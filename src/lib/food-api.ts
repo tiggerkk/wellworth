@@ -1,0 +1,171 @@
+import type { NutrientMap } from './nutrients'
+
+/**
+ * USDA FoodData Central client + nutrient mapping. Called directly from the browser with
+ * VITE_USDA_API_KEY (the tech spec designates it a browser var). Amounts are normalized to
+ * per 100 g — Foundation/SR Legacy/Survey already report per 100 g, and Branded foods in
+ * FDC store per-100g values in foodNutrients too. We map on the stable INFOODS
+ * `nutrient.number` (string), never the free-text name. Units already match ours.
+ */
+
+const USDA_BASE = 'https://api.nal.usda.gov/fdc/v1'
+
+/** A food from USDA or Open Food Facts, normalized for Food Detail + caching into `food`. */
+export interface ExternalFood {
+  source: 'usda' | 'off'
+  externalId: string
+  name: string
+  brand: string | null
+  nutrientBasis: 'per_100g'
+  nutrients: NutrientMap
+  servingText: string | null
+  servingGrams: number | null
+}
+
+// USDA nutrient.number → our key. (energy 208 = kcal, NOT kJ; vitamin_a 320 = µg RAE;
+// folate 435 = µg DFE; vitamin_d 328 = µg; copper 312 = mg; iodine 314 = µg.)
+const USDA_NUTRIENT_MAP: Record<string, string> = {
+  '208': 'energy',
+  '255': 'water',
+  '221': 'alcohol',
+  '262': 'caffeine',
+  '203': 'protein',
+  '204': 'fat',
+  '205': 'carbs',
+  '291': 'fiber',
+  '209': 'starch',
+  '269': 'sugars',
+  '539': 'added_sugars',
+  '212': 'fructose',
+  '211': 'glucose',
+  '213': 'lactose',
+  '214': 'maltose',
+  '210': 'sucrose',
+  '287': 'galactose',
+  '606': 'saturated',
+  '645': 'monounsaturated',
+  '646': 'polyunsaturated',
+  '605': 'trans',
+  '601': 'cholesterol',
+  '621': 'dha',
+  '629': 'epa',
+  '619': 'ala',
+  '618': 'linoleic',
+  '620': 'arachidonic',
+  '608': 'palmitic',
+  '609': 'stearic',
+  '617': 'oleic',
+  '320': 'vitamin_a',
+  '401': 'vitamin_c',
+  '328': 'vitamin_d',
+  '323': 'vitamin_e',
+  '430': 'vitamin_k',
+  '404': 'b1',
+  '405': 'b2',
+  '406': 'b3',
+  '410': 'b5',
+  '415': 'b6',
+  '418': 'b12',
+  '435': 'folate',
+  '416': 'b7',
+  '421': 'choline',
+  '301': 'calcium',
+  '312': 'copper',
+  '314': 'iodine',
+  '303': 'iron',
+  '304': 'magnesium',
+  '315': 'manganese',
+  '305': 'phosphorus',
+  '306': 'potassium',
+  '317': 'selenium',
+  '307': 'sodium',
+  '309': 'zinc',
+  '512': 'histidine',
+  '503': 'isoleucine',
+  '504': 'leucine',
+  '505': 'lysine',
+  '506': 'methionine',
+  '508': 'phenylalanine',
+  '502': 'threonine',
+  '501': 'tryptophan',
+  '510': 'valine',
+}
+
+// Loose shapes for the USDA JSON (search uses nutrientNumber/value; detail uses nutrient.number/amount).
+interface UsdaFoodNutrient {
+  nutrient?: { number?: string }
+  amount?: number
+  nutrientNumber?: string
+  value?: number
+}
+interface UsdaFood {
+  fdcId: number
+  description?: string
+  dataType?: string
+  brandName?: string
+  brandOwner?: string
+  servingSize?: number
+  servingSizeUnit?: string
+  householdServingFullText?: string
+  foodNutrients?: UsdaFoodNutrient[]
+}
+
+/** Map a USDA food's nutrients (per 100 g) to our NutrientMap. Exported for testing. */
+export function mapUsdaNutrients(food: UsdaFood): NutrientMap {
+  const out: NutrientMap = {}
+  for (const fn of food.foodNutrients ?? []) {
+    const number = fn.nutrient?.number ?? fn.nutrientNumber
+    const amount = fn.amount ?? fn.value
+    const key = number ? USDA_NUTRIENT_MAP[number] : undefined
+    if (key && typeof amount === 'number' && Number.isFinite(amount)) {
+      out[key] = amount
+    }
+  }
+  return out
+}
+
+function toExternalFood(food: UsdaFood): ExternalFood {
+  return {
+    source: 'usda',
+    externalId: String(food.fdcId),
+    name: food.description ?? 'Unknown food',
+    brand: food.brandName ?? food.brandOwner ?? null,
+    nutrientBasis: 'per_100g',
+    nutrients: mapUsdaNutrients(food),
+    servingText: food.householdServingFullText ?? null,
+    servingGrams: food.servingSizeUnit === 'g' ? (food.servingSize ?? null) : null,
+  }
+}
+
+function apiKey(): string {
+  const key = import.meta.env.VITE_USDA_API_KEY
+  if (!key) {
+    throw new Error('USDA food search is not configured — add VITE_USDA_API_KEY to .env.')
+  }
+  return key
+}
+
+/** Search USDA foods. Generic data types first, then branded. */
+export async function searchFoods(query: string): Promise<ExternalFood[]> {
+  const trimmed = query.trim()
+  if (!trimmed) return []
+  const params = new URLSearchParams({
+    api_key: apiKey(),
+    query: trimmed,
+    pageSize: '25',
+    dataType: 'Foundation,SR Legacy,Survey (FNDDS),Branded',
+  })
+  const res = await fetch(`${USDA_BASE}/foods/search?${params.toString()}`)
+  if (!res.ok) throw new Error(`USDA search failed (${res.status})`)
+  const json = (await res.json()) as { foods?: UsdaFood[] }
+  return (json.foods ?? []).map(toExternalFood)
+}
+
+/** Fetch one USDA food's full nutrient profile. */
+export async function getUsdaFood(fdcId: string): Promise<ExternalFood> {
+  const params = new URLSearchParams({ api_key: apiKey() })
+  const res = await fetch(`${USDA_BASE}/food/${fdcId}?${params.toString()}`)
+  if (!res.ok) throw new Error(`USDA lookup failed (${res.status})`)
+  const json = (await res.json()) as UsdaFood
+  return toExternalFood(json)
+}

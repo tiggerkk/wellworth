@@ -6,6 +6,11 @@ import type { NutrientDri } from './dri'
  */
 export type NutrientMap = Partial<Record<string, number>>
 
+/** Narrow a JSONB value (from the DB) to a NutrientMap. */
+export function asNutrientMap(value: unknown): NutrientMap {
+  return value && typeof value === 'object' ? (value as NutrientMap) : {}
+}
+
 /** Grams represented by the food's storage basis: 100 for per_100g, else the serving's grams. */
 export function basisGrams(nutrientBasis: string, servingGrams: number): number {
   return nutrientBasis === 'per_serving' ? servingGrams : 100

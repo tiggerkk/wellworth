@@ -34,6 +34,22 @@ export async function getFood(id: string): Promise<Tables<'food'> | null> {
   return data
 }
 
+/** Find a previously-cached external food (USDA/OFF) by source + external id, if any. */
+export async function getFoodByExternal(
+  source: string,
+  externalId: string,
+): Promise<Tables<'food'> | null> {
+  const { data, error } = await supabase
+    .from('food')
+    .select('*')
+    .eq('source', source)
+    .eq('external_id', externalId)
+    .is('deleted_at', null)
+    .maybeSingle()
+  if (error) throw error
+  return data
+}
+
 export async function createFood(input: TablesInsert<'food'>): Promise<Tables<'food'>> {
   const { data, error } = await supabase.from('food').insert(input).select().single()
   if (error) throw error
