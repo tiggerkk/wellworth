@@ -104,6 +104,15 @@ export function Diary() {
                 aria-hidden
               />
               <div className="absolute right-0 z-20 mt-1 w-52 overflow-hidden rounded-card border border-border bg-surface text-sm shadow-lg">
+                <button
+                  onClick={() => {
+                    setMenuOpen(false)
+                    openSheet(`/report/${day}`)
+                  }}
+                  className="block w-full border-b border-border px-4 py-2.5 text-left text-text-primary active:bg-input/40"
+                >
+                  View Daily Report
+                </button>
                 {copiedDay && (
                   <button
                     onClick={() => copyFrom(copiedDay, todayLocal())}
