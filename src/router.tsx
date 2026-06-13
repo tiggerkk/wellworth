@@ -11,6 +11,8 @@ import {
   FoodDetailSheet,
   Library,
   Login,
+  NewActivitySheet,
+  NewFoodSheet,
   Settings,
 } from './screens'
 
@@ -32,6 +34,10 @@ export const router = createBrowserRouter([
           { path: 'add-activity', element: <AddActivitySheet /> },
           { path: 'activity/:activityId', element: <ActivityLogSheet /> },
           { path: 'report/:day', element: <DailyReportSheet /> },
+          { path: 'new-food', element: <NewFoodSheet /> },
+          { path: 'edit-food/:id', element: <NewFoodSheet /> },
+          { path: 'new-activity', element: <NewActivitySheet /> },
+          { path: 'edit-activity/:id', element: <NewActivitySheet /> },
         ],
       },
     ],

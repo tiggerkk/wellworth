@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
-import { IconX } from '@tabler/icons-react'
+import { IconPlus, IconX } from '@tabler/icons-react'
 import { Sheet } from '../components/Sheet'
 import { ListRow } from '../components/ListRow'
 import { useAsync } from '../hooks/useAsync'
@@ -24,7 +24,14 @@ export function AddActivitySheet() {
         <button onClick={() => navigate(-1)} aria-label="Close">
           <IconX size={22} className="text-text-secondary" />
         </button>
-        <h1 className="text-[17px] font-medium text-text-primary">Add Activity</h1>
+        <h1 className="flex-1 text-[17px] font-medium text-text-primary">Add Activity</h1>
+        <button
+          onClick={() => openSheet('/new-activity')}
+          aria-label="New activity"
+          className="text-positive"
+        >
+          <IconPlus size={22} />
+        </button>
       </header>
 
       <div className="p-4">
@@ -45,9 +52,12 @@ export function AddActivitySheet() {
               )
             })}
             {(activities ?? []).length === 0 && (
-              <p className="px-4 py-6 text-center text-sm text-text-tertiary">
-                No activities yet. (New Activity comes with the Library.)
-              </p>
+              <button
+                onClick={() => openSheet('/new-activity')}
+                className="block w-full px-4 py-6 text-center text-sm text-positive"
+              >
+                + Create your first activity
+              </button>
             )}
           </div>
         )}
