@@ -145,17 +145,25 @@ function apiKey(): string {
   return key
 }
 
-/** Search USDA foods. Generic data types first, then branded. */
+/**
+ * Search USDA foods. Uses POST with a JSON body — the GET endpoint rejects a `dataType`
+ * containing "Survey (FNDDS)" (the space/parens 400s), whereas POST accepts the array.
+ */
 export async function searchFoods(query: string): Promise<ExternalFood[]> {
   const trimmed = query.trim()
   if (!trimmed) return []
-  const params = new URLSearchParams({
-    api_key: apiKey(),
-    query: trimmed,
-    pageSize: '25',
-    dataType: 'Foundation,SR Legacy,Survey (FNDDS),Branded',
-  })
-  const res = await fetch(`${USDA_BASE}/foods/search?${params.toString()}`)
+  const res = await fetch(
+    `${USDA_BASE}/foods/search?api_key=${encodeURIComponent(apiKey())}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        query: trimmed,
+        pageSize: 25,
+        dataType: ['Foundation', 'SR Legacy', 'Survey (FNDDS)', 'Branded'],
+      }),
+    },
+  )
   if (!res.ok) throw new Error(`USDA search failed (${res.status})`)
   const json = (await res.json()) as { foods?: UsdaFood[] }
   return (json.foods ?? []).map(toExternalFood)
