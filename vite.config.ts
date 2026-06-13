@@ -35,6 +35,9 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
         cleanupOutdatedCaches: true,
+        // Don't let the precached index.html shadow the OAuth return (?code=) once the
+        // service worker is live in production.
+        navigateFallbackDenylist: [/^\/auth/, /\?code=/],
       },
       // Keep the service worker off during `vite dev` to avoid stale-cache confusion.
       devOptions: { enabled: false },
