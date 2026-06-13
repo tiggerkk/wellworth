@@ -9,11 +9,13 @@ import {
   Dashboard,
   Diary,
   FoodDetailSheet,
+  HighlightedNutrientsSheet,
   Library,
   Login,
   NewActivitySheet,
   NewFoodSheet,
   Settings,
+  VisibleNutrientsSheet,
 } from './screens'
 
 export const router = createBrowserRouter([
@@ -38,6 +40,8 @@ export const router = createBrowserRouter([
           { path: 'edit-food/:id', element: <NewFoodSheet /> },
           { path: 'new-activity', element: <NewActivitySheet /> },
           { path: 'edit-activity/:id', element: <NewActivitySheet /> },
+          { path: 'settings/highlighted', element: <HighlightedNutrientsSheet /> },
+          { path: 'settings/visible', element: <VisibleNutrientsSheet /> },
         ],
       },
     ],
