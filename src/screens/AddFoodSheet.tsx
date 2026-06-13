@@ -1,16 +1,20 @@
-import { useCallback, useEffect, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { IconHeart, IconHeartFilled, IconX } from '@tabler/icons-react'
 import { Sheet } from '../components/Sheet'
 import { SearchBar } from '../components/SearchBar'
 import { SegmentedTabs } from '../components/SegmentedTabs'
 import { ListRow } from '../components/ListRow'
-import { BarcodeScanner } from '../components/BarcodeScanner'
 import { useAsync } from '../hooks/useAsync'
 import { useSheetNavigate } from '../hooks/useSheetNavigate'
 import { listFoods, setFavorite } from '../data/food'
 import { searchFoods, type ExternalFood } from '../lib/food-api'
 import { todayLocal } from '../lib/date'
+
+// Lazy-loaded so the ZXing barcode library is a separate chunk, fetched only when scanning.
+const BarcodeScanner = lazy(() =>
+  import('../components/BarcodeScanner').then((m) => ({ default: m.BarcodeScanner })),
+)
 
 type Tab = 'all' | 'favorites' | 'custom'
 const SOURCE_TAG: Record<string, string> = { usda: 'USDA', custom: 'Custom', off: 'Off' }
@@ -77,12 +81,20 @@ export function AddFoodSheet() {
         />
 
         {scanning ? (
-          <BarcodeScanner
-            onScan={(code) => {
-              setScanning(false)
-              openSheet(`/food/off/${code}${suffix}`)
-            }}
-          />
+          <Suspense
+            fallback={
+              <p className="py-6 text-center text-sm text-text-secondary">
+                Loading scanner…
+              </p>
+            }
+          >
+            <BarcodeScanner
+              onScan={(code) => {
+                setScanning(false)
+                openSheet(`/food/off/${code}${suffix}`)
+              }}
+            />
+          </Suspense>
         ) : (
           <>
             <SegmentedTabs
