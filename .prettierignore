@@ -1,0 +1,10 @@
+dist
+dev-dist
+coverage
+node_modules
+src/types/database.ts
+supabase/migrations
+package-lock.json
+docs/wireframes
+*.png
+*.ico

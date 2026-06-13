@@ -1,0 +1,55 @@
+@import 'tailwindcss';
+
+/*
+ * WellWorth design system (see docs/04-design-system.md).
+ * Tailwind v4 is CSS-first: tokens declared in @theme become utilities.
+ *   --color-surface     -> bg-surface / text-surface / border-surface
+ *   --color-text-primary-> text-text-primary (token name is "text-primary")
+ *   --radius-card       -> rounded-card
+ * Dark, calm, Cronometer-like. Match these tokens exactly.
+ */
+@theme {
+  /* Colors */
+  --color-bg: #161b28;
+  --color-surface: #232a3a;
+  --color-surface-alt: #1b2130;
+  --color-input: #2a3142;
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-text-primary: #e8eaf0;
+  --color-text-secondary: #9aa3b5;
+  --color-text-muted: #c2c7d4;
+  --color-text-tertiary: #5b6172;
+  --color-accent: #e8623c;
+  --color-positive: #5dcaa5;
+  --color-danger: #e2574c;
+  --color-delete: #e24b4a;
+  --color-track: #3a4253;
+  --color-fill: #eef1f7;
+
+  /* Radii */
+  --radius-screen: 28px;
+  --radius-card: 14px;
+  --radius-row: 12px;
+  --radius-pill: 20px;
+  --radius-input: 8px;
+
+  /* Type: system sans with Inter as web fallback */
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', 'Segoe UI', Roboto,
+    Helvetica, Arial, sans-serif;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
