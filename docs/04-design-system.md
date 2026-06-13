@@ -51,6 +51,15 @@ _not_ the primary-button color; it's for emphasis, active states, and energy.
 - **PrimaryButton** — light `fill` pill, used as the bottom "ADD TO DIARY".
 - **FieldRow** — label + value/input + chevron, for forms and Settings.
 - **EffortPicker** — Light / Moderate / Vigorous radio list with MET ranges.
+- **Sheet** — slide-up overlay for route-based modal screens (scrim, `bottom`/`full` variants,
+  Esc/scrim/back close); the app shell renders sheets over the active tab via React Router's
+  background-location pattern.
+- **Splash** — full-screen loading state while the auth session resolves.
+- **Calendar** — month-grid date picker with per-day food/activity cue dots (a local overlay, not a route).
+- **EnergyBalanceCard** — Consumed / BMR / Activity / bold Net.
+- **NutrientReport** — shared body of Dashboard + Daily Report (energy card + visible-nutrient sections).
+- **CollapsibleSection** — collapsible card for the New Food nutrient-entry groups.
+- **BarcodeScanner** — ZXing camera scanner (lazy-loaded).
 
 ## Icons
 

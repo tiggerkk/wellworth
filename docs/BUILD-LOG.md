@@ -1,0 +1,167 @@
+# BUILD-LOG — WellWorth Phase 1 (Wellness)
+
+Engineering history: the build sequence, the rationale behind key decisions, and a short list of
+approaches that were tried and **failed** (so they aren't repeated). **This file is not a behavior
+spec** — `/docs/00-PRD.md … 05-seed-data.md` + `CLAUDE.md` are the source of truth and already
+describe what the app does. Where this log mentions a past failure, it points to the spec section that
+now encodes the correct approach.
+
+Phase 2 (Net Worth) is not built.
+
+---
+
+## Snapshot
+
+- **Stack (as built, June 2026):** React 19.2, react-router 7.17 (unified `react-router` package),
+  Vite 8.0, TypeScript 6.0 (strict), Tailwind 4.3 (CSS-first via `@tailwindcss/vite`),
+  vite-plugin-pwa 1.3, `@supabase/supabase-js` 2.108, `@zxing/library` 0.22 + `@zxing/browser` 0.2,
+  `@tabler/icons-react` 3.44, Vitest 4.1, ESLint 10 (flat config), Prettier 3.8, husky 9. `recharts`
+  3.8 is installed but unused (Phase 2).
+- **Scripts:** `dev`, `build` (`tsc -b && vite build`), `preview`, `lint`, `format`, `typecheck`,
+  `test`, `check` (all gates), `gen:types` (Supabase → `src/types/database.ts`), `prepare` (husky).
+- **Env (`.env`, gitignored; `.env.example` documents):** `VITE_SUPABASE_URL`,
+  `VITE_SUPABASE_ANON_KEY`, `VITE_USDA_API_KEY`. All build-time `VITE_` vars.
+- **Gates:** husky `.husky/pre-commit` → lint-staged + `typecheck` + `test`; GitHub Actions
+  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 45 Vitest tests (pure helpers).
+- **Deploy status:** NOT yet deployed. Local git only (`master`, no remote). GitHub→Vercel runbook is
+  in the session plan; deploy steps must also add the production URL to Supabase redirect URLs +
+  Google JS origins.
+- Conventions (DB-access-via-`src/data`, metric storage, generated `database.ts` contract, etc.) live
+  in `CLAUDE.md` and `02-tech-spec.md` — not repeated here.
+
+---
+
+## Build sequence (per milestone)
+
+### M1 — Scaffold + tooling (`d61e352`)
+
+Goal: runnable dark Vite/React/TS PWA skeleton with the four quality gates enforced by a pre-commit
+hook. Scaffolded from `create-vite` 9.0.7 `react-ts` (Vite 8 / React 19 / TS 6 / ESLint 10 flat
+config). Established Tailwind v4 CSS-first tokens in `src/index.css` (the design system), the strict
+`tsconfig`, Vitest (node env), husky + lint-staged, CI, `.gitattributes` (LF — matters on Windows),
+and the first real helper `src/lib/units.ts`.
+Rationale: tokens-as-utilities keeps the design system in one file; husky+CI double-gate so a bypassed
+hook is still caught.
+
+### M2 — Supabase schema + RLS + seed + types (`959e6a3`, `965c9fb`)
+
+Goal: full Postgres schema on the cloud project (remote-only, no Docker), nutrient reference seeded,
+`database.ts` generated.
+Migrations: `20260613120000_init_schema.sql` (7 tables, CHECK constraints, FKs, indexes, RLS +
+policies, `moddatetime` triggers — all as `03-data-model.md` now specifies);
+`20260613120100_seed_nutrient.sql` (80 nutrient rows, idempotent `ON CONFLICT (key) DO UPDATE`).
+Rationale: reference data ships _in a migration_ (not `seed.sql`, which only runs on local resets) so
+it reaches prod and is re-runnable; the `nutrient.parent_key` self-FK is DEFERRABLE so one multi-row
+insert validates at commit.
+
+### M3 — Google auth + first-run seed + app shell (`f31be26`, `6c3503d`)
+
+Goal: Google sign-in, session-gated 4-tab shell, first-login owner data.
+Built: `src/lib/supabase.ts` (PKCE client), `AuthProvider`/`RequireAuth` (splash, no login flash),
+React Router v7 `createBrowserRouter`, `BottomNav`/`AppShell`/`Splash`/`PrimaryButton`, `Login` +
+stub tab screens, `useEnsureProfile` (idempotent first-login seed), `vercel.json` SPA rewrite.
+Migration `20260613120200_grant_api_roles.sql` was added here — see **Failure F1**.
+Rationale: client-side seeding (not a DB trigger) keeps the owner-seed logic in readable TS and needs
+no `auth`-schema grants; PKCE is the right SPA flow.
+
+### M4 — Data-access layer + calc helpers (`12477a7`)
+
+Goal: the computational + data foundation; no UI; 29 tests.
+Built: `src/lib/{energy,met,nutrients,dri,targets}.ts` and `src/data/*` repos for all 7 tables.
+Rationale & key decisions (all now in `02-tech-spec.md`): DRI is a sex/age-band lookup populated only
+for the owner's band (female 51–70) and throws otherwise; upper limits are **scope-tagged** so
+supplement-only ULs never fire a red bar on dietary intake; fat/saturated/added-sugars get
+energy-derived soft targets; protein honors the profile override.
+
+### M5 — Diary + Add Food/Activity logging (`094a401`, `27e4b89`)
+
+Goal: the core daily loop; built most of the shared component library.
+Built: components (`Sheet`, `NutrientBar`, `GroupHeader`, `SwipeRow` [hand-rolled Pointer Events],
+`SegmentedTabs`, `SearchBar`, `EffortPicker`, `Calendar`, `BarcodeScanner`, …); screens (`Diary`,
+`AddFoodSheet`, `FoodDetailSheet`, `AddActivitySheet`, `ActivityLogSheet`); hooks (`useAsync`,
+`useBarcodeScanner`, `useProfile`, `useNutrientReference`, `useSheetNavigate`); lib (`date`,
+`food-api`, `off-api`, `targets`, `diary-refresh`); constants. `ensureOwnerActivities` (first-login
+activity seeding) added to `useEnsureProfile`. USDA search fix in `27e4b89` — see **Failure F2**.
+Key architecture (rationale):
+
+- **Route-based modal sheets via React Router "background-location"**: sheet routes are children of
+  `AppShell`; opening one navigates with `state.background = currentLocation`; `AppShell` keeps a
+  `TAB_FOR_PATH` map and renders the background tab under the sheet. **New sheets must be added as
+  `AppShell` children and opened via `useSheetNavigate`; new tabs must be added to `TAB_FOR_PATH`.**
+- **`src/lib/diary-refresh.ts` (`bumpDiary`/`useDiaryVersion`) is the app-wide "user-data-changed"
+  tick** (a `useSyncExternalStore` pub/sub). Despite the name it's used by Diary, Library, and
+  `useProfile`, not just the diary — mutations call `bumpDiary()` and subscribers refetch.
+- **`useAsync(fn)` requires a `useCallback`-stable `fn`** or it refetches every render — see
+  **Failure F4**.
+- Logging writes a per-entry snapshot (`nutrients`/`energy_kcal`/`label`) so history is stable across
+  later edits/soft-deletes.
+- Dates are civil `YYYY-MM-DD` via `src/lib/date.ts` — never `new Date('YYYY-MM-DD')` (UTC
+  off-by-one); use `fromIsoDate` (local midnight) / `toIsoDate`.
+
+### M6 — Dashboard / Daily Report (`91c40f4`)
+
+Goal: energy-balance + nutrient report, as a daily average (range) or single day. Mostly reuse.
+Built: `src/lib/report.ts` (+tests), `EnergyBalanceCard`, shared `NutrientReport`, `Dashboard` (range
+dropdown), `DailyReportSheet` (`/report/:day`), `constants/{nutrient-sections,ranges}.ts`.
+Rationale: averages divide by **days-with-entries** (a typical logged day), per `01-screens.md`; one
+`NutrientReport` serves both screens (single day → 1 logged day).
+
+### M7 — Library (`986448f`)
+
+Goal: create/edit/delete custom foods/supplements and activities.
+Built: `Library.tsx` (Foods/Activities tabs, search, swipe-delete, edit, +New), `NewFoodSheet`
+(full collapsible nutrient entry; blank inputs omitted), `NewActivitySheet` (template, MET-by-effort,
+icon picker), `CollapsibleSection`, `serving.replaceServings`.
+Rationale: forms are outer-loader + inner-form (lazy `useState` init) so edits preload without a
+set-state-in-effect; edit re-inserts servings (`replaceServings`) — simplest correct sync at this
+scale.
+
+### M8 — Settings (`ea43586`)
+
+Goal: profile/targets/visibility/units/account.
+Built: `Settings.tsx`, `HighlightedNutrientsSheet` (cap 8), `VisibleNutrientsSheet` (grouped toggles
+
+- protein target + "limited data" notes), `useProfileEditor`. `useProfile` now refetches on the
+  `diary-refresh` tick so edits propagate to Diary/Dashboard.
+  Rationale: auto-save on change (per the spec's button convention); units are display-only via
+  `src/lib/units.ts`.
+
+### M9 — PWA polish (`c9a2c2c`); deploy pending
+
+Goal: real icons, smaller bundle, verified PWA, then deploy.
+Built: branded coral-ring icons (`public/`, incl. a padded maskable) + manifest update; **barcode
+scanner code-split** — `AddFoodSheet` lazy-loads `BarcodeScanner`, moving `@zxing` into its own
+~470 kB chunk (initial JS ~1 MB → ~567 kB). `registerType: 'autoUpdate'` (silent SW update).
+Deploy is the only remaining step (runbook in the plan).
+
+---
+
+## Failures & gotchas to not repeat
+
+- **F1 — RLS without table GRANTs → `42501 permission denied` (M3).** Tables created by raw-SQL
+  migrations do **not** inherit Supabase's default grants to the `anon`/`authenticated` API roles, so
+  enabling RLS alone left the authenticated role with no table access; first login failed on the
+  `profile` select. Fix: `20260613120200_grant_api_roles.sql` grants privileges + sets default
+  privileges. **Every migration must grant to the API roles** — now specified in `03-data-model.md`
+  and `CLAUDE.md`. Don't "fix" a future permission error by loosening RLS.
+- **F2 — USDA `GET /foods/search` 400s on `dataType` (M5).** A GET search whose `dataType` includes
+  `"Survey (FNDDS)"` returns HTTP 400 (the space/parens), which also yielded stale `fdcId`s that then
+  404'd on the detail endpoint. Fix: **search via POST** with a JSON body. Don't switch food search
+  back to GET — see `02-tech-spec.md` → External APIs.
+- **F3 — `@zxing/browser` peer range (M5).** `@zxing/browser@0.2` peers `@zxing/library@^0.22`, so
+  `@zxing/library` was pinned to 0.22 (M1 had installed 0.23). Don't bump `@zxing/library` past 0.22
+  without also moving `@zxing/browser`, or `npm install` needs `--legacy-peer-deps`.
+- **F4 — `useAsync` dep-array shape (M5).** An early `useAsync(fn, deps)` passing a variable `deps`
+  array was rejected by the `react-hooks` v7 ESLint rule ("dependency list must be an array literal").
+  The shipped `useAsync(fn)` takes a single stable (caller-`useCallback`'d) `fn` and exposes
+  `refetch`. Don't reintroduce a `deps` parameter; memoize `fn` at the call site instead.
+
+---
+
+## Known limitations / deferred (not spec issues — future work)
+
+- Not yet deployed; barcode scanning unverified on a real phone (needs HTTPS).
+- App icons are programmatically-generated placeholder marks (coral ring), not designed artwork.
+- Initial JS bundle ~567 kB (supabase-js + react-router + tabler); acceptable, not further optimized.
+- DRI data covers only adult female 51–70; adding other bands is pure data in `src/lib/dri.ts` (the
+  multi-user onboarding path for non-owner users is documented in code but not built).

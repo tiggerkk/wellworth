@@ -21,12 +21,12 @@ Diary groups, in order: **Breakfast, Lunch, Dinner, Snacks, Supplements, Activit
 ## Diary (home tab)
 
 - Header `‹ Today ›`: left/right arrows step one day; tapping the date opens the **Calendar** modal.
-- **Highlighted Nutrients**: a 4×2 grid of 8 chosen nutrients, each a name, % of target, and a thin
-  progress bar. The 8 are chosen in Settings → Highlighted Nutrients.
+- **Highlighted Nutrients**: a grid of up to 8 chosen nutrients (a 4×2 grid when 8 are chosen), each a
+  name, % of target, and a thin progress bar. Chosen in Settings → Highlighted Nutrients (max 8).
 - Groups (Breakfast … Activities): each header has a green `+` (add into that group), a kcal subtotal
   (activities show negative kcal in coral), and a chevron. **Collapsed by default.** Expanded shows
   the logged entries. **Swipe-left** on an entry reveals Delete.
-- Top-right `⋯` menu: View Daily Report · Copy to Today (only if a day was copied) · Copy Current Day · Copy Previous Day.
+- Top-right `⋯` menu: View Daily Report · Copy to Today (only if a day was copied) · Copy Current Day · Copy Previous Day. (Copy clones the day's food/activity entries with their stored snapshots; it does not duplicate individual `strength_set` rows.)
 
 ## Calendar (modal, from the Diary date)
 
@@ -38,9 +38,13 @@ Diary groups, in order: **Breakfast, Lunch, Dinner, Snacks, Supplements, Activit
 
 - Search bar with a barcode-scan icon; a filter/sort control.
 - Tabs: **All** (combined USDA + your custom), **Favorites** (hearted items), **Custom** (your items).
-- Result rows: name, serving, source tag (USDA / Custom / Off for Open Food Facts); a heart marks
-  favorites inline. Tapping a row opens **Food Detail**.
-- Barcode scan looks the product up in Open Food Facts; you may save the result into Custom.
+- Result rows: name, serving, source tag (USDA / Custom / Off for Open Food Facts). Your saved
+  foods (Favorites / Custom) show an inline heart to toggle favorite; raw USDA search results are
+  favorited from **Food Detail** (the heart there), since they aren't cached until favorited or
+  logged. Tapping a row opens **Food Detail**.
+- The barcode-scan button opens the camera scanner (lazy-loaded); a decoded EAN/UPC is looked up in
+  Open Food Facts and opens **Food Detail**. Logging or favoriting saves the product into the `food`
+  table (`source='off'`).
 
 ## Food Detail (logging screen)
 
@@ -66,7 +70,9 @@ Diary groups, in order: **Breakfast, Lunch, Dinner, Snacks, Supplements, Activit
 
 ## Activity Log — strength type
 
-- Duration (minutes) → drives the energy estimate; Energy Burned auto-computed (MET 5.5).
+- Duration (minutes) → drives the energy estimate. Energy Burned = MET × body-weight(kg) × hours,
+  where MET is resolved from the activity's `met_by_effort` at its **default effort** (strength logging
+  shows no per-session effort picker). No hardcoded MET.
 - **Exercises** list: each exercise expands to sets logged as reps × weight, with "Add set"; an
   "Add exercise" button builds the session. Sets persist to `strength_set` for progress tracking.
 - Group defaults to **Activities**. Bottom: **ADD TO DIARY**.
@@ -74,11 +80,16 @@ Diary groups, in order: **Breakfast, Lunch, Dinner, Snacks, Supplements, Activit
 ## Dashboard (tab)
 
 - Title `Daily average · {range} ▾`; the picker offers Last 7 Days (default), Last 2/3/4/8 Weeks,
-  Last 3/6 Months, Last Year.
+  Last 3/6 Months, Last Year. The "daily average" divides totals by the number of **days that have at
+  least one entry** in the range (not by calendar days) — a typical logged day. An empty range shows
+  "Nothing logged."
 - **Energy Balance** card: Consumed, BMR, Activity, and a bold **Net = Consumed − BMR − Activity**.
 - Nutrient sections in fixed order — General, Vitamins, Minerals, Carbohydrates, Lipids,
   Protein & Amino Acids — each visible nutrient a "name · value / target · %" bar.
-  **Bars turn red when a value exceeds that nutrient's DRI upper limit.**
+  **Bars turn red when a value exceeds that nutrient's upper limit — but only for limits that apply
+  to total dietary intake** (and sodium's CDRR). Limits that apply only to supplemental/synthetic
+  forms (e.g. magnesium, niacin, folic acid, vitamin E, preformed vitamin A) never turn a food bar
+  red. See `02-tech-spec.md` → "Upper limits / red bars".
 - Only nutrients toggled **Visible** (Settings → Visible Nutrients) appear.
 
 ## Daily Report (from the Diary `⋯`)
@@ -108,14 +119,18 @@ Two sub-tabs:
 - Activity Name; optional Description.
 - **Logging Template**: Duration (minutes + effort) or Strength (sets/reps/weight + duration).
 - **Default Effort**: Light (<3 MET) / Moderate (3–5.9) / Vigorous (≥6) — applies to both Duration and Strength templates; overridable per session when logging.
-- **MET by effort**: for each effort level selected above, an editable MET value is shown and can be fine-tuned. Single-intensity activities need only one level filled in; the default effort must have a value. Drives the calorie estimate via MET × weight × hours.- **Save** top-right.
+- **MET by effort**: for each effort level, an editable MET value; select which level is the default
+  and fill at least its value (single-intensity activities need only one). Drives the calorie estimate
+  via MET × weight × hours.
+- **Icon**: an icon picker (the keys of `ACTIVITY_ICONS`); optional, defaults to `IconRun`.
+- **Save** top-right (enabled once there's a name and a MET value for the default effort).
 
 ## Settings (tab)
 
 - **PROFILE**: Birthday, Sex, Height, Weight (all editable).
 - **TARGETS** (auto-set from profile via DRI): **Protein Target** is the only manual override field.
 - **VISIBILITY**:
-  - **Highlighted Nutrients** → choose the 8 shown on the Diary.
+  - **Highlighted Nutrients** → choose up to 8 shown on the Diary (the picker caps the selection at 8).
   - **Visible Nutrients** → per-nutrient toggle for what appears on the Dashboard & Daily Report.
 - **ACCOUNT**: **Units** (Metric / Imperial — editable; display-only, DB stays metric), Google account,
   Sign out.

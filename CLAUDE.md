@@ -3,8 +3,13 @@
 WellWorth is a personal (later: small-family) wellness and net-worth tracker, styled after Cronometer.
 It is built as an installable PWA so it runs on iPhone and iPad with no Apple Developer account.
 
-**Read `/docs` before planning or building.** The five spec docs there are the source of truth:
+**Read `/docs` before planning or building.** The six spec docs there are the source of truth:
 `00-PRD.md`, `01-screens.md`, `02-tech-spec.md`, `03-data-model.md`, `04-design-system.md`, `05-seed-data.md`.
+(`docs/BUILD-LOG.md` is a non-spec engineering history — build sequence, rationale, and past-failure
+warnings — not a source of truth for behavior.)
+
+**Before changing existing code, read `docs/BUILD-LOG.md`** to understand how Phase 1 was built and
+which past approaches failed (and see `docs/PARKED.md` for what's intentionally deferred).
 
 ## Scope discipline
 
@@ -13,9 +18,11 @@ It is built as an installable PWA so it runs on iPhone and iPad with no Apple De
 
 ## Stack (do not substitute without asking)
 
-- React + Vite + TypeScript (strict), Tailwind CSS, `vite-plugin-pwa`.
+- React + Vite + TypeScript (strict), Tailwind CSS, `vite-plugin-pwa`, React Router (the unified
+  `react-router` package — import from `react-router`).
 - Supabase (Postgres + Auth + Google OAuth) for data, auth, and cross-device sync.
-- Recharts for charts. `@zxing/library` (or `html5-qrcode`) for barcode scanning.
+- `@zxing/library` + `@zxing/browser` for barcode scanning. Recharts is a dependency reserved for the
+  Phase-2 net-worth trend graph (not used in Phase-1 Wellness).
 - Food data: USDA FoodData Central (search) + Open Food Facts (barcode).
 
 ## Architecture rules (always apply)
@@ -33,7 +40,12 @@ It is built as an installable PWA so it runs on iPhone and iPad with no Apple De
 
 ## Security (non-negotiable)
 
-- RLS is ON for every table from its first migration; policy = `user_id = auth.uid()`.
+- RLS is ON for every table from its first migration; policy = `user_id = auth.uid()` for user-owned
+  tables. Child tables without their own `user_id` (`serving`, `strength_set`) enforce ownership via
+  an `EXISTS` check against their parent.
+- **Migrations must also `GRANT` table privileges to the `anon`/`authenticated` roles.** RLS gates
+  _rows_; the role still needs table-level access. Tables created by raw-SQL migrations do **not**
+  inherit Supabase's default grants, so an explicit grant migration is required (see `03-data-model.md`).
 - The client uses only the **public anon key** (RLS-respecting), injected via a `VITE_`-prefixed env var.
 - The **service-role key bypasses RLS** — it must never appear in client code or the repo. Secrets in
   `.env` (gitignored). Only `VITE_`-prefixed vars are exposed to the browser.
