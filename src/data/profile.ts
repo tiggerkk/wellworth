@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase'
-import type { Tables } from '../types/database'
+import type { Tables, TablesUpdate } from '../types/database'
 import { OWNER_PROFILE_SEED } from '../constants/profile-defaults'
 import { getDefaultVisibleNutrientKeys } from './nutrient'
 
@@ -36,4 +36,20 @@ export async function ensureOwnerProfile(userId: string): Promise<void> {
       { onConflict: 'user_id', ignoreDuplicates: true },
     )
   if (error) throw error
+}
+
+/** Update the signed-in user's profile (Settings edits). Returns the updated row. */
+export async function updateProfile(
+  userId: string,
+  patch: TablesUpdate<'profile'>,
+): Promise<Tables<'profile'>> {
+  const { data, error } = await supabase
+    .from('profile')
+    .update(patch)
+    .eq('user_id', userId)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
 }
