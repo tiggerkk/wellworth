@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { IconPlus, IconTrash, IconX } from '@tabler/icons-react'
 import { Sheet } from '../components/Sheet'
+import { PrimaryButton } from '../components/PrimaryButton'
 import { SegmentedTabs } from '../components/SegmentedTabs'
 import { CollapsibleSection } from '../components/CollapsibleSection'
 import { useAuth } from '../auth/AuthProvider'
@@ -84,6 +85,8 @@ function FoodForm({ id, initial }: { id: string | undefined; initial: FoodInitia
   const [saving, setSaving] = useState(false)
 
   const basisLabel = basis === 'per_serving' ? 'serving' : '100 g'
+  const actionLabel = id ? 'SAVE FOOD' : 'ADD FOOD'
+  const busyLabel = id ? 'Saving…' : 'Adding…'
 
   async function save() {
     if (!userId || !name.trim()) return
@@ -134,13 +137,6 @@ function FoodForm({ id, initial }: { id: string | undefined; initial: FoodInitia
         <h1 className="flex-1 text-[17px] font-medium text-text-primary">
           {id ? 'Edit Food' : 'New Food'}
         </h1>
-        <button
-          onClick={() => void save()}
-          disabled={saving || !name.trim()}
-          className="text-[15px] font-medium text-accent disabled:opacity-40"
-        >
-          {saving ? 'Saving…' : 'Save'}
-        </button>
       </header>
 
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
@@ -265,6 +261,16 @@ function FoodForm({ id, initial }: { id: string | undefined; initial: FoodInitia
             })}
           </div>
         </div>
+      </div>
+
+      <div className="border-t border-border p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
+        <PrimaryButton
+          onClick={() => void save()}
+          disabled={saving || !name.trim()}
+          className="w-full"
+        >
+          {saving ? busyLabel : actionLabel}
+        </PrimaryButton>
       </div>
     </>
   )

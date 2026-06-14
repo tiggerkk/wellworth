@@ -23,9 +23,11 @@ export function Sheet({ children, variant = 'bottom', label }: SheetProps) {
     return () => document.removeEventListener('keydown', onKey)
   }, [navigate])
 
+  // Full-screen sheets are fixed overlays (outside the app shell's padded flow), so they reserve
+  // the top safe-area inset themselves to keep their header clear of the iOS status bar.
   const panel =
     variant === 'full'
-      ? 'inset-0 rounded-none'
+      ? 'inset-0 rounded-none pt-[env(safe-area-inset-top)]'
       : 'inset-x-0 bottom-0 mx-auto max-w-md rounded-t-card pb-[env(safe-area-inset-bottom)]'
 
   return (

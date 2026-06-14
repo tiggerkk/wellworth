@@ -27,7 +27,7 @@ export function AppShell() {
     : null
 
   return (
-    <div className="mx-auto flex min-h-svh max-w-md flex-col bg-bg">
+    <div className="mx-auto flex h-dvh max-w-md flex-col bg-bg pt-[env(safe-area-inset-top)]">
       <main className="flex-1 overflow-y-auto">
         {background ? backgroundTab : outlet}
       </main>

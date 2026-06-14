@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { IconX } from '@tabler/icons-react'
 import { Sheet } from '../components/Sheet'
+import { PrimaryButton } from '../components/PrimaryButton'
 import { SegmentedTabs } from '../components/SegmentedTabs'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
@@ -82,6 +83,8 @@ function ActivityForm({
 
   const defaultMet = Number(met[defaultEffort])
   const canSave = name.trim() !== '' && Number.isFinite(defaultMet) && defaultMet > 0
+  const actionLabel = id ? 'SAVE ACTIVITY' : 'ADD ACTIVITY'
+  const busyLabel = id ? 'Saving…' : 'Adding…'
 
   async function save() {
     if (!userId || !canSave) return
@@ -118,13 +121,6 @@ function ActivityForm({
         <h1 className="flex-1 text-[17px] font-medium text-text-primary">
           {id ? 'Edit Activity' : 'New Activity'}
         </h1>
-        <button
-          onClick={() => void save()}
-          disabled={saving || !canSave}
-          className="text-[15px] font-medium text-accent disabled:opacity-40"
-        >
-          {saving ? 'Saving…' : 'Save'}
-        </button>
       </header>
 
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
@@ -223,6 +219,16 @@ function ActivityForm({
             })}
           </div>
         </div>
+      </div>
+
+      <div className="border-t border-border p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
+        <PrimaryButton
+          onClick={() => void save()}
+          disabled={saving || !canSave}
+          className="w-full"
+        >
+          {saving ? busyLabel : actionLabel}
+        </PrimaryButton>
       </div>
     </>
   )

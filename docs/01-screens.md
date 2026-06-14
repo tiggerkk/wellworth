@@ -116,7 +116,7 @@ Two sub-tabs:
 - **Nutrition shown per**: 100 g / serving (the storage basis).
 - **Nutrition Facts**: the _complete_ nutrient set, grouped by category, each an input + unit,
   collapsible per section. (Supplements: leave Energy/macros blank, fill the relevant micros.)
-- **Save** top-right.
+- Bottom: full-width **ADD FOOD** (new) / **SAVE FOOD** (editing) button (enabled once there's a name).
 
 ### New Activity (form)
 
@@ -127,13 +127,14 @@ Two sub-tabs:
   and fill at least its value (single-intensity activities need only one). Drives the calorie estimate
   via MET × weight × hours.
 - **Icon**: an icon picker (the keys of `ACTIVITY_ICONS`); optional, defaults to `IconRun`.
-- **Save** top-right (enabled once there's a name and a MET value for the default effort).
+- Bottom: full-width **ADD ACTIVITY** (new) / **SAVE ACTIVITY** (editing) button (enabled once there's
+  a name and a MET value for the default effort).
 
 ## Settings (tab)
 
 - **PROFILE**: Birthday, Sex, Height, Weight (all editable).
 - **TARGETS** (auto-set from profile via DRI): **Protein Target** is the only manual override field.
-- **VISIBILITY**:
+- **DISPLAY**:
   - **Highlighted Nutrients** → choose up to 8 shown on the Diary (the picker caps the selection at 8).
   - **Visible Nutrients** → per-nutrient toggle for what appears on the Dashboard & Daily Report.
 - **ACCOUNT**: **Units** (Metric / Imperial — editable; display-only, DB stays metric), Google account,
