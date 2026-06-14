@@ -17,6 +17,7 @@ export type Database = {
       activity: {
         Row: {
           created_at: string
+          default_duration_min: number
           default_effort: string
           deleted_at: string | null
           description: string | null
@@ -30,6 +31,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          default_duration_min?: number
           default_effort: string
           deleted_at?: string | null
           description?: string | null
@@ -43,6 +45,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          default_duration_min?: number
           default_effort?: string
           deleted_at?: string | null
           description?: string | null

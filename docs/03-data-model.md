@@ -45,6 +45,7 @@ Nutrient sets are stored as JSONB maps (`nutrient_key → amount`), validated ag
 - `description` TEXT NULL
 - `template` TEXT — 'duration' | 'strength'
 - `default_effort` TEXT — 'light' | 'moderate' | 'vigorous'; applies to both templates
+- `default_duration_min` NUMERIC NOT NULL DEFAULT 30 — default session length; prefills the Activity Log's Duration field
 - `met_by_effort` JSONB — { "light": n, "moderate": n, "vigorous": n }; at least one key required. Resolved MET for a session = met_by_effort[session_effort]. Single-intensity activities may have just one key; the default_effort must be a key present in this map.
 - `icon` TEXT NULL — Tabler icon component name (e.g. 'IconKarate', 'IconBarbell').
   Resolved at render time via `ACTIVITY_ICONS[icon]` in `src/constants/activity-icons.ts`

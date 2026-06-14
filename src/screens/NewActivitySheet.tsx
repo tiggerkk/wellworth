@@ -7,6 +7,7 @@ import { SegmentedTabs } from '../components/SegmentedTabs'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { createActivity, getActivity, updateActivity } from '../data/activity'
+import { draftAmount } from '../lib/quantity'
 import { bumpDiary } from '../lib/diary-refresh'
 import { EFFORT_LEVELS, type Effort } from '../constants/effort-levels'
 import { ACTIVITY_ICONS, resolveActivityIcon } from '../constants/activity-icons'
@@ -16,6 +17,7 @@ interface ActivityInitial {
   description: string
   template: string
   defaultEffort: Effort
+  defaultDuration: string
   met: Record<string, string>
   icon: string | null
 }
@@ -25,6 +27,7 @@ const BLANK: ActivityInitial = {
   description: '',
   template: 'duration',
   defaultEffort: 'moderate',
+  defaultDuration: '30',
   met: {},
   icon: null,
 }
@@ -45,6 +48,7 @@ export function NewActivitySheet() {
       description: a.description ?? '',
       template: a.template,
       defaultEffort: a.default_effort as Effort,
+      defaultDuration: String(a.default_duration_min),
       met,
       icon: a.icon,
     }
@@ -77,6 +81,7 @@ function ActivityForm({
   const [description, setDescription] = useState(initial.description)
   const [template, setTemplate] = useState(initial.template)
   const [defaultEffort, setDefaultEffort] = useState<Effort>(initial.defaultEffort)
+  const [defaultDuration, setDefaultDuration] = useState(initial.defaultDuration)
   const [met, setMet] = useState<Record<string, string>>(initial.met)
   const [icon, setIcon] = useState<string | null>(initial.icon)
   const [saving, setSaving] = useState(false)
@@ -100,6 +105,7 @@ function ActivityForm({
         description: description.trim() || null,
         template,
         default_effort: defaultEffort,
+        default_duration_min: draftAmount(defaultDuration, 30),
         met_by_effort: metByEffort,
         icon,
       }
@@ -153,6 +159,22 @@ function ActivityForm({
             ]}
           />
         </div>
+
+        <label className="text-xs text-text-secondary">
+          Default Duration (minutes)
+          <input
+            type="number"
+            min={0}
+            step="any"
+            value={defaultDuration}
+            onFocus={(e) => e.target.select()}
+            onChange={(e) => setDefaultDuration(e.target.value)}
+            onBlur={(e) => {
+              if (e.target.value.trim() === '') setDefaultDuration('30')
+            }}
+            className="mt-1 w-full rounded-input bg-input px-3 py-2 text-[15px] text-text-primary focus:outline-none"
+          />
+        </label>
 
         {/* MET by effort + default effort selector */}
         <div>

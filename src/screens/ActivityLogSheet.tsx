@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
 import { IconX, IconPlus } from '@tabler/icons-react'
 import { Sheet } from '../components/Sheet'
@@ -11,6 +11,7 @@ import { getActivity } from '../data/activity'
 import { createEntry } from '../data/diary-entry'
 import { createSets } from '../data/strength-set'
 import { activityEnergyKcal, resolveMet } from '../lib/met'
+import { draftAmount } from '../lib/quantity'
 import { bumpDiary } from '../lib/diary-refresh'
 import { todayLocal } from '../lib/date'
 import type { Effort } from '../constants/effort-levels'
@@ -38,11 +39,20 @@ export function ActivityLogSheet() {
   const availableEfforts = Object.keys(metMap) as Effort[]
 
   const [effort, setEffort] = useState<Effort | null>(null)
-  const [minutes, setMinutes] = useState(30)
+  // Editable draft (string so it can be emptied on focus); resolves to the activity's default.
+  const [minutes, setMinutes] = useState('')
   const [exercises, setExercises] = useState<ExerciseDraft[]>([
     { name: '', sets: [{ reps: 10, weight: 0 }] },
   ])
   const [saving, setSaving] = useState(false)
+
+  const activityDefaultDuration = activity?.default_duration_min ?? 30
+  // Prefill the Duration field from the activity's default once it loads.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (activity) setMinutes(String(activity.default_duration_min))
+  }, [activity])
+  const minutesValue = draftAmount(minutes, activityDefaultDuration)
 
   // Effort: duration is user-selectable (default to the activity's); strength uses the default.
   const sessionEffort: Effort =
@@ -51,7 +61,7 @@ export function ActivityLogSheet() {
       : (effort ?? (activity?.default_effort as Effort) ?? 'moderate')
 
   const met = resolveMet(metMap, sessionEffort) ?? 0
-  const energy = activityEnergyKcal({ met, weightKg, minutes })
+  const energy = activityEnergyKcal({ met, weightKg, minutes: minutesValue })
 
   function addSet(exIdx: number) {
     setExercises((prev) =>
@@ -88,7 +98,7 @@ export function ActivityLogSheet() {
         group_name: 'activities',
         kind: 'activity',
         activity_id: activity.id,
-        duration_min: minutes,
+        duration_min: minutesValue,
         effort: sessionEffort,
         energy_kcal: -Math.round(energy), // activities are negative
         label: activity.name,
@@ -151,8 +161,14 @@ export function ActivityLogSheet() {
               <input
                 type="number"
                 min={0}
+                step="any"
                 value={minutes}
-                onChange={(e) => setMinutes(Number(e.target.value) || 0)}
+                onFocus={(e) => e.target.select()}
+                onChange={(e) => setMinutes(e.target.value)}
+                onBlur={(e) => {
+                  if (e.target.value.trim() === '')
+                    setMinutes(String(activityDefaultDuration))
+                }}
                 className="mt-1 w-full rounded-input bg-input px-3 py-2 text-[15px] text-text-primary focus:outline-none"
               />
             </label>
@@ -165,7 +181,7 @@ export function ActivityLogSheet() {
                 </span>
               </div>
               <p className="mt-1 text-xs text-text-secondary">
-                {met} MET × {weightKg} kg × {(minutes / 60).toFixed(2)} h
+                {met} MET × {weightKg} kg × {(minutesValue / 60).toFixed(2)} h
               </p>
             </div>
 

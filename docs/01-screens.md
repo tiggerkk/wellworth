@@ -122,6 +122,7 @@ Two sub-tabs:
 
 - Activity Name; optional Description.
 - **Logging Template**: Duration (minutes + effort) or Strength (sets/reps/weight + duration).
+- **Default Duration** (minutes): prefills the Duration field when logging this activity (default 30).
 - **Default Effort**: Light (<3 MET) / Moderate (3–5.9) / Vigorous (≥6) — applies to both Duration and Strength templates; overridable per session when logging.
 - **MET by effort**: for each effort level, an editable MET value; select which level is the default
   and fill at least its value (single-intensity activities need only one). Drives the calorie estimate

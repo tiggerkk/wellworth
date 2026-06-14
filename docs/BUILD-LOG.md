@@ -60,7 +60,8 @@ Goal: Google sign-in, session-gated 4-tab shell, first-login owner data.
 Built: `src/lib/supabase.ts` (PKCE client), `AuthProvider`/`RequireAuth` (splash, no login flash),
 React Router v7 `createBrowserRouter`, `BottomNav`/`AppShell`/`Splash`/`PrimaryButton`, `Login` +
 stub tab screens, `useEnsureProfile` (idempotent first-login seed), `vercel.json` SPA rewrite.
-Migration `20260613120200_grant_api_roles.sql` was added here — see **Failure F1**.
+Migration `20260613120200_grant_api_roles.sql` was added here — see **Failure F1**. (Later merged
+into `20260613120000_init_schema.sql` during the migration consolidation; the standalone file is gone.)
 Rationale: client-side seeding (not a DB trigger) keeps the owner-seed logic in readable TS and needs
 no `auth`-schema grants; PKCE is the right SPA flow.
 
@@ -141,9 +142,10 @@ Deploy is the only remaining step (runbook in the plan).
 - **F1 — RLS without table GRANTs → `42501 permission denied` (M3).** Tables created by raw-SQL
   migrations do **not** inherit Supabase's default grants to the `anon`/`authenticated` API roles, so
   enabling RLS alone left the authenticated role with no table access; first login failed on the
-  `profile` select. Fix: `20260613120200_grant_api_roles.sql` grants privileges + sets default
-  privileges. **Every migration must grant to the API roles** — now specified in `03-data-model.md`
-  and `CLAUDE.md`. Don't "fix" a future permission error by loosening RLS.
+  `profile` select. Fix: the API-role grants (originally `20260613120200_grant_api_roles.sql`, since
+  merged into `20260613120000_init_schema.sql`) grant privileges + set default privileges. **Every
+  migration must grant to the API roles** — now specified in `03-data-model.md` and `CLAUDE.md`. Don't
+  "fix" a future permission error by loosening RLS.
 - **F2 — USDA `GET /foods/search` 400s on `dataType` (M5).** A GET search whose `dataType` includes
   `"Survey (FNDDS)"` returns HTTP 400 (the space/parens), which also yielded stale `fdcId`s that then
   404'd on the detail endpoint. Fix: **search via POST** with a JSON body. Don't switch food search

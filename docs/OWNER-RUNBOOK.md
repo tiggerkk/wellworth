@@ -145,8 +145,8 @@ This creates the tables, security rules, and the nutrient reference data in your
    > supabase db push --dry-run
    > supabase db push
    ```
-   This applies three migration files (`…_init_schema.sql`, `…_seed_nutrient.sql`,
-   `…_grant_api_roles.sql`).
+   This applies two migration files: `…_init_schema.sql` (schema + RLS + API-role grants) and
+   `…_seed_nutrient.sql` (the nutrient reference rows).
 
 - ✅ Check (in the Supabase dashboard):
   - **Table Editor** shows seven tables: `nutrient`, `profile`, `food`, `serving`, `activity`,

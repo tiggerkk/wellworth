@@ -9,6 +9,8 @@
 --   * updated_at is auto-maintained by the moddatetime extension trigger.
 --   * JSONB nutrient-map validation (keys must exist in nutrient) is enforced in the
 --     data-access layer, not by a DB constraint.
+--   * API-role GRANTs (anon/authenticated) are at the bottom of this file — required
+--     alongside RLS, since raw-SQL-migration tables don't inherit Supabase's default grants.
 
 create extension if not exists moddatetime schema extensions;
 
@@ -159,6 +161,7 @@ create table public.activity (
   description    text,
   template       text not null check (template in ('duration', 'strength')),
   default_effort text not null check (default_effort in ('light', 'moderate', 'vigorous')),
+  default_duration_min numeric not null default 30, -- prefills the Activity Log's Duration
   met_by_effort  jsonb not null default '{}'::jsonb, -- { "light": n, "moderate": n, "vigorous": n }
   icon           text, -- Tabler icon component name; null falls back to IconRun
   deleted_at     timestamptz, -- soft delete; null = active
@@ -273,3 +276,21 @@ create policy "delete strength_set via owned entry" on public.strength_set
     select 1 from public.diary_entry e
     where e.id = strength_set.entry_id and e.user_id = (select auth.uid())
   ));
+
+-- =====================================================================================
+-- API role grants. RLS (above) restricts which ROWS each user sees; these GRANTs give the
+-- Supabase API roles table-level access in the first place — both are required. Tables
+-- created via raw-SQL migrations do NOT inherit the default grants dashboard-created tables
+-- get, which otherwise causes "42501 permission denied". Where a table has no policy for a
+-- command/role (e.g. nutrient has only SELECT-to-authenticated), RLS still denies it.
+-- =====================================================================================
+grant usage on schema public to anon, authenticated;
+
+grant select, insert, update, delete on all tables in schema public to anon, authenticated;
+grant usage, select on all sequences in schema public to anon, authenticated;
+
+-- Apply the same defaults to tables/sequences created by future migrations (this role).
+alter default privileges in schema public
+  grant select, insert, update, delete on tables to anon, authenticated;
+alter default privileges in schema public
+  grant usage, select on sequences to anon, authenticated;

@@ -20,6 +20,7 @@ import {
   scaleNutrients,
 } from '../lib/nutrients'
 import { computeTargets } from '../lib/targets'
+import { draftAmount } from '../lib/quantity'
 import { bumpDiary } from '../lib/diary-refresh'
 import { todayLocal } from '../lib/date'
 
@@ -111,7 +112,8 @@ export function FoodDetailSheet() {
 
   const { data: food, loading, error } = useAsync(loadFn)
 
-  const [amount, setAmount] = useState(1)
+  // Editable draft (string so it can be emptied on focus); resolves to 1 when left blank.
+  const [amount, setAmount] = useState('1')
   const [servingIndex, setServingIndex] = useState(0)
   // null = follow the loaded value; once toggled, this override drives the heart both ways.
   const [favOverride, setFavOverride] = useState<boolean | null>(null)
@@ -123,7 +125,7 @@ export function FoodDetailSheet() {
     const basis = food.nutrientBasis === 'per_serving' ? serving.grams : 100
     return deriveNetCarbs(
       scaleNutrients(food.nutrients, {
-        amount,
+        amount: draftAmount(amount, 1),
         servingGrams: serving.grams,
         basisGrams: basis,
       }),
@@ -163,7 +165,7 @@ export function FoodDetailSheet() {
         group_name: group,
         kind: 'food',
         food_id: foodId,
-        amount,
+        amount: draftAmount(amount, 1),
         energy_kcal: scaled.energy ?? 0,
         label: food.name,
         nutrients: scaled,
@@ -224,7 +226,11 @@ export function FoodDetailSheet() {
                   min={0}
                   step="any"
                   value={amount}
-                  onChange={(e) => setAmount(Number(e.target.value) || 0)}
+                  onFocus={(e) => e.target.select()}
+                  onChange={(e) => setAmount(e.target.value)}
+                  onBlur={(e) => {
+                    if (e.target.value.trim() === '') setAmount('1')
+                  }}
                   className="mt-1 w-full rounded-input bg-input px-3 py-2 text-[15px] text-text-primary focus:outline-none"
                 />
               </label>

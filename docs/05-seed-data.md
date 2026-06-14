@@ -8,19 +8,19 @@
 - highlighted_nutrients (8): `protein, fiber, vitamin_d, calcium, iron, magnesium, folate, potassium`
 - visible_nutrients: all keys below marked **Visible = yes**
 
-## Activity library (seed these nine — at first login, alongside the profile)
+## Activity library (seed these — at first login, alongside the profile)
 
-| Name               | Template | Default effort | MET (editable)               | Description                               | Icon            |
-| ------------------ | -------- | -------------- | ---------------------------- | ----------------------------------------- | --------------- |
-| Body Combat        | duration | vigorous       | 7.0                          | High-intensity martial-arts cardio        | IconKarate      |
-| 八段锦 (Baduanjin) | duration | light          | 3.0                          | Gentle qigong                             | IconStretching  |
-| Stretching         | duration | light          | 2.3                          | Shoulder/Neck stretches                   | IconStretching2 |
-| Yoga               | duration | light          | 2.5                          | General                                   | IconYoga        |
-| Weight Training    | strength | moderate       | {"light":3.5,"moderate":3.5} | 8–15 reps, standard rest                  | IconBarbell     |
-| Powerlifting       | strength | vigorous       | {"vigorous":6.0}             | Heavy sets                                | IconBarbell     |
-| Circuit Training   | strength | vigorous       | {"vigorous":8.0}             | Fast-paced, minimal rest, high heart rate | IconBarbell     |
-| Swimming           | duration | moderate       | 5.9                          | Leisurely                                 | IconSwimming    |
-| Walking            | duration | moderate       | 3.5                          | ~3 mph                                    | IconWalk        |
+| Name                   | Template | Default duration | Default effort | MET (editable)               | Description                               | Icon            |
+| ---------------------- | -------- | ---------------- | -------------- | ---------------------------- | ----------------------------------------- | --------------- |
+| Body Combat            | duration | 60               | vigorous       | 7.0                          | High-intensity martial-arts cardio        | IconKarate      |
+| 八段锦 (Baduanjin)     | duration | 10               | light          | 3.0                          | Gentle qigong                             | IconStretching  |
+| Stretching             | duration | 10               | light          | 2.3                          | Shoulder/Neck stretches                   | IconStretching2 |
+| Yoga                   | duration | 15               | light          | 2.5                          | General                                   | IconYoga        |
+| Weights - General      | strength | 20               | moderate       | {"light":3.5,"moderate":3.5} | 8–15 reps, standard rest                  | IconBarbell     |
+| Weights - Powerlifting | strength | 20               | vigorous       | {"vigorous":6.0}             | Heavy sets                                | IconBarbell     |
+| Weights - Circuit      | strength | 20               | vigorous       | {"vigorous":8.0}             | Fast-paced, minimal rest, high heart rate | IconBarbell     |
+| Swimming               | duration | 30               | moderate       | 5.9                          | Leisurely                                 | IconSwimming    |
+| Walking                | duration | 30               | moderate       | 3.5                          | ~3 mph                                    | IconWalk        |
 
 MET source: Compendium of Physical Activities. Intensity bands: light <3.0, moderate 3.0–5.9, vigorous ≥6.0 METs.
 For strength activities, met_by_effort maps each effort level to its Compendium value. Sessions resolve the MET from the map using the session's chosen effort level.
