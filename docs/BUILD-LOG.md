@@ -22,10 +22,9 @@ Phase 2 (Net Worth) is not built.
 - **Env (`.env`, gitignored; `.env.example` documents):** `VITE_SUPABASE_URL`,
   `VITE_SUPABASE_ANON_KEY`, `VITE_USDA_API_KEY`. All build-time `VITE_` vars.
 - **Gates:** husky `.husky/pre-commit` → lint-staged + `typecheck` + `test`; GitHub Actions
-  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 45 Vitest tests (pure helpers).
-- **Deploy status:** NOT yet deployed. Local git only (`master`, no remote). GitHub→Vercel runbook is
-  in the session plan; deploy steps must also add the production URL to Supabase redirect URLs +
-  Google JS origins.
+  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 64 Vitest tests (pure helpers).
+- **Deploy status:** Deployed. GitHub `main` → Vercel auto-deploy; the production URL is in the
+  Supabase redirect URLs + Google JS origins (see `OWNER-RUNBOOK.md`). Installed + tested on iPhone (PWA).
 - Conventions (DB-access-via-`src/data`, metric storage, generated `database.ts` contract, etc.) live
   in `CLAUDE.md` and `02-tech-spec.md` — not repeated here.
 
@@ -127,13 +126,45 @@ Built: `Settings.tsx`, `HighlightedNutrientsSheet` (cap 8), `VisibleNutrientsShe
   Rationale: auto-save on change (per the spec's button convention); units are display-only via
   `src/lib/units.ts`.
 
-### M9 — PWA polish (`c9a2c2c`); deploy pending
+### M9 — PWA polish (`c9a2c2c`)
 
 Goal: real icons, smaller bundle, verified PWA, then deploy.
 Built: branded coral-ring icons (`public/`, incl. a padded maskable) + manifest update; **barcode
 scanner code-split** — `AddFoodSheet` lazy-loads `BarcodeScanner`, moving `@zxing` into its own
 ~470 kB chunk (initial JS ~1 MB → ~567 kB). `registerType: 'autoUpdate'` (silent SW update).
-Deploy is the only remaining step (runbook in the plan).
+Subsequently deployed to Vercel + installed on iPhone (see post-launch work below).
+
+### Post-launch polish (session, June 2026)
+
+A batch of usability + data fixes after the first deploy. Behavior is in the specs; the notable
+engineering decisions:
+
+- **Schema:** added `activity.default_duration_min` (prefills the Activity Log duration). Then
+  **consolidated migrations** — folded the API-role grants (old F1 migration) _and_ the new column
+  into `20260613120000_init_schema.sql`, so the tree is just `init_schema` + `seed_nutrient`. The live
+  DB was reconciled with `supabase db reset --linked` (documented in `OWNER-RUNBOOK.md` Part M). Editing
+  already-applied migrations is only OK because this is a solo pre-/early-prod DB that can be reset.
+- **URL-as-state pattern:** the viewed Diary **day**, the Add Food **tab/search**, and the Library
+  **tab** now live in `useSearchParams` (written with `{replace:true}`), not component state — so they
+  survive the background-location remount when a sheet opens over a tab, and `navigate(-1)` restores
+  them. Reach for this whenever a tab's transient UI must persist across an overlay sheet.
+- **Layout / iOS:** app shell switched `min-h-svh` → `h-dvh` + `pt-[env(safe-area-inset-top)]` (the
+  `black-translucent` status bar was overlapping the header, and `100svh` fell short of the screen);
+  per-tab sticky top panes; full sheets reserve the top inset. `dev` script is now `vite --host` for
+  LAN/iPhone testing.
+- **Logging inputs:** Amount/Duration are **string drafts** with select-on-focus (kills the
+  "type onto the leading 0" bug from coercing empty→0); shared `src/lib/quantity.ts#draftAmount`.
+  Effort picker shows all levels but **disables** ones with no MET; New Activity requires ≥1 MET (and
+  the default effort must have one); effort bands relabeled (Light ≤3 / Moderate 3.1–5.9 / Vigorous ≥6).
+- **Edit logged entries:** Diary rows are tappable → reuse **Food Detail / Activity Log** in edit mode
+  via an `entry=<id>` query param; footer becomes **RESET + SAVE**. New `SecondaryButton`; RESET/SAVE
+  are **dirty-gated** (compare current vs. captured initial) across the edit + create forms.
+- **Bulk import:** foods/supplements CSV import — `src/lib/csv.ts` (small RFC-4180 parser),
+  `src/lib/food-import.ts` (validate + map to records), `data/food.importCustomFoods`, and
+  `ImportFoodsSheet` (Library → **Import CSV**). Template + guide in `templates/`.
+- **Seed:** activities carry per-effort METs + default durations; added Running (Jog/Fast).
+- **Misc:** Settings "Visibility" → "Display"; Toggle knob overflow fixed (flex layout, not
+  absolute+translate); FoodDetail favorite-heart toggle fixed (a nullable override, not `a || b`).
 
 ---
 
@@ -157,12 +188,18 @@ Deploy is the only remaining step (runbook in the plan).
   array was rejected by the `react-hooks` v7 ESLint rule ("dependency list must be an array literal").
   The shipped `useAsync(fn)` takes a single stable (caller-`useCallback`'d) `fn` and exposes
   `refetch`. Don't reintroduce a `deps` parameter; memoize `fn` at the call site instead.
+- **F5 — `npx tsc --noEmit` type-checks nothing.** The root `tsconfig.json` is references-only
+  (`files: []` + project references), so a bare `npx tsc --noEmit` exits 0 without checking the app.
+  Verify types with **`npm run typecheck`** (`tsc --noEmit -p tsconfig.app.json`) or `tsc -b`.
 
 ---
 
 ## Known limitations / deferred (not spec issues — future work)
 
-- Not yet deployed; barcode scanning unverified on a real phone (needs HTTPS).
+- Barcode scanning needs an HTTPS origin: works on the deployed PWA (or an HTTPS tunnel), not over a
+  plain `http://<LAN-ip>` address.
+- Editing a logged **USDA / Open Food Facts food** entry can't restore a non-100 g serving — those
+  cached foods have no persisted `serving` rows (see `PARKED.md` → serving fidelity on edit).
 - App icons are programmatically-generated placeholder marks (coral ring), not designed artwork.
 - Initial JS bundle ~567 kB (supabase-js + react-router + tabler); acceptable, not further optimized.
 - DRI data covers only adult female 51–70; adding other bands is pure data in `src/lib/dri.ts` (the

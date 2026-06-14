@@ -47,7 +47,7 @@ Supabase (Postgres + RLS). Components hold no SQL and never import the Supabase 
   `detectSessionInUrl` exchanges the `?code=` on load.
 - On first successful login, a client-side hook (`useEnsureProfile`) seeds the owner's data: it
   creates the `profile` row (defaults from `05-seed-data.md`) **and** seeds the owner's activity
-  library (the nine activities in `05-seed-data.md`) if the user has none. Both are idempotent
+  library (the activities in `05-seed-data.md`) if the user has none. Both are idempotent
   (insert-if-missing), guarded against React StrictMode double-invoke; not DB triggers. The user then
   edits in Settings.
 

@@ -97,10 +97,29 @@ Status legend: **Phase 2** (planned, separate phase) · **Deferred** (Phase-1-ad
 **What:** Showing food amounts / the per-100 g basis in ounces in Imperial mode.
 **Why:** Only **Settings** height/weight are imperialized (in/lb); food amounts and nutrient values stay metric/absolute. This was a deliberate simplification (now reflected in `02-tech-spec.md`).
 
+### Diary food-entry serving fidelity on edit · Deferred
+
+**What:** Editing a logged **food** entry restores the exact serving only for custom foods. USDA /
+Open Food Facts entries cache a `food` row with no `serving` rows (synthetic servings aren't
+persisted), so on edit only a 100 g serving is offered and a non-100 g original can't be reproduced —
+Amount is prefilled but recomputed nutrients may differ.
+**Why deferred:** Custom foods (the common case) round-trip correctly; the gap only affects edited
+external-source entries.
+**Decided:** A faithful fix stores the per-unit grams (or `serving_id`) on `diary_entry` at log time
+and restores it on edit — a small additive schema change, not a rebuild.
+
+### Activities CSV bulk import · Deferred
+
+**What:** A CSV import for the activity library, mirroring the foods/supplements importer.
+**Why deferred:** Foods/supplements import was built (`templates/custom-foods-template.csv`, Library →
+**Import CSV**); an activities import was explicitly declined for now.
+**Decided:** Mirror the foods path — an activities template (name, template, default_effort,
+default_duration_min, met_by_effort, icon) parsed in-browser and inserted via the data layer.
+
 ### Automated tests beyond pure helpers · Deferred
 
 **What:** Component/integration tests; tests for `src/data/*` repositories.
-**Why deferred:** Phase 1 unit-tests the pure calc/mapping helpers (the spec's named targets, 45 tests). Repos are thin wrappers verified manually + by `tsc` against the generated schema.
+**Why deferred:** The suite unit-tests the pure calc/mapping helpers (the spec's named targets, plus the CSV-parse, food-import, and quantity helpers — 64 tests). Repos are thin wrappers verified manually + by `tsc` against the generated schema.
 
 ---
 
@@ -113,7 +132,7 @@ Status legend: **Phase 2** (planned, separate phase) · **Deferred** (Phase-1-ad
 **Decided / constraints (so a future session doesn't redo this):**
 
 - The schema is already isolated per user (`user_id` + RLS on every table), so additional members work with **no schema change** — they sign in and get their own `profile`/data.
-- **First-run seeding is currently owner-specific and must change for real multi-user.** Today `useEnsureProfile` seeds the _owner's_ body metrics (`src/constants/profile-defaults.ts`) and the owner's nine activities (`src/constants/seed-activities.ts`) to _any_ new user. For non-owner users, seed only **neutral** defaults (units, activity factor, the default visible/highlighted sets) and route them through an **onboarding/Settings step** to enter their own birthday/sex/height/weight — never inherit the owner's metrics. (This is noted in those files' header comments.)
+- **First-run seeding is currently owner-specific and must change for real multi-user.** Today `useEnsureProfile` seeds the _owner's_ body metrics (`src/constants/profile-defaults.ts`) and the owner's starter activities (`src/constants/seed-activities.ts`) to _any_ new user. For non-owner users, seed only **neutral** defaults (units, activity factor, the default visible/highlighted sets) and route them through an **onboarding/Settings step** to enter their own birthday/sex/height/weight — never inherit the owner's metrics. (This is noted in those files' header comments.)
 - **DRI bands:** `src/lib/dri.ts` only populates **adult female 51–70** and throws otherwise. Other users need their sex/age bands added (pure data) before targets compute.
 - **Shared household custom foods** would be an **additive** change: a nullable `household_id` + a shared-visibility RLS policy (per `03-data-model.md`), not a rebuild.
 

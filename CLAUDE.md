@@ -11,6 +11,25 @@ warnings — not a source of truth for behavior.)
 **Before changing existing code, read `docs/BUILD-LOG.md`** to understand how Phase 1 was built and
 which past approaches failed (and see `docs/PARKED.md` for what's intentionally deferred).
 
+## Keep the docs in sync (every change — without being asked)
+
+Documentation updates are part of "done," not a follow-up. Whenever a change affects behavior, the
+schema, seed data, workflow, or project layout, update the relevant doc(s) **in the same task** — do
+not wait to be reminded:
+
+- **Spec docs** (`/docs/00-PRD.md … 05-seed-data.md`) — the behavior/data source of truth. Update when
+  a screen's behavior, the data model, seed data, or the design system changes.
+- **`docs/BUILD-LOG.md`** — append the rationale for notable changes (schema changes, migrations, new
+  patterns) and add any new "don't repeat this" lesson to its Failures list. Keep the Snapshot facts
+  current (test count, deploy status).
+- **`docs/PARKED.md`** — remove an item when it's built; add one when something is deliberately
+  deferred or a limitation is discovered.
+- **`docs/OWNER-RUNBOOK.md`** — update when setup, scripts, env vars, migrations, or deploy/reset steps
+  change (it must still stand up the app from a fresh clone).
+- **`README.md`** — update if the top-level overview or file/doc layout changes.
+
+Then run `npm run format` so the docs pass Prettier.
+
 ## Scope discipline
 
 - Build **Wellness first**. **Do not build Net Worth yet** — it is Phase 2 (see PRD).
@@ -64,5 +83,7 @@ which past approaches failed (and see `docs/PARKED.md` for what's intentionally 
 
 ## Enforcement (these run automatically; don't rely on memory alone)
 
-- Prettier (format), ESLint (lint, no unused, no `any`), `tsc --noEmit` (types), Vitest (tests)
-  run via pre-commit hook and/or CI. Code must pass all four before it is considered done.
+- Prettier (format), ESLint (lint, no unused, no `any`), type-check via **`npm run typecheck`**
+  (`tsc -p tsconfig.app.json`; a bare `tsc --noEmit` checks nothing — the root `tsconfig.json` is
+  references-only), and Vitest (tests). All four run via the pre-commit hook and/or CI and are wrapped
+  by `npm run check` — code must pass them before it is considered done.

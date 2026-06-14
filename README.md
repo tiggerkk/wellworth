@@ -12,8 +12,10 @@ Hand-off package for building **WellWorth** (a wellness + net-worth tracker PWA)
   - `02-tech-spec.md` — stack, architecture, folder layout, calculations, env vars, workflows.
   - `03-data-model.md` — Postgres tables, RLS, relationships, multi-user readiness.
   - `04-design-system.md` — exact dark-theme tokens and components from the approved wireframes.
-  - `05-seed-data.md` — full nutrient list (with visibility flags), the nine seeded activities, the owner profile.
+  - `05-seed-data.md` — full nutrient list (with visibility flags), the seeded activity library, the owner profile.
   - `wireframes/` — drop screen screenshots here (optional).
+- **templates/** — `custom-foods-template.csv` + an import guide for bulk-adding custom foods/supplements
+  (used by Library → **Import CSV**).
 
 ## Project documentation
 

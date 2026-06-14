@@ -228,7 +228,7 @@ phone over Wi-Fi; see "Test on your iPhone over Wi-Fi" below.)
   3. In Supabase **SQL Editor**, run `select * from profile;` — there is **one row** (your profile,
      pre-filled: birthday 1974-09-06, female, 171, 56, protein 90).
   4. The bottom tabs (Diary / Dashboard / Library / Settings) switch screens. In **Add Activity** (the
-     Activities group's `+`) you see nine seeded activities.
+     Activities group's `+`) you see your seeded activities.
   5. In **Add Food**, search e.g. "egg" → results appear (this confirms the USDA key works).
 - To stop the dev server: press `Ctrl + C` in the terminal.
 
