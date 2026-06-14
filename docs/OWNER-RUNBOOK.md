@@ -354,6 +354,65 @@ and run the two commands again. Once the commit succeeds:
 
 ---
 
+## Part M — Resetting & re-seeding data
+
+Two common maintenance jobs. The first wipes everything; the second only refreshes the starter
+activities. Both work because the app re-seeds the owner's **profile** and **activity library** on the
+next sign-in (the seed is idempotent — it only runs when that data is missing). The **nutrient**
+reference table is seeded by a migration, not on login.
+
+> ⚠️ These act on your **live** Supabase project. There is no undo. Make sure you mean it.
+
+### M1 — Completely reset the database (wipe + rebuild from migrations)
+
+Use this to get a pristine database matching the migration files (e.g. after consolidating
+migrations, or to clear all test data). It **drops everything and replays the migrations**, so all
+foods, activities, and diary entries are erased.
+
+From the project folder (the database password must be available — see Part F):
+
+```
+> supabase db reset --linked
+```
+
+Confirm at the prompt. The CLI re-runs `…_init_schema.sql` and `…_seed_nutrient.sql` against the
+remote, leaving a clean schema + the 80 nutrient rows and an empty migration-ledger that matches the
+files.
+
+- ✅ Check:
+  1. `> supabase migration list` shows the same two migrations locally and remotely.
+  2. Reload the app and sign in → you land on the Diary; your **profile** and the **activity library**
+     have been re-seeded; SQL `select count(*) from nutrient;` returns **80**.
+
+> If sign-in itself was wiped, just sign in again with Google — a fresh profile + activities are
+> created on first login.
+
+### M2 — Re-seed activities after changing `seed-activities.ts`
+
+The starter activities live in `src/constants/seed-activities.ts` and are seeded **once**, only when
+you have **zero** activities (`ensureOwnerActivities` is a no-op otherwise). So after you edit that
+file (new activities, changed METs/durations), you must clear the existing rows, then sign in again —
+no full reset needed, and your foods and diary history are kept.
+
+1. In **Supabase → SQL Editor**, run:
+   ```sql
+   delete from public.activity;
+   ```
+   (Single-user database, so this clears them all. Diary entries that referenced an activity keep
+   their saved snapshot — name, energy — and their `activity_id` simply becomes null.)
+2. **Reload the app** (or sign out and back in). `ensureOwnerActivities` re-seeds the updated set.
+   The seed is baked into the app bundle, so make sure the app you reload is **running the new code** —
+   for the installed iPhone app, `git push` to deploy first (Part J/K); for local testing, the
+   `npm run dev` server already has it.
+
+- ✅ Check: Library → **Activities** shows the new list; opening one in **Add Activity** prefills the
+  duration/effort you set in the seed file.
+
+> If you'd also added custom activities of your own, the delete removes those too — re-create them
+> afterwards. To keep them, delete only the seeded rows by name instead of the whole table.
+
+---
+
 ## Quick reference
 
 | Value                     | Where it comes from            | Where it goes                                   |
@@ -374,6 +433,7 @@ and run the two commands again. Once the commit succeeds:
 > npm run check        # format + lint + type-check + tests (must pass before committing)
 > npm run build        # production build
 > supabase db push     # apply new database migrations
+> supabase db reset --linked   # ⚠️ wipe + rebuild the DB from migrations (Part M1)
 > npm run gen:types    # regenerate src/types/database.ts after a schema change
 > git add -A && git commit -m "what changed" && git push   # save + push changes (auto-deploys on Vercel)
 ```

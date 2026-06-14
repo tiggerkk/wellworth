@@ -3,13 +3,14 @@ import { useNavigate, useParams, useSearchParams } from 'react-router'
 import { IconX, IconPlus } from '@tabler/icons-react'
 import { Sheet } from '../components/Sheet'
 import { PrimaryButton } from '../components/PrimaryButton'
+import { SecondaryButton } from '../components/SecondaryButton'
 import { EffortPicker } from '../components/EffortPicker'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useProfile } from '../hooks/useProfile'
 import { getActivity } from '../data/activity'
-import { createEntry } from '../data/diary-entry'
-import { createSets } from '../data/strength-set'
+import { createEntry, getEntry, updateEntry } from '../data/diary-entry'
+import { createSets, listSetsByEntry, replaceSets } from '../data/strength-set'
 import { activityEnergyKcal, resolveMet } from '../lib/met'
 import { draftAmount } from '../lib/quantity'
 import { bumpDiary } from '../lib/diary-refresh'
@@ -21,6 +22,26 @@ interface ExerciseDraft {
   sets: { reps: number; weight: number }[]
 }
 
+const blankExercises = (): ExerciseDraft[] => [
+  { name: '', sets: [{ reps: 10, weight: 0 }] },
+]
+
+/** Rebuild the exercise editor's drafts from persisted strength_set rows (for editing). */
+function groupSets(
+  sets: { exercise: string; reps: number | null; weight: number | null }[],
+): ExerciseDraft[] {
+  const out: ExerciseDraft[] = []
+  for (const s of sets) {
+    let ex = out.find((e) => e.name === s.exercise)
+    if (!ex) {
+      ex = { name: s.exercise, sets: [] }
+      out.push(ex)
+    }
+    ex.sets.push({ reps: s.reps ?? 0, weight: Number(s.weight ?? 0) })
+  }
+  return out.length > 0 ? out : blankExercises()
+}
+
 export function ActivityLogSheet() {
   const navigate = useNavigate()
   const { session } = useAuth()
@@ -28,12 +49,26 @@ export function ActivityLogSheet() {
   const { activityId = '' } = useParams()
   const [params] = useSearchParams()
   const day = params.get('day') ?? todayLocal()
+  // When opened from a logged Diary row, `entry` is that diary_entry id → edit mode.
+  const entryId = params.get('entry')
+  const editing = entryId != null
 
   const { data: profile } = useProfile()
   const weightKg = profile?.weight_kg ?? 0
 
   const fn = useCallback(() => getActivity(activityId), [activityId])
   const { data: activity, loading, error } = useAsync(fn)
+
+  const entryFn = useCallback(
+    () => (entryId ? getEntry(entryId) : Promise.resolve(null)),
+    [entryId],
+  )
+  const { data: entry } = useAsync(entryFn)
+  const setsFn = useCallback(
+    () => (entryId ? listSetsByEntry(entryId) : Promise.resolve([])),
+    [entryId],
+  )
+  const { data: sets } = useAsync(setsFn)
 
   const metMap = (activity?.met_by_effort ?? {}) as Record<string, number>
   const availableEfforts = Object.keys(metMap) as Effort[]
@@ -47,12 +82,43 @@ export function ActivityLogSheet() {
   const [saving, setSaving] = useState(false)
 
   const activityDefaultDuration = activity?.default_duration_min ?? 30
-  // Prefill the Duration field from the activity's default once it loads.
+
+  // Initialize once: add mode → the activity's defaults; edit mode → the entry's saved values.
+  // Captured in `initial` to drive the dirty state + RESET.
+  const [initial, setInitial] = useState<{
+    minutes: string
+    effort: Effort | null
+    exercises: ExerciseDraft[]
+  } | null>(null)
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (activity) setMinutes(String(activity.default_duration_min))
-  }, [activity])
+    if (!activity || initial) return
+    if (editing && (!entry || !sets)) return
+    const init =
+      editing && entry
+        ? {
+            minutes: String(entry.duration_min ?? activity.default_duration_min),
+            effort: (entry.effort as Effort | null) ?? null,
+            exercises: groupSets(sets ?? []),
+          }
+        : {
+            minutes: String(activity.default_duration_min),
+            effort: null as Effort | null,
+            exercises: blankExercises(),
+          }
+    /* eslint-disable react-hooks/set-state-in-effect */
+    setMinutes(init.minutes)
+    setEffort(init.effort)
+    setExercises(init.exercises)
+    setInitial(init)
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, [activity, entry, sets, editing, initial])
+
   const minutesValue = draftAmount(minutes, activityDefaultDuration)
+  const dirty =
+    initial != null &&
+    JSON.stringify({ minutes, effort, exercises }) !== JSON.stringify(initial)
+  const primaryBusy = editing ? 'Saving…' : 'Adding…'
+  const primaryIdle = editing ? 'SAVE' : 'ADD TO DIARY'
 
   // Effort defaults to the activity's, but is fully editable per session (e.g. an easier day).
   const defaultEffort = (activity?.default_effort as Effort) ?? 'moderate'
@@ -88,34 +154,49 @@ export function ActivityLogSheet() {
     )
   }
 
-  function resetToDefaults() {
-    setEffort(null)
-    setMinutes(String(activityDefaultDuration))
-    setExercises([{ name: '', sets: [{ reps: 10, weight: 0 }] }])
+  function reset() {
+    if (!initial) return
+    setMinutes(initial.minutes)
+    setEffort(initial.effort)
+    setExercises(
+      initial.exercises.map((e) => ({ ...e, sets: e.sets.map((s) => ({ ...s })) })),
+    )
   }
 
-  async function addToDiary() {
+  async function submit() {
     if (!activity || !userId) return
     setSaving(true)
     try {
-      const entry = await createEntry({
-        user_id: userId,
-        day,
-        group_name: 'activities',
-        kind: 'activity',
-        activity_id: activity.id,
-        duration_min: minutesValue,
-        effort: sessionEffort,
-        energy_kcal: -Math.round(energy), // activities are negative
-        label: activity.name,
-        nutrients: {},
-      })
+      const energyKcal = -Math.round(energy) // activities are negative
+      let targetEntryId: string
+      if (editing && entryId) {
+        await updateEntry(entryId, {
+          duration_min: minutesValue,
+          effort: sessionEffort,
+          energy_kcal: energyKcal,
+        })
+        targetEntryId = entryId
+      } else {
+        const created = await createEntry({
+          user_id: userId,
+          day,
+          group_name: 'activities',
+          kind: 'activity',
+          activity_id: activity.id,
+          duration_min: minutesValue,
+          effort: sessionEffort,
+          energy_kcal: energyKcal,
+          label: activity.name,
+          nutrients: {},
+        })
+        targetEntryId = created.id
+      }
       if (activity.template === 'strength') {
         const rows = exercises
           .filter((ex) => ex.name.trim())
           .flatMap((ex) =>
             ex.sets.map((s, i) => ({
-              entry_id: entry.id,
+              entry_id: targetEntryId,
               exercise: ex.name.trim(),
               set_number: i + 1,
               reps: s.reps,
@@ -123,7 +204,9 @@ export function ActivityLogSheet() {
               weight_unit: 'kg',
             })),
           )
-        if (rows.length > 0) await createSets(rows)
+        // Edit replaces the whole set list (handles removals); add just inserts.
+        if (editing) await replaceSets(targetEntryId, rows)
+        else if (rows.length > 0) await createSets(rows)
       }
       bumpDiary()
       navigate(-1)
@@ -271,19 +354,15 @@ export function ActivityLogSheet() {
 
       {activity && (
         <div className="flex gap-3 border-t border-border p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
-          <button
-            onClick={resetToDefaults}
-            disabled={saving}
-            className="rounded-pill border border-border px-5 py-3 text-sm font-medium text-text-secondary disabled:opacity-50"
-          >
+          <SecondaryButton onClick={reset} disabled={!dirty || saving}>
             RESET
-          </button>
+          </SecondaryButton>
           <PrimaryButton
-            onClick={() => void addToDiary()}
-            disabled={saving}
+            onClick={() => void submit()}
+            disabled={saving || (editing && !dirty)}
             className="flex-1"
           >
-            {saving ? 'Adding…' : 'ADD TO DIARY'}
+            {saving ? primaryBusy : primaryIdle}
           </PrimaryButton>
         </div>
       )}

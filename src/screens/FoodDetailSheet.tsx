@@ -1,20 +1,22 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
 import { IconHeart, IconHeartFilled, IconX } from '@tabler/icons-react'
 import { Sheet } from '../components/Sheet'
 import { NutrientBar } from '../components/NutrientBar'
 import { PrimaryButton } from '../components/PrimaryButton'
+import { SecondaryButton } from '../components/SecondaryButton'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useProfile } from '../hooks/useProfile'
 import { useNutrientReference } from '../hooks/useNutrientReference'
-import { createEntry } from '../data/diary-entry'
+import { createEntry, getEntry, updateEntry } from '../data/diary-entry'
 import { createFood, getFood, getFoodByExternal, setFavorite } from '../data/food'
 import { listServings } from '../data/serving'
 import { getUsdaFood } from '../lib/food-api'
 import { lookupBarcode } from '../lib/off-api'
 import {
   asNutrientMap,
+  basisGrams,
   deriveNetCarbs,
   isOverUpperLimit,
   scaleNutrients,
@@ -50,6 +52,9 @@ export function FoodDetailSheet() {
   const [params] = useSearchParams()
   const group = params.get('group') ?? 'snacks'
   const day = params.get('day') ?? todayLocal()
+  // When opened from a logged Diary row, `entry` is that diary_entry id → edit mode.
+  const entryId = params.get('entry')
+  const editing = entryId != null
 
   const { data: profile } = useProfile()
   const { byKey, nutrients: nutrientRows } = useNutrientReference()
@@ -112,12 +117,23 @@ export function FoodDetailSheet() {
 
   const { data: food, loading, error } = useAsync(loadFn)
 
+  const entryFn = useCallback(
+    () => (entryId ? getEntry(entryId) : Promise.resolve(null)),
+    [entryId],
+  )
+  const { data: entry } = useAsync(entryFn)
+
   // Editable draft (string so it can be emptied on focus); resolves to 1 when left blank.
   const [amount, setAmount] = useState('1')
   const [servingIndex, setServingIndex] = useState(0)
   // null = follow the loaded value; once toggled, this override drives the heart both ways.
   const [favOverride, setFavOverride] = useState<boolean | null>(null)
   const [saving, setSaving] = useState(false)
+  // Edit mode: the entry's saved amount/serving, captured once to drive dirty + RESET.
+  const [initial, setInitial] = useState<{
+    amount: string
+    servingIndex: number
+  } | null>(null)
 
   const serving = food?.servings[servingIndex] ?? food?.servings[0]
   const scaled = useMemo(() => {
@@ -131,6 +147,43 @@ export function FoodDetailSheet() {
       }),
     )
   }, [food, serving, amount])
+
+  // On edit, prefill from the entry once food + entry load. Entries don't persist which serving
+  // was used, so pick the serving whose scaled energy best matches the logged energy.
+  useEffect(() => {
+    if (!editing || !food || !entry || initial) return
+    let bestIndex = 0
+    let bestDiff = Infinity
+    food.servings.forEach((s, i) => {
+      const e =
+        scaleNutrients(food.nutrients, {
+          amount: entry.amount ?? 1,
+          servingGrams: s.grams,
+          basisGrams: basisGrams(food.nutrientBasis, s.grams),
+        }).energy ?? 0
+      const diff = Math.abs(e - (entry.energy_kcal ?? 0))
+      if (diff < bestDiff) {
+        bestDiff = diff
+        bestIndex = i
+      }
+    })
+    const amt = String(entry.amount ?? 1)
+    /* eslint-disable react-hooks/set-state-in-effect */
+    setAmount(amt)
+    setServingIndex(bestIndex)
+    setInitial({ amount: amt, servingIndex: bestIndex })
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, [editing, food, entry, initial])
+
+  const dirty =
+    initial != null &&
+    (amount !== initial.amount || servingIndex !== initial.servingIndex)
+
+  function reset() {
+    if (!initial) return
+    setAmount(initial.amount)
+    setServingIndex(initial.servingIndex)
+  }
 
   const targets = profile ? computeTargets(profile) : null
   const favShown = favOverride ?? food?.isFavorite ?? false
@@ -154,22 +207,30 @@ export function FoodDetailSheet() {
     return created.id
   }
 
-  async function addToDiary() {
+  async function submit() {
     if (!food || !userId || !serving) return
     setSaving(true)
     try {
-      const foodId = await ensureCachedId(food)
-      await createEntry({
-        user_id: userId,
-        day,
-        group_name: group,
-        kind: 'food',
-        food_id: foodId,
-        amount: draftAmount(amount, 1),
-        energy_kcal: scaled.energy ?? 0,
-        label: food.name,
-        nutrients: scaled,
-      })
+      if (editing && entryId) {
+        await updateEntry(entryId, {
+          amount: draftAmount(amount, 1),
+          energy_kcal: scaled.energy ?? 0,
+          nutrients: scaled,
+        })
+      } else {
+        const foodId = await ensureCachedId(food)
+        await createEntry({
+          user_id: userId,
+          day,
+          group_name: group,
+          kind: 'food',
+          food_id: foodId,
+          amount: draftAmount(amount, 1),
+          energy_kcal: scaled.energy ?? 0,
+          label: food.name,
+          nutrients: scaled,
+        })
+      }
       bumpDiary()
       navigate(-1)
     } finally {
@@ -278,14 +339,29 @@ export function FoodDetailSheet() {
       </div>
 
       {food && (
-        <div className="border-t border-border p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
-          <PrimaryButton
-            onClick={() => void addToDiary()}
-            disabled={saving}
-            className="w-full"
-          >
-            {saving ? 'Adding…' : 'ADD TO DIARY'}
-          </PrimaryButton>
+        <div className="flex gap-3 border-t border-border p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
+          {editing ? (
+            <>
+              <SecondaryButton onClick={reset} disabled={!dirty || saving}>
+                RESET
+              </SecondaryButton>
+              <PrimaryButton
+                onClick={() => void submit()}
+                disabled={!dirty || saving}
+                className="flex-1"
+              >
+                {saving ? 'Saving…' : 'SAVE'}
+              </PrimaryButton>
+            </>
+          ) : (
+            <PrimaryButton
+              onClick={() => void submit()}
+              disabled={saving}
+              className="w-full"
+            >
+              {saving ? 'Adding…' : 'ADD TO DIARY'}
+            </PrimaryButton>
+          )}
         </div>
       )}
     </Sheet>

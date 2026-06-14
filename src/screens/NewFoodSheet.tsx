@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router'
 import { IconPlus, IconTrash, IconX } from '@tabler/icons-react'
 import { Sheet } from '../components/Sheet'
 import { PrimaryButton } from '../components/PrimaryButton'
+import { SecondaryButton } from '../components/SecondaryButton'
 import { SegmentedTabs } from '../components/SegmentedTabs'
 import { CollapsibleSection } from '../components/CollapsibleSection'
 import { useAuth } from '../auth/AuthProvider'
@@ -87,6 +88,25 @@ function FoodForm({ id, initial }: { id: string | undefined; initial: FoodInitia
   const basisLabel = basis === 'per_serving' ? 'serving' : '100 g'
   const actionLabel = id ? 'SAVE FOOD' : 'ADD FOOD'
   const busyLabel = id ? 'Saving…' : 'Adding…'
+
+  // Dirty vs the loaded/blank initial — drives RESET + SAVE enablement.
+  const dirty =
+    JSON.stringify({ type, name, basis, servings, values }) !==
+    JSON.stringify({
+      type: initial.type,
+      name: initial.name,
+      basis: initial.basis,
+      servings: initial.servings,
+      values: initial.nutrients,
+    })
+
+  function reset() {
+    setType(initial.type)
+    setName(initial.name)
+    setBasis(initial.basis)
+    setServings(initial.servings.map((s) => ({ ...s })))
+    setValues({ ...initial.nutrients })
+  }
 
   async function save() {
     if (!userId || !name.trim()) return
@@ -263,11 +283,14 @@ function FoodForm({ id, initial }: { id: string | undefined; initial: FoodInitia
         </div>
       </div>
 
-      <div className="border-t border-border p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
+      <div className="flex gap-3 border-t border-border p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
+        <SecondaryButton onClick={reset} disabled={!dirty || saving}>
+          RESET
+        </SecondaryButton>
         <PrimaryButton
           onClick={() => void save()}
-          disabled={saving || !name.trim()}
-          className="w-full"
+          disabled={saving || !name.trim() || (!!id && !dirty)}
+          className="flex-1"
         >
           {saving ? busyLabel : actionLabel}
         </PrimaryButton>

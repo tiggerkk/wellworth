@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase'
-import type { Tables, TablesInsert } from '../types/database'
+import type { Tables, TablesInsert, TablesUpdate } from '../types/database'
 
 /** All entries for a single day, in insertion order. `day` is an ISO date (YYYY-MM-DD). */
 export async function listEntriesByDay(
@@ -39,6 +39,31 @@ export async function createEntry(
   const { data, error } = await supabase
     .from('diary_entry')
     .insert(input)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function getEntry(id: string): Promise<Tables<'diary_entry'> | null> {
+  const { data, error } = await supabase
+    .from('diary_entry')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle()
+  if (error) throw error
+  return data
+}
+
+/** Update an existing diary entry (editing a logged item). */
+export async function updateEntry(
+  id: string,
+  patch: TablesUpdate<'diary_entry'>,
+): Promise<Tables<'diary_entry'>> {
+  const { data, error } = await supabase
+    .from('diary_entry')
+    .update(patch)
+    .eq('id', id)
     .select()
     .single()
   if (error) throw error

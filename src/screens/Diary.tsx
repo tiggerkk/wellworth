@@ -243,6 +243,16 @@ export function Diary() {
                               e.duration_min ? `${e.duration_min} min` : undefined
                             }
                             trailing={`${Math.round(e.energy_kcal ?? 0)} kcal`}
+                            onClick={() => {
+                              if (e.kind === 'activity' && e.activity_id)
+                                openSheet(
+                                  `/activity/${e.activity_id}?entry=${e.id}&day=${day}`,
+                                )
+                              else if (e.kind === 'food' && e.food_id)
+                                openSheet(
+                                  `/food/local/${e.food_id}?entry=${e.id}&group=${e.group_name}&day=${day}`,
+                                )
+                            }}
                           />
                         </SwipeRow>
                       ))}

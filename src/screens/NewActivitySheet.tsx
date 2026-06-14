@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router'
 import { IconX } from '@tabler/icons-react'
 import { Sheet } from '../components/Sheet'
 import { PrimaryButton } from '../components/PrimaryButton'
+import { SecondaryButton } from '../components/SecondaryButton'
 import { SegmentedTabs } from '../components/SegmentedTabs'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
@@ -97,6 +98,28 @@ function ActivityForm({
   const canSave = name.trim() !== '' && anyMet && defaultHasMet
   const actionLabel = id ? 'SAVE ACTIVITY' : 'ADD ACTIVITY'
   const busyLabel = id ? 'Saving…' : 'Adding…'
+
+  // Dirty vs the loaded/blank initial — drives RESET + SAVE enablement.
+  const dirty =
+    JSON.stringify({
+      name,
+      description,
+      template,
+      defaultEffort,
+      defaultDuration,
+      met,
+      icon,
+    }) !== JSON.stringify(initial)
+
+  function reset() {
+    setName(initial.name)
+    setDescription(initial.description)
+    setTemplate(initial.template)
+    setDefaultEffort(initial.defaultEffort)
+    setDefaultDuration(initial.defaultDuration)
+    setMet({ ...initial.met })
+    setIcon(initial.icon)
+  }
 
   async function save() {
     if (!userId || !canSave) return
@@ -255,11 +278,14 @@ function ActivityForm({
         </div>
       </div>
 
-      <div className="border-t border-border p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
+      <div className="flex gap-3 border-t border-border p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
+        <SecondaryButton onClick={reset} disabled={!dirty || saving}>
+          RESET
+        </SecondaryButton>
         <PrimaryButton
           onClick={() => void save()}
-          disabled={saving || !canSave}
-          className="w-full"
+          disabled={saving || !canSave || (!!id && !dirty)}
+          className="flex-1"
         >
           {saving ? busyLabel : actionLabel}
         </PrimaryButton>

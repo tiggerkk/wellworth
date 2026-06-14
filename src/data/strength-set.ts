@@ -21,3 +21,18 @@ export async function createSets(
   if (error) throw error
   return data
 }
+
+/** Replace a strength entry's sets (delete all, re-insert) — used when editing an entry. */
+export async function replaceSets(
+  entryId: string,
+  sets: TablesInsert<'strength_set'>[],
+): Promise<void> {
+  const { error: delError } = await supabase
+    .from('strength_set')
+    .delete()
+    .eq('entry_id', entryId)
+  if (delError) throw delError
+  if (sets.length === 0) return
+  const { error } = await supabase.from('strength_set').insert(sets)
+  if (error) throw error
+}

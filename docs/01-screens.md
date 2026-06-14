@@ -25,7 +25,8 @@ Diary groups, in order: **Breakfast, Lunch, Dinner, Snacks, Supplements, Activit
   name, % of target, and a thin progress bar. Chosen in Settings → Highlighted Nutrients (max 8).
 - Groups (Breakfast … Activities): each header has a green `+` (add into that group), a kcal subtotal
   (activities show negative kcal in coral), and a chevron. **Collapsed by default.** Expanded shows
-  the logged entries. **Swipe-left** on an entry reveals Delete.
+  the logged entries. **Tap an entry** to edit it (reopens Food Detail / Activity Log on the entry,
+  with **RESET** + **SAVE**); **swipe-left** reveals Delete.
 - Top-right `⋯` menu: View Daily Report · Copy to Today (only if a day was copied) · Copy Current Day · Copy Previous Day. (Copy clones the day's food/activity entries with their stored snapshots; it does not duplicate individual `strength_set` rows.)
 
 ## Calendar (modal, from the Diary date)
@@ -53,7 +54,9 @@ Diary groups, in order: **Breakfast, Lunch, Dinner, Snacks, Supplements, Activit
 - Editable fields: **Amount**, **Serving Size** (dropdown), **Group** (pre-filled to the group tapped).
 - **Complete Nutrient Summary**: every nutrient as "name · value / target · %", same bar style as the
   Dashboard, recomputing live as Amount/Serving change.
-- Bottom: **ADD TO DIARY**.
+- Bottom: **ADD TO DIARY** when logging a new item. When opened to **edit a logged entry** (tapped from
+  the Diary), the footer is **RESET** + **SAVE** instead, both enabled only once a value changes; the
+  Amount and the serving are prefilled from the entry.
 
 ## Add Activity (modal, from the Activities `+`)
 
@@ -63,22 +66,22 @@ Diary groups, in order: **Breakfast, Lunch, Dinner, Snacks, Supplements, Activit
 ## Activity Log — duration type
 
 - Effort Level picker (Light / Moderate / Vigorous): defaults to the activity's saved effort, but is
-  **overridable per session** — any level is selectable; if the chosen level has no MET defined, the
-  activity's default-effort MET is used.
+  **overridable per session**. Levels the activity has no MET for are disabled.
 - Duration (minutes): prefilled from the activity's default duration.
 - Energy Burned: auto-computed, read-only = MET × body-weight(kg) × hours. Shows the basis.
 - Group defaults to **Activities**.
-- Bottom: **RESET** (effort/duration/exercises back to defaults) + **ADD TO DIARY**.
+- Bottom: **RESET** + **ADD TO DIARY** (logging). RESET enables only when something differs from the
+  defaults. Editing a logged entry instead shows **RESET** + **SAVE**, both enabled only once changed.
 
 ## Activity Log — strength type
 
 - Same **Effort Level** picker as duration (defaults to the activity's, overridable per session).
 - Duration (minutes, prefilled from the default) → drives the energy estimate. Energy Burned =
-  MET × body-weight(kg) × hours, MET resolved from `met_by_effort` at the chosen effort (with the
-  default-effort MET as fallback). No hardcoded MET.
+  MET × body-weight(kg) × hours, MET resolved from `met_by_effort` at the chosen effort. No hardcoded MET.
 - **Exercises** list: each exercise expands to sets logged as reps × weight, with "Add set"; an
   "Add exercise" button builds the session. Sets persist to `strength_set` for progress tracking.
-- Group defaults to **Activities**. Bottom: **RESET** + **ADD TO DIARY**.
+- Group defaults to **Activities**. Bottom: **RESET** + **ADD TO DIARY** (logging) or **RESET** + **SAVE**
+  (editing a logged entry); editing prefills duration, effort, and the exercise/set list from the entry.
 
 ## Dashboard (tab)
 
@@ -118,7 +121,8 @@ Two sub-tabs:
 - **Nutrition shown per**: 100 g / serving (the storage basis).
 - **Nutrition Facts**: the _complete_ nutrient set, grouped by category, each an input + unit,
   collapsible per section. (Supplements: leave Energy/macros blank, fill the relevant micros.)
-- Bottom: full-width **ADD FOOD** (new) / **SAVE FOOD** (editing) button (enabled once there's a name).
+- Bottom: **RESET** + **ADD FOOD** (new) / **SAVE FOOD** (editing). RESET (and, when editing, SAVE) are
+  enabled only when something changed; ADD requires a name.
 
 ### New Activity (form)
 
@@ -130,8 +134,8 @@ Two sub-tabs:
   default effort must have a value; single-intensity activities need only one). Drives the calorie
   estimate via MET × weight × hours. In the Activity Log, effort levels with no MET are disabled.
 - **Icon**: an icon picker (the keys of `ACTIVITY_ICONS`); optional, defaults to `IconRun`.
-- Bottom: full-width **ADD ACTIVITY** (new) / **SAVE ACTIVITY** (editing) button (enabled once there's
-  a name and a MET value for the default effort).
+- Bottom: **RESET** + **ADD ACTIVITY** (new) / **SAVE ACTIVITY** (editing). RESET (and, when editing,
+  SAVE) are enabled only when something changed; ADD requires a name and a MET for the default effort.
 
 ## Settings (tab)
 
