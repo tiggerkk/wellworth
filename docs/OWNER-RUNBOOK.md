@@ -217,7 +217,9 @@ and Supabase needs Google's client ID + secret.**
 > npm run dev
 ```
 
-Open the printed address — **<http://localhost:5173>** — in your browser.
+Open the printed **Local** address — **<http://localhost:5173>** — in your browser. (The dev server
+also prints a **Network** address like `http://192.168.1.118:5173/` — that's for testing on your
+phone over Wi-Fi; see "Test on your iPhone over Wi-Fi" below.)
 
 - ✅ Check, in order:
   1. You land on a **Sign in with Google** screen.
@@ -231,7 +233,36 @@ Open the printed address — **<http://localhost:5173>** — in your browser.
 - To stop the dev server: press `Ctrl + C` in the terminal.
 
 > Barcode scanning needs the camera, which browsers only allow over HTTPS. It works on your computer
-> at `localhost` (desktop webcam); on a phone it only works after deploying (Part K).
+> at `localhost` (desktop webcam); on a phone it works after deploying (Part K) or via an HTTPS tunnel
+> (see below) — not over a plain LAN address.
+
+### Test on your iPhone over Wi-Fi (no deploy needed)
+
+Great for checking layout/UI changes on the real device without pushing to GitHub/Vercel.
+
+1. Make sure the phone and computer are on the **same Wi-Fi** network.
+2. Run `npm run dev` (the script uses `--host`, so it serves on your network too). Note the
+   **Network** line it prints, e.g. `http://192.168.1.118:5173/`.
+3. On the iPhone, open that **Network** URL in **Safari**. (Find your computer's address from the
+   Network line — it can change when you reconnect to Wi-Fi. On Windows you can also run `ipconfig`
+   and read the **IPv4 Address**.)
+4. **Firewall:** the first time, Windows may ask to allow Node.js through the firewall — tick
+   **Private networks** and allow it. If the page won't load and there was no prompt, the firewall is
+   almost certainly blocking port `5173`.
+
+Two limits over a plain LAN address (`http://…`, not HTTPS):
+
+- **Google sign-in** only returns to allow-listed origins. To sign in from the phone, add your LAN
+  address to **Supabase → Authentication → URL Configuration → Redirect URLs**
+  (`http://192.168.1.118:5173/**` — use your actual IP); update it when your IP changes. (For pure
+  layout checks you may not need to sign in.)
+- **Camera (barcode) and "Add to Home Screen"** need HTTPS, so they don't work over a LAN address. To
+  test those on-device without deploying, start a temporary HTTPS tunnel in a second terminal:
+  ```
+  > npx cloudflared tunnel --url http://localhost:5173
+  ```
+  Open the printed `https://…trycloudflare.com` URL on the phone (add it to the Supabase Redirect URLs
+  too). This is a temporary public link, not a deploy.
 
 ---
 
@@ -339,7 +370,7 @@ and run the two commands again. Once the commit succeeds:
 **Everyday commands** (from the project folder):
 
 ```
-> npm run dev          # run locally at http://localhost:5173
+> npm run dev          # run locally at http://localhost:5173 (also on your LAN for phone testing)
 > npm run check        # format + lint + type-check + tests (must pass before committing)
 > npm run build        # production build
 > supabase db push     # apply new database migrations

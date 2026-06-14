@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import { useSearchParams } from 'react-router'
 import { IconChevronLeft, IconChevronRight, IconDots } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
@@ -25,7 +26,29 @@ import { ListRow } from '../components/ListRow'
 export function Diary() {
   const { session } = useAuth()
   const userId = session?.user.id
-  const [day, setDay] = useState<IsoDate>(todayLocal())
+
+  // The viewed day lives in the URL (`/?day=YYYY-MM-DD`) rather than component state, so it
+  // survives the Diary unmounting/remounting while a sheet (Daily Report, Add Food/Activity)
+  // is open over it: navigate(-1) returns to the same entry and restores the day. A clean `/`
+  // (no param) means today. `setDay` replaces the entry so day stepping doesn't pile up history.
+  const [params, setParams] = useSearchParams()
+  const dayParam = params.get('day')
+  const day: IsoDate =
+    dayParam && /^\d{4}-\d{2}-\d{2}$/.test(dayParam) ? dayParam : todayLocal()
+  const setDay = useCallback(
+    (d: IsoDate) =>
+      setParams(
+        (prev) => {
+          const next = new URLSearchParams(prev)
+          if (d === todayLocal()) next.delete('day')
+          else next.set('day', d)
+          return next
+        },
+        { replace: true },
+      ),
+    [setParams],
+  )
+
   const [calendarOpen, setCalendarOpen] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [copiedDay, setCopiedDay] = useState<IsoDate | null>(null)
@@ -64,106 +87,108 @@ export function Diary() {
 
   return (
     <div className="pb-4">
-      {/* Day header */}
-      <header className="sticky top-0 z-10 flex items-center justify-between bg-bg/90 px-3 py-3 backdrop-blur">
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => setDay(addDays(day, -1))}
-            aria-label="Previous day"
-            className="p-1 text-text-secondary"
-          >
-            <IconChevronLeft size={22} />
-          </button>
-          <button
-            onClick={() => setCalendarOpen(true)}
-            className="min-w-28 text-center text-[15px] font-medium text-text-primary"
-          >
-            {formatDayLabel(day)}
-          </button>
-          <button
-            onClick={() => setDay(addDays(day, 1))}
-            aria-label="Next day"
-            className="p-1 text-text-secondary"
-          >
-            <IconChevronRight size={22} />
-          </button>
-        </div>
-        <div className="relative">
-          <button
-            onClick={() => setMenuOpen((o) => !o)}
-            aria-label="Day options"
-            className="p-1 text-text-secondary"
-          >
-            <IconDots size={20} />
-          </button>
-          {menuOpen && (
-            <>
-              <div
-                className="fixed inset-0 z-10"
-                onClick={() => setMenuOpen(false)}
-                aria-hidden
-              />
-              <div className="absolute right-0 z-20 mt-1 w-52 overflow-hidden rounded-card border border-border bg-surface text-sm shadow-lg">
-                <button
-                  onClick={() => {
-                    setMenuOpen(false)
-                    openSheet(`/report/${day}`)
-                  }}
-                  className="block w-full border-b border-border px-4 py-2.5 text-left text-text-primary active:bg-input/40"
-                >
-                  View Daily Report
-                </button>
-                {copiedDay && (
+      {/* Pinned top pane: day header + highlighted nutrients stay visible while groups scroll. */}
+      <div className="sticky top-0 z-10 bg-bg/90 backdrop-blur">
+        <header className="flex items-center justify-between px-3 py-3">
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setDay(addDays(day, -1))}
+              aria-label="Previous day"
+              className="p-1 text-text-secondary"
+            >
+              <IconChevronLeft size={22} />
+            </button>
+            <button
+              onClick={() => setCalendarOpen(true)}
+              className="min-w-28 text-center text-[15px] font-medium text-text-primary"
+            >
+              {formatDayLabel(day)}
+            </button>
+            <button
+              onClick={() => setDay(addDays(day, 1))}
+              aria-label="Next day"
+              className="p-1 text-text-secondary"
+            >
+              <IconChevronRight size={22} />
+            </button>
+          </div>
+          <div className="relative">
+            <button
+              onClick={() => setMenuOpen((o) => !o)}
+              aria-label="Day options"
+              className="p-1 text-text-secondary"
+            >
+              <IconDots size={20} />
+            </button>
+            {menuOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-10"
+                  onClick={() => setMenuOpen(false)}
+                  aria-hidden
+                />
+                <div className="absolute right-0 z-20 mt-1 w-52 overflow-hidden rounded-card border border-border bg-surface text-sm shadow-lg">
                   <button
-                    onClick={() => copyFrom(copiedDay, todayLocal())}
+                    onClick={() => {
+                      setMenuOpen(false)
+                      openSheet(`/report/${day}`)
+                    }}
+                    className="block w-full border-b border-border px-4 py-2.5 text-left text-text-primary active:bg-input/40"
+                  >
+                    View Daily Report
+                  </button>
+                  {copiedDay && (
+                    <button
+                      onClick={() => copyFrom(copiedDay, todayLocal())}
+                      className="block w-full px-4 py-2.5 text-left text-text-primary active:bg-input/40"
+                    >
+                      Copy to Today
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      setCopiedDay(day)
+                      setMenuOpen(false)
+                    }}
                     className="block w-full px-4 py-2.5 text-left text-text-primary active:bg-input/40"
                   >
-                    Copy to Today
+                    Copy Current Day
                   </button>
-                )}
-                <button
-                  onClick={() => {
-                    setCopiedDay(day)
-                    setMenuOpen(false)
-                  }}
-                  className="block w-full px-4 py-2.5 text-left text-text-primary active:bg-input/40"
-                >
-                  Copy Current Day
-                </button>
-                <button
-                  onClick={() => copyFrom(addDays(day, -1), day)}
-                  className="block w-full px-4 py-2.5 text-left text-text-primary active:bg-input/40"
-                >
-                  Copy Previous Day
-                </button>
-              </div>
-            </>
-          )}
-        </div>
-      </header>
-
-      {/* Highlighted nutrients */}
-      {profile && profile.highlighted_nutrients.length > 0 && (
-        <section className="px-4 pb-2 pt-1">
-          <div className="grid grid-cols-2 gap-x-4">
-            {profile.highlighted_nutrients.map((key) => {
-              const ref = byKey.get(key)
-              const dri = targets?.dri[key]
-              const value = totals[key] ?? 0
-              return (
-                <NutrientBar
-                  key={key}
-                  label={ref?.display_name ?? key}
-                  value={value}
-                  target={dri?.target ?? null}
-                  unit={ref?.unit ?? ''}
-                  over={dri ? isOverUpperLimit(value, dri) : false}
-                />
-              )
-            })}
+                  <button
+                    onClick={() => copyFrom(addDays(day, -1), day)}
+                    className="block w-full px-4 py-2.5 text-left text-text-primary active:bg-input/40"
+                  >
+                    Copy Previous Day
+                  </button>
+                </div>
+              </>
+            )}
           </div>
-        </section>
-      )}
+        </header>
+
+        {/* Highlighted nutrients */}
+        {profile && profile.highlighted_nutrients.length > 0 && (
+          <section className="px-4 pb-2 pt-1">
+            <div className="grid grid-cols-2 gap-x-4">
+              {profile.highlighted_nutrients.map((key) => {
+                const ref = byKey.get(key)
+                const dri = targets?.dri[key]
+                const value = totals[key] ?? 0
+                return (
+                  <NutrientBar
+                    key={key}
+                    label={ref?.display_name ?? key}
+                    value={value}
+                    target={dri?.target ?? null}
+                    unit={ref?.unit ?? ''}
+                    over={dri ? isOverUpperLimit(value, dri) : false}
+                  />
+                )
+              })}
+            </div>
+          </section>
+        )}
+      </div>
 
       {/* States */}
       {loading && <p className="px-4 py-6 text-sm text-text-secondary">Loading…</p>}
@@ -195,8 +220,8 @@ export function Diary() {
                   onAdd={() =>
                     openSheet(
                       group.kind === 'activity'
-                        ? '/add-activity'
-                        : `/add-food?group=${group.key}`,
+                        ? `/add-activity?day=${day}`
+                        : `/add-food?group=${group.key}&day=${day}`,
                     )
                   }
                   onToggle={() =>

@@ -37,7 +37,8 @@ Diary groups, in order: **Breakfast, Lunch, Dinner, Snacks, Supplements, Activit
 ## Add Food (modal, from a group's `+`)
 
 - Search bar with a barcode-scan icon; a filter/sort control.
-- Tabs: **All** (combined USDA + your custom), **Favorites** (hearted items), **Custom** (your items).
+- Tabs: **Favorites** (hearted items, default), **Custom** (your items), **All** (combined USDA + your custom).
+  Selecting a food and returning (X / ADD TO DIARY) preserves the active tab, search text, and results.
 - Result rows: name, serving, source tag (USDA / Custom / Off for Open Food Facts). Your saved
   foods (Favorites / Custom) show an inline heart to toggle favorite; raw USDA search results are
   favorited from **Food Detail** (the heart there), since they aren't cached until favorited or
@@ -101,7 +102,10 @@ Diary groups, in order: **Breakfast, Lunch, Dinner, Snacks, Supplements, Activit
 Two sub-tabs:
 
 - **Foods**: searchable list of your custom foods and supplements; tap a row to edit, swipe to delete;
-  `+ New Food` opens the form. Supplements show a "supplement" tag.
+  `+ New Food` opens the form. Supplements show a "supplement" tag. `Import CSV` opens the bulk
+  importer (parses a CSV in-browser and inserts custom foods/supplements + servings via the data
+  layer; format in `templates/custom-foods-template.csv`, documented in
+  `templates/custom-foods-import-guide.md`).
 - **Activities**: list of your activities; tap a row to edit template + default effort/MET, swipe to delete; `+ New Activity` opens the form.
 
 ### New Food (form)

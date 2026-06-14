@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import { IconPlus } from '@tabler/icons-react'
+import { IconPlus, IconUpload } from '@tabler/icons-react'
 import { useAsync } from '../hooks/useAsync'
 import { useSheetNavigate } from '../hooks/useSheetNavigate'
 import { useDiaryVersion, bumpDiary } from '../lib/diary-refresh'
@@ -50,22 +50,35 @@ export function Library() {
 
   return (
     <div className="flex flex-col gap-3 px-4 py-4">
-      <SegmentedTabs
-        value={tab}
-        onChange={setTab}
-        options={[
-          { value: 'foods', label: 'Foods' },
-          { value: 'activities', label: 'Activities' },
-        ]}
-      />
-      <SearchBar value={query} onChange={setQuery} placeholder={`Search ${tab}`} />
+      {/* Pinned top pane: tabs, search, and the New action stay visible while the list scrolls. */}
+      <div className="sticky top-0 z-10 -mx-4 flex flex-col gap-3 bg-bg/90 px-4 py-3 backdrop-blur">
+        <SegmentedTabs
+          value={tab}
+          onChange={setTab}
+          options={[
+            { value: 'foods', label: 'Foods' },
+            { value: 'activities', label: 'Activities' },
+          ]}
+        />
+        <SearchBar value={query} onChange={setQuery} placeholder={`Search ${tab}`} />
 
-      <button
-        onClick={() => openSheet(tab === 'foods' ? '/new-food' : '/new-activity')}
-        className="flex items-center gap-1 self-start text-sm text-positive"
-      >
-        <IconPlus size={16} /> New {tab === 'foods' ? 'Food' : 'Activity'}
-      </button>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => openSheet(tab === 'foods' ? '/new-food' : '/new-activity')}
+            className="flex items-center gap-1 text-sm text-positive"
+          >
+            <IconPlus size={16} /> New {tab === 'foods' ? 'Food' : 'Activity'}
+          </button>
+          {tab === 'foods' && (
+            <button
+              onClick={() => openSheet('/import-foods')}
+              className="flex items-center gap-1 text-sm text-positive"
+            >
+              <IconUpload size={16} /> Import CSV
+            </button>
+          )}
+        </div>
+      </div>
 
       <div className="overflow-hidden rounded-card border border-border bg-surface">
         {tab === 'foods' &&

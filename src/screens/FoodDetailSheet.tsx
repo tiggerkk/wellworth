@@ -113,7 +113,8 @@ export function FoodDetailSheet() {
 
   const [amount, setAmount] = useState(1)
   const [servingIndex, setServingIndex] = useState(0)
-  const [favorite, setFavorite_] = useState(false)
+  // null = follow the loaded value; once toggled, this override drives the heart both ways.
+  const [favOverride, setFavOverride] = useState<boolean | null>(null)
   const [saving, setSaving] = useState(false)
 
   const serving = food?.servings[servingIndex] ?? food?.servings[0]
@@ -130,7 +131,7 @@ export function FoodDetailSheet() {
   }, [food, serving, amount])
 
   const targets = profile ? computeTargets(profile) : null
-  const favShown = favorite || food?.isFavorite === true
+  const favShown = favOverride ?? food?.isFavorite ?? false
 
   async function ensureCachedId(f: DetailFood): Promise<string> {
     if (f.localId) return f.localId
@@ -177,7 +178,7 @@ export function FoodDetailSheet() {
   async function toggleFavorite() {
     if (!food) return
     const next = !favShown
-    setFavorite_(next)
+    setFavOverride(next)
     const foodId = await ensureCachedId(food)
     await setFavorite(foodId, next)
   }

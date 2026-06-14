@@ -34,7 +34,7 @@ export function AddActivitySheet() {
         </button>
       </header>
 
-      <div className="p-4">
+      <div className="flex-1 overflow-y-auto p-4">
         {loading && <p className="text-sm text-text-secondary">Loading…</p>}
         {error && <p className="text-sm text-danger">Couldn’t load activities.</p>}
         {!loading && !error && (

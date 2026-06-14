@@ -19,7 +19,10 @@ export function Settings() {
 
   return (
     <div className="flex flex-col gap-5 px-4 py-4">
-      <h1 className="text-lg font-medium text-text-primary">Settings</h1>
+      {/* Pinned title pane: stays visible while the settings sections scroll. */}
+      <h1 className="sticky top-0 z-10 -mx-4 bg-bg/90 px-4 py-3 text-lg font-medium text-text-primary backdrop-blur">
+        Settings
+      </h1>
       {loading && <p className="text-sm text-text-secondary">Loading…</p>}
       {!loading && !profile && (
         <p className="text-sm text-danger">Couldn’t load your profile.</p>
@@ -173,7 +176,7 @@ function SettingsBody({ profile, save }: { profile: Tables<'profile'>; save: Sav
         </div>
       </SectionCard>
 
-      <SectionCard title="Visibility">
+      <SectionCard title="Display">
         <button onClick={() => openSheet('/settings/highlighted')} className="w-full">
           <FieldRow label="Highlighted Nutrients">
             <IconChevronRight size={18} className="text-text-tertiary" />

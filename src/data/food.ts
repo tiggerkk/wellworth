@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase'
+import type { ImportFoodRecord } from '../lib/food-import'
 import type { Tables, TablesInsert, TablesUpdate } from '../types/database'
 
 export interface ListFoodsOptions {
@@ -22,6 +23,49 @@ export async function listFoods(
   const { data, error } = await query
   if (error) throw error
   return data
+}
+
+/**
+ * Bulk-insert custom foods (and their servings) for the current user — the CSV importer.
+ * Foods are inserted in one statement; the returned rows preserve input order, so each item's
+ * servings are linked by position. Returns the number of foods created.
+ */
+export async function importCustomFoods(
+  userId: string,
+  items: ImportFoodRecord[],
+): Promise<number> {
+  if (items.length === 0) return 0
+
+  const foodRows: TablesInsert<'food'>[] = items.map((it) => ({
+    user_id: userId,
+    source: 'custom',
+    external_id: null,
+    name: it.name,
+    type: it.type,
+    nutrient_basis: it.nutrient_basis,
+    nutrients: it.nutrients,
+    is_favorite: it.is_favorite,
+  }))
+
+  const { data: inserted, error } = await supabase
+    .from('food')
+    .insert(foodRows)
+    .select('id')
+  if (error) throw error
+
+  const servingRows = (inserted ?? []).flatMap((row, i) =>
+    (items[i]?.servings ?? []).map((s) => ({
+      food_id: row.id,
+      name: s.name,
+      grams: s.grams,
+    })),
+  )
+  if (servingRows.length > 0) {
+    const { error: servingError } = await supabase.from('serving').insert(servingRows)
+    if (servingError) throw servingError
+  }
+
+  return inserted?.length ?? 0
 }
 
 export async function getFood(id: string): Promise<Tables<'food'> | null> {
