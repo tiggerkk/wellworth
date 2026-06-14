@@ -18,7 +18,7 @@ export const OWNER_SEED_ACTIVITIES: SeedActivity[] = [
     template: 'duration',
     default_effort: 'vigorous',
     default_duration_min: 60,
-    met_by_effort: { vigorous: 7.0 },
+    met_by_effort: { light: 3.0, moderate: 5.9, vigorous: 7.0 },
     icon: 'IconKarate',
   },
   {
@@ -45,7 +45,7 @@ export const OWNER_SEED_ACTIVITIES: SeedActivity[] = [
     template: 'duration',
     default_effort: 'light',
     default_duration_min: 15,
-    met_by_effort: { light: 2.5 },
+    met_by_effort: { light: 2.5, moderate: 3.5 },
     icon: 'IconYoga',
   },
   {
@@ -54,7 +54,7 @@ export const OWNER_SEED_ACTIVITIES: SeedActivity[] = [
     template: 'strength',
     default_effort: 'moderate',
     default_duration_min: 20,
-    met_by_effort: { light: 3.5, moderate: 3.5 },
+    met_by_effort: { light: 3.0, moderate: 3.5 },
     icon: 'IconBarbell',
   },
   {
@@ -81,7 +81,7 @@ export const OWNER_SEED_ACTIVITIES: SeedActivity[] = [
     template: 'duration',
     default_effort: 'moderate',
     default_duration_min: 30,
-    met_by_effort: { moderate: 5.9 },
+    met_by_effort: { light: 3.0, moderate: 5.9, vigorous: 6.5 },
     icon: 'IconSwimming',
   },
   {
@@ -90,7 +90,25 @@ export const OWNER_SEED_ACTIVITIES: SeedActivity[] = [
     template: 'duration',
     default_effort: 'moderate',
     default_duration_min: 30,
-    met_by_effort: { moderate: 3.5 },
+    met_by_effort: { moderate: 3.3 },
     icon: 'IconWalk',
+  },
+  {
+    name: 'Running - Jog',
+    description: '~4 mph',
+    template: 'duration',
+    default_effort: 'moderate',
+    default_duration_min: 30,
+    met_by_effort: { moderate: 5.9 },
+    icon: 'IconRun',
+  },
+  {
+    name: 'Running - Fast',
+    description: '~6 mph',
+    template: 'duration',
+    default_effort: 'vigorous',
+    default_duration_min: 30,
+    met_by_effort: { vigorous: 9.8 },
+    icon: 'IconRun',
   },
 ]

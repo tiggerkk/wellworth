@@ -8,7 +8,7 @@ export interface EffortLevel {
 }
 
 export const EFFORT_LEVELS: EffortLevel[] = [
-  { key: 'light', label: 'Light', range: '< 3 MET' },
-  { key: 'moderate', label: 'Moderate', range: '3–5.9 MET' },
+  { key: 'light', label: 'Light', range: '≤ 3 MET' },
+  { key: 'moderate', label: 'Moderate', range: '3.1–5.9 MET' },
   { key: 'vigorous', label: 'Vigorous', range: '≥ 6 MET' },
 ]

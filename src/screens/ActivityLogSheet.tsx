@@ -54,13 +54,13 @@ export function ActivityLogSheet() {
   }, [activity])
   const minutesValue = draftAmount(minutes, activityDefaultDuration)
 
-  // Effort: duration is user-selectable (default to the activity's); strength uses the default.
-  const sessionEffort: Effort =
-    activity?.template === 'strength'
-      ? (activity.default_effort as Effort)
-      : (effort ?? (activity?.default_effort as Effort) ?? 'moderate')
+  // Effort defaults to the activity's, but is fully editable per session (e.g. an easier day).
+  const defaultEffort = (activity?.default_effort as Effort) ?? 'moderate'
+  const sessionEffort: Effort = effort ?? defaultEffort
 
-  const met = resolveMet(metMap, sessionEffort) ?? 0
+  // Use the chosen effort's MET; fall back to the default-effort MET (always defined) when the
+  // user picks a level this activity hasn't set a MET for.
+  const met = resolveMet(metMap, sessionEffort) ?? resolveMet(metMap, defaultEffort) ?? 0
   const energy = activityEnergyKcal({ met, weightKg, minutes: minutesValue })
 
   function addSet(exIdx: number) {
@@ -86,6 +86,12 @@ export function ActivityLogSheet() {
           : ex,
       ),
     )
+  }
+
+  function resetToDefaults() {
+    setEffort(null)
+    setMinutes(String(activityDefaultDuration))
+    setExercises([{ name: '', sets: [{ reps: 10, weight: 0 }] }])
   }
 
   async function addToDiary() {
@@ -145,16 +151,14 @@ export function ActivityLogSheet() {
 
         {activity && (
           <div className="flex flex-col gap-4">
-            {activity.template === 'duration' && (
-              <div>
-                <p className="mb-2 text-xs text-text-secondary">Effort Level</p>
-                <EffortPicker
-                  value={sessionEffort}
-                  onChange={setEffort}
-                  available={availableEfforts}
-                />
-              </div>
-            )}
+            <div>
+              <p className="mb-2 text-xs text-text-secondary">Effort Level</p>
+              <EffortPicker
+                value={sessionEffort}
+                onChange={setEffort}
+                available={availableEfforts}
+              />
+            </div>
 
             <label className="text-xs text-text-secondary">
               Duration (minutes)
@@ -266,11 +270,18 @@ export function ActivityLogSheet() {
       </div>
 
       {activity && (
-        <div className="border-t border-border p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
+        <div className="flex gap-3 border-t border-border p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
+          <button
+            onClick={resetToDefaults}
+            disabled={saving}
+            className="rounded-pill border border-border px-5 py-3 text-sm font-medium text-text-secondary disabled:opacity-50"
+          >
+            RESET
+          </button>
           <PrimaryButton
             onClick={() => void addToDiary()}
             disabled={saving}
-            className="w-full"
+            className="flex-1"
           >
             {saving ? 'Adding…' : 'ADD TO DIARY'}
           </PrimaryButton>

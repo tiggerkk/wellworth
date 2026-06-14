@@ -63,20 +63,22 @@ Diary groups, in order: **Breakfast, Lunch, Dinner, Snacks, Supplements, Activit
 ## Activity Log — duration type
 
 - Effort Level picker (Light / Moderate / Vigorous): defaults to the activity's saved effort, but is
-  **overridable per session**.
-- Duration (minutes).
+  **overridable per session** — any level is selectable; if the chosen level has no MET defined, the
+  activity's default-effort MET is used.
+- Duration (minutes): prefilled from the activity's default duration.
 - Energy Burned: auto-computed, read-only = MET × body-weight(kg) × hours. Shows the basis.
 - Group defaults to **Activities**.
-- Bottom: **ADD TO DIARY**.
+- Bottom: **RESET** (effort/duration/exercises back to defaults) + **ADD TO DIARY**.
 
 ## Activity Log — strength type
 
-- Duration (minutes) → drives the energy estimate. Energy Burned = MET × body-weight(kg) × hours,
-  where MET is resolved from the activity's `met_by_effort` at its **default effort** (strength logging
-  shows no per-session effort picker). No hardcoded MET.
+- Same **Effort Level** picker as duration (defaults to the activity's, overridable per session).
+- Duration (minutes, prefilled from the default) → drives the energy estimate. Energy Burned =
+  MET × body-weight(kg) × hours, MET resolved from `met_by_effort` at the chosen effort (with the
+  default-effort MET as fallback). No hardcoded MET.
 - **Exercises** list: each exercise expands to sets logged as reps × weight, with "Add set"; an
   "Add exercise" button builds the session. Sets persist to `strength_set` for progress tracking.
-- Group defaults to **Activities**. Bottom: **ADD TO DIARY**.
+- Group defaults to **Activities**. Bottom: **RESET** + **ADD TO DIARY**.
 
 ## Dashboard (tab)
 
@@ -123,10 +125,10 @@ Two sub-tabs:
 - Activity Name; optional Description.
 - **Logging Template**: Duration (minutes + effort) or Strength (sets/reps/weight + duration).
 - **Default Duration** (minutes): prefills the Duration field when logging this activity (default 30).
-- **Default Effort**: Light (<3 MET) / Moderate (3–5.9) / Vigorous (≥6) — applies to both Duration and Strength templates; overridable per session when logging.
-- **MET by effort**: for each effort level, an editable MET value; select which level is the default
-  and fill at least its value (single-intensity activities need only one). Drives the calorie estimate
-  via MET × weight × hours.
+- **Default Effort**: Light (≤3 MET) / Moderate (3.1–5.9) / Vigorous (≥6) — applies to both Duration and Strength templates; overridable per session when logging.
+- **MET by effort**: for each effort level, an editable MET value; fill **at least one** level (the
+  default effort must have a value; single-intensity activities need only one). Drives the calorie
+  estimate via MET × weight × hours. In the Activity Log, effort levels with no MET are disabled.
 - **Icon**: an icon picker (the keys of `ACTIVITY_ICONS`); optional, defaults to `IconRun`.
 - Bottom: full-width **ADD ACTIVITY** (new) / **SAVE ACTIVITY** (editing) button (enabled once there's
   a name and a MET value for the default effort).

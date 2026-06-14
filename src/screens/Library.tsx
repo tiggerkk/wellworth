@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import { useSearchParams } from 'react-router'
 import { IconPlus, IconUpload } from '@tabler/icons-react'
 import { useAsync } from '../hooks/useAsync'
 import { useSheetNavigate } from '../hooks/useSheetNavigate'
@@ -16,7 +17,23 @@ type Tab = 'foods' | 'activities'
 export function Library() {
   const openSheet = useSheetNavigate()
   const version = useDiaryVersion()
-  const [tab, setTab] = useState<Tab>('foods')
+  // Tab lives in the URL so returning from a sheet (New/Edit Food or Activity) restores it
+  // instead of resetting to Foods. A clean `/library` (no param) means Foods.
+  const [params, setParams] = useSearchParams()
+  const tab: Tab = params.get('tab') === 'activities' ? 'activities' : 'foods'
+  const setTab = useCallback(
+    (t: Tab) =>
+      setParams(
+        (prev) => {
+          const next = new URLSearchParams(prev)
+          if (t === 'foods') next.delete('tab')
+          else next.set('tab', t)
+          return next
+        },
+        { replace: true },
+      ),
+    [setParams],
+  )
   const [query, setQuery] = useState('')
 
   const foodsFn = useCallback(() => {

@@ -86,8 +86,15 @@ function ActivityForm({
   const [icon, setIcon] = useState<string | null>(initial.icon)
   const [saving, setSaving] = useState(false)
 
-  const defaultMet = Number(met[defaultEffort])
-  const canSave = name.trim() !== '' && Number.isFinite(defaultMet) && defaultMet > 0
+  const hasMet = (k: Effort) => {
+    const n = Number(met[k])
+    return (met[k] ?? '').trim() !== '' && Number.isFinite(n) && n > 0
+  }
+  const anyMet = EFFORT_LEVELS.some((l) => hasMet(l.key))
+  const defaultHasMet = hasMet(defaultEffort)
+  // Require a MET for at least one level, and the chosen default must be one of them
+  // (the Activity Log resolves energy from the default effort's MET).
+  const canSave = name.trim() !== '' && anyMet && defaultHasMet
   const actionLabel = id ? 'SAVE ACTIVITY' : 'ADD ACTIVITY'
   const busyLabel = id ? 'Saving…' : 'Adding…'
 
@@ -179,7 +186,7 @@ function ActivityForm({
         {/* MET by effort + default effort selector */}
         <div>
           <p className="mb-1 text-xs text-text-secondary">
-            MET by effort (select the default, fill at least its value)
+            MET by effort (fill at least one level; the default effort must have a value)
           </p>
           <div className="flex flex-col gap-2">
             {EFFORT_LEVELS.map((level) => {
@@ -215,6 +222,11 @@ function ActivityForm({
               )
             })}
           </div>
+          {anyMet && !defaultHasMet && (
+            <p className="mt-1 text-xs text-danger">
+              Set a MET for the default effort, or choose a default you’ve filled in.
+            </p>
+          )}
         </div>
 
         {/* Icon picker */}
