@@ -16,8 +16,8 @@ Hand-off package for building **WellWorth** (a wellness + net-worth tracker PWA)
   - `06-networth.md` — Net Worth (Phase 2): scope, two-table data model, FX, screens, CSV import.
   - `wireframes/` — drop screen screenshots here (optional).
 - **templates/** — `custom-foods-template.csv` + an import guide for bulk-adding custom foods/supplements
-  (used by Library → **Import CSV**), and `networth-seed-template.csv` (a sanitized example for the
-  Phase-2 Net Worth import; your real balances stay gitignored).
+  (used by Library → **Import CSV**), and `networth-seed-template.csv` + `networth-import-guide.md`
+  for the Net Worth importer (sanitized example; your real balances stay gitignored).
 
 ## Project documentation
 

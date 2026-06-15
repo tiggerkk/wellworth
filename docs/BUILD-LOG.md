@@ -6,7 +6,7 @@ spec** — `/docs/00-PRD.md … 05-seed-data.md` + `CLAUDE.md` are the source of
 describe what the app does. Where this log mentions a past failure, it points to the spec section that
 now encodes the correct approach.
 
-Phase 2 (Net Worth) is **in progress** — see "Phase 2 — Net Worth (build sequence)" below.
+Phase 2 (Net Worth) is **feature-complete** (M1–M6) — see "Phase 2 — Net Worth (build sequence)" below.
 
 ---
 
@@ -391,6 +391,12 @@ Wellness import machinery + `saveSnapshotEntries`.
   gitignored (`*.local.csv`). Lesson: gitignore the private file **before** the first `git add`; a
   committed template must be sanitized example data, never real values. Sanitize example numbers in
   **docs** too — a real balance had leaked into a `06-networth.md` parsing example.
+
+- **F8 — `useAsync` keeps stale `data` during a refetch (Phase 2).** When `fn` changes, `useAsync`
+  flips `loading=true` but **retains the previous `data`** until the new result lands. A screen that
+  swaps its loaded subject (e.g. Net Worth Monthly Entry switching months) must **gate the form on
+  `!loading`** (and key it by the subject) — else the new subject briefly mounts with the old
+  subject's data. See `NetWorthEntry`.
 
 ## Known limitations / deferred (not spec issues — future work)
 

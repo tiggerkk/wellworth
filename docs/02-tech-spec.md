@@ -137,6 +137,30 @@ the cloud is authoritative (this also sidesteps iOS PWA storage eviction).
   `src/lib/off-api.ts`. The owner-band DRI target/UL values are tabulated in `05-seed-data.md` and
   live in `src/lib/dri.ts`.
 
+## Net Worth (Phase 2)
+
+Asset-only net worth, entered ~monthly (each snapshot dated to the **1st**). Base **HKD**; entries in
+HKD/CNY/USD. Full behavior: `06-networth.md`. Where things live:
+
+- **Data:** `src/data/networth-snapshot.ts` + `src/data/asset-entry.ts`. Write path
+  `saveSnapshotEntries(userId, month, rows)` = get-or-create the month's snapshot, delete its
+  `asset_entry` rows, insert the new set — **idempotent per month** (reused by the CSV importer). The
+  dashboard reads via `listSnapshotsWithEntries` (one embedded `networth_snapshot → asset_entry`
+  select; slice the window client-side).
+- **Calc:** `src/lib/networth.ts` — `ASSET_TYPES`/labels, `DETAIL_FIELDS`,
+  `valueBase`/`totalBase`/`groupByType`/`typeTotals`/`typeBreakdown`, `formatHkd`/`formatHkdCompact`,
+  `ASSET_TYPE_COLORS`.
+- **FX:** `src/lib/fx.ts` — keyless **Frankfurter** native→HKD for the month's 1st; **CNY is the
+  stored code** (no RMB→CNY map); HKD = 1; failures non-fatal. The rate + `value_base` are **frozen**
+  on each `asset_entry`, so saved months are immune to later revisions.
+- **Refresh:** `src/lib/networth-refresh.ts` (`bumpNetWorth`/`useNetWorthVersion`), separate from the
+  Wellness `diary-refresh` tick.
+- **CSV import:** `src/lib/networth-import.ts` (`parseNetWorthCsv` + `stripNumber` — strips
+  thousands commas/quotes from values and detail values) + `src/screens/ImportNetWorthSheet.tsx`.
+- **UI:** `NetWorthDashboard` (recharts trend via the **lazy** `src/components/NetWorthTrendChart`,
+  own chunk; windows in `src/constants/networth-ranges.ts`), `NetWorthEntry` (copy-forward, grouped
+  inline edit, manual+auto FX, RESET/SAVE).
+
 ## Environment variables
 
 `.env` (gitignored). Only `VITE_`-prefixed vars reach the browser.

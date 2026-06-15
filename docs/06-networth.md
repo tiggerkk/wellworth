@@ -111,6 +111,8 @@ Your real balances stay **out of the repo**. An **in-app importer** (in the Net 
   `asset_type,name,currency,value_native,detail1_key,detail1_value,detail2_key,detail2_value`
   - `detail*` columns are optional, type-specific, and stored as-is in `details` (e.g. `maturity_date`, `ticker`, `shares`, `units`, `cost`, `premium`, `policy_year`). Extra detail pairs are allowed.
   - The importer asks you for the snapshot month (e.g. `2026-06`) and normalizes it to the **first day** of that month.
+  - Full column rules + examples: `templates/networth-import-guide.md`. (Implemented in
+    `src/lib/networth-import.ts` + `src/screens/ImportNetWorthSheet.tsx`.)
 
 ## Parked (Net Worth — see PARKED.md)
 

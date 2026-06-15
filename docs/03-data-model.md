@@ -3,6 +3,12 @@
 Postgres on Supabase. Table names **singular, snake_case**. Every user-owned table has a `user_id` (→ `auth.users.id`, `ON DELETE CASCADE`) and four RLS policies (select/insert/update/delete) using `(select auth.uid()) = user_id`. Child tables without their own `user_id` (`serving`, `strength_set`) enforce ownership with an `EXISTS` check against their parent. RLS is enabled in the first migration for **every** table, and that migration also **`GRANT`s table privileges to the `anon`/`authenticated` roles** (raw-SQL-migration tables don't inherit Supabase's default grants — RLS alone yields `42501 permission denied`). Enumerated TEXT columns are constrained with `CHECK`; `updated_at` columns are maintained by the `moddatetime` trigger.
 Nutrient sets are stored as JSONB maps (`nutrient_key → amount`), validated against the `nutrient` reference table at the data-access layer (`filterToKnownKeys`) — so adding a tracked nutrient never needs a schema change.
 
+> **Net Worth (Phase 2)** adds two more user-owned tables — `networth_snapshot` and `asset_entry` —
+> following the same conventions (own `user_id` + 4 RLS policies + role grants + `moddatetime`;
+> `CHECK`-constrained enums; `asset_entry` cascades on snapshot delete). Their full schema lives in
+> **`06-networth.md`** (kept there so this file stays Phase-1-focused); the migration is
+> `supabase/migrations/20260615120000_networth_schema.sql`.
+
 ## Tables
 
 ### profile (one row per user)

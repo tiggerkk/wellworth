@@ -197,3 +197,19 @@ Wellness-module sub-settings. Auto-save on change. A back chevron returns to the
 - All nutrients grouped (General & Protein, Vitamins, Minerals, Carbohydrates, Lipids), each a Visible
   toggle. Defaults on for the Phase-1 list (see seed data), off for the rest.
 - Protein also shows its editable Daily Target here. No other per-nutrient targets and no max-threshold fields are exposed. Items with sparse source data show a small "limited data" note.
+
+## Net Worth screens (Phase 2 — see `06-networth.md` for full behavior)
+
+The Net Worth module (Home hub → Net Worth) has two tabs plus an import sheet:
+
+- **Dashboard** (`/networth`): large **current total** (latest month) in HKD; a **trend line graph**
+  (recharts) with a window selector (6M/12M/2Y/3Y/5Y/All) and a **Total ⇄ By asset type** toggle; a
+  **latest-month per-type summary** (color dot · type · HKD · % of net worth).
+- **Monthly Entry** (`/networth/entry`): month selector (prev/next); a new month **copies the previous
+  month forward** and auto-fetches its FX; entries **grouped by asset type** with a per-group add +
+  inline edit (name, currency HKD/CNY/USD, value, type-specific details) + delete; editable
+  per-currency **FX rates** (auto-fetched, override + refresh ↻; HKD = 1); live HKD total; **RESET /
+  SAVE**. An **Import CSV** button opens the importer.
+- **Import CSV** (`/networth/import`, sheet): pick a month + upload a CSV → preview (rows, skipped
+  rows, fetched rates, HKD total) → **Import** create-or-replaces that month (idempotent). Columns +
+  rules: `templates/networth-import-guide.md`.

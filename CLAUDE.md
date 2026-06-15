@@ -3,7 +3,7 @@
 WellWorth is a personal (later: small-family) wellness and net-worth tracker, styled after Cronometer.
 It is built as an installable PWA so it runs on iPhone and iPad with no Apple Developer account.
 
-**Read `/docs` before planning or building.** The six spec docs there are the source of truth:
+**Read `/docs` before planning or building.** The seven spec docs there are the source of truth:
 `00-PRD.md`, `01-screens.md`, `02-tech-spec.md`, `03-data-model.md`, `04-design-system.md`, `05-seed-data.md`, `06-networth.md`.
 (`docs/BUILD-LOG.md` is a non-spec engineering history — build sequence, rationale, and past-failure warnings — not a source of truth for behavior.)
 
@@ -29,14 +29,39 @@ Then run `npm run format` so the docs pass Prettier.
 - Build **Wellness and Net Worth**.
 - Steps are entered **manually**. Do not attempt HealthKit / native step sync (impossible in a PWA).
 
+## App structure (multi-module — current state)
+
+The app is a multi-module PWA behind a **Home hub** (`/home`): module cards launch into **Wellness**
+(`/wellness/*`) or **Net Worth** (`/networth/*`); `/` redirects to the last-used module. Adding a
+module is a **drop-in** — append a `ModuleDef` to `src/constants/modules.ts` + its routes.
+
+- **Routing:** flat children of one `<AppShell/>` in `src/router.tsx`; **all path strings live in
+  `src/constants/routes.ts`** (single source of truth). `src/constants/modules.ts` (`MODULES` +
+  `moduleForPath`) drives the hub cards + per-module `BottomNav`. Modal **sheets** use the
+  background-location pattern (`useSheetNavigate`); `AppShell.TAB_FOR_PATH` paints the tab behind a
+  sheet. `/` → `RootRedirect` (last-used module via `src/lib/last-module.ts`, else `/home`).
+- **Settings is split:** global `/settings` (profile, units, account) from the hub gear; Wellness
+  sub-settings at `/wellness/settings` (protein target, nutrient display) from a gear in the Wellness
+  header.
+- **Net Worth (Phase 2, built):** two tables `networth_snapshot` + `asset_entry` (schema in
+  `06-networth.md`; migration `supabase/migrations/20260615120000_networth_schema.sql`). Data:
+  `src/data/networth-snapshot.ts` + `asset-entry.ts` — write path `saveSnapshotEntries` is an
+  **idempotent create-or-replace per month** (reused by the importer). Calc `src/lib/networth.ts`; FX
+  `src/lib/fx.ts` (Frankfurter; **currency stored as `CNY`**, no RMB→CNY map; each entry freezes
+  `fx_rate_to_base` + `value_base`); refresh tick `src/lib/networth-refresh.ts`; CSV import
+  `src/lib/networth-import.ts`; windows `src/constants/networth-ranges.ts`; lazy chart
+  `src/components/NetWorthTrendChart.tsx`; screens `NetWorthDashboard` / `NetWorthEntry` /
+  `ImportNetWorthSheet`.
+
 ## Stack (do not substitute without asking)
 
 - React + Vite + TypeScript (strict), Tailwind CSS, `vite-plugin-pwa`, React Router (the unified
   `react-router` package — import from `react-router`).
 - Supabase (Postgres + Auth + Google OAuth) for data, auth, and cross-device sync.
-- `@zxing/library` + `@zxing/browser` for barcode scanning. Recharts is a dependency reserved for the
-  Phase-2 net-worth trend graph (not used in Phase-1 Wellness).
-- Food data: USDA FoodData Central (search) + Open Food Facts (barcode).
+- `@zxing/library` + `@zxing/browser` for barcode scanning. **Recharts** powers the Net Worth dashboard
+  trend chart (lazy-loaded into its own chunk via `src/components/NetWorthTrendChart`).
+- Food data: USDA FoodData Central (search) + Open Food Facts (barcode). FX: keyless **Frankfurter**
+  (ECB) for Net Worth native→HKD rates (`src/lib/fx.ts`).
 
 ## Architecture rules (always apply)
 
