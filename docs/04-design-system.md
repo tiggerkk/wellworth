@@ -21,6 +21,10 @@ Dark, calm, Cronometer-like. These tokens are taken directly from the approved w
 | `delete`          | `#e24b4a`                | Swipe-to-delete background                                 |
 | `track`           | `#3a4253`                | Progress-bar track, off-toggle                             |
 | `fill`            | `#eef1f7`                | Progress-bar fill; primary-button background               |
+| `cat-meal`        | `#e2574c`                | Diary category icon — Breakfast/Lunch/Dinner (red apple)   |
+| `cat-snack`       | `#e2933c`                | Diary category icon — Snacks (orange cookie)               |
+| `cat-supplement`  | `#a779e0`                | Diary category icon — Supplements (purple pill)            |
+| `cat-activity`    | `#5b8def`                | Diary category icon — Activities (blue runner)             |
 
 Primary button = `fill` background with `#161b28` text (a light pill on dark). The accent coral is
 _not_ the primary-button color; it's for emphasis, active states, and energy.
@@ -45,9 +49,10 @@ _not_ the primary-button color; it's for emphasis, active states, and energy.
 - **Toggle** — pill switch; on = coral with knob right, off = `track` with grey knob left.
 - **SegmentedTabs** — `input` track, active segment = `fill` pill with dark text (All/Favorites/Custom,
   Food/Supplement, Foods/Activities).
-- **GroupHeader** — green `+`, title, kcal subtotal, chevron; collapsible.
+- **GroupHeader** — collapsible: expand chevron · category icon · title · kcal subtotal, with a green
+  `+` on the right.
 - **SwipeRow** — swipe-left reveals a `delete` Delete action.
-- **SearchBar** — magnifier + input + filter icon (+ barcode icon on Add Food).
+- **SearchBar** — magnifier + input (+ barcode icon on Add Food).
 - **PrimaryButton** — light `fill` pill, used as the bottom "ADD TO DIARY".
 - **FieldRow** — label + value/input + chevron, for forms and Settings.
 - **EffortPicker** — Light / Moderate / Vigorous radio list with MET ranges.
@@ -66,6 +71,11 @@ _not_ the primary-button color; it's for emphasis, active states, and energy.
 Tabler Icons (or lucide-react), outline style. Mapping used in the wireframes:
 food = apple, supplement = pill, activity = run/karate/barbell, energy = flame/flask,
 nav = chart-bar / notebook / apple / settings, delete = trash, favorite = heart, scan = barcode.
+
+**Diary group category icons** (in the group headers) use the `cat-*` color tokens above:
+Breakfast/Lunch/Dinner = red apple (`cat-meal`), Snacks = orange cookie (`cat-snack`),
+Supplements = purple pill (`cat-supplement`), Activities = blue runner (`cat-activity`). The
+icon↔group mapping lives in `constants/groups.ts`.
 
 ## Button placement
 

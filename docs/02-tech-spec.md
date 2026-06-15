@@ -22,7 +22,7 @@ src/
   screens/           # one folder per screen/tab
   data/              # typed data-access layer (wraps supabase-js) — the ONLY db access
   lib/               # supabase client, units, dri, energy, met, nutrients, targets, report,
-                     # date, food-api, off-api, diary-refresh helpers
+                     # date, food-api, off-api, food-search, diary-refresh, diary-clipboard helpers
   constants/         # global constants (groups, effort-levels, nutrient-sections, ranges,
                      # profile-defaults, seed-activities)
                      # activity-icons.ts maps icon name strings to named Tabler imports

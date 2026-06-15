@@ -23,9 +23,9 @@ export interface DiaryGroup {
   iconClass: string
 }
 
-// Category colors (red apple / orange cookie / purple pill / blue runner) — deliberate accents
-// outside the core token set, used only for these decorative group icons.
-const MEAL = { Icon: IconApple, iconClass: 'text-[#e2574c]' }
+// Per-category icon colors live as `cat-*` tokens in index.css (red apple / orange cookie /
+// purple pill / blue runner).
+const MEAL = { Icon: IconApple, iconClass: 'text-cat-meal' }
 
 export const DIARY_GROUPS: DiaryGroup[] = [
   { key: 'breakfast', label: 'Breakfast', kind: 'food', ...MEAL },
@@ -36,20 +36,20 @@ export const DIARY_GROUPS: DiaryGroup[] = [
     label: 'Snacks',
     kind: 'food',
     Icon: IconCookie,
-    iconClass: 'text-[#e2933c]',
+    iconClass: 'text-cat-snack',
   },
   {
     key: 'supplements',
     label: 'Supplements',
     kind: 'food',
     Icon: IconPill,
-    iconClass: 'text-[#a779e0]',
+    iconClass: 'text-cat-supplement',
   },
   {
     key: 'activities',
     label: 'Activities',
     kind: 'activity',
     Icon: IconRun,
-    iconClass: 'text-[#5b8def]',
+    iconClass: 'text-cat-activity',
   },
 ]

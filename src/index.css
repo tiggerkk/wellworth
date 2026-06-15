@@ -26,6 +26,12 @@
   --color-track: #3a4253;
   --color-fill: #eef1f7;
 
+  /* Category accents — Diary group icons (meal red matches danger today but is its own role) */
+  --color-cat-meal: #e2574c;
+  --color-cat-snack: #e2933c;
+  --color-cat-supplement: #a779e0;
+  --color-cat-activity: #5b8def;
+
   /* Radii */
   --radius-screen: 28px;
   --radius-card: 14px;

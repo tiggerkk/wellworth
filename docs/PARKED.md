@@ -39,9 +39,9 @@ Status legend: **Phase 2** (planned, separate phase) · **Deferred** (Phase-1-ad
 
 ### Add-Food filter/sort control · Deferred
 
-**What:** `01-screens.md` describes "a filter/sort control" on Add Food; only search + the All/Favorites/Custom tabs were built.
-**Why deferred:** Search + tabs proved sufficient for a single user; sort/filter is polish.
-**Decided:** Would sort/filter the combined result list (e.g. by source, recency, or name).
+**What:** A user-facing filter/sort control on Add Food (an earlier `01-screens.md` draft mentioned one; only search + the All/Favorites/Custom tabs were built, and that mention has since been removed).
+**Why deferred:** Search + tabs proved sufficient for a single user, and results now auto-sort by name-match relevance then nutrient count (`food-search.ts`), which covers the common need; a manual sort/filter is polish.
+**Decided:** Would let the user re-sort/filter the combined result list (e.g. by source, recency, or name).
 
 ### Inline favoriting of raw USDA search results · Deferred
 
@@ -113,7 +113,7 @@ default_duration_min, met_by_effort, icon) parsed in-browser and inserted via th
 ### Automated tests beyond pure helpers · Deferred
 
 **What:** Component/integration tests; tests for `src/data/*` repositories.
-**Why deferred:** The suite unit-tests the pure calc/mapping helpers (the spec's named targets, plus the CSV-parse, food-import, and quantity helpers — 64 tests). Repos are thin wrappers verified manually + by `tsc` against the generated schema.
+**Why deferred:** The suite unit-tests the pure calc/mapping helpers (the spec's named targets, plus the CSV-parse, food-import, quantity, and food-search helpers — 76 tests). Repos are thin wrappers verified manually + by `tsc` against the generated schema.
 
 ---
 
