@@ -19,6 +19,13 @@ coverage
 .env.*
 !.env.example
 
+# Net Worth — real private balances must never be committed. The sanitized
+# templates/networth-seed-template.csv is the only Net Worth CSV that should be tracked.
+*-filled.csv
+*.local.csv
+networth-*.csv
+!templates/networth-seed-template.csv
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

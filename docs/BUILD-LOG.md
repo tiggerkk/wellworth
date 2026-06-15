@@ -6,7 +6,7 @@ spec** — `/docs/00-PRD.md … 05-seed-data.md` + `CLAUDE.md` are the source of
 describe what the app does. Where this log mentions a past failure, it points to the spec section that
 now encodes the correct approach.
 
-Phase 2 (Net Worth) is not built.
+Phase 2 (Net Worth) is **in progress** — see "Phase 2 — Net Worth (build sequence)" below.
 
 ---
 
@@ -202,6 +202,38 @@ engineering decisions:
 
 ---
 
+## Phase 2 — Net Worth (build sequence)
+
+### M1 — Secure seed data + Net Worth schema (this session)
+
+Goal: get private financial data out of the repo and lay the two-table foundation, without touching
+the running Wellness app.
+
+- **Security fix (the urgent part):** `templates/networth-seed-template.csv` had been committed with
+  **real** balances and pushed to GitHub (commits `d08ef38`, `0e363e2`). Fixed by purging the file
+  from all history with `git filter-repo --invert-paths` and **force-pushing**, then committing a
+  **sanitized** example template. The real data now lives only in a **gitignored**
+  `templates/networth-seed.local.csv`; `.gitignore` ignores `*-filled.csv` / `*.local.csv` /
+  `networth-*.csv` with a `!templates/networth-seed-template.csv` negation so the sanitized template
+  stays tracked. See **Failure F7**.
+- **Schema:** `20260615120000_networth_schema.sql` — `networth_snapshot` (one row per user+month,
+  `month` CHECK-normalized to the 1st, `UNIQUE(user_id, month)`) and `asset_entry` (own `user_id` for
+  direct RLS like `diary_entry`; `snapshot_id` ON DELETE CASCADE; `value_native`/`fx_rate_to_base`/
+  `value_base` stored so a month's HKD figures freeze against later FX revisions). RLS + 4 owner
+  policies + explicit per-table grants, matching `init_schema`.
+- **Currency = `CNY`, not `RMB`.** The renminbi is stored as ISO `CNY` end-to-end, which is exactly
+  what Frankfurter (ECB) quotes — so FX needs no code translation. Docs (`00-PRD`, `06-networth`,
+  `PARKED`) updated accordingly.
+- **Import is in-app, not a script.** Per the owner's choice, the one-time CSV seed becomes a reusable
+  **in-app importer** (anon key + RLS, signed in as the owner) that creates/replaces a month's entries
+  — idempotent per month. Built in a later Net Worth milestone.
+- **Navigation grows into a Home hub** (owner's decision): instead of a two-way Wellness⇄Net Worth
+  switch, a top-level Home hub of module cards, Wellness moved under `/wellness/*`, Settings lifted to
+  the global level, last-used-module reopen. Built in the next milestone (M2). `00-PRD.md` carries the
+  navigation model.
+
+---
+
 ## Failures & gotchas to not repeat
 
 - **F1 — RLS without table GRANTs → `42501 permission denied` (M3).** Tables created by raw-SQL
@@ -248,6 +280,15 @@ engineering decisions:
   its full height and the pane scrolls. A `flex-col` scroll pane needs its children `shrink-0`.
 
 ---
+
+- **F7 — Private financial data committed + pushed (Phase 2 M1).** The Net Worth seed CSV
+  (`templates/networth-seed-template.csv`) was filled with **real** balances and committed/pushed to
+  GitHub before being gitignored — gitignore only stops _future_ commits, so the data sat in pushed
+  history. Fix: purge with `git filter-repo --invert-paths --path <file>` (then re-add the `origin`
+  remote it strips) and **force-push**; commit a **sanitized** template and keep the real file
+  gitignored (`*.local.csv`). Lesson: gitignore the private file **before** the first `git add`; a
+  committed template must be sanitized example data, never real values. Sanitize example numbers in
+  **docs** too — a real balance had leaked into a `06-networth.md` parsing example.
 
 ## Known limitations / deferred (not spec issues — future work)
 

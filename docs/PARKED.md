@@ -7,18 +7,26 @@ Status legend: **Phase 2** (planned, separate phase) · **Deferred** (Phase-1-ad
 
 ---
 
-## Phase 2 — Net Worth · Phase 2
+## Phase 2 — Net Worth · In progress
 
-**What:** Monthly entry of asset values across categories — cash, time deposits, mutual funds, retirement, insurance, stock options, real estate — each held in one of three currencies (**HKD = base**, RMB, USD). A net-worth figure computed in the base currency, and a trend graph with a selectable time window.
+**What:** Monthly entry of asset values across categories — cash, time deposits, stocks, mutual funds, retirement, insurance, property — each held in one of three currencies (**HKD = base**, CNY, USD). A net-worth figure computed in the base currency, plus total and by-asset-type trend graphs with a selectable time window. Full spec: `06-networth.md`.
 
-**Why deferred:** Explicit PRD phasing — Wellness ships first; `CLAUDE.md` scope discipline says do not build Net Worth yet.
+**Status:** Being built (Phase 2). The two tables (`networth_snapshot`, `asset_entry`) and the Home-hub/module navigation are part of this phase. The items below are the sub-features that remain **deliberately deferred** within Net Worth:
 
-**Design notes / constraints already decided (00-PRD.md):**
+- **Auto stock price lookup** (Alpha Vantage) — manual value entry for now; `details.shares` is stored to support it later.
+- **Mutual fund NAV lookup** — no reliable free source for HK/China-domiciled funds; manual only.
+- **Per-asset-type stacked-area composition graph** — scope is one line per type, not stacked bands.
+- **Liabilities / net-of-debt** tracking — asset-only for now.
+- **Individual-asset (sub-type) trends** — aggregates at asset-type level only.
+- **Multi-currency display toggle** for the dashboard.
+- **Cost-basis / unrealized gain** — `details.cost`/`details.premium` are captured but not yet surfaced.
+
+**Design notes / constraints already decided (00-PRD.md, 06-networth.md):**
 
 - **Separate tables.** Net Worth shares only **auth + `profile` + the app shell** with Wellness; it does not touch the wellness tables. Additive, not a rebuild.
-- Base currency is **HKD**; RMB/USD values convert to base for the net-worth total (FX source TBD).
-- **`recharts` is already installed** specifically for this trend graph (it is unused in Phase 1).
-- Reuse the existing patterns: `src/data/*` repositories, `useAsync`, route-based sheets, the `BottomNav`/`AppShell` — a Net Worth tab would slot into the existing shell.
+- Base currency is **HKD**; CNY/USD values convert to base via **Frankfurter** (keyless, ECB-sourced; quotes CNY directly) as of the 1st of the month, with a manual per-currency override; the rate + `value_base` are frozen on each entry.
+- **`recharts` is already installed** specifically for the trend graphs (it was unused in Phase 1).
+- Reuse the existing patterns: `src/data/*` repositories, `useAsync`, the RESET/SAVE dirty-snapshot form pattern, the `BottomNav`/`AppShell` shell — Net Worth slots in as a module under the Home hub.
 - Multi-user-ready by default (every table carries `user_id` + RLS, same as Wellness).
 
 ---

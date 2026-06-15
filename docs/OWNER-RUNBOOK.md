@@ -145,12 +145,13 @@ This creates the tables, security rules, and the nutrient reference data in your
    > supabase db push --dry-run
    > supabase db push
    ```
-   This applies two migration files: `…_init_schema.sql` (schema + RLS + API-role grants) and
-   `…_seed_nutrient.sql` (the nutrient reference rows).
+   This applies the migration files: `…_init_schema.sql` (schema + RLS + API-role grants),
+   `…_seed_nutrient.sql` (the nutrient reference rows), and `…_networth_schema.sql` (the Phase-2
+   Net Worth tables).
 
 - ✅ Check (in the Supabase dashboard):
-  - **Table Editor** shows seven tables: `nutrient`, `profile`, `food`, `serving`, `activity`,
-    `diary_entry`, `strength_set`.
+  - **Table Editor** shows nine tables: `nutrient`, `profile`, `food`, `serving`, `activity`,
+    `diary_entry`, `strength_set`, and the Net Worth pair `networth_snapshot`, `asset_entry`.
   - **SQL Editor** → run `select count(*) from nutrient;` → returns **80**.
   - **Advisors → Security** shows no "RLS disabled in public" warnings.
 
@@ -284,6 +285,11 @@ Part K.)
    The first push will ask you to sign in to GitHub (a browser window opens).
    > Your secrets are safe: `.env` is git-ignored and is **not** uploaded. Only `.env.example`
    > (the blank template) is in the repo.
+   > Same for your **Net Worth balances**: keep your real CSV as `templates/networth-seed.local.csv`
+   > (git-ignored). Only the **sanitized** `templates/networth-seed-template.csv` is tracked. Never
+   > commit a CSV with real values. (History note: real balances were once committed and later purged
+   > from git history with a force-push — if you have an old clone, re-clone it so it doesn't push the
+   > old history back.)
 
 - ✅ Check: refresh your GitHub repo page — you see the project files (and a `docs/` folder), but
   **no `.env`**.
