@@ -59,6 +59,62 @@ export type Database = {
         }
         Relationships: []
       }
+      asset_entry: {
+        Row: {
+          asset_type: string
+          created_at: string
+          currency: string
+          details: Json
+          fx_rate_to_base: number
+          id: string
+          name: string
+          snapshot_id: string
+          sort_order: number | null
+          updated_at: string
+          user_id: string
+          value_base: number
+          value_native: number
+        }
+        Insert: {
+          asset_type: string
+          created_at?: string
+          currency: string
+          details?: Json
+          fx_rate_to_base?: number
+          id?: string
+          name: string
+          snapshot_id: string
+          sort_order?: number | null
+          updated_at?: string
+          user_id: string
+          value_base?: number
+          value_native?: number
+        }
+        Update: {
+          asset_type?: string
+          created_at?: string
+          currency?: string
+          details?: Json
+          fx_rate_to_base?: number
+          id?: string
+          name?: string
+          snapshot_id?: string
+          sort_order?: number | null
+          updated_at?: string
+          user_id?: string
+          value_base?: number
+          value_native?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_entry_snapshot_id_fkey"
+            columns: ["snapshot_id"]
+            isOneToOne: false
+            referencedRelation: "networth_snapshot"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       diary_entry: {
         Row: {
           activity_id: string | null
@@ -178,6 +234,30 @@ export type Database = {
           nutrients?: Json
           source?: string
           type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      networth_snapshot: {
+        Row: {
+          created_at: string
+          id: string
+          month: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          month: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          month?: string
           updated_at?: string
           user_id?: string
         }
