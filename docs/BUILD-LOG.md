@@ -22,7 +22,7 @@ Phase 2 (Net Worth) is **in progress** — see "Phase 2 — Net Worth (build seq
 - **Env (`.env`, gitignored; `.env.example` documents):** `VITE_SUPABASE_URL`,
   `VITE_SUPABASE_ANON_KEY`, `VITE_USDA_API_KEY`. All build-time `VITE_` vars.
 - **Gates:** husky `.husky/pre-commit` → lint-staged + `typecheck` + `test`; GitHub Actions
-  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 76 Vitest tests (pure helpers).
+  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 82 Vitest tests (pure helpers).
 - **Deploy status:** Deployed. GitHub `main` → Vercel auto-deploy; the production URL is in the
   Supabase redirect URLs + Google JS origins (see `OWNER-RUNBOOK.md`). Installed + tested on iPhone (PWA).
 - Conventions (DB-access-via-`src/data`, metric storage, generated `database.ts` contract, etc.) live
@@ -258,6 +258,27 @@ working under `/wellness/*` and Net Worth reachable as a placeholder module. No 
   `Sheet`) is path-agnostic (`navigate(-1/-2)` off `state.background`) — unchanged.
 - Built on branch `phase2-m2-home-hub` (auto-deploy safety); gates + production build green. The 76
   tests are pure helpers, so routing was verified by manual click-through.
+
+### M3 — Net Worth Monthly Entry (this session)
+
+Goal: make Net Worth real — data layer + pure calc helpers + the Monthly Entry screen (replacing the
+M2 placeholder). **Manual FX** in M3 (auto-fetch is M4); no schema change.
+
+- **Calc/constants** `src/lib/networth.ts`: `ASSET_TYPES` (+labels), `DETAIL_FIELDS`, `CURRENCIES`,
+  `valueBase`/`totalBase`/`groupByType`/`formatHkd` — pure (+6 tests → **82** total).
+- **Data layer** `src/data/networth-snapshot.ts` + `asset-entry.ts`. The SAVE path is
+  `saveSnapshotEntries(userId, month, rows)` — get-or-create the month's snapshot, delete its
+  `asset_entry` rows, insert the new set (mirrors `data/serving.replaceServings`). **Idempotent per
+  month**; the M6 importer reuses it. Delete+insert is non-atomic (solo-app trade-off).
+- **Screen** `src/screens/NetWorthEntry.tsx`: outer-loader + inner-form mirroring `NewFoodSheet`'s
+  dirty-snapshot pattern, but it **stays mounted** after SAVE — so it keeps a local `baseline` and
+  **re-seats it on save** (instead of `navigate(-1)`). Month nav (prev/next + `formatMonthLabel`);
+  copy-forward via `getLatestSnapshotBefore`; entries grouped by all 7 asset types with a per-group
+  add + inline edit/trash; manual per-currency FX (HKD locked at 1); live HKD total. SAVE calls
+  `bumpNetWorth()` (new `src/lib/networth-refresh.ts`) for the M5 dashboard.
+- **`useAsync` gotcha:** it keeps the _previous_ `data` while a refetch is in flight, so the form is
+  gated on `!loading` (and keyed by `month`) — else a month switch briefly mounts the new month with
+  the old month's rows.
 
 ---
 

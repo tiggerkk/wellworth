@@ -57,3 +57,11 @@ export function addMonths(iso: IsoDate, n: number): IsoDate {
   const [y, m] = iso.split('-').map(Number)
   return toIsoDate(new Date(y ?? 1970, (m ?? 1) - 1 + n, 1))
 }
+
+/** Format the month of a civil date as e.g. 'June 2026' (local parts). */
+export function formatMonthLabel(iso: IsoDate): string {
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'long',
+    year: 'numeric',
+  }).format(fromIsoDate(iso))
+}
