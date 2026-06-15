@@ -1,4 +1,5 @@
 import type { NutrientMap } from './nutrients'
+import { toUsdaWildcardQuery } from './food-search'
 
 /**
  * USDA FoodData Central client + nutrient mapping. Called directly from the browser with
@@ -146,27 +147,64 @@ function apiKey(): string {
 }
 
 /**
- * Search USDA foods. Uses POST with a JSON body — the GET endpoint rejects a `dataType`
+ * One USDA search call. Uses POST with a JSON body — the GET endpoint rejects a `dataType`
  * containing "Survey (FNDDS)" (the space/parens 400s), whereas POST accepts the array.
  */
-export async function searchFoods(query: string): Promise<ExternalFood[]> {
-  const trimmed = query.trim()
-  if (!trimmed) return []
+async function usdaSearch(
+  query: string,
+  dataType: string[],
+  pageSize: number,
+): Promise<ExternalFood[]> {
   const res = await fetch(
     `${USDA_BASE}/foods/search?api_key=${encodeURIComponent(apiKey())}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        query: trimmed,
-        pageSize: 25,
-        dataType: ['Foundation', 'SR Legacy', 'Survey (FNDDS)', 'Branded'],
-      }),
+      body: JSON.stringify({ query, pageSize, dataType }),
     },
   )
   if (!res.ok) throw new Error(`USDA search failed (${res.status})`)
   const json = (await res.json()) as { foods?: UsdaFood[] }
   return (json.foods ?? []).map(toExternalFood)
+}
+
+/** Identical branded products dedupe by name + brand (see searchFoods). */
+const MAX_BRANDED_RESULTS = 15
+
+/**
+ * Search USDA foods for the Add-Food list.
+ *
+ * The whole-food databases (Foundation / SR Legacy / Survey FNDDS) use "Food, modifier"
+ * descriptions ("Blueberries, raw", "Muffins, blueberry") and carry full nutrient profiles —
+ * exactly what we want to surface. Branded foods, however, number in the thousands per term
+ * (8000+ for "blueberries") and, ranked by USDA's relevance, flood the first page with
+ * identical exact-name products, burying every "…, raw"/"Muffins, blueberry" entry below them.
+ *
+ * So we query the two pools separately and always include the whole foods, then collapse the
+ * branded duplicates (same name + brand) and cap them. The caller sorts the merged list by how
+ * well each name matches the query, so this only needs to guarantee variety, not order.
+ */
+export async function searchFoods(query: string): Promise<ExternalFood[]> {
+  const trimmed = query.trim()
+  if (!trimmed) return []
+  // Wildcard the last word so partial/plural input ("blueberr", "blueberrie") still matches; the
+  // result scorer in the UI re-filters to the typed term, so over-broad recall is harmless.
+  const wild = toUsdaWildcardQuery(trimmed)
+  const [whole, branded] = await Promise.all([
+    usdaSearch(wild, ['Foundation', 'SR Legacy', 'Survey (FNDDS)'], 40),
+    usdaSearch(wild, ['Branded'], 40),
+  ])
+
+  const out = [...whole]
+  const brandedSeen = new Set<string>()
+  for (const f of branded) {
+    if (brandedSeen.size >= MAX_BRANDED_RESULTS) break
+    const key = `${f.name.toLowerCase()}|${(f.brand ?? '').toLowerCase()}`
+    if (brandedSeen.has(key)) continue
+    brandedSeen.add(key)
+    out.push(f)
+  }
+  return out
 }
 
 /** Fetch one USDA food's full nutrient profile. */

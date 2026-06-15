@@ -4,10 +4,11 @@ import { IconHeart, IconHeartFilled, IconX } from '@tabler/icons-react'
 import { Sheet } from '../components/Sheet'
 import { SearchBar } from '../components/SearchBar'
 import { SegmentedTabs } from '../components/SegmentedTabs'
-import { ListRow } from '../components/ListRow'
 import { useSheetNavigate } from '../hooks/useSheetNavigate'
 import { listFoods, setFavorite } from '../data/food'
 import { searchFoods, type ExternalFood } from '../lib/food-api'
+import { foodMatchScore } from '../lib/food-search'
+import { asNutrientMap } from '../lib/nutrients'
 import { todayLocal } from '../lib/date'
 
 // Lazy-loaded so the ZXing barcode library is a separate chunk, fetched only when scanning.
@@ -16,7 +17,30 @@ const BarcodeScanner = lazy(() =>
 )
 
 type Tab = 'favorites' | 'custom' | 'all'
-const SOURCE_TAG: Record<string, string> = { usda: 'USDA', custom: 'Custom', off: 'Off' }
+const SOURCE_TAG: Record<string, string> = { usda: 'USDA', custom: 'Custom', off: 'OFF' }
+
+/** A search-result row, normalized across local foods and USDA results. */
+interface DisplayFood {
+  key: string
+  name: string
+  nutrientCount: number
+  serving: string
+  source: string
+  onOpen: () => void
+  /** Present only for local foods, which are the only ones that can be (un)favorited. */
+  favorite?: { isFavorite: boolean; toggle: () => void }
+}
+
+/** Serving shown on a result's second line — USDA whole foods are stored per 100 g. */
+function externalServing(f: ExternalFood): string {
+  if (f.servingText) return f.servingText
+  if (f.servingGrams) return `${f.servingGrams} g`
+  return '100 g'
+}
+
+function localServing(nutrientBasis: string): string {
+  return nutrientBasis === 'per_serving' ? '1 serving' : '100 g'
+}
 
 // These caches outlive the sheet's React tree. Opening a food (Food Detail) unmounts this
 // sheet; clicking X / ADD TO DIARY navigates back and remounts it. Serving the last results
@@ -131,20 +155,58 @@ export function AddFoodSheet() {
     }
   }, [tab, debounced])
 
-  const q = query.trim().toLowerCase()
-  const matchingUserFoods = (userFoods ?? []).filter((f) => {
-    if (tab === 'favorites') return f.is_favorite
-    if (tab === 'custom') return f.source === 'custom'
-    return q ? f.name.toLowerCase().includes(q) : true
-  })
+  const q = query.trim()
 
   async function toggleFav(id: string, next: boolean) {
     await setFavorite(id, next)
     setReloadNonce((n) => n + 1)
   }
 
-  function openExternal(food: ExternalFood) {
-    openSheet(`/food/${food.source}/${food.externalId}${suffix}`)
+  // Merge local foods (filtered by tab) and USDA results into one normalized list, then — when
+  // there is a query — keep only the matches and order them by how well each name matches, with
+  // same-name (and same-score) entries ordered by nutrient count, descending. With no query we
+  // keep the source order (local foods newest-first; no USDA fetched).
+  const localFoods = (userFoods ?? []).filter((f) => {
+    if (tab === 'favorites') return f.is_favorite
+    if (tab === 'custom') return f.source === 'custom'
+    return true
+  })
+  const localResults: DisplayFood[] = localFoods.map((f) => ({
+    key: `local-${f.id}`,
+    name: f.name,
+    nutrientCount: Object.keys(asNutrientMap(f.nutrients)).length,
+    serving: localServing(f.nutrient_basis),
+    source: SOURCE_TAG[f.source] ?? f.source,
+    onOpen: () => openSheet(`/food/local/${f.id}${suffix}`),
+    favorite: {
+      isFavorite: f.is_favorite,
+      toggle: () => void toggleFav(f.id, !f.is_favorite),
+    },
+  }))
+  const usdaDisplay: DisplayFood[] =
+    tab === 'all'
+      ? usdaResults.map((f) => ({
+          key: `usda-${f.externalId}`,
+          name: f.name,
+          nutrientCount: Object.keys(f.nutrients).length,
+          serving: externalServing(f),
+          source: SOURCE_TAG[f.source] ?? f.source.toUpperCase(),
+          onOpen: () => openSheet(`/food/${f.source}/${f.externalId}${suffix}`),
+        }))
+      : []
+
+  let results = [...localResults, ...usdaDisplay]
+  if (q) {
+    results = results
+      .map((r) => ({ r, score: foodMatchScore(r.name, q) }))
+      .filter((x) => x.score > 0)
+      .sort(
+        (a, b) =>
+          b.score - a.score ||
+          b.r.nutrientCount - a.r.nutrientCount ||
+          a.r.name.localeCompare(b.r.name),
+      )
+      .map((x) => x.r)
   }
 
   return (
@@ -178,7 +240,9 @@ export function AddFoodSheet() {
         )}
       </div>
 
-      <div className="flex flex-1 flex-col gap-3 overflow-y-auto p-4">
+      {/* Plain block scroll pane (not a flex column): a flex item here would shrink the results
+          card to fit and clip its overflowing rows instead of letting the pane scroll. */}
+      <div className="min-h-0 flex-1 overflow-y-auto p-4">
         {scanning ? (
           <Suspense
             fallback={
@@ -196,42 +260,50 @@ export function AddFoodSheet() {
           </Suspense>
         ) : (
           <>
-            <div className="overflow-hidden rounded-card border border-border bg-surface">
-              {matchingUserFoods.map((f) => (
-                <ListRow
-                  key={f.id}
-                  title={f.name}
-                  subtitle={SOURCE_TAG[f.source] ?? f.source}
-                  onClick={() => openSheet(`/food/local/${f.id}${suffix}`)}
-                  trailing={
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        void toggleFav(f.id, !f.is_favorite)
-                      }}
-                      aria-label={f.is_favorite ? 'Unfavorite' : 'Favorite'}
-                    >
-                      {f.is_favorite ? (
-                        <IconHeartFilled size={18} className="text-accent" />
+            <div className="divide-y divide-border overflow-hidden rounded-card border border-border bg-surface">
+              {results.map((r) => (
+                <button
+                  key={r.key}
+                  onClick={r.onOpen}
+                  className="flex w-full items-start gap-3 px-4 py-3 text-left active:bg-input/40"
+                >
+                  <span className="min-w-0 flex-1">
+                    {/* Line 1: name (wraps) · heart */}
+                    <span className="flex items-start gap-2">
+                      <span className="min-w-0 flex-1 break-words text-[15px] text-text-primary">
+                        {r.name}
+                      </span>
+                      {r.favorite ? (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            r.favorite!.toggle()
+                          }}
+                          aria-label={r.favorite.isFavorite ? 'Unfavorite' : 'Favorite'}
+                          className="shrink-0"
+                        >
+                          {r.favorite.isFavorite ? (
+                            <IconHeartFilled size={18} className="text-accent" />
+                          ) : (
+                            <IconHeart size={18} className="text-text-tertiary" />
+                          )}
+                        </button>
                       ) : (
-                        <IconHeart size={18} className="text-text-tertiary" />
+                        <IconHeart size={18} className="shrink-0 text-text-tertiary" />
                       )}
-                    </button>
-                  }
-                />
+                    </span>
+                    {/* Line 2: nutrient count · serving (left) — source (right) */}
+                    <span className="mt-0.5 flex items-baseline justify-between gap-2 text-xs text-text-secondary">
+                      <span className="min-w-0 truncate">
+                        {r.nutrientCount} nutrients · {r.serving}
+                      </span>
+                      <span className="shrink-0 text-text-tertiary">{r.source}</span>
+                    </span>
+                  </span>
+                </button>
               ))}
 
-              {tab === 'all' &&
-                usdaResults.map((f) => (
-                  <ListRow
-                    key={`usda-${f.externalId}`}
-                    title={f.name}
-                    subtitle={f.brand ? `USDA · ${f.brand}` : 'USDA'}
-                    onClick={() => openExternal(f)}
-                  />
-                ))}
-
-              {matchingUserFoods.length === 0 && usdaResults.length === 0 && (
+              {results.length === 0 && (
                 <p className="px-4 py-6 text-center text-sm text-text-tertiary">
                   {tab === 'all' && !debounced.trim()
                     ? 'Search USDA, or pick from Favorites/Custom.'
@@ -243,7 +315,7 @@ export function AddFoodSheet() {
             </div>
 
             {usdaError && (
-              <p className="text-xs text-danger">
+              <p className="mt-3 text-xs text-danger">
                 Food search unavailable — is VITE_USDA_API_KEY set?
               </p>
             )}

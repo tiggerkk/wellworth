@@ -22,7 +22,7 @@ Phase 2 (Net Worth) is not built.
 - **Env (`.env`, gitignored; `.env.example` documents):** `VITE_SUPABASE_URL`,
   `VITE_SUPABASE_ANON_KEY`, `VITE_USDA_API_KEY`. All build-time `VITE_` vars.
 - **Gates:** husky `.husky/pre-commit` → lint-staged + `typecheck` + `test`; GitHub Actions
-  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 64 Vitest tests (pure helpers).
+  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 70 Vitest tests (pure helpers).
 - **Deploy status:** Deployed. GitHub `main` → Vercel auto-deploy; the production URL is in the
   Supabase redirect URLs + Google JS origins (see `OWNER-RUNBOOK.md`). Installed + tested on iPhone (PWA).
 - Conventions (DB-access-via-`src/data`, metric storage, generated `database.ts` contract, etc.) live
@@ -162,6 +162,17 @@ engineering decisions:
 - **Bulk import:** foods/supplements CSV import — `src/lib/csv.ts` (small RFC-4180 parser),
   `src/lib/food-import.ts` (validate + map to records), `data/food.importCustomFoods`, and
   `ImportFoodsSheet` (Library → **Import CSV**). Template + guide in `templates/`.
+- **Add Food search overhaul:** (1) **broader matching** — two layers. USDA matches whole tokens, so
+  `searchFoods` wildcards the last word at a stem (`food-search.ts#toUsdaWildcardQuery`:
+  "blueberry"/"blueberries"/"blueberrie"/"blueberr" → `blueberr*`) so partial/plural input all returns
+  the same candidates; then a pure, punctuation/plural-insensitive prefix scorer
+  (`food-search.ts#foodMatchScore`: leading-word-equals > leading-prefix > later-word > substring)
+  re-filters/ranks them. "Blueberries" → "Blueberries, raw" and "Muffins, blueberry".
+  (2) **Branded flood fix** — `searchFoods` now runs two USDA POST searches (whole-food databases vs
+  Branded) and merges whole-foods-first, collapsing/​capping Branded duplicates; a single combined
+  search drowned the page in 8000+ identical "BLUEBERRIES" Branded items (see **F6**). (3) **Two-line
+  result rows** — name (wraps) + heart on line 1; `n nutrients · serving` + source on line 2; local +
+  USDA merged into one list sorted by match score then nutrient count. (4) **Scroll fix** — see **F6**.
 - **Seed:** activities carry per-effort METs + default durations; added Running (Jog/Fast).
 - **Misc:** Settings "Visibility" → "Display"; Toggle knob overflow fixed (flex layout, not
   absolute+translate); FoodDetail favorite-heart toggle fixed (a nullable override, not `a || b`).
@@ -191,6 +202,27 @@ engineering decisions:
 - **F5 — `npx tsc --noEmit` type-checks nothing.** The root `tsconfig.json` is references-only
   (`files: []` + project references), so a bare `npx tsc --noEmit` exits 0 without checking the app.
   Verify types with **`npm run typecheck`** (`tsc --noEmit -p tsconfig.app.json`) or `tsc -b`.
+- **F6 — Add Food search: a cluster of bugs (post-launch).** (a) **USDA Branded flood:** a single
+  `/foods/search` across all `dataType`s ranks the thousands of identical Branded exact-name products
+  first (8000+ "BLUEBERRIES"), so the first page is _only_ those — "Blueberries, raw" / "Muffins,
+  blueberry" never appear. Fix: query whole-food types and `Branded` as **separate POST searches**,
+  merge whole-foods-first, dedupe/cap Branded. Don't fold them back into one search. (b) **Exact
+  matches buried nutrient-rich ones:** the relevance scorer ranked an _exact_ name match above a
+  _prefix_ match, so a bare 14-nutrient Branded "BLUEBERRIES" sorted above the 61-nutrient
+  "Blueberries, raw" (and looked like "uppercase wins"). Fix: exact and leading-prefix matches share
+  the top tier in `foodMatchScore`, so the nutrient-count tiebreak orders them — the fuller food wins.
+  (b2) **Partial words returned junk/nothing:** USDA matches whole tokens, so "blueberr"/"blueberrie"
+  returned 0 hits (or loose noise) and the client scorer can only rank what USDA returns. Fix:
+  wildcard the last word at a stem (`toUsdaWildcardQuery`) so partial/plural input recalls the full
+  set, then let the scorer filter by the typed term. The wildcard must sit at a **stem** (`blueberr*`),
+  not the raw word — `blueberry*` can't match "blueberries" and `blueberries*` can't match
+  "blueberry". And the scorer's prefix match must stay **plain** (no fuzzy last-char tolerance), or
+  "rice" matches "rich". (c) **Results wouldn't scroll:** the scroll pane was a `flex flex-col`
+  column, so the results card
+  (a flex item, default `flex-shrink:1`) **shrank to fit** the pane instead of overflowing it; the
+  card's `overflow-hidden` then clipped the rows past the fold, unreachable. Fix: make the scroll
+  pane a **plain block** `flex-1 overflow-y-auto` (matching the other full sheets) so the card keeps
+  its full height and the pane scrolls. A `flex-col` scroll pane needs its children `shrink-0`.
 
 ---
 

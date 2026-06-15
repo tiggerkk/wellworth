@@ -89,6 +89,16 @@ the cloud is authoritative (this also sidesteps iOS PWA storage eviction).
   Facts allows browser requests. Results are cached into `food` on favorite/log to limit calls.
 - **USDA FoodData Central** (`api.nal.usda.gov/fdc/v1`): free `api.data.gov` key. **Search uses POST**
   `/foods/search` with a JSON body — the GET form 400s when `dataType` includes `"Survey (FNDDS)"`.
+  `searchFoods` issues **two POST searches** — the whole-food databases
+  (`Foundation`/`SR Legacy`/`Survey (FNDDS)`) and `Branded` — and merges them whole-foods-first.
+  This is deliberate: a single combined search ranks the thousands of identical Branded exact-name
+  products (8000+ for "blueberries") above every varied whole-food entry, so they'd be the only thing
+  on the page. Branded duplicates (same name + brand) are then collapsed and capped. The UI sorts the
+  merged list (with local foods) by name-match relevance, so search only needs to guarantee variety.
+  USDA matches **whole tokens**, so a partial word ("blueberr") returns nothing; `searchFoods`
+  therefore wildcards the last word at a stem (`food-search.ts#toUsdaWildcardQuery`: "blueberry",
+  "blueberries", "blueberrie", "blueberr" → `blueberr*`) so partial/plural input all returns the same
+  set. Over-broad recall is fine — the UI scorer re-filters to the typed term.
   Detail is `GET /food/{fdcId}`. Map nutrients on the stable INFOODS **`nutrient.number`** (e.g. 208
   energy kcal — not 268 kJ; 320 vitamin A µg RAE — not 318 IU; 435 folate µg DFE; 328 vitamin D µg;
   312 copper mg). USDA amounts are per 100 g. When a USDA (or OFF) food is favorited or logged, cache

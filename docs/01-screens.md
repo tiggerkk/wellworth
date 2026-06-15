@@ -37,13 +37,24 @@ Diary groups, in order: **Breakfast, Lunch, Dinner, Snacks, Supplements, Activit
 
 ## Add Food (modal, from a group's `+`)
 
-- Search bar with a barcode-scan icon; a filter/sort control.
+- Search bar with a barcode-scan icon.
 - Tabs: **Favorites** (hearted items, default), **Custom** (your items), **All** (combined USDA + your custom).
   Selecting a food and returning (X / ADD TO DIARY) preserves the active tab, search text, and results.
-- Result rows: name, serving, source tag (USDA / Custom / Off for Open Food Facts). Your saved
-  foods (Favorites / Custom) show an inline heart to toggle favorite; raw USDA search results are
-  favorited from **Food Detail** (the heart there), since they aren't cached until favorited or
-  logged. Tapping a row opens **Food Detail**.
+- **Matching is broad** — case-, punctuation-, singular/plural-insensitive and partial-typing-tolerant
+  (so "blueberr" and "blueberri" already match "blueberry"/"blueberries") — a "Blueberries" search
+  returns "Blueberries, raw", "Muffins, blueberry", etc., not just the exact name. USDA text
+  search queries the whole-food databases (Foundation / SR Legacy / Survey FNDDS) and Branded foods
+  as two separate pools so the thousands of identical Branded exact-name products can't bury the
+  varied whole-food results; Branded duplicates (same name + brand) are collapsed and capped.
+- Result rows are two lines: **line 1** is the food name (wraps to multiple lines) with a heart on
+  the right; **line 2** shows `<n> nutrients · <serving>` on the left and the source tag (USDA /
+  Custom / OFF for Open Food Facts) on the right. Results are ordered by how well the name matches
+  the query, then by nutrient count (descending) — and because exact and leading-prefix matches share
+  a tier, the nutrient count decides between them (a bare "BLUEBERRIES" won't outrank a richer
+  "Blueberries, raw"). Your saved foods
+  (Favorites / Custom) have an interactive heart to toggle favorite; raw USDA results show a
+  non-interactive heart and are favorited from **Food Detail** (they aren't cached until favorited or
+  logged). Tapping a row opens **Food Detail**.
 - The barcode-scan button opens the camera scanner (lazy-loaded); a decoded EAN/UPC is looked up in
   Open Food Facts and opens **Food Detail**. Logging or favoriting saves the product into the `food`
   table (`source='off'`).
