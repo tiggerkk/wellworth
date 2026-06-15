@@ -287,9 +287,11 @@ Part K.)
    > (the blank template) is in the repo.
    > Same for your **Net Worth balances**: keep your real CSV as `templates/networth-seed.local.csv`
    > (git-ignored). Only the **sanitized** `templates/networth-seed-template.csv` is tracked. Never
-   > commit a CSV with real values. (History note: real balances were once committed and later purged
-   > from git history with a force-push — if you have an old clone, re-clone it so it doesn't push the
-   > old history back.)
+   > commit a CSV with real values. To load them into the app, use **Net Worth → Monthly Entry →
+   > Import CSV** (pick the month; re-importing replaces that month — see
+   > `templates/networth-import-guide.md`). (History note: real balances were once committed and later
+   > purged from git history with a force-push — if you have an old clone, re-clone it so it doesn't
+   > push the old history back.)
 
 - ✅ Check: refresh your GitHub repo page — you see the project files (and a `docs/` folder), but
   **no `.env`**.

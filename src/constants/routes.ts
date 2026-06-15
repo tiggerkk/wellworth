@@ -34,5 +34,6 @@ export const routes = {
     base: '/networth',
     dashboard: '/networth',
     entry: '/networth/entry',
+    import: '/networth/import',
   },
 } as const

@@ -7,11 +7,11 @@ Status legend: **Phase 2** (planned, separate phase) · **Deferred** (Phase-1-ad
 
 ---
 
-## Phase 2 — Net Worth · In progress
+## Phase 2 — Net Worth · Built (feature-complete)
 
 **What:** Monthly entry of asset values across categories — cash, time deposits, stocks, mutual funds, retirement, insurance, property — each held in one of three currencies (**HKD = base**, CNY, USD). A net-worth figure computed in the base currency, plus total and by-asset-type trend graphs with a selectable time window. Full spec: `06-networth.md`.
 
-**Status:** Being built (Phase 2). The two tables (`networth_snapshot`, `asset_entry`) and the Home-hub/module navigation are part of this phase. The items below are the sub-features that remain **deliberately deferred** within Net Worth:
+**Status:** **Built** (Phase 2, M1–M6) — Home hub + module nav, the two tables (`networth_snapshot`, `asset_entry`), Monthly Entry, Frankfurter FX, the Dashboard, and the in-app CSV importer all shipped. The items below are the sub-features that remain **deliberately deferred** within Net Worth:
 
 - **Auto stock price lookup** (Alpha Vantage) — manual value entry for now; `details.shares` is stored to support it later.
 - **Mutual fund NAV lookup** — no reliable free source for HK/China-domiciled funds; manual only.

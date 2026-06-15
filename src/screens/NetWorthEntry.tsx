@@ -5,9 +5,11 @@ import {
   IconPlus,
   IconRefresh,
   IconTrash,
+  IconUpload,
 } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
+import { useSheetNavigate } from '../hooks/useSheetNavigate'
 import {
   getSnapshotWithEntries,
   listEntriesBySnapshot,
@@ -26,10 +28,11 @@ import {
   type AssetType,
   type Currency,
 } from '../lib/networth'
-import { bumpNetWorth } from '../lib/networth-refresh'
+import { bumpNetWorth, useNetWorthVersion } from '../lib/networth-refresh'
 import { fetchRateToHkd, fetchRatesToHkd, type FetchableCurrency } from '../lib/fx'
 import { addMonths, formatMonthLabel, startOfMonth, todayLocal } from '../lib/date'
 import { draftAmount } from '../lib/quantity'
+import { routes } from '../constants/routes'
 import { SectionCard } from '../components/SectionCard'
 import { PrimaryButton } from '../components/PrimaryButton'
 import { SecondaryButton } from '../components/SecondaryButton'
@@ -109,9 +112,11 @@ function serialize(rows: EntryDraft[], fx: RateDraft): string {
 export function NetWorthEntry() {
   const { session } = useAuth()
   const userId = session?.user.id
+  const version = useNetWorthVersion()
   const [month, setMonth] = useState(() => startOfMonth(todayLocal()))
 
   const loadFn = useCallback(async (): Promise<MonthDraft> => {
+    void version // refetch after an import (or SAVE) bumps the Net Worth tick
     if (!userId) return { rows: [], fxRates: blankRates() }
     const existing = await getSnapshotWithEntries(userId, month)
     if (existing) return draftFromEntries(existing.entries) // stored rates stay frozen
@@ -129,7 +134,7 @@ export function NetWorthEntry() {
         USD: fetched.USD != null ? String(fetched.USD) : base.fxRates.USD,
       },
     }
-  }, [userId, month])
+  }, [userId, month, version])
   const { data: initial, loading, error } = useAsync(loadFn)
 
   return (
@@ -175,6 +180,7 @@ function EntryForm({
   const [saving, setSaving] = useState(false)
   const [fetching, setFetching] = useState<FetchableCurrency | null>(null)
   const [fxError, setFxError] = useState<Partial<Record<FetchableCurrency, boolean>>>({})
+  const openSheet = useSheetNavigate()
 
   const dirty = serialize(rows, fxRates) !== serialize(baseline.rows, baseline.fxRates)
 
@@ -317,6 +323,13 @@ function EntryForm({
 
       {/* Scrolling body */}
       <div className="flex flex-1 flex-col gap-3 overflow-y-auto p-4">
+        <button
+          onClick={() => openSheet(`${routes.networth.import}?month=${month}`)}
+          className="flex items-center gap-1 self-end text-sm text-positive"
+        >
+          <IconUpload size={16} /> Import CSV
+        </button>
+
         {/* Exchange rates */}
         <SectionCard title="Exchange rates (to HKD)">
           <div className="flex items-center justify-between px-4 py-2.5">

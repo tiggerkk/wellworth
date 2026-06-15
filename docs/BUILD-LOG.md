@@ -22,7 +22,7 @@ Phase 2 (Net Worth) is **in progress** — see "Phase 2 — Net Worth (build seq
 - **Env (`.env`, gitignored; `.env.example` documents):** `VITE_SUPABASE_URL`,
   `VITE_SUPABASE_ANON_KEY`, `VITE_USDA_API_KEY`. All build-time `VITE_` vars.
 - **Gates:** husky `.husky/pre-commit` → lint-staged + `typecheck` + `test`; GitHub Actions
-  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 89 Vitest tests (pure helpers).
+  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 94 Vitest tests (pure helpers).
 - **Deploy status:** Deployed. GitHub `main` → Vercel auto-deploy; the production URL is in the
   Supabase redirect URLs + Google JS origins (see `OWNER-RUNBOOK.md`). Installed + tested on iPhone (PWA).
 - Conventions (DB-access-via-`src/data`, metric storage, generated `database.ts` contract, etc.) live
@@ -312,6 +312,27 @@ Total⇄By-type toggle, and a latest-month per-type summary. Reads the frozen `v
   CSS vars so it matches the dark theme.
 - **Screen**: refetches after an entry SAVE via `useNetWorthVersion`; explicit loading/error/empty
   states; the By-Type chart only draws types **present** in the window.
+
+### M6 — In-app CSV importer (this session)
+
+Goal: bulk-load/replace a month's holdings from a CSV — **Phase 2 feature-complete**. Reuses the
+Wellness import machinery + `saveSnapshotEntries`.
+
+- **`src/lib/networth-import.ts`** (+`.test.ts`, +5 tests → **94**): `parseNetWorthCsv` (mirrors
+  `food-import.ts`) + `stripNumber` (strips thousands-separator commas **and** quotes — `"8,466,568.80"`
+  → `8466568.80` — for `value_native` and all detail values). Scans any number of
+  `detailN_key`/`detailN_value` pairs into `details`; validates asset_type/currency/name/value, case-
+  normalized, bad rows reported + skipped.
+- **`src/screens/ImportNetWorthSheet.tsx`** (mirrors `ImportFoodsSheet`): `<input type="month">` +
+  file picker → preview (rows, errors, fetched FX rates, HKD total); fetches the month's FX
+  (`fetchRatesToHkd`) and **blocks import** if a used non-HKD rate is missing; shows "Replaces N
+  existing entries"; Import → `saveSnapshotEntries` (create-or-replace, idempotent) → `bumpNetWorth`.
+  Opened from a new **Import CSV** button on Monthly Entry via `/networth/import` (background-location
+  over `/networth/entry`).
+- **Entry staleness fix:** `NetWorthEntry`'s `loadFn` now also depends on `useNetWorthVersion()`, so
+  the entry refetches after an import (and its own SAVE) — keeps entry + dashboard consistent (a brief
+  post-SAVE reload is the trade-off).
+- Guide: `templates/networth-import-guide.md`.
 
 ---
 

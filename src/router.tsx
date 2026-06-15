@@ -13,6 +13,7 @@ import {
   HighlightedNutrientsSheet,
   Home,
   ImportFoodsSheet,
+  ImportNetWorthSheet,
   Library,
   Login,
   NetWorthDashboard,
@@ -62,9 +63,10 @@ export const router = createBrowserRouter([
           },
           { path: 'wellness/settings/visible', element: <VisibleNutrientsSheet /> },
 
-          // Net Worth module — placeholders (M3+ fills these in)
+          // Net Worth module
           { path: 'networth', element: <NetWorthDashboard /> },
           { path: 'networth/entry', element: <NetWorthEntry /> },
+          { path: 'networth/import', element: <ImportNetWorthSheet /> },
         ],
       },
     ],
