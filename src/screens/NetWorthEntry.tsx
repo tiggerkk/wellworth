@@ -3,6 +3,7 @@ import {
   IconChevronLeft,
   IconChevronRight,
   IconPlus,
+  IconRefresh,
   IconTrash,
 } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
@@ -26,6 +27,7 @@ import {
   type Currency,
 } from '../lib/networth'
 import { bumpNetWorth } from '../lib/networth-refresh'
+import { fetchRateToHkd, fetchRatesToHkd, type FetchableCurrency } from '../lib/fx'
 import { addMonths, formatMonthLabel, startOfMonth, todayLocal } from '../lib/date'
 import { draftAmount } from '../lib/quantity'
 import { SectionCard } from '../components/SectionCard'
@@ -112,11 +114,21 @@ export function NetWorthEntry() {
   const loadFn = useCallback(async (): Promise<MonthDraft> => {
     if (!userId) return { rows: [], fxRates: blankRates() }
     const existing = await getSnapshotWithEntries(userId, month)
-    if (existing) return draftFromEntries(existing.entries)
-    // New month → copy-forward from the most recent prior snapshot.
+    if (existing) return draftFromEntries(existing.entries) // stored rates stay frozen
+    // New month → copy entries forward (if any) and auto-fetch this month's FX.
     const prior = await getLatestSnapshotBefore(userId, month)
-    if (prior) return draftFromEntries(await listEntriesBySnapshot(prior.id))
-    return { rows: [], fxRates: blankRates() }
+    const base = prior
+      ? draftFromEntries(await listEntriesBySnapshot(prior.id))
+      : { rows: [], fxRates: blankRates() }
+    const fetched = await fetchRatesToHkd(month)
+    return {
+      rows: base.rows,
+      fxRates: {
+        HKD: '1',
+        CNY: fetched.CNY != null ? String(fetched.CNY) : base.fxRates.CNY,
+        USD: fetched.USD != null ? String(fetched.USD) : base.fxRates.USD,
+      },
+    }
   }, [userId, month])
   const { data: initial, loading, error } = useAsync(loadFn)
 
@@ -161,8 +173,23 @@ function EntryForm({
     fxRates: { ...initial.fxRates },
   }))
   const [saving, setSaving] = useState(false)
+  const [fetching, setFetching] = useState<FetchableCurrency | null>(null)
+  const [fxError, setFxError] = useState<Partial<Record<FetchableCurrency, boolean>>>({})
 
   const dirty = serialize(rows, fxRates) !== serialize(baseline.rows, baseline.fxRates)
+
+  async function refreshRate(ccy: FetchableCurrency) {
+    setFetching(ccy)
+    setFxError((e) => ({ ...e, [ccy]: false }))
+    try {
+      const rate = await fetchRateToHkd(ccy, month, { force: true })
+      setFxRates((prev) => ({ ...prev, [ccy]: String(rate) }))
+    } catch {
+      setFxError((e) => ({ ...e, [ccy]: true }))
+    } finally {
+      setFetching(null)
+    }
+  }
 
   const rateOf = (currency: Currency) =>
     currency === 'HKD' ? 1 : draftAmount(fxRates[currency], 0)
@@ -297,28 +324,48 @@ function EntryForm({
             <span className="text-[15px] text-text-secondary">1.0000</span>
           </div>
           {(['CNY', 'USD'] as const).map((ccy) => (
-            <div
-              key={ccy}
-              className="flex items-center justify-between gap-2 border-t border-border px-4 py-2.5"
-            >
-              <span className="text-[15px] text-text-primary">{ccy}</span>
-              <input
-                type="number"
-                inputMode="decimal"
-                step="any"
-                min={0}
-                placeholder="rate"
-                value={fxRates[ccy]}
-                onChange={(e) =>
-                  setFxRates((prev) => ({ ...prev, [ccy]: e.target.value }))
-                }
-                className={`w-28 text-right ${inputCls}`}
-              />
+            <div key={ccy} className="border-t border-border px-4 py-2.5">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[15px] text-text-primary">{ccy}</span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    step="any"
+                    min={0}
+                    placeholder="rate"
+                    value={fxRates[ccy]}
+                    onChange={(e) => {
+                      const v = e.target.value
+                      setFxRates((prev) => ({ ...prev, [ccy]: v }))
+                      setFxError((er) => ({ ...er, [ccy]: false }))
+                    }}
+                    className={`w-28 text-right ${inputCls}`}
+                  />
+                  <button
+                    onClick={() => void refreshRate(ccy)}
+                    disabled={fetching === ccy}
+                    aria-label={`Refresh ${ccy} rate`}
+                    className="text-text-secondary disabled:opacity-50"
+                  >
+                    <IconRefresh size={16} />
+                  </button>
+                </div>
+              </div>
+              {fetching === ccy && (
+                <p className="mt-1 text-right text-xs text-text-tertiary">Fetching…</p>
+              )}
+              {fxError[ccy] && (
+                <p className="mt-1 text-right text-xs text-text-tertiary">
+                  Couldn’t fetch — enter manually.
+                </p>
+              )}
             </div>
           ))}
           <p className="px-4 py-2 text-xs text-text-tertiary">
-            Native → HKD as of the 1st of the month. Auto-fetch comes later — enter
-            manually for now.
+            Native → HKD as of the 1st of the month, auto-fetched from the ECB
+            (Frankfurter). Edit to override, or ↻ to refetch. Saved months keep their
+            rate.
           </p>
         </SectionCard>
 

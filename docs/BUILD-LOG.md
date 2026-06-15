@@ -22,7 +22,7 @@ Phase 2 (Net Worth) is **in progress** — see "Phase 2 — Net Worth (build seq
 - **Env (`.env`, gitignored; `.env.example` documents):** `VITE_SUPABASE_URL`,
   `VITE_SUPABASE_ANON_KEY`, `VITE_USDA_API_KEY`. All build-time `VITE_` vars.
 - **Gates:** husky `.husky/pre-commit` → lint-staged + `typecheck` + `test`; GitHub Actions
-  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 82 Vitest tests (pure helpers).
+  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 85 Vitest tests (pure helpers).
 - **Deploy status:** Deployed. GitHub `main` → Vercel auto-deploy; the production URL is in the
   Supabase redirect URLs + Google JS origins (see `OWNER-RUNBOOK.md`). Installed + tested on iPhone (PWA).
 - Conventions (DB-access-via-`src/data`, metric storage, generated `database.ts` contract, etc.) live
@@ -279,6 +279,21 @@ M2 placeholder). **Manual FX** in M3 (auto-fetch is M4); no schema change.
 - **`useAsync` gotcha:** it keeps the _previous_ `data` while a refetch is in flight, so the form is
   gated on `!loading` (and keyed by `month`) — else a month switch briefly mounts the new month with
   the old month's rows.
+
+### M4 — Frankfurter FX auto-fetch (this session)
+
+Goal: replace M3's manual-only rate entry with an auto-fetch, keeping a manual override.
+
+- **`src/lib/fx.ts`** (+ `fx.test.ts`, +3 tests → **85**): `fxUrl` / `parseFrankfurterRate` (pure,
+  tested); `fetchRateToHkd` (module cache keyed `month|currency`, `AbortController` ~8s timeout);
+  `fetchRatesToHkd` (`Promise.allSettled` → null on a failed leg, non-fatal). **Keyless, ECB,
+  CORS-enabled** (browser-callable like OFF). **CNY is native** — no RMB→CNY map. HKD never fetched
+  (= 1). Network fetch isn't unit-tested (only the pure URL/parse helpers are, matching off-api).
+- **`NetWorthEntry`**: `loadFn` auto-fetches **only for a new month** (no existing snapshot) and
+  overrides the copied/blank CNY/USD rates — existing months keep their **frozen stored** rates. The
+  FX bar gains a per-currency **refresh ↻** (force-bypasses the cache) + "Fetching…/Couldn't fetch"
+  status; a manual edit overrides and clears the error. `save()` is unchanged (already freezes the
+  rate + `value_base` per row).
 
 ---
 

@@ -126,6 +126,12 @@ the cloud is authoritative (this also sidesteps iOS PWA storage eviction).
   `*_100g` value is in grams** (including vitamins/minerals) → scale to our mg (×1000) / µg (×1e6).
   Sodium = `salt_100g / 2.5 × 1000` when `sodium_100g` is absent. All fields optional/sparse. Scanned
   products save into Custom.
+- **Frankfurter** (`api.frankfurter.dev/v1/{date}?from={CNY|USD}&to=HKD`): **keyless**, ECB-sourced,
+  CORS-enabled — used by **Net Worth** for native→HKD FX as of the **1st of the month** (it returns the
+  most recent rate on/before a non-trading day). CNY is the stored code (no RMB→CNY mapping); HKD = 1
+  is never fetched. The fetched rate is **frozen** onto each `asset_entry`
+  (`fx_rate_to_base`/`value_base`) so saved months are immune to later revisions; the user can override
+  per currency. Helpers + a small cache live in `src/lib/fx.ts`.
 - The **complete** nutrient mappings are the source of truth in code: USDA `nutrient.number` → our key
   in `src/lib/food-api.ts`, and Open Food Facts key → our key (with the per-field scale factor) in
   `src/lib/off-api.ts`. The owner-band DRI target/UL values are tabulated in `05-seed-data.md` and
