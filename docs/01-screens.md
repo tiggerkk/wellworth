@@ -23,11 +23,20 @@ Diary groups, in order: **Breakfast, Lunch, Dinner, Snacks, Supplements, Activit
 - Header `‹ Today ›`: left/right arrows step one day; tapping the date opens the **Calendar** modal.
 - **Highlighted Nutrients**: a grid of up to 8 chosen nutrients (a 4×2 grid when 8 are chosen), each a
   name, % of target, and a thin progress bar. Chosen in Settings → Highlighted Nutrients (max 8).
-- Groups (Breakfast … Activities): each header has a green `+` (add into that group), a kcal subtotal
-  (activities show negative kcal in coral), and a chevron. **Collapsed by default.** Expanded shows
-  the logged entries. **Tap an entry** to edit it (reopens Food Detail / Activity Log on the entry,
-  with **RESET** + **SAVE**); **swipe-left** reveals Delete.
-- Top-right `⋯` menu: View Daily Report · Copy to Today (only if a day was copied) · Copy Current Day · Copy Previous Day. (Copy clones the day's food/activity entries with their stored snapshots; it does not duplicate individual `strength_set` rows.)
+- Groups (Breakfast … Activities): each header reads, left-to-right, **expand chevron · category icon ·
+  group name · kcal subtotal** (activities show negative kcal in coral), with the green **`+`** (add into
+  that group) on the **right**. Category icons: a red apple for Breakfast/Lunch/Dinner, an orange cookie
+  for Snacks, a purple pill for Supplements, a blue runner for Activities. **Collapsed by default.**
+  Expanded shows the logged entries. **Tap an entry** to edit it (reopens Food Detail / Activity Log on
+  the entry, with **RESET** + **SAVE**); **swipe-left** reveals Delete.
+- Top-right `⋯` menu:
+  - **View Daily Report** — opens the day's report.
+  - **Multi-Select** — shows a checkbox before each logged entry (and expands all groups). Pick one or
+    more, then reopen the `⋯` menu and choose **Copy** to copy them to an in-app clipboard (strength
+    activities carry their `strength_set` rows); **Cancel** exits the mode.
+  - **Paste** — shown only when the clipboard holds entries copied from a **different** day; **adds**
+    them to the day in view (does not replace existing entries) and stays on that day.
+  - **Delete All Diary Entries** — clears the day's entries after a confirm.
 
 ## Calendar (modal, from the Diary date)
 

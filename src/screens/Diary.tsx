@@ -1,14 +1,27 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router'
-import { IconChevronLeft, IconChevronRight, IconDots } from '@tabler/icons-react'
+import {
+  IconChevronLeft,
+  IconChevronRight,
+  IconDots,
+  IconSquare,
+  IconSquareCheckFilled,
+} from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useProfile } from '../hooks/useProfile'
 import { useNutrientReference } from '../hooks/useNutrientReference'
 import { useSheetNavigate } from '../hooks/useSheetNavigate'
-import { copyEntriesToDay, deleteEntry, listEntriesByDay } from '../data/diary-entry'
+import {
+  cloneEntriesToDay,
+  deleteEntriesByDay,
+  deleteEntry,
+  listEntriesByDay,
+} from '../data/diary-entry'
+import { listSetsForEntries } from '../data/strength-set'
 import { addDays, formatDayLabel, todayLocal, type IsoDate } from '../lib/date'
 import { bumpDiary, useDiaryVersion } from '../lib/diary-refresh'
+import { setDiaryClipboard, useDiaryClipboard } from '../lib/diary-clipboard'
 import { computeTargets } from '../lib/targets'
 import {
   asNutrientMap,
@@ -17,6 +30,7 @@ import {
   sumNutrients,
 } from '../lib/nutrients'
 import { DIARY_GROUPS, type GroupName } from '../constants/groups'
+import type { Tables } from '../types/database'
 import { Calendar } from '../components/Calendar'
 import { GroupHeader } from '../components/GroupHeader'
 import { NutrientBar } from '../components/NutrientBar'
@@ -51,8 +65,13 @@ export function Diary() {
 
   const [calendarOpen, setCalendarOpen] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
-  const [copiedDay, setCopiedDay] = useState<IsoDate | null>(null)
   const [expanded, setExpanded] = useState<Partial<Record<GroupName, boolean>>>({})
+
+  // Multi-select: checkboxes on each entry, the selected ids, and the in-app clipboard.
+  const [multiSelect, setMultiSelect] = useState(false)
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const clipboard = useDiaryClipboard()
+  const canPaste = clipboard != null && clipboard.day !== day
 
   const openSheet = useSheetNavigate()
   const { data: profile } = useProfile()
@@ -67,6 +86,14 @@ export function Diary() {
   }, [userId, day, diaryVersion])
   const { data: entries, loading, error } = useAsync(entriesFn)
 
+  // Leaving the day abandons any in-progress selection (its ids belong to the old day).
+  useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect */
+    setMultiSelect(false)
+    setSelected(new Set())
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, [day])
+
   const targets = profile ? computeTargets(profile) : null
   const totals = deriveNetCarbs(
     sumNutrients((entries ?? []).map((e) => asNutrientMap(e.nutrients))),
@@ -77,13 +104,65 @@ export function Diary() {
     bumpDiary()
   }
 
-  async function copyFrom(from: IsoDate, to: IsoDate) {
+  function enterMultiSelect() {
+    setMenuOpen(false)
+    setSelected(new Set())
+    // Expand every group so all entries are visible to select.
+    setExpanded(Object.fromEntries(DIARY_GROUPS.map((g) => [g.key, true])))
+    setMultiSelect(true)
+  }
+
+  function exitMultiSelect() {
+    setMultiSelect(false)
+    setSelected(new Set())
+  }
+
+  function toggleSelect(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  async function copySelected() {
+    const chosen = (entries ?? []).filter((e) => selected.has(e.id))
+    if (chosen.length === 0) return
+    setMenuOpen(false)
+    // Pull strength_set children for any selected activity entries so Copy carries them.
+    const sets = await listSetsForEntries(
+      chosen.filter((e) => e.kind === 'activity').map((e) => e.id),
+    )
+    const setsByEntry: Record<string, Tables<'strength_set'>[]> = {}
+    for (const s of sets) (setsByEntry[s.entry_id] ??= []).push(s)
+    setDiaryClipboard({ day, entries: chosen, setsByEntry })
+    exitMultiSelect()
+  }
+
+  async function paste() {
+    if (!userId || !clipboard || clipboard.day === day) return
+    setMenuOpen(false)
+    await cloneEntriesToDay(userId, day, clipboard.entries, clipboard.setsByEntry)
+    bumpDiary()
+  }
+
+  async function deleteAll() {
     if (!userId) return
     setMenuOpen(false)
-    await copyEntriesToDay(userId, from, to)
-    if (to === day) bumpDiary()
-    else setDay(to)
+    if (
+      !window.confirm(
+        `Delete all entries for ${formatDayLabel(day)}? This can’t be undone.`,
+      )
+    ) {
+      return
+    }
+    await deleteEntriesByDay(userId, day)
+    bumpDiary()
   }
+
+  const menuItem =
+    'block w-full px-4 py-2.5 text-left text-text-primary active:bg-input/40'
 
   return (
     <div className="pb-4">
@@ -127,39 +206,47 @@ export function Diary() {
                   onClick={() => setMenuOpen(false)}
                   aria-hidden
                 />
-                <div className="absolute right-0 z-20 mt-1 w-52 overflow-hidden rounded-card border border-border bg-surface text-sm shadow-lg">
-                  <button
-                    onClick={() => {
-                      setMenuOpen(false)
-                      openSheet(`/report/${day}`)
-                    }}
-                    className="block w-full border-b border-border px-4 py-2.5 text-left text-text-primary active:bg-input/40"
-                  >
-                    View Daily Report
-                  </button>
-                  {copiedDay && (
-                    <button
-                      onClick={() => copyFrom(copiedDay, todayLocal())}
-                      className="block w-full px-4 py-2.5 text-left text-text-primary active:bg-input/40"
-                    >
-                      Copy to Today
-                    </button>
+                <div className="absolute right-0 z-20 mt-1 w-56 divide-y divide-border overflow-hidden rounded-card border border-border bg-surface text-sm shadow-lg">
+                  {multiSelect ? (
+                    <>
+                      <button
+                        onClick={() => void copySelected()}
+                        disabled={selected.size === 0}
+                        className={`${menuItem} disabled:text-text-tertiary disabled:active:bg-transparent`}
+                      >
+                        Copy{selected.size > 0 ? ` (${selected.size})` : ''}
+                      </button>
+                      <button onClick={exitMultiSelect} className={menuItem}>
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => {
+                          setMenuOpen(false)
+                          openSheet(`/report/${day}`)
+                        }}
+                        className={menuItem}
+                      >
+                        View Daily Report
+                      </button>
+                      <button onClick={enterMultiSelect} className={menuItem}>
+                        Multi-Select
+                      </button>
+                      {canPaste && (
+                        <button onClick={() => void paste()} className={menuItem}>
+                          Paste
+                        </button>
+                      )}
+                      <button
+                        onClick={() => void deleteAll()}
+                        className={`${menuItem} text-danger`}
+                      >
+                        Delete All Diary Entries
+                      </button>
+                    </>
                   )}
-                  <button
-                    onClick={() => {
-                      setCopiedDay(day)
-                      setMenuOpen(false)
-                    }}
-                    className="block w-full px-4 py-2.5 text-left text-text-primary active:bg-input/40"
-                  >
-                    Copy Current Day
-                  </button>
-                  <button
-                    onClick={() => copyFrom(addDays(day, -1), day)}
-                    className="block w-full px-4 py-2.5 text-left text-text-primary active:bg-input/40"
-                  >
-                    Copy Previous Day
-                  </button>
                 </div>
               </>
             )}
@@ -215,6 +302,8 @@ export function Diary() {
               >
                 <GroupHeader
                   title={group.label}
+                  Icon={group.Icon}
+                  iconClass={group.iconClass}
                   kcal={subtotal}
                   expanded={isOpen}
                   onAdd={() =>
@@ -235,27 +324,50 @@ export function Diary() {
                     </p>
                   ) : (
                     <div className="border-t border-border">
-                      {groupEntries.map((e) => (
-                        <SwipeRow key={e.id} onDelete={() => handleDelete(e.id)}>
+                      {groupEntries.map((e) => {
+                        const row = (
                           <ListRow
+                            leading={
+                              multiSelect ? (
+                                selected.has(e.id) ? (
+                                  <IconSquareCheckFilled
+                                    size={20}
+                                    className="text-positive"
+                                  />
+                                ) : (
+                                  <IconSquare size={20} className="text-text-tertiary" />
+                                )
+                              ) : undefined
+                            }
                             title={e.label}
                             subtitle={
                               e.duration_min ? `${e.duration_min} min` : undefined
                             }
                             trailing={`${Math.round(e.energy_kcal ?? 0)} kcal`}
-                            onClick={() => {
-                              if (e.kind === 'activity' && e.activity_id)
-                                openSheet(
-                                  `/activity/${e.activity_id}?entry=${e.id}&day=${day}`,
-                                )
-                              else if (e.kind === 'food' && e.food_id)
-                                openSheet(
-                                  `/food/local/${e.food_id}?entry=${e.id}&group=${e.group_name}&day=${day}`,
-                                )
-                            }}
+                            onClick={
+                              multiSelect
+                                ? () => toggleSelect(e.id)
+                                : () => {
+                                    if (e.kind === 'activity' && e.activity_id)
+                                      openSheet(
+                                        `/activity/${e.activity_id}?entry=${e.id}&day=${day}`,
+                                      )
+                                    else if (e.kind === 'food' && e.food_id)
+                                      openSheet(
+                                        `/food/local/${e.food_id}?entry=${e.id}&group=${e.group_name}&day=${day}`,
+                                      )
+                                  }
+                            }
                           />
-                        </SwipeRow>
-                      ))}
+                        )
+                        return multiSelect ? (
+                          <div key={e.id}>{row}</div>
+                        ) : (
+                          <SwipeRow key={e.id} onDelete={() => handleDelete(e.id)}>
+                            {row}
+                          </SwipeRow>
+                        )
+                      })}
                     </div>
                   ))}
               </div>

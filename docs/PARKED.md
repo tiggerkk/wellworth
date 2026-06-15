@@ -29,7 +29,7 @@ Status legend: **Phase 2** (planned, separate phase) · **Deferred** (Phase-1-ad
 
 **What:** Re-log a past diary entry to today (e.g. from a history/favorites view) in one tap.
 **Why deferred:** Not in the Phase-1 screen set; the daily loop + copy-day cover the core need.
-**Decided:** `diary_entry` already keeps `food_id`/`activity_id`/`serving_id` and a full nutrient/energy/label **snapshot** precisely for this — a re-log clones the snapshot to the target day (like `copyEntriesToDay`, but per-entry). No schema change needed.
+**Decided:** `diary_entry` already keeps `food_id`/`activity_id`/`serving_id` and a full nutrient/energy/label **snapshot** precisely for this — a re-log clones the snapshot to the target day (like the Multi-Select `cloneEntriesToDay`, but a one-tap per-entry shortcut). No schema change needed.
 
 ### Restore (un-delete) via `deleted_at` · Deferred
 
@@ -48,12 +48,6 @@ Status legend: **Phase 2** (planned, separate phase) · **Deferred** (Phase-1-ad
 **What:** A heart directly on USDA search rows. Currently you favorite from **Food Detail**.
 **Why deferred:** Raw USDA results aren't cached in `food` until favorited/logged, so an inline heart would need to cache-on-tap from the list. Saved foods (Favorites/Custom) already have inline hearts.
 **Decided:** On inline-favorite, call the same `ensureCachedId` path used by Food Detail, then `setFavorite`.
-
-### Copy-day cloning of strength sets · Deferred
-
-**What:** The ⋯ copy-day actions clone `diary_entry` rows but not their `strength_set` children.
-**Why deferred:** Minor; copied strength entries keep their energy/label, just not the per-set detail.
-**Decided:** A future version would also clone `strength_set` rows for copied strength entries.
 
 ### Adjustable activity factor in Settings · Deferred
 

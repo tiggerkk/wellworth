@@ -13,6 +13,20 @@ export async function listSetsByEntry(
   return data
 }
 
+/** All sets for several entries (Multi-Select copy of strength activities), by set number. */
+export async function listSetsForEntries(
+  entryIds: string[],
+): Promise<Tables<'strength_set'>[]> {
+  if (entryIds.length === 0) return []
+  const { data, error } = await supabase
+    .from('strength_set')
+    .select('*')
+    .in('entry_id', entryIds)
+    .order('set_number')
+  if (error) throw error
+  return data
+}
+
 /** Insert all sets for a strength entry in one round-trip. */
 export async function createSets(
   sets: TablesInsert<'strength_set'>[],

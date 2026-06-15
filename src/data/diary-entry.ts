@@ -76,22 +76,34 @@ export async function deleteEntry(id: string): Promise<void> {
   if (error) throw error
 }
 
-/**
- * Clone every entry from one day onto another (the ⋯-menu copy actions). Snapshots
- * (nutrients/energy/label) are copied as-is. Strength sets are not duplicated.
- * Returns the number of entries copied.
- */
-export async function copyEntriesToDay(
-  userId: string,
-  from: string,
-  to: string,
-): Promise<number> {
-  const source = await listEntriesByDay(userId, from)
-  if (source.length === 0) return 0
+/** Hard-delete every entry for a day (the ⋯ "Delete All" action). strength_set rows cascade. */
+export async function deleteEntriesByDay(userId: string, day: string): Promise<void> {
+  const { error } = await supabase
+    .from('diary_entry')
+    .delete()
+    .eq('user_id', userId)
+    .eq('day', day)
+  if (error) throw error
+}
 
-  const clones: TablesInsert<'diary_entry'>[] = source.map((e) => ({
+/**
+ * Clone specific entries onto a target day (Multi-Select → Copy → Paste), ADDING to whatever is
+ * already there. Snapshots (nutrients/energy/label) copy as-is, and strength entries also clone
+ * their `strength_set` children onto the new entry ids. `setsByEntry` is keyed by source entry id;
+ * the insert preserves input order, so each clone links to its source's sets by position.
+ * Returns the number of entries created.
+ */
+export async function cloneEntriesToDay(
+  userId: string,
+  toDay: string,
+  entries: Tables<'diary_entry'>[],
+  setsByEntry: Record<string, Tables<'strength_set'>[]> = {},
+): Promise<number> {
+  if (entries.length === 0) return 0
+
+  const clones: TablesInsert<'diary_entry'>[] = entries.map((e) => ({
     user_id: userId,
-    day: to,
+    day: toDay,
     group_name: e.group_name,
     kind: e.kind,
     food_id: e.food_id,
@@ -104,7 +116,26 @@ export async function copyEntriesToDay(
     label: e.label,
     nutrients: e.nutrients,
   }))
-  const { error } = await supabase.from('diary_entry').insert(clones)
+  const { data: inserted, error } = await supabase
+    .from('diary_entry')
+    .insert(clones)
+    .select('id')
   if (error) throw error
+
+  const setRows = (inserted ?? []).flatMap((row, i) => {
+    const sets = entries[i] ? (setsByEntry[entries[i]!.id] ?? []) : []
+    return sets.map((s) => ({
+      entry_id: row.id,
+      exercise: s.exercise,
+      set_number: s.set_number,
+      reps: s.reps,
+      weight: s.weight,
+      weight_unit: s.weight_unit,
+    }))
+  })
+  if (setRows.length > 0) {
+    const { error: setError } = await supabase.from('strength_set').insert(setRows)
+    if (setError) throw setError
+  }
   return clones.length
 }

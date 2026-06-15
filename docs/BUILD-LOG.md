@@ -156,6 +156,16 @@ engineering decisions:
   "type onto the leading 0" bug from coercing empty→0); shared `src/lib/quantity.ts#draftAmount`.
   Effort picker shows all levels but **disables** ones with no MET; New Activity requires ≥1 MET (and
   the default effort must have one); effort bands relabeled (Light ≤3 / Moderate 3.1–5.9 / Vigorous ≥6).
+- **Diary group headers + ⋯ menu overhaul:** group headers reordered to **chevron · category icon ·
+  name · kcal** with the green `+` moved to the **right** (`GroupHeader` now takes `Icon`/`iconClass`
+  from `constants/groups.ts` — apple/cookie/pill/runner in per-category colors). The ⋯ menu's per-day
+  copy actions were replaced by **Multi-Select → Copy / Paste / Delete All**: Multi-Select shows a
+  checkbox per entry (and expands all groups); Copy stashes the chosen entries — with their
+  `strength_set` children — in an in-memory clipboard (`lib/diary-clipboard.ts`, a `useSyncExternalStore`
+  store so it survives the Diary remounting behind a sheet); Paste appears only for a **different** day
+  and **adds** the clipboard entries to the viewed day (`cloneEntriesToDay`, which also clones strength
+  sets — retired the PARKED item); Delete All clears the day via `deleteEntriesByDay` after a confirm.
+  Removed `copyEntriesToDay`.
 - **Return to Diary after logging:** ADD TO DIARY from Food Detail / Activity Log now lands back on
   the Diary, not the picker the user came through. `useReturnAfterLog` pops two sheets in create mode
   (detail-over-picker-over-Diary) and one in edit mode (detail opened straight from a Diary row, via
