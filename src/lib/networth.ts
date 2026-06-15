@@ -83,3 +83,55 @@ export function groupByType<T extends Typed>(
 export function formatHkd(n: number): string {
   return `HK$${Math.round(n).toLocaleString('en-US')}`
 }
+
+/** Compact HKD for chart axes/ticks, e.g. `HK$1.2M` / `HK$450K`. */
+export function formatHkdCompact(n: number): string {
+  const abs = Math.abs(n)
+  if (abs >= 1_000_000) return `HK$${(n / 1_000_000).toFixed(abs >= 10_000_000 ? 0 : 1)}M`
+  if (abs >= 1_000) return `HK$${Math.round(n / 1_000)}K`
+  return `HK$${Math.round(n)}`
+}
+
+/** Sum `value_base` per asset type (all 7 keys present, 0 default). */
+export function typeTotals(
+  entries: { value_base: number; asset_type: string }[],
+): Record<AssetType, number> {
+  const out = Object.fromEntries(ASSET_TYPES.map((t) => [t, 0])) as Record<
+    AssetType,
+    number
+  >
+  for (const e of entries) {
+    if (e.asset_type in out) out[e.asset_type as AssetType] += e.value_base ?? 0
+  }
+  return out
+}
+
+export interface TypeBreakdownRow {
+  type: AssetType
+  total: number
+  pct: number
+}
+
+/** Per-type HKD total + share of the grand total (fixed order; pct 0 when empty). */
+export function typeBreakdown(
+  entries: { value_base: number; asset_type: string }[],
+): TypeBreakdownRow[] {
+  const totals = typeTotals(entries)
+  const grand = ASSET_TYPES.reduce((s, t) => s + totals[t], 0)
+  return ASSET_TYPES.map((type) => ({
+    type,
+    total: totals[type],
+    pct: grand > 0 ? totals[type] / grand : 0,
+  }))
+}
+
+/** Chart/legend/summary color per asset type — CSS vars from the @theme palette (index.css). */
+export const ASSET_TYPE_COLORS: Record<AssetType, string> = {
+  cash: 'var(--color-positive)',
+  time_deposit: 'var(--color-cat-activity)',
+  stock: 'var(--color-accent)',
+  mutual_fund: 'var(--color-cat-supplement)',
+  retirement: 'var(--color-cat-snack)',
+  insurance: 'var(--color-cat-meal)',
+  property: 'var(--color-text-muted)',
+}

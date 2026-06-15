@@ -4,8 +4,8 @@
 
 - **Frontend:** React + Vite + TypeScript (strict mode). Tailwind CSS (v4, CSS-first via
   `@tailwindcss/vite`). `vite-plugin-pwa` for install/offline. **React Router** (the unified
-  `react-router` package) for routing + modal sheets. Recharts is installed but reserved for the
-  Phase-2 net-worth trend (unused in Phase 1).
+  `react-router` package) for routing + modal sheets. **Recharts** powers the Net Worth dashboard
+  trend chart (Phase 2); it's **lazy-loaded** (its own chunk) so it stays out of the initial bundle.
 - **Barcode:** `@zxing/browser` (`BrowserMultiFormatReader`) + `@zxing/library` decoding the device
   camera via `getUserMedia`. Requires HTTPS (localhost is exempt for dev). The scanner is lazy-loaded
   so ZXing is a separate chunk, fetched only when scanning.

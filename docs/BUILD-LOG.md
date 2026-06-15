@@ -16,13 +16,13 @@ Phase 2 (Net Worth) is **in progress** — see "Phase 2 — Net Worth (build seq
   Vite 8.0, TypeScript 6.0 (strict), Tailwind 4.3 (CSS-first via `@tailwindcss/vite`),
   vite-plugin-pwa 1.3, `@supabase/supabase-js` 2.108, `@zxing/library` 0.22 + `@zxing/browser` 0.2,
   `@tabler/icons-react` 3.44, Vitest 4.1, ESLint 10 (flat config), Prettier 3.8, husky 9. `recharts`
-  3.8 is installed but unused (Phase 2).
+  3.8 powers the Net Worth dashboard trend chart (lazy-loaded into its own chunk).
 - **Scripts:** `dev`, `build` (`tsc -b && vite build`), `preview`, `lint`, `format`, `typecheck`,
   `test`, `check` (all gates), `gen:types` (Supabase → `src/types/database.ts`), `prepare` (husky).
 - **Env (`.env`, gitignored; `.env.example` documents):** `VITE_SUPABASE_URL`,
   `VITE_SUPABASE_ANON_KEY`, `VITE_USDA_API_KEY`. All build-time `VITE_` vars.
 - **Gates:** husky `.husky/pre-commit` → lint-staged + `typecheck` + `test`; GitHub Actions
-  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 85 Vitest tests (pure helpers).
+  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 89 Vitest tests (pure helpers).
 - **Deploy status:** Deployed. GitHub `main` → Vercel auto-deploy; the production URL is in the
   Supabase redirect URLs + Google JS origins (see `OWNER-RUNBOOK.md`). Installed + tested on iPhone (PWA).
 - Conventions (DB-access-via-`src/data`, metric storage, generated `database.ts` contract, etc.) live
@@ -294,6 +294,24 @@ Goal: replace M3's manual-only rate entry with an auto-fetch, keeping a manual o
   FX bar gains a per-currency **refresh ↻** (force-bypasses the cache) + "Fetching…/Couldn't fetch"
   status; a manual edit overrides and clears the error. `save()` is unchanged (already freezes the
   rate + `value_base` per row).
+
+### M5 — Net Worth Dashboard (this session)
+
+Goal: the real dashboard — current total, total-trend line graph (recharts) with a window selector +
+Total⇄By-type toggle, and a latest-month per-type summary. Reads the frozen `value_base`; no mutation.
+
+- **Data**: `asset-entry.listSnapshotsWithEntries(userId)` — one **embedded select**
+  (`networth_snapshot` → `asset_entry(value_base, asset_type)`). Net-worth data is small, so fetch all
+  and slice the window **client-side** (no refetch per window).
+- **Calc** (`networth.ts`, +4 tests → **89**): `typeTotals`, `typeBreakdown` (% of net worth),
+  `ASSET_TYPE_COLORS` (CSS-var per type), `formatHkdCompact` (axis). `date.formatMonthShort`
+  (`Jun ’26`); `constants/networth-ranges.ts` (6M/12M/2Y/3Y/5Y/All, default All).
+- **recharts is lazy-loaded.** All recharts imports live in `components/NetWorthTrendChart.tsx`, which
+  the dashboard pulls in via `lazy()`/`Suspense` (mirrors the BarcodeScanner split) — it builds as its
+  **own ~344 kB chunk** (gzip ~101 kB), kept out of the initial bundle. Chart colors are the `@theme`
+  CSS vars so it matches the dark theme.
+- **Screen**: refetches after an entry SAVE via `useNetWorthVersion`; explicit loading/error/empty
+  states; the By-Type chart only draws types **present** in the window.
 
 ---
 

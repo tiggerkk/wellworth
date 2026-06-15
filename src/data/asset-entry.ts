@@ -31,6 +31,29 @@ export async function getSnapshotWithEntries(
   return { snapshot, entries }
 }
 
+/** Minimal per-month rollup for the Net Worth dashboard (all months, oldest first). */
+export interface SnapshotEntries {
+  month: string
+  entries: { value_base: number; asset_type: string }[]
+}
+
+/**
+ * Every snapshot with just its entries' `value_base` + `asset_type`, via one embedded select.
+ * Net-worth data is small (≈monthly), so the dashboard fetches all and slices the time window
+ * client-side. RLS scopes both tables to the owner.
+ */
+export async function listSnapshotsWithEntries(
+  userId: string,
+): Promise<SnapshotEntries[]> {
+  const { data, error } = await supabase
+    .from('networth_snapshot')
+    .select('month, asset_entry(value_base, asset_type)')
+    .eq('user_id', userId)
+    .order('month', { ascending: true })
+  if (error) throw error
+  return (data ?? []).map((s) => ({ month: s.month, entries: s.asset_entry ?? [] }))
+}
+
 /** Caller-supplied entry to persist (snapshot_id + user_id are filled in by the save). */
 export type AssetEntryInput = Omit<TablesInsert<'asset_entry'>, 'snapshot_id' | 'user_id'>
 

@@ -65,3 +65,12 @@ export function formatMonthLabel(iso: IsoDate): string {
     year: 'numeric',
   }).format(fromIsoDate(iso))
 }
+
+/** Short month label for chart ticks, e.g. `Jun ’26`. */
+export function formatMonthShort(iso: IsoDate): string {
+  const s = new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    year: '2-digit',
+  }).format(fromIsoDate(iso))
+  return s.replace(/(\d\d)$/, '’$1')
+}
