@@ -1,0 +1,38 @@
+/**
+ * Central source of truth for app route paths. Modules are URL-namespaced
+ * (`/wellness/*`, `/networth/*`) so adding a module is a drop-in: add its paths
+ * here + a `ModuleDef` in `modules.ts`.
+ *
+ * These are **path builders only** — URL-as-state query strings (`?day=`,
+ * `?group=`, `?entry=`, `?tab=`) are appended by callers.
+ */
+export const routes = {
+  root: '/',
+  login: '/login',
+  home: '/home',
+  settings: '/settings', // global: profile, units, account
+  wellness: {
+    base: '/wellness',
+    diary: '/wellness',
+    dashboard: '/wellness/dashboard',
+    library: '/wellness/library',
+    settings: '/wellness/settings', // wellness sub-settings: targets, display
+    settingsHighlighted: '/wellness/settings/highlighted',
+    settingsVisible: '/wellness/settings/visible',
+    addFood: '/wellness/add-food',
+    food: (source: string, id: string) => `/wellness/food/${source}/${id}`,
+    addActivity: '/wellness/add-activity',
+    activity: (id: string) => `/wellness/activity/${id}`,
+    report: (day: string) => `/wellness/report/${day}`,
+    importFoods: '/wellness/import-foods',
+    newFood: '/wellness/new-food',
+    editFood: (id: string) => `/wellness/edit-food/${id}`,
+    newActivity: '/wellness/new-activity',
+    editActivity: (id: string) => `/wellness/edit-activity/${id}`,
+  },
+  networth: {
+    base: '/networth',
+    dashboard: '/networth',
+    entry: '/networth/entry',
+  },
+} as const

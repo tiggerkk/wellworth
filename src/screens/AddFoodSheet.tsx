@@ -10,6 +10,7 @@ import { searchFoods, type ExternalFood } from '../lib/food-api'
 import { foodMatchScore } from '../lib/food-search'
 import { asNutrientMap } from '../lib/nutrients'
 import { todayLocal } from '../lib/date'
+import { routes } from '../constants/routes'
 
 // Lazy-loaded so the ZXing barcode library is a separate chunk, fetched only when scanning.
 const BarcodeScanner = lazy(() =>
@@ -177,7 +178,7 @@ export function AddFoodSheet() {
     nutrientCount: Object.keys(asNutrientMap(f.nutrients)).length,
     serving: localServing(f.nutrient_basis),
     source: SOURCE_TAG[f.source] ?? f.source,
-    onOpen: () => openSheet(`/food/local/${f.id}${suffix}`),
+    onOpen: () => openSheet(`${routes.wellness.food('local', f.id)}${suffix}`),
     favorite: {
       isFavorite: f.is_favorite,
       toggle: () => void toggleFav(f.id, !f.is_favorite),
@@ -191,7 +192,8 @@ export function AddFoodSheet() {
           nutrientCount: Object.keys(f.nutrients).length,
           serving: externalServing(f),
           source: SOURCE_TAG[f.source] ?? f.source.toUpperCase(),
-          onOpen: () => openSheet(`/food/${f.source}/${f.externalId}${suffix}`),
+          onOpen: () =>
+            openSheet(`${routes.wellness.food(f.source, f.externalId)}${suffix}`),
         }))
       : []
 
@@ -254,7 +256,7 @@ export function AddFoodSheet() {
             <BarcodeScanner
               onScan={(code) => {
                 setScanning(false)
-                openSheet(`/food/off/${code}${suffix}`)
+                openSheet(`${routes.wellness.food('off', code)}${suffix}`)
               }}
             />
           </Suspense>

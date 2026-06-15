@@ -232,6 +232,33 @@ the running Wellness app.
   the global level, last-used-module reopen. Built in the next milestone (M2). `00-PRD.md` carries the
   navigation model.
 
+### M2 — Home hub + module routing refactor (this session)
+
+Goal: turn the single-app shell into a multi-module app behind a Home hub, with Wellness fully
+working under `/wellness/*` and Net Worth reachable as a placeholder module. No DB/data-layer changes.
+
+- **Drop-in module architecture.** `src/constants/routes.ts` is the single source of truth for all
+  path strings; `src/constants/modules.ts` holds the `MODULES` registry (`ModuleDef` + `moduleForPath`)
+  that both the Home hub cards and the per-module `BottomNav` are derived from. Adding a module later =
+  one `ModuleDef` + its routes in `router.tsx` — no structural change. New screens: `Home` (hub),
+  `WellnessSettings`, `NetWorthDashboard`/`NetWorthEntry` (placeholders), `RootRedirect`.
+- **Routing.** All routes stay flat children of the single `<AppShell/>` (full path strings, no nested
+  layout route) so the background-location sheet pattern + single `<Outlet/>` are unchanged — lowest
+  risk. Wellness tabs **and all its sheets** moved under `/wellness/*`; `TAB_FOR_PATH` re-keyed.
+  `/` → `RootRedirect` → last-used module (`src/lib/last-module.ts`, localStorage) else `/home`.
+- **Module-aware shell.** `BottomNav` takes a `module` prop (its tabs + a trailing Home item);
+  `AppShell` renders it only when `moduleForPath(pathname)` is non-null (hub + global Settings have no
+  bottom nav) and records the last-used module in an effect.
+- **Settings split.** Global `Settings` (Profile, Units, Account) reached from the hub gear; new
+  `WellnessSettings` (protein Target + nutrient Display sheets) reached from a **gear added to the
+  Wellness screen headers** (Diary/Dashboard/Library). The highlighted/visible sheets moved to
+  `/wellness/settings/*`.
+- **Internal links.** Every `openSheet(...)`/`to=` absolute literal swapped to `routes.*`
+  (Diary, AddFoodSheet, AddActivitySheet, Library). The Back/X pop-logic (`useReturnAfterLog`,
+  `Sheet`) is path-agnostic (`navigate(-1/-2)` off `state.background`) — unchanged.
+- Built on branch `phase2-m2-home-hub` (auto-deploy safety); gates + production build green. The 76
+  tests are pure helpers, so routing was verified by manual click-through.
+
 ---
 
 ## Failures & gotchas to not repeat

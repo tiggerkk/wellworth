@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import {
   IconChevronLeft,
   IconChevronRight,
   IconDots,
+  IconSettings,
   IconSquare,
   IconSquareCheckFilled,
 } from '@tabler/icons-react'
@@ -30,6 +31,7 @@ import {
   sumNutrients,
 } from '../lib/nutrients'
 import { DIARY_GROUPS, type GroupName } from '../constants/groups'
+import { routes } from '../constants/routes'
 import type { Tables } from '../types/database'
 import { Calendar } from '../components/Calendar'
 import { GroupHeader } from '../components/GroupHeader'
@@ -41,10 +43,10 @@ export function Diary() {
   const { session } = useAuth()
   const userId = session?.user.id
 
-  // The viewed day lives in the URL (`/?day=YYYY-MM-DD`) rather than component state, so it
-  // survives the Diary unmounting/remounting while a sheet (Daily Report, Add Food/Activity)
-  // is open over it: navigate(-1) returns to the same entry and restores the day. A clean `/`
-  // (no param) means today. `setDay` replaces the entry so day stepping doesn't pile up history.
+  // The viewed day lives in the URL (`/wellness?day=YYYY-MM-DD`) rather than component state, so
+  // it survives the Diary unmounting/remounting while a sheet (Daily Report, Add Food/Activity)
+  // is open over it: navigate(-1) returns to the same entry and restores the day. A clean
+  // `/wellness` (no param) means today. `setDay` replaces so day stepping doesn't pile up history.
   const [params, setParams] = useSearchParams()
   const dayParam = params.get('day')
   const day: IsoDate =
@@ -191,65 +193,74 @@ export function Diary() {
               <IconChevronRight size={22} />
             </button>
           </div>
-          <div className="relative">
-            <button
-              onClick={() => setMenuOpen((o) => !o)}
-              aria-label="Day options"
+          <div className="flex items-center gap-1">
+            <Link
+              to={routes.wellness.settings}
+              aria-label="Wellness settings"
               className="p-1 text-text-secondary"
             >
-              <IconDots size={20} />
-            </button>
-            {menuOpen && (
-              <>
-                <div
-                  className="fixed inset-0 z-10"
-                  onClick={() => setMenuOpen(false)}
-                  aria-hidden
-                />
-                <div className="absolute right-0 z-20 mt-1 w-56 divide-y divide-border overflow-hidden rounded-card border border-border bg-surface text-sm shadow-lg">
-                  {multiSelect ? (
-                    <>
-                      <button
-                        onClick={() => void copySelected()}
-                        disabled={selected.size === 0}
-                        className={`${menuItem} disabled:text-text-tertiary disabled:active:bg-transparent`}
-                      >
-                        Copy{selected.size > 0 ? ` (${selected.size})` : ''}
-                      </button>
-                      <button onClick={exitMultiSelect} className={menuItem}>
-                        Cancel
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        onClick={() => {
-                          setMenuOpen(false)
-                          openSheet(`/report/${day}`)
-                        }}
-                        className={menuItem}
-                      >
-                        View Daily Report
-                      </button>
-                      <button onClick={enterMultiSelect} className={menuItem}>
-                        Multi-Select
-                      </button>
-                      {canPaste && (
-                        <button onClick={() => void paste()} className={menuItem}>
-                          Paste
+              <IconSettings size={20} />
+            </Link>
+            <div className="relative">
+              <button
+                onClick={() => setMenuOpen((o) => !o)}
+                aria-label="Day options"
+                className="p-1 text-text-secondary"
+              >
+                <IconDots size={20} />
+              </button>
+              {menuOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setMenuOpen(false)}
+                    aria-hidden
+                  />
+                  <div className="absolute right-0 z-20 mt-1 w-56 divide-y divide-border overflow-hidden rounded-card border border-border bg-surface text-sm shadow-lg">
+                    {multiSelect ? (
+                      <>
+                        <button
+                          onClick={() => void copySelected()}
+                          disabled={selected.size === 0}
+                          className={`${menuItem} disabled:text-text-tertiary disabled:active:bg-transparent`}
+                        >
+                          Copy{selected.size > 0 ? ` (${selected.size})` : ''}
                         </button>
-                      )}
-                      <button
-                        onClick={() => void deleteAll()}
-                        className={`${menuItem} text-danger`}
-                      >
-                        Delete All Diary Entries
-                      </button>
-                    </>
-                  )}
-                </div>
-              </>
-            )}
+                        <button onClick={exitMultiSelect} className={menuItem}>
+                          Cancel
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => {
+                            setMenuOpen(false)
+                            openSheet(routes.wellness.report(day))
+                          }}
+                          className={menuItem}
+                        >
+                          View Daily Report
+                        </button>
+                        <button onClick={enterMultiSelect} className={menuItem}>
+                          Multi-Select
+                        </button>
+                        {canPaste && (
+                          <button onClick={() => void paste()} className={menuItem}>
+                            Paste
+                          </button>
+                        )}
+                        <button
+                          onClick={() => void deleteAll()}
+                          className={`${menuItem} text-danger`}
+                        >
+                          Delete All Diary Entries
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </header>
 
@@ -309,8 +320,8 @@ export function Diary() {
                   onAdd={() =>
                     openSheet(
                       group.kind === 'activity'
-                        ? `/add-activity?day=${day}`
-                        : `/add-food?group=${group.key}&day=${day}`,
+                        ? `${routes.wellness.addActivity}?day=${day}`
+                        : `${routes.wellness.addFood}?group=${group.key}&day=${day}`,
                     )
                   }
                   onToggle={() =>
@@ -350,11 +361,11 @@ export function Diary() {
                                 : () => {
                                     if (e.kind === 'activity' && e.activity_id)
                                       openSheet(
-                                        `/activity/${e.activity_id}?entry=${e.id}&day=${day}`,
+                                        `${routes.wellness.activity(e.activity_id)}?entry=${e.id}&day=${day}`,
                                       )
                                     else if (e.kind === 'food' && e.food_id)
                                       openSheet(
-                                        `/food/local/${e.food_id}?entry=${e.id}&group=${e.group_name}&day=${day}`,
+                                        `${routes.wellness.food('local', e.food_id)}?entry=${e.id}&group=${e.group_name}&day=${day}`,
                                       )
                                   }
                             }

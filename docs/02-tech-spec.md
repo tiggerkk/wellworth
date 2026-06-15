@@ -22,9 +22,12 @@ src/
   screens/           # one folder per screen/tab
   data/              # typed data-access layer (wraps supabase-js) — the ONLY db access
   lib/               # supabase client, units, dri, energy, met, nutrients, targets, report,
-                     # date, food-api, off-api, food-search, diary-refresh, diary-clipboard helpers
+                     # date, food-api, off-api, food-search, diary-refresh, diary-clipboard,
+                     # last-module helpers
   constants/         # global constants (groups, effort-levels, nutrient-sections, ranges,
-                     # profile-defaults, seed-activities)
+                     # profile-defaults, seed-activities, routes, modules)
+                     # routes.ts = all route paths (one source of truth); modules.ts = the
+                     # Home-hub module registry (ModuleDef + moduleForPath)
                      # activity-icons.ts maps icon name strings to named Tabler imports
   types/             # database.ts (generated), domain types
   hooks/
@@ -32,6 +35,22 @@ supabase/
   migrations/        # source-of-truth SQL migrations
 docs/                # the spec bundle
 ```
+
+## Navigation & routing
+
+- The app is **multi-module behind a Home hub**. Routes are **URL-namespaced per module**
+  (`/wellness/*`, `/networth/*`; future `/shows/*`, `/quotes/*`) and declared as flat children of a
+  single `<AppShell/>` layout in `src/router.tsx`. Path strings live in `src/constants/routes.ts`
+  (one source of truth) and the hub/bottom-nav are derived from `src/constants/modules.ts`
+  (`MODULES` + `moduleForPath`). Adding a module = a `ModuleDef` + its routes — no structural change.
+- The index route `/` is a `RootRedirect` to the **last-used module** (`localStorage`, via
+  `src/lib/last-module.ts`), falling back to `/home`. Login and the PWA `start_url`/OAuth redirect all
+  land on `/` and flow through it.
+- `AppShell` renders the per-module `BottomNav` (the module's tabs + a **Home** item) only when in a
+  module; the hub and global Settings have none. Modal **sheets** use React Router's
+  **background-location** pattern — opening a sheet stashes the current location as
+  `state.background`, and `AppShell` paints that tab (via `TAB_FOR_PATH`) behind the sheet. New sheets
+  live under their module's prefix and are opened with `useSheetNavigate`.
 
 ## Data flow
 

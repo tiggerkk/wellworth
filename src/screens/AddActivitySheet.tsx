@@ -7,6 +7,7 @@ import { useAsync } from '../hooks/useAsync'
 import { useSheetNavigate } from '../hooks/useSheetNavigate'
 import { listActivities } from '../data/activity'
 import { resolveActivityIcon } from '../constants/activity-icons'
+import { routes } from '../constants/routes'
 import { todayLocal } from '../lib/date'
 
 export function AddActivitySheet() {
@@ -26,7 +27,7 @@ export function AddActivitySheet() {
         </button>
         <h1 className="flex-1 text-[17px] font-medium text-text-primary">Add Activity</h1>
         <button
-          onClick={() => openSheet('/new-activity')}
+          onClick={() => openSheet(routes.wellness.newActivity)}
           aria-label="New activity"
           className="text-positive"
         >
@@ -47,13 +48,15 @@ export function AddActivitySheet() {
                   leading={<Icon size={22} stroke={1.75} />}
                   title={a.name}
                   subtitle={a.template === 'strength' ? 'Strength' : 'Duration'}
-                  onClick={() => openSheet(`/activity/${a.id}?day=${day}`)}
+                  onClick={() =>
+                    openSheet(`${routes.wellness.activity(a.id)}?day=${day}`)
+                  }
                 />
               )
             })}
             {(activities ?? []).length === 0 && (
               <button
-                onClick={() => openSheet('/new-activity')}
+                onClick={() => openSheet(routes.wellness.newActivity)}
                 className="block w-full px-4 py-6 text-center text-sm text-positive"
               >
                 + Create your first activity

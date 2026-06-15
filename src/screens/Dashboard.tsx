@@ -1,10 +1,12 @@
 import { useCallback, useState } from 'react'
-import { IconChevronDown } from '@tabler/icons-react'
+import { Link } from 'react-router'
+import { IconChevronDown, IconSettings } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { listEntriesByRange } from '../data/diary-entry'
 import { NutrientReport } from '../components/NutrientReport'
 import { RANGES } from '../constants/ranges'
+import { routes } from '../constants/routes'
 import { todayLocal } from '../lib/date'
 
 export function Dashboard() {
@@ -60,6 +62,13 @@ export function Dashboard() {
             </>
           )}
         </div>
+        <Link
+          to={routes.wellness.settings}
+          aria-label="Wellness settings"
+          className="ml-auto p-1 text-text-secondary"
+        >
+          <IconSettings size={20} />
+        </Link>
       </header>
 
       <NutrientReport entries={entries} loading={loading} error={error} />

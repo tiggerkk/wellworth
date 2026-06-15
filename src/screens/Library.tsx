@@ -1,12 +1,13 @@
 import { useCallback, useState } from 'react'
-import { useSearchParams } from 'react-router'
-import { IconPlus, IconUpload } from '@tabler/icons-react'
+import { Link, useSearchParams } from 'react-router'
+import { IconPlus, IconSettings, IconUpload } from '@tabler/icons-react'
 import { useAsync } from '../hooks/useAsync'
 import { useSheetNavigate } from '../hooks/useSheetNavigate'
 import { useDiaryVersion, bumpDiary } from '../lib/diary-refresh'
 import { listFoods, softDeleteFood } from '../data/food'
 import { listActivities, softDeleteActivity } from '../data/activity'
 import { resolveActivityIcon } from '../constants/activity-icons'
+import { routes } from '../constants/routes'
 import { SegmentedTabs } from '../components/SegmentedTabs'
 import { SearchBar } from '../components/SearchBar'
 import { ListRow } from '../components/ListRow'
@@ -18,7 +19,7 @@ export function Library() {
   const openSheet = useSheetNavigate()
   const version = useDiaryVersion()
   // Tab lives in the URL so returning from a sheet (New/Edit Food or Activity) restores it
-  // instead of resetting to Foods. A clean `/library` (no param) means Foods.
+  // instead of resetting to Foods. A clean `/wellness/library` (no param) means Foods.
   const [params, setParams] = useSearchParams()
   const tab: Tab = params.get('tab') === 'activities' ? 'activities' : 'foods'
   const setTab = useCallback(
@@ -81,19 +82,30 @@ export function Library() {
 
         <div className="flex items-center gap-4">
           <button
-            onClick={() => openSheet(tab === 'foods' ? '/new-food' : '/new-activity')}
+            onClick={() =>
+              openSheet(
+                tab === 'foods' ? routes.wellness.newFood : routes.wellness.newActivity,
+              )
+            }
             className="flex items-center gap-1 text-sm text-positive"
           >
             <IconPlus size={16} /> New {tab === 'foods' ? 'Food' : 'Activity'}
           </button>
           {tab === 'foods' && (
             <button
-              onClick={() => openSheet('/import-foods')}
+              onClick={() => openSheet(routes.wellness.importFoods)}
               className="flex items-center gap-1 text-sm text-positive"
             >
               <IconUpload size={16} /> Import CSV
             </button>
           )}
+          <Link
+            to={routes.wellness.settings}
+            aria-label="Wellness settings"
+            className="ml-auto p-1 text-text-secondary"
+          >
+            <IconSettings size={18} />
+          </Link>
         </div>
       </div>
 
@@ -109,7 +121,7 @@ export function Library() {
                 <ListRow
                   title={f.name}
                   subtitle={f.type === 'supplement' ? 'Supplement' : undefined}
-                  onClick={() => openSheet(`/edit-food/${f.id}`)}
+                  onClick={() => openSheet(routes.wellness.editFood(f.id))}
                 />
               </SwipeRow>
             ))
@@ -129,7 +141,7 @@ export function Library() {
                     leading={<Icon size={22} stroke={1.75} />}
                     title={a.name}
                     subtitle={a.template === 'strength' ? 'Strength' : 'Duration'}
-                    onClick={() => openSheet(`/edit-activity/${a.id}`)}
+                    onClick={() => openSheet(routes.wellness.editActivity(a.id))}
                   />
                 </SwipeRow>
               )

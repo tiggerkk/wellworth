@@ -2,9 +2,20 @@
 
 ## Navigation
 
-Bottom tab bar with four tabs: **Diary**, **Dashboard**, **Library**, **Settings**.
-Modals (sheets) slide up over these: Calendar, Add Food, Food Detail, Add Activity, Activity Log,
-New Food, New Activity.
+The app opens to a **Home hub** — a launcher of module cards (Wellness, Net Worth; more later).
+Selecting a module enters it and the **bottom tab bar becomes that module's tabs**, with a **Home**
+item to return to the hub. On launch the app reopens the **last-used module**, so daily Wellness use
+skips the hub.
+
+- **Wellness** tabs: **Diary**, **Dashboard**, **Library**, **Home**. A **gear** in each Wellness
+  header opens Wellness Settings.
+- **Net Worth** tabs: **Dashboard**, **Monthly Entry**, **Home** (Phase 2).
+- **Settings is global**, reached from a gear on the Home hub (profile, units, account — app-wide).
+  Wellness-specific settings (protein target, nutrient display) live in **Wellness Settings**.
+
+Routing is URL-namespaced per module (`/wellness/*`, `/networth/*`); a future module drops in as a
+card + routes with no structural change. Modals (sheets) slide up over a module's tabs: Calendar,
+Add Food, Food Detail, Add Activity, Activity Log, New Food, New Activity.
 
 Diary groups, in order: **Breakfast, Lunch, Dinner, Snacks, Supplements, Activities**.
 
@@ -18,7 +29,7 @@ Diary groups, in order: **Breakfast, Lunch, Dinner, Snacks, Supplements, Activit
 
 ---
 
-## Diary (home tab)
+## Diary (Wellness home tab)
 
 - Header `‹ Today ›`: left/right arrows step one day; tapping the date opens the **Calendar** modal.
 - **Highlighted Nutrients**: a grid of up to 8 chosen nutrients (a 4×2 grid when 8 are chosen), each a
@@ -164,15 +175,22 @@ Two sub-tabs:
 - Bottom: **RESET** + **ADD ACTIVITY** (new) / **SAVE ACTIVITY** (editing). RESET (and, when editing,
   SAVE) are enabled only when something changed; ADD requires a name and a MET for the default effort.
 
-## Settings (tab)
+## Settings (global — from the Home hub gear)
+
+App-wide; shared across all modules. Auto-save on change. A back chevron returns to the hub.
 
 - **PROFILE**: Birthday, Sex, Height, Weight (all editable).
+- **ACCOUNT**: **Units** (Metric / Imperial — editable; display-only, DB stays metric), Google account,
+  Sign out.
+
+## Wellness Settings (from the gear in the Wellness header)
+
+Wellness-module sub-settings. Auto-save on change. A back chevron returns to the previous Wellness screen.
+
 - **TARGETS** (auto-set from profile via DRI): **Protein Target** is the only manual override field.
 - **DISPLAY**:
   - **Highlighted Nutrients** → choose up to 8 shown on the Diary (the picker caps the selection at 8).
   - **Visible Nutrients** → per-nutrient toggle for what appears on the Dashboard & Daily Report.
-- **ACCOUNT**: **Units** (Metric / Imperial — editable; display-only, DB stays metric), Google account,
-  Sign out.
 
 ### Visible Nutrients sub-screen
 
