@@ -8,6 +8,7 @@ import { EffortPicker } from '../components/EffortPicker'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useProfile } from '../hooks/useProfile'
+import { useReturnAfterLog } from '../hooks/useReturnAfterLog'
 import { getActivity } from '../data/activity'
 import { createEntry, getEntry, updateEntry } from '../data/diary-entry'
 import { createSets, listSetsByEntry, replaceSets } from '../data/strength-set'
@@ -17,14 +18,21 @@ import { bumpDiary } from '../lib/diary-refresh'
 import { todayLocal } from '../lib/date'
 import type { Effort } from '../constants/effort-levels'
 
+// reps/weight are string drafts (like Duration) so a field can be emptied while typing; they
+// resolve to numbers only at save, where both must be > 0 (see strengthError).
+interface SetDraft {
+  reps: string
+  weight: string
+}
 interface ExerciseDraft {
   name: string
-  sets: { reps: number; weight: number }[]
+  sets: SetDraft[]
 }
 
-const blankExercises = (): ExerciseDraft[] => [
-  { name: '', sets: [{ reps: 10, weight: 0 }] },
-]
+// Empty defaults: an untouched set holds no data, so a still-unnamed exercise doesn't trip the
+// "name your filled-in sets" error until the user actually types reps/weight.
+const blankSet = (): SetDraft => ({ reps: '', weight: '' })
+const blankExercises = (): ExerciseDraft[] => [{ name: '', sets: [blankSet()] }]
 
 /** Rebuild the exercise editor's drafts from persisted strength_set rows (for editing). */
 function groupSets(
@@ -37,13 +45,17 @@ function groupSets(
       ex = { name: s.exercise, sets: [] }
       out.push(ex)
     }
-    ex.sets.push({ reps: s.reps ?? 0, weight: Number(s.weight ?? 0) })
+    ex.sets.push({
+      reps: s.reps != null ? String(s.reps) : '',
+      weight: s.weight != null ? String(Number(s.weight)) : '',
+    })
   }
   return out.length > 0 ? out : blankExercises()
 }
 
 export function ActivityLogSheet() {
   const navigate = useNavigate()
+  const returnAfterLog = useReturnAfterLog()
   const { session } = useAuth()
   const userId = session?.user.id
   const { activityId = '' } = useParams()
@@ -76,9 +88,7 @@ export function ActivityLogSheet() {
   const [effort, setEffort] = useState<Effort | null>(null)
   // Editable draft (string so it can be emptied on focus); resolves to the activity's default.
   const [minutes, setMinutes] = useState('')
-  const [exercises, setExercises] = useState<ExerciseDraft[]>([
-    { name: '', sets: [{ reps: 10, weight: 0 }] },
-  ])
+  const [exercises, setExercises] = useState<ExerciseDraft[]>(blankExercises)
   const [saving, setSaving] = useState(false)
 
   const activityDefaultDuration = activity?.default_duration_min ?? 30
@@ -129,18 +139,40 @@ export function ActivityLogSheet() {
   const met = resolveMet(metMap, sessionEffort) ?? resolveMet(metMap, defaultEffort) ?? 0
   const energy = activityEnergyKcal({ met, weightKg, minutes: minutesValue })
 
+  // Validate one exercise's draft (null = valid):
+  //  - named   → every set needs reps > 0 and weight (kg) >= 0 (0 = bodyweight).
+  //  - unnamed → fine if blank (dropped on save), but flag it if any set has data the user typed.
+  function exerciseError(ex: ExerciseDraft): string | null {
+    if (!ex.name.trim()) {
+      const hasData = ex.sets.some((s) => s.reps.trim() !== '' || s.weight.trim() !== '')
+      return hasData ? 'Enter a name for the exercise you’ve filled in.' : null
+    }
+    for (const s of ex.sets) {
+      if (!(Number(s.reps) > 0)) return 'Reps must be greater than 0.'
+      if (!(Number(s.weight) >= 0)) return 'Weight (kg) cannot be negative.'
+    }
+    return null
+  }
+  const strengthError =
+    activity?.template === 'strength'
+      ? (exercises.map(exerciseError).find((e) => e != null) ?? null)
+      : null
+
+  // Add set duplicates the previous row's reps + weight (a new set is usually the same load).
   function addSet(exIdx: number) {
     setExercises((prev) =>
-      prev.map((ex, i) =>
-        i === exIdx ? { ...ex, sets: [...ex.sets, { reps: 10, weight: 0 }] } : ex,
-      ),
+      prev.map((ex, i) => {
+        if (i !== exIdx) return ex
+        const last = ex.sets[ex.sets.length - 1] ?? blankSet()
+        return { ...ex, sets: [...ex.sets, { ...last }] }
+      }),
     )
   }
   function updateSet(
     exIdx: number,
     setIdx: number,
     field: 'reps' | 'weight',
-    value: number,
+    value: string,
   ) {
     setExercises((prev) =>
       prev.map((ex, i) =>
@@ -164,7 +196,7 @@ export function ActivityLogSheet() {
   }
 
   async function submit() {
-    if (!activity || !userId) return
+    if (!activity || !userId || strengthError) return
     setSaving(true)
     try {
       const energyKcal = -Math.round(energy) // activities are negative
@@ -199,8 +231,8 @@ export function ActivityLogSheet() {
               entry_id: targetEntryId,
               exercise: ex.name.trim(),
               set_number: i + 1,
-              reps: s.reps,
-              weight: s.weight,
+              reps: Number(s.reps),
+              weight: Number(s.weight),
               weight_unit: 'kg',
             })),
           )
@@ -209,7 +241,7 @@ export function ActivityLogSheet() {
         else if (rows.length > 0) await createSets(rows)
       }
       bumpDiary()
-      navigate(-1)
+      returnAfterLog({ editing })
     } finally {
       setSaving(false)
     }
@@ -301,8 +333,9 @@ export function ActivityLogSheet() {
                           type="number"
                           min={0}
                           value={s.reps}
+                          onFocus={(e) => e.target.select()}
                           onChange={(e) =>
-                            updateSet(exIdx, setIdx, 'reps', Number(e.target.value) || 0)
+                            updateSet(exIdx, setIdx, 'reps', e.target.value)
                           }
                           className="w-16 rounded-input bg-input px-2 py-1.5 text-[13px] text-text-primary focus:outline-none"
                           aria-label="Reps"
@@ -313,13 +346,9 @@ export function ActivityLogSheet() {
                           min={0}
                           step="any"
                           value={s.weight}
+                          onFocus={(e) => e.target.select()}
                           onChange={(e) =>
-                            updateSet(
-                              exIdx,
-                              setIdx,
-                              'weight',
-                              Number(e.target.value) || 0,
-                            )
+                            updateSet(exIdx, setIdx, 'weight', e.target.value)
                           }
                           className="w-20 rounded-input bg-input px-2 py-1.5 text-[13px] text-text-primary focus:outline-none"
                           aria-label="Weight"
@@ -337,10 +366,7 @@ export function ActivityLogSheet() {
                 ))}
                 <button
                   onClick={() =>
-                    setExercises((prev) => [
-                      ...prev,
-                      { name: '', sets: [{ reps: 10, weight: 0 }] },
-                    ])
+                    setExercises((prev) => [...prev, { name: '', sets: [blankSet()] }])
                   }
                   className="flex items-center gap-1 text-sm text-positive"
                 >
@@ -353,17 +379,20 @@ export function ActivityLogSheet() {
       </div>
 
       {activity && (
-        <div className="flex gap-3 border-t border-border p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
-          <SecondaryButton onClick={reset} disabled={!dirty || saving}>
-            RESET
-          </SecondaryButton>
-          <PrimaryButton
-            onClick={() => void submit()}
-            disabled={saving || (editing && !dirty)}
-            className="flex-1"
-          >
-            {saving ? primaryBusy : primaryIdle}
-          </PrimaryButton>
+        <div className="border-t border-border p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
+          {strengthError && <p className="mb-2 text-xs text-danger">{strengthError}</p>}
+          <div className="flex gap-3">
+            <SecondaryButton onClick={reset} disabled={!dirty || saving}>
+              RESET
+            </SecondaryButton>
+            <PrimaryButton
+              onClick={() => void submit()}
+              disabled={saving || !!strengthError || (editing && !dirty)}
+              className="flex-1"
+            >
+              {saving ? primaryBusy : primaryIdle}
+            </PrimaryButton>
+          </div>
         </div>
       )}
     </Sheet>

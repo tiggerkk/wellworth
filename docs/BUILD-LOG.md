@@ -156,6 +156,19 @@ engineering decisions:
   "type onto the leading 0" bug from coercing empty→0); shared `src/lib/quantity.ts#draftAmount`.
   Effort picker shows all levels but **disables** ones with no MET; New Activity requires ≥1 MET (and
   the default effort must have one); effort bands relabeled (Light ≤3 / Moderate 3.1–5.9 / Vigorous ≥6).
+- **Return to Diary after logging:** ADD TO DIARY from Food Detail / Activity Log now lands back on
+  the Diary, not the picker the user came through. `useReturnAfterLog` pops two sheets in create mode
+  (detail-over-picker-over-Diary) and one in edit mode (detail opened straight from a Diary row, via
+  `entry=`), keyed off the `editing` flag; a deep-linked sheet (no painted `background` state) falls
+  back to a single pop so we never unwind past the app. The **X** close still pops one level, so it
+  returns to the picker with its tab/search intact.
+- **Strength sets (Activity Log):** reps/weight are now **string drafts** too (were raw `number` with
+  `Number(e.target.value) || 0`, which snapped an emptied field back to `0` and couldn't be cleared);
+  they parse to numbers only at save. **Validation** (inline error + ADD TO DIARY/SAVE disabled):
+  a _named_ exercise needs reps > 0 and weight (kg) ≥ 0 in every set (0 = bodyweight); an _unnamed_
+  exercise is fine blank (dropped on save) but is flagged once any reps/weight field is filled, so
+  typed sets aren't silently lost. Default set is empty (`'' / ''`) so a fresh, untouched exercise
+  doesn't trip the name check. **Add set** duplicates the previous set's reps + weight.
 - **Edit logged entries:** Diary rows are tappable → reuse **Food Detail / Activity Log** in edit mode
   via an `entry=<id>` query param; footer becomes **RESET + SAVE**. New `SecondaryButton`; RESET/SAVE
   are **dirty-gated** (compare current vs. captured initial) across the edit + create forms.

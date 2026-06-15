@@ -8,6 +8,7 @@ import { SecondaryButton } from '../components/SecondaryButton'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useProfile } from '../hooks/useProfile'
+import { useReturnAfterLog } from '../hooks/useReturnAfterLog'
 import { useNutrientReference } from '../hooks/useNutrientReference'
 import { createEntry, getEntry, updateEntry } from '../data/diary-entry'
 import { createFood, getFood, getFoodByExternal, setFavorite } from '../data/food'
@@ -46,6 +47,7 @@ function withDefaultServing(servings: { name: string; grams: number }[]) {
 
 export function FoodDetailSheet() {
   const navigate = useNavigate()
+  const returnAfterLog = useReturnAfterLog()
   const { session } = useAuth()
   const userId = session?.user.id
   const { source = 'usda', id = '' } = useParams()
@@ -232,7 +234,7 @@ export function FoodDetailSheet() {
         })
       }
       bumpDiary()
-      navigate(-1)
+      returnAfterLog({ editing })
     } finally {
       setSaving(false)
     }

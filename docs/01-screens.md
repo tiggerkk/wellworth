@@ -39,7 +39,9 @@ Diary groups, in order: **Breakfast, Lunch, Dinner, Snacks, Supplements, Activit
 
 - Search bar with a barcode-scan icon.
 - Tabs: **Favorites** (hearted items, default), **Custom** (your items), **All** (combined USDA + your custom).
-  Selecting a food and returning (X / ADD TO DIARY) preserves the active tab, search text, and results.
+  Opening a food then backing out with **X** returns here with the active tab, search text, and results
+  preserved; **ADD TO DIARY** instead closes both sheets and lands back on the **Diary** (you don't pass
+  back through this picker).
 - **Matching is broad** — case-, punctuation-, singular/plural-insensitive and partial-typing-tolerant
   (so "blueberr" and "blueberri" already match "blueberry"/"blueberries") — a "Blueberries" search
   returns "Blueberries, raw", "Muffins, blueberry", etc., not just the exact name. USDA text
@@ -91,6 +93,11 @@ Diary groups, in order: **Breakfast, Lunch, Dinner, Snacks, Supplements, Activit
   MET × body-weight(kg) × hours, MET resolved from `met_by_effort` at the chosen effort. No hardcoded MET.
 - **Exercises** list: each exercise expands to sets logged as reps × weight, with "Add set"; an
   "Add exercise" button builds the session. Sets persist to `strength_set` for progress tracking.
+  Reps/weight are editable drafts that can be **emptied** while typing; **Add set duplicates the
+  previous set's reps + weight** (a new set is usually the same load). Validation (inline error +
+  ADD TO DIARY / SAVE disabled): for any **named** exercise every set needs **reps > 0** and
+  **weight (kg) ≥ 0** (0 = bodyweight); an **unnamed** exercise is fine left blank (dropped on save)
+  but is flagged if any reps/weight field has been filled in — so typed sets aren't silently lost.
 - Group defaults to **Activities**. Bottom: **RESET** + **ADD TO DIARY** (logging) or **RESET** + **SAVE**
   (editing a logged entry); editing prefills duration, effort, and the exercise/set list from the entry.
 
