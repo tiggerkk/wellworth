@@ -253,15 +253,16 @@ export function ActivityLogSheet() {
         <button onClick={() => navigate(-1)} aria-label="Close">
           <IconX size={22} className="text-text-secondary" />
         </button>
-        <h1 className="flex-1 truncate text-[17px] font-medium text-text-primary">
+        <h1 className="line-clamp-2 flex-1 text-[17px] font-medium text-text-primary">
           {activity?.name ?? 'Activity'}
         </h1>
         {activity && (
           <>
-            <SecondaryButton onClick={reset} disabled={!dirty || saving}>
+            <SecondaryButton size="sm" onClick={reset} disabled={!dirty || saving}>
               RESET
             </SecondaryButton>
             <PrimaryButton
+              size="sm"
               onClick={() => void submit()}
               disabled={saving || !!strengthError || (editing && !dirty)}
             >

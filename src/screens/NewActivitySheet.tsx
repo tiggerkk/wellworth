@@ -157,10 +157,11 @@ function ActivityForm({
         <h1 className="flex-1 truncate text-[17px] font-medium text-text-primary">
           {id ? 'Edit Activity' : 'New Activity'}
         </h1>
-        <SecondaryButton onClick={reset} disabled={!dirty || saving}>
+        <SecondaryButton size="sm" onClick={reset} disabled={!dirty || saving}>
           RESET
         </SecondaryButton>
         <PrimaryButton
+          size="sm"
           onClick={() => void save()}
           disabled={saving || !canSave || (!!id && !dirty)}
         >

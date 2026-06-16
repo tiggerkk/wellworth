@@ -157,10 +157,11 @@ function FoodForm({ id, initial }: { id: string | undefined; initial: FoodInitia
         <h1 className="flex-1 truncate text-[17px] font-medium text-text-primary">
           {id ? 'Edit Food' : 'New Food'}
         </h1>
-        <SecondaryButton onClick={reset} disabled={!dirty || saving}>
+        <SecondaryButton size="sm" onClick={reset} disabled={!dirty || saving}>
           RESET
         </SecondaryButton>
         <PrimaryButton
+          size="sm"
           onClick={() => void save()}
           disabled={saving || !name.trim() || (!!id && !dirty)}
         >

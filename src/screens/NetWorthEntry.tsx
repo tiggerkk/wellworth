@@ -325,10 +325,14 @@ function EntryForm({
             </span>
           </div>
           <div className="flex gap-2">
-            <SecondaryButton onClick={reset} disabled={!dirty || saving}>
+            <SecondaryButton size="sm" onClick={reset} disabled={!dirty || saving}>
               RESET
             </SecondaryButton>
-            <PrimaryButton onClick={() => void save()} disabled={!dirty || saving}>
+            <PrimaryButton
+              size="sm"
+              onClick={() => void save()}
+              disabled={!dirty || saving}
+            >
               {saving ? 'Saving…' : 'SAVE'}
             </PrimaryButton>
           </div>

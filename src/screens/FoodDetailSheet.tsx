@@ -259,7 +259,7 @@ export function FoodDetailSheet() {
         <button onClick={() => navigate(-1)} aria-label="Close">
           <IconX size={22} className="text-text-secondary" />
         </button>
-        <h1 className="flex-1 truncate text-[17px] font-medium text-text-primary">
+        <h1 className="line-clamp-2 flex-1 text-[17px] font-medium text-text-primary">
           {food?.name ?? 'Food'}
         </h1>
         {food && (
@@ -274,15 +274,19 @@ export function FoodDetailSheet() {
         {food &&
           (editing ? (
             <>
-              <SecondaryButton onClick={reset} disabled={!dirty || saving}>
+              <SecondaryButton size="sm" onClick={reset} disabled={!dirty || saving}>
                 RESET
               </SecondaryButton>
-              <PrimaryButton onClick={() => void submit()} disabled={!dirty || saving}>
+              <PrimaryButton
+                size="sm"
+                onClick={() => void submit()}
+                disabled={!dirty || saving}
+              >
                 {saving ? 'Saving…' : 'SAVE'}
               </PrimaryButton>
             </>
           ) : (
-            <PrimaryButton onClick={() => void submit()} disabled={saving}>
+            <PrimaryButton size="sm" onClick={() => void submit()} disabled={saving}>
               {saving ? 'Adding…' : 'ADD'}
             </PrimaryButton>
           ))}

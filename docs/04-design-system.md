@@ -53,7 +53,9 @@ _not_ the primary-button color; it's for emphasis, active states, and energy.
   `+` on the right.
 - **SwipeRow** — swipe-left reveals a `delete` Delete action.
 - **SearchBar** — magnifier + input (+ barcode icon on Add Food).
-- **PrimaryButton** — light `fill` pill, used for the top-right ADD / SAVE / CREATE actions.
+- **PrimaryButton** / **SecondaryButton** — light `fill` pill / outline pill. A `size` prop toggles
+  `default` (full, e.g. sign-in) vs `sm` (compact, used by the top-right ADD / SAVE / CREATE / RESET
+  header actions).
 - **FieldRow** — label + value/input + chevron, for forms and Settings.
 - **EffortPicker** — Light / Moderate / Vigorous radio list with MET ranges.
 - **Sheet** — slide-up overlay for route-based modal screens (scrim, `bottom`/`full` variants,
@@ -80,7 +82,8 @@ icon↔group mapping lives in `constants/groups.ts`.
 
 ## Button placement
 
-Action buttons live in the **top-right of the screen/sheet header** (consistent with Net Worth):
-logging screens show **ADD** (or **RESET** + **SAVE** when editing a logged entry); form screens show
-**RESET** + **CREATE** (new) / **RESET** + **SAVE** (editing). No bottom action bar. (See
-`01-screens.md` → Button convention.)
+Action buttons live in the **top-right of the screen/sheet header** (consistent with Net Worth), at
+the compact `sm` size: logging screens show **ADD** (or **RESET** + **SAVE** when editing a logged
+entry); form screens show **RESET** + **CREATE** (new) / **RESET** + **SAVE** (editing). No bottom
+action bar. The header title (food / activity name) sits left of the actions and **clamps to 2 lines
+with an ellipsis** when long. (See `01-screens.md` → Button convention.)
