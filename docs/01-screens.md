@@ -145,7 +145,7 @@ Two sub-tabs:
 - **Nutrition Facts**: the _complete_ nutrient set, grouped by category, each an input + unit,
   collapsible per section. (Supplements: leave Energy/macros blank, fill the relevant micros.)
 - **RESET** + **CREATE** (new) / **SAVE** (editing). **RESET** (and, when editing, **SAVE**) are
-  enabled only when something changed; ADD requires a name.
+  enabled only when something changed; CREATE requires a name.
 
 ## Wellness - New Activity (form)
 
@@ -155,7 +155,7 @@ Two sub-tabs:
 - **Default Effort**: Light (≤3 MET) / Moderate (3.1–5.9) / Vigorous (≥6) — applies to both Duration and Strength templates; overridable per session when logging.
 - **MET by effort**: for each effort level, an editable MET value; fill **at least one** level (the default effort must have a value; single-intensity activities need only one). Drives the calorie estimate via MET × weight × hours. In the Activity Log, effort levels with no MET are disabled.
 - **Icon**: an icon picker (the keys of `ACTIVITY_ICONS`); optional, defaults to `IconRun`.
-- Bottom: **RESET** + **CREATE** (new) / **SAVE** (editing). RESET (and, when editing **SAVE**) are enabled only when something changed; ADD requires a name and a MET for the default effort.
+- Top-right: **RESET** + **CREATE** (new) / **SAVE** (editing). RESET (and, when editing **SAVE**) are enabled only when something changed; CREATE requires a name and a MET for the default effort.
 
 ## Wellness - Settings (from the gear in the Wellness header)
 

@@ -245,7 +245,7 @@ working under `/wellness/*` and Net Worth reachable as a placeholder module. No 
   layout route) so the background-location sheet pattern + single `<Outlet/>` are unchanged — lowest
   risk. Wellness tabs **and all its sheets** moved under `/wellness/*`; `TAB_FOR_PATH` re-keyed.
   `/` → `RootRedirect` → last-used module (`src/lib/last-module.ts`, localStorage) else `/home`.
-- **Module-aware shell.** `BottomNav` takes a `module` prop (its tabs + a trailing Home item);
+- **Module-aware shell.** `BottomNav` takes a `module` prop (a Home item + the module's tabs);
   `AppShell` renders it only when `moduleForPath(pathname)` is non-null (hub + global Settings have no
   bottom nav) and records the last-used module in an effect.
 - **Settings split.** Global `Settings` (Profile, Units, Account) reached from the hub gear; new
@@ -348,6 +348,11 @@ Cross-module consistency pass after the Net Worth build:
   edit-mode keeps **RESET** + **SAVE**. `ActivityLogSheet`'s strength validation error moved to a
   fixed strip just under the header (it used to sit above the now-removed footer). Convention is
   documented in `01-screens.md` (Button convention) + `04-design-system.md` (Button placement).
+- **Compact header buttons + 2-line titles.** `PrimaryButton`/`SecondaryButton` gained a `size` prop
+  (`default` = full pill for sign-in/full-width; `sm` = `px-3 py-1.5` for the header action bars);
+  every top-right action (Net Worth + the four Wellness sheets) uses `size="sm"`. The food/activity
+  name in `FoodDetailSheet`/`ActivityLogSheet` headers switched from single-line `truncate` to
+  **`line-clamp-2`** so long names wrap to two lines with an ellipsis instead of being cut at one.
 - **Diary header** `‹ date ›` is now **centered**: the day stepper is `justify-center` and the
   settings/⋯ controls are `absolute right-3`, so the date sits mid-header regardless of the controls'
   width.

@@ -37,4 +37,4 @@ After the Phase-1 build, three living docs sit alongside the spec in `docs/`:
 
 The app is **multi-module behind a Home hub** (Wellness, Net Worth; more later) — see `00-PRD.md`.
 Wellness (food, supplements, activity, dashboard, library, settings, auth, sync).
-Net Worth — in progress (separate tables; reached via the Home hub; shares only auth/profile and the app shell).
+Net Worth (separate tables; reached via the Home hub; shares only auth/profile and the app shell).

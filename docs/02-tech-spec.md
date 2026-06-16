@@ -46,8 +46,8 @@ docs/                # the spec bundle
 - The index route `/` is a `RootRedirect` to the **last-used module** (`localStorage`, via
   `src/lib/last-module.ts`), falling back to `/home`. Login and the PWA `start_url`/OAuth redirect all
   land on `/` and flow through it.
-- `AppShell` renders the per-module `BottomNav` (the module's tabs + a **Home** item) only when in a
-  module; the hub and global Settings have none. Modal **sheets** use React Router's
+- `AppShell` renders the per-module `BottomNav` (a leading **Home** item + the module's tabs) only
+  when in a module; the hub and global Settings have none. Modal **sheets** use React Router's
   **background-location** pattern — opening a sheet stashes the current location as
   `state.background`, and `AppShell` paints that tab (via `TAB_FOR_PATH`) behind the sheet. New sheets
   live under their module's prefix and are opened with `useSheetNavigate`.
