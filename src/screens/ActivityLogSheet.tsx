@@ -128,7 +128,7 @@ export function ActivityLogSheet() {
     initial != null &&
     JSON.stringify({ minutes, effort, exercises }) !== JSON.stringify(initial)
   const primaryBusy = editing ? 'Saving…' : 'Adding…'
-  const primaryIdle = editing ? 'SAVE' : 'ADD TO DIARY'
+  const primaryIdle = editing ? 'SAVE' : 'ADD'
 
   // Effort defaults to the activity's, but is fully editable per session (e.g. an easier day).
   const defaultEffort = (activity?.default_effort as Effort) ?? 'moderate'
@@ -256,7 +256,25 @@ export function ActivityLogSheet() {
         <h1 className="flex-1 truncate text-[17px] font-medium text-text-primary">
           {activity?.name ?? 'Activity'}
         </h1>
+        {activity && (
+          <>
+            <SecondaryButton onClick={reset} disabled={!dirty || saving}>
+              RESET
+            </SecondaryButton>
+            <PrimaryButton
+              onClick={() => void submit()}
+              disabled={saving || !!strengthError || (editing && !dirty)}
+            >
+              {saving ? primaryBusy : primaryIdle}
+            </PrimaryButton>
+          </>
+        )}
       </header>
+      {activity && strengthError && (
+        <p className="border-b border-border bg-surface px-4 py-2 text-xs text-danger">
+          {strengthError}
+        </p>
+      )}
 
       <div className="flex-1 overflow-y-auto p-4">
         {loading && <p className="text-sm text-text-secondary">Loading…</p>}
@@ -377,24 +395,6 @@ export function ActivityLogSheet() {
           </div>
         )}
       </div>
-
-      {activity && (
-        <div className="border-t border-border p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
-          {strengthError && <p className="mb-2 text-xs text-danger">{strengthError}</p>}
-          <div className="flex gap-3">
-            <SecondaryButton onClick={reset} disabled={!dirty || saving}>
-              RESET
-            </SecondaryButton>
-            <PrimaryButton
-              onClick={() => void submit()}
-              disabled={saving || !!strengthError || (editing && !dirty)}
-              className="flex-1"
-            >
-              {saving ? primaryBusy : primaryIdle}
-            </PrimaryButton>
-          </div>
-        </div>
-      )}
     </Sheet>
   )
 }

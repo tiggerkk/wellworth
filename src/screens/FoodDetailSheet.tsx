@@ -271,6 +271,21 @@ export function FoodDetailSheet() {
             )}
           </button>
         )}
+        {food &&
+          (editing ? (
+            <>
+              <SecondaryButton onClick={reset} disabled={!dirty || saving}>
+                RESET
+              </SecondaryButton>
+              <PrimaryButton onClick={() => void submit()} disabled={!dirty || saving}>
+                {saving ? 'Saving…' : 'SAVE'}
+              </PrimaryButton>
+            </>
+          ) : (
+            <PrimaryButton onClick={() => void submit()} disabled={saving}>
+              {saving ? 'Adding…' : 'ADD'}
+            </PrimaryButton>
+          ))}
       </header>
 
       <div className="flex-1 overflow-y-auto p-4">
@@ -339,33 +354,6 @@ export function FoodDetailSheet() {
           </>
         )}
       </div>
-
-      {food && (
-        <div className="flex gap-3 border-t border-border p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
-          {editing ? (
-            <>
-              <SecondaryButton onClick={reset} disabled={!dirty || saving}>
-                RESET
-              </SecondaryButton>
-              <PrimaryButton
-                onClick={() => void submit()}
-                disabled={!dirty || saving}
-                className="flex-1"
-              >
-                {saving ? 'Saving…' : 'SAVE'}
-              </PrimaryButton>
-            </>
-          ) : (
-            <PrimaryButton
-              onClick={() => void submit()}
-              disabled={saving}
-              className="w-full"
-            >
-              {saving ? 'Adding…' : 'ADD TO DIARY'}
-            </PrimaryButton>
-          )}
-        </div>
-      )}
     </Sheet>
   )
 }

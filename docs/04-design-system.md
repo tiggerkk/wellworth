@@ -53,7 +53,7 @@ _not_ the primary-button color; it's for emphasis, active states, and energy.
   `+` on the right.
 - **SwipeRow** — swipe-left reveals a `delete` Delete action.
 - **SearchBar** — magnifier + input (+ barcode icon on Add Food).
-- **PrimaryButton** — light `fill` pill, used as the bottom "ADD TO DIARY".
+- **PrimaryButton** — light `fill` pill, used for the top-right ADD / SAVE / CREATE actions.
 - **FieldRow** — label + value/input + chevron, for forms and Settings.
 - **EffortPicker** — Light / Moderate / Vigorous radio list with MET ranges.
 - **Sheet** — slide-up overlay for route-based modal screens (scrim, `bottom`/`full` variants,
@@ -61,6 +61,7 @@ _not_ the primary-button color; it's for emphasis, active states, and energy.
   background-location pattern.
 - **Splash** — full-screen loading state while the auth session resolves.
 - **Calendar** — month-grid date picker with per-day food/activity cue dots (a local overlay, not a route).
+- **MonthPicker** — month/year picker (year stepper over a month grid, OK/Cancel) for the Net Worth month selector (a local overlay, not a route).
 - **EnergyBalanceCard** — Consumed / BMR / Activity / bold Net.
 - **NutrientReport** — shared body of Dashboard + Daily Report (energy card + visible-nutrient sections).
 - **CollapsibleSection** — collapsible card for the New Food nutrient-entry groups.
@@ -79,5 +80,7 @@ icon↔group mapping lives in `constants/groups.ts`.
 
 ## Button placement
 
-Form screens: **Save** top-right, no bottom button. Logging screens: **ADD TO DIARY** at the bottom,
-no top-right Save. (See `01-screens.md` table.)
+Action buttons live in the **top-right of the screen/sheet header** (consistent with Net Worth):
+logging screens show **ADD** (or **RESET** + **SAVE** when editing a logged entry); form screens show
+**RESET** + **CREATE** (new) / **RESET** + **SAVE** (editing). No bottom action bar. (See
+`01-screens.md` → Button convention.)

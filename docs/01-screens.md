@@ -188,6 +188,6 @@ Wellness-module sub-settings. Auto-save on change. A back chevron returns to the
 - The **header is pinned** — month selector, the live **NET WORTH** total, and **RESET**/**SAVE** stay visible while the **asset-type list scrolls** beneath them.
 - Entries **grouped by asset type**; each row editable: name, currency, `value_native`, and the type-specific `details`. **Add entry** (pick type) / edit / **delete** (delete just omits it from this
   month onward — each month is self-contained).
-- **Exchange rates** panel is compact: title shows the base (`EXCHANGE RATES (HKD 1.0000)`), with **CNY and USD rates on one line**, each auto-fetched (with ↻ refetch) and overridable. Note: _Native → HKD as of 1st of the month from ECB (Frankfurter)_.
+- **Exchange rates** panel is compact: title shows the base (`EXCHANGE RATES (HKD 1.0000)`), with **CNY and USD rates on one line**, each auto-fetched (with ↻ refetch) and overridable. Note: \_Native → HKD as of 1st of the month from Frankfurter.
 - **Running total in HKD** updates live as you edit.
 - **RESET** and **SAVE** buttons.

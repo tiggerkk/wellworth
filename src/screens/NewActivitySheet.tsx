@@ -96,7 +96,7 @@ function ActivityForm({
   // Require a MET for at least one level, and the chosen default must be one of them
   // (the Activity Log resolves energy from the default effort's MET).
   const canSave = name.trim() !== '' && anyMet && defaultHasMet
-  const actionLabel = id ? 'SAVE ACTIVITY' : 'ADD ACTIVITY'
+  const actionLabel = id ? 'SAVE' : 'CREATE'
   const busyLabel = id ? 'Saving…' : 'Adding…'
 
   // Dirty vs the loaded/blank initial — drives RESET + SAVE enablement.
@@ -154,9 +154,18 @@ function ActivityForm({
         <button onClick={() => navigate(-1)} aria-label="Close">
           <IconX size={22} className="text-text-secondary" />
         </button>
-        <h1 className="flex-1 text-[17px] font-medium text-text-primary">
+        <h1 className="flex-1 truncate text-[17px] font-medium text-text-primary">
           {id ? 'Edit Activity' : 'New Activity'}
         </h1>
+        <SecondaryButton onClick={reset} disabled={!dirty || saving}>
+          RESET
+        </SecondaryButton>
+        <PrimaryButton
+          onClick={() => void save()}
+          disabled={saving || !canSave || (!!id && !dirty)}
+        >
+          {saving ? busyLabel : actionLabel}
+        </PrimaryButton>
       </header>
 
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
@@ -276,19 +285,6 @@ function ActivityForm({
             })}
           </div>
         </div>
-      </div>
-
-      <div className="flex gap-3 border-t border-border p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
-        <SecondaryButton onClick={reset} disabled={!dirty || saving}>
-          RESET
-        </SecondaryButton>
-        <PrimaryButton
-          onClick={() => void save()}
-          disabled={saving || !canSave || (!!id && !dirty)}
-          className="flex-1"
-        >
-          {saving ? busyLabel : actionLabel}
-        </PrimaryButton>
       </div>
     </>
   )

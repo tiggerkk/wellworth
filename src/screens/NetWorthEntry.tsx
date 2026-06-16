@@ -339,13 +339,13 @@ function EntryForm({
       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4">
         <button
           onClick={() => openSheet(`${routes.networth.import}?month=${month}`)}
-          className="flex items-center gap-1 self-end text-sm text-positive"
+          className="flex shrink-0 items-center gap-1 self-end text-sm text-positive"
         >
           <IconUpload size={16} /> Import CSV
         </button>
 
         {/* Exchange rates */}
-        <SectionCard title="Exchange rates (HKD 1.0000)">
+        <SectionCard className="shrink-0" title="Exchange rates (HKD 1.0000)">
           <div className="flex items-stretch gap-2 px-4 py-2.5">
             {(['CNY', 'USD'] as const).map((ccy) => (
               <div key={ccy} className="flex flex-1 items-center gap-1.5">
@@ -390,12 +390,12 @@ function EntryForm({
             </p>
           )}
           <p className="px-4 py-2 text-xs text-text-tertiary">
-            Native → HKD as of 1st of the month from ECB (Frankfurter)
+            Native → HKD as of 1st of the month from Frankfurter
           </p>
         </SectionCard>
 
         {rows.length === 0 && (
-          <p className="px-1 text-xs text-text-tertiary">No entries yet</p>
+          <p className="shrink-0 px-1 text-xs text-text-tertiary">No entries yet</p>
         )}
 
         {/* Asset-type groups */}
@@ -404,7 +404,7 @@ function EntryForm({
           return (
             <div
               key={type}
-              className="overflow-hidden rounded-card border border-border bg-surface"
+              className="shrink-0 overflow-hidden rounded-card border border-border bg-surface"
             >
               <div className="flex items-center justify-between gap-3 px-4 py-2.5">
                 <span className="min-w-0 flex-1 text-[15px] font-medium text-text-primary">

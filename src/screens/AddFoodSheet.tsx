@@ -44,7 +44,7 @@ function localServing(nutrientBasis: string): string {
 }
 
 // These caches outlive the sheet's React tree. Opening a food (Food Detail) unmounts this
-// sheet; clicking X / ADD TO DIARY navigates back and remounts it. Serving the last results
+// sheet; clicking X / ADD navigates back and remounts it. Serving the last results
 // from the cache lets the previous tab, search, and results reappear instantly instead of
 // flashing empty while refetching. (Tab + search text are restored from the URL; see below.)
 let localFoodsCache: Awaited<ReturnType<typeof listFoods>> | null = null

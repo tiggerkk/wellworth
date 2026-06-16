@@ -335,6 +335,27 @@ Wellness import machinery + `saveSnapshotEntries`.
 
 ---
 
+### UI refinements (session, June 2026)
+
+Cross-module consistency pass after the Net Worth build:
+
+- **Bottom nav:** Home is now the **leading** (leftmost) tab in every module's `BottomNav`, not
+  trailing.
+- **Action-button convention unified to the top-right header.** All Wellness logging/form sheets
+  (`FoodDetailSheet`, `ActivityLogSheet`, `NewFoodSheet`, `NewActivitySheet`) moved their action
+  buttons out of a bottom bar into the **sheet header's right edge** — matching Net Worth's
+  `EntryForm`. Labels shortened: `ADD TO DIARY` → **ADD**, `ADD FOOD`/`ADD ACTIVITY` → **CREATE**;
+  edit-mode keeps **RESET** + **SAVE**. `ActivityLogSheet`'s strength validation error moved to a
+  fixed strip just under the header (it used to sit above the now-removed footer). Convention is
+  documented in `01-screens.md` (Button convention) + `04-design-system.md` (Button placement).
+- **Diary header** `‹ date ›` is now **centered**: the day stepper is `justify-center` and the
+  settings/⋯ controls are `absolute right-3`, so the date sits mid-header regardless of the controls'
+  width.
+- **Net Worth month selector:** tapping the month label opens a new **`MonthPicker`** overlay
+  (year stepper + month grid, OK/Cancel — same modal pattern as the Wellness `Calendar`).
+
+---
+
 ## Failures & gotchas to not repeat
 
 - **F1 — RLS without table GRANTs → `42501 permission denied` (M3).** Tables created by raw-SQL
@@ -397,15 +418,19 @@ Wellness import machinery + `saveSnapshotEntries`.
   `!loading`** (and key it by the subject) — else the new subject briefly mounts with the old
   subject's data. See `NetWorthEntry`.
 
-- **F9 — Pinned header didn't pin: flex scroll child missing `min-h-0` (Net Worth Monthly Entry).**
-  The screen is `flex h-full flex-col` with a `shrink-0` header and a `flex-1 overflow-y-auto` body,
-  which _looks_ pinned but wasn't: a flex item's default `min-height:auto` refuses to shrink below its
-  content, so the body grew to fit every asset card, overflowed, and the **whole screen scrolled inside
-  `<main>`** — header included — pushing asset-type cards below the fold (they read as "cut off" /
-  "not displayed"). Fix: add **`min-h-0`** to the scrolling body (and the `h-full` root) so it
-  constrains to the parent and scrolls internally, leaving the header fixed. Same root cause as F6(c):
-  any `flex-col` scroll child needs `min-h-0` (or `shrink-0` siblings). Don't add a fixed pixel height
-  to "fix" a non-scrolling pane — reach for `min-h-0` first.
+- **F9 — Flex scroll pane, two-part fix: `min-h-0` to pin + `shrink-0` children to stop squish
+  (Net Worth Monthly Entry).** The screen is `flex h-full flex-col` with a `shrink-0` header and a
+  `flex-1 flex-col overflow-y-auto` body. **(a)** A flex item's default `min-height:auto` refuses to
+  shrink below its content, so the body grew to fit every asset card, overflowed, and the **whole
+  screen scrolled inside `<main>`** — header included — pushing cards below the fold (read as "cut
+  off" / "not displayed"). Fix: **`min-h-0`** on the body (and the `h-full` root) so it constrains to
+  the parent and scrolls internally. **(b)** But the body is itself `flex-col`, so once it _was_
+  height-constrained its children (default `flex-shrink:1`) **shrank to fit** instead of overflowing —
+  empty asset cards collapsed to thin bars and `overflow-hidden` clipped the rest (visible only after
+  adding a row pushed total content past the viewport). Fix: **`shrink-0` on every direct child** of
+  the scroll pane (Import button, Exchange-rates card, empty note, each asset-group card). Exact same
+  root cause as F6(c): a `flex-col` scroll pane needs `min-h-0` on itself **and** `shrink-0` on its
+  children. Don't reach for a fixed pixel height.
 
 ## Known limitations / deferred (not spec issues — future work)
 

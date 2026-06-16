@@ -86,7 +86,7 @@ function FoodForm({ id, initial }: { id: string | undefined; initial: FoodInitia
   const [saving, setSaving] = useState(false)
 
   const basisLabel = basis === 'per_serving' ? 'serving' : '100 g'
-  const actionLabel = id ? 'SAVE FOOD' : 'ADD FOOD'
+  const actionLabel = id ? 'SAVE' : 'CREATE'
   const busyLabel = id ? 'Saving…' : 'Adding…'
 
   // Dirty vs the loaded/blank initial — drives RESET + SAVE enablement.
@@ -154,9 +154,18 @@ function FoodForm({ id, initial }: { id: string | undefined; initial: FoodInitia
         <button onClick={() => navigate(-1)} aria-label="Close">
           <IconX size={22} className="text-text-secondary" />
         </button>
-        <h1 className="flex-1 text-[17px] font-medium text-text-primary">
+        <h1 className="flex-1 truncate text-[17px] font-medium text-text-primary">
           {id ? 'Edit Food' : 'New Food'}
         </h1>
+        <SecondaryButton onClick={reset} disabled={!dirty || saving}>
+          RESET
+        </SecondaryButton>
+        <PrimaryButton
+          onClick={() => void save()}
+          disabled={saving || !name.trim() || (!!id && !dirty)}
+        >
+          {saving ? busyLabel : actionLabel}
+        </PrimaryButton>
       </header>
 
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
@@ -281,19 +290,6 @@ function FoodForm({ id, initial }: { id: string | undefined; initial: FoodInitia
             })}
           </div>
         </div>
-      </div>
-
-      <div className="flex gap-3 border-t border-border p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
-        <SecondaryButton onClick={reset} disabled={!dirty || saving}>
-          RESET
-        </SecondaryButton>
-        <PrimaryButton
-          onClick={() => void save()}
-          disabled={saving || !name.trim() || (!!id && !dirty)}
-          className="flex-1"
-        >
-          {saving ? busyLabel : actionLabel}
-        </PrimaryButton>
       </div>
     </>
   )

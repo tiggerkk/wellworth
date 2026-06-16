@@ -4,8 +4,8 @@ interface PrimaryButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode
 }
 
-/** The light `fill` pill on dark — the primary action button (Google sign-in now,
- * "ADD TO DIARY" later). See docs/04-design-system.md. */
+/** The light `fill` pill on dark — the primary action button (e.g. Google sign-in,
+ * the top-right ADD / SAVE / CREATE actions). See docs/04-design-system.md. */
 export function PrimaryButton({
   children,
   className = '',

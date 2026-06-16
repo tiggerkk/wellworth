@@ -170,7 +170,7 @@ export function Diary() {
     <div className="pb-4">
       {/* Pinned top pane: day header + highlighted nutrients stay visible while groups scroll. */}
       <div className="sticky top-0 z-10 bg-bg/90 backdrop-blur">
-        <header className="flex items-center justify-between px-3 py-3">
+        <header className="relative flex items-center justify-center px-3 py-3">
           <div className="flex items-center gap-1">
             <button
               onClick={() => setDay(addDays(day, -1))}
@@ -193,7 +193,7 @@ export function Diary() {
               <IconChevronRight size={22} />
             </button>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="absolute right-3 flex items-center gap-1">
             <Link
               to={routes.wellness.settings}
               aria-label="Wellness settings"
