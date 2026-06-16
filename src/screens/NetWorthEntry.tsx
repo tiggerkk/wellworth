@@ -36,6 +36,7 @@ import { routes } from '../constants/routes'
 import { SectionCard } from '../components/SectionCard'
 import { PrimaryButton } from '../components/PrimaryButton'
 import { SecondaryButton } from '../components/SecondaryButton'
+import { MonthPicker } from '../components/MonthPicker'
 import type { Json, Tables } from '../types/database'
 
 // --- Draft model -------------------------------------------------------------------------
@@ -138,7 +139,7 @@ export function NetWorthEntry() {
   const { data: initial, loading, error } = useAsync(loadFn)
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full min-h-0 flex-col">
       {loading && <p className="px-4 py-6 text-sm text-text-secondary">Loading…</p>}
       {error && (
         <p className="px-4 py-6 text-sm text-danger">Couldn’t load this month.</p>
@@ -180,6 +181,7 @@ function EntryForm({
   const [saving, setSaving] = useState(false)
   const [fetching, setFetching] = useState<FetchableCurrency | null>(null)
   const [fxError, setFxError] = useState<Partial<Record<FetchableCurrency, boolean>>>({})
+  const [pickerOpen, setPickerOpen] = useState(false)
   const openSheet = useSheetNavigate()
 
   const dirty = serialize(rows, fxRates) !== serialize(baseline.rows, baseline.fxRates)
@@ -211,6 +213,14 @@ function EntryForm({
   function changeMonth(delta: number) {
     if (dirty && !window.confirm('Discard unsaved changes for this month?')) return
     setMonth(addMonths(month, delta))
+  }
+
+  function goToMonth(target: string) {
+    const m = startOfMonth(target)
+    setPickerOpen(false)
+    if (m === month) return
+    if (dirty && !window.confirm('Discard unsaved changes for this month?')) return
+    setMonth(m)
   }
 
   function addRow(type: AssetType) {
@@ -290,9 +300,13 @@ function EntryForm({
           >
             <IconChevronLeft size={22} />
           </button>
-          <span className="min-w-36 text-center text-[15px] font-medium text-text-primary">
+          <button
+            onClick={() => setPickerOpen(true)}
+            aria-label="Choose month"
+            className="min-w-36 rounded-input py-1 text-center text-[15px] font-medium text-text-primary"
+          >
             {formatMonthLabel(month)}
-          </span>
+          </button>
           <button
             onClick={() => changeMonth(1)}
             aria-label="Next month"
@@ -322,7 +336,7 @@ function EntryForm({
       </header>
 
       {/* Scrolling body */}
-      <div className="flex flex-1 flex-col gap-3 overflow-y-auto p-4">
+      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4">
         <button
           onClick={() => openSheet(`${routes.networth.import}?month=${month}`)}
           className="flex items-center gap-1 self-end text-sm text-positive"
@@ -331,61 +345,57 @@ function EntryForm({
         </button>
 
         {/* Exchange rates */}
-        <SectionCard title="Exchange rates (to HKD)">
-          <div className="flex items-center justify-between px-4 py-2.5">
-            <span className="text-[15px] text-text-primary">HKD</span>
-            <span className="text-[15px] text-text-secondary">1.0000</span>
-          </div>
-          {(['CNY', 'USD'] as const).map((ccy) => (
-            <div key={ccy} className="border-t border-border px-4 py-2.5">
-              <div className="flex items-center justify-between gap-2">
+        <SectionCard title="Exchange rates (HKD 1.0000)">
+          <div className="flex items-stretch gap-2 px-4 py-2.5">
+            {(['CNY', 'USD'] as const).map((ccy) => (
+              <div key={ccy} className="flex flex-1 items-center gap-1.5">
                 <span className="text-[15px] text-text-primary">{ccy}</span>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    inputMode="decimal"
-                    step="any"
-                    min={0}
-                    placeholder="rate"
-                    value={fxRates[ccy]}
-                    onChange={(e) => {
-                      const v = e.target.value
-                      setFxRates((prev) => ({ ...prev, [ccy]: v }))
-                      setFxError((er) => ({ ...er, [ccy]: false }))
-                    }}
-                    className={`w-28 text-right ${inputCls}`}
-                  />
-                  <button
-                    onClick={() => void refreshRate(ccy)}
-                    disabled={fetching === ccy}
-                    aria-label={`Refresh ${ccy} rate`}
-                    className="text-text-secondary disabled:opacity-50"
-                  >
-                    <IconRefresh size={16} />
-                  </button>
-                </div>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  step="any"
+                  min={0}
+                  placeholder="rate"
+                  value={fxRates[ccy]}
+                  onChange={(e) => {
+                    const v = e.target.value
+                    setFxRates((prev) => ({ ...prev, [ccy]: v }))
+                    setFxError((er) => ({ ...er, [ccy]: false }))
+                  }}
+                  className={`w-0 min-w-0 flex-1 text-right ${inputCls}`}
+                />
+                <button
+                  onClick={() => void refreshRate(ccy)}
+                  disabled={fetching === ccy}
+                  aria-label={`Refresh ${ccy} rate`}
+                  className="shrink-0 text-text-secondary disabled:opacity-50"
+                >
+                  <IconRefresh size={16} />
+                </button>
               </div>
-              {fetching === ccy && (
-                <p className="mt-1 text-right text-xs text-text-tertiary">Fetching…</p>
-              )}
-              {fxError[ccy] && (
-                <p className="mt-1 text-right text-xs text-text-tertiary">
-                  Couldn’t fetch — enter manually.
-                </p>
-              )}
-            </div>
-          ))}
+            ))}
+          </div>
+          {(['CNY', 'USD'] as const).some((c) => fetching === c || fxError[c]) && (
+            <p className="px-4 pb-1 text-xs text-text-tertiary">
+              {(['CNY', 'USD'] as const)
+                .map((c) =>
+                  fetching === c
+                    ? `${c}: fetching…`
+                    : fxError[c]
+                      ? `${c}: couldn’t fetch — enter manually.`
+                      : null,
+                )
+                .filter(Boolean)
+                .join('  ')}
+            </p>
+          )}
           <p className="px-4 py-2 text-xs text-text-tertiary">
-            Native → HKD as of the 1st of the month, auto-fetched from the ECB
-            (Frankfurter). Edit to override, or ↻ to refetch. Saved months keep their
-            rate.
+            Native → HKD as of 1st of the month from ECB (Frankfurter)
           </p>
         </SectionCard>
 
         {rows.length === 0 && (
-          <p className="px-1 text-xs text-text-tertiary">
-            No entries yet — add your holdings below. Next month copies these forward.
-          </p>
+          <p className="px-1 text-xs text-text-tertiary">No entries yet</p>
         )}
 
         {/* Asset-type groups */}
@@ -396,11 +406,11 @@ function EntryForm({
               key={type}
               className="overflow-hidden rounded-card border border-border bg-surface"
             >
-              <div className="flex items-center justify-between px-4 py-2.5">
-                <span className="text-[15px] font-medium text-text-primary">
+              <div className="flex items-center justify-between gap-3 px-4 py-2.5">
+                <span className="min-w-0 flex-1 text-[15px] font-medium text-text-primary">
                   {ASSET_TYPE_LABELS[type]}
                 </span>
-                <div className="flex items-center gap-3">
+                <div className="flex shrink-0 items-center gap-3">
                   {entries.length > 0 && (
                     <span className="text-sm text-text-secondary">
                       {formatHkd(subtotal)}
@@ -502,6 +512,14 @@ function EntryForm({
           )
         })}
       </div>
+
+      {pickerOpen && (
+        <MonthPicker
+          month={month}
+          onSelect={goToMonth}
+          onClose={() => setPickerOpen(false)}
+        />
+      )}
     </>
   )
 }

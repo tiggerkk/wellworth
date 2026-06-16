@@ -5,7 +5,7 @@
 - **Frontend:** React + Vite + TypeScript (strict mode). Tailwind CSS (v4, CSS-first via
   `@tailwindcss/vite`). `vite-plugin-pwa` for install/offline. **React Router** (the unified
   `react-router` package) for routing + modal sheets. **Recharts** powers the Net Worth dashboard
-  trend chart (Phase 2); it's **lazy-loaded** (its own chunk) so it stays out of the initial bundle.
+  trend chart; it's **lazy-loaded** (its own chunk) so it stays out of the initial bundle.
 - **Barcode:** `@zxing/browser` (`BrowserMultiFormatReader`) + `@zxing/library` decoding the device
   camera via `getUserMedia`. Requires HTTPS (localhost is exempt for dev). The scanner is lazy-loaded
   so ZXing is a separate chunk, fetched only when scanning.
@@ -14,7 +14,7 @@
 - **Food data:** USDA FoodData Central (search + nutrients, free data.gov key, ~1000 req/hr,
   public domain); Open Food Facts (barcode lookup, free).
 
-## Suggested folder structure
+## Folder structure
 
 ```
 src/
@@ -75,7 +75,7 @@ Supabase (Postgres + RLS). Components hold no SQL and never import the Supabase 
 Supabase is the single source of truth; all devices read/write it. Optional local caching is fine but
 the cloud is authoritative (this also sidesteps iOS PWA storage eviction).
 
-## Calculations (implement as pure helpers in `src/lib`)
+## Wellness Calculations (implement as pure helpers in `src/lib`)
 
 - **BMR (Mifflin–St Jeor):**
   `BMR = 10*kg + 6.25*cm − 5*age − 161` (female); use `+5` instead of `−161` for male.
@@ -102,64 +102,30 @@ the cloud is authoritative (this also sidesteps iOS PWA storage eviction).
   unit-independent. In Imperial mode, **Settings shows height in inches and weight in lb** (decimal);
   food nutrient amounts and the per-100 g basis are not re-expressed in imperial.
 
-## External APIs
+## Net Worth Calculations
 
-- **Called directly from the browser** (no server proxy): the USDA key is a `VITE_` var and Open Food
-  Facts allows browser requests. Results are cached into `food` on favorite/log to limit calls.
-- **USDA FoodData Central** (`api.nal.usda.gov/fdc/v1`): free `api.data.gov` key. **Search uses POST**
-  `/foods/search` with a JSON body — the GET form 400s when `dataType` includes `"Survey (FNDDS)"`.
-  `searchFoods` issues **two POST searches** — the whole-food databases
-  (`Foundation`/`SR Legacy`/`Survey (FNDDS)`) and `Branded` — and merges them whole-foods-first.
-  This is deliberate: a single combined search ranks the thousands of identical Branded exact-name
-  products (8000+ for "blueberries") above every varied whole-food entry, so they'd be the only thing
-  on the page. Branded duplicates (same name + brand) are then collapsed and capped. The UI sorts the
-  merged list (with local foods) by name-match relevance, so search only needs to guarantee variety.
-  USDA matches **whole tokens**, so a partial word ("blueberr") returns nothing; `searchFoods`
-  therefore wildcards the last word at a stem (`food-search.ts#toUsdaWildcardQuery`: "blueberry",
-  "blueberries", "blueberrie", "blueberr" → `blueberr*`) so partial/plural input all returns the same
-  set. Over-broad recall is fine — the UI scorer re-filters to the typed term.
-  Detail is `GET /food/{fdcId}`. Map nutrients on the stable INFOODS **`nutrient.number`** (e.g. 208
-  energy kcal — not 268 kJ; 320 vitamin A µg RAE — not 318 IU; 435 folate µg DFE; 328 vitamin D µg;
-  312 copper mg). USDA amounts are per 100 g. When a USDA (or OFF) food is favorited or logged, cache
-  a copy into `food` (`source`, `external_id`); plain search hits aren't persisted.
-- **Open Food Facts** (`world.openfoodfacts.org/api/v2/product/{barcode}.json`): free, global. **Every
-  `*_100g` value is in grams** (including vitamins/minerals) → scale to our mg (×1000) / µg (×1e6).
-  Sodium = `salt_100g / 2.5 × 1000` when `sodium_100g` is absent. All fields optional/sparse. Scanned
-  products save into Custom.
-- **Frankfurter** (`api.frankfurter.dev/v1/{date}?from={CNY|USD}&to=HKD`): **keyless**, ECB-sourced,
-  CORS-enabled — used by **Net Worth** for native→HKD FX as of the **1st of the month** (it returns the
-  most recent rate on/before a non-trading day). CNY is the stored code (no RMB→CNY mapping); HKD = 1
-  is never fetched. The fetched rate is **frozen** onto each `asset_entry`
-  (`fx_rate_to_base`/`value_base`) so saved months are immune to later revisions; the user can override
-  per currency. Helpers + a small cache live in `src/lib/fx.ts`.
-- The **complete** nutrient mappings are the source of truth in code: USDA `nutrient.number` → our key
-  in `src/lib/food-api.ts`, and Open Food Facts key → our key (with the per-field scale factor) in
-  `src/lib/off-api.ts`. The owner-band DRI target/UL values are tabulated in `05-seed-data.md` and
-  live in `src/lib/dri.ts`.
-
-## Net Worth (Phase 2)
-
-Asset-only net worth, entered ~monthly (each snapshot dated to the **1st**). Base **HKD**; entries in
-HKD/CNY/USD. Full behavior: `06-networth.md`. Where things live:
-
+- `value_base = value_native × fx_rate_to_base` (HKD ⇒ rate 1).
+- **Net worth(month)** = `SUM(value_base)` over that snapshot's entries.
+- **Asset-type trend** = group a snapshot's entries by `asset_type`, `SUM(value_base)` per type, per month. (Grouping is by the fixed enum, so renaming a holding never breaks the lines.)
 - **Data:** `src/data/networth-snapshot.ts` + `src/data/asset-entry.ts`. Write path
-  `saveSnapshotEntries(userId, month, rows)` = get-or-create the month's snapshot, delete its
-  `asset_entry` rows, insert the new set — **idempotent per month** (reused by the CSV importer). The
-  dashboard reads via `listSnapshotsWithEntries` (one embedded `networth_snapshot → asset_entry`
-  select; slice the window client-side).
-- **Calc:** `src/lib/networth.ts` — `ASSET_TYPES`/labels, `DETAIL_FIELDS`,
-  `valueBase`/`totalBase`/`groupByType`/`typeTotals`/`typeBreakdown`, `formatHkd`/`formatHkdCompact`,
-  `ASSET_TYPE_COLORS`.
-- **FX:** `src/lib/fx.ts` — keyless **Frankfurter** native→HKD for the month's 1st; **CNY is the
-  stored code** (no RMB→CNY map); HKD = 1; failures non-fatal. The rate + `value_base` are **frozen**
-  on each `asset_entry`, so saved months are immune to later revisions.
-- **Refresh:** `src/lib/networth-refresh.ts` (`bumpNetWorth`/`useNetWorthVersion`), separate from the
-  Wellness `diary-refresh` tick.
+  `saveSnapshotEntries(userId, month, rows)` = get-or-create the month's snapshot, delete its `asset_entry` rows, insert the new set — **idempotent per month** (reused by the CSV importer). The dashboard reads via `listSnapshotsWithEntries` (one embedded `networth_snapshot → asset_entry` select; slice the window client-side).
+- **Calc:** `src/lib/networth.ts` — `ASSET_TYPES`/labels, `DETAIL_FIELDS`, `valueBase`/`totalBase`/`groupByType`/`typeTotals`/`typeBreakdown`, `formatHkd`/`formatHkdCompact`, `ASSET_TYPE_COLORS`.
+- **FX:** `src/lib/fx.ts` — keyless **Frankfurter** native → HKD for the month's 1st (most recent rate on or before it if the 1st is a non-trading day); **CNY is the stored code**; HKD = 1; failures non-fatal. The rate + `value_base` are **frozen** on each `asset_entry`, so saved months are immune to later revisions.
+- **Refresh:** `src/lib/networth-refresh.ts` (`bumpNetWorth`/`useNetWorthVersion`), separate from the Wellness `diary-refresh` tick.
 - **CSV import:** `src/lib/networth-import.ts` (`parseNetWorthCsv` + `stripNumber` — strips
   thousands commas/quotes from values and detail values) + `src/screens/ImportNetWorthSheet.tsx`.
-- **UI:** `NetWorthDashboard` (recharts trend via the **lazy** `src/components/NetWorthTrendChart`,
-  own chunk; windows in `src/constants/networth-ranges.ts`), `NetWorthEntry` (copy-forward, grouped
-  inline edit, manual+auto FX, RESET/SAVE).
+- **UI:** `NetWorthDashboard` (recharts trend via the **lazy** `src/components/NetWorthTrendChart`, own chunk; windows in `src/constants/networth-ranges.ts`), `NetWorthEntry` (copy-forward, grouped inline edit, manual+auto FX, RESET/SAVE).
+
+## External APIs
+
+- **Called directly from the browser** (no server proxy): the USDA key is a `VITE_` var and Open Food Facts allows browser requests. Results are cached into `food` on favorite/log to limit calls.
+- **USDA FoodData Central** (`api.nal.usda.gov/fdc/v1`): free `api.data.gov` key. **Search uses POST** `/foods/search` with a JSON body — the GET form 400s when `dataType` includes `"Survey (FNDDS)"`. `searchFoods` issues **two POST searches** — the whole-food databases
+  (`Foundation`/`SR Legacy`/`Survey (FNDDS)`) and `Branded` — and merges them whole-foods-first.
+  This is deliberate: a single combined search ranks the thousands of identical Branded exact-name products (8000+ for "blueberries") above every varied whole-food entry, so they'd be the only thing on the page. Branded duplicates (same name + brand) are then collapsed and capped. The UI sorts the merged list (with local foods) by name-match relevance, so search only needs to guarantee variety. USDA matches **whole tokens**, so a partial word ("blueberr") returns nothing; `searchFoods` therefore wildcards the last word at a stem (`food-search.ts#toUsdaWildcardQuery`: "blueberry", "blueberries", "blueberrie", "blueberr" → `blueberr*`) so partial/plural input all returns the same set. Over-broad recall is fine — the UI scorer re-filters to the typed term.
+  Detail is `GET /food/{fdcId}`. Map nutrients on the stable INFOODS **`nutrient.number`** (e.g. 208 energy kcal — not 268 kJ; 320 vitamin A µg RAE — not 318 IU; 435 folate µg DFE; 328 vitamin D µg; 312 copper mg). USDA amounts are per 100 g. When a USDA (or OFF) food is favorited or logged, cache a copy into `food` (`source`, `external_id`); plain search hits aren't persisted.
+- **Open Food Facts** (`world.openfoodfacts.org/api/v2/product/{barcode}.json`): free, global. **Every `*_100g` value is in grams** (including vitamins/minerals) → scale to our mg (×1000) / µg (×1e6). Sodium = `salt_100g / 2.5 × 1000` when `sodium_100g` is absent. All fields optional/sparse. Scanned products save into Custom.
+- The **complete** nutrient mappings are the source of truth in code: USDA `nutrient.number` → our key in `src/lib/food-api.ts`, and Open Food Facts key → our key (with the per-field scale factor) in `src/lib/off-api.ts`. The owner-band DRI target/UL values are tabulated in `05-seed-data.md` and live in `src/lib/dri.ts`.
+- **Frankfurter** (`api.frankfurter.dev/v1/{date}?from={CNY|USD}&to=HKD`): **keyless**, ECB-sourced, CORS-enabled — used by **Net Worth** for native→HKD FX as of the **1st of the month** (it returns the most recent rate on/before a non-trading day). CNY is the stored code; HKD = 1 is never fetched. The fetched rate is **frozen** onto each `asset_entry` (`fx_rate_to_base`/`value_base`) so saved months are immune to later revisions; the user can override per currency. Helpers + a small cache live in `src/lib/fx.ts`.
 
 ## Environment variables
 

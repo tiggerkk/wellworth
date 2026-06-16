@@ -2,16 +2,16 @@
 
 Things deliberately NOT built in Phase 1, with the rationale and any design decisions already made so we don't re-litigate them. The built app + `/docs` spec are the source of truth for what _exists_; this file is the backlog and the "we decided X, don't redo that analysis" record.
 
-Status legend: **Phase 2** (planned, separate phase) · **Deferred** (Phase-1-adjacent, do later) ·
+Status legend: **Net Worth** (built) · **Deferred** (Phase-1-adjacent, do later) ·
 **Out of scope** (intentionally never, or a hard platform limit).
 
 ---
 
-## Phase 2 — Net Worth · Built (feature-complete)
+## Net Worth · Built (feature-complete)
 
-**What:** Monthly entry of asset values across categories — cash, time deposits, stocks, mutual funds, retirement, insurance, property — each held in one of three currencies (**HKD = base**, CNY, USD). A net-worth figure computed in the base currency, plus total and by-asset-type trend graphs with a selectable time window. Full spec: `06-networth.md`.
+**What:** Monthly entry of asset values across categories — cash, time deposits, stocks, mutual funds, retirement, insurance, property — each held in one of three currencies (**HKD = base**, CNY, USD). A net-worth figure computed in the base currency, plus total and by-asset-type trend graphs with a selectable time window.
 
-**Status:** **Built** (Phase 2, M1–M6) — Home hub + module nav, the two tables (`networth_snapshot`, `asset_entry`), Monthly Entry, Frankfurter FX, the Dashboard, and the in-app CSV importer all shipped. The items below are the sub-features that remain **deliberately deferred** within Net Worth:
+**Status:** **Built** (Net Worth, M1–M6) — Home hub + module nav, the two tables (`networth_snapshot`, `asset_entry`), Monthly Entry, Frankfurter FX, the Dashboard, and the in-app CSV importer all shipped. The items below are the sub-features that remain **deliberately deferred** within Net Worth:
 
 - **Auto stock price lookup** (Alpha Vantage) — manual value entry for now; `details.shares` is stored to support it later.
 - **Mutual fund NAV lookup** — no reliable free source for HK/China-domiciled funds; manual only.
@@ -21,7 +21,7 @@ Status legend: **Phase 2** (planned, separate phase) · **Deferred** (Phase-1-ad
 - **Multi-currency display toggle** for the dashboard.
 - **Cost-basis / unrealized gain** — `details.cost`/`details.premium` are captured but not yet surfaced.
 
-**Design notes / constraints already decided (00-PRD.md, 06-networth.md):**
+**Design notes / constraints already decided (00-PRD.md):**
 
 - **Separate tables.** Net Worth shares only **auth + `profile` + the app shell** with Wellness; it does not touch the wellness tables. Additive, not a rebuild.
 - Base currency is **HKD**; CNY/USD values convert to base via **Frankfurter** (keyless, ECB-sourced; quotes CNY directly) as of the 1st of the month, with a manual per-currency override; the rate + `value_base` are frozen on each entry.

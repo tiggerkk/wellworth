@@ -4,13 +4,13 @@ import { routes } from '../constants/routes'
 import type { ModuleDef, NavItem } from '../constants/modules'
 
 /**
- * Per-module bottom nav: the active module's tabs plus a trailing Home item that
- * returns to the hub. Rendered by AppShell only when inside a module.
+ * Per-module bottom nav: a leading Home item that returns to the hub, then the
+ * active module's tabs. Rendered by AppShell only when inside a module.
  */
 export function BottomNav({ module }: { module: ModuleDef }) {
   const items: NavItem[] = [
-    ...module.tabs,
     { to: routes.home, label: 'Home', Icon: IconHome },
+    ...module.tabs,
   ]
 
   return (

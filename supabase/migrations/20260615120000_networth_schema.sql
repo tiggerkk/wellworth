@@ -1,4 +1,4 @@
--- WellWorth Net Worth schema (Phase 2). See docs/06-networth.md.
+-- WellWorth Net Worth schema.
 --
 -- Conventions (identical to 20260613120000_init_schema.sql):
 --   * Table names singular, snake_case.

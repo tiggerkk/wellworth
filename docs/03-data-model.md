@@ -1,13 +1,7 @@
 # 03 — Data Model
 
-Postgres on Supabase. Table names **singular, snake_case**. Every user-owned table has a `user_id` (→ `auth.users.id`, `ON DELETE CASCADE`) and four RLS policies (select/insert/update/delete) using `(select auth.uid()) = user_id`. Child tables without their own `user_id` (`serving`, `strength_set`) enforce ownership with an `EXISTS` check against their parent. RLS is enabled in the first migration for **every** table, and that migration also **`GRANT`s table privileges to the `anon`/`authenticated` roles** (raw-SQL-migration tables don't inherit Supabase's default grants — RLS alone yields `42501 permission denied`). Enumerated TEXT columns are constrained with `CHECK`; `updated_at` columns are maintained by the `moddatetime` trigger.
+Postgres on Supabase. Table names **singular, snake_case**. Every user-owned table has a `user_id` (→ `auth.users.id`, `ON DELETE CASCADE`) and four RLS policies (select/insert/update/delete) using `(select auth.uid()) = user_id`. Child tables without their own `user_id` (`serving`, `strength_set`) enforce ownership with an `EXISTS` check against their parent. RLS is enabled in the first migration for **every** table, and that migration also `GRANT`s table privileges to the `anon`/`authenticated` roles\*\* (raw-SQL-migration tables don't inherit Supabase's default grants — RLS alone yields `42501 permission denied`). Enumerated TEXT columns are constrained with `CHECK`; `updated_at` columns are maintained by the `moddatetime` trigger.
 Nutrient sets are stored as JSONB maps (`nutrient_key → amount`), validated against the `nutrient` reference table at the data-access layer (`filterToKnownKeys`) — so adding a tracked nutrient never needs a schema change.
-
-> **Net Worth (Phase 2)** adds two more user-owned tables — `networth_snapshot` and `asset_entry` —
-> following the same conventions (own `user_id` + 4 RLS policies + role grants + `moddatetime`;
-> `CHECK`-constrained enums; `asset_entry` cascades on snapshot delete). Their full schema lives in
-> **`06-networth.md`** (kept there so this file stays Phase-1-focused); the migration is
-> `supabase/migrations/20260615120000_networth_schema.sql`.
 
 ## Tables
 
@@ -105,6 +99,33 @@ Nutrient sets are stored as JSONB maps (`nutrient_key → amount`), validated ag
   (See `05-seed-data.md` for the full seed list — exactly 80 rows. DRI target/UL values are a lookup
   in `src/lib/dri.ts`, keyed by sex/age band, not stored per row; **Phase 1 populates only adult
   female 51–70** and throws for other bands.)
+
+### networth_snapshot
+
+- `id` UUID PK
+- `user_id` UUID → auth.users
+- `month` DATE — normalized to the **first day of the month**; **UNIQUE (user_id, month)**
+- `created_at`, `updated_at` TIMESTAMPTZ
+
+### asset_entry
+
+- `id` UUID PK
+- `user_id` UUID → auth.users
+- `snapshot_id` UUID → networth_snapshot (ON DELETE CASCADE)
+- `asset_type` TEXT — the enum above
+- `name` TEXT
+- `currency` TEXT — 'HKD' | 'CNY' | 'USD'
+- `details` JSONB — type-specific fields (maturity_date, ticker, shares, units, …)
+- `value_native` NUMERIC — value in the entry's own currency
+- `fx_rate_to_base` NUMERIC — native → HKD rate used (1 for HKD)
+- `value_base` NUMERIC — value_native × fx_rate_to_base (stored)
+- `sort_order` INT NULL
+- `created_at`, `updated_at`
+- Index on (`user_id`, `snapshot_id`).
+
+`asset_entry` cascades on snapshot delete. No `asset` table and no soft-delete: each month is a complete, self-contained set of `asset_entry` rows, so deleting an entry simply means it is absent from that month forward; prior months are intact.
+
+The migration is `supabase/migrations/20260615120000_networth_schema.sql`.
 
 ## Relationships
 

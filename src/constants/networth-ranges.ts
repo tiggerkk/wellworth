@@ -1,6 +1,6 @@
 import { addMonths, startOfMonth, type IsoDate } from '../lib/date'
 
-/** Net Worth dashboard trend windows (docs/06-networth.md). `months: null` = All. */
+/** Net Worth dashboard trend windows. `months: null` = All. */
 export interface NetWorthRange {
   key: string
   label: string

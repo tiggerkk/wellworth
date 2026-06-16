@@ -8,7 +8,9 @@
 - highlighted_nutrients (8): `protein, fiber, vitamin_d, calcium, iron, magnesium, folate, potassium`
 - visible_nutrients: all keys below marked **Visible = yes**
 
-## Activity library (seed these — at first login, alongside the profile)
+---
+
+## Wellness - Activity library (seed these — at first login, alongside the profile)
 
 | Name                   | Template | Default duration | Default effort | MET by effort (editable)                    | Description                               | Icon            |
 | ---------------------- | -------- | ---------------- | -------------- | ------------------------------------------- | ----------------------------------------- | --------------- |
@@ -29,7 +31,7 @@ For strength activities, met_by_effort maps each effort level to its Compendium 
 
 Icon values are Tabler icon component name strings stored in activity.icon. Resolved via src/constants/activity-icons.ts, which imports only the icons used in the app by name (tree-shaking safe — do NOT use import \* as TablerIcons). The New Activity icon picker renders the keys of ACTIVITY_ICONS. Null/unknown falls back to DEFAULT_ACTIVITY_ICON (IconRun).
 
-## Nutrient reference (seed the `nutrient` table)
+## Wellness - Nutrient reference (seed the `nutrient` table)
 
 `Visible = yes` = `default_visible true` (Phase-1 list). `UL` = `has_upper_limit true` (red-bar capable).
 DRI target/UL numeric values are looked up by age/sex in `src/lib/dri.ts`, not stored here.
@@ -233,3 +235,35 @@ Three nutrients get targets computed from the day's energy target (kcal), not fr
 Add another `Record<string, StaticDri>` (e.g. `MALE_31_50`) with that band's RDA/AI + UL + ulScope
 values from the same NASEM/IOM tables, register it in `DRI_TABLES` keyed `'male:31-50'`, and extend
 `bandFor(sex, age)` in `dri.ts` to map ages to the new key. No schema or UI change is required.
+
+---
+
+## Net Worth - Asset types (fixed enum in this order)
+
+`cash, time_deposit, stock, mutual_fund, retirement, insurance, property`
+
+| Type         | `name` is      | Type-specific `details` (informational unless noted) | `value_native` holds |
+| ------------ | -------------- | ---------------------------------------------------- | -------------------- |
+| cash         | institution    | —                                                    | balance              |
+| time_deposit | institution    | `maturity_date`                                      | principal + interest |
+| stock        | ticker/company | `ticker`, `shares`                                   | total value (manual) |
+| mutual_fund  | fund name      | `units`, `cost` (purchase cost)                      | total value (manual) |
+| retirement   | provider       | —                                                    | portfolio value      |
+| insurance    | policy label   | `premium`, `policy_year`                             | net cash value       |
+| property     | address/label  | —                                                    | market value         |
+
+All values are entered manually. The `details` fields are preserved for reference but do **not** drive the value or the net-worth math. The `details` JSONB is open-ended — the import accepts whatever `detailN_key`/`detailN_value` pairs appear in the CSV, so new keys can be added later without a schema change.
+
+## Net Worth - Seed & import (in-app CSV importer)
+
+Your real balances stay **out of the repo**. An **in-app importer** (in the Net Worth module, signed in as you) reads a local CSV and creates/replaces a month's snapshot + `asset_entry` rows. It is reusable for **any** month — not just the first — so you can bulk-replace a month's holdings instead of typing them in. After the initial import, copy-forward takes over month to month. The importer is **idempotent per month** (re-running for a month replaces that month's entries, never duplicating them).
+
+- File: `templates/networth-seed-template.csv` — a **sanitized example** is committed; your **filled** copy must stay gitignored (see `.gitignore`; keep it as e.g. `templates/networth-seed.local.csv`). Confirm each `value_native`.
+- **Number parsing:** some CSV numbers are quoted with thousands-separator commas (e.g. `"1,234,567.89"`) while others are plain (e.g. `999.99`). The importer **must strip commas (and surrounding quotes) before converting to numeric**, for both `value_native` and all detail values.
+- **Gitignore the filled CSV** (it contains private financial data).
+- Column spec:
+  `asset_type,name,currency,value_native,detail1_key,detail1_value,detail2_key,detail2_value`
+  - `detail*` columns are optional, type-specific, and stored as-is in `details` (e.g. `maturity_date`, `ticker`, `shares`, `units`, `cost`, `premium`, `policy_year`). Extra detail pairs are allowed.
+  - The importer asks you for the snapshot month (e.g. `2026-06`) and normalizes it to the **first day** of that month.
+  - Full column rules + examples: `templates/networth-import-guide.md`. (Implemented in
+    `src/lib/networth-import.ts` + `src/screens/ImportNetWorthSheet.tsx`.)

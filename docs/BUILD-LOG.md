@@ -1,4 +1,4 @@
-# BUILD-LOG — WellWorth Phase 1 (Wellness)
+# BUILD-LOG — WellWorth (Wellness)
 
 Engineering history: the build sequence, the rationale behind key decisions, and a short list of
 approaches that were tried and **failed** (so they aren't repeated). **This file is not a behavior
@@ -6,7 +6,7 @@ spec** — `/docs/00-PRD.md … 05-seed-data.md` + `CLAUDE.md` are the source of
 describe what the app does. Where this log mentions a past failure, it points to the spec section that
 now encodes the correct approach.
 
-Phase 2 (Net Worth) is **feature-complete** (M1–M6) — see "Phase 2 — Net Worth (build sequence)" below.
+Net Worth is **feature-complete** (M1–M6) — see "Net Worth (build sequence)" below.
 
 ---
 
@@ -30,7 +30,7 @@ Phase 2 (Net Worth) is **feature-complete** (M1–M6) — see "Phase 2 — Net W
 
 ---
 
-## Build sequence (per milestone)
+## Wellness Build Sequence (per milestone)
 
 ### M1 — Scaffold + tooling (`d61e352`)
 
@@ -202,9 +202,9 @@ engineering decisions:
 
 ---
 
-## Phase 2 — Net Worth (build sequence)
+## Net Worth Build Sequence (per milestone)
 
-### M1 — Secure seed data + Net Worth schema (this session)
+### M1 — Secure seed data + Net Worth schema
 
 Goal: get private financial data out of the repo and lay the two-table foundation, without touching
 the running Wellness app.
@@ -222,8 +222,7 @@ the running Wellness app.
   `value_base` stored so a month's HKD figures freeze against later FX revisions). RLS + 4 owner
   policies + explicit per-table grants, matching `init_schema`.
 - **Currency = `CNY`, not `RMB`.** The renminbi is stored as ISO `CNY` end-to-end, which is exactly
-  what Frankfurter (ECB) quotes — so FX needs no code translation. Docs (`00-PRD`, `06-networth`,
-  `PARKED`) updated accordingly.
+  what Frankfurter (ECB) quotes — so FX needs no code translation. Docs (`00-PRD`, `PARKED`) updated accordingly.
 - **Import is in-app, not a script.** Per the owner's choice, the one-time CSV seed becomes a reusable
   **in-app importer** (anon key + RLS, signed in as the owner) that creates/replaces a month's entries
   — idempotent per month. Built in a later Net Worth milestone.
@@ -232,7 +231,7 @@ the running Wellness app.
   the global level, last-used-module reopen. Built in the next milestone (M2). `00-PRD.md` carries the
   navigation model.
 
-### M2 — Home hub + module routing refactor (this session)
+### M2 — Home hub + module routing refactor
 
 Goal: turn the single-app shell into a multi-module app behind a Home hub, with Wellness fully
 working under `/wellness/*` and Net Worth reachable as a placeholder module. No DB/data-layer changes.
@@ -259,7 +258,7 @@ working under `/wellness/*` and Net Worth reachable as a placeholder module. No 
 - Built on branch `phase2-m2-home-hub` (auto-deploy safety); gates + production build green. The 76
   tests are pure helpers, so routing was verified by manual click-through.
 
-### M3 — Net Worth Monthly Entry (this session)
+### M3 — Net Worth Monthly Entry
 
 Goal: make Net Worth real — data layer + pure calc helpers + the Monthly Entry screen (replacing the
 M2 placeholder). **Manual FX** in M3 (auto-fetch is M4); no schema change.
@@ -280,7 +279,7 @@ M2 placeholder). **Manual FX** in M3 (auto-fetch is M4); no schema change.
   gated on `!loading` (and keyed by `month`) — else a month switch briefly mounts the new month with
   the old month's rows.
 
-### M4 — Frankfurter FX auto-fetch (this session)
+### M4 — Frankfurter FX auto-fetch
 
 Goal: replace M3's manual-only rate entry with an auto-fetch, keeping a manual override.
 
@@ -295,7 +294,7 @@ Goal: replace M3's manual-only rate entry with an auto-fetch, keeping a manual o
   status; a manual edit overrides and clears the error. `save()` is unchanged (already freezes the
   rate + `value_base` per row).
 
-### M5 — Net Worth Dashboard (this session)
+### M5 — Net Worth Dashboard
 
 Goal: the real dashboard — current total, total-trend line graph (recharts) with a window selector +
 Total⇄By-type toggle, and a latest-month per-type summary. Reads the frozen `value_base`; no mutation.
@@ -313,9 +312,9 @@ Total⇄By-type toggle, and a latest-month per-type summary. Reads the frozen `v
 - **Screen**: refetches after an entry SAVE via `useNetWorthVersion`; explicit loading/error/empty
   states; the By-Type chart only draws types **present** in the window.
 
-### M6 — In-app CSV importer (this session)
+### M6 — In-app CSV importer
 
-Goal: bulk-load/replace a month's holdings from a CSV — **Phase 2 feature-complete**. Reuses the
+Goal: bulk-load/replace a month's holdings from a CSV — **feature-complete**. Reuses the
 Wellness import machinery + `saveSnapshotEntries`.
 
 - **`src/lib/networth-import.ts`** (+`.test.ts`, +5 tests → **94**): `parseNetWorthCsv` (mirrors
@@ -383,20 +382,30 @@ Wellness import machinery + `saveSnapshotEntries`.
 
 ---
 
-- **F7 — Private financial data committed + pushed (Phase 2 M1).** The Net Worth seed CSV
+- **F7 — Private financial data committed + pushed (Net Worth M1).** The Net Worth seed CSV
   (`templates/networth-seed-template.csv`) was filled with **real** balances and committed/pushed to
   GitHub before being gitignored — gitignore only stops _future_ commits, so the data sat in pushed
   history. Fix: purge with `git filter-repo --invert-paths --path <file>` (then re-add the `origin`
   remote it strips) and **force-push**; commit a **sanitized** template and keep the real file
   gitignored (`*.local.csv`). Lesson: gitignore the private file **before** the first `git add`; a
   committed template must be sanitized example data, never real values. Sanitize example numbers in
-  **docs** too — a real balance had leaked into a `06-networth.md` parsing example.
+  **docs** too.
 
-- **F8 — `useAsync` keeps stale `data` during a refetch (Phase 2).** When `fn` changes, `useAsync`
+- **F8 — `useAsync` keeps stale `data` during a refetch (Net Worth)** When `fn` changes, `useAsync`
   flips `loading=true` but **retains the previous `data`** until the new result lands. A screen that
   swaps its loaded subject (e.g. Net Worth Monthly Entry switching months) must **gate the form on
   `!loading`** (and key it by the subject) — else the new subject briefly mounts with the old
   subject's data. See `NetWorthEntry`.
+
+- **F9 — Pinned header didn't pin: flex scroll child missing `min-h-0` (Net Worth Monthly Entry).**
+  The screen is `flex h-full flex-col` with a `shrink-0` header and a `flex-1 overflow-y-auto` body,
+  which _looks_ pinned but wasn't: a flex item's default `min-height:auto` refuses to shrink below its
+  content, so the body grew to fit every asset card, overflowed, and the **whole screen scrolled inside
+  `<main>`** — header included — pushing asset-type cards below the fold (they read as "cut off" /
+  "not displayed"). Fix: add **`min-h-0`** to the scrolling body (and the `h-full` root) so it
+  constrains to the parent and scrolls internally, leaving the header fixed. Same root cause as F6(c):
+  any `flex-col` scroll child needs `min-h-0` (or `shrink-0` siblings). Don't add a fixed pixel height
+  to "fix" a non-scrolling pane — reach for `min-h-0` first.
 
 ## Known limitations / deferred (not spec issues — future work)
 

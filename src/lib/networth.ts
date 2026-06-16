@@ -1,5 +1,5 @@
 /**
- * Net Worth domain constants + pure calc helpers (Phase 2). All values are stored in HKD
+ * Net Worth domain constants + pure calc helpers. All values are stored in HKD
  * (`value_base`); native currency values convert via a per-entry `fx_rate_to_base`.
  */
 

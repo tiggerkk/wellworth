@@ -3,11 +3,11 @@
 WellWorth is a personal (later: small-family) wellness and net-worth tracker, styled after Cronometer.
 It is built as an installable PWA so it runs on iPhone and iPad with no Apple Developer account.
 
-**Read `/docs` before planning or building.** The seven spec docs there are the source of truth:
-`00-PRD.md`, `01-screens.md`, `02-tech-spec.md`, `03-data-model.md`, `04-design-system.md`, `05-seed-data.md`, `06-networth.md`.
+**Read `/docs` before planning or building.** The six spec docs there are the source of truth:
+`00-PRD.md`, `01-screens.md`, `02-tech-spec.md`, `03-data-model.md`, `04-design-system.md`, `05-seed-data.md`.
 (`docs/BUILD-LOG.md` is a non-spec engineering history — build sequence, rationale, and past-failure warnings — not a source of truth for behavior.)
 
-**Before changing existing code, read `docs/BUILD-LOG.md`** to understand how Phase 1 was built and
+**Before changing existing code, read `docs/BUILD-LOG.md`** to understand how the app was built and
 which past approaches failed (and see `docs/PARKED.md` for what's intentionally deferred).
 
 ## Keep the docs in sync (every change — without being asked)
@@ -15,7 +15,7 @@ which past approaches failed (and see `docs/PARKED.md` for what's intentionally 
 Documentation updates are part of "done," not a follow-up. Whenever a change affects behavior, the schema, seed data, workflow, or project layout, update the relevant doc(s) **in the same task** — do
 not wait to be reminded:
 
-- **Spec docs** (`/docs/00-PRD.md … 06-networth.md`) — the behavior/data source of truth. Update when a screen's behavior, the data model, seed data, or the design system changes.
+- **Spec docs** (`/docs/00-PRD.md … 05-seed-data.md`) — the behavior/data source of truth. Update when a screen's behavior, the data model, seed data, or the design system changes.
 - **`docs/BUILD-LOG.md`** — append the rationale for notable changes (schema changes, migrations, new patterns) and add any new "don't repeat this" lesson to its Failures list. Keep the Snapshot facts
   current (test count, deploy status).
 - **`docs/PARKED.md`** — remove an item when it's built; add one when something is deliberately deferred or a limitation is discovered.
@@ -43,8 +43,7 @@ module is a **drop-in** — append a `ModuleDef` to `src/constants/modules.ts` +
 - **Settings is split:** global `/settings` (profile, units, account) from the hub gear; Wellness
   sub-settings at `/wellness/settings` (protein target, nutrient display) from a gear in the Wellness
   header.
-- **Net Worth (Phase 2, built):** two tables `networth_snapshot` + `asset_entry` (schema in
-  `06-networth.md`; migration `supabase/migrations/20260615120000_networth_schema.sql`). Data:
+- **Net Worth (built):** two tables `networth_snapshot` + `asset_entry` (migration `supabase/migrations/20260615120000_networth_schema.sql`). Data:
   `src/data/networth-snapshot.ts` + `asset-entry.ts` — write path `saveSnapshotEntries` is an
   **idempotent create-or-replace per month** (reused by the importer). Calc `src/lib/networth.ts`; FX
   `src/lib/fx.ts` (Frankfurter; **currency stored as `CNY`**, no RMB→CNY map; each entry freezes
