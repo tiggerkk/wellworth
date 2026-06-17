@@ -1,7 +1,5 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react'
-import { useAuth } from '../auth/AuthProvider'
-import { listEntriesByRange } from '../data/diary-entry'
 import { useAsync } from '../hooks/useAsync'
 import {
   addDays,
@@ -12,18 +10,26 @@ import {
   type IsoDate,
 } from '../lib/date'
 
+export interface DayCue {
+  food?: boolean
+  activity?: boolean
+}
+
 interface CalendarProps {
   day: IsoDate
   onSelect: (day: IsoDate) => void
   onClose: () => void
+  /**
+   * Optional cue-dot loader for the visible month (passed `monthStart`..`monthEnd`). Provide it
+   * to draw per-day dots + a legend (Wellness Diary); omit it for a plain date picker (Shows).
+   */
+  loadCues?: (monthStart: IsoDate, monthEnd: IsoDate) => Promise<Map<IsoDate, DayCue>>
 }
 
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 
-/** Month-grid date picker with food/activity cue dots. Local overlay (not a route). */
-export function Calendar({ day, onSelect, onClose }: CalendarProps) {
-  const { session } = useAuth()
-  const userId = session?.user.id
+/** Month-grid date picker. Presentational + optional injected cue dots. Local overlay (not a route). */
+export function Calendar({ day, onSelect, onClose, loadCues }: CalendarProps) {
   const [viewMonth, setViewMonth] = useState<IsoDate>(startOfMonth(day))
   const [selected, setSelected] = useState<IsoDate>(day)
   const today = todayLocal()
@@ -35,22 +41,11 @@ export function Calendar({ day, onSelect, onClose }: CalendarProps) {
   const leadingBlanks = monthStart.getDay()
 
   const rangeEnd = addDays(addMonths(viewMonth, 1), -1)
-  const entriesFn = useCallback(() => {
-    if (!userId) return Promise.resolve([])
-    return listEntriesByRange(userId, viewMonth, rangeEnd)
-  }, [userId, viewMonth, rangeEnd])
-  const { data: entries } = useAsync(entriesFn)
-
-  const cues = useMemo(() => {
-    const map = new Map<string, { food: boolean; activity: boolean }>()
-    for (const e of entries ?? []) {
-      const cur = map.get(e.day) ?? { food: false, activity: false }
-      if (e.kind === 'activity') cur.activity = true
-      else cur.food = true
-      map.set(e.day, cur)
-    }
-    return map
-  }, [entries])
+  const cuesFn = useCallback(() => {
+    if (!loadCues) return Promise.resolve(new Map<IsoDate, DayCue>())
+    return loadCues(viewMonth, rangeEnd)
+  }, [loadCues, viewMonth, rangeEnd])
+  const { data: cues } = useAsync(cuesFn)
 
   const monthLabel = new Intl.DateTimeFormat('en-US', {
     month: 'long',
@@ -95,7 +90,7 @@ export function Calendar({ day, onSelect, onClose }: CalendarProps) {
           ))}
           {Array.from({ length: daysInMonth }).map((_, i) => {
             const d = `${viewMonth.slice(0, 8)}${String(i + 1).padStart(2, '0')}`
-            const cue = cues.get(d)
+            const cue = cues?.get(d)
             const isToday = d === today
             const isSelected = d === selected
             return (
@@ -122,14 +117,16 @@ export function Calendar({ day, onSelect, onClose }: CalendarProps) {
           })}
         </div>
 
-        <div className="mt-3 flex items-center justify-between text-[11px] text-text-secondary">
-          <span className="flex items-center gap-1">
-            <span className="size-1.5 rounded-full bg-positive" /> Food
-          </span>
-          <span className="flex items-center gap-1">
-            <span className="size-1.5 rounded-full bg-accent" /> Activity
-          </span>
-        </div>
+        {loadCues && (
+          <div className="mt-3 flex items-center justify-between text-[11px] text-text-secondary">
+            <span className="flex items-center gap-1">
+              <span className="size-1.5 rounded-full bg-positive" /> Food
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="size-1.5 rounded-full bg-accent" /> Activity
+            </span>
+          </div>
+        )}
 
         <div className="mt-4 flex gap-2">
           <button

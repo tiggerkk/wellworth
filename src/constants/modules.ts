@@ -2,6 +2,8 @@ import {
   IconApple,
   IconCalendarPlus,
   IconChartBar,
+  IconDeviceTv,
+  IconList,
   IconNotebook,
   IconWallet,
   type Icon,
@@ -60,6 +62,17 @@ export const MODULES: ModuleDef[] = [
         end: true,
       },
       { to: routes.networth.entry, label: 'Monthly Entry', Icon: IconCalendarPlus },
+    ],
+  },
+  {
+    key: 'shows',
+    label: 'Shows',
+    Icon: IconDeviceTv,
+    base: routes.shows.base,
+    description: 'TV shows & movies watched or to watch, with TMDB metadata.',
+    tabs: [
+      { to: routes.shows.dashboard, label: 'Dashboard', Icon: IconChartBar, end: true },
+      { to: routes.shows.library, label: 'Library', Icon: IconList },
     ],
   },
 ]

@@ -14,6 +14,10 @@ Nutrient sets are stored as JSONB maps (`nutrient_key → amount`), validated ag
 - `units` TEXT DEFAULT 'metric' — 'metric' | 'imperial' (display only)
 - `highlighted_nutrients` TEXT[] — up to 8 nutrient keys for the Diary grid
 - `visible_nutrients` TEXT[] — nutrient keys shown on Dashboard/Daily Report (seeded from defaults)
+- `show_visible_fields` TEXT[] NULL — Shows Entry-form field visibility; **NULL = all visible**
+  (default-on, no seeding); an explicit array once trimmed in Shows Settings
+- `show_importer_enabled` BOOLEAN NOT NULL DEFAULT false — surfaces the Shows in-app CSV importer
+  (the two `show_*` columns are added by `supabase/migrations/20260617130000_profile_show_settings.sql`)
 - `created_at`, `updated_at` TIMESTAMPTZ
 
 ### food (custom items + cached USDA/Off items the user favorited or logged)
@@ -127,10 +131,38 @@ Nutrient sets are stored as JSONB maps (`nutrient_key → amount`), validated ag
 
 The migration is `supabase/migrations/20260615120000_networth_schema.sql`.
 
+### show (one row per tracked title)
+
+- `id` UUID PK
+- `user_id` UUID → auth.users (ON DELETE CASCADE)
+- `type` TEXT — 'tv' | 'movie' (CHECK); chooses the TMDB endpoint and the season/episode UI
+- `status` TEXT — 'want' | 'watching' | 'watched' | 'dropped' (CHECK)
+- `tmdb_id` INT NULL — TMDB id (enables a future "refresh metadata")
+- `imdb_id` TEXT NULL — stable cross-reference
+- `title` TEXT, `original_title` TEXT NULL, `year` INT NULL
+- `poster_path` TEXT NULL — TMDB path; URL built from the fixed CDN base
+- `overview` TEXT NULL
+- `genres` TEXT[] NULL
+- `director` TEXT NULL — movie director, or TV creator(s) joined
+- `cast` TEXT[] NULL — top ~10 cast names (quoted `"cast"` in DDL — reserved word)
+- `runtime_min` INT NULL
+- `content_rating` TEXT NULL, `original_language` TEXT NULL
+- `total_seasons` INT NULL, `total_episodes` INT NULL — TV only
+- `watched_seasons` INT NULL, `watched_episodes` INT NULL — TV only; set to totals on Watched
+- `rating` NUMERIC NULL — user stars, 0–5 in 0.5 steps (CHECK)
+- `lgbtq_rep` TEXT DEFAULT 'none' — LGBT+ representation: 'none' | 'some' | 'significant' (CHECK)
+- `start_date` DATE NULL, `end_date` DATE NULL — finish/drop date
+- `last_update_date` DATE NULL — defaults to today in the UI, editable; NULL for imported rows
+- `comments` TEXT NULL
+- `created_at`, `updated_at`
+- Index on (`user_id`, `status`).
+
+Standard rules apply: own `user_id` for direct RLS, four owner policies using `(select auth.uid()) = user_id`, `CHECK` on the enum columns, `moddatetime` trigger on `updated_at`, explicit `GRANT` to `anon`/`authenticated`. Imported back-catalogue rows leave the three dates NULL (genuinely unknown). The migration is `supabase/migrations/20260617120000_shows_schema.sql`.
+
 ## Relationships
 
 profile 1—_ food, activity, diary_entry · food 1—_ serving · food 1—_ diary_entry ·
-activity 1—_ diary_entry · diary_entry 1—\* strength_set.
+activity 1—_ diary_entry · diary_entry 1—\* strength_set · profile 1—\* show.
 
 ## Soft deletes
 

@@ -23,6 +23,7 @@ src/
   data/              # typed data-access layer (wraps supabase-js) — the ONLY db access
   lib/               # supabase client, units, dri, energy, met, nutrients, targets, report,
                      # date, food-api, off-api, food-search, diary-refresh, diary-clipboard,
+                     # networth, fx, networth-refresh, shows, shows-refresh, tmdb-api,
                      # last-module helpers
   constants/         # global constants (groups, effort-levels, nutrient-sections, ranges,
                      # profile-defaults, seed-activities, routes, modules)
@@ -39,7 +40,7 @@ docs/                # the spec bundle
 ## Navigation & routing
 
 - The app is **multi-module behind a Home hub**. Routes are **URL-namespaced per module**
-  (`/wellness/*`, `/networth/*`; future `/shows/*`, `/quotes/*`) and declared as flat children of a
+  (`/wellness/*`, `/networth/*`, `/shows/*`; future `/quotes/*`) and declared as flat children of a
   single `<AppShell/>` layout in `src/router.tsx`. Path strings live in `src/constants/routes.ts`
   (one source of truth) and the hub/bottom-nav are derived from `src/constants/modules.ts`
   (`MODULES` + `moduleForPath`). Adding a module = a `ModuleDef` + its routes — no structural change.
@@ -116,6 +117,35 @@ the cloud is authoritative (this also sidesteps iOS PWA storage eviction).
   thousands commas/quotes from values and detail values) + `src/screens/ImportNetWorthSheet.tsx`.
 - **UI:** `NetWorthDashboard` (recharts trend via the **lazy** `src/components/NetWorthTrendChart`, own chunk; windows in `src/constants/networth-ranges.ts`), `NetWorthEntry` (copy-forward, grouped inline edit, manual+auto FX, RESET/SAVE).
 
+## Shows
+
+- **Data:** `src/data/show.ts` — `listShows`/`getShow`/`createShow`/`updateShow`/`deleteShow` over the
+  single `show` table (hard delete; nothing references the row). `src/lib/shows-refresh.ts`
+  (`bumpShows`/`useShowsVersion`) is the module's data-changed tick.
+- **Logic** (`src/lib/shows.ts`, pure + tested): the `type`/`status`/`lgbtq_rep` unions + label maps,
+  the status-chip palette, `posterUrl` (built from the fixed TMDB CDN base), and transitions/selectors —
+  `startWatching` (status `watching` + `start_date = today`), `markWatched` (status `watched` +
+  `end_date = today` + TV watched counts → totals), `progressLabel`, `isUpNext` (status `watching`,
+  TV, episodes remaining), `recentlyWatched`, `countWatchedThisYear`.
+- **UI:** `ShowsDashboard` (Up Next / Watching / Want / Recently-Watched shelves + type filter + Mark
+  Watched / Start Watching quick actions), `ShowsLibrary` (search + swipe-delete list), `ShowsEntry`
+  (create/edit form with TMDB title search; outer-loader + inner-form with dirty RESET/SAVE). The
+  Type/Status/LGBT+ controls reuse `SegmentedTabs`; dates reuse the generalized `Calendar`; posters
+  use the shared `PosterThumb`. **TMDB** client + `TitleSearchSheet` live in `src/lib/tmdb-api.ts` and
+  `src/components/TitleSearchSheet.tsx`.
+- **Settings (split, like Wellness):** `ShowsSettings` (gear in the Shows headers) hosts **Entry field
+  visibility** (`ShowsFieldsSheet`, a route sheet of toggles) + an **importer enable** toggle. Both
+  prefs sync on `profile` — `show_visible_fields` (`text[]`, **NULL = all visible**) and
+  `show_importer_enabled` (`boolean`); saved via `useProfileEditor`. Entry reads them through
+  `useProfile` + the pure `isFieldVisible` helper.
+- **CSV importer (in-app, one-off):** enabled by the Settings toggle → `ImportShowsSheet`. Pure
+  parse/build in `src/lib/shows-import.ts` (`parseShowsCsv` via the shared `src/lib/csv.ts`,
+  `buildImportRow`, `dedupKey`); the sheet resolves each row against TMDB (`searchTitles` top hit +
+  `getTitleDetails`, small concurrency pool) with an inline fix (`TitleSearchSheet`) for no-match /
+  review rows; commit is the **idempotent** `saveImportedShows` (`src/data/show.ts`) — dedup on
+  `type` + lower(title), update-not-duplicate. Imported rows get **NULL dates**. Sanitized template +
+  guide in `templates/`.
+
 ## External APIs
 
 - **Called directly from the browser** (no server proxy): the USDA key is a `VITE_` var and Open Food Facts allows browser requests. Results are cached into `food` on favorite/log to limit calls.
@@ -126,6 +156,7 @@ the cloud is authoritative (this also sidesteps iOS PWA storage eviction).
 - **Open Food Facts** (`world.openfoodfacts.org/api/v2/product/{barcode}.json`): free, global. **Every `*_100g` value is in grams** (including vitamins/minerals) → scale to our mg (×1000) / µg (×1e6). Sodium = `salt_100g / 2.5 × 1000` when `sodium_100g` is absent. All fields optional/sparse. Scanned products save into Custom.
 - The **complete** nutrient mappings are the source of truth in code: USDA `nutrient.number` → our key in `src/lib/food-api.ts`, and Open Food Facts key → our key (with the per-field scale factor) in `src/lib/off-api.ts`. The owner-band DRI target/UL values are tabulated in `05-seed-data.md` and live in `src/lib/dri.ts`.
 - **Frankfurter** (`api.frankfurter.dev/v1/{date}?from={CNY|USD}&to=HKD`): **keyless**, ECB-sourced, CORS-enabled — used by **Net Worth** for native→HKD FX as of the **1st of the month** (it returns the most recent rate on/before a non-trading day). CNY is the stored code; HKD = 1 is never fetched. The fetched rate is **frozen** onto each `asset_entry` (`fx_rate_to_base`/`value_base`) so saved months are immune to later revisions; the user can override per currency. Helpers + a small cache live in `src/lib/fx.ts`.
+- **TMDB** (`api.themoviedb.org/3`): free v3 `api_key` (one signup), a `VITE_` var, **called directly from the browser** (CORS-enabled) — same pattern as USDA. Used by **Shows**, two-step on-demand only: **search** per the Type toggle (`GET /search/{movie|tv}?query=…` → title, year, `poster_path`) and **details on select** (`GET /{movie|tv}/{id}?append_to_response=credits,external_ids` → genres, overview, runtime, movie director from `credits.crew`/TV `created_by`, top ~10 cast, TV `number_of_seasons`/`number_of_episodes`, `imdb_id`). Images store only `poster_path`; URLs are built from the fixed CDN base `https://image.tmdb.org/t/p/{size}{path}` (`posterUrl` in `src/lib/shows.ts`). The client + pure mappers live in `src/lib/tmdb-api.ts`; nothing persists until CREATE/SAVE. `content_rating` is not fetched (deferred).
 
 ## Environment variables
 
@@ -135,6 +166,7 @@ the cloud is authoritative (this also sidesteps iOS PWA storage eviction).
 VITE_SUPABASE_URL=...
 VITE_SUPABASE_ANON_KEY=...     # public, RLS-respecting — safe in the client
 VITE_USDA_API_KEY=...          # data.gov key
+VITE_TMDB_API_KEY=...          # themoviedb.org v3 key (public, client-side) — Shows
 # service-role key is NEVER placed here or anywhere in the client
 ```
 

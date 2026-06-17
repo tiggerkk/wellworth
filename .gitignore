@@ -26,6 +26,11 @@ coverage
 networth-*.csv
 !templates/networth-seed-template.csv
 
+# Shows — real watch-history import lists must never be committed. Only the
+# sanitized templates/shows-import-template.csv is tracked.
+shows-import*.csv
+!templates/shows-import-template.csv
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

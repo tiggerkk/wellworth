@@ -36,4 +36,14 @@ export const routes = {
     entry: '/networth/entry',
     import: '/networth/import',
   },
+  shows: {
+    base: '/shows',
+    dashboard: '/shows',
+    library: '/shows/library',
+    entry: '/shows/entry', // blank Entry (new)
+    edit: (id: string) => `/shows/${id}`,
+    settings: '/shows/settings', // shows sub-settings: field visibility, importer
+    settingsVisible: '/shows/settings/visible',
+    import: '/shows/import', // one-off CSV importer (sheet)
+  },
 } as const

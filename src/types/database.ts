@@ -313,6 +313,8 @@ export type Database = {
           highlighted_nutrients: string[]
           protein_target_g: number | null
           sex: string | null
+          show_importer_enabled: boolean
+          show_visible_fields: string[] | null
           units: string
           updated_at: string
           user_id: string
@@ -327,6 +329,8 @@ export type Database = {
           highlighted_nutrients?: string[]
           protein_target_g?: number | null
           sex?: string | null
+          show_importer_enabled?: boolean
+          show_visible_fields?: string[] | null
           units?: string
           updated_at?: string
           user_id: string
@@ -341,6 +345,8 @@ export type Database = {
           highlighted_nutrients?: string[]
           protein_target_g?: number | null
           sex?: string | null
+          show_importer_enabled?: boolean
+          show_visible_fields?: string[] | null
           units?: string
           updated_at?: string
           user_id?: string
@@ -377,6 +383,102 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      show: {
+        Row: {
+          cast: string[] | null
+          comments: string | null
+          content_rating: string | null
+          created_at: string
+          director: string | null
+          end_date: string | null
+          genres: string[] | null
+          id: string
+          imdb_id: string | null
+          last_update_date: string | null
+          lgbtq_rep: string
+          original_language: string | null
+          original_title: string | null
+          overview: string | null
+          poster_path: string | null
+          rating: number | null
+          runtime_min: number | null
+          start_date: string | null
+          status: string
+          title: string
+          tmdb_id: number | null
+          total_episodes: number | null
+          total_seasons: number | null
+          type: string
+          updated_at: string
+          user_id: string
+          watched_episodes: number | null
+          watched_seasons: number | null
+          year: number | null
+        }
+        Insert: {
+          cast?: string[] | null
+          comments?: string | null
+          content_rating?: string | null
+          created_at?: string
+          director?: string | null
+          end_date?: string | null
+          genres?: string[] | null
+          id?: string
+          imdb_id?: string | null
+          last_update_date?: string | null
+          lgbtq_rep?: string
+          original_language?: string | null
+          original_title?: string | null
+          overview?: string | null
+          poster_path?: string | null
+          rating?: number | null
+          runtime_min?: number | null
+          start_date?: string | null
+          status: string
+          title: string
+          tmdb_id?: number | null
+          total_episodes?: number | null
+          total_seasons?: number | null
+          type: string
+          updated_at?: string
+          user_id: string
+          watched_episodes?: number | null
+          watched_seasons?: number | null
+          year?: number | null
+        }
+        Update: {
+          cast?: string[] | null
+          comments?: string | null
+          content_rating?: string | null
+          created_at?: string
+          director?: string | null
+          end_date?: string | null
+          genres?: string[] | null
+          id?: string
+          imdb_id?: string | null
+          last_update_date?: string | null
+          lgbtq_rep?: string
+          original_language?: string | null
+          original_title?: string | null
+          overview?: string | null
+          poster_path?: string | null
+          rating?: number | null
+          runtime_min?: number | null
+          start_date?: string | null
+          status?: string
+          title?: string
+          tmdb_id?: number | null
+          total_episodes?: number | null
+          total_seasons?: number | null
+          type?: string
+          updated_at?: string
+          user_id?: string
+          watched_episodes?: number | null
+          watched_seasons?: number | null
+          year?: number | null
+        }
+        Relationships: []
       }
       strength_set: {
         Row: {

@@ -18,6 +18,7 @@ import {
   deleteEntriesByDay,
   deleteEntry,
   listEntriesByDay,
+  listEntriesByRange,
 } from '../data/diary-entry'
 import { listSetsForEntries } from '../data/strength-set'
 import { addDays, formatDayLabel, todayLocal, type IsoDate } from '../lib/date'
@@ -33,7 +34,7 @@ import {
 import { DIARY_GROUPS, type GroupName } from '../constants/groups'
 import { routes } from '../constants/routes'
 import type { Tables } from '../types/database'
-import { Calendar } from '../components/Calendar'
+import { Calendar, type DayCue } from '../components/Calendar'
 import { GroupHeader } from '../components/GroupHeader'
 import { NutrientBar } from '../components/NutrientBar'
 import { SwipeRow } from '../components/SwipeRow'
@@ -66,6 +67,21 @@ export function Diary() {
   )
 
   const [calendarOpen, setCalendarOpen] = useState(false)
+  // Diary supplies the calendar's food/activity cue dots for the visible month.
+  const loadCalendarCues = useCallback(
+    async (monthStart: IsoDate, monthEnd: IsoDate): Promise<Map<IsoDate, DayCue>> => {
+      const map = new Map<IsoDate, DayCue>()
+      if (!userId) return map
+      for (const e of await listEntriesByRange(userId, monthStart, monthEnd)) {
+        const cur = map.get(e.day) ?? {}
+        if (e.kind === 'activity') cur.activity = true
+        else cur.food = true
+        map.set(e.day, cur)
+      }
+      return map
+    },
+    [userId],
+  )
   const [menuOpen, setMenuOpen] = useState(false)
   const [expanded, setExpanded] = useState<Partial<Record<GroupName, boolean>>>({})
 
@@ -390,6 +406,7 @@ export function Diary() {
       {calendarOpen && (
         <Calendar
           day={day}
+          loadCues={loadCalendarCues}
           onSelect={(d) => {
             setDay(d)
             setCalendarOpen(false)

@@ -118,6 +118,26 @@ and restores it on edit — a small additive schema change, not a rebuild.
 **Decided:** Mirror the foods path — an activities template (name, template, default_effort,
 default_duration_min, met_by_effort, icon) parsed in-browser and inserted via the data layer.
 
+### Shows Library — wide-screen sortable table · Deferred
+
+**What:** On wide screens (iPad), render the Shows Library as a sortable **table** with tappable
+column headers, instead of the list + Sort-menu.
+**Why deferred:** `06-shows.md` lists it as a "may"; header-click sorting is a desktop idiom. Phones
+
+- iPad both ship the **list + Sort-menu** (the Sort menu already covers every column), which is the
+  correct mobile-first idiom and avoids a second responsive layout.
+  **Decided:** The pure `applyLibraryView(shows, criteria)` (`src/lib/shows.ts`) already does all the
+  filtering/sorting; a table view would be an additive presentation over the same criteria + helper.
+
+### Shows Library — filter/sort URL-persistence · Deferred
+
+**What:** Persist the Library's filter + sort state across navigation (e.g. in `useSearchParams`), so
+leaving the tab and returning restores it.
+**Why deferred:** M5 keeps the criteria in local component state (resets on remount) — fine for a
+single user and simpler. The Wellness Library persists only its tab in the URL today.
+**Decided:** Mirror the Wellness "URL-as-state" pattern — serialize `LibraryCriteria` into query
+params written with `{replace:true}`; the screen already centralizes the criteria in one state object.
+
 ### Automated tests beyond pure helpers · Deferred
 
 **What:** Component/integration tests; tests for `src/data/*` repositories.

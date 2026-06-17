@@ -12,6 +12,10 @@ import {
   NetWorthDashboard,
   NetWorthEntry,
   Settings,
+  ShowsDashboard,
+  ShowsEntry,
+  ShowsLibrary,
+  ShowsSettings,
   WellnessSettings,
 } from '../screens'
 
@@ -26,6 +30,10 @@ const TAB_FOR_PATH: Record<string, React.ReactNode> = {
   '/settings': <Settings />,
   '/networth': <NetWorthDashboard />,
   '/networth/entry': <NetWorthEntry />,
+  '/shows': <ShowsDashboard />,
+  '/shows/library': <ShowsLibrary />,
+  '/shows/entry': <ShowsEntry />,
+  '/shows/settings': <ShowsSettings />,
 }
 
 export function AppShell() {

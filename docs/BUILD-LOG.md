@@ -7,6 +7,8 @@ describe what the app does. Where this log mentions a past failure, it points to
 now encodes the correct approach.
 
 Net Worth is **feature-complete** (M1–M6) — see "Net Worth (build sequence)" below.
+**Shows** (TV & movies) is **feature-complete (M1–M7)** — see "Shows Build Sequence" below: schema,
+module scaffold, manual CRUD, TMDB metadata, Dashboard, Library filters/sort, Settings, CSV importer.
 
 ---
 
@@ -20,9 +22,9 @@ Net Worth is **feature-complete** (M1–M6) — see "Net Worth (build sequence)"
 - **Scripts:** `dev`, `build` (`tsc -b && vite build`), `preview`, `lint`, `format`, `typecheck`,
   `test`, `check` (all gates), `gen:types` (Supabase → `src/types/database.ts`), `prepare` (husky).
 - **Env (`.env`, gitignored; `.env.example` documents):** `VITE_SUPABASE_URL`,
-  `VITE_SUPABASE_ANON_KEY`, `VITE_USDA_API_KEY`. All build-time `VITE_` vars.
+  `VITE_SUPABASE_ANON_KEY`, `VITE_USDA_API_KEY`, `VITE_TMDB_API_KEY`. All build-time `VITE_` vars.
 - **Gates:** husky `.husky/pre-commit` → lint-staged + `typecheck` + `test`; GitHub Actions
-  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 94 Vitest tests (pure helpers).
+  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 137 Vitest tests (pure helpers).
 - **Deploy status:** Deployed. GitHub `main` → Vercel auto-deploy; the production URL is in the
   Supabase redirect URLs + Google JS origins (see `OWNER-RUNBOOK.md`). Installed + tested on iPhone (PWA).
 - Conventions (DB-access-via-`src/data`, metric storage, generated `database.ts` contract, etc.) live
@@ -360,6 +362,169 @@ Cross-module consistency pass after the Net Worth build:
   (year stepper + month grid, OK/Cancel — same modal pattern as the Wellness `Calendar`).
 
 ---
+
+## Shows Build Sequence (per milestone)
+
+The Shows module (TV shows + movies) is specced in `docs/06-shows.md` (a staging doc whose sections
+merge into the permanent specs as each feature lands). It drops into the multi-module architecture
+with no structural change. Two **owner decisions deviate from `06-shows.md`** and are carried in the
+permanent docs as built: (1) the back-catalogue importer is **in-app, not a CLI script** (same
+reversal as Net Worth — an in-app preview table lets the owner fix no-match/ambiguous TMDB rows
+inline); (2) a **Shows Settings** screen (`/shows/settings`) adds Entry/Edit **field-visibility** +
+an **importer enable/disable** toggle, with both prefs synced on `profile`.
+
+### M1 — Schema + module registration + scaffold screens
+
+Goal: a runnable, navigable Shows module behind a hub card, before any data layer or external API.
+
+- **Schema:** `20260617120000_shows_schema.sql` — one `show` table (own `user_id` for direct RLS like
+  `asset_entry`; CHECKs on `type`/`status`/`lgbtq_rep` and `rating` 0–5 in 0.5 steps via
+  `(rating*2)=floor(rating*2)`; `index (user_id, status)`; 4 owner policies; `moddatetime`; explicit
+  grants). `cast` is a SQL reserved word → declared as `"cast"`; the M2 data layer will map it to a
+  safe TS name. Imported rows leave `start_date`/`end_date`/`last_update_date` NULL by design.
+  Owner reviews + `supabase db push`, then `npm run gen:types` regenerates `database.ts`.
+- **Module registration (drop-in):** `shows` namespace in `constants/routes.ts`; a Shows `ModuleDef`
+  in `constants/modules.ts` (tabs Dashboard + Library; `IconDeviceTv`); flat routes `/shows`,
+  `/shows/library`, `/shows/entry`, `/shows/:id` in `router.tsx`; `/shows*` keys added to
+  `AppShell.TAB_FOR_PATH`. `Home` + `moduleForPath` need no change.
+- **Stub screens:** `ShowsDashboard` / `ShowsLibrary` / `ShowsEntry` — navigable empty states (the
+  real shelves, list/filters/sort, and the Entry form arrive in M2–M5). Exported from `screens/index`.
+- Verified by `npm run typecheck` + manual click-through; the data-model section of `06-shows.md` was
+  merged into `03-data-model.md` and the PRD module list / nav / non-goals updated.
+
+### M2 — Data layer + manual Entry/Edit + basic Library
+
+Goal: a full **manual** CRUD loop (no TMDB yet) so the module is usable end-to-end.
+
+- **Pure layer** `src/lib/shows.ts` (+`shows.test.ts`, +10 tests → **104**): the `type`/`status`/
+  `lgbtq_rep` unions + label maps (the generated types surface the CHECK columns as plain `string`),
+  the status-chip palette, `posterUrl`, and the tested transitions `startWatching`/`markWatched`/
+  `progressLabel`/`isUpNext`. `src/lib/shows-refresh.ts` mirrors `networth-refresh`.
+- **Data** `src/data/show.ts`: list/get/create/update + **hard** `deleteShow` (no soft-delete column;
+  nothing references `show`). `cast` needed quoting only in SQL — in TS it's an ordinary
+  `row.cast` property, no rename.
+- **Components**: `StarRating` (0–5 half-star, display+input via two half-width hit-zones per star,
+  tap-to-clear), `ShowTypeBadge` (TV/movie icon chip), `StatusChip` (palette pill). The Type/Status/
+  LGBT+ controls **reuse `SegmentedTabs`** (already generic over N options) — no new toggle.
+- **`Calendar` generalized.** It was wellness-coupled (imported `useAuth` + `listEntriesByRange` to
+  draw food/activity cue dots). Made it **presentational** with an optional
+  `loadCues(monthStart, monthEnd)` callback (legend shown only when provided); the diary fetch moved
+  into its one caller, `Diary.tsx`. Shows date pickers pass no loader → a plain date picker. Keeps a
+  single shared Calendar; verified the Diary calendar still shows its dots.
+- **Screens**: `ShowsEntry` (full route `/shows/entry` + `/shows/:id`, not a sheet — outer loader +
+  inner form keyed by id per F8, single `draft` object, `JSON.stringify` dirty gate, RESET +
+  CREATE/SAVE; status→Watched/Dropped defaults the finish date and snaps TV watched counts to totals;
+  dates via `Calendar`); `ShowsLibrary` (search + `SwipeRow` hard-delete with confirm, rows show
+  badge/status/stars, tap → edit). TMDB metadata fields are deferred to M3 (manual Title/Year for now).
+
+### M3 — TMDB integration
+
+Goal: pull poster + metadata into the Entry form on demand (search → details on select); persisted
+only on CREATE/SAVE.
+
+- **Client** `src/lib/tmdb-api.ts` (+`tmdb-api.test.ts`, +11 tests → **115**): browser-direct
+  (v3 `api_key` query param, `VITE_TMDB_API_KEY`), mirroring `food-api`. `searchTitles(type, query)`
+  - `getTitleDetails(type, id)` (`append_to_response=credits,external_ids`). Pure mappers
+    (`mapSearchResults`/`mapMovieDetails`/`mapTvDetails`/`pickDirectorFromCrew`/`pickCast`/`pickYear`)
+    are unit-tested; the network calls aren't (matching food-api/off-api/fx). `content_rating` is not
+    fetched (deferred — needs extra `release_dates`/`content_ratings` parsing the spec doesn't require).
+- **Title Search is a LOCAL overlay, not a route sheet** (`src/components/TitleSearchSheet.tsx`). The
+  routing `Sheet` closes via `navigate(-1)`, so opening it puts Entry behind the background-location
+  and **remounts a fresh `ShowsEntry`** (from `AppShell.TAB_FOR_PATH`), discarding the in-progress
+  draft. So Title Search renders as a local `fixed inset-0` overlay inside Entry (like
+  `Calendar`/`MonthPicker`), returning the pick via an `onSelect` callback. No new route / `router` /
+  `AppShell` change. **Don't make in-form pickers route sheets** — they must outlive a remount.
+- **`ShowsEntry`**: `ShowDraft` extended to the full column set; a **Search TMDB** button opens the
+  overlay scoped to `draft.type`; on select, `getTitleDetails` merges metadata (incl. Title/Year + TV
+  totals) while keeping the user's Status/Rating/LGBT+/dates/comments; a read-only poster + metadata
+  block renders when populated; `save()` now writes the metadata columns. Title/Year stay editable.
+- **Config**: `VITE_TMDB_API_KEY` added to `vite-env.d.ts` + `.env.example`; OWNER-RUNBOOK gained a
+  "Get a free TMDB key" part (Part C2) + env/Vercel/smoke-test/summary entries.
+
+### M4 — Shows Dashboard
+
+Goal: replace the `ShowsDashboard` stub with the real shelves + quick actions. Mostly assembly of
+existing tested helpers; no schema/API change.
+
+- **Selectors** (`src/lib/shows.ts`, +3 tests → **118**): `recentlyWatched(shows, limit)` (watched +
+  non-null `end_date`, newest first) and `countWatchedThisYear(shows, year)`. The Up Next / Watching /
+  Want filters are inline one-liners reusing `isUpNext`.
+- **`PosterThumb`** (`src/components/PosterThumb.tsx`): the 2:3 poster/placeholder, extracted from
+  `TitleSearchSheet` (refactored to use it) and reused by the dashboard rows (and M5 Library).
+- **`ShowsDashboard`**: sticky header (title + `+` New + All/TV/Movies `SegmentedTabs` filter);
+  `useAsync(listShows)` keyed on `useShowsVersion`; shelves as `SectionCard`s shown only when
+  non-empty; a compact local `DashRow` (poster + two lines + optional trailing action). Quick actions
+  reuse the pure transitions — **Mark Watched** = `updateShow(id, markWatched(show, todayLocal()))`,
+  **Start Watching** = `updateShow(id, startWatching(todayLocal()))` — then `bumpShows()`; an
+  `updatingId` disables the button in-flight.
+- **Decision**: **Watching de-duplicates Up Next** (`watching && !isUpNext`) so an episode-tracked TV
+  show isn't listed twice; **Mark Watched** is offered on Watching rows too (movies aren't a dead end).
+  The "this year" count derives from `todayLocal().slice(0,4)` (no `new Date('…')` — date.ts rule).
+
+### M5 — Library filters + sort + poster thumbnails
+
+Goal: the full Library — poster rows + a filter panel + a Sort menu, search over Title/Director/Cast.
+
+- **Pure view** (`src/lib/shows.ts`, +7 tests → **125**): `applyLibraryView(shows, criteria)` does all
+  filtering (query over `searchableText` = title+original+director+cast; Type/Genre/Rating(min)/LGBT+/
+  Status; start & finish date ranges) then sorts (`field × dir`, **nulls last** regardless of
+  direction, stable title tiebreak; `date` key = `end_date ?? last_update_date ?? updated_at`). Plus
+  `showGenres` (genre options from the user's own rows), `searchableText`, `SHOW_STATUS_ORDER`,
+  `LibraryCriteria` + `DEFAULT_LIBRARY_CRITERIA`.
+- **`SelectMenu`** (`src/components/SelectMenu.tsx`): extracted the dropdown pattern (previously inlined
+  in `NetWorthDashboard`/`Dashboard`/`Diary`) — used for the Status/Genre/Rating/LGBT+/Sort dropdowns.
+  (The three existing inlined menus were left as-is — out of M5 scope.)
+- **`ShowsLibrary`** rewritten: sticky header (search + a **Filters** toggle with an active-count + a
+  **Sort** `SelectMenu` + asc/desc button); a collapsible filter panel (Type `SegmentedTabs`, the four
+  dropdowns, two date ranges via the `Calendar` overlay, Clear filters); poster rows (`PosterThumb`)
+  with title/year · badge·status·stars · genre·date. Rows come straight from `applyLibraryView`.
+- **Decision**: filter/sort state is **local** (resets on leaving the tab); URL-persistence and the
+  wide-screen sortable table are **parked** (`PARKED.md`). Rating filter is a **minimum**.
+
+### M6 — Shows Settings + Entry field-visibility
+
+Goal: a Shows Settings screen (the Wellness Settings split, mirrored) for Entry field-visibility + an
+importer-enable toggle, both synced on `profile`.
+
+- **Migration** `20260617130000_profile_show_settings.sql`: adds `profile.show_visible_fields text[]`
+  (**nullable — NULL = all visible**, default-on, no seeding) + `show_importer_enabled boolean default
+false`. Additive columns on an existing table → RLS/grants/`moddatetime` already cover them. Owner
+  `db push` + `gen:types`.
+- **Null-sentinel decision**: unlike `visible_nutrients` (defaults `'{}'` = none), Shows field
+  visibility defaults **on** — hiding-by-default is wrong for an entry form, and a NULL sentinel means
+  new fields added later are visible without a data migration. `isFieldVisible(prefs, key)` = `prefs
+== null || prefs.includes(key)` (`src/lib/shows.ts`, +2 tests → **127**).
+- **Screens** (mirror `WellnessSettings`/`VisibleNutrientsSheet`): `ShowsSettings` (full screen — a
+  **Visible Fields** row + an **Enable CSV import** `Toggle` on `show_importer_enabled`) and
+  `ShowsFieldsSheet` (route `Sheet` of per-field toggles over `SHOW_ENTRY_FIELDS`, auto-saving via
+  `useProfileEditor`; initialised from `show_visible_fields ?? all keys`). A **gear** was added to the
+  `ShowsDashboard`/`ShowsLibrary` headers → `/shows/settings`; `/shows/settings/visible` is the sheet.
+- **Entry** reads the prefs via `useProfile` and wraps each hideable field in `isFieldVisible(...)`
+  (Type/Title/Status/Search always shown). Hiding is display-only — `save()` still writes the draft's
+  loaded values, so no data is lost and the dirty check is unaffected.
+- **Importer toggle persists in M6**; its launcher + the Import sheet land in **M7**.
+
+### M7 — In-app CSV importer (Shows feature-complete)
+
+Goal: the one-off bulk importer to seed the back-catalogue — per-row TMDB resolution + idempotent
+commit. Launched from the M6 Settings toggle. No migration, no env.
+
+- **`.gitignore` first** (F7): added `shows-import*.csv` + `!templates/shows-import-template.csv`
+  before creating any CSV; only the sanitized `templates/shows-import-template.csv` + guide are tracked.
+- **Pure layer** `src/lib/shows-import.ts` (+`.test.ts`, +10 tests → **137**): `parseShowsCsv` (shares
+  `src/lib/csv.ts`), `dedupKey(title, type)`, `buildImportRow(input, match)` — combines a CSV row with
+  its TMDB match; **dates left NULL**; watched counts per status/type (watched ⇒ TMDB totals,
+  watching/dropped TV ⇒ CSV values, want/movie ⇒ null).
+- **Idempotent commit** `data/show.saveImportedShows(userId, payloads)`: fetch existing `(id,title,
+type)` once → `dedupKey → id` map → update-or-insert (collapsing in-file dupes). Re-running the same
+  file updates in place. **Dedup keys on the _resolved_ (stored) title**, so a CSV title that resolves
+  to a different TMDB title still re-matches on re-run (both runs resolve identically).
+- **`ImportShowsSheet`** (route `Sheet`, mirrors `ImportNetWorthSheet`): pick file → resolve every row
+  against TMDB with a **concurrency pool (5)** + progress → preview (poster, matched title/year,
+  no-match / review flags) → per-row **Change** reuses `TitleSearchSheet` to re-pick → **Import** →
+  `saveImportedShows` + `bumpShows` → done ("N — C new, U updated"). Launcher added to `ShowsSettings`
+  (shown when `show_importer_enabled`); route `/shows/import` opens over `/shows/settings`.
+- **Shows is now feature-complete (M1–M7).**
 
 ## Failures & gotchas to not repeat
 

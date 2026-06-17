@@ -2,20 +2,23 @@
 
 ## Navigation
 
-The app opens to a **Home hub** — a launcher of module cards (Wellness, Net Worth; more later).
-Selecting a module enters it and the **bottom tab bar becomes that module's tabs**, with a **Home**
-item to return to the hub. On launch the app reopens the **last-used module**, so daily Wellness use
-skips the hub.
+The app opens to a **Home hub** — a launcher of module cards (Wellness, Net Worth, Shows; more
+later). Selecting a module enters it and the **bottom tab bar becomes that module's tabs**, with a
+**Home** item to return to the hub. On launch the app reopens the **last-used module**, so daily
+Wellness use skips the hub.
 
 - **Wellness** tabs: **Home**, **Diary**, **Dashboard**, **Library**. A **gear** in each Wellness
   header opens Wellness Settings.
 - **Net Worth** tabs: **Home**, **Dashboard**, **Monthly Entry**.
+- **Shows** tabs: **Home**, **Dashboard**, **Library**. The Entry/Edit screen is a form reached from
+  a `+` (new) or by tapping a Library/Dashboard row (edit).
 - **Settings is global**, reached from a gear on the Home hub (profile, units, account — app-wide).
   Wellness-specific settings (protein target, nutrient display) live in **Wellness Settings**.
 
-Routing is URL-namespaced per module (`/wellness/*`, `/networth/*`); a future module drops in as a
-card + routes with no structural change. Modals (sheets) slide up over a module's tabs: Calendar,
-Add Food, Food Detail, Add Activity, Activity Log, New Food, New Activity, Month Picker (Net Worth).
+Routing is URL-namespaced per module (`/wellness/*`, `/networth/*`, `/shows/*`); a future module
+drops in as a card + routes with no structural change. Modals (sheets) slide up over a module's tabs:
+Calendar, Add Food, Food Detail, Add Activity, Activity Log, New Food, New Activity, Month Picker
+(Net Worth), Title Search (Shows).
 
 Diary groups, in order: **Breakfast, Lunch, Dinner, Snacks, Supplements, Activities**.
 
@@ -191,3 +194,94 @@ Wellness-module sub-settings. Auto-save on change. A back chevron returns to the
 - **Exchange rates** panel is compact: title shows the base (`EXCHANGE RATES (HKD 1.0000)`), with **CNY and USD rates on one line**, each auto-fetched (with ↻ refetch) and overridable. Note: \_Native → HKD as of 1st of the month from Frankfurter.
 - **Running total in HKD** updates live as you edit.
 - **RESET** and **SAVE** buttons.
+
+## Shows - Dashboard
+
+- Shelves, each a card shown only when it has items, scoped by a **type filter** (All / TV / Movies)
+  and a `+` that opens a blank Entry:
+  - **Up Next** — in-progress TV with episodes remaining; each row shows the poster, title, type
+    badge, and **"S{watched_seasons} · {watched_episodes}/{total_episodes}"** progress + a **Mark
+    Watched** action (status → watched, finish → today, watched counts → totals).
+  - **Watching** — the remaining `status=watching` titles (movies + TV without episode totals); also
+    offers **Mark Watched**. (Up Next is de-duplicated out of Watching so a show isn't listed twice.)
+  - **Want to Watch** — a short shelf of `status=want`, each with a **Start Watching** action (status
+    → watching, start → today).
+  - **Recently Watched** — the last 5 by finish date (rows show stars + finish date). Imported rows
+    with no `end_date` don't appear here (they live in the Library).
+- A small stat line: "**N watched this year**".
+
+## Shows - Library
+
+- **Search bar** over a list of every tracked title — matches **Title, Director, and Cast** (when
+  TMDB returned them); a **`+ New Show`** opens the blank Entry.
+- A **Filters** toggle opens a panel: **Type** (All/TV/Movies), **Status**, **Genre** (the genres
+  present in your own rows), **Rating** (minimum: Any / 1★+ … / 5★), **LGBT+** (Any/None/Some/
+  Significant), and **Started-between** + **Finished-between** date ranges (each bound via the
+  Calendar modal, clearable). A count on the Filters button shows how many are active; **Clear
+  filters** resets them.
+- A **Sort** menu over { Date, Title, Type, Year, Status, Rating, Genre } with an **asc/desc** toggle
+  (nulls sort last); default is **Date** descending.
+- Each row: a **poster thumbnail**, title (+ year), a **TV/Movie type badge**, a **status chip**, the
+  **star rating**, the first genre, and the finish/updated date. Tap a row → **Entry/Edit**;
+  **swipe-left → Delete** (hard, with a confirm).
+- A **gear** in the Shows Dashboard/Library headers opens **Shows Settings**.
+- _Filter/sort state is per-visit (not persisted); a wide-screen sortable table is parked — see
+  `PARKED.md`._
+
+## Shows - Entry / Edit (form)
+
+- Reached from the Library `+` (new, `/shows/entry`) or by tapping a row (edit, `/shows/:id`).
+- **Type** toggle (TV Show / Movie) — Movie hides the season/episode fields.
+- **Title** (required for CREATE), **Original Title**, **Year**.
+- **Status** (Want / Watching / Watched / Dropped): choosing Watched or Dropped defaults the
+  **Finish/Drop date** to today; choosing **Watched** on a TV show snaps the watched counts to the
+  totals.
+- **Rating**: a 0–5 **half-star** picker. **LGBT+ representation**: a None / Some / Significant
+  segmented control.
+- **Start Date**, **Finish / Drop Date**, **Last Update** — each opens the **Calendar** modal;
+  clearable. Start + Last Update default to today on a new entry.
+- **Watched/Total Seasons & Episodes** (TV only); **Comments** (textarea).
+- **Search TMDB** (scoped to the current Type) opens the **Title Search** modal; selecting a result
+  fetches details and populates the **metadata** — a poster thumbnail + Genres, Director/Creator, top
+  Cast, Overview, Runtime (read-only display), plus Title/Original Title/Year (editable) and, for TV,
+  the season & episode totals. Nothing is saved until CREATE/SAVE. Title/Year stay editable so manual
+  entry and match corrections still work.
+- Top-right **RESET** + **CREATE/SAVE**, enabled only once something changes; CREATE needs a Title.
+- Which optional fields appear is controlled by **Shows Settings → Visible Fields** (Type, Title and
+  Status are always shown); hiding a field is display-only and never drops saved data.
+
+## Shows - Title Search (modal)
+
+- Mirrors the **Add Food** search-sheet pattern but is a **local overlay inside Entry** (not a route
+  sheet — a route sheet would remount the Entry form and lose in-progress edits): a search bar over
+  poster-thumbnail result rows (poster · title · year · TV/Movie badge), scoped to the current Type
+  toggle. Tapping a result selects it (triggers the TMDB details fetch + field population) and closes
+  the modal; **X**/Esc/scrim cancels. Shows a configuration hint if `VITE_TMDB_API_KEY` is unset.
+
+## Shows - Settings (from the gear in the Shows headers)
+
+Shows-specific sub-settings (mirrors the Wellness Settings split; app-wide profile/units/account stay
+in the global Settings at the Home level).
+
+- **Entry Form → Visible Fields** opens a sub-screen of toggles over the optional Entry/Edit fields
+  (Original Title, Year, Rating, LGBT+, the three dates, Season & Episode counts, Comments, TMDB
+  metadata display). Stored on `profile.show_visible_fields` (**NULL = all visible**); auto-saves per
+  toggle. Type, Title and Status are always shown and not listed.
+- **Import → Enable CSV import** toggle (`profile.show_importer_enabled`); when on, an **Import CSV…**
+  launcher appears that opens the importer sheet.
+
+## Shows - Import CSV (sheet, from Shows Settings)
+
+A one-off in-app bulk importer (the owner's choice over a script — same as Net Worth). Columns:
+`title,type,status,rating,lgbtq_rep,watched_seasons,watched_episodes` (see
+`templates/shows-import-guide.md`).
+
+- **Choose CSV** → rows are parsed/validated (bad rows listed as skipped) and each is **matched
+  against TMDB** (top hit + details) with a progress count.
+- A **preview list** shows each row's poster + matched title/year + type/status + (TV) season·episode
+  totals; rows TMDB couldn't find are flagged **No match** and rows whose top hit differs from the CSV
+  title are flagged **review**. **Change** on any row opens the **Title Search** modal to pick the
+  correct title (or leave it as-is to import with no metadata).
+- **Import** writes all rows **idempotently** (dedup on `type` + lower title — re-running the same
+  file updates in place, never duplicates). Imported rows have **NULL dates**, so they appear in the
+  Library but not the Dashboard's "Recently Watched".

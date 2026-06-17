@@ -48,7 +48,8 @@ _not_ the primary-button color; it's for emphasis, active states, and energy.
 - **NutrientBar** — name + "value / target" (muted) + %; thin track+fill; **red variant** when over UL.
 - **Toggle** — pill switch; on = coral with knob right, off = `track` with grey knob left.
 - **SegmentedTabs** — `input` track, active segment = `fill` pill with dark text (All/Favorites/Custom,
-  Food/Supplement, Foods/Activities).
+  Food/Supplement, Foods/Activities). Generic over N options — Shows reuses it for the **Type**
+  (TV/Movie), **Status** (Want/Watching/Watched/Dropped), and **LGBT+** (None/Some/Significant) controls.
 - **GroupHeader** — collapsible: expand chevron · category icon · title · kcal subtotal, with a green
   `+` on the right.
 - **SwipeRow** — swipe-left reveals a `delete` Delete action.
@@ -62,7 +63,23 @@ _not_ the primary-button color; it's for emphasis, active states, and energy.
   Esc/scrim/back close); the app shell renders sheets over the active tab via React Router's
   background-location pattern.
 - **Splash** — full-screen loading state while the auth session resolves.
-- **Calendar** — month-grid date picker with per-day food/activity cue dots (a local overlay, not a route).
+- **Calendar** — month-grid date picker (a local overlay, not a route). Presentational: per-day cue
+  dots + legend are drawn only when a caller passes an optional `loadCues(monthStart, monthEnd)`
+  loader (Wellness Diary draws food/activity dots; Shows date pickers pass none).
+- **StarRating** — 0–5 **half-star** rating; display (no `onChange`) or input (two half-width
+  hit-zones per star; tap the current value to clear). Reused on Shows Entry + Library rows.
+- **ShowTypeBadge** — small chip with a TV (`IconDeviceTv`) or movie (`IconMovie`) icon, on every
+  Shows row/poster.
+- **StatusChip** — Shows status pill in the per-status palette: Want = neutral (`input`), Watching =
+  coral (`accent`), Watched = teal (`positive`), Dropped = grey (`track`).
+- **PosterThumb** — the poster thumbnail component (`src/components/PosterThumb.tsx`): a 2:3 rounded
+  image from TMDB (`posterUrl` in `src/lib/shows.ts`, `w92` in search/list rows, `w185` on Entry) or
+  a neutral `bg-input` tile when `poster_path` is null. Reused by Title Search, the Dashboard rows,
+  and (M5) the Library.
+- **TitleSearchSheet** — TMDB title search, a **local** full-screen overlay inside Entry (not the
+  routing `Sheet`): search bar + poster-thumb result rows; selecting a row populates the live form.
+- **SelectMenu** — a compact dropdown (button + label + chevron → scrim + absolute menu of
+  `{value,label}` options); generic over string options. Used by the Shows Library filters + sort.
 - **MonthPicker** — month/year picker (year stepper over a month grid, OK/Cancel) for the Net Worth month selector (a local overlay, not a route).
 - **EnergyBalanceCard** — Consumed / BMR / Activity / bold Net.
 - **NutrientReport** — shared body of Dashboard + Daily Report (energy card + visible-nutrient sections).

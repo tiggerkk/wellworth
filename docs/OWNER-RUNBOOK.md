@@ -9,7 +9,8 @@ use **PowerShell** (Start menu → type "PowerShell"). You run commands from the
 told otherwise.
 
 You will create free accounts on: **Supabase**, **Google Cloud**, **api.data.gov** (USDA),
-**GitHub**, **Vercel**. The only thing that can cost money is the Claude/Claude Code subscription used
+**themoviedb.org** (TMDB), **GitHub**, **Vercel**. The only thing that can cost money is the
+Claude/Claude Code subscription used
 to _build_ the app — running it is free.
 
 ---
@@ -69,6 +70,20 @@ to _build_ the app — running it is free.
 
 ---
 
+## Part C2 — Get a free TMDB (movie/TV database) key
+
+Used by the **Shows** module to look up posters and metadata. Free, one signup.
+
+1. Create an account at <https://www.themoviedb.org/signup> and verify your email.
+2. Go to **Settings → API** (<https://www.themoviedb.org/settings/api>) → **Request an API key** →
+   choose **Developer**, accept the terms, and fill in the short form (any personal use description is
+   fine; URL can be `http://localhost`).
+3. Copy the **API Key (v3 auth)** — a ~32-character string.
+
+- ✅ Check: you have a v3 API key. (Shows _title search_ won't work without it; manual entry still does.)
+
+---
+
 ## Part D — Create the `.env` file (your secrets, kept off the internet)
 
 The app reads its configuration from a file named `.env` in the project root. It is intentionally
@@ -78,19 +93,21 @@ The app reads its configuration from a file named `.env` in the project root. It
    ```
    > Copy-Item .env.example .env
    ```
-2. Open `.env` in a text editor (e.g. Notepad: `> notepad .env`) and fill in the three values from
-   Parts B and C. It should look like this (no quotes, no spaces around `=`):
+2. Open `.env` in a text editor (e.g. Notepad: `> notepad .env`) and fill in the values from
+   Parts B, C, and C2. It should look like this (no quotes, no spaces around `=`):
    ```
    VITE_SUPABASE_URL=https://abcd1234.supabase.co
    VITE_SUPABASE_ANON_KEY=eyJhbGciOi...your-long-anon-key...
    VITE_USDA_API_KEY=your-usda-key
+   VITE_TMDB_API_KEY=your-tmdb-v3-key
    ```
    - `VITE_SUPABASE_URL` — the Project URL from Part B.
    - `VITE_SUPABASE_ANON_KEY` — the anon public key from Part B.
    - `VITE_USDA_API_KEY` — the USDA key from Part C.
+   - `VITE_TMDB_API_KEY` — the TMDB v3 key from Part C2.
      Save and close.
 
-- ✅ Check: `.env` exists and has all three lines filled. (These get baked into the app when it
+- ✅ Check: `.env` exists and has all four lines filled. (These get baked into the app when it
   builds, so if you change them later you must rebuild/redeploy.)
 
 ---
@@ -146,12 +163,14 @@ This creates the tables, security rules, and the nutrient reference data in your
    > supabase db push
    ```
    This applies the migration files: `…_init_schema.sql` (schema + RLS + API-role grants),
-   `…_seed_nutrient.sql` (the nutrient reference rows), and `…_networth_schema.sql` (the Phase-2
-   Net Worth tables).
+   `…_seed_nutrient.sql` (the nutrient reference rows), `…_networth_schema.sql` (the Net Worth
+   tables), `…_shows_schema.sql` (the Shows `show` table), and `…_profile_show_settings.sql` (the two
+   Shows preference columns on `profile`).
 
 - ✅ Check (in the Supabase dashboard):
-  - **Table Editor** shows nine tables: `nutrient`, `profile`, `food`, `serving`, `activity`,
-    `diary_entry`, `strength_set`, and the Net Worth pair `networth_snapshot`, `asset_entry`.
+  - **Table Editor** shows ten tables: `nutrient`, `profile`, `food`, `serving`, `activity`,
+    `diary_entry`, `strength_set`, the Net Worth pair `networth_snapshot`, `asset_entry`, and the
+    Shows table `show`.
   - **SQL Editor** → run `select count(*) from nutrient;` → returns **80**.
   - **Advisors → Security** shows no "RLS disabled in public" warnings.
 
@@ -231,6 +250,8 @@ phone over Wi-Fi; see "Test on your iPhone over Wi-Fi" below.)
   4. The bottom tabs (Diary / Dashboard / Library / Settings) switch screens. In **Add Activity** (the
      Activities group's `+`) you see your seeded activities.
   5. In **Add Food**, search e.g. "egg" → results appear (this confirms the USDA key works).
+  6. In **Shows → Library → New Show → Search TMDB**, type e.g. "matrix" → poster results appear (this
+     confirms the TMDB key works).
 - To stop the dev server: press `Ctrl + C` in the terminal.
 
 > Barcode scanning needs the camera, which browsers only allow over HTTPS. It works on your computer
@@ -332,6 +353,7 @@ and run the two commands again. Once the commit succeeds:
    - `VITE_SUPABASE_URL` = your Project URL
    - `VITE_SUPABASE_ANON_KEY` = your anon key
    - `VITE_USDA_API_KEY` = your USDA key
+   - `VITE_TMDB_API_KEY` = your TMDB v3 key
 4. Click **Deploy**. When it finishes, copy your app's address, e.g.
    `https://wellworth-xxxx.vercel.app`.
 5. **Point Google + Supabase at the live address** (sign-in will fail until you do):
@@ -383,12 +405,13 @@ From the project folder (the database password must be available — see Part F)
 > supabase db reset --linked
 ```
 
-Confirm at the prompt. The CLI re-runs `…_init_schema.sql` and `…_seed_nutrient.sql` against the
-remote, leaving a clean schema + the 80 nutrient rows and an empty migration-ledger that matches the
-files.
+Confirm at the prompt. The CLI re-runs all the migration files (`…_init_schema.sql`,
+`…_seed_nutrient.sql`, `…_networth_schema.sql`, `…_shows_schema.sql`, `…_profile_show_settings.sql`)
+against the remote, leaving a clean schema + the 80 nutrient rows and an empty migration-ledger that
+matches the files.
 
 - ✅ Check:
-  1. `> supabase migration list` shows the same two migrations locally and remotely.
+  1. `> supabase migration list` shows the same migrations locally and remotely.
   2. Reload the app and sign in → you land on the Diary; your **profile** and the **activity library**
      have been re-seeded; SQL `select count(*) from nutrient;` returns **80**.
 
@@ -430,6 +453,7 @@ no full reset needed, and your foods and diary history are kept.
 | Project ref               | Supabase (the URL subdomain)   | `supabase link --project-ref`                   |
 | DB password               | you set it at project creation | `SUPABASE_DB_PASSWORD` (for `db push`)          |
 | USDA key                  | api.data.gov/signup            | `.env` `VITE_USDA_API_KEY` + Vercel env         |
+| TMDB key                  | themoviedb.org → Settings→API  | `.env` `VITE_TMDB_API_KEY` + Vercel env         |
 | Google Client ID + secret | Google Cloud → Clients         | Supabase → Auth → Providers → Google            |
 | Supabase callback URL     | Supabase Google provider page  | Google Cloud → Authorized redirect URIs         |
 | Vercel app URL            | after first deploy             | Google JS origins + Supabase Site/Redirect URLs |

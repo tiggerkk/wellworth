@@ -1,0 +1,259 @@
+/**
+ * Shows (TV & movies) domain constants + pure helpers. UI-framework-free so it's unit-tested
+ * and shared by the Entry form, the Library, and the (M4) Dashboard. DB access lives in
+ * `src/data/show.ts`; TMDB mapping will live in `src/lib/tmdb-api.ts` (M3).
+ */
+import type { Tables, TablesInsert, TablesUpdate } from '../types/database'
+import type { IsoDate } from './date'
+
+export type ShowRow = Tables<'show'>
+export type ShowInsert = TablesInsert<'show'>
+export type ShowUpdate = TablesUpdate<'show'>
+
+// The CHECK-constrained enums come through the generated types as plain `string`; these
+// unions + label maps are the front-end's narrowed view.
+export const SHOW_TYPES = ['tv', 'movie'] as const
+export type ShowType = (typeof SHOW_TYPES)[number]
+export const SHOW_TYPE_LABELS: Record<ShowType, string> = {
+  tv: 'TV Show',
+  movie: 'Movie',
+}
+
+export const SHOW_STATUSES = ['want', 'watching', 'watched', 'dropped'] as const
+export type ShowStatus = (typeof SHOW_STATUSES)[number]
+export const SHOW_STATUS_LABELS: Record<ShowStatus, string> = {
+  want: 'Want to Watch',
+  watching: 'Watching',
+  watched: 'Watched',
+  dropped: 'Dropped',
+}
+
+export const LGBTQ_REPS = ['none', 'some', 'significant'] as const
+export type LgbtqRep = (typeof LGBTQ_REPS)[number]
+export const LGBTQ_REP_LABELS: Record<LgbtqRep, string> = {
+  none: 'None',
+  some: 'Some',
+  significant: 'Significant',
+}
+
+/** Status-chip palette (Tailwind classes on the design tokens): want = neutral, watching =
+ * coral (active), watched = teal (positive), dropped = grey (muted). */
+export const SHOW_STATUS_CHIP: Record<ShowStatus, string> = {
+  want: 'bg-input text-text-secondary',
+  watching: 'bg-accent text-bg',
+  watched: 'bg-positive text-bg',
+  dropped: 'bg-track text-text-secondary',
+}
+
+// --- TMDB poster URLs (only `poster_path` is stored; URLs built from the fixed CDN base) ---
+export const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p'
+
+/** Build a poster URL for a size (e.g. `w92` list, `w342` detail); null when no poster. */
+export function posterUrl(path: string | null | undefined, size: string): string | null {
+  return path ? `${TMDB_IMAGE_BASE}/${size}${path}` : null
+}
+
+// --- Status transitions (pure: take `today` so they're deterministic in tests) ---
+
+/** "Start Watching": status → watching + start date → today. */
+export function startWatching(today: IsoDate): Pick<ShowUpdate, 'status' | 'start_date'> {
+  return { status: 'watching', start_date: today }
+}
+
+/** "Mark Watched": status → watched, finish date → today, and (TV) watched counts → totals. */
+export function markWatched(
+  show: Pick<ShowRow, 'type' | 'total_seasons' | 'total_episodes'>,
+  today: IsoDate,
+): Pick<ShowUpdate, 'status' | 'end_date' | 'watched_seasons' | 'watched_episodes'> {
+  const tv = show.type === 'tv'
+  return {
+    status: 'watched',
+    end_date: today,
+    watched_seasons: tv ? show.total_seasons : null,
+    watched_episodes: tv ? show.total_episodes : null,
+  }
+}
+
+/** "S{watched_seasons} · {watched_episodes}/{total_episodes}" — the TV progress label. */
+export function progressLabel(
+  show: Pick<ShowRow, 'watched_seasons' | 'watched_episodes' | 'total_episodes'>,
+): string {
+  return `S${show.watched_seasons ?? 0} · ${show.watched_episodes ?? 0}/${show.total_episodes ?? 0}`
+}
+
+/** Dashboard "Up Next": an in-progress TV show with episodes still to watch. */
+export function isUpNext(
+  show: Pick<ShowRow, 'status' | 'type' | 'watched_episodes' | 'total_episodes'>,
+): boolean {
+  return (
+    show.status === 'watching' &&
+    show.type === 'tv' &&
+    (show.watched_episodes ?? 0) < (show.total_episodes ?? 0)
+  )
+}
+
+/**
+ * Dashboard "Recently Watched": the most-recently-finished titles. Imported rows with no
+ * `end_date` are excluded by design — they live in the Library, not the recent shelf.
+ */
+export function recentlyWatched<T extends Pick<ShowRow, 'status' | 'end_date'>>(
+  shows: T[],
+  limit: number,
+): T[] {
+  return shows
+    .filter((s) => s.status === 'watched' && s.end_date != null)
+    .sort((a, b) => (b.end_date ?? '').localeCompare(a.end_date ?? ''))
+    .slice(0, limit)
+}
+
+/** Count titles finished in a given calendar year (by `end_date`). */
+export function countWatchedThisYear(
+  shows: Pick<ShowRow, 'status' | 'end_date'>[],
+  year: number,
+): number {
+  const prefix = `${year}-`
+  return shows.filter((s) => s.status === 'watched' && s.end_date?.startsWith(prefix))
+    .length
+}
+
+// --- Library filtering + sorting (pure; the screen just holds the criteria state) ---
+
+/** Sort/precedence order for statuses. */
+export const SHOW_STATUS_ORDER: Record<ShowStatus, number> = {
+  want: 0,
+  watching: 1,
+  watched: 2,
+  dropped: 3,
+}
+
+/** Sorted unique genres present across the given shows (drives the Library Genre filter). */
+export function showGenres(shows: Pick<ShowRow, 'genres'>[]): string[] {
+  const set = new Set<string>()
+  for (const s of shows) for (const g of s.genres ?? []) set.add(g)
+  return [...set].sort((a, b) => a.localeCompare(b))
+}
+
+/** Lowercased text the Library search matches: title + original title + director + cast. */
+export function searchableText(
+  show: Pick<ShowRow, 'title' | 'original_title' | 'director' | 'cast'>,
+): string {
+  return [show.title, show.original_title, show.director, ...(show.cast ?? [])]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase()
+}
+
+export type SortField = 'title' | 'type' | 'year' | 'status' | 'rating' | 'genre' | 'date'
+export type SortDir = 'asc' | 'desc'
+
+export interface LibraryCriteria {
+  query: string
+  type: 'all' | ShowType
+  genre: 'all' | string
+  minRating: number // 0 = any
+  lgbtq: 'all' | LgbtqRep
+  status: 'all' | ShowStatus
+  startFrom: IsoDate | null
+  startTo: IsoDate | null
+  endFrom: IsoDate | null
+  endTo: IsoDate | null
+  sortField: SortField
+  sortDir: SortDir
+}
+
+export const DEFAULT_LIBRARY_CRITERIA: LibraryCriteria = {
+  query: '',
+  type: 'all',
+  genre: 'all',
+  minRating: 0,
+  lgbtq: 'all',
+  status: 'all',
+  startFrom: null,
+  startTo: null,
+  endFrom: null,
+  endTo: null,
+  sortField: 'date',
+  sortDir: 'desc',
+}
+
+function matchesCriteria(show: ShowRow, c: LibraryCriteria): boolean {
+  const q = c.query.trim().toLowerCase()
+  if (q && !searchableText(show).includes(q)) return false
+  if (c.type !== 'all' && show.type !== c.type) return false
+  if (c.status !== 'all' && show.status !== c.status) return false
+  if (c.lgbtq !== 'all' && (show.lgbtq_rep ?? 'none') !== c.lgbtq) return false
+  if (c.genre !== 'all' && !(show.genres ?? []).includes(c.genre)) return false
+  if (c.minRating > 0 && (show.rating ?? 0) < c.minRating) return false
+  if (c.startFrom && (!show.start_date || show.start_date < c.startFrom)) return false
+  if (c.startTo && (!show.start_date || show.start_date > c.startTo)) return false
+  if (c.endFrom && (!show.end_date || show.end_date < c.endFrom)) return false
+  if (c.endTo && (!show.end_date || show.end_date > c.endTo)) return false
+  return true
+}
+
+function sortKey(show: ShowRow, field: SortField): string | number | null {
+  switch (field) {
+    case 'title':
+      return show.title.toLowerCase()
+    case 'type':
+      return show.type
+    case 'year':
+      return show.year
+    case 'status':
+      return SHOW_STATUS_ORDER[show.status as ShowStatus] ?? 99
+    case 'rating':
+      return show.rating
+    case 'genre':
+      return show.genres?.[0]?.toLowerCase() ?? null
+    case 'date':
+      return show.end_date ?? show.last_update_date ?? show.updated_at
+  }
+}
+
+function compareShows(a: ShowRow, b: ShowRow, field: SortField, dir: SortDir): number {
+  const ka = sortKey(a, field)
+  const kb = sortKey(b, field)
+  // Missing values always sort last, regardless of direction.
+  if (ka == null && kb == null) return a.title.localeCompare(b.title)
+  if (ka == null) return 1
+  if (kb == null) return -1
+  const primary =
+    typeof ka === 'number' && typeof kb === 'number'
+      ? ka - kb
+      : String(ka).localeCompare(String(kb))
+  if (primary !== 0) return dir === 'asc' ? primary : -primary
+  return a.title.localeCompare(b.title) // stable tiebreak
+}
+
+/** Filter then sort a Library list. Pure — does not mutate `shows`. */
+export function applyLibraryView(shows: ShowRow[], c: LibraryCriteria): ShowRow[] {
+  return shows
+    .filter((s) => matchesCriteria(s, c))
+    .sort((a, b) => compareShows(a, b, c.sortField, c.sortDir))
+}
+
+// --- Entry/Edit field visibility (Shows Settings) ---
+
+/**
+ * The Entry/Edit fields the owner can hide from Shows Settings. The core Type / Title / Status /
+ * Search-TMDB controls are always shown and are not listed here. Stored on `profile.show_visible_fields`
+ * (NULL = all visible); `'episodes'` covers the TV season/episode block, `'metadata'` the read-only
+ * TMDB display.
+ */
+export const SHOW_ENTRY_FIELDS: { key: string; label: string }[] = [
+  { key: 'original_title', label: 'Original Title' },
+  { key: 'year', label: 'Year' },
+  { key: 'rating', label: 'Rating' },
+  { key: 'lgbtq_rep', label: 'LGBT+ Representation' },
+  { key: 'start_date', label: 'Start Date' },
+  { key: 'end_date', label: 'Finish / Drop Date' },
+  { key: 'last_update_date', label: 'Last Update' },
+  { key: 'episodes', label: 'Season & Episode Counts' },
+  { key: 'comments', label: 'Comments' },
+  { key: 'metadata', label: 'TMDB Metadata Display' },
+]
+
+/** Whether an Entry field is visible. NULL stored prefs (or an unknown key) ⇒ visible (default-on). */
+export function isFieldVisible(visibleFields: string[] | null, key: string): boolean {
+  return visibleFields == null || visibleFields.includes(key)
+}

@@ -1,7 +1,7 @@
 # WellWorth — Project Memory
 
-WellWorth is a personal (later: small-family) wellness and net-worth tracker, styled after Cronometer.
-It is built as an installable PWA so it runs on iPhone and iPad with no Apple Developer account.
+WellWorth is a personal (later: small-family) wellness, net-worth, and media tracker, styled after
+Cronometer. It is built as an installable PWA so it runs on iPhone and iPad with no Apple Developer account.
 
 **Read `/docs` before planning or building.** The six spec docs there are the source of truth:
 `00-PRD.md`, `01-screens.md`, `02-tech-spec.md`, `03-data-model.md`, `04-design-system.md`, `05-seed-data.md`.
@@ -26,23 +26,24 @@ Then run `npm run format` so the docs pass Prettier.
 
 ## Scope discipline
 
-- Build **Wellness and Net Worth**.
+- Built modules: **Wellness, Net Worth, and Shows** (all feature-complete).
 - Steps are entered **manually**. Do not attempt HealthKit / native step sync (impossible in a PWA).
 
 ## App structure (multi-module — current state)
 
 The app is a multi-module PWA behind a **Home hub** (`/home`): module cards launch into **Wellness**
-(`/wellness/*`) or **Net Worth** (`/networth/*`); `/` redirects to the last-used module. Adding a
-module is a **drop-in** — append a `ModuleDef` to `src/constants/modules.ts` + its routes.
+(`/wellness/*`), **Net Worth** (`/networth/*`), or **Shows** (`/shows/*`); `/` redirects to the
+last-used module. Adding a module is a **drop-in** — append a `ModuleDef` to
+`src/constants/modules.ts` + its routes.
 
 - **Routing:** flat children of one `<AppShell/>` in `src/router.tsx`; **all path strings live in
   `src/constants/routes.ts`** (single source of truth). `src/constants/modules.ts` (`MODULES` +
   `moduleForPath`) drives the hub cards + per-module `BottomNav`. Modal **sheets** use the
   background-location pattern (`useSheetNavigate`); `AppShell.TAB_FOR_PATH` paints the tab behind a
   sheet. `/` → `RootRedirect` (last-used module via `src/lib/last-module.ts`, else `/home`).
-- **Settings is split:** global `/settings` (profile, units, account) from the hub gear; Wellness
-  sub-settings at `/wellness/settings` (protein target, nutrient display) from a gear in the Wellness
-  header.
+- **Settings is split:** global `/settings` (profile, units, account) from the hub gear; per-module
+  sub-settings from a gear in the module header — Wellness at `/wellness/settings` (protein target,
+  nutrient display) and Shows at `/shows/settings` (Entry field-visibility, CSV-importer toggle).
 - **Net Worth (built):** two tables `networth_snapshot` + `asset_entry` (migration `supabase/migrations/20260615120000_networth_schema.sql`). Data:
   `src/data/networth-snapshot.ts` + `asset-entry.ts` — write path `saveSnapshotEntries` is an
   **idempotent create-or-replace per month** (reused by the importer). Calc `src/lib/networth.ts`; FX
@@ -51,6 +52,19 @@ module is a **drop-in** — append a `ModuleDef` to `src/constants/modules.ts` +
   `src/lib/networth-import.ts`; windows `src/constants/networth-ranges.ts`; lazy chart
   `src/components/NetWorthTrendChart.tsx`; screens `NetWorthDashboard` / `NetWorthEntry` /
   `ImportNetWorthSheet`.
+- **Shows (built):** one table `show` (migration `supabase/migrations/20260617120000_shows_schema.sql`)
+  plus two `profile` columns `show_visible_fields` / `show_importer_enabled`
+  (`20260617130000_profile_show_settings.sql`). Data `src/data/show.ts` (CRUD + idempotent
+  `saveImportedShows`). Pure logic `src/lib/shows.ts` (status/type/LGBT+ enums, status-chip palette,
+  `posterUrl`, transitions `markWatched`/`startWatching`, selectors `applyLibraryView`/`recentlyWatched`,
+  `SHOW_ENTRY_FIELDS`/`isFieldVisible`); refresh tick `src/lib/shows-refresh.ts`. **TMDB** browser
+  client `src/lib/tmdb-api.ts` (`VITE_TMDB_API_KEY`, search + details on demand; persist only on
+  CREATE/SAVE); one-off CSV importer `src/lib/shows-import.ts`. Components `StarRating` / `ShowTypeBadge`
+  / `StatusChip` / `PosterThumb` / `SelectMenu` / `TitleSearchSheet` (local overlay — **not** a route
+  sheet, so the Entry form survives). Screens `ShowsDashboard` / `ShowsLibrary` / `ShowsEntry` /
+  `ShowsSettings` / `ShowsFieldsSheet` / `ImportShowsSheet`. **Calendar** was generalized to a
+  presentational component with an optional `loadCues` (Wellness Diary injects food/activity dots;
+  Shows date pickers pass none).
 
 ## Stack (do not substitute without asking)
 
