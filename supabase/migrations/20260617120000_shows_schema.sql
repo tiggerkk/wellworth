@@ -1,4 +1,4 @@
--- WellWorth Shows (TV & movies) schema.
+-- WellWorth Shows (TV shows, movies & documentaries) schema.
 --
 -- Conventions (identical to 20260615120000_networth_schema.sql):
 --   * Table name singular, snake_case. One row per tracked title.
@@ -7,40 +7,43 @@
 --   * Enumerated TEXT columns use CHECK constraints (no Postgres enums).
 --   * updated_at is auto-maintained by the moddatetime extension trigger.
 --   * Metadata (poster_path, genres, director/creator, cast, totals) is pulled from TMDB
---     on demand in the UI and persisted only on CREATE/SAVE; tmdb_id is stored so a future
---     "refresh metadata" can re-pull. Images store only poster_path (URL built from the
---     fixed TMDB CDN base in the client).
+--     on demand in the UI and persisted only on CREATE/SAVE; tmdb_id is stored so the
+--     per-show "Refresh from TMDB" can re-pull. Images store only an URL/path, never a
+--     file: poster_path holds EITHER a TMDB path (URL built from the fixed CDN base in the
+--     client) OR a full pasted image URL — rendered with referrerpolicy="no-referrer".
 --   * API-role GRANTs (anon/authenticated) are at the bottom — required alongside RLS, since
 --     raw-SQL-migration tables don't inherit Supabase's default grants (see init F1).
 
 -- =====================================================================================
--- show — one row per tracked title (TV show or movie). `type` chooses the TMDB endpoint
--- and the season/episode UI; `watched_*`/`total_*` are TV-only. Dates are NULL for
--- imported back-catalogue rows (genuinely unknown — fabricating "today" would pollute
--- "Recently Watched" and date sorts).
+-- show — one row per tracked title (TV show, movie or documentary). `type` chooses the
+-- TMDB endpoint (documentary → /tv) and the season/episode UI; `watched_*`/`total_*` are
+-- for episodic types (TV + documentary). `master_series` groups documentary sub-series
+-- (e.g. 国宝档案 → 从东晋到北魏); NULL for standalone titles. Dates are NULL for imported
+-- back-catalogue rows (genuinely unknown — fabricating "today" would pollute "Recently
+-- Watched" and date sorts).
 -- =====================================================================================
 create table public.show (
   id               uuid primary key default gen_random_uuid(),
   user_id          uuid not null references auth.users (id) on delete cascade,
-  type             text not null check (type in ('tv', 'movie')),
+  type             text not null check (type in ('tv', 'movie', 'documentary')),
   status           text not null check (status in ('want', 'watching', 'watched', 'dropped')),
-  tmdb_id          integer,                  -- TMDB id (enables a future "refresh metadata")
+  tmdb_id          integer,                  -- TMDB id (enables per-show "Refresh from TMDB")
   imdb_id          text,                     -- stable cross-reference
   title            text not null,
+  master_series    text,                     -- parent series for a documentary sub-series; else NULL
   original_title   text,
   year             integer,
-  poster_path      text,                     -- TMDB path; URL built from the fixed CDN base
+  poster_path      text,                     -- TMDB path OR a full pasted image URL (no-referrer render)
   overview         text,
   genres           text[],
   director         text,                     -- movie director, or TV creator(s) joined
   "cast"           text[],                   -- top ~10 cast names ("cast" is a reserved word)
   runtime_min      integer,
-  content_rating   text,
   original_language text,
-  total_seasons    integer,                  -- TV only
-  total_episodes   integer,                  -- TV only
-  watched_seasons  integer,                  -- TV only; set to totals on Watched
-  watched_episodes integer,                  -- TV only; set to totals on Watched
+  total_seasons    integer,                  -- episodic types only (TV + documentary)
+  total_episodes   integer,                  -- episodic types only
+  watched_seasons  integer,                  -- episodic types only; set to totals on Watched
+  watched_episodes integer,                  -- episodic types only; set to totals on Watched
   rating           numeric check (
                      rating >= 0 and rating <= 5 and (rating * 2) = floor(rating * 2)
                    ),                         -- user stars, 0–5 in 0.5 steps
@@ -55,6 +58,7 @@ create table public.show (
 );
 
 create index on public.show (user_id, status);
+create index on public.show (user_id, master_series);  -- master-series grouping/filter
 
 alter table public.show enable row level security;
 

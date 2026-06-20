@@ -7,17 +7,19 @@ import {
 } from './shows-import'
 import type { ShowMetadata } from './tmdb-api'
 
-const HEADER = 'title,type,status,rating,lgbtq_rep,watched_seasons,watched_episodes'
+const HEADER =
+  'title,master_series,type,status,rating,lgbtq_rep,watched_seasons,watched_episodes'
 const parse = (body: string) =>
   parseShowsCsv(`${HEADER}\n${body}`.split('\n').map((l) => l.split(',')))
 
 describe('parseShowsCsv', () => {
   it('parses a valid row with defaults', () => {
-    const { rows, errors } = parse('Dune,movie,want,,,,')
+    const { rows, errors } = parse('Dune,,movie,want,,,,')
     expect(errors).toEqual([])
     expect(rows).toEqual([
       {
         title: 'Dune',
+        master_series: null, // blank → null
         type: 'movie',
         status: 'want',
         rating: null,
@@ -28,7 +30,7 @@ describe('parseShowsCsv', () => {
     ])
   })
   it('keeps TV watched counts and a half-star rating', () => {
-    const { rows } = parse('Heartstopper,tv,watching,4.5,significant,1,8')
+    const { rows } = parse('Heartstopper,,tv,watching,4.5,significant,1,8')
     expect(rows[0]).toMatchObject({
       type: 'tv',
       status: 'watching',
@@ -38,16 +40,26 @@ describe('parseShowsCsv', () => {
       watched_episodes: 8,
     })
   })
+  it('accepts a documentary with a master series (Chinese)', () => {
+    const { rows, errors } = parse('从东晋到北魏,国宝档案,documentary,watched,,,,')
+    expect(errors).toEqual([])
+    expect(rows[0]).toMatchObject({
+      title: '从东晋到北魏',
+      master_series: '国宝档案',
+      type: 'documentary',
+      status: 'watched',
+    })
+  })
   it('reports the required columns when missing', () => {
     expect(parseShowsCsv([['type', 'status']]).errors[0]).toContain('title')
   })
   it('skips rows with a bad type / status / lgbtq_rep / rating', () => {
     const { rows, errors } = parse(
       [
-        'X,book,want,,,,',
-        'Y,movie,maybe,,,,',
-        'Z,movie,want,,lots,,',
-        'W,movie,want,3.3,,,',
+        'X,,book,want,,,,',
+        'Y,,movie,maybe,,,,',
+        'Z,,movie,want,,lots,,',
+        'W,,movie,want,3.3,,,',
       ].join('\n'),
     )
     expect(rows).toHaveLength(0)
@@ -56,9 +68,12 @@ describe('parseShowsCsv', () => {
 })
 
 describe('dedupKey', () => {
-  it('is case-insensitive on title and scoped by type', () => {
-    expect(dedupKey('  The Matrix ', 'movie')).toBe('movie|the matrix')
-    expect(dedupKey('The Matrix', 'tv')).not.toBe(dedupKey('The Matrix', 'movie'))
+  it('is case-insensitive on title and scoped by master series (not type)', () => {
+    expect(dedupKey('  The Matrix ', null)).toBe('the matrix|')
+    expect(dedupKey('从东晋到北魏', '国宝档案')).toBe('从东晋到北魏|国宝档案')
+    expect(dedupKey('从东晋到北魏', '国宝档案')).not.toBe(
+      dedupKey('从东晋到北魏', '消失的古国'),
+    )
   })
 })
 
@@ -81,6 +96,7 @@ const tvMeta: ShowMetadata = {
 
 const row = (p: Partial<ParsedShowRow>): ParsedShowRow => ({
   title: 'Breaking Bad',
+  master_series: null,
   type: 'tv',
   status: 'watched',
   rating: null,
@@ -121,6 +137,15 @@ describe('buildImportRow', () => {
     })
     expect(out.total_seasons).toBeNull()
     expect(out.watched_seasons).toBeNull()
+  })
+  it('documentaries are episodic + carry the master series', () => {
+    const out = buildImportRow(
+      row({ type: 'documentary', status: 'watched', master_series: '国宝档案' }),
+      { ...tvMeta, total_seasons: 1, total_episodes: 12 },
+    )
+    expect(out.master_series).toBe('国宝档案')
+    expect(out.total_episodes).toBe(12)
+    expect(out.watched_episodes).toBe(12)
   })
   it('falls back to the CSV title with no match', () => {
     const out = buildImportRow(row({ title: 'Unknown Title' }), null)

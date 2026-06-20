@@ -17,6 +17,7 @@ import {
   DEFAULT_LIBRARY_CRITERIA,
   LGBTQ_REP_LABELS,
   LGBTQ_REPS,
+  masterSeriesOptions,
   SHOW_STATUS_CHIP,
   SHOW_STATUS_LABELS,
   SHOW_STATUSES,
@@ -46,6 +47,7 @@ const TYPE_OPTIONS: { value: TypeFilter; label: string }[] = [
   { value: 'all', label: 'All' },
   { value: 'tv', label: 'TV' },
   { value: 'movie', label: 'Movies' },
+  { value: 'documentary', label: 'Docs' },
 ]
 const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
   { value: 'all', label: 'All statuses' },
@@ -127,10 +129,16 @@ export function ShowsLibrary() {
     { value: 'all', label: 'All genres' },
     ...showGenres(allShows).map((g) => ({ value: g, label: g })),
   ]
+  const seriesList = masterSeriesOptions(allShows)
+  const seriesOptions = [
+    { value: 'all', label: 'All series' },
+    ...seriesList.map((m) => ({ value: m, label: m })),
+  ]
   const view = applyLibraryView(allShows, criteria)
 
   const activeCount =
     (criteria.type !== 'all' ? 1 : 0) +
+    (criteria.masterSeries !== 'all' ? 1 : 0) +
     (criteria.genre !== 'all' ? 1 : 0) +
     (criteria.minRating > 0 ? 1 : 0) +
     (criteria.lgbtq !== 'all' ? 1 : 0) +
@@ -245,6 +253,15 @@ export function ShowsLibrary() {
               />
             </Field>
           </div>
+          {seriesList.length > 0 && (
+            <Field label="Master series">
+              <SelectMenu
+                value={criteria.masterSeries}
+                options={seriesOptions}
+                onChange={(m) => setCrit({ masterSeries: m })}
+              />
+            </Field>
+          )}
           <DateRange
             label="Started between"
             from={criteria.startFrom}
@@ -291,6 +308,11 @@ export function ShowsLibrary() {
                 >
                   <PosterThumb path={s.poster_path} size="w92" />
                   <span className="min-w-0 flex-1">
+                    {s.master_series && (
+                      <span className="block truncate text-[11px] uppercase tracking-wide text-text-tertiary">
+                        {s.master_series}
+                      </span>
+                    )}
                     <span className="block truncate text-[15px] text-text-primary">
                       {s.title}
                       {s.year ? ` (${s.year})` : ''}

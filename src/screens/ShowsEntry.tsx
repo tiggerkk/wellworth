@@ -1,23 +1,30 @@
 import { useCallback, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router'
-import { IconQuote, IconSearch, IconX } from '@tabler/icons-react'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
+import { IconQuote, IconRefresh, IconSearch, IconX } from '@tabler/icons-react'
 import { routes } from '../constants/routes'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { createShow, getShow, updateShow } from '../data/show'
 import {
+  buildRefreshPatch,
   isFieldVisible,
   LGBTQ_REP_LABELS,
   LGBTQ_REPS,
   posterUrl,
   SHOW_TYPE_LABELS,
   SHOW_TYPES,
+  usesEpisodes,
   type LgbtqRep,
   type ShowRow,
   type ShowStatus,
   type ShowType,
 } from '../lib/shows'
-import { getTitleDetails, type TmdbSearchResult } from '../lib/tmdb-api'
+import {
+  getTitleDetails,
+  refreshFromTmdb,
+  tmdbLanguage,
+  type TmdbSearchResult,
+} from '../lib/tmdb-api'
 import { useProfile } from '../hooks/useProfile'
 import { bumpShows } from '../lib/shows-refresh'
 import { formatDayLabel, todayLocal, type IsoDate } from '../lib/date'
@@ -31,6 +38,7 @@ import { TitleSearchSheet } from '../components/TitleSearchSheet'
 interface ShowDraft {
   type: ShowType
   title: string
+  master_series: string
   original_title: string
   year: string
   status: ShowStatus
@@ -58,11 +66,21 @@ interface ShowDraft {
 
 const numStr = (n: number | null): string => (n != null ? String(n) : '')
 
-function blankDraft(): ShowDraft {
+/** A new show, optionally prefilled from `?title=&poster=&overview=&master_series=&type=`. */
+interface ShowPrefill {
+  title: string
+  poster: string
+  overview: string
+  master_series: string
+  type: ShowType | null
+}
+
+function blankDraft(prefill?: ShowPrefill): ShowDraft {
   const today = todayLocal()
   return {
-    type: 'tv',
-    title: '',
+    type: prefill?.type ?? 'tv',
+    title: prefill?.title ?? '',
+    master_series: prefill?.master_series ?? '',
     original_title: '',
     year: '',
     status: 'want',
@@ -76,8 +94,8 @@ function blankDraft(): ShowDraft {
     watched_seasons: '',
     watched_episodes: '',
     comments: '',
-    poster_path: null,
-    overview: null,
+    poster_path: prefill?.poster || null,
+    overview: prefill?.overview || null,
     genres: null,
     director: null,
     cast: null,
@@ -92,6 +110,7 @@ function draftFromRow(row: ShowRow): ShowDraft {
   return {
     type: row.type as ShowType,
     title: row.title,
+    master_series: row.master_series ?? '',
     original_title: row.original_title ?? '',
     year: numStr(row.year),
     status: row.status as ShowStatus,
@@ -124,12 +143,21 @@ function draftFromRow(row: ShowRow): ShowDraft {
  */
 export function ShowsEntry() {
   const { id } = useParams()
+  const [params] = useSearchParams()
+  const title = params.get('title') ?? ''
+  const poster = params.get('poster') ?? ''
+  const overview = params.get('overview') ?? ''
+  const master_series = params.get('master_series') ?? ''
+  const typeParam = params.get('type')
+  const type = (SHOW_TYPES as readonly string[]).includes(typeParam ?? '')
+    ? (typeParam as ShowType)
+    : null
 
   const loadFn = useCallback(async (): Promise<ShowDraft | null> => {
-    if (!id) return blankDraft()
+    if (!id) return blankDraft({ title, poster, overview, master_series, type })
     const row = await getShow(id)
     return row ? draftFromRow(row) : null
-  }, [id])
+  }, [id, title, poster, overview, master_series, type])
   const { data: initial, loading, error } = useAsync(loadFn)
 
   return (
@@ -160,10 +188,15 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
   const [searchOpen, setSearchOpen] = useState(false)
   const [metaLoading, setMetaLoading] = useState(false)
   const [metaError, setMetaError] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
+  const [refreshResult, setRefreshResult] = useState<
+    null | 'updated' | 'nochange' | 'error'
+  >(null)
 
   const update = (patch: Partial<ShowDraft>) => setDraft((d) => ({ ...d, ...patch }))
   const dirty = JSON.stringify(draft) !== JSON.stringify(initial)
-  const isTv = draft.type === 'tv'
+  const episodic = usesEpisodes(draft.type)
+  const isDocumentary = draft.type === 'documentary'
   const hasMeta =
     !!draft.poster_path ||
     !!draft.overview ||
@@ -178,8 +211,9 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
     setSearchOpen(false)
     setMetaLoading(true)
     setMetaError(false)
+    setRefreshResult(null)
     try {
-      const m = await getTitleDetails(r.type, r.tmdbId)
+      const m = await getTitleDetails(r.type, r.tmdbId, tmdbLanguage(r.title))
       setDraft((d) => ({
         ...d,
         type: r.type,
@@ -207,14 +241,77 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
     }
   }
 
+  // Re-pull TMDB metadata for this title (enabled once a tmdb_id exists). Updates only the
+  // TMDB-sourced fields into the draft (owner fields + a manually pasted poster are preserved);
+  // the owner reviews and saves. Reports "updated" / "no changes".
+  async function refresh() {
+    if (draft.tmdb_id == null) return
+    setRefreshing(true)
+    setRefreshResult(null)
+    const toNum = (s: string): number | null => {
+      const n = Number(s)
+      return s.trim() !== '' && Number.isFinite(n) ? Math.trunc(n) : null
+    }
+    try {
+      const meta = await refreshFromTmdb({
+        type: draft.type,
+        tmdb_id: draft.tmdb_id,
+        title: draft.title,
+        original_title: draft.original_title.trim() || null,
+      })
+      const { patch, changed } = buildRefreshPatch(
+        {
+          title: draft.title,
+          original_title: draft.original_title.trim() || null,
+          overview: draft.overview,
+          genres: draft.genres,
+          director: draft.director,
+          cast: draft.cast,
+          total_seasons: toNum(draft.total_seasons),
+          total_episodes: toNum(draft.total_episodes),
+          runtime_min: draft.runtime_min,
+          original_language: draft.original_language,
+          poster_path: draft.poster_path,
+        },
+        meta,
+      )
+      if (changed) {
+        setDraft((d) => ({
+          ...d,
+          title: patch.title ?? d.title,
+          original_title: patch.original_title ?? '',
+          overview: patch.overview ?? null,
+          genres: patch.genres ?? null,
+          director: patch.director ?? null,
+          cast: patch.cast ?? null,
+          total_seasons:
+            patch.total_seasons != null ? String(patch.total_seasons) : d.total_seasons,
+          total_episodes:
+            patch.total_episodes != null
+              ? String(patch.total_episodes)
+              : d.total_episodes,
+          runtime_min: patch.runtime_min ?? null,
+          original_language: patch.original_language ?? null,
+          poster_path:
+            patch.poster_path !== undefined ? patch.poster_path : d.poster_path,
+        }))
+      }
+      setRefreshResult(changed ? 'updated' : 'nochange')
+    } catch {
+      setRefreshResult('error')
+    } finally {
+      setRefreshing(false)
+    }
+  }
+
   // Status convenience: entering Watched/Dropped defaults the finish date to today, and
-  // marking a TV show Watched snaps the watched counts to the totals (spec).
+  // marking an episodic title (TV / documentary) Watched snaps the watched counts to the totals.
   function changeStatus(next: ShowStatus) {
     const patch: Partial<ShowDraft> = { status: next }
     if ((next === 'watched' || next === 'dropped') && !draft.end_date) {
       patch.end_date = todayLocal()
     }
-    if (next === 'watched' && draft.type === 'tv') {
+    if (next === 'watched' && usesEpisodes(draft.type)) {
       patch.watched_seasons = draft.total_seasons
       patch.watched_episodes = draft.total_episodes
     }
@@ -238,6 +335,7 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
       const row = {
         type: draft.type,
         title: draft.title.trim(),
+        master_series: draft.master_series.trim() || null,
         original_title: draft.original_title.trim() || null,
         year: intOrNull(draft.year),
         status: draft.status,
@@ -246,10 +344,10 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
         start_date: draft.start_date,
         end_date: draft.end_date,
         last_update_date: draft.last_update_date,
-        total_seasons: isTv ? intOrNull(draft.total_seasons) : null,
-        total_episodes: isTv ? intOrNull(draft.total_episodes) : null,
-        watched_seasons: isTv ? intOrNull(draft.watched_seasons) : null,
-        watched_episodes: isTv ? intOrNull(draft.watched_episodes) : null,
+        total_seasons: episodic ? intOrNull(draft.total_seasons) : null,
+        total_episodes: episodic ? intOrNull(draft.total_episodes) : null,
+        watched_seasons: episodic ? intOrNull(draft.watched_seasons) : null,
+        watched_episodes: episodic ? intOrNull(draft.watched_episodes) : null,
         comments: draft.comments.trim() || null,
         poster_path: draft.poster_path,
         overview: draft.overview,
@@ -314,19 +412,51 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
         />
 
         <div>
-          <button
-            onClick={() => setSearchOpen(true)}
-            className="flex w-full items-center justify-center gap-2 rounded-input bg-input py-2 text-sm text-accent"
-          >
-            <IconSearch size={16} /> Search TMDB
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="flex flex-1 items-center justify-center gap-2 rounded-input bg-input py-2 text-sm text-accent"
+            >
+              <IconSearch size={16} /> Search TMDB
+            </button>
+            <button
+              onClick={() => void refresh()}
+              disabled={draft.tmdb_id == null || refreshing}
+              aria-label="Refresh from TMDB"
+              title={draft.tmdb_id == null ? 'Search TMDB first' : 'Refresh from TMDB'}
+              className="flex items-center justify-center rounded-input bg-input px-3 text-accent disabled:text-text-tertiary"
+            >
+              <IconRefresh size={16} className={refreshing ? 'animate-spin' : ''} />
+            </button>
+          </div>
           {metaLoading && (
             <p className="mt-1 text-xs text-text-secondary">Fetching details…</p>
           )}
           {metaError && (
             <p className="mt-1 text-xs text-danger">Couldn’t fetch details.</p>
           )}
+          {refreshResult === 'updated' && (
+            <p className="mt-1 text-xs text-positive">Updated from TMDB.</p>
+          )}
+          {refreshResult === 'nochange' && (
+            <p className="mt-1 text-xs text-text-secondary">Already up to date.</p>
+          )}
+          {refreshResult === 'error' && (
+            <p className="mt-1 text-xs text-danger">Couldn’t refresh from TMDB.</p>
+          )}
         </div>
+
+        {isDocumentary && (
+          <label className="text-xs text-text-secondary">
+            Master Series
+            <input
+              value={draft.master_series}
+              onChange={(e) => update({ master_series: e.target.value })}
+              placeholder="Parent series, e.g. 国宝档案 (optional)"
+              className={`mt-1 ${inputClass}`}
+            />
+          </label>
+        )}
 
         <label className="text-xs text-text-secondary">
           Title
@@ -370,6 +500,7 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
                 <img
                   src={posterUrl(draft.poster_path, 'w185') ?? undefined}
                   alt=""
+                  referrerPolicy="no-referrer"
                   className="h-36 w-24 shrink-0 rounded object-cover"
                 />
               ) : (
@@ -383,7 +514,7 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
                 ) : null}
                 {draft.director && (
                   <p className="mt-1">
-                    {isTv ? 'Creator' : 'Director'}:{' '}
+                    {episodic ? 'Creator' : 'Director'}:{' '}
                     <span className="text-text-muted">{draft.director}</span>
                   </p>
                 )}
@@ -407,6 +538,16 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
             )}
           </div>
         )}
+
+        <label className="text-xs text-text-secondary">
+          Poster URL
+          <input
+            value={draft.poster_path ?? ''}
+            onChange={(e) => update({ poster_path: e.target.value.trim() || null })}
+            placeholder="Paste a direct image URL (optional)"
+            className={`mt-1 ${inputClass}`}
+          />
+        </label>
 
         <div>
           <p className="mb-1 text-xs text-text-secondary">Status</p>
@@ -469,7 +610,7 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
           />
         )}
 
-        {isTv && show('episodes') && (
+        {episodic && show('episodes') && (
           <div className="flex flex-col gap-3">
             <div className="flex gap-3">
               <NumField

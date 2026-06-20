@@ -15,10 +15,11 @@ import {
   type ParsedShowRow,
   type ShowsImportResult,
 } from '../lib/shows-import'
-import { SHOW_STATUS_CHIP, SHOW_STATUS_LABELS } from '../lib/shows'
+import { SHOW_STATUS_CHIP, SHOW_STATUS_LABELS, usesEpisodes } from '../lib/shows'
 import {
   getTitleDetails,
   searchTitles,
+  tmdbLanguage,
   type ShowMetadata,
   type TmdbSearchResult,
 } from '../lib/tmdb-api'
@@ -45,7 +46,7 @@ async function resolveRow(input: ParsedShowRow): Promise<ResolvedRow> {
     const results = await searchTitles(input.type, input.title)
     const top = results[0]
     if (!top) return { input, match: null, status: 'nomatch' }
-    const match = await getTitleDetails(input.type, top.tmdbId)
+    const match = await getTitleDetails(input.type, top.tmdbId, tmdbLanguage(input.title))
     return {
       input,
       match,
@@ -108,7 +109,7 @@ export function ImportShowsSheet() {
   async function applyFix(i: number, r: TmdbSearchResult) {
     setFixIndex(null)
     try {
-      const match = await getTitleDetails(r.type, r.tmdbId)
+      const match = await getTitleDetails(r.type, r.tmdbId, tmdbLanguage(r.title))
       setResolved(
         (prev) =>
           prev?.map((row, j) => (j === i ? { ...row, match, status: 'ok' } : row)) ??
@@ -242,6 +243,11 @@ export function ImportShowsSheet() {
                         className="h-14 w-10"
                       />
                       <div className="min-w-0 flex-1">
+                        {r.input.master_series && (
+                          <p className="truncate text-[11px] uppercase tracking-wide text-text-tertiary">
+                            {r.input.master_series}
+                          </p>
+                        )}
                         <p className="truncate text-[15px] text-text-primary">
                           {r.match?.title ?? r.input.title}
                           {r.match?.year ? ` (${r.match.year})` : ''}
@@ -252,7 +258,7 @@ export function ImportShowsSheet() {
                             label={SHOW_STATUS_LABELS[r.input.status]}
                             className={SHOW_STATUS_CHIP[r.input.status]}
                           />
-                          {r.input.type === 'tv' && r.match && (
+                          {usesEpisodes(r.input.type) && r.match && (
                             <span>
                               {r.match.total_seasons ?? '?'}S ·{' '}
                               {r.match.total_episodes ?? '?'}E

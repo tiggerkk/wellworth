@@ -3,12 +3,13 @@
  * `templates/shows-import-guide.md`). No I/O and no TMDB calls — the import screen reads the file,
  * resolves each row against TMDB, and writes via `saveImportedShows`.
  *
- * Column spec: `title,type,status,rating,lgbtq_rep,watched_seasons,watched_episodes`.
+ * Column spec: `title,master_series,type,status,rating,lgbtq_rep,watched_seasons,watched_episodes`.
  */
 import {
   LGBTQ_REPS,
   SHOW_STATUSES,
   SHOW_TYPES,
+  usesEpisodes,
   type LgbtqRep,
   type ShowInsert,
   type ShowStatus,
@@ -20,6 +21,7 @@ const REQUIRED_COLUMNS = ['title', 'type', 'status']
 
 export interface ParsedShowRow {
   title: string
+  master_series: string | null
   type: ShowType
   status: ShowStatus
   rating: number | null
@@ -79,7 +81,7 @@ export function parseShowsCsv(rows: string[][]): ShowsImportResult {
     const type = typeRaw.toLowerCase()
     if (!typeSet.has(type)) {
       errors.push(
-        `Row ${line} ("${title}"): type "${typeRaw}" must be tv or movie — skipped.`,
+        `Row ${line} ("${title}"): type "${typeRaw}" must be tv, movie or documentary — skipped.`,
       )
       continue
     }
@@ -117,6 +119,7 @@ export function parseShowsCsv(rows: string[][]): ShowsImportResult {
 
     out.push({
       title,
+      master_series: col(cells, 'master_series') || null,
       type: type as ShowType,
       status: status as ShowStatus,
       rating,
@@ -129,9 +132,13 @@ export function parseShowsCsv(rows: string[][]): ShowsImportResult {
   return { rows: out, errors }
 }
 
-/** Idempotency key — a row updates an existing show with the same `type` + case-insensitive title. */
-export function dedupKey(title: string, type: string): string {
-  return `${type}|${title.trim().toLowerCase()}`
+/**
+ * Idempotency key — a row updates an existing show with the same case-insensitive title +
+ * master series (type-agnostic), so an English/Chinese pair under one 国宝档案 series stays
+ * distinct while a re-import of the same title+series updates in place.
+ */
+export function dedupKey(title: string, masterSeries: string | null | undefined): string {
+  return `${title.trim().toLowerCase()}|${(masterSeries ?? '').trim().toLowerCase()}`
 }
 
 /**
@@ -143,10 +150,10 @@ export function buildImportRow(
   input: ParsedShowRow,
   match: ShowMetadata | null,
 ): ImportShowRow {
-  const tv = input.type === 'tv'
+  const episodic = usesEpisodes(input.type)
   let watched_seasons: number | null = null
   let watched_episodes: number | null = null
-  if (tv) {
+  if (episodic) {
     if (input.status === 'watched') {
       watched_seasons = match?.total_seasons ?? null
       watched_episodes = match?.total_episodes ?? null
@@ -160,6 +167,7 @@ export function buildImportRow(
     type: input.type,
     status: input.status,
     title: match?.title ?? input.title,
+    master_series: input.master_series,
     rating: input.rating,
     lgbtq_rep: input.lgbtq_rep,
     original_title: match?.original_title ?? null,
@@ -171,8 +179,8 @@ export function buildImportRow(
     cast: match?.cast ?? null,
     runtime_min: match?.runtime_min ?? null,
     original_language: match?.original_language ?? null,
-    total_seasons: tv ? (match?.total_seasons ?? null) : null,
-    total_episodes: tv ? (match?.total_episodes ?? null) : null,
+    total_seasons: episodic ? (match?.total_seasons ?? null) : null,
+    total_episodes: episodic ? (match?.total_episodes ?? null) : null,
     watched_seasons,
     watched_episodes,
     tmdb_id: match?.tmdb_id ?? null,

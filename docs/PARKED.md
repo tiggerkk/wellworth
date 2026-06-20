@@ -138,6 +138,33 @@ single user and simpler. The Wellness Library persists only its tab in the URL t
 **Decided:** Mirror the Wellness "URL-as-state" pattern — serialize `LibraryCriteria` into query
 params written with `{replace:true}`; the screen already centralizes the criteria in one state object.
 
+### Shows — bulk "sync all" refresh · Deferred
+
+**What:** A one-tap "refresh every show from TMDB" action.
+**Why deferred:** Only **per-show** Refresh from TMDB is built (M8). The owner always knows which title
+needs a re-pull (a contributed entry cleared moderation, a show gained a season), so a bulk sync would
+spend a lot of TMDB calls for little benefit and risks overwriting many rows at once.
+**Decided:** The pure `buildRefreshPatch` + `refreshFromTmdb` are per-show; a bulk action would just
+map them over `listShows`, gated behind an explicit confirm, if ever wanted.
+
+### Shows — auto-rematch un-linked titles to TMDB · Deferred
+
+**What:** Automatically (re)match a show that has no `tmdb_id` (e.g. a niche documentary imported
+metadata-less) to a TMDB entry.
+**Why deferred:** M8 upgrades such a row only by a **manual** re-search (or a pasted Poster URL). Auto
+top-hit matching is exactly what produces wrong matches for niche/Chinese titles; the owner picking the
+right hit is safer.
+**Decided:** The Entry **Search TMDB** + **Refresh** already cover the manual upgrade path.
+
+### Shows — Chinese search-as-you-type via a Worker · Rejected (revisit only if needed)
+
+**What:** Live Chinese title suggestions (Douban/Bilibili) for shows TMDB lacks.
+**Why rejected:** A Cloudflare Worker / Douban–Bilibili scraping / server-side OG parsing is fragile,
+targets hostile endpoints, and **ends the no-backend architecture**. Manual entry + a pasted poster +
+contributing to TMDB cover the need (M8).
+**Decided:** If Chinese search-as-you-type ever becomes high-frequency, revisit a Worker over
+**Bilibili's keyless suggest endpoint** only — **never** a Douban scraper.
+
 ### Books Library — wide-screen sortable table · Deferred
 
 **What:** On wide screens (iPad), render the Books Library as a sortable **table** with tappable column

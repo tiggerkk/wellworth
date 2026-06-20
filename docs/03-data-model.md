@@ -143,29 +143,30 @@ The migration is `supabase/migrations/20260615120000_networth_schema.sql`.
 
 - `id` UUID PK
 - `user_id` UUID → auth.users (ON DELETE CASCADE)
-- `type` TEXT — 'tv' | 'movie' (CHECK); chooses the TMDB endpoint and the season/episode UI
+- `type` TEXT — 'tv' | 'movie' | 'documentary' (CHECK); chooses the TMDB endpoint (documentary → /tv) and the season/episode UI
 - `status` TEXT — 'want' | 'watching' | 'watched' | 'dropped' (CHECK)
-- `tmdb_id` INT NULL — TMDB id (enables a future "refresh metadata")
+- `tmdb_id` INT NULL — TMDB id (enables the per-show "Refresh from TMDB")
 - `imdb_id` TEXT NULL — stable cross-reference
 - `title` TEXT, `original_title` TEXT NULL, `year` INT NULL
-- `poster_path` TEXT NULL — TMDB path; URL built from the fixed CDN base
+- `master_series` TEXT NULL — parent series for a documentary sub-series (e.g. 国宝档案 → 从东晋到北魏); NULL for standalone titles
+- `poster_path` TEXT NULL — **either** a TMDB path (URL built from the fixed CDN base) **or** a full pasted image URL; always rendered with `referrerpolicy="no-referrer"`
 - `overview` TEXT NULL
 - `genres` TEXT[] NULL
-- `director` TEXT NULL — movie director, or TV creator(s) joined
+- `director` TEXT NULL — movie director, or TV/documentary creator(s) joined
 - `cast` TEXT[] NULL — top ~10 cast names (quoted `"cast"` in DDL — reserved word)
 - `runtime_min` INT NULL
-- `content_rating` TEXT NULL, `original_language` TEXT NULL
-- `total_seasons` INT NULL, `total_episodes` INT NULL — TV only
-- `watched_seasons` INT NULL, `watched_episodes` INT NULL — TV only; set to totals on Watched
+- `original_language` TEXT NULL
+- `total_seasons` INT NULL, `total_episodes` INT NULL — episodic types only (TV + documentary)
+- `watched_seasons` INT NULL, `watched_episodes` INT NULL — episodic types only; set to totals on Watched
 - `rating` NUMERIC NULL — user stars, 0–5 in 0.5 steps (CHECK)
 - `lgbtq_rep` TEXT DEFAULT 'none' — LGBT+ representation: 'none' | 'some' | 'significant' (CHECK)
 - `start_date` DATE NULL, `end_date` DATE NULL — finish/drop date
 - `last_update_date` DATE NULL — defaults to today in the UI, editable; NULL for imported rows
 - `comments` TEXT NULL
 - `created_at`, `updated_at`
-- Index on (`user_id`, `status`).
+- Index on (`user_id`, `status`) and on (`user_id`, `master_series`) — the latter backs master-series filtering.
 
-Standard rules apply: own `user_id` for direct RLS, four owner policies using `(select auth.uid()) = user_id`, `CHECK` on the enum columns, `moddatetime` trigger on `updated_at`, explicit `GRANT` to `anon`/`authenticated`. Imported back-catalogue rows leave the three dates NULL (genuinely unknown). The migration is `supabase/migrations/20260617120000_shows_schema.sql`.
+Standard rules apply: own `user_id` for direct RLS, four owner policies using `(select auth.uid()) = user_id`, `CHECK` on the enum columns, `moddatetime` trigger on `updated_at`, explicit `GRANT` to `anon`/`authenticated`. Imported back-catalogue rows leave the three dates NULL (genuinely unknown). The migration is `supabase/migrations/20260617120000_shows_schema.sql` (the Shows DB held no live data, so the documentary/`master_series` additions and the `content_rating` removal were folded into this original migration and the table recreated, rather than shipping an additive migration).
 
 ### book (one row per tracked book)
 

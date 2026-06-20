@@ -7,8 +7,10 @@ describe what the app does. Where this log mentions a past failure, it points to
 now encodes the correct approach.
 
 Net Worth is **feature-complete** (M1–M6) — see "Net Worth (build sequence)" below.
-**Shows** (TV & movies) is **feature-complete (M1–M7)** — see "Shows Build Sequence" below: schema,
-module scaffold, manual CRUD, TMDB metadata, Dashboard, Library filters/sort, Settings, CSV importer.
+**Shows** (TV, movies & documentaries) is **feature-complete (M1–M7 + the M8 enhancement)** — see "Shows
+Build Sequence" below: schema, module scaffold, manual CRUD, TMDB metadata, Dashboard, Library
+filters/sort, Settings, CSV importer, then M8 (documentary type + master series, Chinese-aware TMDB,
+pasted Poster URL, per-show Refresh, prefill).
 **Books** (books read / to read) is **feature-complete (M1–M7)** — see "Books Build Sequence" below:
 schema, module scaffold, manual CRUD, Google Books / Open Library metadata, Dashboard, Library
 filters/sort, Settings, CSV importer. It re-skinned Shows; its `docs/06-books.md` staging spec has been
@@ -34,7 +36,7 @@ its `docs/07-quotes.md` staging spec has been merged into the permanent docs and
   `VITE_SUPABASE_ANON_KEY`, `VITE_USDA_API_KEY`, `VITE_TMDB_API_KEY`, and the optional
   `VITE_GOOGLE_BOOKS_API_KEY` (Books). All build-time `VITE_` vars.
 - **Gates:** husky `.husky/pre-commit` → lint-staged + `typecheck` + `test`; GitHub Actions
-  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 231 Vitest tests (pure helpers).
+  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 242 Vitest tests (pure helpers).
 - **Deploy status:** Deployed. GitHub `main` → Vercel auto-deploy; the production URL is in the
   Supabase redirect URLs + Google JS origins (see `OWNER-RUNBOOK.md`). Installed + tested on iPhone (PWA).
 - Conventions (DB-access-via-`src/data`, metric storage, generated `database.ts` contract, etc.) live
@@ -535,6 +537,40 @@ type)` once → `dedupKey → id` map → update-or-insert (collapsing in-file d
   `saveImportedShows` + `bumpShows` → done ("N — C new, U updated"). Launcher added to `ShowsSettings`
   (shown when `show_importer_enabled`); route `/shows/import` opens over `/shows/settings`.
 - **Shows is now feature-complete (M1–M7).**
+
+### M8 — Chinese documentaries enhancement (`06-shows-enhancement.md`, then deleted)
+
+Goal: track Chinese-language content — esp. Chinese documentaries / CCTV series TMDB often lacks or only
+carries under Chinese titles. Four owner decisions taken before building (see `06-shows-enhancement.md`'s
+ambiguities): **(1)** edit the original `20260617120000_shows_schema.sql` + recreate the table (the DB
+held no live data) rather than ship an additive migration; **(2)** **remove** the dormant `content_rating`
+column outright (it was fetched/displayed nowhere); **(3)** Library handles `master_series` with a
+**filter only** (no grouped headers); **(4)** documentary uses the **`/tv`** endpoint by default.
+
+- **Schema** (recreated `show`): `type` CHECK gains `documentary`; **add** `master_series text` + index
+  `(user_id, master_series)`; **drop** `content_rating`. `poster_path` now documents a dual meaning (TMDB
+  path **or** a full pasted URL). `database.ts` regenerated (master_series in, content_rating out).
+- **Pure logic** (`src/lib/shows.ts`, +tests → **242** total): `SHOW_TYPES` += documentary;
+  `usesEpisodes(type)` (TV + documentary share the episode UI + watched-count logic — `markWatched`,
+  Entry, importer all switch off it); `posterUrl` returns an absolute pasted URL as-is (`isAbsoluteUrl`)
+  and only CDN-prefixes a TMDB path; `buildRefreshPatch(show, meta)` — the per-show Refresh merge:
+  patches only the TMDB-sourced fields, **preserves owner fields + a manual (absolute-URL) poster**, and
+  reports `changed` for "no changes"; `masterSeriesOptions` + a `masterSeries` `LibraryCriteria` filter.
+  **Refresh deliberately excludes `year`/`imdb_id`** (per the spec's explicit field list).
+- **TMDB Chinese-aware** (`src/lib/tmdb-api.ts`): `containsCjk`/`tmdbLanguage` send `language=zh-CN` for
+  CJK queries/titles; `endpointFor` maps documentary→/tv; `getTitleDetails` takes an optional `language`;
+  `refreshFromTmdb(show)` re-pulls a `tmdb_id` title (Chinese-aware) → `ShowMetadata` for the pure merge.
+- **Posters:** `referrerpolicy="no-referrer"` added once on the shared `Thumb` (covers PosterThumb +
+  CoverThumb) plus the Entry detail `<img>`, so hotlink-protected CDNs (a pasted Douban poster) serve.
+- **UI:** `ShowTypeBadge` third glyph `IconVideo`; Entry gains a documentary-only **Master Series** field,
+  an always-editable **Poster URL** field, a **⟳ Refresh** button (enabled once `tmdb_id` is set), and
+  `?title=&poster=&overview=&master_series=&type=` **prefill** (mirrors `QuotesEntry`); Library + Dashboard
+  - importer render a master-series eyebrow; Library type filter gains **Docs** + a **master-series filter**.
+- **Importer:** column `master_series` added, `documentary` accepted, **`dedupKey(title, masterSeries)`**
+  (type-agnostic; `saveImportedShows` + the existing-row fetch updated to match); a no-match documentary
+  imports metadata-less. Template + guide updated (incl. two Chinese documentary example rows).
+- The transient `docs/06-shows-enhancement.md` staging doc was deleted (all sections merged into the
+  spec docs / templates / runbook). **Shows feature-complete (M1–M7 + M8).**
 
 ## Books Build Sequence (per milestone)
 

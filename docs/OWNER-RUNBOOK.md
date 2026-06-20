@@ -542,6 +542,22 @@ truncate public.show cascade;
 update public.profile set show_visible_fields = null, show_importer_enabled = false;
 ```
 
+> **One-time Shows schema update (the documentaries enhancement).** That enhancement added the
+> `documentary` type + a `master_series` column and **removed** the unused `content_rating` column by
+> **editing the original** `…_shows_schema.sql` (the Shows table had no live data) rather than shipping a
+> new migration. Editing an already-applied migration means `supabase db push` won't re-run it, so apply
+> the new shape by **recreating the `show` table** once: either run a full **M1 reset**
+> (`supabase db reset --linked`, which re-runs every migration from scratch — wipes all modules), or, to
+> touch only Shows, drop and re-create just that table from the edited migration:
+>
+> ```sql
+> drop table if exists public.show cascade;
+> ```
+>
+> then re-run the `show` portion of `supabase/migrations/20260617120000_shows_schema.sql` in the SQL
+> Editor (table + indexes + RLS policies + grants + trigger). Afterwards run **Part G** again
+> (`npm run gen:types`) so `src/types/database.ts` matches (gains `master_series`, loses `content_rating`).
+
 **Books** — wipes every tracked book:
 
 ```sql
@@ -571,6 +587,33 @@ update public.profile set quote_visible_fields = null, quote_importer_enabled = 
 > `show` / `book` / `quote` — and the child rows (`serving`, `strength_set`, `asset_entry`) cascade
 > automatically.
 > Your user id is in **Supabase → Authentication → Users**.
+
+---
+
+## Part N — Logging a new show (the Shows workflow)
+
+The Shows module covers TV, movies, and **documentaries** (incl. Chinese titles and Chinese
+documentaries / CCTV series). To add one (**Shows → New Show**):
+
+1. **Search TMDB** in the Add Show form — works for any title; a **Chinese (CJK) query returns Chinese
+   titles**. For a documentary, set Type → **Documentary** first (it searches TMDB's TV catalogue) and,
+   if it belongs to a parent series, fill **Master Series** (e.g. `国宝档案`).
+2. **Found → select** → metadata + poster auto-fill → set status / rating / etc. → **Save**. Done.
+3. **Not found** (common for niche documentaries), choose one:
+   - **(Preferred, durable) Contribute to TMDB:** create the entry at themoviedb.org (title, episode
+     count, upload a poster). It may take from minutes to a day or two to clear moderation. Either log the
+     show now poster-less and **Refresh from TMDB** once it appears, or wait and then Search TMDB.
+   - **(Immediate) Manual entry + paste a Poster URL:** type title / master series / status / rating, then
+     on Douban or the streaming page **Copy Image Address** and paste it into the **Poster URL** field.
+     Saves instantly; rendered via `no-referrer`. (Prefer a streaming-site `og:image` or TMDB URL over a
+     Baidu/Douban _search_ URL — those can expire.)
+4. **⟳ Refresh from TMDB** (the button beside Search; enabled once a `tmdb_id` exists): use it when your
+   contributed entry clears moderation, or when a show adds seasons/episodes. It updates TMDB-sourced
+   fields only and **never** overwrites your status, rating, dates, comments, master series, or a manually
+   pasted poster. (Bulk "refresh everything" is intentionally not built — see `PARKED.md`.)
+
+**Bulk import:** to seed a back-catalogue, enable **Shows Settings → Enable CSV import** and use one CSV
+spanning English + Chinese across all three types — see `templates/shows-import-guide.md`.
 
 ---
 

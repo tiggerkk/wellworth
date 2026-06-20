@@ -544,7 +544,6 @@ export type Database = {
         Row: {
           cast: string[] | null
           comments: string | null
-          content_rating: string | null
           created_at: string
           director: string | null
           end_date: string | null
@@ -553,6 +552,7 @@ export type Database = {
           imdb_id: string | null
           last_update_date: string | null
           lgbtq_rep: string
+          master_series: string | null
           original_language: string | null
           original_title: string | null
           overview: string | null
@@ -575,7 +575,6 @@ export type Database = {
         Insert: {
           cast?: string[] | null
           comments?: string | null
-          content_rating?: string | null
           created_at?: string
           director?: string | null
           end_date?: string | null
@@ -584,6 +583,7 @@ export type Database = {
           imdb_id?: string | null
           last_update_date?: string | null
           lgbtq_rep?: string
+          master_series?: string | null
           original_language?: string | null
           original_title?: string | null
           overview?: string | null
@@ -606,7 +606,6 @@ export type Database = {
         Update: {
           cast?: string[] | null
           comments?: string | null
-          content_rating?: string | null
           created_at?: string
           director?: string | null
           end_date?: string | null
@@ -615,6 +614,7 @@ export type Database = {
           imdb_id?: string | null
           last_update_date?: string | null
           lgbtq_rep?: string
+          master_series?: string | null
           original_language?: string | null
           original_title?: string | null
           overview?: string | null

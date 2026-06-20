@@ -5,6 +5,7 @@
  */
 import type { Tables, TablesInsert, TablesUpdate } from '../types/database'
 import type { IsoDate } from './date'
+import type { ShowMetadata } from './tmdb-api'
 
 export type ShowRow = Tables<'show'>
 export type ShowInsert = TablesInsert<'show'>
@@ -12,11 +13,17 @@ export type ShowUpdate = TablesUpdate<'show'>
 
 // The CHECK-constrained enums come through the generated types as plain `string`; these
 // unions + label maps are the front-end's narrowed view.
-export const SHOW_TYPES = ['tv', 'movie'] as const
+export const SHOW_TYPES = ['tv', 'movie', 'documentary'] as const
 export type ShowType = (typeof SHOW_TYPES)[number]
 export const SHOW_TYPE_LABELS: Record<ShowType, string> = {
   tv: 'TV Show',
   movie: 'Movie',
+  documentary: 'Documentary',
+}
+
+/** Episodic types carry the season/episode UI + watched counts; a movie is a single title. */
+export function usesEpisodes(type: string): boolean {
+  return type === 'tv' || type === 'documentary'
 }
 
 export const SHOW_STATUSES = ['want', 'watching', 'watched', 'dropped'] as const
@@ -45,12 +52,21 @@ export const SHOW_STATUS_CHIP: Record<ShowStatus, string> = {
   dropped: 'bg-track text-text-secondary',
 }
 
-// --- TMDB poster URLs (only `poster_path` is stored; URLs built from the fixed CDN base) ---
+// --- Poster URLs. `poster_path` holds EITHER a TMDB path OR a full pasted image URL. ---
 export const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p'
 
-/** Build a poster URL for a size (e.g. `w92` list, `w342` detail); null when no poster. */
+/** True for a full `http(s)://` URL — a manually pasted poster, not a TMDB path. */
+export function isAbsoluteUrl(path: string | null | undefined): boolean {
+  return !!path && /^https?:\/\//i.test(path)
+}
+
+/**
+ * Build a poster URL for a size (e.g. `w92` list, `w342` detail); null when no poster. An
+ * absolute pasted URL is returned as-is (size ignored); a TMDB path gets the fixed CDN base.
+ */
 export function posterUrl(path: string | null | undefined, size: string): string | null {
-  return path ? `${TMDB_IMAGE_BASE}/${size}${path}` : null
+  if (!path) return null
+  return isAbsoluteUrl(path) ? path : `${TMDB_IMAGE_BASE}/${size}${path}`
 }
 
 // --- Status transitions (pure: take `today` so they're deterministic in tests) ---
@@ -60,18 +76,74 @@ export function startWatching(today: IsoDate): Pick<ShowUpdate, 'status' | 'star
   return { status: 'watching', start_date: today }
 }
 
-/** "Mark Watched": status → watched, finish date → today, and (TV) watched counts → totals. */
+/** "Mark Watched": status → watched, finish date → today, and (episodic) watched counts → totals. */
 export function markWatched(
   show: Pick<ShowRow, 'type' | 'total_seasons' | 'total_episodes'>,
   today: IsoDate,
 ): Pick<ShowUpdate, 'status' | 'end_date' | 'watched_seasons' | 'watched_episodes'> {
-  const tv = show.type === 'tv'
+  const episodic = usesEpisodes(show.type)
   return {
     status: 'watched',
     end_date: today,
-    watched_seasons: tv ? show.total_seasons : null,
-    watched_episodes: tv ? show.total_episodes : null,
+    watched_seasons: episodic ? show.total_seasons : null,
+    watched_episodes: episodic ? show.total_episodes : null,
   }
+}
+
+// --- Per-show "Refresh from TMDB": re-pull metadata, never touch owner fields ---
+
+/** The TMDB-sourced columns Refresh may update (owner fields — status/rating/dates/etc — excluded). */
+const REFRESH_FIELDS = [
+  'title',
+  'original_title',
+  'overview',
+  'genres',
+  'director',
+  'cast',
+  'total_seasons',
+  'total_episodes',
+  'runtime_min',
+  'original_language',
+] as const
+
+const sameArray = (a: string[] | null, b: string[] | null): boolean =>
+  (a ?? null) === (b ?? null) ||
+  (!!a && !!b && a.length === b.length && a.every((v, i) => v === b[i]))
+
+/**
+ * Build the patch for a per-show Refresh: only the TMDB-sourced fields above, plus the poster.
+ * Never `year`/`imdb_id` (per spec) and never owner fields (status, rating, lgbtq_rep, dates,
+ * comments, watched counts, master_series). A **manually pasted** poster (an absolute URL) is
+ * preserved; otherwise the TMDB poster is applied. `changed` is false when nothing differs, so
+ * the caller can skip the write and report "no changes" (idempotent + non-destructive).
+ */
+export function buildRefreshPatch(
+  show: Pick<ShowRow, (typeof REFRESH_FIELDS)[number] | 'poster_path'>,
+  meta: ShowMetadata,
+): { patch: ShowUpdate; changed: boolean } {
+  const patch: ShowUpdate = {
+    title: meta.title,
+    original_title: meta.original_title,
+    overview: meta.overview,
+    genres: meta.genres,
+    director: meta.director,
+    cast: meta.cast,
+    total_seasons: meta.total_seasons,
+    total_episodes: meta.total_episodes,
+    runtime_min: meta.runtime_min,
+    original_language: meta.original_language,
+  }
+  // Preserve a manually pasted poster; otherwise adopt the TMDB poster.
+  if (!isAbsoluteUrl(show.poster_path)) patch.poster_path = meta.poster_path
+
+  const changed =
+    REFRESH_FIELDS.some((k) =>
+      k === 'genres' || k === 'cast'
+        ? !sameArray(show[k], patch[k] as string[] | null)
+        : show[k] !== patch[k],
+    ) ||
+    (patch.poster_path !== undefined && patch.poster_path !== show.poster_path)
+  return { patch, changed }
 }
 
 /** "S{watched_seasons} · {watched_episodes}/{total_episodes}" — the TV progress label. */
@@ -133,6 +205,16 @@ export function showGenres(shows: Pick<ShowRow, 'genres'>[]): string[] {
   return [...set].sort((a, b) => a.localeCompare(b))
 }
 
+/** Sorted unique non-empty `master_series` values (drives the Library Master-Series filter). */
+export function masterSeriesOptions(shows: Pick<ShowRow, 'master_series'>[]): string[] {
+  const set = new Set<string>()
+  for (const s of shows) {
+    const m = s.master_series?.trim()
+    if (m) set.add(m)
+  }
+  return [...set].sort((a, b) => a.localeCompare(b))
+}
+
 /** Lowercased text the Library search matches: title + original title + director + cast. */
 export function searchableText(
   show: Pick<ShowRow, 'title' | 'original_title' | 'director' | 'cast'>,
@@ -149,6 +231,7 @@ export type SortDir = 'asc' | 'desc'
 export interface LibraryCriteria {
   query: string
   type: 'all' | ShowType
+  masterSeries: 'all' | string
   genre: 'all' | string
   minRating: number // 0 = any
   lgbtq: 'all' | LgbtqRep
@@ -164,6 +247,7 @@ export interface LibraryCriteria {
 export const DEFAULT_LIBRARY_CRITERIA: LibraryCriteria = {
   query: '',
   type: 'all',
+  masterSeries: 'all',
   genre: 'all',
   minRating: 0,
   lgbtq: 'all',
@@ -180,6 +264,8 @@ function matchesCriteria(show: ShowRow, c: LibraryCriteria): boolean {
   const q = c.query.trim().toLowerCase()
   if (q && !searchableText(show).includes(q)) return false
   if (c.type !== 'all' && show.type !== c.type) return false
+  if (c.masterSeries !== 'all' && (show.master_series ?? '') !== c.masterSeries)
+    return false
   if (c.status !== 'all' && show.status !== c.status) return false
   if (c.lgbtq !== 'all' && (show.lgbtq_rep ?? 'none') !== c.lgbtq) return false
   if (c.genre !== 'all' && !(show.genres ?? []).includes(c.genre)) return false

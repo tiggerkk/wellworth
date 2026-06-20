@@ -53,19 +53,28 @@ append a `ModuleDef` to `src/constants/modules.ts` + its routes.
   `src/lib/networth-import.ts`; windows `src/constants/networth-ranges.ts`; lazy chart
   `src/components/NetWorthTrendChart.tsx`; screens `NetWorthDashboard` / `NetWorthEntry` /
   `ImportNetWorthSheet`.
-- **Shows (built):** one table `show` (migration `supabase/migrations/20260617120000_shows_schema.sql`)
-  plus two `profile` columns `show_visible_fields` / `show_importer_enabled`
+- **Shows (built):** TV, movies & **documentaries**. One table `show` (migration
+  `supabase/migrations/20260617120000_shows_schema.sql` — `type` ∈ `tv|movie|documentary`, a
+  `master_series` text col for documentary sub-series + a `(user_id, master_series)` index, **no**
+  `content_rating`; `poster_path` holds **either** a TMDB path **or** a full pasted image URL) plus two
+  `profile` columns `show_visible_fields` / `show_importer_enabled`
   (`20260617130000_profile_show_settings.sql`). Data `src/data/show.ts` (CRUD + idempotent
-  `saveImportedShows`). Pure logic `src/lib/shows.ts` (status/type/LGBT+ enums, status-chip palette,
-  `posterUrl`, transitions `markWatched`/`startWatching`, selectors `applyLibraryView`/`recentlyWatched`,
-  `SHOW_ENTRY_FIELDS`/`isFieldVisible`); refresh tick `src/lib/shows-refresh.ts`. **TMDB** browser
-  client `src/lib/tmdb-api.ts` (`VITE_TMDB_API_KEY`, search + details on demand; persist only on
-  CREATE/SAVE); CSV importer `src/lib/shows-import.ts`. Components `StarRating` / `ShowTypeBadge`
-  / `StatusChip` / `PosterThumb` / `SelectMenu` / `TitleSearchSheet` (local overlay — **not** a route
-  sheet, so the Entry form survives). Screens `ShowsDashboard` / `ShowsLibrary` / `ShowsEntry` /
-  `ShowsSettings` / `ShowsFieldsSheet` / `ImportShowsSheet`. **Calendar** was generalized to a
-  presentational component with an optional `loadCues` (Wellness Diary injects food/activity dots;
-  Shows date pickers pass none).
+  `saveImportedShows`, dedup on lower(title)+lower(master_series)). Pure logic `src/lib/shows.ts`
+  (status/type/LGBT+ enums, `usesEpisodes` (TV + documentary), status-chip palette, `posterUrl` +
+  `isAbsoluteUrl` (pasted URL passthrough), `buildRefreshPatch` (per-show Refresh merge — TMDB fields
+  only, preserves owner fields + a manual poster), transitions `markWatched`/`startWatching`, selectors
+  `applyLibraryView` (incl. `masterSeries` filter)/`recentlyWatched`/`masterSeriesOptions`,
+  `SHOW_ENTRY_FIELDS`/`isFieldVisible`); refresh tick `src/lib/shows-refresh.ts`. **TMDB** browser client
+  `src/lib/tmdb-api.ts` (`VITE_TMDB_API_KEY`; **Chinese-aware** — `containsCjk`/`tmdbLanguage` send
+  `language=zh-CN`; documentary → `/tv` via `endpointFor`; search + details on demand; `refreshFromTmdb`;
+  persist only on CREATE/SAVE); CSV importer `src/lib/shows-import.ts`. Posters render with
+  `referrerpolicy="no-referrer"` (set on the shared `Thumb`). Components `StarRating` / `ShowTypeBadge`
+  (TV/Movie/Documentary glyphs) / `StatusChip` / `PosterThumb` / `SelectMenu` / `TitleSearchSheet` (local
+  overlay — **not** a route sheet, so the Entry form survives). Screens `ShowsDashboard` / `ShowsLibrary`
+  / `ShowsEntry` (three-way Type, documentary Master Series field, always-editable Poster URL, ⟳ Refresh,
+  `?title=&poster=&overview=&master_series=&type=` prefill) / `ShowsSettings` / `ShowsFieldsSheet` /
+  `ImportShowsSheet`. **Calendar** was generalized to a presentational component with an optional
+  `loadCues` (Wellness Diary injects food/activity dots; Shows date pickers pass none).
 - **Books (built):** one table `book` (migration `supabase/migrations/20260620120000_books_schema.sql`)
   plus two `profile` columns `book_visible_fields` / `book_importer_enabled`
   (`20260620130000_profile_book_settings.sql`). Data `src/data/book.ts` (CRUD + idempotent

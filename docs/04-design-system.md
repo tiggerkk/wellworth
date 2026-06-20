@@ -68,8 +68,14 @@ _not_ the primary-button color; it's for emphasis, active states, and energy.
   loader (Wellness Diary draws food/activity dots; Shows date pickers pass none).
 - **StarRating** — 0–5 **half-star** rating; display (no `onChange`) or input (two half-width
   hit-zones per star; tap the current value to clear). Reused on Shows + Books Entry + Library rows.
-- **ShowTypeBadge** — small chip with a TV (`IconDeviceTv`) or movie (`IconMovie`) icon, on every
-  Shows row/poster. (Books have no type badge — all books are one kind.)
+- **ShowTypeBadge** — small chip with a TV (`IconDeviceTv`), movie (`IconMovie`), or documentary
+  (`IconVideo`) icon, on every Shows row/poster. The Entry **Type** control is a three-segment
+  `SegmentedTabs` (TV Show / Movie / Documentary). (Books have no type badge — all books are one kind.)
+- **Master-series eyebrow** — when `master_series` is set (documentary sub-series), a small uppercased
+  `text-tertiary` label is rendered above the title on Library / Dashboard / importer rows and the Entry
+  form (e.g. "国宝档案" over "从东晋到北魏").
+- **Refresh from TMDB** — a small `⟳` (`IconRefresh`) action beside Search TMDB on the Shows Entry form,
+  greyed/disabled until a `tmdb_id` exists; spins while fetching and reports "Updated" / "Already up to date".
 - **StatusChip** — a **presentational** status pill taking a `label` + palette `className`, so Shows,
   Books, and Quotes share one chip. Shows/Books use the per-status palette tokens: neutral (`input`) /
   coral (`accent`, active) / teal (`positive`) / grey (`track`) — Shows = Want/Watching/Watched/Dropped,
@@ -77,10 +83,12 @@ _not_ the primary-button color; it's for emphasis, active states, and energy.
   (a single neutral palette; a fixed colour per category is an optional, deferred nicety) and the
   importer/linker type pills.
 - **Thumb** — the shared presentational 2:3 rounded image-or-placeholder (`src/components/Thumb.tsx`,
-  `url` + `className`; a neutral `bg-input` tile when `url` is null). **PosterThumb** (Shows) wraps it,
-  resolving the TMDB `posterUrl` (`w92` list / `w185` detail); **CoverThumb** (Books) wraps it with the
-  full `cover_url` (Google Books / Open Library — no CDN base). Used by search sheets, Dashboard rows,
-  and Library rows in both modules.
+  `url` + `className`; a neutral `bg-input` tile when `url` is null). Its `<img>` sets
+  `referrerpolicy="no-referrer"` so hotlink-protected CDNs (a pasted Douban/streaming poster) still serve.
+  **PosterThumb** (Shows) wraps it, resolving `posterUrl` (`w92` list / `w185` detail) — which now passes
+  a full pasted image URL through as-is and only prefixes the CDN base for a TMDB path; **CoverThumb**
+  (Books) wraps it with the full `cover_url` (Google Books / Open Library — no CDN base). Used by search
+  sheets, Dashboard rows, and Library rows in both modules.
 - **TitleSearchSheet** / **BookSearchSheet** / **QuoteSourceLinkSheet** — title/source search, a
   **local** full-screen overlay inside Entry (not the routing `Sheet`, which would remount Entry and
   lose the draft): search bar + thumb result rows; selecting a row populates the live form. Shows scopes

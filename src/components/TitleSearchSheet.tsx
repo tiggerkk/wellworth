@@ -84,7 +84,7 @@ export function TitleSearchSheet({ type, onSelect, onClose }: TitleSearchSheetPr
             <SearchBar
               value={query}
               onChange={setQuery}
-              placeholder={`Search ${typeLabel}s`}
+              placeholder={`Search ${typeLabel} titles`}
             />
           </div>
         </div>

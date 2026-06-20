@@ -1,19 +1,24 @@
 import { describe, expect, it } from 'vitest'
 import {
   applyLibraryView,
+  buildRefreshPatch,
   countWatchedThisYear,
   DEFAULT_LIBRARY_CRITERIA,
+  isAbsoluteUrl,
   isFieldVisible,
   isUpNext,
   markWatched,
+  masterSeriesOptions,
   posterUrl,
   progressLabel,
   recentlyWatched,
   showGenres,
   startWatching,
+  usesEpisodes,
   type LibraryCriteria,
   type ShowRow,
 } from './shows'
+import type { ShowMetadata } from './tmdb-api'
 
 function makeShow(p: Partial<ShowRow>): ShowRow {
   return {
@@ -24,6 +29,7 @@ function makeShow(p: Partial<ShowRow>): ShowRow {
     tmdb_id: null,
     imdb_id: null,
     title: 'Untitled',
+    master_series: null,
     original_title: null,
     year: null,
     poster_path: null,
@@ -32,7 +38,6 @@ function makeShow(p: Partial<ShowRow>): ShowRow {
     director: null,
     cast: null,
     runtime_min: null,
-    content_rating: null,
     original_language: null,
     total_seasons: null,
     total_episodes: null,
@@ -56,12 +61,35 @@ const crit = (p: Partial<LibraryCriteria>): LibraryCriteria => ({
 })
 
 describe('posterUrl', () => {
-  it('builds a CDN url for a size + path', () => {
+  it('builds a CDN url for a size + TMDB path', () => {
     expect(posterUrl('/abc.jpg', 'w92')).toBe('https://image.tmdb.org/t/p/w92/abc.jpg')
+  })
+  it('returns an absolute pasted URL as-is (size ignored)', () => {
+    const url = 'https://img.example.com/poster.jpg'
+    expect(posterUrl(url, 'w92')).toBe(url)
+    expect(posterUrl('http://x.test/p.png', 'w342')).toBe('http://x.test/p.png')
   })
   it('returns null when there is no poster', () => {
     expect(posterUrl(null, 'w92')).toBeNull()
     expect(posterUrl(undefined, 'w342')).toBeNull()
+  })
+})
+
+describe('isAbsoluteUrl', () => {
+  it('detects http(s) URLs but not TMDB paths or blanks', () => {
+    expect(isAbsoluteUrl('https://x.test/p.jpg')).toBe(true)
+    expect(isAbsoluteUrl('http://x.test/p.jpg')).toBe(true)
+    expect(isAbsoluteUrl('/abc.jpg')).toBe(false)
+    expect(isAbsoluteUrl(null)).toBe(false)
+    expect(isAbsoluteUrl('')).toBe(false)
+  })
+})
+
+describe('usesEpisodes', () => {
+  it('is true for tv and documentary, false for movie', () => {
+    expect(usesEpisodes('tv')).toBe(true)
+    expect(usesEpisodes('documentary')).toBe(true)
+    expect(usesEpisodes('movie')).toBe(false)
   })
 })
 
@@ -96,6 +124,19 @@ describe('markWatched', () => {
       end_date: '2026-06-17',
       watched_seasons: null,
       watched_episodes: null,
+    })
+  })
+  it('snaps watched counts to totals for a documentary (episodic)', () => {
+    expect(
+      markWatched(
+        { type: 'documentary', total_seasons: 1, total_episodes: 12 },
+        '2026-06-17',
+      ),
+    ).toEqual({
+      status: 'watched',
+      end_date: '2026-06-17',
+      watched_seasons: 1,
+      watched_episodes: 12,
     })
   })
 })
@@ -198,6 +239,89 @@ describe('showGenres', () => {
   })
 })
 
+describe('masterSeriesOptions', () => {
+  it('returns unique non-empty master series', () => {
+    const opts = masterSeriesOptions([
+      makeShow({ master_series: '国宝档案' }),
+      makeShow({ master_series: '消失的古国' }),
+      makeShow({ master_series: '国宝档案' }),
+      makeShow({ master_series: null }),
+      makeShow({ master_series: '  ' }),
+    ])
+    expect(opts).toHaveLength(2)
+    expect(opts).toContain('国宝档案')
+    expect(opts).toContain('消失的古国')
+  })
+})
+
+describe('buildRefreshPatch', () => {
+  const meta: ShowMetadata = {
+    title: 'New Title',
+    original_title: '新标题',
+    year: 2020,
+    poster_path: '/new.jpg',
+    overview: 'fresh overview',
+    genres: ['Documentary'],
+    director: 'Dir',
+    cast: ['A', 'B'],
+    runtime_min: 45,
+    original_language: 'zh',
+    total_seasons: 2,
+    total_episodes: 20,
+    tmdb_id: 99,
+    imdb_id: 'tt999',
+  }
+  const current = {
+    title: 'Old',
+    original_title: null,
+    overview: 'old',
+    genres: ['Old'],
+    director: 'OldDir',
+    cast: ['X'],
+    total_seasons: 1,
+    total_episodes: 10,
+    runtime_min: 30,
+    original_language: 'en',
+    poster_path: '/old.jpg',
+  }
+
+  it('patches only TMDB fields — never year or imdb_id', () => {
+    const { patch, changed } = buildRefreshPatch(current, meta)
+    expect(changed).toBe(true)
+    expect(patch.title).toBe('New Title')
+    expect(patch.original_title).toBe('新标题')
+    expect(patch.poster_path).toBe('/new.jpg') // current was a TMDB path → adopt TMDB poster
+    expect(patch).not.toHaveProperty('year')
+    expect(patch).not.toHaveProperty('imdb_id')
+    expect(patch).not.toHaveProperty('status')
+  })
+
+  it('preserves a manually pasted (absolute URL) poster', () => {
+    const { patch } = buildRefreshPatch(
+      { ...current, poster_path: 'https://manual.test/p.jpg' },
+      meta,
+    )
+    expect(patch.poster_path).toBeUndefined()
+  })
+
+  it('reports no change when everything already matches', () => {
+    const same = {
+      title: meta.title,
+      original_title: meta.original_title,
+      overview: meta.overview,
+      genres: meta.genres,
+      director: meta.director,
+      cast: meta.cast,
+      total_seasons: meta.total_seasons,
+      total_episodes: meta.total_episodes,
+      runtime_min: meta.runtime_min,
+      original_language: meta.original_language,
+      poster_path: meta.poster_path,
+    }
+    expect(buildRefreshPatch(same, meta).changed).toBe(false)
+  })
+})
+
 describe('applyLibraryView', () => {
   const matrix = makeShow({
     title: 'The Matrix',
@@ -236,6 +360,21 @@ describe('applyLibraryView', () => {
   it('filters by type and status', () => {
     expect(applyLibraryView(all, crit({ type: 'tv' }))).toEqual([bb])
     expect(applyLibraryView(all, crit({ status: 'want' }))).toEqual([heat])
+  })
+  it('filters by documentary type and by master series', () => {
+    const doc1 = makeShow({
+      title: '从东晋到北魏',
+      type: 'documentary',
+      master_series: '国宝档案',
+    })
+    const doc2 = makeShow({
+      title: '消失的楼兰',
+      type: 'documentary',
+      master_series: '消失的古国',
+    })
+    const set = [doc1, doc2, matrix]
+    expect(applyLibraryView(set, crit({ type: 'documentary' }))).toHaveLength(2)
+    expect(applyLibraryView(set, crit({ masterSeries: '国宝档案' }))).toEqual([doc1])
   })
   it('filters by genre and minimum rating', () => {
     expect(applyLibraryView(all, crit({ genre: 'Drama' }))).toEqual([bb])

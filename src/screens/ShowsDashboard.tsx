@@ -103,6 +103,7 @@ export function ShowsDashboard() {
             { value: 'all', label: 'All' },
             { value: 'tv', label: 'TV' },
             { value: 'movie', label: 'Movies' },
+            { value: 'documentary', label: 'Docs' },
           ]}
         />
       </header>
@@ -229,6 +230,11 @@ function DashRow({
     <div className="flex items-center gap-3 border-b border-border px-3 py-2.5 last:border-b-0">
       <PosterThumb path={show.poster_path} size="w92" className="h-14 w-10" />
       <button onClick={onEdit} className="min-w-0 flex-1 text-left">
+        {show.master_series && (
+          <span className="block truncate text-[11px] uppercase tracking-wide text-text-tertiary">
+            {show.master_series}
+          </span>
+        )}
         <span className="block truncate text-[15px] text-text-primary">
           {show.title}
           {show.year ? ` (${show.year})` : ''}

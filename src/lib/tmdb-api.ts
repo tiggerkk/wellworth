@@ -1,4 +1,4 @@
-import type { ShowType } from './shows'
+import type { ShowRow, ShowType } from './shows'
 
 /**
  * TMDB (The Movie Database) client + pure field mapping. Called directly from the browser with
@@ -6,9 +6,28 @@ import type { ShowType } from './shows'
  * on-demand only: search → details on select. Only the pure mappers below are unit-tested
  * (matching food-api / off-api / fx); the network calls are not. Nothing is persisted here —
  * the Entry form writes mapped fields into a `show` row only on CREATE/SAVE.
+ *
+ * Chinese-aware: a query/title containing CJK is sent with `language=zh-CN` so results and stored
+ * metadata use the Chinese title. `documentary` shares the `/tv` endpoint (most are multi-episode
+ * series); the endpoint ternary below treats every non-movie type as `tv`.
  */
 
 const TMDB_BASE = 'https://api.themoviedb.org/3'
+
+/** True when the text contains a CJK character (same ranges as quotes' detectLanguage). */
+export function containsCjk(text: string): boolean {
+  return /[㐀-鿿豈-﫿]/.test(text)
+}
+
+/** TMDB `language` for a piece of text: `zh-CN` for CJK, else undefined (TMDB default). */
+export function tmdbLanguage(text: string): string | undefined {
+  return containsCjk(text) ? 'zh-CN' : undefined
+}
+
+/** TMDB endpoint segment for a Show type — movie → `movie`, tv/documentary → `tv`. */
+function endpointFor(type: ShowType): 'movie' | 'tv' {
+  return type === 'movie' ? 'movie' : 'tv'
+}
 
 /** A lightweight search hit, scoped to the searched Type. */
 export interface TmdbSearchResult {
@@ -205,39 +224,59 @@ function apiKey(): string {
   return key
 }
 
-/** Search TMDB for the given Type → lightweight results (title, year, poster). */
+/** Search TMDB for the given Type → lightweight results (title, year, poster). CJK ⇒ zh-CN. */
 export async function searchTitles(
   type: ShowType,
   query: string,
 ): Promise<TmdbSearchResult[]> {
   const q = query.trim()
   if (!q) return []
-  const endpoint = type === 'movie' ? 'movie' : 'tv'
   const params = new URLSearchParams({
     api_key: apiKey(),
     query: q,
     include_adult: 'false',
   })
-  const res = await fetch(`${TMDB_BASE}/search/${endpoint}?${params.toString()}`)
+  const lang = tmdbLanguage(q)
+  if (lang) params.set('language', lang)
+  const res = await fetch(`${TMDB_BASE}/search/${endpointFor(type)}?${params.toString()}`)
   if (!res.ok) throw new Error(`TMDB search failed (${res.status})`)
   const json = (await res.json()) as { results?: unknown[] }
   return mapSearchResults(type, json)
 }
 
-/** Fetch full details for a selected title and map them into our `show` columns. */
+/**
+ * Fetch full details for a selected title and map them into our `show` columns. `language`
+ * (e.g. `zh-CN`) is forwarded when given so Chinese titles/overviews come back in Chinese.
+ */
 export async function getTitleDetails(
   type: ShowType,
   tmdbId: number,
+  language?: string,
 ): Promise<ShowMetadata> {
-  const endpoint = type === 'movie' ? 'movie' : 'tv'
   const params = new URLSearchParams({
     api_key: apiKey(),
     append_to_response: 'credits,external_ids',
   })
-  const res = await fetch(`${TMDB_BASE}/${endpoint}/${tmdbId}?${params.toString()}`)
+  if (language) params.set('language', language)
+  const res = await fetch(
+    `${TMDB_BASE}/${endpointFor(type)}/${tmdbId}?${params.toString()}`,
+  )
   if (!res.ok) throw new Error(`TMDB details failed (${res.status})`)
   const json = await res.json()
   return type === 'movie'
     ? mapMovieDetails(json as TmdbMovieDetails)
     : mapTvDetails(json as TmdbTvDetails)
+}
+
+/**
+ * Per-show "Refresh from TMDB": re-pull metadata for a title that already has a `tmdb_id`
+ * (Chinese-aware via the stored title/original title). Returns the fresh `ShowMetadata`; the
+ * pure `buildRefreshPatch` (in shows.ts) decides what changes and the data layer persists it.
+ */
+export async function refreshFromTmdb(
+  show: Pick<ShowRow, 'type' | 'tmdb_id' | 'title' | 'original_title'>,
+): Promise<ShowMetadata> {
+  if (show.tmdb_id == null) throw new Error('No TMDB id to refresh from.')
+  const lang = tmdbLanguage(`${show.title} ${show.original_title ?? ''}`)
+  return getTitleDetails(show.type as ShowType, show.tmdb_id, lang)
 }
