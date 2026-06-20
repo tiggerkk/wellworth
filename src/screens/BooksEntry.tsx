@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
-import { useNavigate, useParams } from 'react-router'
-import { IconSearch, IconX } from '@tabler/icons-react'
+import { Link, useNavigate, useParams } from 'react-router'
+import { IconQuote, IconSearch, IconX } from '@tabler/icons-react'
+import { routes } from '../constants/routes'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { createBook, getBook, updateBook } from '../data/book'
@@ -424,6 +425,15 @@ function BookForm({ id, initial }: { id: string | undefined; initial: BookDraft 
               className={`mt-1 ${inputClass} resize-none`}
             />
           </label>
+        )}
+
+        {id && (
+          <Link
+            to={`${routes.quotes.library}?book=${id}`}
+            className="flex items-center justify-center gap-1.5 rounded-input bg-input py-2 text-sm text-accent"
+          >
+            <IconQuote size={16} /> Quotes from this title
+          </Link>
         )}
       </div>
 

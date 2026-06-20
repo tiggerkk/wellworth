@@ -13,6 +13,11 @@ module scaffold, manual CRUD, TMDB metadata, Dashboard, Library filters/sort, Se
 schema, module scaffold, manual CRUD, Google Books / Open Library metadata, Dashboard, Library
 filters/sort, Settings, CSV importer. It re-skinned Shows; its `docs/06-books.md` staging spec has been
 merged into the permanent docs and deleted.
+**Quotes** (favourite quotes from screen/page/sound, English or Chinese) is **feature-complete (M1–M7)**
+— see "Quotes Build Sequence" below: schema + module scaffold, data layer + manual Entry/Edit, the
+cross-module Show/Book linker, the Moment-of-Zen dashboard, the Library filters/facets, Settings + Entry
+field-visibility, and the in-app CSV importer. It re-skinned Books/Shows (adding the shared `TagInput`);
+its `docs/07-quotes.md` staging spec has been merged into the permanent docs and deleted.
 
 ---
 
@@ -29,7 +34,7 @@ merged into the permanent docs and deleted.
   `VITE_SUPABASE_ANON_KEY`, `VITE_USDA_API_KEY`, `VITE_TMDB_API_KEY`, and the optional
   `VITE_GOOGLE_BOOKS_API_KEY` (Books). All build-time `VITE_` vars.
 - **Gates:** husky `.husky/pre-commit` → lint-staged + `typecheck` + `test`; GitHub Actions
-  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 190 Vitest tests (pure helpers).
+  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 231 Vitest tests (pure helpers).
 - **Deploy status:** Deployed. GitHub `main` → Vercel auto-deploy; the production URL is in the
   Supabase redirect URLs + Google JS origins (see `OWNER-RUNBOOK.md`). Installed + tested on iPhone (PWA).
 - Conventions (DB-access-via-`src/data`, metric storage, generated `database.ts` contract, etc.) live
@@ -732,6 +737,239 @@ authors)` once → `dedupKey(title, authors[0])` map → update-or-insert (colla
   query first, then titles that **contain** it, then the rest; within a tier, **year descending**
   (undated last), stable on the upstream Google-relevance order. The importer keeps the raw top hit (its
   query is `"title author"`, so prefix ranking doesn't apply).
+
+## Quotes Build Sequence (per milestone)
+
+The Quotes module (favourite quotes from TV/film/books/podcasts/articles/videos/songs, English or
+Chinese) is specced in `docs/07-quotes.md` (a staging doc whose sections merge into the permanent
+specs as each milestone lands, then it is deleted — same lifecycle as `06-shows.md`/`06-books.md`).
+It drops into the multi-module architecture with no structural change. Structurally it is **Books/Shows
+re-skinned** with three genuinely new pieces landing in later milestones: a cross-module **Show/Book
+linker** (local search — there is **no external metadata API**; "Discover Quotes" external fetch is out
+of scope), a **tags input + tag facet**, and the **Moment-of-Zen** randomiser. **Owner decisions**
+carried as built: (1) Show-link auto-fill leaves **Author empty** (the seed uses the speaker/character
+as `author`); a Book link still fills Author from `book.authors`. (2) Zen refresh is a \*\*shuffle button
+
+- pull-to-refresh** (works on non-touch iPad/desktop). (3) the importer's optional Title→link is
+  **scoped by source type\*\* (tv/movie→Show, book→Book; others→no link).
+
+**CSV parsing — Papa Parse is NOT used; the in-house `src/lib/csv.ts` is** (the same decision Books
+made). The spec docs say "Papa Parse", but `papaparse` is not a dependency: `parseCsv` already handles
+quoted fields, embedded commas, `""` escapes, **multi-line quoted cells**, and the Excel BOM. Verified
+against the real `templates/quotes-seed-local.csv`, which **does** contain an RFC-4180 multi-line quoted
+cell (the Schitt's Creek "Moira/Roland" row spans two physical lines) plus `""` escapes and quoted
+comma-bearing Tags — so a naïve split is wrong, but `csv.ts` parses it correctly.
+
+### M1 — Schema + module registration + scaffold screens
+
+Goal: a runnable, navigable Quotes module behind a hub card, before any data layer.
+
+- **`.gitignore` first** (F7): the owner's `templates/quotes-seed-local.csv` was present, **untracked,
+  and not yet ignored** (a `git add .` would have committed private data). Added the Quotes block
+  (`quotes-import*.csv` + `quotes-seed-local.csv` + `!templates/quotes-import-template.csv`) **before**
+  any staging; verified `git check-ignore` now reports the seed file ignored.
+- **Schema:** `20260621120000_quotes_schema.sql` — one `quote` table (own `user_id` for direct RLS like
+  `book`; CHECKs on `source_type`/`category`/`language`; generated `text_norm = lower(btrim(text))` STORED
+  backing `UNIQUE(user_id, text_norm)` for "no exact duplicates" + import idempotency; indexes
+  `(user_id, category)` + `(user_id, is_favorite)`; FKs `show_id`/`book_id` → show/book **ON DELETE SET
+  NULL** (author/title/source_type are denormalised so a quote survives a linked record's deletion);
+  4 owner policies; `moddatetime`; explicit grants). `quote` is not a SQL reserved word — no quoting
+  needed (unlike Shows' `"cast"`). Owner reviews + `supabase db push`, then `npm run gen:types`.
+- **Module registration (drop-in):** `quotes` namespace in `constants/routes.ts`; a Quotes `ModuleDef`
+  in `constants/modules.ts` (tabs **Zen** + **Library**; `IconQuote`; Zen tab `IconSparkles`); flat
+  routes `/quotes`, `/quotes/library`, `/quotes/entry`, `/quotes/:id` in `router.tsx`; `/quotes*` keys
+  in `AppShell.TAB_FOR_PATH`. `Home` + `moduleForPath` need no change.
+- **Constants:** `src/constants/quotes.ts` — `QUOTE_CATEGORIES`/`QUOTE_SOURCE_TYPES`/`QUOTE_LANGUAGES`
+  - label maps (the source of truth for the CHECK columns the generated types surface as `string`). The
+    runtime helpers (`detectLanguage`, chip palette, selectors) land in M2's `src/lib/quotes.ts`.
+- **Stub screens:** `QuotesZen` / `QuotesLibrary` / `QuotesEntry` — navigable empty states (the random
+  card, list/filters, and the Entry form arrive in M2–M5). Exported from `screens/index`.
+- Verified by `npm run typecheck` + `npm run lint`; the §00-PRD (module list/nav/goals/non-goals) and
+  §03-data-model (`quote` table + relationships) sections of `07-quotes.md` were merged into the
+  permanent specs. No new pure helpers in M1, so the test count is unchanged (**190**).
+
+### M2 — Data layer + pure logic + manual Entry/Edit + basic Library
+
+Goal: a full **manual** CRUD loop (no cross-module linker yet) so the module is usable end-to-end —
+mirrors the Books M2 build.
+
+- **Pure layer** `src/lib/quotes.ts` (+`quotes.test.ts`, +7 tests → **197**): `QuoteRow`/`Insert`/
+  `Update` aliases; `detectLanguage(text)` (any CJK char ⇒ `zh`, else `en`); `quoteSearchText` (text +
+  author + title + tags, lowercased) backing the Library search; `QUOTE_CATEGORY_CHIP` — a **single**
+  neutral chip class used via the presentational `StatusChip`. Per-category colours are optional in the
+  spec and there are only ~4 semantic colour tokens, so they're **deferred** (revisit when the Zen badge
+  is prominent). The enums/labels stay in `constants/quotes.ts` (not redefined here).
+  `src/lib/quotes-refresh.ts` mirrors `books-refresh` (`bumpQuotes`/`useQuotesVersion`).
+- **Data** `src/data/quote.ts`: list/get/create/update + **hard** `deleteQuote`, plus
+  `listDistinctTags(userId)` (selects the `tags` column, flatten + dedupe + sort client-side — quotes
+  are small; no RPC) for the Entry tag autocomplete + M5 facet. `saveImportedQuotes` lands in M7.
+- **New shared component** `src/components/TagInput.tsx`: free-form tag editor — committed tags as
+  removable chips; commits on **Enter or comma**; **Backspace on empty** removes the last; a filtered
+  suggestion dropdown commits on click (keeps focus via `onMouseDown` preventDefault so the click beats
+  blur). Case-insensitive dedupe, trims, drops empties. Built from existing tokens — no new visual.
+- **Screens**: `QuotesEntry` (full route `/quotes/entry` + `/quotes/:id`, not a sheet — outer loader +
+  inner form keyed by id per F8, single `draft`, `JSON.stringify` dirty gate, RESET + CREATE/SAVE).
+  Fields: Quote Text (textarea, required), a header favourite **heart** (`FoodDetailSheet` pattern),
+  Author, Source Type (`SelectMenu`/7), Title, **Category** (`SelectMenu` with a `'Select category…'`
+  placeholder, required), **Tags** (`TagInput`, suggestions from `listDistinctTags`), Language
+  (`SegmentedTabs`). **Language auto-detects from the text but is editable** — a `languageTouched` flag
+  stops retyping from overwriting a user/edit choice (edit-mode loads touched). A new quote prefills from
+  `?text=&author=&title=` (copy-paste / Apple Books Shortcut) and a **Paste from clipboard** button
+  (`navigator.clipboard.readText`, feature-detected). `save()` **catches the `UNIQUE(user_id,
+text_norm)` violation (Postgres `23505`)** → inline "You already have this quote." (the manual-entry
+  counterpart to the importer's `ON CONFLICT DO NOTHING`); never sends the generated `text_norm`.
+  `QuotesLibrary` (search over `quoteSearchText` + `SwipeRow` hard-delete with confirm; rows show a
+  2-line snippet, the category `StatusChip`, and the author; tap → edit). The cross-module linker,
+  field-visibility, and Dashboard/Library selectors are **deferred** (M3 / M6 / M4–M5).
+- Verified by `npm run check` (all gates, **197** tests) + manual click-through (create with required
+  text+category → Library → search → edit → swipe-delete; `?text=…` deep-link prefill; duplicate-text
+  save shows the inline message).
+
+### M3 — Cross-module Show/Book linker
+
+Goal: let the Entry form link a quote to one of the user's existing **Show** or **Book** records,
+binding `show_id`/`book_id` and denormalising title/source_type (+author for books) onto the quote.
+**No external API** — pure search over the user's own rows.
+
+- **Pure layer** `src/lib/quotes.ts` (+`quotes.test.ts`, +4 tests → **201**): a `LinkCandidate` model
+  (`kind`/`id`/`title`/`year`/`thumbUrl`/`sourceType`/`authors`) + `linkSearchText` + pure
+  `filterLinkCandidates(candidates, query)` (title/author substring; empty ⇒ all). The screen maps
+  `ShowRow`/`BookRow` → `LinkCandidate` so `quotes.ts` stays **decoupled** from `shows.ts`/`books.ts`.
+- **`QuoteSourceLinkSheet`** (`src/components/QuoteSourceLinkSheet.tsx`) — a **local** `fixed inset-0`
+  overlay (NOT a route `Sheet`: that remounts Entry and discards the draft — the same lesson as Shows
+  `TitleSearchSheet` / Books `BookSearchSheet`). One `useAsync` does
+  `Promise.all([listShows, listBooks])` and maps to candidates (show thumb via `posterUrl(poster_path,
+'w92')`, book thumb via `cover_url`); a `SearchBar` + `filterLinkCandidates` drive a combined list
+  (shared `Thumb` + title/year + a `TV`/`Movie`/`Book` `StatusChip` + book authors). **No debounce/abort**
+  — the data is already local. Returns the pick via `onSelect`.
+- **`QuotesEntry`**: a **Source link** block above Source Type — `Link a Show or Book` opens the overlay;
+  when linked, a row shows `{title} · {source-type}` + an **Unlink**. `selectLink` binds the FK +
+  denormalises: a **show** fills Title + Source Type (Author **untouched** — owner decision: the speaker
+  is the author); a **book** also fills Author from its authors. `unlink` clears only the FKs (keeps the
+  denormalised values, still editable). `show_id`/`book_id` were already in `QuoteDraft` since M2, so the
+  dirty gate + `save()` persist them — **no data-layer change**. The `ON DELETE SET NULL` FK means a
+  later hard-delete of the linked Show/Book just nulls the column; the quote keeps its title/author.
+- **Title-as-link navigation** (tap a quote's title → the Show/Book detail) lands in **M4 (Zen)**, where
+  the card actually renders the title — the M2 Library row doesn't show it, and nesting a link inside the
+  row's tap-to-edit button is bad UX.
+- Verified by `npm run check` (all gates, **201** tests) + manual click-through (link a Show → Author
+  stays as typed; link a Book → Author fills; Unlink keeps values; SAVE persists the FK).
+
+### M4 — Moment of Zen dashboard
+
+Goal: replace the `QuotesZen` stub with the real single-random-quote experience — favourites first,
+broadening to the whole pool on refresh with no immediate repeat. Pure assembly of tested helpers + the
+M3 link FKs; no schema/data-layer change (reuses `listQuotes`/`updateQuote`/`useQuotesVersion`).
+
+- **Pure selection** (`src/lib/quotes.ts`, +6 tests → **209**): `initialZenPool` (favourites if any,
+  else all), `nextZenPool(quotes, currentId)` (all minus current; degrades to all for a single quote /
+  null current — the "no immediate repeat" rule), `randomItem(items, random = Math.random)` (random
+  **injected** so the rules are deterministic in tests).
+- **`QuotesZen`** (`flex h-full flex-col`): `useAsync(listQuotes)` keyed on `useQuotesVersion`; a
+  `currentId` effect picks the initial quote **and keeps the current one across refetches** (so a
+  favourite toggle doesn't jump the card). A **Shuffle** button (`IconArrowsShuffle`) draws from
+  `nextZenPool`. **Pull-to-refresh** is a hand-rolled Pointer-Events gesture (mirroring `SwipeRow`) on
+  the inner `overflow-y-auto` scroller — engages only at `scrollTop===0` dragging **down**, damps the
+  offset, shows a "Pull / release to shuffle" hint, and shuffles past the threshold on release; kept
+  **inline** (no other consumer). The card centres the quote `text` (`text-2xl`, `whitespace-pre-line`
+  - `break-words` so the multi-line Schitt's Creek quote and **CJK** render correctly), a metadata
+    cluster **Author · {source-type} · Title** where the **Title is a `Link`** to `/shows/:id` /
+    `/books/:id` when `show_id`/`book_id` is set (the deferred M3 title-nav), the category `StatusChip`,
+    tag chips, and a favourite **heart** that flips **instantly** via an optimistic
+    `Record<id, boolean>` override before `updateQuote` + `bumpQuotes` persist/reconcile (reverts on
+    error). Loading / error / empty (→ Add a quote) states.
+- **Lint note:** `const all = quotes ?? []` feeding a `useCallback` dep tripped `exhaustive-deps`
+  (a fresh `[]` each render) — wrapped in `useMemo(() => quotes ?? [], [quotes])` so the `shuffle`
+  callback's deps stay stable.
+- Verified by `npm run check` (all gates, **209** tests).
+
+### M5 — Library filters + facets
+
+Goal: the full Library — real-time search + a collapsible faceted filter panel + the "Quotes from this
+title" constraint, replacing the M2 basic list. Mirrors the Books M5 build, adapted to the Quotes
+facets. No schema/data-layer change.
+
+- **Pure view** (`src/lib/quotes.ts`, +8 tests → **217**): `LibraryCriteria` + `DEFAULT_LIBRARY_CRITERIA`,
+  `quoteTags(quotes)` (sorted distinct tags — the facet options, derived from loaded rows), and
+  `applyLibraryView(quotes, c)` — **filter only**, preserving input order (`updated_at desc`; the spec
+  has no sort menu): query over `quoteSearchText`, Category, **Tags = OR/any**
+  (`c.tags.some(t => quote.tags.includes(t))` — owner decision: the seed tags cluster per-quote, so AND
+  would yield near-zero), Favourites-only, Source type, Language, and the URL `showId`/`bookId`
+  constraint.
+- **`QuotesLibrary`** rewritten: sticky header (search + a **Filters** toggle with an active-count);
+  the **`?show=`/`?book=` constraint** is read from `useSearchParams` and layered at view time
+  (`applyLibraryView(all, { ...criteria, showId, bookId })`), so the panel state stays **purely local**
+  (Books M5 decision — filters reset on leaving the tab; URL-persistence parked). A **"Quotes from this
+  title" banner** (derives the title from the first matching quote) with a clear-X → plain Library. The
+  collapsible panel reuses `SelectMenu` (Category / Source type / Language), `Toggle` (Favourites only),
+  and **toggle-chips** for Tags (selected = `bg-accent`), plus Clear filters. Rows unchanged from M2.
+- **Launch link (cross-module, owner-approved):** `ShowsEntry` + `BooksEntry` gained a **"Quotes from
+  this title"** `Link` (edit mode only) → `` `${routes.quotes.library}?show=${id}` `` / `?book=${id}`.
+  Display-only — no save/dirty impact. (The app has no separate read-only detail; the Entry screen _is_
+  the record's detail, which the Zen title-link already targets.)
+- Verified by `npm run check` (all gates, **217** tests).
+
+### M6 — Quotes Settings + Entry field-visibility
+
+Goal: a Quotes Settings screen (the Wellness/Shows/Books Settings split, mirrored) for Entry
+field-visibility + an importer-enable toggle, both synced on `profile`.
+
+- **Migration** `20260621130000_profile_quote_settings.sql`: adds `profile.quote_visible_fields text[]`
+  (**nullable — NULL = all visible**, default-on, no seeding) + `quote_importer_enabled boolean default
+false`. Additive columns on an existing table → RLS/grants/`moddatetime` already cover them. Owner
+  `db push` + `gen:types`.
+- **Null-sentinel decision** (same as Shows/Books): unlike `visible_nutrients` (defaults `'{}'` = none),
+  Quotes field visibility defaults **on** — hiding-by-default is wrong for an entry form, and a NULL
+  sentinel means new fields added later are visible without a data migration. `isFieldVisible(prefs,
+key)` = `prefs == null || prefs.includes(key)` (`src/lib/quotes.ts`, +2 tests → **219**).
+- **Screens** (mirror `BooksSettings`/`BooksFieldsSheet`): `QuotesSettings` (a **Visible Fields** row +
+  an **Enable CSV import** `Toggle` on `quote_importer_enabled`) and `QuotesFieldsSheet` (route `Sheet`
+  of per-field toggles over `QUOTE_ENTRY_FIELDS` — `author`/`source_link`/`source_type`/`title`/`tags`/
+  `language`; **Quote Text + Category are always shown**), auto-saving via `useProfileEditor`;
+  initialised from `quote_visible_fields ?? all keys`. A **gear** was added to the `QuotesZen`/
+  `QuotesLibrary` headers → `/quotes/settings`; `/quotes/settings/visible` is the sheet.
+- **Importer toggle persists in M6**; its launcher + the `/quotes/import` route land in **M7** — Settings
+  shows a hint instead of a launcher (no dead route).
+- **Entry** reads the prefs via `useProfile` and wraps each hideable field in `isFieldVisible(...)`.
+  Hiding is display-only — `save()` still writes the draft's loaded values (a hidden Source Type still
+  saves its default `tv`), so no data is lost and the dirty check is unaffected.
+- Verified by `npm run check` (all gates, **219** tests).
+
+### M7 — In-app CSV importer (Quotes feature-complete)
+
+Goal: the bulk importer to seed the back-catalogue — idempotent (no exact duplicates), with an optional
+Title→Show/Book link by source type. **Simpler than Books/Shows M7 — no external API**, so no
+concurrency pool / per-row "Change"; links resolve against the user's own `show`/`book` rows. No
+migration, no env.
+
+- **`.gitignore` already covered it** (added in M1): `quotes-import*.csv` + `quotes-seed-local.csv` +
+  `!templates/quotes-import-template.csv` — only the sanitized template + guide are tracked (re-verified
+  before adding any CSV, F7).
+- **Pure layer** `src/lib/quotes-import.ts` (+`.test.ts`, +12 tests → **231**): `parseQuotesCsv` (shares
+  `src/lib/csv.ts`; columns `Quote,Author,Source,Title,Category,Tags`; Category validated against the
+  six / Source against the seven, blank/invalid → flagged with line numbers; **Tags = read the whole
+  quoted cell, then split on `,`** — the two-comma-meanings step; Language auto-detected;
+  `text_norm = lower(trim(text))` via `normalizeQuoteText`), `partitionNewRows` (existing + in-file
+  dedup so the DB batch has no in-file conflicts), and `buildTitleIndex`/`resolveLink`/`buildImportPayload`
+  (optional Title→Show/Book link **by source type** — tv/movie→Show, book→Book, others→none).
+- **Idempotent commit** `data/quote.saveImportedQuotes(userId, payloads)`:
+  `upsert(rows, { onConflict: 'user_id,text_norm', ignoreDuplicates: true }).select('id')` — the spec's
+  `ON CONFLICT DO NOTHING` (the unique index on the generated `text_norm` is the arbiter; conflict targets
+  on a generated column are valid — the insert just omits it). `.select()` returns only the truly-inserted
+  rows, so its length is the imported count. Re-running the same file inserts **nothing**.
+- **`ImportQuotesSheet`** (route `Sheet`, mirrors `ImportBooksSheet` **without** the resolver pool): on
+  mount loads the dedup set (existing quotes' normalised text) + the local Show/Book title index; pick
+  `.csv` → `parseCsv` → `parseQuotesCsv` → `partitionNewRows` → `buildImportPayload` → preview
+  (**new / duplicate-skipped / flagged** counts + a sample of new rows [snippet + category + a "linked"
+  marker] + the flagged list) → Import → `saveImportedQuotes` + `bumpQuotes`. Launcher added to
+  `QuotesSettings` (shown when `quote_importer_enabled`); route `/quotes/import` over `/quotes/settings`.
+- **Templates** `templates/quotes-import-template.csv` (sanitized — exercises a quoted embedded comma,
+  an escaped `""`, a CJK/`zh` row, a multi-line quoted cell, and quoted Tags) + `quotes-import-guide.md`.
+- **Docs finalised:** the remaining `07-quotes.md` sections were merged into the permanent specs
+  (§01-screens, §02-tech-spec, §04-design-system; §05-seed-data had nothing to add) and `07-quotes.md`
+  **deleted**; CLAUDE.md / README mark Quotes built; OWNER-RUNBOOK gained the optional Apple Books
+  `?text=` Shortcut note.
+- **Quotes is now feature-complete (M1–M7).** Verified by `npm run check` (all gates, **231** tests).
 
 ## Failures & gotchas to not repeat
 

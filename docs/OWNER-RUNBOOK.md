@@ -286,6 +286,8 @@ phone over Wi-Fi; see "Test on your iPhone over Wi-Fi" below.)
      confirms the TMDB key works).
   7. In **Books → Library → New Book → Search Google Books**, type e.g. "dune" → cover results appear
      (this works with or without the optional Google Books key).
+  8. In **Quotes → Zen**, the **Shuffle** button rotates quotes (once you have some); **Library → New
+     Quote** opens the entry form. No API key is needed — Quotes has no external service.
 - To stop the dev server: press `Ctrl + C` in the terminal.
 
 > Barcode scanning needs the camera, which browsers only allow over HTTPS. It works on your computer
@@ -347,6 +349,18 @@ Part K.)
    > `templates/networth-import-guide.md`). (History note: real balances were once committed and later
    > purged from git history with a force-push — if you have an old clone, re-clone it so it doesn't
    > push the old history back.)
+   > The same applies to your **Shows / Books / Quotes** lists: keep your real CSV git-ignored (e.g.
+   > `quotes-seed-local.csv`), and load it in-app via that module's **Settings → Enable CSV import →
+   > Import CSV…** (idempotent — re-importing skips duplicates). Only the sanitized
+   > `*-import-template.csv` files are tracked.
+
+> **Optional — add quotes straight from Apple Books (iPhone/iPad).** Quotes has no API, so you add
+> quotes by typing, pasting (the **Paste from clipboard** button on the Add Quote form), the **CSV
+> importer**, or an optional **Apple Shortcut**: in the Shortcuts app, make a share-sheet shortcut that
+> takes selected text and **Opens URL**
+> `https://<your-app>/quotes/entry?text=[Shortcut Input]&author=&title=` (URL-encode the text). Sharing
+> a highlight from Apple Books to that shortcut opens the Add Quote form pre-filled. (`?text=`,
+> `?author=`, `?title=` all prefill.)
 
 - ✅ Check: refresh your GitHub repo page — you see the project files (and a `docs/` folder), but
   **no `.env`**.

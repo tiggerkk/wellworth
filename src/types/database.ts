@@ -389,6 +389,8 @@ export type Database = {
           height_cm: number | null
           highlighted_nutrients: string[]
           protein_target_g: number | null
+          quote_importer_enabled: boolean
+          quote_visible_fields: string[] | null
           sex: string | null
           show_importer_enabled: boolean
           show_visible_fields: string[] | null
@@ -407,6 +409,8 @@ export type Database = {
           height_cm?: number | null
           highlighted_nutrients?: string[]
           protein_target_g?: number | null
+          quote_importer_enabled?: boolean
+          quote_visible_fields?: string[] | null
           sex?: string | null
           show_importer_enabled?: boolean
           show_visible_fields?: string[] | null
@@ -425,6 +429,8 @@ export type Database = {
           height_cm?: number | null
           highlighted_nutrients?: string[]
           protein_target_g?: number | null
+          quote_importer_enabled?: boolean
+          quote_visible_fields?: string[] | null
           sex?: string | null
           show_importer_enabled?: boolean
           show_visible_fields?: string[] | null
@@ -435,6 +441,75 @@ export type Database = {
           weight_kg?: number | null
         }
         Relationships: []
+      }
+      quote: {
+        Row: {
+          author: string | null
+          book_id: string | null
+          category: string
+          created_at: string
+          id: string
+          is_favorite: boolean
+          language: string
+          show_id: string | null
+          source_type: string
+          tags: string[]
+          text: string
+          text_norm: string | null
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          author?: string | null
+          book_id?: string | null
+          category: string
+          created_at?: string
+          id?: string
+          is_favorite?: boolean
+          language?: string
+          show_id?: string | null
+          source_type: string
+          tags?: string[]
+          text: string
+          text_norm?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          author?: string | null
+          book_id?: string | null
+          category?: string
+          created_at?: string
+          id?: string
+          is_favorite?: boolean
+          language?: string
+          show_id?: string | null
+          source_type?: string
+          tags?: string[]
+          text?: string
+          text_norm?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "book"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_show_id_fkey"
+            columns: ["show_id"]
+            isOneToOne: false
+            referencedRelation: "show"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       serving: {
         Row: {

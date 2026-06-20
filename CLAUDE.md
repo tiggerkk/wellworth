@@ -26,15 +26,15 @@ Then run `npm run format` so the docs pass Prettier.
 
 ## Scope discipline
 
-- Built modules: **Wellness, Net Worth, Shows, and Books** (all feature-complete).
+- Built modules: **Wellness, Net Worth, Shows, Books, and Quotes** (all feature-complete).
 - Steps are entered **manually**. Do not attempt HealthKit / native step sync (impossible in a PWA).
 
 ## App structure (multi-module — current state)
 
 The app is a multi-module PWA behind a **Home hub** (`/home`): module cards launch into **Wellness**
-(`/wellness/*`), **Net Worth** (`/networth/*`), **Shows** (`/shows/*`), or **Books** (`/books/*`); `/`
-redirects to the last-used module. Adding a module is a **drop-in** — append a `ModuleDef` to
-`src/constants/modules.ts` + its routes.
+(`/wellness/*`), **Net Worth** (`/networth/*`), **Shows** (`/shows/*`), **Books** (`/books/*`), or
+**Quotes** (`/quotes/*`); `/` redirects to the last-used module. Adding a module is a **drop-in** —
+append a `ModuleDef` to `src/constants/modules.ts` + its routes.
 
 - **Routing:** flat children of one `<AppShell/>` in `src/router.tsx`; **all path strings live in
   `src/constants/routes.ts`** (single source of truth). `src/constants/modules.ts` (`MODULES` +
@@ -43,8 +43,8 @@ redirects to the last-used module. Adding a module is a **drop-in** — append a
   sheet. `/` → `RootRedirect` (last-used module via `src/lib/last-module.ts`, else `/home`).
 - **Settings is split:** global `/settings` (profile, units, account) from the hub gear; per-module
   sub-settings from a gear in the module header — Wellness at `/wellness/settings` (protein target,
-  nutrient display), Shows at `/shows/settings`, and Books at `/books/settings` (each: Entry
-  field-visibility + CSV-importer toggle).
+  nutrient display), Shows at `/shows/settings`, Books at `/books/settings`, and Quotes at
+  `/quotes/settings` (each of the latter three: Entry field-visibility + CSV-importer toggle).
 - **Net Worth (built):** two tables `networth_snapshot` + `asset_entry` (migration `supabase/migrations/20260615120000_networth_schema.sql`). Data:
   `src/data/networth-snapshot.ts` + `asset-entry.ts` — write path `saveSnapshotEntries` is an
   **idempotent create-or-replace per month** (reused by the importer). Calc `src/lib/networth.ts`; FX
@@ -80,6 +80,23 @@ redirects to the last-used module. Adding a module is a **drop-in** — append a
   `StatusChip`, and `BookSearchSheet` (local overlay — **not** a route sheet, so the Entry form
   survives). No type badge (all books). Screens `BooksDashboard` / `BooksLibrary` / `BooksEntry` /
   `BooksSettings` / `BooksFieldsSheet` / `ImportBooksSheet`.
+- **Quotes (built):** one table `quote` (migration `supabase/migrations/20260621120000_quotes_schema.sql`)
+  plus two `profile` columns `quote_visible_fields` / `quote_importer_enabled`
+  (`20260621130000_profile_quote_settings.sql`). The `quote` table denormalises `author`/`title`/
+  `source_type` and has optional `show_id`/`book_id` FKs (**ON DELETE SET NULL**) + a generated
+  `text_norm` with `UNIQUE(user_id, text_norm)` (no exact duplicates / import idempotency). Data
+  `src/data/quote.ts` (CRUD + `listDistinctTags` + idempotent `saveImportedQuotes` via
+  `onConflict:'user_id,text_norm'`). Pure logic `src/lib/quotes.ts` (`detectLanguage` CJK→zh,
+  `quoteSearchText`, category-chip class, `LinkCandidate`/`filterLinkCandidates`, Zen `initialZenPool`/
+  `nextZenPool`/`randomItem`, Library `applyLibraryView`/`quoteTags`, `QUOTE_ENTRY_FIELDS`/
+  `isFieldVisible`); enums in `src/constants/quotes.ts`; refresh tick `src/lib/quotes-refresh.ts`;
+  CSV importer `src/lib/quotes-import.ts` (**no external API** — links resolve against local Show/Book
+  rows). **No metadata API** ("Discover Quotes" is out of scope). Quotes **re-skins Books/Shows**: it
+  reuses `SelectMenu` / `SegmentedTabs` / `SwipeRow` / `Toggle` / `StatusChip` and the shared `Thumb`,
+  and adds the new shared **`TagInput`**. `QuoteSourceLinkSheet` (local overlay — **not** a route sheet)
+  searches local shows/books. **Moment-of-Zen** dashboard (favourites-first random + shuffle/pull-to-
+  refresh). Screens `QuotesZen` / `QuotesLibrary` / `QuotesEntry` / `QuotesSettings` / `QuotesFieldsSheet`
+  / `ImportQuotesSheet`.
 
 ## Stack (do not substitute without asking)
 

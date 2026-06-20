@@ -2,7 +2,7 @@
 
 ## Overview
 
-**WellWorth** is a personal mobile app — a private "super-app" of self-contained modules for one household. It launches to a Home hub of module cards; the modules are (1) Wellness — food, supplements, and activity with full nutrient reporting — (2) Net Worth, (3) Shows — tracking TV shows and movies watched or to watch — and (4) Books — tracking books read or to read. Further modules (e.g. inspirational quotes) may be added later as new cards with no structural change. The Wellness module is modeled on the Cronometer app's look and feel, simplified to one person's needs. It is delivered as an installable PWA (web app added to the iPhone/iPad home screen) so it needs no Apple Developer account and is free to run.
+**WellWorth** is a personal mobile app — a private "super-app" of self-contained modules for one household. It launches to a Home hub of module cards; the modules are (1) Wellness — food, supplements, and activity with full nutrient reporting — (2) Net Worth, (3) Shows — tracking TV shows and movies watched or to watch — (4) Books — tracking books read or to read — and (5) Quotes — favourite quotes from screen, page, and sound. Further modules may be added later as new cards with no structural change. The Wellness module is modeled on the Cronometer app's look and feel, simplified to one person's needs. It is delivered as an installable PWA (web app added to the iPhone/iPad home screen) so it needs no Apple Developer account and is free to run.
 
 ## Users
 
@@ -16,16 +16,17 @@
 - Net Worth: Monthly (first-of-month) entry of asset values across cash, time deposits, stocks, mutual funds, retirement funds, insurance, and properties, in HKD (base), CNY, or USD; net-worth calculation in base currency; total and by-asset-type trend graphs with a selectable time window.
 - Shows: track TV shows and movies across a single **status** (Want to Watch / Watching / Watched / Dropped); a three-level **LGBT+ representation** rating (None / Some / Significant); pull metadata (poster, genres, director/creator, cast, seasons & episode counts) from **TMDB** on demand; a Dashboard of what's in progress and recently finished, and a searchable, filterable, sortable Library. A back-catalogue of hundreds of titles is seeded via an in-app importer.
 - Books: track books across a single **status** (Want to Read / Reading / Read / Dropped); a three-level **LGBT+ representation** rating (None / Some / Significant); pull metadata (cover, authors, year, description, genres, page count) from **Google Books** (Open Library fallback) on demand; a Dashboard of what's in progress and recently read, and a searchable, filterable, sortable Library. A back-catalogue is seeded via an in-app importer.
+- Quotes: collect favourite quotes (English or Chinese) from TV shows, films, books, podcasts, articles, videos, and songs; each filed under **exactly one** of six categories with optional free-form tags, and optionally **linked to a Show or Book** record; a "Moment of Zen" dashboard, a searchable/filterable Library, and a recurring **CSV import**.
 - Works identically on iPhone and iPad, with data synced across both devices.
 - Modular by design: each feature is a self-contained module under the Home hub, so new modules drop in as a card + route without restructuring existing ones.
 - Entirely free to run; easy to maintain by one non-expert owner.
 
 ## Navigation model
 
-- The app launches to a Home hub — a launcher of module cards (Wellness, Net Worth, Shows, Books, and future modules), styled with the existing dark surface cards and Tabler icons.
-- Selecting a module enters it; the bottom nav then shows that module's own tabs (Wellness keeps Dashboard / Diary / Library; Net Worth, Shows, and Books show their own), with a persistent way back to Home.
-- Settings is global, lifted to the Home level (profile, units, account apply across all modules); a module may add its own sub-settings (e.g. Wellness targets/display; Shows and Books field-visibility + importer).
-- Routing is URL-driven per module (/wellness/_, /networth/_, /shows/_, /books/_, future /quotes/\_).
+- The app launches to a Home hub — a launcher of module cards (Wellness, Net Worth, Shows, Books, Quotes, and future modules), styled with the existing dark surface cards and Tabler icons.
+- Selecting a module enters it; the bottom nav then shows that module's own tabs (Wellness keeps Dashboard / Diary / Library; Net Worth, Shows, Books, and Quotes show their own), with a persistent way back to Home.
+- Settings is global, lifted to the Home level (profile, units, account apply across all modules); a module may add its own sub-settings (e.g. Wellness targets/display; Shows, Books, and Quotes field-visibility + importer).
+- Routing is URL-driven per module (/wellness/_, /networth/_, /shows/_, /books/_, /quotes/\_).
 - On launch, the app reopens the last-used module so daily Wellness use isn't slowed by the hub.
 - The hub makes adding future modules a drop-in (a `ModuleDef` + its routes).
 
@@ -63,11 +64,19 @@
 - **Settings** (`/books/settings`): choose which Entry fields are visible; enable a **CSV importer** (`/books/import`) that matches each row against Google Books (with inline fix for ambiguous/no-match rows) and commits idempotently. Columns + rules: `templates/books-import-guide.md`.
 - **Metadata only on demand** from **Google Books** (Open Library fallback); `cover_url` stores a full image URL, and `google_books_id`/`open_library_id`/`isbn` are kept for a future "refresh metadata". Imported rows get `status = read` with the file's finish date and NULL start/last-update dates, so they live in the Library and the Recently Read shelf, not as in-progress.
 
+## Quotes
+
+- **Moment of Zen** (`/quotes`): a single random quote — favourites first, broadening to the whole pool on pull-to-refresh (or a shuffle button on non-touch); the quote text rendered large and centred (correct CJK rendering), a metadata cluster (**Author · Source type · Title**, where tapping the Title jumps to the linked Show/Book when a link exists), the single **Category** badge, any **Tags**, and a **heart** to toggle favourite instantly.
+- **Library** (`/quotes/library`): real-time search across quote text, author, title, and tags; faceted filters (the six **Categories**, multi-select **Tags**, **Favourites** toggle, **Source type**, **Language**); a lazy-loaded list of quote snippets; tap a row to edit, swipe-left to delete (hard, with confirm). When opened from a Show/Book detail it is constrained to that record's quotes.
+- **Add / Edit** (`/quotes/entry`, `/quotes/:id`): quote text (required), an optional **Source link** that searches local **Show** and **Book** records (binds `show_id`/`book_id` and auto-fills Source Type + Title; Author stays manual — the speaker/character), Author, Source Type (TV Show / Movie / Book / Podcast / Article / Video / Song), Title, one **Category** (required), optional **Tags** (autocomplete over existing tags), **Language** (auto-detected, editable), and a **Favourite** toggle; **RESET / CREATE / SAVE**. Accepts a `?text=&author=&title=` prefill (copy-paste / an Apple Books Shortcut) and a **Paste from clipboard** button. An **Import** button opens the importer.
+- **Settings** (`/quotes/settings`): choose which Entry fields are visible; enable a **CSV importer** (`/quotes/import`) that validates each row, optionally links the title to a Show/Book by source type, and commits idempotently (no exact duplicates). Columns + rules: `templates/quotes-import-guide.md`.
+- **Cross-module links are optional enrichment.** `author`, `title`, and `source_type` are denormalised onto the quote, so a quote stays complete (and still renders) after a linked Show or Book is hard-deleted — the FK just goes null.
+
 ## Out of scope / non-goals
 
 ### General
 
-- Future modules (quotes, etc.) are noted as direction only — not built now. The hub is built to accept them later.
+- The hub is built to accept further modules as drop-in cards + routes.
 - No social features, no ads, no third-party tracking.
 
 ### Wellness
@@ -97,8 +106,15 @@
 
 - **Page / reading-progress, audiobooks, format, series** — deliberately omitted (status only).
 - **Refresh metadata** action — `google_books_id` (and `open_library_id`/`isbn`) are stored to enable it later.
-- **Discover Quotes for books** (Wikiquote auto-fetch) — parked with the future Quotes module.
+- **Discover Quotes for books** (Wikiquote auto-fetch) — parked with the Quotes module's external-fetch non-goal.
 - **Reading history / multiple re-reads** — one record per book, single start/finish.
+
+### Quotes
+
+- **"Discover Quotes" / external quote fetch** (the Wikiquote + TV-quotes routing engine) — parked. Reliability and CORS of those sources are unproven, and manual entry + import cover the need; the `language` field is kept so routing can be added later.
+- **Traditional vs Simplified** Chinese distinction — one `zh` value is enough for now.
+- **Quotes from Articles** — the source type exists, but there's no data in the import file yet.
+- **Direct Apple Books integration** — not possible from a PWA; copy-paste + the optional `?text=` Shortcut are the ingestion path.
 
 ## Key constraints
 

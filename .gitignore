@@ -36,6 +36,12 @@ shows-import*.csv
 books-import*.csv
 !templates/books-import-template.csv
 
+# Quotes — real personal quote collections must never be committed. Only the
+# sanitized templates/quotes-import-template.csv is tracked.
+quotes-import*.csv
+quotes-seed-local.csv
+!templates/quotes-import-template.csv
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

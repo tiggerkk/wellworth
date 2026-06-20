@@ -186,13 +186,34 @@ Standard rules apply: own `user_id` for direct RLS, four owner policies using `(
 - `created_at`, `updated_at`
 - Index on (`user_id`, `status`).
 
-Standard rules apply: own `user_id` for direct RLS, four owner policies using `(select auth.uid()) = user_id`, `CHECK` on the enum columns, `moddatetime` trigger on `updated_at`, explicit `GRANT` to `anon`/`authenticated`. **Hard delete** (leaf table — nothing references `book`; no `deleted_at`). The future Quotes module's optional `quote.book_id` link is declared `ON DELETE SET NULL` on `quote`, so it imposes no FK here. Imported back-catalogue rows get `status = 'read'`, the file's `end_date`, and NULL `start_date`/`last_update_date`. The migration is `supabase/migrations/20260620120000_books_schema.sql`.
+Standard rules apply: own `user_id` for direct RLS, four owner policies using `(select auth.uid()) = user_id`, `CHECK` on the enum columns, `moddatetime` trigger on `updated_at`, explicit `GRANT` to `anon`/`authenticated`. **Hard delete** (leaf table — nothing references `book`; no `deleted_at`). The Quotes module's optional `quote.book_id` link is declared `ON DELETE SET NULL` on `quote`, so it imposes no FK here. Imported back-catalogue rows get `status = 'read'`, the file's `end_date`, and NULL `start_date`/`last_update_date`. The migration is `supabase/migrations/20260620120000_books_schema.sql`.
+
+### quote (one row per quote)
+
+- `id` UUID PK
+- `user_id` UUID → auth.users (ON DELETE CASCADE)
+- `text` TEXT — the quote
+- `author` TEXT NULL
+- `source_type` TEXT — 'tv' | 'movie' | 'book' | 'podcast' | 'article' | 'video' | 'song' (CHECK)
+- `title` TEXT NULL — source title (denormalised; survives a linked record's deletion)
+- `category` TEXT — 'philosophy' | 'heart' | 'connection' | 'growth' | 'wit' | 'observation' (CHECK; required)
+- `tags` TEXT[] DEFAULT '{}' — optional; autocomplete reads distinct `unnest(tags)`
+- `language` TEXT DEFAULT 'en' — 'en' | 'zh' (CHECK)
+- `is_favorite` BOOLEAN DEFAULT false
+- `show_id` UUID NULL → show (ON DELETE SET NULL), `book_id` UUID NULL → book (ON DELETE SET NULL)
+- `created_at`, `updated_at`
+- `text_norm` TEXT GENERATED ALWAYS AS (`lower(btrim(text))`) STORED
+- **UNIQUE (`user_id`, `text_norm`)** — enforces "no exact duplicates" and import idempotency.
+- Indexes on (`user_id`, `category`) and (`user_id`, `is_favorite`).
+
+Standard rules apply: own `user_id` for direct RLS, four owner policies using `(select auth.uid()) = user_id`, `CHECK` on the enum columns, `moddatetime` trigger on `updated_at`, explicit `GRANT` to `anon`/`authenticated`. **Hard delete** (leaf table; no `deleted_at`). `show_id`/`book_id` are optional enrichment — because `author`, `title`, and `source_type` live on the quote, it stays complete after a linked Show/Book is hard-deleted (the FK just nulls). The migration is `supabase/migrations/20260621120000_quotes_schema.sql`.
 
 ## Relationships
 
 profile 1—_ food, activity, diary_entry · food 1—_ serving · food 1—_ diary_entry ·
 activity 1—_ diary_entry · diary_entry 1—\* strength_set · profile 1—\* show ·
-profile 1—\* book. (Future: book 1—\* quote — optional, ON DELETE SET NULL.)
+profile 1—\* book · profile 1—\* quote · show 1—\* quote and book 1—\* quote
+(both optional, ON DELETE SET NULL).
 
 ## Soft deletes
 

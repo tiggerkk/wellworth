@@ -70,21 +70,33 @@ _not_ the primary-button color; it's for emphasis, active states, and energy.
   hit-zones per star; tap the current value to clear). Reused on Shows + Books Entry + Library rows.
 - **ShowTypeBadge** — small chip with a TV (`IconDeviceTv`) or movie (`IconMovie`) icon, on every
   Shows row/poster. (Books have no type badge — all books are one kind.)
-- **StatusChip** — a **presentational** status pill taking a `label` + palette `className`, so Shows
-  and Books share one chip. Both use the same per-status palette tokens: neutral (`input`) / coral
-  (`accent`, active) / teal (`positive`) / grey (`track`) — Shows = Want/Watching/Watched/Dropped,
-  Books = Want to Read/Reading/Read/Dropped.
+- **StatusChip** — a **presentational** status pill taking a `label` + palette `className`, so Shows,
+  Books, and Quotes share one chip. Shows/Books use the per-status palette tokens: neutral (`input`) /
+  coral (`accent`, active) / teal (`positive`) / grey (`track`) — Shows = Want/Watching/Watched/Dropped,
+  Books = Want to Read/Reading/Read/Dropped. **Quotes** reuses the same chip for its **Category badge**
+  (a single neutral palette; a fixed colour per category is an optional, deferred nicety) and the
+  importer/linker type pills.
 - **Thumb** — the shared presentational 2:3 rounded image-or-placeholder (`src/components/Thumb.tsx`,
   `url` + `className`; a neutral `bg-input` tile when `url` is null). **PosterThumb** (Shows) wraps it,
   resolving the TMDB `posterUrl` (`w92` list / `w185` detail); **CoverThumb** (Books) wraps it with the
   full `cover_url` (Google Books / Open Library — no CDN base). Used by search sheets, Dashboard rows,
   and Library rows in both modules.
-- **TitleSearchSheet** / **BookSearchSheet** — metadata title search, a **local** full-screen overlay
-  inside Entry (not the routing `Sheet`, which would remount Entry and lose the draft): search bar +
-  cover/poster-thumb result rows; selecting a row populates the live form. Shows scopes by Type (TMDB);
-  Books searches Google Books (Open Library fallback).
+- **TitleSearchSheet** / **BookSearchSheet** / **QuoteSourceLinkSheet** — title/source search, a
+  **local** full-screen overlay inside Entry (not the routing `Sheet`, which would remount Entry and
+  lose the draft): search bar + thumb result rows; selecting a row populates the live form. Shows scopes
+  by Type (TMDB); Books searches Google Books (Open Library fallback); **Quotes** searches the user's own
+  local Show + Book rows (no external API) and binds the FK + denormalised Title/Source Type/Author.
+- **TagInput** — a free-form tag editor (`src/components/TagInput.tsx`): committed tags as removable
+  `rounded-pill` chips + a text input that commits on **Enter/comma**, removes the last on Backspace, and
+  offers an autocomplete dropdown over passed suggestions (case-insensitive dedupe). Used by the Quotes
+  Entry form.
+- **Quote card** (Zen): large centred quote text with comfortable line-height (`whitespace-pre-line` +
+  `break-words` so multi-line and **CJK** render correctly); a metadata cluster (Author · source type ·
+  title-as-link); the Category `StatusChip` + Tag chips; a favourite heart. Refreshed by a Shuffle
+  button + a hand-rolled pull-to-refresh gesture.
 - **SelectMenu** — a compact dropdown (button + label + chevron → scrim + absolute menu of
-  `{value,label}` options); generic over string options. Used by the Shows + Books Library filters/sort.
+  `{value,label}` options); generic over string options. Used by the Shows, Books, and Quotes Library
+  filters/sort.
 - **MonthPicker** — month/year picker (year stepper over a month grid, OK/Cancel) for the Net Worth month selector (a local overlay, not a route).
 - **EnergyBalanceCard** — Consumed / BMR / Activity / bold Net.
 - **NutrientReport** — shared body of Dashboard + Daily Report (energy card + visible-nutrient sections).

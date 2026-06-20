@@ -2,10 +2,10 @@
 
 ## Navigation
 
-The app opens to a **Home hub** — a launcher of module cards (Wellness, Net Worth, Shows, Books; more
-later). Selecting a module enters it and the **bottom tab bar becomes that module's tabs**, with a
-**Home** item to return to the hub. On launch the app reopens the **last-used module**, so daily
-Wellness use skips the hub.
+The app opens to a **Home hub** — a launcher of module cards (Wellness, Net Worth, Shows, Books,
+Quotes; more later). Selecting a module enters it and the **bottom tab bar becomes that module's
+tabs**, with a **Home** item to return to the hub. On launch the app reopens the **last-used module**,
+so daily Wellness use skips the hub.
 
 - **Wellness** tabs: **Home**, **Diary**, **Dashboard**, **Library**. A **gear** in each Wellness
   header opens Wellness Settings.
@@ -15,13 +15,16 @@ Wellness use skips the hub.
 - **Books** tabs: **Home**, **Dashboard**, **Library**. Same shape as Shows; the Entry/Edit screen is
   a form reached from a `+` (new) or by tapping a row (edit). A **gear** in the Books headers opens
   Books Settings.
+- **Quotes** tabs: **Home**, **Zen** (the Moment-of-Zen dashboard), **Library**. The Add/Edit screen is
+  a form reached from a `+` (new) or by tapping a row (edit). A **gear** in the Quotes headers opens
+  Quotes Settings.
 - **Settings is global**, reached from a gear on the Home hub (profile, units, account — app-wide).
   Wellness-specific settings (protein target, nutrient display) live in **Wellness Settings**.
 
-Routing is URL-namespaced per module (`/wellness/*`, `/networth/*`, `/shows/*`, `/books/*`); a future
-module drops in as a card + routes with no structural change. Modals (sheets) slide up over a module's tabs:
-Calendar, Add Food, Food Detail, Add Activity, Activity Log, New Food, New Activity, Month Picker
-(Net Worth), Title Search (Shows), Book Search (Books).
+Routing is URL-namespaced per module (`/wellness/*`, `/networth/*`, `/shows/*`, `/books/*`,
+`/quotes/*`); a future module drops in as a card + routes with no structural change. Modals (sheets)
+slide up over a module's tabs: Calendar, Add Food, Food Detail, Add Activity, Activity Log, New Food,
+New Activity, Month Picker (Net Worth), Title Search (Shows), Book Search (Books), Source Link (Quotes).
 
 Diary groups, in order: **Breakfast, Lunch, Dinner, Snacks, Supplements, Activities**.
 
@@ -377,3 +380,59 @@ An in-app bulk importer (the owner's choice over a script — same as Net Worth 
   same file updates in place, never duplicates). Every imported row is **Read**; `start_date` /
   `last_update_date` are **NULL** and `end_date` comes from the file, so imported books appear in the
   Library and (when dated) the Dashboard's "Recently Read".
+
+## Quotes - Moment of Zen (`/quotes`, dashboard)
+
+- **First load**: one random quote where `is_favorite = true`; falls back to the whole pool if no
+  favourites.
+- **Refresh**: a **Shuffle** button (works everywhere) and **pull-to-refresh** (touch) rotate to a new
+  random quote from the **entire pool** (no immediate repeat).
+- **Card**: the quote text (large, centred; renders Chinese + multi-line correctly); a metadata cluster
+  — **Author · Source type · Title**, where **tapping the Title navigates to the linked Show/Book
+  detail** (only when a link exists); the single **Category** badge and any **Tags**; a **heart** to
+  toggle favourite instantly.
+
+## Quotes - Library (`/quotes/library`)
+
+- **Search**: real-time match across quote text, author, title, and tags.
+- **Filters** (collapsible panel): the six **Categories**, multi-select **Tags** (OR — any selected
+  tag), **Favourites** toggle, **Source type**, **Language**. When opened from a Show/Book detail
+  ("Quotes from this title", via a `?show=`/`?book=` param), the list is constrained to that record's
+  quotes with a clearable banner.
+- **List**: rows — a quote snippet, the category badge, and author. Tap → Add/Edit; **swipe-left** →
+  Delete (hard, with confirm). No sort menu (newest-touched order).
+
+## Quotes - Add / Edit (form, `/quotes/entry`, `/quotes/:id`)
+
+- **Quote Text** (textarea; required). Prefilled from `?text=` when launched via copy-paste / an Apple
+  Books Shortcut; a **Paste from clipboard** button fills it from the clipboard.
+- **Source link** (optional): a **Source Link** modal searching local **Show** and **Book** records;
+  selecting one binds `show_id`/`book_id` and auto-fills **Source Type** + **Title** (for a Book, also
+  **Author**; a Show leaves Author for the speaker/character). **Unlink** keeps the filled values.
+- **Author**, **Source Type** (TV Show / Movie / Book / Podcast / Article / Video / Song), **Title** —
+  entered manually for podcasts/songs/articles/videos (no module to link).
+- **Category** (required): single-select from the six. **Tags** (optional): inline tag input with
+  autocomplete against existing tags. **Language**: English / Chinese, auto-detected from the text (CJK
+  → Chinese), editable. **Favourite** heart in the header.
+- Top-right: **RESET** + **CREATE** (new) / **SAVE** (editing). **Validation**: requires Quote Text +
+  exactly one Category. A duplicate (same normalised text) is rejected inline.
+- Which fields are visible is controlled in **Quotes Settings** (Quote Text + Category always shown).
+
+## Quotes - Settings (from the gear in the Quotes headers)
+
+- **Visible Fields**: choose which Add/Edit fields appear (Quote Text + Category always shown).
+- **Enable CSV import**: surfaces the **Import CSV…** launcher.
+
+## Quotes - Import CSV (sheet, from Quotes Settings)
+
+An in-app bulk importer (the owner's choice over a script — same as Net Worth / Shows / Books). Columns:
+`Quote,Author,Source,Title,Category,Tags` (see `templates/quotes-import-guide.md`). **No external API** —
+unlike Shows/Books, links resolve against the user's own Show/Book rows.
+
+- **Choose CSV** → rows are parsed/validated; the **Category** is checked against the six and **Source**
+  against the seven (blank/invalid → flagged), **Tags** is split from its quoted cell, **Language** is
+  auto-detected, and a **Title** matching an existing Show (tv/movie) or Book (book) **links** the quote.
+- A **preview** shows counts of **new / duplicate-skipped / flagged** rows + a sample of the new rows
+  (snippet + category + a "linked" marker) and the flagged rows with reasons.
+- **Import** writes only the new, valid rows **idempotently** (dedup on `lower(trim(text))` via the DB
+  `UNIQUE` + `ON CONFLICT DO NOTHING`) — re-running the same file imports nothing.

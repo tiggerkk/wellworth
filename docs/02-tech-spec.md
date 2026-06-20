@@ -24,7 +24,8 @@ src/
   lib/               # supabase client, units, dri, energy, met, nutrients, targets, report,
                      # date, food-api, off-api, food-search, diary-refresh, diary-clipboard, csv,
                      # networth, fx, networth-refresh, shows, shows-refresh, tmdb-api, shows-import,
-                     # books, books-refresh, books-api, books-import, last-module helpers
+                     # books, books-refresh, books-api, books-import, quotes, quotes-refresh,
+                     # quotes-import, last-module helpers
   constants/         # global constants (groups, effort-levels, nutrient-sections, ranges,
                      # profile-defaults, seed-activities, routes, modules)
                      # routes.ts = all route paths (one source of truth); modules.ts = the
@@ -40,7 +41,7 @@ docs/                # the spec bundle
 ## Navigation & routing
 
 - The app is **multi-module behind a Home hub**. Routes are **URL-namespaced per module**
-  (`/wellness/*`, `/networth/*`, `/shows/*`; future `/quotes/*`) and declared as flat children of a
+  (`/wellness/*`, `/networth/*`, `/shows/*`, `/books/*`, `/quotes/*`) and declared as flat children of a
   single `<AppShell/>` layout in `src/router.tsx`. Path strings live in `src/constants/routes.ts`
   (one source of truth) and the hub/bottom-nav are derived from `src/constants/modules.ts`
   (`MODULES` + `moduleForPath`). Adding a module = a `ModuleDef` + its routes — no structural change.
@@ -207,6 +208,61 @@ _Books re-skins Shows (see the Shows section); only the differences are noted._
   (`end_date` from the file). Reuses the in-house RFC-4180 parser `src/lib/csv.ts` (**not Papa Parse** —
   verified sufficient for the quoted/embedded-comma cells in the real Quotes seed). Sanitized template +
   guide in `templates/`.
+
+## Quotes
+
+_Quotes re-skins Books/Shows; only the differences are noted. There is **no external metadata API** —
+"Discover Quotes" external fetch is out of scope._
+
+- **Data:** `src/data/quote.ts` — `listQuotes`/`getQuote`/`createQuote`/`updateQuote`/`deleteQuote`
+  (hard delete) over the single `quote` table, plus `listDistinctTags` (Entry autocomplete) and the
+  idempotent `saveImportedQuotes`. `src/lib/quotes-refresh.ts` (`bumpQuotes`/`useQuotesVersion`) is the
+  module's data-changed tick.
+- **Logic** (`src/lib/quotes.ts`, pure + tested): `detectLanguage(text)` (any CJK char ⇒ `zh`, else
+  `en`); `quoteSearchText`; the `QUOTE_CATEGORY_CHIP` chip class (a single neutral palette — per-category
+  colours are an optional, deferred nicety); the Library view `applyLibraryView(quotes, criteria)`
+  (query over text+author+title+tags; Category / **multi-select Tags = OR** / Favourites / Source type /
+  Language; plus the `showId`/`bookId` URL constraint) with `quoteTags` driving the tag facet;
+  **filter-only** (no sort menu — newest-touched order preserved). The cross-module linker model is
+  `LinkCandidate` + `filterLinkCandidates` (the screen maps `ShowRow`/`BookRow` → candidates, so
+  `quotes.ts` stays decoupled from `shows.ts`/`books.ts`). The Zen randomiser is `initialZenPool`
+  (favourites first, else all), `nextZenPool` (whole pool minus current — no immediate repeat), and
+  `randomItem(items, random = Math.random)` (random injected for deterministic tests). Field visibility
+  is `QUOTE_ENTRY_FIELDS` + the pure `isFieldVisible` (NULL prefs ⇒ all visible).
+- **UI:** `QuotesEntry` (create/edit form; outer-loader + inner-form with the `JSON.stringify` dirty
+  RESET/SAVE; Source Type/Category reuse `SelectMenu`, Language reuses `SegmentedTabs`, a header
+  favourite heart; a **`23505` unique-violation** on save → inline "You already have this quote.").
+  `QuotesLibrary` (search + a collapsible facet panel of `SelectMenu`s + a Favourites `Toggle` +
+  Tag toggle-chips; swipe-delete; a "Quotes from this title" banner when constrained). `QuotesZen`
+  (favourites-first random card; a **Shuffle** button + a hand-rolled **pull-to-refresh** Pointer-Events
+  gesture on an inner scroller; metadata cluster with a title-as-`Link` to `/shows/:id` / `/books/:id`
+  when linked; an optimistic favourite heart). A new **`TagInput`** component (chips + autocomplete,
+  commit on Enter/comma) is shared by the Entry form (and the Library facet).
+- **Cross-module linker:** `src/components/QuoteSourceLinkSheet.tsx` — a **local** `fixed inset-0`
+  overlay (not a route sheet, which would remount Entry and lose the draft) that loads the user's `show`
+  - `book` rows, maps them to `LinkCandidate`s (show thumb via `posterUrl`, book via `cover_url`), and
+    returns the pick. Selecting binds `show_id`/`book_id` + denormalises Title/Source Type (+Author for a
+    Book; a Show leaves Author for the speaker). The denormalised `author`/`title`/`source_type` mean a
+    quote survives a linked record's hard-delete (the FK just nulls — `ON DELETE SET NULL`).
+- **Apple Books / external ingestion:** the Add/Edit route reads `?text=&author=&title=` query params to
+  prefill the form (copy-paste, or an optional Apple Books **Shortcut** that opens that URL — see the
+  runbook). A **Paste from clipboard** button fills Quote Text from `navigator.clipboard`. No direct
+  Apple Books API exists.
+- **Settings (split, like Shows/Books):** `QuotesSettings` (gear in the Quotes headers) hosts **Entry
+  field visibility** (`QuotesFieldsSheet`, a route sheet of toggles over `QUOTE_ENTRY_FIELDS`,
+  auto-saving via `useProfileEditor`) + an **importer enable** toggle. Both prefs sync on `profile` —
+  `quote_visible_fields` (`text[]`, **NULL = all visible**) and `quote_importer_enabled` (`boolean`).
+  Entry reads them through `useProfile` + `isFieldVisible` (Quote Text + Category always shown).
+- **CSV importer (in-app):** enabled by the Settings toggle → `ImportQuotesSheet`. Pure parse/validate
+  in `src/lib/quotes-import.ts` (`parseQuotesCsv` via the shared `src/lib/csv.ts`; columns
+  `Quote,Author,Source,Title,Category,Tags`; Category/Source validated, **Tags read-whole-cell-then-
+  split-on-`,`**, Language auto-detected), `partitionNewRows` (existing + in-file dedup on
+  `lower(trim(text))`), and `buildTitleIndex`/`resolveLink` (optional Title→Show/Book link **by source
+  type**: tv/movie→Show, book→Book, others→none). The sheet loads existing-norms + the local title index
+  once (no external API, no concurrency pool), previews **new / duplicate / flagged** counts, and commits
+  via the **idempotent** `saveImportedQuotes` — `upsert(..., { onConflict: 'user_id,text_norm',
+ignoreDuplicates: true })` = the spec's `ON CONFLICT DO NOTHING`. Sanitized template + guide in
+  `templates/`.
 
 ## External APIs
 

@@ -56,4 +56,14 @@ export const routes = {
     settingsVisible: '/books/settings/visible',
     import: '/books/import', // CSV importer (sheet)
   },
+  quotes: {
+    base: '/quotes',
+    zen: '/quotes', // Moment of Zen (module index)
+    library: '/quotes/library',
+    entry: '/quotes/entry', // blank Entry (new)
+    edit: (id: string) => `/quotes/${id}`,
+    settings: '/quotes/settings', // quotes sub-settings: field visibility, importer
+    settingsVisible: '/quotes/settings/visible',
+    import: '/quotes/import', // CSV importer (sheet)
+  },
 } as const

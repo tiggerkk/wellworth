@@ -15,6 +15,10 @@ import {
   Library,
   NetWorthDashboard,
   NetWorthEntry,
+  QuotesEntry,
+  QuotesLibrary,
+  QuotesSettings,
+  QuotesZen,
   Settings,
   ShowsDashboard,
   ShowsEntry,
@@ -42,6 +46,10 @@ const TAB_FOR_PATH: Record<string, React.ReactNode> = {
   '/books/library': <BooksLibrary />,
   '/books/entry': <BooksEntry />,
   '/books/settings': <BooksSettings />,
+  '/quotes': <QuotesZen />,
+  '/quotes/library': <QuotesLibrary />,
+  '/quotes/entry': <QuotesEntry />,
+  '/quotes/settings': <QuotesSettings />,
 }
 
 export function AppShell() {

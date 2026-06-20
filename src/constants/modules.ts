@@ -6,6 +6,8 @@ import {
   IconDeviceTv,
   IconList,
   IconNotebook,
+  IconQuote,
+  IconSparkles,
   IconWallet,
   type Icon,
 } from '@tabler/icons-react'
@@ -85,6 +87,17 @@ export const MODULES: ModuleDef[] = [
     tabs: [
       { to: routes.books.dashboard, label: 'Dashboard', Icon: IconChartBar, end: true },
       { to: routes.books.library, label: 'Library', Icon: IconList },
+    ],
+  },
+  {
+    key: 'quotes',
+    label: 'Quotes',
+    Icon: IconQuote,
+    base: routes.quotes.base,
+    description: 'Favourite quotes from screen, page & sound — a daily Moment of Zen.',
+    tabs: [
+      { to: routes.quotes.zen, label: 'Zen', Icon: IconSparkles, end: true },
+      { to: routes.quotes.library, label: 'Library', Icon: IconList },
     ],
   },
 ]
