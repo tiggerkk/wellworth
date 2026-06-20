@@ -22,6 +22,10 @@ Nutrient sets are stored as JSONB maps (`nutrient_key → amount`), validated ag
   (default-on, no seeding); an explicit array once trimmed in Books Settings
 - `book_importer_enabled` BOOLEAN NOT NULL DEFAULT false — surfaces the Books in-app CSV importer
   (the two `book_*` columns are added by `supabase/migrations/20260620130000_profile_book_settings.sql`)
+- `quote_visible_fields` TEXT[] NULL — Quotes Entry-form field visibility; **NULL = all visible**
+  (default-on, no seeding); an explicit array once trimmed in Quotes Settings
+- `quote_importer_enabled` BOOLEAN NOT NULL DEFAULT false — surfaces the Quotes in-app CSV importer
+  (the two `quote_*` columns are added by `supabase/migrations/20260621130000_profile_quote_settings.sql`)
 - `created_at`, `updated_at` TIMESTAMPTZ
 
 ### food (custom items + cached USDA/Off items the user favorited or logged)

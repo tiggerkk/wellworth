@@ -157,10 +157,30 @@ user and simpler; same trade-off as the Shows Library.
 **Decided:** Mirror the Wellness "URL-as-state" pattern — serialize `LibraryCriteria` into query params
 written with `{replace:true}`; the screen already centralizes the criteria in one state object.
 
+### Quotes Library — filter URL-persistence · Deferred
+
+**What:** Persist the Quotes Library's filter state (Category / Tags / Favourites / Source / Language)
+across navigation, so leaving the tab and returning restores it.
+**Why deferred:** Filter state is local component state (resets on remount) — fine for a single user;
+same trade-off as the Shows/Books libraries. The `?show=`/`?book=` "Quotes from this title" constraint
+**is** already URL-driven. (Quotes has no Sort menu — newest-touched order — so there's no sort to
+persist.)
+**Decided:** Mirror the Wellness "URL-as-state" pattern over the local `LibraryCriteria` object.
+
+### Quotes — per-category badge colours · Deferred
+
+**What:** A fixed accent colour per Category badge on the Zen card / Library rows (instead of one
+neutral chip for all six).
+**Why deferred:** The spec marks it **optional**, and the dark theme has only ~4 semantic colour tokens,
+so six distinct category colours would need a new palette. The single neutral `QUOTE_CATEGORY_CHIP`
+(via the presentational `StatusChip`) ships now.
+**Decided:** Add a `Record<QuoteCategory, string>` palette in `src/lib/quotes.ts` and pass it to the
+existing chip — purely additive, no structural change.
+
 ### Automated tests beyond pure helpers · Deferred
 
 **What:** Component/integration tests; tests for `src/data/*` repositories.
-**Why deferred:** The suite unit-tests the pure calc/mapping helpers (the spec's named targets, plus the CSV-parse, food-import, quantity, and food-search helpers — 76 tests). Repos are thin wrappers verified manually + by `tsc` against the generated schema.
+**Why deferred:** The suite unit-tests the pure calc/mapping helpers (the spec's named targets, plus the CSV-parse, food/shows/books/quotes-import, quantity, and search helpers — 230+ tests). Repos are thin wrappers verified manually + by `tsc` against the generated schema.
 
 ---
 
@@ -185,6 +205,16 @@ written with `{replace:true}`; the screen already centralizes the criteria in on
 - **Social features, ads, third-party tracking/analytics** — non-goals (PRD).
 - **Medical-device claims** — nutrient targets are public-DRI guidance, not medical advice.
 - **Native app / App Store** — the whole point is a free installable PWA (no Apple Developer account).
+- **Quotes — "Discover Quotes" / external quote fetch** (the Wikiquote + TV-quotes routing engine) —
+  **parked.** The reliability and CORS of those sources are unproven, and manual entry + the `?text=`
+  prefill + the CSV importer cover the need. The `language` field is kept so routing could be added
+  later. (Quotes deliberately has **no external metadata API**, unlike Shows/Books.)
+- **Quotes — Traditional vs Simplified Chinese distinction** — one `zh` value is enough; no plan to
+  split or convert scripts.
+- **Quotes — direct Apple Books integration** — not possible from a PWA; the ingestion path is
+  copy-paste, the **Paste from clipboard** button, the CSV importer, and the optional Apple **Shortcut**
+  that opens `/quotes/entry?text=…` (see OWNER-RUNBOOK). The `Article` source type exists but the import
+  file has no article rows yet.
 
 ---
 

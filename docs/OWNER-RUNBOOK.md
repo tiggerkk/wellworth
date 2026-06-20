@@ -440,9 +440,9 @@ and **M3** resets one module's data while leaving the others intact.
 
 Only **Wellness** has seed data: the owner's **profile** + **activity library** are re-seeded on the
 next sign-in (idempotent — only when that data is missing), and the **nutrient** reference table is
-seeded by a migration (not on login). **Net Worth, Shows, and Books have no seed data** — their tables
-(`networth_snapshot`/`asset_entry`, `show`, `book`) come back **empty** after a reset and are filled
-entirely by you in the app.
+seeded by a migration (not on login). **Net Worth, Shows, Books, and Quotes have no seed data** — their
+tables (`networth_snapshot`/`asset_entry`, `show`, `book`, `quote`) come back **empty** after a reset and
+are filled entirely by you in the app.
 
 > ⚠️ These act on your **live** Supabase project. There is no undo. Make sure you mean it.
 
@@ -460,8 +460,9 @@ From the project folder (the database password must be available — see Part F)
 
 Confirm at the prompt. The CLI re-runs **every** file in `supabase/migrations/` — currently
 `…_init_schema.sql`, `…_seed_nutrient.sql`, `…_networth_schema.sql`, `…_shows_schema.sql`,
-`…_profile_show_settings.sql`, `…_books_schema.sql`, and `…_profile_book_settings.sql` — against the
-remote, leaving a clean schema + the 80 nutrient rows and a migration-ledger that matches the files.
+`…_profile_show_settings.sql`, `…_books_schema.sql`, `…_profile_book_settings.sql`,
+`…_quotes_schema.sql`, and `…_profile_quote_settings.sql` — against the remote, leaving a clean schema +
+the 80 nutrient rows and a migration-ledger that matches the files.
 (You never list them yourself; the CLI applies whatever is in the folder, so new migrations are picked
 up automatically.)
 
@@ -479,7 +480,7 @@ The starter activities live in `src/constants/seed-activities.ts` and are seeded
 you have **zero** activities (`ensureOwnerActivities` is a no-op otherwise). So after you edit that
 file (new activities, changed METs/durations), you must clear the existing rows, then sign in again —
 no full reset needed, and your foods and diary history are kept. (Activities are the **only**
-client-seeded library; Net Worth, Shows, and Books have no starter data, so there's nothing to
+client-seeded library; Net Worth, Shows, Books, and Quotes have no starter data, so there's nothing to
 re-seed for them.)
 
 1. In **Supabase → SQL Editor**, run:
@@ -502,8 +503,8 @@ re-seed for them.)
 ### M3 — Reset one module's data only (keep the other modules)
 
 Use this to start a module clean — test it, wipe just its tables, then enter real production data —
-without touching the others (e.g. reset Wellness and go live on it while Net Worth, Shows, and Books
-stay as they are). Run the SQL in **Supabase → SQL Editor** (Dashboard → **SQL Editor** → **New query**
+without touching the others (e.g. reset Wellness and go live on it while Net Worth, Shows, Books, and
+Quotes stay as they are). Run the SQL in **Supabase → SQL Editor** (Dashboard → **SQL Editor** → **New query**
 → paste → **Run**). It edits **data only** — never the schema or the migrations.
 
 > ⚠️ The SQL Editor runs with full privileges (it bypasses row-level security), so `truncate` wipes
@@ -549,13 +550,26 @@ truncate public.book cascade;
 update public.profile set book_visible_fields = null, book_importer_enabled = false;
 ```
 
+**Quotes** — wipes every quote:
+
+```sql
+truncate public.quote cascade;
+-- optional: also reset the Quotes settings on your profile to defaults
+update public.profile set quote_visible_fields = null, quote_importer_enabled = false;
+```
+
+> Quotes' optional `show_id`/`book_id` links are `ON DELETE SET NULL`, so wiping Shows/Books only nulls
+> those columns on surviving quotes (the denormalised author/title/source type stay). Wiping `quote`
+> never touches `show`/`book`.
+
 - ✅ Check: open that module in the app — its lists are empty (Wellness shows the re-seeded starter
   activities after a reload), and the **other** modules' data is untouched.
 
 > **Multi-user note (future household project):** `truncate` clears every user's rows. To scope a wipe
 > to **yourself**, instead run `delete from <table> where user_id = '<your-user-id>';` on each module's
 > **own** tables — `activity`, `food`, `diary_entry` (Wellness) / `networth_snapshot` (Net Worth) /
-> `show` / `book` — and the child rows (`serving`, `strength_set`, `asset_entry`) cascade automatically.
+> `show` / `book` / `quote` — and the child rows (`serving`, `strength_set`, `asset_entry`) cascade
+> automatically.
 > Your user id is in **Supabase → Authentication → Users**.
 
 ---
