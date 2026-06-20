@@ -9,6 +9,10 @@ now encodes the correct approach.
 Net Worth is **feature-complete** (M1–M6) — see "Net Worth (build sequence)" below.
 **Shows** (TV & movies) is **feature-complete (M1–M7)** — see "Shows Build Sequence" below: schema,
 module scaffold, manual CRUD, TMDB metadata, Dashboard, Library filters/sort, Settings, CSV importer.
+**Books** (books read / to read) is **feature-complete (M1–M7)** — see "Books Build Sequence" below:
+schema, module scaffold, manual CRUD, Google Books / Open Library metadata, Dashboard, Library
+filters/sort, Settings, CSV importer. It re-skinned Shows; its `docs/06-books.md` staging spec has been
+merged into the permanent docs and deleted.
 
 ---
 
@@ -22,9 +26,10 @@ module scaffold, manual CRUD, TMDB metadata, Dashboard, Library filters/sort, Se
 - **Scripts:** `dev`, `build` (`tsc -b && vite build`), `preview`, `lint`, `format`, `typecheck`,
   `test`, `check` (all gates), `gen:types` (Supabase → `src/types/database.ts`), `prepare` (husky).
 - **Env (`.env`, gitignored; `.env.example` documents):** `VITE_SUPABASE_URL`,
-  `VITE_SUPABASE_ANON_KEY`, `VITE_USDA_API_KEY`, `VITE_TMDB_API_KEY`. All build-time `VITE_` vars.
+  `VITE_SUPABASE_ANON_KEY`, `VITE_USDA_API_KEY`, `VITE_TMDB_API_KEY`, and the optional
+  `VITE_GOOGLE_BOOKS_API_KEY` (Books). All build-time `VITE_` vars.
 - **Gates:** husky `.husky/pre-commit` → lint-staged + `typecheck` + `test`; GitHub Actions
-  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 137 Vitest tests (pure helpers).
+  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 190 Vitest tests (pure helpers).
 - **Deploy status:** Deployed. GitHub `main` → Vercel auto-deploy; the production URL is in the
   Supabase redirect URLs + Google JS origins (see `OWNER-RUNBOOK.md`). Installed + tested on iPhone (PWA).
 - Conventions (DB-access-via-`src/data`, metric storage, generated `database.ts` contract, etc.) live
@@ -506,7 +511,7 @@ false`. Additive columns on an existing table → RLS/grants/`moddatetime` alrea
 
 ### M7 — In-app CSV importer (Shows feature-complete)
 
-Goal: the one-off bulk importer to seed the back-catalogue — per-row TMDB resolution + idempotent
+Goal: the bulk importer to seed the back-catalogue — per-row TMDB resolution + idempotent
 commit. Launched from the M6 Settings toggle. No migration, no env.
 
 - **`.gitignore` first** (F7): added `shows-import*.csv` + `!templates/shows-import-template.csv`
@@ -525,6 +530,208 @@ type)` once → `dedupKey → id` map → update-or-insert (collapsing in-file d
   `saveImportedShows` + `bumpShows` → done ("N — C new, U updated"). Launcher added to `ShowsSettings`
   (shown when `show_importer_enabled`); route `/shows/import` opens over `/shows/settings`.
 - **Shows is now feature-complete (M1–M7).**
+
+## Books Build Sequence (per milestone)
+
+The Books module (books read / to read) is specced in `docs/06-books.md` (a staging doc whose
+sections merge into the permanent specs as each feature lands). Per that doc it is **"the Shows module
+re-skinned for books"**, so it drops into the multi-module architecture with no structural change and
+its build mirrors the Shows M1–M7 sequence. **Four owner decisions deviate from `06-books.md`** and
+are carried in the permanent docs as built: (1) the back-catalogue importer is **in-app, not a CLI
+script** (same reversal as Net Worth / Shows — an in-app preview lets the owner fix no-match/ambiguous
+Google Books rows inline); (2) a **Books Settings** screen (`/books/settings`) adds Entry
+field-visibility + an importer enable/disable toggle, synced on `profile` (mirrors Shows Settings);
+(3) the **Open Library fallback is built**, not parked, so titles Google Books lacks (and ISBN/cover
+lookup) still resolve; (4) the importer **reuses the in-house RFC-4180 parser `src/lib/csv.ts`, not
+Papa Parse** — verified against the real `templates/quotes-seed-local.csv` that `csv.ts` already
+handles quoted fields with embedded commas, `""` escapes, embedded newlines, and the Excel BOM, and
+the Books CSV (`title,author,rating,lgbtq_rep,end_date`) has no multi-line cells at all.
+
+### M1 — Schema + module registration + scaffold screens
+
+Goal: a runnable, navigable Books module behind a hub card, before any data layer or external API.
+
+- **Schema:** `20260620120000_books_schema.sql` — one `book` table (own `user_id` for direct RLS like
+  `show`; CHECKs on `status`/`lgbtq_rep` and `rating` 0–5 in 0.5 steps via
+  `(rating*2)=floor(rating*2)`; `index (user_id, status)`; 4 owner policies; `moddatetime`; explicit
+  grants). Unlike Shows' `poster_path`, `cover_url` stores a **full image URL** (Google Books / Open
+  Library return absolute URLs, no CDN base to prepend). **Hard delete** (leaf table; no `deleted_at`)
+  — the future Quotes `quote.book_id` link is `ON DELETE SET NULL` on `quote`, so it imposes no FK on
+  `book`. Imported rows leave `start_date`/`last_update_date` NULL by design. Owner reviews +
+  `supabase db push`, then `npm run gen:types` regenerates `database.ts` (the M2 data layer needs the
+  `book` row type).
+- **Module registration (drop-in):** `books` namespace in `constants/routes.ts`; a Books `ModuleDef`
+  in `constants/modules.ts` (tabs Dashboard + Library; `IconBook`); flat routes `/books`,
+  `/books/library`, `/books/entry`, `/books/:id` in `router.tsx`; `/books*` keys added to
+  `AppShell.TAB_FOR_PATH`. `Home` + `moduleForPath` need no change.
+- **Stub screens:** `BooksDashboard` / `BooksLibrary` / `BooksEntry` — navigable empty states (the real
+  shelves, list/filters/sort, and the Entry form arrive in M2–M5). The Dashboard's settings gear is
+  intentionally deferred to M6 (its route lands then), so M1 has no dead links. Exported from
+  `screens/index`.
+- Verified by `npm run typecheck` + manual click-through; the data-model section of `06-books.md` was
+  merged into `03-data-model.md` and the PRD module list / nav / non-goals updated. No new pure helpers
+  in M1, so the test count is unchanged (**137**).
+
+### M2 — Data layer + pure logic + manual Entry/Edit + basic Library
+
+Goal: a full **manual** CRUD loop (no Google Books yet) so the module is usable end-to-end.
+
+- **Pure layer** `src/lib/books.ts` (+`books.test.ts`, +8 tests → **145**): the `status`/`lgbtq_rep`
+  unions + label maps, the `BOOK_STATUS_CHIP` palette, `bookSearchText`, and the tested transitions
+  `startReading`/`markRead`. Simpler than `shows.ts` — no type/episode/watched-count logic.
+  `src/lib/books-refresh.ts` mirrors `shows-refresh`.
+- **Data** `src/data/book.ts`: list/get/create/update + **hard** `deleteBook`. (`saveImportedBooks`
+  lands in M7.)
+- **Shared-UI refactors (DRY).** Two Shows-coupled components were generalized rather than duplicated:
+  the 2:3 poster/cover tile was extracted into a presentational **`Thumb`** (`url` + `className`);
+  `PosterThumb` now delegates to it (keeping its `path`/`size` TMDB API, so Shows call sites are
+  unchanged) and a new **`CoverThumb`** wraps it for Books' full `cover_url`. **`StatusChip`** was made
+  presentational (`label` + palette `className`); the three Shows call sites
+  (`ShowsDashboard`/`ShowsLibrary`/`ImportShowsSheet`) now pass `SHOW_STATUS_LABELS`/`SHOW_STATUS_CHIP`,
+  and Books passes its own — one chip, no duplicated visual.
+- **Screens**: `BooksEntry` (full route `/books/entry` + `/books/:id`, not a sheet — outer loader +
+  inner form keyed by id per F8, single `draft` object, `JSON.stringify` dirty gate, RESET +
+  CREATE/SAVE; status→Reading defaults the start date, status→Read/Dropped defaults the finish date;
+  dates via `Calendar`). The Google Books metadata fields are **carried through** as nulls (M3 wires the
+  search that populates them). **Author(s) entered as one comma-separated string** in the form, split to
+  `text[]` on save and rejoined on load — simplest manual input; the M3 search will set the array
+  directly. `BooksLibrary` (search over `bookSearchText` + `SwipeRow` hard-delete with confirm, rows
+  show cover/status/stars, tap → edit). `BooksDashboard` stays the M1 stub until M4.
+- Verified by `npm run check` (all gates) + manual click-through (create → list → edit → delete; Shows
+  chips/posters regression-checked after the refactor).
+
+### M3 — Google Books + Open Library metadata
+
+Goal: pull cover + metadata into the Entry form on demand (search → details on select); persisted only
+on CREATE/SAVE.
+
+- **Client** `src/lib/books-api.ts` (+`books-api.test.ts`, +18 tests → **163**): browser-direct, two
+  APIs. `searchBooks` queries **Google Books** (`GET /volumes?q=`) and **falls back to Open Library**
+  (`GET /search.json`) on an empty result set **or** an error; `getBookDetails(result)` fetches the
+  Google volume or the Open Library work (the work JSON lacks authors/year/cover/isbn, so those are
+  carried from the search hit and merged). Pure mappers are unit-tested (`pickPublishYear` across
+  `YYYY`/`YYYY-MM`/`YYYY-MM-DD` + numeric, `httpsCover`, `pickIsbn` [ISBN_13 > ISBN_10], `capGenres`,
+  `olCoverUrl`, the Google + OL search/detail mappers incl. OL's string-or-`{value}` description); the
+  network calls aren't (matching `tmdb-api`/`food-api`/`fx`).
+- **Optional key — the one divergence from `tmdb-api.ts`.** Google Books works keyless (lower quota),
+  so `googleKeyParam()` appends `&key=` only when `VITE_GOOGLE_BOOKS_API_KEY` is set and **never
+  throws** (unlike `tmdb-api.ts#apiKey()`). The var is typed optional (`?`) in `vite-env.d.ts`.
+- **`cover_url` is a full image URL** (Google/OL return absolute URLs; Google thumbnails are normalized
+  `http→https`) — no CDN base, unlike Shows' `poster_path`.
+- **`BookSearchSheet`** (`src/components/BookSearchSheet.tsx`) is a **local** `fixed inset-0` overlay,
+  not a route sheet (same lesson as Shows `TitleSearchSheet` — a route sheet remounts Entry and
+  discards the draft). Reuses `SearchBar` + `CoverThumb`; returns the pick via `onSelect`.
+- **`BooksEntry`**: a **Search Google Books** button opens the overlay; `selectBook` merges the fetched
+  `BookMetadata` (authors array → the comma-joined string; year → string; cover/description/genres/
+  page_count/language/isbn/ids) while keeping the user's Status/Rating/LGBT+/dates/comments; a read-only
+  metadata block renders when populated. Title/Author/Year stay editable.
+- **Config**: `VITE_GOOGLE_BOOKS_API_KEY` added to `vite-env.d.ts` + `.env.example`; OWNER-RUNBOOK gained
+  an optional "Part C3 — Google Books key" + env/Vercel/smoke-test/credentials-table entries.
+
+### M4 — Books Dashboard
+
+Goal: replace the `BooksDashboard` stub with the real shelves + quick actions. Mostly assembly of
+existing tested helpers + the M2 transitions; no schema/API change.
+
+- **Selectors** (`src/lib/books.ts`, +5 tests → **168**): `currentlyReading`, `wantToRead(limit)`,
+  `recentlyRead(limit)` (read + non-null `end_date`, newest first — imported NULL-date rows are excluded
+  by design), and `countReadThisYear`. Direct parallels of the Shows selectors.
+- **`BooksDashboard`**: sticky header (title + `+` New); `useAsync(listBooks)` keyed on
+  `useBooksVersion`; shelves as `SectionCard`s shown only when non-empty (Currently Reading / Recently
+  Read / Want to Read, per `06-books.md` order); a compact local `DashRow` (`CoverThumb` + two lines +
+  optional trailing action). Quick actions reuse the pure transitions — **Mark Read** =
+  `updateBook(id, markRead(todayLocal()))`, **Start Reading** = `updateBook(id,
+startReading(todayLocal()))` — then `bumpBooks()`; an `updatingId` disables the button in-flight.
+- **Parity addition**: an "N read this year" stat line (`countReadThisYear`), mirroring the Shows
+  dashboard's "watched this year" — not in `06-books.md`, a re-skin nicety. **No type filter** (books
+  are one kind) and **no settings gear** (that lands in M6).
+- Verified by `npm run check` (all gates) + manual click-through (Mark Read / Start Reading move books
+  between shelves with today's dates).
+
+### M5 — Library filters + sort + cover thumbnails
+
+Goal: the full Library — cover rows + a filter panel + a Sort menu, search over Title/Author.
+
+- **Pure view** (`src/lib/books.ts`, +7 tests → **175**): `applyLibraryView(books, criteria)` filters
+  (query via `bookSearchText`; Status/Genre/Rating-min/LGBT+/**Author**; start & finish date ranges)
+  then sorts (`field × dir`, **nulls last** regardless of direction, stable title tiebreak; `date` key =
+  `end_date ?? last_update_date ?? updated_at`). Plus `bookGenres`/`bookAuthors` (facet options from the
+  user's own rows), `BOOK_STATUS_ORDER`, `LibraryCriteria` + `DEFAULT_LIBRARY_CRITERIA`. The only
+  divergence from the Shows view: an **Author** filter + sort field where Shows has **Type** (books are
+  one kind, so there's no Type `SegmentedTabs` either).
+- **`BooksLibrary`** rewritten: sticky header (search + a **Filters** toggle with an active-count + a
+  **Sort** `SelectMenu` + asc/desc button); a collapsible filter panel (the five `SelectMenu`s + two
+  date ranges via the `Calendar` overlay + Clear filters); cover rows (`CoverThumb`) with
+  title/year · author(s) · status·stars · genre·date. Rows come straight from `applyLibraryView`.
+- **Decision**: filter/sort state is **local** (resets on leaving the tab); URL-persistence and the
+  wide-screen sortable table are **parked** (`PARKED.md`). Rating filter is a **minimum**. Mirrors the
+  Shows M5 decisions.
+- Verified by `npm run check` (all gates) + manual filter/sort/search/swipe-delete click-through.
+
+### M6 — Books Settings + Entry field-visibility
+
+Goal: a Books Settings screen (the Wellness/Shows Settings split, mirrored) for Entry field-visibility +
+an importer-enable toggle, both synced on `profile`.
+
+- **Migration** `20260620130000_profile_book_settings.sql`: adds `profile.book_visible_fields text[]`
+  (**nullable — NULL = all visible**, default-on, no seeding) + `book_importer_enabled boolean default
+false`. Additive columns on an existing table → RLS/grants/`moddatetime` already cover them. Owner
+  `db push` + `gen:types`.
+- **Null-sentinel decision** (same as Shows): unlike `visible_nutrients` (defaults `'{}'` = none), Books
+  field visibility defaults **on** — hiding-by-default is wrong for an entry form, and a NULL sentinel
+  means new fields added later are visible without a data migration. `isFieldVisible(prefs, key)` =
+  `prefs == null || prefs.includes(key)` (`src/lib/books.ts`, +2 tests → **177**).
+- **Screens** (mirror `ShowsSettings`/`ShowsFieldsSheet`): `BooksSettings` (a **Visible Fields** row + an
+  **Enable CSV import** `Toggle` on `book_importer_enabled`) and `BooksFieldsSheet` (route `Sheet` of
+  per-field toggles over `BOOK_ENTRY_FIELDS`, auto-saving via `useProfileEditor`; initialised from
+  `book_visible_fields ?? all keys`). A **gear** was added to the `BooksDashboard`/`BooksLibrary` headers
+  (the spot left for it since M4/M5) → `/books/settings`; `/books/settings/visible` is the sheet.
+- **Entry** reads the prefs via `useProfile` and wraps each hideable field in `isFieldVisible(...)`
+  (Title/Status/Search always shown; the metadata block additionally gated on `'metadata'`). Hiding is
+  display-only — `save()` still writes the draft's loaded values, so no data is lost and the dirty check
+  is unaffected.
+- **Importer toggle persists in M6**; its launcher + the Import sheet (the `/books/import` route) land in
+  **M7** — for now Settings shows a hint instead of the launcher. Verified by `npm run check` + a
+  click-through (toggle a field off → it disappears from Entry; the importer toggle persists).
+
+### M7 — In-app CSV importer (Books feature-complete)
+
+Goal: the bulk importer to seed the back-catalogue — per-row Google Books resolution +
+idempotent commit. Launched from the M6 Settings toggle. No migration, no env.
+
+- **`.gitignore` first** (F7): added `books-import*.csv` + `!templates/books-import-template.csv` before
+  creating any CSV; only the sanitized `templates/books-import-template.csv` + guide are tracked.
+- **Pure layer** `src/lib/books-import.ts` (+`.test.ts`, +10 tests → **187**): `parseBooksCsv` (shares
+  `src/lib/csv.ts`; columns `title,author,rating,lgbtq_rep,end_date` — title+author required, rating
+  0–5/0.5 optional, `lgbtq_rep` blank→none, `end_date` `YYYY-MM-DD` optional), `dedupKey(title, author)`,
+  `buildImportRow(input, match)` — every row **Read**, `start_date`/`last_update_date` **NULL**,
+  `end_date` from the file; a no-match row keeps the CSV title/author with null metadata.
+- **Idempotent commit** `data/book.saveImportedBooks(userId, payloads)`: fetch existing `(id, title,
+authors)` once → `dedupKey(title, authors[0])` map → update-or-insert (collapsing in-file dupes).
+  **Dedup keys on the resolved (stored) title + first author**, so a CSV title that resolves to a
+  different Google Books title still re-matches on re-run (both runs resolve identically) — the same
+  decision Shows made.
+- **`ImportBooksSheet`** (route `Sheet`, mirrors `ImportShowsSheet`): pick file → resolve every row
+  against Google Books (`searchBooks` of `"title author"` top hit → `getBookDetails`) with a
+  **concurrency pool (5)** + progress → preview (cover, matched title/year, no-match / review flags) →
+  per-row **Change** reuses `BookSearchSheet` to re-pick → **Import** → `saveImportedBooks` + `bumpBooks`
+  → done ("N — C new, U updated"). Launcher added to `BooksSettings` (shown when
+  `book_importer_enabled`); route `/books/import` opens over `/books/settings`.
+- **Books is now feature-complete (M1–M7).** The `06-books.md` staging doc was deleted (all sections
+  merged into the permanent specs, incl. the `04-design-system` `Thumb`/`CoverThumb`/presentational
+  `StatusChip` + `BookSearchSheet` notes), and CLAUDE.md / README mark Books built.
+- **Post-launch — Google Books 429 resilience.** Live keyless search 429'd on rapid typing / the import
+  pool, and the OL fallback then hit `ERR_CONNECTION_RESET` (OL is network-blocked from some regions).
+  Fix: a distinct `BookSearchRateLimitError` (429) that **doesn't** fall back to OL; `AbortSignal`
+  support so the search overlay (debounce 600 ms) **cancels** the in-flight request on the next
+  keystroke; the importer pool dropped 5→3 with a per-row **429 backoff-retry**. The real fix for heavy
+  use is the optional `VITE_GOOGLE_BOOKS_API_KEY` (raises quota). Network calls stay un-unit-tested per
+  convention.
+- **Post-launch — Books search result ranking** (`rankSearchResults`, `books-api.ts`, +3 tests →
+  **190**): the **interactive** overlay re-ranks the fetched hits — titles that **start with** the typed
+  query first, then titles that **contain** it, then the rest; within a tier, **year descending**
+  (undated last), stable on the upstream Google-relevance order. The importer keeps the raw top hit (its
+  query is `"title author"`, so prefix ranking doesn't apply).
 
 ## Failures & gotchas to not repeat
 

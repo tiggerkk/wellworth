@@ -1,5 +1,6 @@
 import {
   IconApple,
+  IconBook,
   IconCalendarPlus,
   IconChartBar,
   IconDeviceTv,
@@ -73,6 +74,17 @@ export const MODULES: ModuleDef[] = [
     tabs: [
       { to: routes.shows.dashboard, label: 'Dashboard', Icon: IconChartBar, end: true },
       { to: routes.shows.library, label: 'Library', Icon: IconList },
+    ],
+  },
+  {
+    key: 'books',
+    label: 'Books',
+    Icon: IconBook,
+    base: routes.books.base,
+    description: 'Books read or to read, with Google Books metadata.',
+    tabs: [
+      { to: routes.books.dashboard, label: 'Dashboard', Icon: IconChartBar, end: true },
+      { to: routes.books.library, label: 'Library', Icon: IconList },
     ],
   },
 ]

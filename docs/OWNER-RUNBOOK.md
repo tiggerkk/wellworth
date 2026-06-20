@@ -84,6 +84,35 @@ Used by the **Shows** module to look up posters and metadata. Free, one signup.
 
 ---
 
+## Part C3 — Get a free Google Books key (recommended)
+
+Used by the **Books** module to look up covers and metadata. It's technically optional — Books search
+works without it — but the **keyless quota is very low and rate-limits (HTTP 429) almost immediately**
+in practice, so a key is recommended.
+
+1. In the Google Cloud console (the **same project** as your Google sign-in is fine), go to **APIs &
+   Services → Library**, search **Books API**, and **Enable** it.
+2. **APIs & Services → Credentials → Create credentials → API key**, then configure it:
+   - **Name**: anything, e.g. `WellWorth Books (browser)` — it's just a label. Do **not** check
+     "Authenticate API calls through a service account" — a plain API key is correct (the search reads
+     public data; a service account is the wrong credential type here).
+   - **Application restrictions → Websites** (your app is browser JavaScript). Add your origins with a
+     trailing `/*`: `http://localhost:5173/*` (local dev — match the port `npm run dev` prints), your
+     LAN address if you test on the phone (e.g. `http://192.168.1.50:5173/*`), and your production URL
+     (`https://your-app.vercel.app/*`). If you later get `403`s, an origin is missing — temporarily
+     switch to **None** to confirm the key works, then re-add the right patterns. (For a solo app,
+     leaving it on **None** with the API restriction below is also fine.)
+   - **API restrictions → Restrict key → Books API.** A `VITE_` key ships in your browser bundle and is
+     therefore **public**, so limiting it to this one free, read-only API caps any abuse.
+3. Copy the key.
+
+> ⚠️ Never put a **service-account / secret** key in a `VITE_` var — only this kind of restricted,
+> public, read-only API key.
+
+- ✅ Check: Books title search works, and with the key set you won't hit 429s on normal use.
+
+---
+
 ## Part D — Create the `.env` file (your secrets, kept off the internet)
 
 The app reads its configuration from a file named `.env` in the project root. It is intentionally
@@ -94,21 +123,24 @@ The app reads its configuration from a file named `.env` in the project root. It
    > Copy-Item .env.example .env
    ```
 2. Open `.env` in a text editor (e.g. Notepad: `> notepad .env`) and fill in the values from
-   Parts B, C, and C2. It should look like this (no quotes, no spaces around `=`):
+   Parts B, C, C2, and C3. It should look like this (no quotes, no spaces around `=`):
    ```
    VITE_SUPABASE_URL=https://abcd1234.supabase.co
    VITE_SUPABASE_ANON_KEY=eyJhbGciOi...your-long-anon-key...
    VITE_USDA_API_KEY=your-usda-key
    VITE_TMDB_API_KEY=your-tmdb-v3-key
+   VITE_GOOGLE_BOOKS_API_KEY=your-google-books-key
    ```
    - `VITE_SUPABASE_URL` — the Project URL from Part B.
    - `VITE_SUPABASE_ANON_KEY` — the anon public key from Part B.
    - `VITE_USDA_API_KEY` — the USDA key from Part C.
    - `VITE_TMDB_API_KEY` — the TMDB v3 key from Part C2.
-     Save and close.
+   - `VITE_GOOGLE_BOOKS_API_KEY` — Google Books key from Part C3 (recommended; blank works but
+     rate-limits quickly). Save and close.
 
-- ✅ Check: `.env` exists and has all four lines filled. (These get baked into the app when it
-  builds, so if you change them later you must rebuild/redeploy.)
+- ✅ Check: `.env` exists with the four required lines filled (the Google Books line is optional but
+  recommended). (These get baked into the app when it builds, so if you change them later you must
+  rebuild/redeploy — and **restart `npm run dev`**, since Vite only reads `.env` at startup.)
 
 ---
 
@@ -252,6 +284,8 @@ phone over Wi-Fi; see "Test on your iPhone over Wi-Fi" below.)
   5. In **Add Food**, search e.g. "egg" → results appear (this confirms the USDA key works).
   6. In **Shows → Library → New Show → Search TMDB**, type e.g. "matrix" → poster results appear (this
      confirms the TMDB key works).
+  7. In **Books → Library → New Book → Search Google Books**, type e.g. "dune" → cover results appear
+     (this works with or without the optional Google Books key).
 - To stop the dev server: press `Ctrl + C` in the terminal.
 
 > Barcode scanning needs the camera, which browsers only allow over HTTPS. It works on your computer
@@ -348,12 +382,13 @@ and run the two commands again. Once the commit succeeds:
 1. Go to <https://vercel.com>, sign up with your GitHub account.
 2. **Add New… → Project** → import the `wellworth` repository. Vercel auto-detects it as a **Vite**
    app (build command `npm run build`, output `dist`) — leave those defaults.
-3. Expand **Environment Variables** and add the same three from your `.env` (these get used at build
+3. Expand **Environment Variables** and add the same ones from your `.env` (these get used at build
    time, so they must be set before deploying):
    - `VITE_SUPABASE_URL` = your Project URL
    - `VITE_SUPABASE_ANON_KEY` = your anon key
    - `VITE_USDA_API_KEY` = your USDA key
    - `VITE_TMDB_API_KEY` = your TMDB v3 key
+   - `VITE_GOOGLE_BOOKS_API_KEY` = your Google Books key (optional — omit if you skipped Part C3)
 4. Click **Deploy**. When it finishes, copy your app's address, e.g.
    `https://wellworth-xxxx.vercel.app`.
 5. **Point Google + Supabase at the live address** (sign-in will fail until you do):
@@ -454,6 +489,7 @@ no full reset needed, and your foods and diary history are kept.
 | DB password               | you set it at project creation | `SUPABASE_DB_PASSWORD` (for `db push`)          |
 | USDA key                  | api.data.gov/signup            | `.env` `VITE_USDA_API_KEY` + Vercel env         |
 | TMDB key                  | themoviedb.org → Settings→API  | `.env` `VITE_TMDB_API_KEY` + Vercel env         |
+| Google Books key (opt.)   | Google Cloud → Books API       | `.env` `VITE_GOOGLE_BOOKS_API_KEY` + Vercel env |
 | Google Client ID + secret | Google Cloud → Clients         | Supabase → Auth → Providers → Google            |
 | Supabase callback URL     | Supabase Google provider page  | Google Cloud → Authorized redirect URIs         |
 | Vercel app URL            | after first deploy             | Google JS origins + Supabase Site/Redirect URLs |

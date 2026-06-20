@@ -18,6 +18,10 @@ Nutrient sets are stored as JSONB maps (`nutrient_key → amount`), validated ag
   (default-on, no seeding); an explicit array once trimmed in Shows Settings
 - `show_importer_enabled` BOOLEAN NOT NULL DEFAULT false — surfaces the Shows in-app CSV importer
   (the two `show_*` columns are added by `supabase/migrations/20260617130000_profile_show_settings.sql`)
+- `book_visible_fields` TEXT[] NULL — Books Entry-form field visibility; **NULL = all visible**
+  (default-on, no seeding); an explicit array once trimmed in Books Settings
+- `book_importer_enabled` BOOLEAN NOT NULL DEFAULT false — surfaces the Books in-app CSV importer
+  (the two `book_*` columns are added by `supabase/migrations/20260620130000_profile_book_settings.sql`)
 - `created_at`, `updated_at` TIMESTAMPTZ
 
 ### food (custom items + cached USDA/Off items the user favorited or logged)
@@ -159,10 +163,36 @@ The migration is `supabase/migrations/20260615120000_networth_schema.sql`.
 
 Standard rules apply: own `user_id` for direct RLS, four owner policies using `(select auth.uid()) = user_id`, `CHECK` on the enum columns, `moddatetime` trigger on `updated_at`, explicit `GRANT` to `anon`/`authenticated`. Imported back-catalogue rows leave the three dates NULL (genuinely unknown). The migration is `supabase/migrations/20260617120000_shows_schema.sql`.
 
+### book (one row per tracked book)
+
+- `id` UUID PK
+- `user_id` UUID → auth.users (ON DELETE CASCADE)
+- `status` TEXT — 'want' | 'reading' | 'read' | 'dropped' (CHECK)
+- `google_books_id` TEXT NULL — enables a future "refresh metadata"
+- `open_library_id` TEXT NULL — Open Library work/edition key (fallback source)
+- `isbn` TEXT NULL — stable cross-reference
+- `title` TEXT, `authors` TEXT[] NULL, `year` INT NULL — first-published year
+- `cover_url` TEXT NULL — **full image URL** (Google Books / Open Library); unlike Shows'
+  `poster_path`, no CDN base is prepended
+- `description` TEXT NULL
+- `genres` TEXT[] NULL
+- `page_count` INT NULL — informational only (no progress tracking)
+- `language` TEXT NULL
+- `rating` NUMERIC NULL — user stars, 0–5 in 0.5 steps (CHECK)
+- `lgbtq_rep` TEXT DEFAULT 'none' — LGBT+ representation: 'none' | 'some' | 'significant' (CHECK)
+- `start_date` DATE NULL, `end_date` DATE NULL — finish/drop date
+- `last_update_date` DATE NULL — defaults to today in the UI, editable; NULL for imported rows
+- `comments` TEXT NULL
+- `created_at`, `updated_at`
+- Index on (`user_id`, `status`).
+
+Standard rules apply: own `user_id` for direct RLS, four owner policies using `(select auth.uid()) = user_id`, `CHECK` on the enum columns, `moddatetime` trigger on `updated_at`, explicit `GRANT` to `anon`/`authenticated`. **Hard delete** (leaf table — nothing references `book`; no `deleted_at`). The future Quotes module's optional `quote.book_id` link is declared `ON DELETE SET NULL` on `quote`, so it imposes no FK here. Imported back-catalogue rows get `status = 'read'`, the file's `end_date`, and NULL `start_date`/`last_update_date`. The migration is `supabase/migrations/20260620120000_books_schema.sql`.
+
 ## Relationships
 
 profile 1—_ food, activity, diary_entry · food 1—_ serving · food 1—_ diary_entry ·
-activity 1—_ diary_entry · diary_entry 1—\* strength_set · profile 1—\* show.
+activity 1—_ diary_entry · diary_entry 1—\* strength_set · profile 1—\* show ·
+profile 1—\* book. (Future: book 1—\* quote — optional, ON DELETE SET NULL.)
 
 ## Soft deletes
 

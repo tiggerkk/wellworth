@@ -1,12 +1,18 @@
-import { SHOW_STATUS_CHIP, SHOW_STATUS_LABELS, type ShowStatus } from '../lib/shows'
+interface StatusChipProps {
+  /** The label to show (e.g. 'Watching', 'Reading'). */
+  label: string
+  /** Palette classes for this status (from the module's `*_STATUS_CHIP` map). */
+  className: string
+}
 
-/** A status pill (Want to Watch / Watching / Watched / Dropped) in the per-status palette. */
-export function StatusChip({ status }: { status: ShowStatus }) {
+/** A status pill in a module-supplied palette. Presentational — Shows and Books pass their own
+ * label + palette so the single chip serves both without duplicating the visual. */
+export function StatusChip({ label, className }: StatusChipProps) {
   return (
     <span
-      className={`inline-flex items-center rounded-pill px-2 py-0.5 text-[11px] font-medium ${SHOW_STATUS_CHIP[status]}`}
+      className={`inline-flex items-center rounded-pill px-2 py-0.5 text-[11px] font-medium ${className}`}
     >
-      {SHOW_STATUS_LABELS[status]}
+      {label}
     </span>
   )
 }

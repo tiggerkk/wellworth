@@ -31,6 +31,11 @@ networth-*.csv
 shows-import*.csv
 !templates/shows-import-template.csv
 
+# Books — real read-history import lists must never be committed. Only the
+# sanitized templates/books-import-template.csv is tracked.
+books-import*.csv
+!templates/books-import-template.csv
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

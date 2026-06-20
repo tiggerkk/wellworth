@@ -26,14 +26,14 @@ Then run `npm run format` so the docs pass Prettier.
 
 ## Scope discipline
 
-- Built modules: **Wellness, Net Worth, and Shows** (all feature-complete).
+- Built modules: **Wellness, Net Worth, Shows, and Books** (all feature-complete).
 - Steps are entered **manually**. Do not attempt HealthKit / native step sync (impossible in a PWA).
 
 ## App structure (multi-module — current state)
 
 The app is a multi-module PWA behind a **Home hub** (`/home`): module cards launch into **Wellness**
-(`/wellness/*`), **Net Worth** (`/networth/*`), or **Shows** (`/shows/*`); `/` redirects to the
-last-used module. Adding a module is a **drop-in** — append a `ModuleDef` to
+(`/wellness/*`), **Net Worth** (`/networth/*`), **Shows** (`/shows/*`), or **Books** (`/books/*`); `/`
+redirects to the last-used module. Adding a module is a **drop-in** — append a `ModuleDef` to
 `src/constants/modules.ts` + its routes.
 
 - **Routing:** flat children of one `<AppShell/>` in `src/router.tsx`; **all path strings live in
@@ -43,7 +43,8 @@ last-used module. Adding a module is a **drop-in** — append a `ModuleDef` to
   sheet. `/` → `RootRedirect` (last-used module via `src/lib/last-module.ts`, else `/home`).
 - **Settings is split:** global `/settings` (profile, units, account) from the hub gear; per-module
   sub-settings from a gear in the module header — Wellness at `/wellness/settings` (protein target,
-  nutrient display) and Shows at `/shows/settings` (Entry field-visibility, CSV-importer toggle).
+  nutrient display), Shows at `/shows/settings`, and Books at `/books/settings` (each: Entry
+  field-visibility + CSV-importer toggle).
 - **Net Worth (built):** two tables `networth_snapshot` + `asset_entry` (migration `supabase/migrations/20260615120000_networth_schema.sql`). Data:
   `src/data/networth-snapshot.ts` + `asset-entry.ts` — write path `saveSnapshotEntries` is an
   **idempotent create-or-replace per month** (reused by the importer). Calc `src/lib/networth.ts`; FX
@@ -59,12 +60,26 @@ last-used module. Adding a module is a **drop-in** — append a `ModuleDef` to
   `posterUrl`, transitions `markWatched`/`startWatching`, selectors `applyLibraryView`/`recentlyWatched`,
   `SHOW_ENTRY_FIELDS`/`isFieldVisible`); refresh tick `src/lib/shows-refresh.ts`. **TMDB** browser
   client `src/lib/tmdb-api.ts` (`VITE_TMDB_API_KEY`, search + details on demand; persist only on
-  CREATE/SAVE); one-off CSV importer `src/lib/shows-import.ts`. Components `StarRating` / `ShowTypeBadge`
+  CREATE/SAVE); CSV importer `src/lib/shows-import.ts`. Components `StarRating` / `ShowTypeBadge`
   / `StatusChip` / `PosterThumb` / `SelectMenu` / `TitleSearchSheet` (local overlay — **not** a route
   sheet, so the Entry form survives). Screens `ShowsDashboard` / `ShowsLibrary` / `ShowsEntry` /
   `ShowsSettings` / `ShowsFieldsSheet` / `ImportShowsSheet`. **Calendar** was generalized to a
   presentational component with an optional `loadCues` (Wellness Diary injects food/activity dots;
   Shows date pickers pass none).
+- **Books (built):** one table `book` (migration `supabase/migrations/20260620120000_books_schema.sql`)
+  plus two `profile` columns `book_visible_fields` / `book_importer_enabled`
+  (`20260620130000_profile_book_settings.sql`). Data `src/data/book.ts` (CRUD + idempotent
+  `saveImportedBooks`). Pure logic `src/lib/books.ts` (status/LGBT+ enums, status-chip palette,
+  transitions `markRead`/`startReading`, selectors `applyLibraryView`/`recentlyRead`/`currentlyReading`/
+  `wantToRead`, `bookGenres`/`bookAuthors`, `BOOK_ENTRY_FIELDS`/`isFieldVisible`); refresh tick
+  `src/lib/books-refresh.ts`. **Google Books** (Open Library fallback) browser client
+  `src/lib/books-api.ts` (**optional** `VITE_GOOGLE_BOOKS_API_KEY` — never throws when unset; search +
+  details on demand; `cover_url` is a full image URL, no CDN base; persist only on CREATE/SAVE);
+  CSV importer `src/lib/books-import.ts`. Books **re-skins Shows**: it reuses `StarRating` / `Calendar` /
+  `SegmentedTabs` / `SelectMenu` / `SwipeRow`, the shared `Thumb` (via `CoverThumb`), the presentational
+  `StatusChip`, and `BookSearchSheet` (local overlay — **not** a route sheet, so the Entry form
+  survives). No type badge (all books). Screens `BooksDashboard` / `BooksLibrary` / `BooksEntry` /
+  `BooksSettings` / `BooksFieldsSheet` / `ImportBooksSheet`.
 
 ## Stack (do not substitute without asking)
 

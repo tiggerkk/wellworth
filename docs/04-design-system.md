@@ -67,19 +67,24 @@ _not_ the primary-button color; it's for emphasis, active states, and energy.
   dots + legend are drawn only when a caller passes an optional `loadCues(monthStart, monthEnd)`
   loader (Wellness Diary draws food/activity dots; Shows date pickers pass none).
 - **StarRating** — 0–5 **half-star** rating; display (no `onChange`) or input (two half-width
-  hit-zones per star; tap the current value to clear). Reused on Shows Entry + Library rows.
+  hit-zones per star; tap the current value to clear). Reused on Shows + Books Entry + Library rows.
 - **ShowTypeBadge** — small chip with a TV (`IconDeviceTv`) or movie (`IconMovie`) icon, on every
-  Shows row/poster.
-- **StatusChip** — Shows status pill in the per-status palette: Want = neutral (`input`), Watching =
-  coral (`accent`), Watched = teal (`positive`), Dropped = grey (`track`).
-- **PosterThumb** — the poster thumbnail component (`src/components/PosterThumb.tsx`): a 2:3 rounded
-  image from TMDB (`posterUrl` in `src/lib/shows.ts`, `w92` in search/list rows, `w185` on Entry) or
-  a neutral `bg-input` tile when `poster_path` is null. Reused by Title Search, the Dashboard rows,
-  and (M5) the Library.
-- **TitleSearchSheet** — TMDB title search, a **local** full-screen overlay inside Entry (not the
-  routing `Sheet`): search bar + poster-thumb result rows; selecting a row populates the live form.
+  Shows row/poster. (Books have no type badge — all books are one kind.)
+- **StatusChip** — a **presentational** status pill taking a `label` + palette `className`, so Shows
+  and Books share one chip. Both use the same per-status palette tokens: neutral (`input`) / coral
+  (`accent`, active) / teal (`positive`) / grey (`track`) — Shows = Want/Watching/Watched/Dropped,
+  Books = Want to Read/Reading/Read/Dropped.
+- **Thumb** — the shared presentational 2:3 rounded image-or-placeholder (`src/components/Thumb.tsx`,
+  `url` + `className`; a neutral `bg-input` tile when `url` is null). **PosterThumb** (Shows) wraps it,
+  resolving the TMDB `posterUrl` (`w92` list / `w185` detail); **CoverThumb** (Books) wraps it with the
+  full `cover_url` (Google Books / Open Library — no CDN base). Used by search sheets, Dashboard rows,
+  and Library rows in both modules.
+- **TitleSearchSheet** / **BookSearchSheet** — metadata title search, a **local** full-screen overlay
+  inside Entry (not the routing `Sheet`, which would remount Entry and lose the draft): search bar +
+  cover/poster-thumb result rows; selecting a row populates the live form. Shows scopes by Type (TMDB);
+  Books searches Google Books (Open Library fallback).
 - **SelectMenu** — a compact dropdown (button + label + chevron → scrim + absolute menu of
-  `{value,label}` options); generic over string options. Used by the Shows Library filters + sort.
+  `{value,label}` options); generic over string options. Used by the Shows + Books Library filters/sort.
 - **MonthPicker** — month/year picker (year stepper over a month grid, OK/Cancel) for the Net Worth month selector (a local overlay, not a route).
 - **EnergyBalanceCard** — Consumed / BMR / Activity / bold Net.
 - **NutrientReport** — shared body of Dashboard + Daily Report (energy card + visible-nutrient sections).

@@ -11,6 +11,8 @@ import {
   markWatched,
   progressLabel,
   recentlyWatched,
+  SHOW_STATUS_CHIP,
+  SHOW_STATUS_LABELS,
   startWatching,
   type ShowRow,
   type ShowStatus,
@@ -151,7 +153,12 @@ export function ShowsDashboard() {
                   key={s.id}
                   show={s}
                   onEdit={() => editShow(s.id)}
-                  secondary={<StatusChip status={s.status as ShowStatus} />}
+                  secondary={
+                    <StatusChip
+                      label={SHOW_STATUS_LABELS[s.status as ShowStatus]}
+                      className={SHOW_STATUS_CHIP[s.status as ShowStatus]}
+                    />
+                  }
                   action={
                     <ActionButton
                       label="Mark Watched"

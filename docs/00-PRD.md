@@ -2,7 +2,7 @@
 
 ## Overview
 
-**WellWorth** is a personal mobile app — a private "super-app" of self-contained modules for one household. It launches to a Home hub of module cards; the modules are (1) Wellness — food, supplements, and activity with full nutrient reporting — (2) Net Worth, and (3) Shows — tracking TV shows and movies watched or to watch. Further modules (e.g. inspirational quotes) may be added later as new cards with no structural change. The Wellness module is modeled on the Cronometer app's look and feel, simplified to one person's needs. It is delivered as an installable PWA (web app added to the iPhone/iPad home screen) so it needs no Apple Developer account and is free to run.
+**WellWorth** is a personal mobile app — a private "super-app" of self-contained modules for one household. It launches to a Home hub of module cards; the modules are (1) Wellness — food, supplements, and activity with full nutrient reporting — (2) Net Worth, (3) Shows — tracking TV shows and movies watched or to watch — and (4) Books — tracking books read or to read. Further modules (e.g. inspirational quotes) may be added later as new cards with no structural change. The Wellness module is modeled on the Cronometer app's look and feel, simplified to one person's needs. It is delivered as an installable PWA (web app added to the iPhone/iPad home screen) so it needs no Apple Developer account and is free to run.
 
 ## Users
 
@@ -15,16 +15,17 @@
 - Wellness: Fast daily logging of food, supplements, and activity; accurate micronutrient reporting; energy balance: calories consumed vs. BMR vs. activity, with a clear net number.
 - Net Worth: Monthly (first-of-month) entry of asset values across cash, time deposits, stocks, mutual funds, retirement funds, insurance, and properties, in HKD (base), CNY, or USD; net-worth calculation in base currency; total and by-asset-type trend graphs with a selectable time window.
 - Shows: track TV shows and movies across a single **status** (Want to Watch / Watching / Watched / Dropped); a three-level **LGBT+ representation** rating (None / Some / Significant); pull metadata (poster, genres, director/creator, cast, seasons & episode counts) from **TMDB** on demand; a Dashboard of what's in progress and recently finished, and a searchable, filterable, sortable Library. A back-catalogue of hundreds of titles is seeded via an in-app importer.
+- Books: track books across a single **status** (Want to Read / Reading / Read / Dropped); a three-level **LGBT+ representation** rating (None / Some / Significant); pull metadata (cover, authors, year, description, genres, page count) from **Google Books** (Open Library fallback) on demand; a Dashboard of what's in progress and recently read, and a searchable, filterable, sortable Library. A back-catalogue is seeded via an in-app importer.
 - Works identically on iPhone and iPad, with data synced across both devices.
 - Modular by design: each feature is a self-contained module under the Home hub, so new modules drop in as a card + route without restructuring existing ones.
 - Entirely free to run; easy to maintain by one non-expert owner.
 
 ## Navigation model
 
-- The app launches to a Home hub — a launcher of module cards (Wellness, Net Worth, Shows, and future modules), styled with the existing dark surface cards and Tabler icons.
-- Selecting a module enters it; the bottom nav then shows that module's own tabs (Wellness keeps Dashboard / Diary / Library; Net Worth and Shows show their own), with a persistent way back to Home.
-- Settings is global, lifted to the Home level (profile, units, account apply across all modules); a module may add its own sub-settings (e.g. Wellness targets/display; Shows field-visibility + importer).
-- Routing is URL-driven per module (/wellness/_, /networth/_, /shows/_, future /quotes/_).
+- The app launches to a Home hub — a launcher of module cards (Wellness, Net Worth, Shows, Books, and future modules), styled with the existing dark surface cards and Tabler icons.
+- Selecting a module enters it; the bottom nav then shows that module's own tabs (Wellness keeps Dashboard / Diary / Library; Net Worth, Shows, and Books show their own), with a persistent way back to Home.
+- Settings is global, lifted to the Home level (profile, units, account apply across all modules); a module may add its own sub-settings (e.g. Wellness targets/display; Shows and Books field-visibility + importer).
+- Routing is URL-driven per module (/wellness/_, /networth/_, /shows/_, /books/_, future /quotes/\_).
 - On launch, the app reopens the last-used module so daily Wellness use isn't slowed by the hub.
 - The hub makes adding future modules a drop-in (a `ModuleDef` + its routes).
 
@@ -51,8 +52,16 @@
 - **Dashboard** (`/shows`): shelves of **Up Next** (in-progress TV with episode progress), **Watching**, **Want to Watch**, and **Recently Watched** (last 5 by finish date), each shown only when non-empty; a **type filter** (All / TV / Movies); quick actions **Mark Watched** and **Start Watching**; a "N watched this year" stat line; a `+` to a blank Entry.
 - **Entry / Edit** (`/shows/entry`, `/shows/:id`): a **Search TMDB** title lookup populates metadata (poster, genres, director/creator, top cast, overview, runtime, season/episode totals) on select; Type (TV/Movie), Status, manual **star rating** (0–5, half-stars), a three-way **LGBT+ representation** control, start/finish/last-update dates (Calendar), TV watched/total counts, and comments; **RESET / CREATE / SAVE**. Nothing is saved until CREATE/SAVE.
 - **Library** (`/shows/library`): a poster-thumbnail list with search (title, director, cast) + filters (Type, Genre, Rating, LGBT+, Status, start/finish date ranges) + a Sort menu; tap a row to edit, swipe-left to delete (hard, with confirm).
-- **Settings** (`/shows/settings`): choose which Entry fields are visible; enable a one-off **CSV importer** (`/shows/import`) that matches each row against TMDB (with inline fix for ambiguous/no-match rows) and commits idempotently. Columns + rules: `templates/shows-import-guide.md`.
+- **Settings** (`/shows/settings`): choose which Entry fields are visible; enable a **CSV importer** (`/shows/import`) that matches each row against TMDB (with inline fix for ambiguous/no-match rows) and commits idempotently. Columns + rules: `templates/shows-import-guide.md`.
 - **TMDB metadata only on demand**; images store just `poster_path` (URLs built from the CDN base). Imported rows have NULL dates, so they live in the Library, not the Dashboard's recent shelf.
+
+## Books
+
+- **Dashboard** (`/books`): **Currently Reading**, **Recently Read** (last 5 by finish date), and a **Want to Read** shelf, each shown only when non-empty; quick actions **Mark Read** (status → read, finish date → today) and **Start Reading** (status → reading, start date → today); a `+` to a blank Entry. Cover thumbnails throughout.
+- **Entry / Edit** (`/books/entry`, `/books/:id`): a title/author **Search Google Books** lookup populates metadata (cover, authors, year, description, genres, page count) on select; Status, manual **star rating** (0–5, half-stars), a three-way **LGBT+ representation** control, start/finish/last-update dates (Calendar), and comments; **RESET / CREATE / SAVE**. Nothing is saved until CREATE/SAVE; CREATE requires at least a Title.
+- **Library** (`/books/library`): a cover-thumbnail list with search (title, author) + filters (Genre, Rating, LGBT+, Status, Author, start/finish date ranges) + a Sort menu; tap a row to edit, swipe-left to delete (hard, with confirm).
+- **Settings** (`/books/settings`): choose which Entry fields are visible; enable a **CSV importer** (`/books/import`) that matches each row against Google Books (with inline fix for ambiguous/no-match rows) and commits idempotently. Columns + rules: `templates/books-import-guide.md`.
+- **Metadata only on demand** from **Google Books** (Open Library fallback); `cover_url` stores a full image URL, and `google_books_id`/`open_library_id`/`isbn` are kept for a future "refresh metadata". Imported rows get `status = read` with the file's finish date and NULL start/last-update dates, so they live in the Library and the Recently Read shelf, not as in-progress.
 
 ## Out of scope / non-goals
 
@@ -83,6 +92,13 @@
 - **Watch-provider / streaming availability**, **trailers**, **keywords/recommendations**.
 - **Refresh metadata** action (re-pull a show that added a season) — `tmdb_id` is stored to enable it later.
 - **Watch history / multiple rewatches** — one record per title, single start/finish.
+
+### Books
+
+- **Page / reading-progress, audiobooks, format, series** — deliberately omitted (status only).
+- **Refresh metadata** action — `google_books_id` (and `open_library_id`/`isbn`) are stored to enable it later.
+- **Discover Quotes for books** (Wikiquote auto-fetch) — parked with the future Quotes module.
+- **Reading history / multiple re-reads** — one record per book, single start/finish.
 
 ## Key constraints
 

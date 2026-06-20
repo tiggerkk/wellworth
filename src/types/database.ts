@@ -115,6 +115,81 @@ export type Database = {
           },
         ]
       }
+      book: {
+        Row: {
+          authors: string[] | null
+          comments: string | null
+          cover_url: string | null
+          created_at: string
+          description: string | null
+          end_date: string | null
+          genres: string[] | null
+          google_books_id: string | null
+          id: string
+          isbn: string | null
+          language: string | null
+          last_update_date: string | null
+          lgbtq_rep: string
+          open_library_id: string | null
+          page_count: number | null
+          rating: number | null
+          start_date: string | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+          year: number | null
+        }
+        Insert: {
+          authors?: string[] | null
+          comments?: string | null
+          cover_url?: string | null
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          genres?: string[] | null
+          google_books_id?: string | null
+          id?: string
+          isbn?: string | null
+          language?: string | null
+          last_update_date?: string | null
+          lgbtq_rep?: string
+          open_library_id?: string | null
+          page_count?: number | null
+          rating?: number | null
+          start_date?: string | null
+          status: string
+          title: string
+          updated_at?: string
+          user_id: string
+          year?: number | null
+        }
+        Update: {
+          authors?: string[] | null
+          comments?: string | null
+          cover_url?: string | null
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          genres?: string[] | null
+          google_books_id?: string | null
+          id?: string
+          isbn?: string | null
+          language?: string | null
+          last_update_date?: string | null
+          lgbtq_rep?: string
+          open_library_id?: string | null
+          page_count?: number | null
+          rating?: number | null
+          start_date?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+          year?: number | null
+        }
+        Relationships: []
+      }
       diary_entry: {
         Row: {
           activity_id: string | null
@@ -308,6 +383,8 @@ export type Database = {
         Row: {
           activity_factor: number
           birthday: string | null
+          book_importer_enabled: boolean
+          book_visible_fields: string[] | null
           created_at: string
           height_cm: number | null
           highlighted_nutrients: string[]
@@ -324,6 +401,8 @@ export type Database = {
         Insert: {
           activity_factor?: number
           birthday?: string | null
+          book_importer_enabled?: boolean
+          book_visible_fields?: string[] | null
           created_at?: string
           height_cm?: number | null
           highlighted_nutrients?: string[]
@@ -340,6 +419,8 @@ export type Database = {
         Update: {
           activity_factor?: number
           birthday?: string | null
+          book_importer_enabled?: boolean
+          book_visible_fields?: string[] | null
           created_at?: string
           height_cm?: number | null
           highlighted_nutrients?: string[]

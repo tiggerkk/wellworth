@@ -2,7 +2,7 @@
 
 ## Navigation
 
-The app opens to a **Home hub** — a launcher of module cards (Wellness, Net Worth, Shows; more
+The app opens to a **Home hub** — a launcher of module cards (Wellness, Net Worth, Shows, Books; more
 later). Selecting a module enters it and the **bottom tab bar becomes that module's tabs**, with a
 **Home** item to return to the hub. On launch the app reopens the **last-used module**, so daily
 Wellness use skips the hub.
@@ -12,13 +12,16 @@ Wellness use skips the hub.
 - **Net Worth** tabs: **Home**, **Dashboard**, **Monthly Entry**.
 - **Shows** tabs: **Home**, **Dashboard**, **Library**. The Entry/Edit screen is a form reached from
   a `+` (new) or by tapping a Library/Dashboard row (edit).
+- **Books** tabs: **Home**, **Dashboard**, **Library**. Same shape as Shows; the Entry/Edit screen is
+  a form reached from a `+` (new) or by tapping a row (edit). A **gear** in the Books headers opens
+  Books Settings.
 - **Settings is global**, reached from a gear on the Home hub (profile, units, account — app-wide).
   Wellness-specific settings (protein target, nutrient display) live in **Wellness Settings**.
 
-Routing is URL-namespaced per module (`/wellness/*`, `/networth/*`, `/shows/*`); a future module
-drops in as a card + routes with no structural change. Modals (sheets) slide up over a module's tabs:
+Routing is URL-namespaced per module (`/wellness/*`, `/networth/*`, `/shows/*`, `/books/*`); a future
+module drops in as a card + routes with no structural change. Modals (sheets) slide up over a module's tabs:
 Calendar, Add Food, Food Detail, Add Activity, Activity Log, New Food, New Activity, Month Picker
-(Net Worth), Title Search (Shows).
+(Net Worth), Title Search (Shows), Book Search (Books).
 
 Diary groups, in order: **Breakfast, Lunch, Dinner, Snacks, Supplements, Activities**.
 
@@ -272,7 +275,7 @@ in the global Settings at the Home level).
 
 ## Shows - Import CSV (sheet, from Shows Settings)
 
-A one-off in-app bulk importer (the owner's choice over a script — same as Net Worth). Columns:
+An in-app bulk importer (the owner's choice over a script — same as Net Worth). Columns:
 `title,type,status,rating,lgbtq_rep,watched_seasons,watched_episodes` (see
 `templates/shows-import-guide.md`).
 
@@ -285,3 +288,92 @@ A one-off in-app bulk importer (the owner's choice over a script — same as Net
 - **Import** writes all rows **idempotently** (dedup on `type` + lower title — re-running the same
   file updates in place, never duplicates). Imported rows have **NULL dates**, so they appear in the
   Library but not the Dashboard's "Recently Watched".
+
+## Books - Dashboard
+
+- Shelves, each a card shown only when it has items, with a `+` (top-right) that opens a blank Entry.
+  There is no type filter (books are one kind):
+  - **Currently Reading** — all `status=reading`; each row shows the cover, title (+ year), and
+    author(s), plus a **Mark Read** action (status → read, finish → today).
+  - **Recently Read** — the last 5 by finish date (rows show the star rating + finish date). Imported
+    rows with no `end_date` don't appear here (they live in the Library).
+  - **Want to Read** — a short shelf of `status=want`, each with a **Start Reading** action (status →
+    reading, start → today).
+- A small stat line: "**N read this year**".
+
+## Books - Library
+
+- **Search bar** over a list of every tracked book — matches **Title and Author(s)**; a
+  **`+ New Book`** opens the blank Entry.
+- A **Filters** toggle opens a panel: **Status**, **Genre** (the genres present in your own rows),
+  **Rating** (minimum: Any / 1★+ … / 5★), **LGBT+** (Any/None/Some/Significant), **Author** (the
+  authors present in your own rows), and **Started-between** + **Finished-between** date ranges (each
+  bound via the Calendar modal, clearable). A count on the Filters button shows how many are active;
+  **Clear filters** resets them.
+- A **Sort** menu over { Date, Title, Author, Year, Status, Rating, Genre } with an **asc/desc** toggle
+  (nulls sort last); default is **Date** descending.
+- Each row: a **cover thumbnail** (2:3, neutral placeholder when there's no cover), title (+ year),
+  the author(s), a **status chip** (Want to Read / Reading / Read / Dropped), the **star rating** when
+  rated, the first genre, and the finish/updated date. Tap a row → **Entry/Edit**; **swipe-left →
+  Delete** (hard, with a confirm).
+- A **gear** in the Books Dashboard/Library headers opens **Books Settings**.
+- _Filter/sort state is per-visit (not persisted); a wide-screen sortable table is parked — see
+  `PARKED.md`._
+
+## Books - Entry / Edit (form)
+
+- Reached from the Library `+` (new, `/books/entry`) or by tapping a row (edit, `/books/:id`).
+- **Search Google Books** (a button) opens the **Title Search** modal; selecting a result fetches
+  details and populates the **metadata** — a cover thumbnail + Genres, Page count, Language,
+  Description (read-only display) — plus Title / Author(s) / Year (editable). Nothing is saved until
+  CREATE/SAVE; Title/Author/Year stay editable so manual entry and match corrections still work.
+- **Title** (required for CREATE), **Author(s)** (comma-separated), **Year**.
+- **Status** (Want to Read / Reading / Read / Dropped): choosing **Reading** defaults the **Start
+  Date** to today; choosing **Read** or **Dropped** defaults the **Finish / Drop date** to today.
+- **Rating**: a 0–5 **half-star** picker. **LGBT+ representation**: a None / Some / Significant
+  segmented control.
+- **Start Date**, **Finish / Drop Date**, **Last Update** — each opens the **Calendar** modal;
+  clearable. Start + Last Update default to today on a new entry.
+- **Comments** (textarea).
+- Top-right **RESET** + **CREATE/SAVE**, enabled only once something changes; CREATE needs a Title.
+- Which optional fields appear is controlled by **Books Settings → Visible Fields** (Title, Status and
+  the Search button are always shown); hiding a field is display-only and never drops saved data.
+
+## Books - Title Search (modal)
+
+- Mirrors the Shows **Title Search** pattern but is a **local overlay inside Entry** (not a route
+  sheet — a route sheet would remount the Entry form and lose in-progress edits): a search bar over
+  cover-thumbnail result rows (cover · title · author(s) · year). Tapping a result selects it
+  (triggers the details fetch + field population) and closes the modal; **X**/Esc/scrim cancels.
+- Results come from **Google Books**, falling back to **Open Library** when Google returns nothing.
+  The `VITE_GOOGLE_BOOKS_API_KEY` is **optional** (search works keyless at a lower quota), so a failure
+  is a network/quota issue, not a missing key.
+
+## Books - Settings (from the gear in the Books headers)
+
+Books-specific sub-settings (mirrors the Wellness/Shows Settings split; app-wide profile/units/account
+stay in the global Settings at the Home level). Reached from a **gear** in the Books Dashboard/Library
+headers.
+
+- **Entry Form → Visible Fields** opens a sub-screen of toggles over the optional Entry/Edit fields
+  (Author(s), Year, Rating, LGBT+, the three dates, Comments, Book metadata display). Stored on
+  `profile.book_visible_fields` (**NULL = all visible**); auto-saves per toggle. Title, Status and the
+  Search button are always shown and not listed.
+- **Import → Enable CSV import** toggle (`profile.book_importer_enabled`); when on, an **Import CSV…**
+  launcher appears that opens the importer sheet.
+
+## Books - Import CSV (sheet, from Books Settings)
+
+An in-app bulk importer (the owner's choice over a script — same as Net Worth / Shows). Columns:
+`title,author,rating,lgbtq_rep,end_date` (see `templates/books-import-guide.md`).
+
+- **Choose CSV** → rows are parsed/validated (bad rows listed as skipped) and each is **matched against
+  Google Books** (searching `title author` for the top hit, Open Library fallback) with a progress count.
+- A **preview list** shows each row's cover + matched title/year + author(s) + the **Read** status chip +
+  the parsed rating/finish date; rows nothing was found for are flagged **No match** and rows whose top
+  hit differs from the CSV title are flagged **review**. **Change** on any row opens the **Book Search**
+  modal to pick the correct book (or leave it as-is to import with the CSV values + no metadata).
+- **Import** writes all rows **idempotently** (dedup on lower(title) + lower(author) — re-running the
+  same file updates in place, never duplicates). Every imported row is **Read**; `start_date` /
+  `last_update_date` are **NULL** and `end_date` comes from the file, so imported books appear in the
+  Library and (when dated) the Dashboard's "Recently Read".

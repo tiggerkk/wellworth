@@ -6,6 +6,10 @@ import { useEnsureProfile } from '../hooks/useEnsureProfile'
 import { moduleForPath } from '../constants/modules'
 import { setLastModule } from '../lib/last-module'
 import {
+  BooksDashboard,
+  BooksEntry,
+  BooksLibrary,
+  BooksSettings,
   Dashboard,
   Diary,
   Library,
@@ -34,6 +38,10 @@ const TAB_FOR_PATH: Record<string, React.ReactNode> = {
   '/shows/library': <ShowsLibrary />,
   '/shows/entry': <ShowsEntry />,
   '/shows/settings': <ShowsSettings />,
+  '/books': <BooksDashboard />,
+  '/books/library': <BooksLibrary />,
+  '/books/entry': <BooksEntry />,
+  '/books/settings': <BooksSettings />,
 }
 
 export function AppShell() {

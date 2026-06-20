@@ -1,0 +1,485 @@
+import { useCallback, useState } from 'react'
+import { useNavigate, useParams } from 'react-router'
+import { IconSearch, IconX } from '@tabler/icons-react'
+import { useAuth } from '../auth/AuthProvider'
+import { useAsync } from '../hooks/useAsync'
+import { createBook, getBook, updateBook } from '../data/book'
+import {
+  BOOK_STATUS_LABELS,
+  BOOK_STATUSES,
+  isFieldVisible,
+  LGBTQ_REP_LABELS,
+  LGBTQ_REPS,
+  type BookRow,
+  type BookStatus,
+  type LgbtqRep,
+} from '../lib/books'
+import { getBookDetails, type BookSearchResult } from '../lib/books-api'
+import { useProfile } from '../hooks/useProfile'
+import { bumpBooks } from '../lib/books-refresh'
+import { formatDayLabel, todayLocal, type IsoDate } from '../lib/date'
+import { Calendar } from '../components/Calendar'
+import { BookSearchSheet } from '../components/BookSearchSheet'
+import { CoverThumb } from '../components/CoverThumb'
+import { PrimaryButton } from '../components/PrimaryButton'
+import { SecondaryButton } from '../components/SecondaryButton'
+import { SegmentedTabs } from '../components/SegmentedTabs'
+import { StarRating } from '../components/StarRating'
+
+interface BookDraft {
+  title: string
+  authors: string // comma-separated in the form; split to text[] on save
+  year: string
+  status: BookStatus
+  rating: number
+  lgbtq_rep: LgbtqRep
+  start_date: IsoDate | null
+  end_date: IsoDate | null
+  last_update_date: IsoDate | null
+  comments: string
+  // Carry-through metadata (Google Books / Open Library populate these in M3; persisted as-is).
+  cover_url: string | null
+  description: string | null
+  genres: string[] | null
+  page_count: number | null
+  language: string | null
+  google_books_id: string | null
+  open_library_id: string | null
+  isbn: string | null
+}
+
+const numStr = (n: number | null): string => (n != null ? String(n) : '')
+
+function blankDraft(): BookDraft {
+  const today = todayLocal()
+  return {
+    title: '',
+    authors: '',
+    year: '',
+    status: 'want',
+    rating: 0,
+    lgbtq_rep: 'none',
+    start_date: today,
+    end_date: null,
+    last_update_date: today,
+    comments: '',
+    cover_url: null,
+    description: null,
+    genres: null,
+    page_count: null,
+    language: null,
+    google_books_id: null,
+    open_library_id: null,
+    isbn: null,
+  }
+}
+
+function draftFromRow(row: BookRow): BookDraft {
+  return {
+    title: row.title,
+    authors: (row.authors ?? []).join(', '),
+    year: numStr(row.year),
+    status: row.status as BookStatus,
+    rating: row.rating ?? 0,
+    lgbtq_rep: (row.lgbtq_rep as LgbtqRep) ?? 'none',
+    start_date: row.start_date,
+    end_date: row.end_date,
+    last_update_date: row.last_update_date,
+    comments: row.comments ?? '',
+    cover_url: row.cover_url,
+    description: row.description,
+    genres: row.genres,
+    page_count: row.page_count,
+    language: row.language,
+    google_books_id: row.google_books_id,
+    open_library_id: row.open_library_id,
+    isbn: row.isbn,
+  }
+}
+
+/**
+ * Books — Entry / Edit (M2: manual). Outer loader + inner form keyed by id (so a stale `useAsync`
+ * result never mounts under the wrong title). Google Books title search + the read-only metadata
+ * block arrive in M3; the metadata columns are carried through unchanged for now.
+ */
+export function BooksEntry() {
+  const { id } = useParams()
+
+  const loadFn = useCallback(async (): Promise<BookDraft | null> => {
+    if (!id) return blankDraft()
+    const row = await getBook(id)
+    return row ? draftFromRow(row) : null
+  }, [id])
+  const { data: initial, loading, error } = useAsync(loadFn)
+
+  return (
+    <div className="flex h-full min-h-0 flex-col">
+      {loading && <p className="p-4 text-sm text-text-secondary">Loading…</p>}
+      {(error || (!loading && !initial)) && (
+        <p className="p-4 text-sm text-danger">Couldn’t load this book.</p>
+      )}
+      {!loading && initial && <BookForm key={id ?? 'new'} id={id} initial={initial} />}
+    </div>
+  )
+}
+
+const inputClass =
+  'w-full rounded-input bg-input px-3 py-2 text-[15px] text-text-primary focus:outline-none'
+
+function BookForm({ id, initial }: { id: string | undefined; initial: BookDraft }) {
+  const navigate = useNavigate()
+  const { session } = useAuth()
+  const userId = session?.user.id
+  const { data: profile } = useProfile()
+  // Entry field visibility (Books Settings). Title / Status / Search are always shown.
+  const show = (key: string) => isFieldVisible(profile?.book_visible_fields ?? null, key)
+
+  const [draft, setDraft] = useState<BookDraft>(initial)
+  const [saving, setSaving] = useState(false)
+  const [datePicker, setDatePicker] = useState<null | 'start' | 'end' | 'last'>(null)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [metaLoading, setMetaLoading] = useState(false)
+  const [metaError, setMetaError] = useState(false)
+
+  const update = (patch: Partial<BookDraft>) => setDraft((d) => ({ ...d, ...patch }))
+  const dirty = JSON.stringify(draft) !== JSON.stringify(initial)
+  const hasMeta =
+    !!draft.cover_url ||
+    !!draft.description ||
+    !!draft.genres?.length ||
+    draft.page_count != null ||
+    !!draft.language
+
+  // Selecting a search result fetches details and overwrites the metadata fields (incl. Title /
+  // Author(s) / Year), keeping the user's Status / Rating / LGBT+ / dates / comments.
+  async function selectBook(r: BookSearchResult) {
+    setSearchOpen(false)
+    setMetaLoading(true)
+    setMetaError(false)
+    try {
+      const m = await getBookDetails(r)
+      setDraft((d) => ({
+        ...d,
+        title: m.title || d.title,
+        authors: m.authors?.length ? m.authors.join(', ') : d.authors,
+        year: m.year != null ? String(m.year) : d.year,
+        cover_url: m.cover_url,
+        description: m.description,
+        genres: m.genres,
+        page_count: m.page_count,
+        language: m.language,
+        isbn: m.isbn,
+        google_books_id: m.google_books_id,
+        open_library_id: m.open_library_id,
+      }))
+    } catch {
+      setMetaError(true)
+    } finally {
+      setMetaLoading(false)
+    }
+  }
+
+  // Status convenience: entering Reading defaults the start date to today; entering Read/Dropped
+  // defaults the finish date to today (both editable, only when not already set).
+  function changeStatus(next: BookStatus) {
+    const patch: Partial<BookDraft> = { status: next }
+    if (next === 'reading' && !draft.start_date) patch.start_date = todayLocal()
+    if ((next === 'read' || next === 'dropped') && !draft.end_date) {
+      patch.end_date = todayLocal()
+    }
+    update(patch)
+  }
+
+  function setDate(which: 'start' | 'end' | 'last', d: IsoDate | null) {
+    if (which === 'start') update({ start_date: d })
+    else if (which === 'end') update({ end_date: d })
+    else update({ last_update_date: d })
+  }
+
+  async function save() {
+    if (!userId || !draft.title.trim()) return
+    setSaving(true)
+    try {
+      const intOrNull = (s: string): number | null => {
+        const n = Number(s)
+        return s.trim() !== '' && Number.isFinite(n) ? Math.trunc(n) : null
+      }
+      const authors = draft.authors
+        .split(',')
+        .map((a) => a.trim())
+        .filter(Boolean)
+      const row = {
+        title: draft.title.trim(),
+        authors: authors.length ? authors : null,
+        year: intOrNull(draft.year),
+        status: draft.status,
+        rating: draft.rating || null,
+        lgbtq_rep: draft.lgbtq_rep,
+        start_date: draft.start_date,
+        end_date: draft.end_date,
+        last_update_date: draft.last_update_date,
+        comments: draft.comments.trim() || null,
+        cover_url: draft.cover_url,
+        description: draft.description,
+        genres: draft.genres,
+        page_count: draft.page_count,
+        language: draft.language,
+        google_books_id: draft.google_books_id,
+        open_library_id: draft.open_library_id,
+        isbn: draft.isbn,
+      }
+      if (id) await updateBook(id, row)
+      else await createBook({ ...row, user_id: userId })
+      bumpBooks()
+      navigate(-1)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const pickerDay =
+    (datePicker === 'start'
+      ? draft.start_date
+      : datePicker === 'end'
+        ? draft.end_date
+        : draft.last_update_date) ?? todayLocal()
+
+  return (
+    <>
+      <header className="flex items-center gap-3 border-b border-border px-4 py-3">
+        <button
+          onClick={() => navigate(-1)}
+          aria-label="Close"
+          className="text-text-secondary"
+        >
+          <IconX size={22} />
+        </button>
+        <h1 className="flex-1 truncate text-[17px] font-medium text-text-primary">
+          {id ? 'Edit Book' : 'Add Book'}
+        </h1>
+        <SecondaryButton
+          size="sm"
+          onClick={() => setDraft(initial)}
+          disabled={!dirty || saving}
+        >
+          RESET
+        </SecondaryButton>
+        <PrimaryButton
+          size="sm"
+          onClick={() => void save()}
+          disabled={saving || !draft.title.trim() || (!!id && !dirty)}
+        >
+          {saving ? 'Saving…' : id ? 'SAVE' : 'CREATE'}
+        </PrimaryButton>
+      </header>
+
+      <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
+        <div>
+          <button
+            onClick={() => setSearchOpen(true)}
+            className="flex w-full items-center justify-center gap-2 rounded-input bg-input py-2 text-sm text-accent"
+          >
+            <IconSearch size={16} /> Search Google Books
+          </button>
+          {metaLoading && (
+            <p className="mt-1 text-xs text-text-secondary">Fetching details…</p>
+          )}
+          {metaError && (
+            <p className="mt-1 text-xs text-danger">Couldn’t fetch details.</p>
+          )}
+        </div>
+
+        <label className="text-xs text-text-secondary">
+          Title
+          <input
+            value={draft.title}
+            onChange={(e) => update({ title: e.target.value })}
+            className={`mt-1 ${inputClass}`}
+          />
+        </label>
+
+        {(show('authors') || show('year')) && (
+          <div className="flex gap-3">
+            {show('authors') && (
+              <label className="flex-1 text-xs text-text-secondary">
+                Author(s)
+                <input
+                  value={draft.authors}
+                  onChange={(e) => update({ authors: e.target.value })}
+                  placeholder="Comma-separated"
+                  className={`mt-1 ${inputClass}`}
+                />
+              </label>
+            )}
+            {show('year') && (
+              <label className="w-24 text-xs text-text-secondary">
+                Year
+                <input
+                  type="number"
+                  value={draft.year}
+                  onChange={(e) => update({ year: e.target.value })}
+                  className={`mt-1 ${inputClass}`}
+                />
+              </label>
+            )}
+          </div>
+        )}
+
+        {hasMeta && show('metadata') && (
+          <div className="flex flex-col gap-3 rounded-card border border-border bg-surface-alt p-3">
+            <div className="flex gap-3">
+              <CoverThumb url={draft.cover_url} className="h-36 w-24" />
+              <div className="min-w-0 flex-1 text-xs text-text-secondary">
+                {draft.genres?.length ? (
+                  <p className="text-[13px] text-text-primary">
+                    {draft.genres.join(', ')}
+                  </p>
+                ) : null}
+                {draft.page_count != null && (
+                  <p className="mt-1">
+                    Pages: <span className="text-text-muted">{draft.page_count}</span>
+                  </p>
+                )}
+                {draft.language && (
+                  <p className="mt-1">
+                    Language: <span className="text-text-muted">{draft.language}</span>
+                  </p>
+                )}
+              </div>
+            </div>
+            {draft.description && (
+              <p className="line-clamp-6 text-xs leading-relaxed text-text-secondary">
+                {draft.description}
+              </p>
+            )}
+          </div>
+        )}
+
+        <div>
+          <p className="mb-1 text-xs text-text-secondary">Status</p>
+          <SegmentedTabs
+            value={draft.status}
+            onChange={changeStatus}
+            options={BOOK_STATUSES.map((s) => ({
+              value: s,
+              label: BOOK_STATUS_LABELS[s],
+            }))}
+          />
+        </div>
+
+        {show('rating') && (
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-text-secondary">Rating</span>
+            <StarRating
+              value={draft.rating}
+              onChange={(rating) => update({ rating })}
+              size={24}
+            />
+          </div>
+        )}
+
+        {show('lgbtq_rep') && (
+          <div>
+            <p className="mb-1 text-xs text-text-secondary">LGBT+ representation</p>
+            <SegmentedTabs
+              value={draft.lgbtq_rep}
+              onChange={(lgbtq_rep) => update({ lgbtq_rep })}
+              options={LGBTQ_REPS.map((r) => ({ value: r, label: LGBTQ_REP_LABELS[r] }))}
+            />
+          </div>
+        )}
+
+        {show('start_date') && (
+          <DateField
+            label="Start Date"
+            value={draft.start_date}
+            onPick={() => setDatePicker('start')}
+            onClear={() => setDate('start', null)}
+          />
+        )}
+        {show('end_date') && (
+          <DateField
+            label="Finish / Drop Date"
+            value={draft.end_date}
+            onPick={() => setDatePicker('end')}
+            onClear={() => setDate('end', null)}
+          />
+        )}
+        {show('last_update_date') && (
+          <DateField
+            label="Last Update"
+            value={draft.last_update_date}
+            onPick={() => setDatePicker('last')}
+            onClear={() => setDate('last', null)}
+          />
+        )}
+
+        {show('comments') && (
+          <label className="text-xs text-text-secondary">
+            Comments
+            <textarea
+              value={draft.comments}
+              onChange={(e) => update({ comments: e.target.value })}
+              rows={3}
+              className={`mt-1 ${inputClass} resize-none`}
+            />
+          </label>
+        )}
+      </div>
+
+      {datePicker && (
+        <Calendar
+          day={pickerDay}
+          onSelect={(d) => {
+            setDate(datePicker, d)
+            setDatePicker(null)
+          }}
+          onClose={() => setDatePicker(null)}
+        />
+      )}
+
+      {searchOpen && (
+        <BookSearchSheet
+          onSelect={(r) => void selectBook(r)}
+          onClose={() => setSearchOpen(false)}
+        />
+      )}
+    </>
+  )
+}
+
+function DateField({
+  label,
+  value,
+  onPick,
+  onClear,
+}: {
+  label: string
+  value: IsoDate | null
+  onPick: () => void
+  onClear: () => void
+}) {
+  return (
+    <div>
+      <p className="mb-1 text-xs text-text-secondary">{label}</p>
+      <div className="flex items-center gap-2">
+        <button onClick={onPick} className={`flex-1 text-left ${inputClass}`}>
+          {value ? (
+            formatDayLabel(value)
+          ) : (
+            <span className="text-text-tertiary">Set date</span>
+          )}
+        </button>
+        {value && (
+          <button
+            onClick={onClear}
+            aria-label={`Clear ${label}`}
+            className="p-1 text-text-tertiary"
+          >
+            <IconX size={18} />
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}

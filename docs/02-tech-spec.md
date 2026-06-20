@@ -22,9 +22,9 @@ src/
   screens/           # one folder per screen/tab
   data/              # typed data-access layer (wraps supabase-js) — the ONLY db access
   lib/               # supabase client, units, dri, energy, met, nutrients, targets, report,
-                     # date, food-api, off-api, food-search, diary-refresh, diary-clipboard,
-                     # networth, fx, networth-refresh, shows, shows-refresh, tmdb-api,
-                     # last-module helpers
+                     # date, food-api, off-api, food-search, diary-refresh, diary-clipboard, csv,
+                     # networth, fx, networth-refresh, shows, shows-refresh, tmdb-api, shows-import,
+                     # books, books-refresh, books-api, books-import, last-module helpers
   constants/         # global constants (groups, effort-levels, nutrient-sections, ranges,
                      # profile-defaults, seed-activities, routes, modules)
                      # routes.ts = all route paths (one source of truth); modules.ts = the
@@ -138,12 +138,74 @@ the cloud is authoritative (this also sidesteps iOS PWA storage eviction).
   prefs sync on `profile` — `show_visible_fields` (`text[]`, **NULL = all visible**) and
   `show_importer_enabled` (`boolean`); saved via `useProfileEditor`. Entry reads them through
   `useProfile` + the pure `isFieldVisible` helper.
-- **CSV importer (in-app, one-off):** enabled by the Settings toggle → `ImportShowsSheet`. Pure
+- **CSV importer (in-app):** enabled by the Settings toggle → `ImportShowsSheet`. Pure
   parse/build in `src/lib/shows-import.ts` (`parseShowsCsv` via the shared `src/lib/csv.ts`,
   `buildImportRow`, `dedupKey`); the sheet resolves each row against TMDB (`searchTitles` top hit +
   `getTitleDetails`, small concurrency pool) with an inline fix (`TitleSearchSheet`) for no-match /
   review rows; commit is the **idempotent** `saveImportedShows` (`src/data/show.ts`) — dedup on
   `type` + lower(title), update-not-duplicate. Imported rows get **NULL dates**. Sanitized template +
+  guide in `templates/`.
+
+## Books
+
+_Books re-skins Shows (see the Shows section); only the differences are noted._
+
+- **Data:** `src/data/book.ts` — `listBooks`/`getBook`/`createBook`/`updateBook`/`deleteBook` over the
+  single `book` table (hard delete; nothing references the row). `src/lib/books-refresh.ts`
+  (`bumpBooks`/`useBooksVersion`) is the module's data-changed tick.
+- **Logic** (`src/lib/books.ts`, pure + tested): the `status`/`lgbtq_rep` unions + label maps (the
+  generated types surface the CHECK columns as plain `string`), the `BOOK_STATUS_CHIP` palette,
+  `bookSearchText` (title + authors), and the transitions `startReading` (status `reading` +
+  `start_date = today`) and `markRead` (status `read` + `end_date = today`). No watched-count logic —
+  books are status-only. The 3-value `LGBTQ_REP*` enum is defined locally (not imported from `shows.ts`)
+  to keep the modules decoupled. Dashboard selectors `currentlyReading`/`recentlyRead`/`wantToRead`/
+  `countReadThisYear` mirror the Shows ones; the Library view is `applyLibraryView(books, criteria)`
+  (query over title+authors; Status/Genre/Rating-min/LGBT+/**Author** filters; start & finish date
+  ranges; sort field×dir, nulls-last, stable title tiebreak) with `bookGenres`/`bookAuthors` driving the
+  facet dropdowns. The **Author** filter + sort field are the only divergence from the Shows view (which
+  has Type instead).
+- **UI:** `BooksEntry` (create/edit form; outer-loader + inner-form with the `JSON.stringify` dirty
+  RESET/SAVE; Status/LGBT+ reuse `SegmentedTabs`, dates reuse `Calendar`, rating reuses `StarRating`).
+  `BooksLibrary` (search + a collapsible filter panel of `SelectMenu`s + a Sort menu + cover rows;
+  swipe-delete). `BooksDashboard` (Currently Reading / Recently Read / Want to Read shelves + Mark Read
+  / Start Reading quick actions + an "N read this year" stat; no type filter).
+- **Shared 2:3 thumbnail:** the poster/cover tile was extracted into a presentational
+  `src/components/Thumb.tsx` (`url` + `className`); `PosterThumb` (Shows, TMDB sizing via `posterUrl`)
+  and `CoverThumb` (Books, the full `cover_url`) both render it. `StatusChip` was likewise made
+  presentational (`label` + palette `className`) so Shows and Books share one chip — neither duplicates
+  the visual.
+- **Metadata:** `src/lib/books-api.ts` — **Google Books** search/details with an **Open Library**
+  fallback (and ISBN/cover lookup); the local `BookSearchSheet` overlay (not a route sheet) populates
+  the Entry form on select; persisted only on CREATE/SAVE. `cover_url` stores a **full image URL** (no
+  CDN base; Google thumbnails are normalized `http→https`). Optional `VITE_GOOGLE_BOOKS_API_KEY` raises
+  quota — `books-api.ts` **never throws when it's unset** (unlike `tmdb-api.ts`), since the API works
+  keyless. Pure mappers are unit-tested; the network calls are not (matching `tmdb-api`/`food-api`/`fx`).
+  - **Rate-limit handling:** the keyless quota is low, so a 429 surfaces as a distinct
+    `BookSearchRateLimitError` and **does not** fall back to Open Library (a 429 means "slow down", not
+    "no results" — and OL is unreachable from some regions). `searchBooks`/`getBookDetails` accept an
+    `AbortSignal`; the search overlay debounces 600 ms and **cancels the in-flight request** on the next
+    keystroke; the importer uses a small pool (3) and **retries a row on 429 with backoff**. The fix for
+    sustained 429s is to set the (free) `VITE_GOOGLE_BOOKS_API_KEY`.
+  - **Result ranking** (`rankSearchResults`, pure + tested): the **interactive** overlay re-ranks the
+    fetched hits — titles that **start with** the typed query first, then titles that **contain** it,
+    then the rest; within a tier, **year descending** (undated last), stable on the upstream relevance
+    order. The importer does **not** re-rank (its query is `"title author"`, so it keeps Google's raw top
+    hit).
+- **Settings (split, like Shows):** `BooksSettings` (gear in the Books headers) hosts **Entry field
+  visibility** (`BooksFieldsSheet`, a route sheet of toggles over `BOOK_ENTRY_FIELDS`, auto-saving via
+  `useProfileEditor`) + an **importer enable** toggle. Both prefs sync on `profile` —
+  `book_visible_fields` (`text[]`, **NULL = all visible**) and `book_importer_enabled` (`boolean`).
+  Entry reads them through `useProfile` + the pure `isFieldVisible` helper (Title/Status/Search always
+  shown).
+- **CSV importer (in-app):** enabled by the Settings toggle → `ImportBooksSheet`. Pure
+  parse/build in `src/lib/books-import.ts` (`parseBooksCsv` via the shared `src/lib/csv.ts`,
+  `buildImportRow`, `dedupKey`) — columns `title,author,rating,lgbtq_rep,end_date`; the sheet resolves
+  each row against Google Books (`searchBooks` of `title author` top hit + `getBookDetails`, a small
+  concurrency pool) with an inline fix (`BookSearchSheet`) for no-match / review rows; commit is the
+  **idempotent** `saveImportedBooks` (`src/data/book.ts`) — dedup on lower(title) + lower(author),
+  update-not-duplicate. Every imported row is **Read** with **NULL `start_date`/`last_update_date`**
+  (`end_date` from the file). Reuses the in-house RFC-4180 parser `src/lib/csv.ts` (**not Papa Parse** —
+  verified sufficient for the quoted/embedded-comma cells in the real Quotes seed). Sanitized template +
   guide in `templates/`.
 
 ## External APIs
@@ -157,6 +219,16 @@ the cloud is authoritative (this also sidesteps iOS PWA storage eviction).
 - The **complete** nutrient mappings are the source of truth in code: USDA `nutrient.number` → our key in `src/lib/food-api.ts`, and Open Food Facts key → our key (with the per-field scale factor) in `src/lib/off-api.ts`. The owner-band DRI target/UL values are tabulated in `05-seed-data.md` and live in `src/lib/dri.ts`.
 - **Frankfurter** (`api.frankfurter.dev/v1/{date}?from={CNY|USD}&to=HKD`): **keyless**, ECB-sourced, CORS-enabled — used by **Net Worth** for native→HKD FX as of the **1st of the month** (it returns the most recent rate on/before a non-trading day). CNY is the stored code; HKD = 1 is never fetched. The fetched rate is **frozen** onto each `asset_entry` (`fx_rate_to_base`/`value_base`) so saved months are immune to later revisions; the user can override per currency. Helpers + a small cache live in `src/lib/fx.ts`.
 - **TMDB** (`api.themoviedb.org/3`): free v3 `api_key` (one signup), a `VITE_` var, **called directly from the browser** (CORS-enabled) — same pattern as USDA. Used by **Shows**, two-step on-demand only: **search** per the Type toggle (`GET /search/{movie|tv}?query=…` → title, year, `poster_path`) and **details on select** (`GET /{movie|tv}/{id}?append_to_response=credits,external_ids` → genres, overview, runtime, movie director from `credits.crew`/TV `created_by`, top ~10 cast, TV `number_of_seasons`/`number_of_episodes`, `imdb_id`). Images store only `poster_path`; URLs are built from the fixed CDN base `https://image.tmdb.org/t/p/{size}{path}` (`posterUrl` in `src/lib/shows.ts`). The client + pure mappers live in `src/lib/tmdb-api.ts`; nothing persists until CREATE/SAVE. `content_rating` is not fetched (deferred).
+- **Google Books** (`www.googleapis.com/books/v1`) + **Open Library** (`openlibrary.org`,
+  `covers.openlibrary.org`): both **keyless-capable, CORS-enabled, browser-direct**, used by **Books**,
+  two-step on-demand only. **Search** `GET /volumes?q=…` (Google) → title, authors, year (from
+  `publishedDate`), `imageLinks.thumbnail`; **on empty/error it falls back** to Open Library
+  `GET /search.json?q=…` (→ `author_name`, `first_publish_year`, `cover_i`, `isbn`). **Details on
+  select** `GET /volumes/{id}` (Google `volumeInfo`) or `GET /works/{id}.json` (Open Library; merged
+  with the carried search fields). Mapped into `book` columns in `src/lib/books-api.ts` (cover forced
+  to https; ISBN prefers ISBN_13; OL `subjects`/Google `categories` → `genres`, capped). The optional
+  `VITE_GOOGLE_BOOKS_API_KEY` only raises quota — the client never requires it. Nothing persists until
+  CREATE/SAVE.
 
 ## Environment variables
 
@@ -167,6 +239,7 @@ VITE_SUPABASE_URL=...
 VITE_SUPABASE_ANON_KEY=...     # public, RLS-respecting — safe in the client
 VITE_USDA_API_KEY=...          # data.gov key
 VITE_TMDB_API_KEY=...          # themoviedb.org v3 key (public, client-side) — Shows
+VITE_GOOGLE_BOOKS_API_KEY=...  # optional, raises Google Books quota — Books
 # service-role key is NEVER placed here or anywhere in the client
 ```
 

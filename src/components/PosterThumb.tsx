@@ -1,4 +1,5 @@
 import { posterUrl } from '../lib/shows'
+import { Thumb } from './Thumb'
 
 interface PosterThumbProps {
   path: string | null
@@ -9,11 +10,6 @@ interface PosterThumbProps {
 }
 
 /** A 2:3 rounded TMDB poster, or a neutral placeholder tile when there's no poster. */
-export function PosterThumb({ path, size, className = 'h-16 w-11' }: PosterThumbProps) {
-  const url = posterUrl(path, size)
-  return url ? (
-    <img src={url} alt="" className={`shrink-0 rounded object-cover ${className}`} />
-  ) : (
-    <span className={`shrink-0 rounded bg-input ${className}`} />
-  )
+export function PosterThumb({ path, size, className }: PosterThumbProps) {
+  return <Thumb url={posterUrl(path, size)} className={className} />
 }

@@ -10,46 +10,38 @@ import {
 } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
-import { useShowsVersion, bumpShows } from '../lib/shows-refresh'
-import { deleteShow, listShows } from '../data/show'
+import { useBooksVersion, bumpBooks } from '../lib/books-refresh'
+import { deleteBook, listBooks } from '../data/book'
 import {
   applyLibraryView,
+  bookAuthors,
+  bookGenres,
+  BOOK_STATUS_CHIP,
+  BOOK_STATUS_LABELS,
+  BOOK_STATUSES,
   DEFAULT_LIBRARY_CRITERIA,
   LGBTQ_REP_LABELS,
   LGBTQ_REPS,
-  SHOW_STATUS_CHIP,
-  SHOW_STATUS_LABELS,
-  SHOW_STATUSES,
-  showGenres,
+  type BookStatus,
   type LibraryCriteria,
-  type ShowStatus,
-  type ShowType,
   type SortField,
-} from '../lib/shows'
+} from '../lib/books'
 import { formatDayLabel, todayLocal, type IsoDate } from '../lib/date'
 import { routes } from '../constants/routes'
 import { SearchBar } from '../components/SearchBar'
 import { SwipeRow } from '../components/SwipeRow'
-import { SegmentedTabs } from '../components/SegmentedTabs'
 import { SelectMenu } from '../components/SelectMenu'
 import { Calendar } from '../components/Calendar'
-import { ShowTypeBadge } from '../components/ShowTypeBadge'
 import { StatusChip } from '../components/StatusChip'
 import { StarRating } from '../components/StarRating'
-import { PosterThumb } from '../components/PosterThumb'
+import { CoverThumb } from '../components/CoverThumb'
 
-type TypeFilter = 'all' | ShowType
-type StatusFilter = 'all' | ShowStatus
+type StatusFilter = 'all' | BookStatus
 type DateBound = 'startFrom' | 'startTo' | 'endFrom' | 'endTo'
 
-const TYPE_OPTIONS: { value: TypeFilter; label: string }[] = [
-  { value: 'all', label: 'All' },
-  { value: 'tv', label: 'TV' },
-  { value: 'movie', label: 'Movies' },
-]
 const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
   { value: 'all', label: 'All statuses' },
-  ...SHOW_STATUSES.map((s) => ({ value: s, label: SHOW_STATUS_LABELS[s] })),
+  ...BOOK_STATUSES.map((s) => ({ value: s, label: BOOK_STATUS_LABELS[s] })),
 ]
 const LGBTQ_OPTIONS = [
   { value: 'all' as const, label: 'Any LGBT+' },
@@ -66,7 +58,7 @@ const RATING_OPTIONS = [
 const SORT_OPTIONS: { value: SortField; label: string }[] = [
   { value: 'date', label: 'Date' },
   { value: 'title', label: 'Title' },
-  { value: 'type', label: 'Type' },
+  { value: 'author', label: 'Author' },
   { value: 'year', label: 'Year' },
   { value: 'status', label: 'Status' },
   { value: 'rating', label: 'Rating' },
@@ -74,15 +66,15 @@ const SORT_OPTIONS: { value: SortField; label: string }[] = [
 ]
 
 /**
- * Shows — Library. Poster-thumbnail list with search (title/director/cast), a collapsible filter
- * panel (Type/Genre/Rating/LGBT+/Status + start & finish date ranges) and a Sort menu. All
+ * Books — Library. Cover-thumbnail list with search (title/author), a collapsible filter panel
+ * (Status/Genre/Rating/LGBT+/Author + start & finish date ranges) and a Sort menu. All
  * filtering/sorting is the pure `applyLibraryView`; this screen just holds the criteria state.
  */
-export function ShowsLibrary() {
+export function BooksLibrary() {
   const navigate = useNavigate()
   const { session } = useAuth()
   const userId = session?.user.id
-  const version = useShowsVersion()
+  const version = useBooksVersion()
   const [criteria, setCriteria] = useState<LibraryCriteria>(DEFAULT_LIBRARY_CRITERIA)
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [whichDate, setWhichDate] = useState<DateBound | null>(null)
@@ -91,16 +83,16 @@ export function ShowsLibrary() {
     setCriteria((c) => ({ ...c, ...patch }))
 
   const fn = useCallback(() => {
-    void version // refetch after a create/edit/delete (bumpShows)
+    void version // refetch after a create/edit/delete (bumpBooks)
     if (!userId) return Promise.resolve([])
-    return listShows(userId)
+    return listBooks(userId)
   }, [userId, version])
-  const { data: shows, loading, error } = useAsync(fn)
+  const { data: books, loading, error } = useAsync(fn)
 
   async function remove(id: string, title: string) {
     if (!confirm(`Delete “${title}”? This can’t be undone.`)) return
-    await deleteShow(id)
-    bumpShows()
+    await deleteBook(id)
+    bumpBooks()
   }
 
   function setBound(which: DateBound, d: IsoDate | null) {
@@ -122,16 +114,20 @@ export function ShowsLibrary() {
     }))
   }
 
-  const allShows = shows ?? []
+  const allBooks = books ?? []
   const genreOptions = [
     { value: 'all', label: 'All genres' },
-    ...showGenres(allShows).map((g) => ({ value: g, label: g })),
+    ...bookGenres(allBooks).map((g) => ({ value: g, label: g })),
   ]
-  const view = applyLibraryView(allShows, criteria)
+  const authorOptions = [
+    { value: 'all', label: 'All authors' },
+    ...bookAuthors(allBooks).map((a) => ({ value: a, label: a })),
+  ]
+  const view = applyLibraryView(allBooks, criteria)
 
   const activeCount =
-    (criteria.type !== 'all' ? 1 : 0) +
     (criteria.genre !== 'all' ? 1 : 0) +
+    (criteria.author !== 'all' ? 1 : 0) +
     (criteria.minRating > 0 ? 1 : 0) +
     (criteria.lgbtq !== 'all' ? 1 : 0) +
     (criteria.status !== 'all' ? 1 : 0) +
@@ -152,14 +148,14 @@ export function ShowsLibrary() {
           <h1 className="text-lg font-medium text-text-primary">Library</h1>
           <div className="flex items-center gap-3">
             <button
-              onClick={() => navigate(routes.shows.entry)}
+              onClick={() => navigate(routes.books.entry)}
               className="flex items-center gap-1 text-sm text-positive"
             >
-              <IconPlus size={16} /> New Show
+              <IconPlus size={16} /> New Book
             </button>
             <Link
-              to={routes.shows.settings}
-              aria-label="Shows settings"
+              to={routes.books.settings}
+              aria-label="Books settings"
               className="p-1 text-text-secondary"
             >
               <IconSettings size={18} />
@@ -169,7 +165,7 @@ export function ShowsLibrary() {
         <SearchBar
           value={criteria.query}
           onChange={(q) => setCrit({ query: q })}
-          placeholder="Search title, director, cast"
+          placeholder="Search title, author"
         />
         <div className="flex items-center gap-2">
           <button
@@ -207,14 +203,6 @@ export function ShowsLibrary() {
 
       {filtersOpen && (
         <div className="flex flex-col gap-3 rounded-card border border-border bg-surface p-3 text-xs">
-          <div>
-            <p className="mb-1 text-text-secondary">Type</p>
-            <SegmentedTabs
-              value={criteria.type}
-              onChange={(t) => setCrit({ type: t })}
-              options={TYPE_OPTIONS}
-            />
-          </div>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Status">
               <SelectMenu
@@ -242,6 +230,13 @@ export function ShowsLibrary() {
                 value={criteria.lgbtq}
                 options={LGBTQ_OPTIONS}
                 onChange={(l) => setCrit({ lgbtq: l })}
+              />
+            </Field>
+            <Field label="Author">
+              <SelectMenu
+                value={criteria.author}
+                options={authorOptions}
+                onChange={(a) => setCrit({ author: a })}
               />
             </Field>
           </div>
@@ -273,42 +268,46 @@ export function ShowsLibrary() {
 
       {loading && <p className="px-1 py-6 text-sm text-text-secondary">Loading…</p>}
       {error && (
-        <p className="px-1 py-6 text-sm text-danger">Couldn’t load your shows.</p>
+        <p className="px-1 py-6 text-sm text-danger">Couldn’t load your books.</p>
       )}
 
       {!loading && !error && (
         <div className="overflow-hidden rounded-card border border-border bg-surface">
           {view.length === 0 ? (
             <p className="px-4 py-6 text-center text-sm text-text-tertiary">
-              {allShows.length > 0 ? 'No matches.' : 'No shows yet — add one.'}
+              {allBooks.length > 0 ? 'No matches.' : 'No books yet — add one.'}
             </p>
           ) : (
-            view.map((s) => (
-              <SwipeRow key={s.id} onDelete={() => void remove(s.id, s.title)}>
+            view.map((b) => (
+              <SwipeRow key={b.id} onDelete={() => void remove(b.id, b.title)}>
                 <button
-                  onClick={() => navigate(routes.shows.edit(s.id))}
+                  onClick={() => navigate(routes.books.edit(b.id))}
                   className="flex w-full items-center gap-3 px-3 py-2.5 text-left active:bg-input/40"
                 >
-                  <PosterThumb path={s.poster_path} size="w92" />
+                  <CoverThumb url={b.cover_url} />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-[15px] text-text-primary">
-                      {s.title}
-                      {s.year ? ` (${s.year})` : ''}
+                      {b.title}
+                      {b.year ? ` (${b.year})` : ''}
                     </span>
+                    {b.authors?.length ? (
+                      <span className="block truncate text-xs text-text-secondary">
+                        {b.authors.join(', ')}
+                      </span>
+                    ) : null}
                     <span className="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-secondary">
-                      <ShowTypeBadge type={s.type as ShowType} />
                       <StatusChip
-                        label={SHOW_STATUS_LABELS[s.status as ShowStatus]}
-                        className={SHOW_STATUS_CHIP[s.status as ShowStatus]}
+                        label={BOOK_STATUS_LABELS[b.status as BookStatus]}
+                        className={BOOK_STATUS_CHIP[b.status as BookStatus]}
                       />
-                      {s.rating ? <StarRating value={s.rating} size={13} /> : null}
+                      {b.rating ? <StarRating value={b.rating} size={13} /> : null}
                     </span>
-                    {(s.genres?.[0] || s.end_date || s.last_update_date) && (
+                    {(b.genres?.[0] || b.end_date || b.last_update_date) && (
                       <span className="mt-0.5 flex items-center gap-2 text-xs text-text-tertiary">
-                        {s.genres?.[0] && <span>{s.genres[0]}</span>}
-                        {(s.end_date ?? s.last_update_date) && (
+                        {b.genres?.[0] && <span>{b.genres[0]}</span>}
+                        {(b.end_date ?? b.last_update_date) && (
                           <span>
-                            {formatDayLabel((s.end_date ?? s.last_update_date)!)}
+                            {formatDayLabel((b.end_date ?? b.last_update_date)!)}
                           </span>
                         )}
                       </span>

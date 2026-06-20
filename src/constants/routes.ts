@@ -44,6 +44,16 @@ export const routes = {
     edit: (id: string) => `/shows/${id}`,
     settings: '/shows/settings', // shows sub-settings: field visibility, importer
     settingsVisible: '/shows/settings/visible',
-    import: '/shows/import', // one-off CSV importer (sheet)
+    import: '/shows/import', // CSV importer (sheet)
+  },
+  books: {
+    base: '/books',
+    dashboard: '/books',
+    library: '/books/library',
+    entry: '/books/entry', // blank Entry (new)
+    edit: (id: string) => `/books/${id}`,
+    settings: '/books/settings', // books sub-settings: field visibility, importer
+    settingsVisible: '/books/settings/visible',
+    import: '/books/import', // CSV importer (sheet)
   },
 } as const

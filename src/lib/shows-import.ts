@@ -1,5 +1,5 @@
 /**
- * Pure parsing + validation + row-building for the one-off Shows CSV import (see
+ * Pure parsing + validation + row-building for the Shows CSV import (see
  * `templates/shows-import-guide.md`). No I/O and no TMDB calls — the import screen reads the file,
  * resolves each row against TMDB, and writes via `saveImportedShows`.
  *

@@ -11,11 +11,11 @@ import type { Tables, TablesUpdate } from '../types/database'
 type SaveFn = (patch: TablesUpdate<'profile'>) => Promise<void>
 
 /**
- * Shows-specific sub-settings (Entry field visibility + the CSV importer toggle). Reached from a
- * gear in the Shows headers — mirrors the Wellness Settings split. App-wide settings live in the
- * global Settings screen at the Home level.
+ * Books-specific sub-settings (Entry field visibility + the CSV importer toggle). Reached from a
+ * gear in the Books headers — mirrors the Wellness/Shows Settings split. App-wide settings live in
+ * the global Settings screen at the Home level.
  */
-export function ShowsSettings() {
+export function BooksSettings() {
   const { profile, loading, save } = useProfileEditor()
   const navigate = useNavigate()
 
@@ -29,7 +29,7 @@ export function ShowsSettings() {
         >
           <IconChevronLeft size={22} />
         </button>
-        <h1 className="text-lg font-medium text-text-primary">Shows Settings</h1>
+        <h1 className="text-lg font-medium text-text-primary">Books Settings</h1>
       </header>
       {loading && <p className="text-sm text-text-secondary">Loading…</p>}
       {!loading && !profile && (
@@ -47,7 +47,7 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
     <>
       <SectionCard title="Entry Form">
         <button
-          onClick={() => openSheet(routes.shows.settingsVisible)}
+          onClick={() => openSheet(routes.books.settingsVisible)}
           className="w-full"
         >
           <FieldRow label="Visible Fields">
@@ -59,14 +59,14 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
       <SectionCard title="Import">
         <FieldRow label="Enable CSV import">
           <Toggle
-            checked={profile.show_importer_enabled}
-            onChange={(on) => void save({ show_importer_enabled: on })}
+            checked={profile.book_importer_enabled}
+            onChange={(on) => void save({ book_importer_enabled: on })}
             label="Enable CSV import"
           />
         </FieldRow>
-        {profile.show_importer_enabled ? (
+        {profile.book_importer_enabled ? (
           <button
-            onClick={() => openSheet(routes.shows.import)}
+            onClick={() => openSheet(routes.books.import)}
             className="flex w-full items-center gap-2 border-b border-border px-4 py-3 text-[15px] text-accent last:border-b-0 active:bg-input/40"
           >
             <IconUpload size={18} /> Import CSV…

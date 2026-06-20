@@ -3,34 +3,37 @@ import { useNavigate } from 'react-router'
 import { IconUpload, IconX } from '@tabler/icons-react'
 import { Sheet } from '../components/Sheet'
 import { PrimaryButton } from '../components/PrimaryButton'
-import { PosterThumb } from '../components/PosterThumb'
-import { ShowTypeBadge } from '../components/ShowTypeBadge'
+import { CoverThumb } from '../components/CoverThumb'
 import { StatusChip } from '../components/StatusChip'
-import { TitleSearchSheet } from '../components/TitleSearchSheet'
+import { StarRating } from '../components/StarRating'
+import { BookSearchSheet } from '../components/BookSearchSheet'
 import { useAuth } from '../auth/AuthProvider'
 import { parseCsv } from '../lib/csv'
 import {
   buildImportRow,
-  parseShowsCsv,
-  type ParsedShowRow,
-  type ShowsImportResult,
-} from '../lib/shows-import'
-import { SHOW_STATUS_CHIP, SHOW_STATUS_LABELS } from '../lib/shows'
+  parseBooksCsv,
+  type BooksImportResult,
+  type ParsedBookRow,
+} from '../lib/books-import'
+import { BOOK_STATUS_CHIP, BOOK_STATUS_LABELS } from '../lib/books'
 import {
-  getTitleDetails,
-  searchTitles,
-  type ShowMetadata,
-  type TmdbSearchResult,
-} from '../lib/tmdb-api'
-import { saveImportedShows } from '../data/show'
-import { bumpShows } from '../lib/shows-refresh'
+  BookSearchRateLimitError,
+  getBookDetails,
+  searchBooks,
+  type BookMetadata,
+  type BookSearchResult,
+} from '../lib/books-api'
+import { saveImportedBooks } from '../data/book'
+import { bumpBooks } from '../lib/books-refresh'
 
 const MAX_MESSAGES = 20
-const POOL = 5
+// A small pool keeps the keyless Google Books quota from 429-ing; a key lets you raise it safely.
+const POOL = 3
+const RATE_RETRIES = 3
 
 interface ResolvedRow {
-  input: ParsedShowRow
-  match: ShowMetadata | null
+  input: ParsedBookRow
+  match: BookMetadata | null
   status: 'ok' | 'review' | 'nomatch'
 }
 
@@ -40,30 +43,40 @@ const norm = (s: string) =>
     .replace(/[^a-z0-9]+/g, ' ')
     .trim()
 
-async function resolveRow(input: ParsedShowRow): Promise<ResolvedRow> {
-  try {
-    const results = await searchTitles(input.type, input.title)
-    const top = results[0]
-    if (!top) return { input, match: null, status: 'nomatch' }
-    const match = await getTitleDetails(input.type, top.tmdbId)
-    return {
-      input,
-      match,
-      status: norm(match.title) === norm(input.title) ? 'ok' : 'review',
+const sleep = (ms: number): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, ms))
+
+async function resolveRow(input: ParsedBookRow): Promise<ResolvedRow> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const results = await searchBooks(`${input.title} ${input.author}`)
+      const top = results[0]
+      if (!top) return { input, match: null, status: 'nomatch' }
+      const match = await getBookDetails(top)
+      return {
+        input,
+        match,
+        status: norm(match.title) === norm(input.title) ? 'ok' : 'review',
+      }
+    } catch (e) {
+      // On a 429, back off and retry — the keyless quota recovers within a second or two.
+      if (e instanceof BookSearchRateLimitError && attempt < RATE_RETRIES) {
+        await sleep(1000 * (attempt + 1))
+        continue
+      }
+      return { input, match: null, status: 'nomatch' }
     }
-  } catch {
-    return { input, match: null, status: 'nomatch' }
   }
 }
 
-export function ImportShowsSheet() {
+export function ImportBooksSheet() {
   const navigate = useNavigate()
   const { session } = useAuth()
   const userId = session?.user.id
 
   const inputRef = useRef<HTMLInputElement>(null)
   const [fileName, setFileName] = useState<string | null>(null)
-  const [parsed, setParsed] = useState<ShowsImportResult | null>(null)
+  const [parsed, setParsed] = useState<BooksImportResult | null>(null)
   const [resolved, setResolved] = useState<ResolvedRow[] | null>(null)
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null)
   const [fixIndex, setFixIndex] = useState<number | null>(null)
@@ -76,7 +89,7 @@ export function ImportShowsSheet() {
     setDone(null)
     setResolved(null)
     try {
-      const result = parseShowsCsv(parseCsv(await file.text()))
+      const result = parseBooksCsv(parseCsv(await file.text()))
       setFileName(file.name)
       setParsed(result)
       if (result.rows.length > 0) void resolveAll(result.rows)
@@ -86,7 +99,7 @@ export function ImportShowsSheet() {
     }
   }
 
-  async function resolveAll(rows: ParsedShowRow[]) {
+  async function resolveAll(rows: ParsedBookRow[]) {
     const out = new Array<ResolvedRow>(rows.length)
     let nextIdx = 0
     let completed = 0
@@ -105,10 +118,10 @@ export function ImportShowsSheet() {
     setResolved(out)
   }
 
-  async function applyFix(i: number, r: TmdbSearchResult) {
+  async function applyFix(i: number, r: BookSearchResult) {
     setFixIndex(null)
     try {
-      const match = await getTitleDetails(r.type, r.tmdbId)
+      const match = await getBookDetails(r)
       setResolved(
         (prev) =>
           prev?.map((row, j) => (j === i ? { ...row, match, status: 'ok' } : row)) ??
@@ -125,8 +138,8 @@ export function ImportShowsSheet() {
     setImportError(null)
     try {
       const payloads = resolved.map((r) => buildImportRow(r.input, r.match))
-      const counts = await saveImportedShows(userId, payloads)
-      bumpShows()
+      const counts = await saveImportedBooks(userId, payloads)
+      bumpBooks()
       setDone(counts)
     } catch (e) {
       setImportError(e instanceof Error ? e.message : 'Import failed.')
@@ -141,19 +154,19 @@ export function ImportShowsSheet() {
   const review = resolved?.filter((r) => r.status === 'review').length ?? 0
 
   return (
-    <Sheet variant="full" label="Import Shows">
+    <Sheet variant="full" label="Import Books">
       <header className="flex items-center gap-3 border-b border-border px-4 py-3">
         <button onClick={() => navigate(-1)} aria-label="Close">
           <IconX size={22} className="text-text-secondary" />
         </button>
-        <h1 className="text-[17px] font-medium text-text-primary">Import Shows CSV</h1>
+        <h1 className="text-[17px] font-medium text-text-primary">Import Books CSV</h1>
       </header>
 
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
         {done !== null ? (
           <div className="flex flex-col gap-2">
             <p className="text-[15px] font-medium text-text-primary">
-              Imported {done.created + done.updated} title
+              Imported {done.created + done.updated} book
               {done.created + done.updated === 1 ? '' : 's'} — {done.created} new,{' '}
               {done.updated} updated.
             </p>
@@ -163,9 +176,10 @@ export function ImportShowsSheet() {
           <>
             <p className="text-sm text-text-secondary">
               Upload a CSV in the{' '}
-              <code className="text-text-primary">shows-import-template.csv</code> format
-              (see <code className="text-text-primary">templates/</code>). Each title is
-              matched against TMDB; re-importing the same file updates in place.
+              <code className="text-text-primary">books-import-template.csv</code> format
+              (see <code className="text-text-primary">templates/</code>). Each row is
+              matched against Google Books and imported as <strong>Read</strong>;
+              re-importing the same file updates in place.
             </p>
 
             <input
@@ -210,14 +224,14 @@ export function ImportShowsSheet() {
 
             {progress && (
               <p className="text-sm text-text-secondary">
-                Matching titles… {progress.done}/{progress.total}
+                Matching books… {progress.done}/{progress.total}
               </p>
             )}
 
             {resolved && rowCount > 0 && (
               <>
                 <div className="rounded-card border border-border bg-surface px-4 py-3 text-sm text-text-primary">
-                  Ready to import <strong>{rowCount}</strong> title
+                  Ready to import <strong>{rowCount}</strong> book
                   {rowCount === 1 ? '' : 's'}.
                   {(noMatch > 0 || review > 0) && (
                     <span className="text-text-secondary">
@@ -236,9 +250,8 @@ export function ImportShowsSheet() {
                       key={i}
                       className="flex items-center gap-3 border-b border-border px-3 py-2.5 last:border-b-0"
                     >
-                      <PosterThumb
-                        path={r.match?.poster_path ?? null}
-                        size="w92"
+                      <CoverThumb
+                        url={r.match?.cover_url ?? null}
                         className="h-14 w-10"
                       />
                       <div className="min-w-0 flex-1">
@@ -246,18 +259,18 @@ export function ImportShowsSheet() {
                           {r.match?.title ?? r.input.title}
                           {r.match?.year ? ` (${r.match.year})` : ''}
                         </p>
+                        <p className="truncate text-xs text-text-secondary">
+                          {(r.match?.authors ?? [r.input.author]).join(', ')}
+                        </p>
                         <p className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-text-secondary">
-                          <ShowTypeBadge type={r.input.type} />
                           <StatusChip
-                            label={SHOW_STATUS_LABELS[r.input.status]}
-                            className={SHOW_STATUS_CHIP[r.input.status]}
+                            label={BOOK_STATUS_LABELS.read}
+                            className={BOOK_STATUS_CHIP.read}
                           />
-                          {r.input.type === 'tv' && r.match && (
-                            <span>
-                              {r.match.total_seasons ?? '?'}S ·{' '}
-                              {r.match.total_episodes ?? '?'}E
-                            </span>
-                          )}
+                          {r.input.rating ? (
+                            <StarRating value={r.input.rating} size={12} />
+                          ) : null}
+                          {r.input.end_date && <span>{r.input.end_date}</span>}
                           {r.status === 'nomatch' && (
                             <span className="text-danger">No match</span>
                           )}
@@ -297,15 +310,14 @@ export function ImportShowsSheet() {
             {importing
               ? 'Importing…'
               : rowCount > 0
-                ? `IMPORT ${rowCount} TITLE${rowCount === 1 ? '' : 'S'}`
+                ? `IMPORT ${rowCount} BOOK${rowCount === 1 ? '' : 'S'}`
                 : 'IMPORT'}
           </PrimaryButton>
         )}
       </div>
 
       {fixIndex !== null && resolved && (
-        <TitleSearchSheet
-          type={resolved[fixIndex]!.input.type}
+        <BookSearchSheet
           onSelect={(r) => void applyFix(fixIndex, r)}
           onClose={() => setFixIndex(null)}
         />
