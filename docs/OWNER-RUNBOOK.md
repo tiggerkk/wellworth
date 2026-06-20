@@ -421,10 +421,14 @@ and run the two commands again. Once the commit succeeds:
 
 ## Part M — Resetting & re-seeding data
 
-Two common maintenance jobs. The first wipes everything; the second only refreshes the starter
-activities. Both work because the app re-seeds the owner's **profile** and **activity library** on the
-next sign-in (the seed is idempotent — it only runs when that data is missing). The **nutrient**
-reference table is seeded by a migration, not on login.
+Three maintenance jobs: **M1** wipes + rebuilds everything, **M2** refreshes the starter activities,
+and **M3** resets one module's data while leaving the others intact.
+
+Only **Wellness** has seed data: the owner's **profile** + **activity library** are re-seeded on the
+next sign-in (idempotent — only when that data is missing), and the **nutrient** reference table is
+seeded by a migration (not on login). **Net Worth, Shows, and Books have no seed data** — their tables
+(`networth_snapshot`/`asset_entry`, `show`, `book`) come back **empty** after a reset and are filled
+entirely by you in the app.
 
 > ⚠️ These act on your **live** Supabase project. There is no undo. Make sure you mean it.
 
@@ -440,10 +444,12 @@ From the project folder (the database password must be available — see Part F)
 > supabase db reset --linked
 ```
 
-Confirm at the prompt. The CLI re-runs all the migration files (`…_init_schema.sql`,
-`…_seed_nutrient.sql`, `…_networth_schema.sql`, `…_shows_schema.sql`, `…_profile_show_settings.sql`)
-against the remote, leaving a clean schema + the 80 nutrient rows and an empty migration-ledger that
-matches the files.
+Confirm at the prompt. The CLI re-runs **every** file in `supabase/migrations/` — currently
+`…_init_schema.sql`, `…_seed_nutrient.sql`, `…_networth_schema.sql`, `…_shows_schema.sql`,
+`…_profile_show_settings.sql`, `…_books_schema.sql`, and `…_profile_book_settings.sql` — against the
+remote, leaving a clean schema + the 80 nutrient rows and a migration-ledger that matches the files.
+(You never list them yourself; the CLI applies whatever is in the folder, so new migrations are picked
+up automatically.)
 
 - ✅ Check:
   1. `> supabase migration list` shows the same migrations locally and remotely.
@@ -458,7 +464,9 @@ matches the files.
 The starter activities live in `src/constants/seed-activities.ts` and are seeded **once**, only when
 you have **zero** activities (`ensureOwnerActivities` is a no-op otherwise). So after you edit that
 file (new activities, changed METs/durations), you must clear the existing rows, then sign in again —
-no full reset needed, and your foods and diary history are kept.
+no full reset needed, and your foods and diary history are kept. (Activities are the **only**
+client-seeded library; Net Worth, Shows, and Books have no starter data, so there's nothing to
+re-seed for them.)
 
 1. In **Supabase → SQL Editor**, run:
    ```sql
@@ -476,6 +484,65 @@ no full reset needed, and your foods and diary history are kept.
 
 > If you'd also added custom activities of your own, the delete removes those too — re-create them
 > afterwards. To keep them, delete only the seeded rows by name instead of the whole table.
+
+### M3 — Reset one module's data only (keep the other modules)
+
+Use this to start a module clean — test it, wipe just its tables, then enter real production data —
+without touching the others (e.g. reset Wellness and go live on it while Net Worth, Shows, and Books
+stay as they are). Run the SQL in **Supabase → SQL Editor** (Dashboard → **SQL Editor** → **New query**
+→ paste → **Run**). It edits **data only** — never the schema or the migrations.
+
+> ⚠️ The SQL Editor runs with full privileges (it bypasses row-level security), so `truncate` wipes
+> **all** rows in those tables — on a solo project that's exactly your data. `cascade` also clears the
+> dependent child rows (strength sets, servings, asset entries). There is no undo.
+
+> Note: every table's primary key is a **random UUID** (`gen_random_uuid()`), not an auto-increment
+> counter, so there's no "id sequence" to reset — IDs don't go back to 1; new rows just get fresh
+> UUIDs. (That's why the commands use plain `truncate … cascade`, not `restart identity`.)
+
+**Wellness** — wipes foods, servings, activities, diary entries, and their strength sets:
+
+```sql
+truncate public.diary_entry, public.strength_set, public.food, public.serving,
+         public.activity cascade;
+```
+
+This keeps the `nutrient` reference table and your `profile`. After running it, **reload the app**:
+`ensureOwnerActivities` sees zero activities and re-seeds the starter **activity library** (your
+production starting point); foods and diary start empty. Your `profile` (identity, units, protein
+target, nutrient visibility) is the **shared account row** and is left as-is — adjust it in the app's
+**Settings** if you want, rather than here.
+
+**Net Worth** — wipes every monthly snapshot and its asset entries:
+
+```sql
+truncate public.networth_snapshot, public.asset_entry cascade;
+```
+
+**Shows** — wipes every tracked title:
+
+```sql
+truncate public.show cascade;
+-- optional: also reset the Shows settings on your profile to defaults
+update public.profile set show_visible_fields = null, show_importer_enabled = false;
+```
+
+**Books** — wipes every tracked book:
+
+```sql
+truncate public.book cascade;
+-- optional: also reset the Books settings on your profile to defaults
+update public.profile set book_visible_fields = null, book_importer_enabled = false;
+```
+
+- ✅ Check: open that module in the app — its lists are empty (Wellness shows the re-seeded starter
+  activities after a reload), and the **other** modules' data is untouched.
+
+> **Multi-user note (future household project):** `truncate` clears every user's rows. To scope a wipe
+> to **yourself**, instead run `delete from <table> where user_id = '<your-user-id>';` on each module's
+> **own** tables — `activity`, `food`, `diary_entry` (Wellness) / `networth_snapshot` (Net Worth) /
+> `show` / `book` — and the child rows (`serving`, `strength_set`, `asset_entry`) cascade automatically.
+> Your user id is in **Supabase → Authentication → Users**.
 
 ---
 
