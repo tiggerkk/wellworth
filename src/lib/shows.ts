@@ -29,7 +29,7 @@ export function usesEpisodes(type: string): boolean {
 export const SHOW_STATUSES = ['want', 'watching', 'watched', 'dropped'] as const
 export type ShowStatus = (typeof SHOW_STATUSES)[number]
 export const SHOW_STATUS_LABELS: Record<ShowStatus, string> = {
-  want: 'Want to Watch',
+  want: 'Want',
   watching: 'Watching',
   watched: 'Watched',
   dropped: 'Dropped',
@@ -43,10 +43,10 @@ export const LGBTQ_REP_LABELS: Record<LgbtqRep, string> = {
   significant: 'Significant',
 }
 
-/** Status-chip palette (Tailwind classes on the design tokens): want = neutral, watching =
+/** Status-chip palette (Tailwind classes on the design tokens): want = blue (planned), watching =
  * coral (active), watched = teal (positive), dropped = grey (muted). */
 export const SHOW_STATUS_CHIP: Record<ShowStatus, string> = {
-  want: 'bg-input text-text-secondary',
+  want: 'bg-info text-bg',
   watching: 'bg-accent text-bg',
   watched: 'bg-positive text-bg',
   dropped: 'bg-track text-text-secondary',

@@ -75,10 +75,11 @@ append a `ModuleDef` to `src/constants/modules.ts` + its routes.
   (TV/Movie/Documentary glyphs) / `StatusChip` / `PosterThumb` / `SelectMenu` / `TitleSearchSheet` (local
   overlay — **not** a route sheet, so the Entry form survives). Screens `ShowsDashboard` (Favourites shelf;
   watching rows show the Watching chip + progress) / `ShowsLibrary` (favourites filter) / `ShowsEntry`
-  (three-way Type, favourite heart, Poster URL shown only when TMDB lacks one or forced on in Settings,
-  Want⇒blank Start Date, ⟳ Refresh, `?title=&poster=&overview=&type=` prefill) / `ShowsSettings` (incl. a
-  Display → Visible Poster URL toggle) / `ShowsFieldsSheet` / `ImportShowsSheet` (CSV ends with an
-  `is_favorite` column). **Calendar** was generalized to a presentational component with an optional
+  (three-way Type, favourite heart, Poster URL field auto-shown when TMDB has no poster + a
+  Visible-Fields toggle `show_poster_url_visible` (off by default) that forces it always visible,
+  Want⇒blank Start Date, ⟳ Refresh, `?title=&poster=&overview=&type=` prefill) / `ShowsSettings` /
+  `ShowsFieldsSheet` (incl. the Poster URL toggle) / `ImportShowsSheet` (CSV ends with an `is_favorite`
+  column). **Calendar** was generalized to a presentational component with an optional
   `loadCues` (Wellness Diary injects food/activity dots; Shows date pickers pass none).
 - **Books (built):** one table `book` (migration `supabase/migrations/20260620120000_books_schema.sql` —
   incl. an `is_favorite` boolean + `(user_id, is_favorite)` index) plus two `profile` columns

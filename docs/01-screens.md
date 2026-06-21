@@ -219,11 +219,14 @@ Wellness-module sub-settings. Auto-save on change. A back chevron returns to the
     shows the **"Watching"** chip (and, for episodic titles, the season·episode progress) + a **Mark
     Watched** action. (Up Next is de-duplicated out of Watching so a show isn't listed twice.) Every
     watching title — whether started from the Want shelf or set to Watching manually — gets the chip.
-  - **Want to Watch** — a short shelf of `status=want`, each with a **Start Watching** action (status
-    → watching, start → today).
-  - **Recently Watched** — the last 5 by finish date (rows show stars + finish date). Imported rows
-    with no `end_date` don't appear here (they live in the Library).
-- A favourite row anywhere shows a small filled **♥** before the title.
+  - **Want to Watch** — a short shelf of `status=want`, each showing the blue **"Want"** chip + first
+    genre and a **Start Watching** action (status → watching, start → today).
+  - **Recently Watched** — the last 5 by finish date (rows show the **"Watched"** chip + stars + finish
+    date). Imported rows with no `end_date` don't appear here (they live in the Library).
+- Every Dashboard row shows its **status chip** (like the Library), and a favourite row anywhere shows a
+  small filled **♥** before the title. The status chips use a shared palette — **Want** = blue,
+  **Watching** = coral, **Watched** = teal, **Dropped** = grey — with the short label "Want" (the shelf
+  titles still spell out "Want to Watch").
 - A small stat line: "**N watched this year**".
 
 ## Shows - Library
@@ -256,9 +259,10 @@ Wellness-module sub-settings. Auto-save on change. A back chevron returns to the
   **Title** by the owner, e.g. `国宝档案 — 从东晋到北魏`.)
 - **Title** (required for CREATE), **Original Title**, **Year**.
 - **Poster URL**: paste a direct image URL ("Copy Image Address" from Douban / a streaming page) into
-  `poster_path`; rendered everywhere with `referrerpolicy="no-referrer"`. **Shown only when needed** —
-  when there's no poster yet, when the current value is a manually pasted URL, or when forced on via
-  **Shows Settings → Display → Visible Poster URL** — and hidden once TMDB supplied a poster path.
+  `poster_path`; rendered everywhere with `referrerpolicy="no-referrer"`. **Shown automatically when TMDB
+  supplied no poster** (the field is empty or holds a manually pasted URL); the **Shows Settings →
+  Visible Fields → Poster URL** toggle (off by default) forces it always visible, even when TMDB
+  provided a poster.
 - **Status** (Want / Watching / Watched / Dropped): choosing Watching / Watched / Dropped defaults the
   **Start date** to today (the title has been started); choosing Watched or Dropped also defaults the
   **Finish/Drop date** to today; choosing **Watched** on an episodic title (TV / documentary) snaps the
@@ -281,9 +285,10 @@ Wellness-module sub-settings. Auto-save on change. A back chevron returns to the
   pasted** poster. Reports "Updated" / "Already up to date".
 - Top-right **favourite heart** + **RESET** + **CREATE/SAVE**, enabled only once something changes;
   CREATE needs a Title.
-- Which optional fields appear is controlled by **Shows Settings → Visible Fields** (Type, Title, Status
-  and the favourite heart are always shown; the Poster URL field follows the Display rule above + the
-  Refresh action is always available); hiding a field is display-only and never drops saved data.
+- Which optional fields appear is controlled by **Shows Settings → Visible Fields** (Type, Title, Status,
+  the favourite heart and the Refresh action are always shown; **Poster URL** auto-shows when TMDB has no
+  poster and its Visible-Fields toggle — **off by default** — forces it always visible); hiding a field
+  is display-only and never drops saved data.
 
 ## Shows - Title Search (modal)
 
@@ -301,11 +306,12 @@ in the global Settings at the Home level).
 
 - **Entry Form → Visible Fields** opens a sub-screen of toggles over the optional Entry/Edit fields
   (Original Title, Year, Rating, LGBT+, the three dates, Season & Episode counts, Comments, TMDB
-  metadata display). Stored on `profile.show_visible_fields` (**NULL = all visible**); auto-saves per
-  toggle. Type, Title, Status, and the favourite heart are always shown and not listed.
-- **Display → Visible Poster URL** toggle (`profile.show_poster_url_visible`, default off): when on, the
-  Entry **Poster URL** field is always shown; when off, it appears only when TMDB supplied no poster (or
-  the current value is a manually pasted URL).
+  metadata display, and **Poster URL**). Most are stored on `profile.show_visible_fields` (**NULL = all
+  visible**, default-on) and auto-save per toggle; **Poster URL** is the exception — it's backed by
+  `profile.show_poster_url_visible` (**default off**, kept separate because the visible-fields list is
+  default-on) and means "**force always visible**": the field still auto-shows whenever TMDB supplied no
+  poster regardless of the toggle. Type, Title, Status, and the favourite heart are always shown and not
+  listed.
 - **Import → Enable CSV import** toggle (`profile.show_importer_enabled`); when on, an **Import CSV…**
   launcher appears that opens the importer sheet.
 
@@ -330,16 +336,20 @@ Chinese across all three types. Columns:
 ## Books - Dashboard
 
 - Shelves, each a card shown only when it has items, with a `+` (top-right) that opens a blank Entry.
-  There is no type filter (books are one kind):
+  There is no type filter (books are one kind). Every row shows its **status chip** (Want / Reading /
+  Read / Dropped) — the same chip as the Library, so the status reads consistently rather than
+  being only implied by the shelf title:
   - **Favourites** — every `is_favorite` book (any status), each row showing its status chip. (A
     favourite also still appears in its status shelf below.)
-  - **Currently Reading** — all `status=reading`; each row shows the cover, title (+ year), and
-    author(s), plus a **Mark Read** action (status → read, finish → today).
-  - **Recently Read** — the last 5 by finish date (rows show the star rating + finish date). Imported
-    rows with no `end_date` don't appear here (they live in the Library).
-  - **Want to Read** — a short shelf of `status=want`, each with a **Start Reading** action (status →
-    reading, start → today).
-- A favourite row anywhere shows a small filled **♥** before the title.
+  - **Currently Reading** — all `status=reading`; each row shows the cover, title (+ year), the status
+    chip, and author(s), plus a **Mark Read** action (status → read, finish → today).
+  - **Recently Read** — the last 5 by finish date (rows show the status chip + star rating + finish
+    date). Imported rows with no `end_date` don't appear here (they live in the Library).
+  - **Want to Read** — a short shelf of `status=want`, each with the blue **"Want"** chip + author(s)
+    and a **Start Reading** action (status → reading, start → today).
+- A favourite row anywhere shows a small filled **♥** before the title. The status chips share the
+  Shows palette — **Want** = blue, **Reading** = coral, **Read** = teal, **Dropped** = grey — with the
+  short label "Want" (the shelf title still spells out "Want to Read").
 - A small stat line: "**N read this year**".
 
 ## Books - Library
@@ -354,8 +364,8 @@ Chinese across all three types. Columns:
 - A **Sort** menu over { Date, Title, Author, Year, Status, Rating, Genre } with an **asc/desc** toggle
   (nulls sort last); default is **Date** descending.
 - Each row: a **cover thumbnail** (2:3, neutral placeholder when there's no cover), title (+ year) with
-  a small filled **♥** when favourited, the author(s), a **status chip** (Want to Read / Reading / Read /
-  Dropped), the **star rating** when rated, the first genre, and the finish/updated date. Tap a row →
+  a small filled **♥** when favourited, the author(s), a **status chip** (Want / Reading / Read /
+  Dropped — Want is blue), the **star rating** when rated, the first genre, and the finish/updated date. Tap a row →
   **Entry/Edit**; **swipe-left → Delete** (hard, with a confirm).
 - A **gear** in the Books Dashboard/Library headers opens **Books Settings**.
 - _Filter/sort state is per-visit (not persisted); a wide-screen sortable table is parked — see
@@ -371,7 +381,7 @@ Chinese across all three types. Columns:
   Description (read-only display) — plus Title / Author(s) / Year (editable). Nothing is saved until
   CREATE/SAVE; Title/Author/Year stay editable so manual entry and match corrections still work.
 - **Title** (required for CREATE), **Author(s)** (comma-separated), **Year**.
-- **Status** (Want to Read / Reading / Read / Dropped): choosing **Reading** defaults the **Start
+- **Status** (Want / Reading / Read / Dropped): choosing **Reading** defaults the **Start
   Date** to today; choosing **Read** or **Dropped** defaults the **Finish / Drop date** to today.
 - **Rating**: a 0–5 **half-star** picker. **LGBT+ representation**: a None / Some / Significant
   segmented control.

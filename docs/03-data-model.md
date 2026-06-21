@@ -17,8 +17,10 @@ Nutrient sets are stored as JSONB maps (`nutrient_key → amount`), validated ag
 - `show_visible_fields` TEXT[] NULL — Shows Entry-form field visibility; **NULL = all visible**
   (default-on, no seeding); an explicit array once trimmed in Shows Settings
 - `show_importer_enabled` BOOLEAN NOT NULL DEFAULT false — surfaces the Shows in-app CSV importer
-- `show_poster_url_visible` BOOLEAN NOT NULL DEFAULT false — Shows Settings → Display: force the Entry
-  "Poster URL" field always visible (off = shown only when TMDB has no poster)
+- `show_poster_url_visible` BOOLEAN NOT NULL DEFAULT false — Shows Settings → Visible Fields → Poster
+  URL: **force the Entry "Poster URL" field always visible** (default off; the field still auto-shows
+  whenever TMDB supplied no poster). Stored separately from `show_visible_fields` (which is default-on)
+  so the toggle can default to off.
   (the three `show_*` columns are added by `supabase/migrations/20260617130000_profile_show_settings.sql`)
 - `book_visible_fields` TEXT[] NULL — Books Entry-form field visibility; **NULL = all visible**
   (default-on, no seeding); an explicit array once trimmed in Books Settings

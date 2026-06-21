@@ -137,12 +137,7 @@ export function ShowsDashboard() {
                   key={s.id}
                   show={s}
                   onEdit={() => editShow(s.id)}
-                  secondary={
-                    <StatusChip
-                      label={SHOW_STATUS_LABELS[s.status as ShowStatus]}
-                      className={SHOW_STATUS_CHIP[s.status as ShowStatus]}
-                    />
-                  }
+                  secondary={<ShowStatusChip status={s.status} />}
                 />
               ))}
             </SectionCard>
@@ -195,7 +190,14 @@ export function ShowsDashboard() {
                   key={s.id}
                   show={s}
                   onEdit={() => editShow(s.id)}
-                  secondary={s.genres?.[0] ?? null}
+                  secondary={
+                    <>
+                      <ShowStatusChip status={s.status} />
+                      {s.genres?.[0] ? (
+                        <span className="min-w-0 truncate">{s.genres[0]}</span>
+                      ) : null}
+                    </>
+                  }
                   action={
                     <ActionButton
                       label="Start Watching"
@@ -217,6 +219,7 @@ export function ShowsDashboard() {
                   onEdit={() => editShow(s.id)}
                   secondary={
                     <>
+                      <ShowStatusChip status={s.status} />
                       {s.rating ? <StarRating value={s.rating} size={12} /> : null}
                       {s.end_date && <span>{formatDayLabel(s.end_date)}</span>}
                     </>
@@ -266,6 +269,17 @@ function DashRow({
       </button>
       {action}
     </div>
+  )
+}
+
+/** The status pill (Want / Watching / Watched / Dropped) — shown on every dashboard row so the
+ * status reads the same here as in the Library, not just implied by the shelf title. */
+function ShowStatusChip({ status }: { status: string }) {
+  return (
+    <StatusChip
+      label={SHOW_STATUS_LABELS[status as ShowStatus]}
+      className={SHOW_STATUS_CHIP[status as ShowStatus]}
+    />
   )
 }
 

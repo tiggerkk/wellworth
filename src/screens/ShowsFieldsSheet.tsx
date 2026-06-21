@@ -39,11 +39,19 @@ function Picker({
 }) {
   const allKeys = SHOW_ENTRY_FIELDS.map((f) => f.key)
   const [visible, setVisible] = useState<string[]>(profile.show_visible_fields ?? allKeys)
+  // Poster URL is backed by its own boolean (default off) rather than `show_visible_fields`,
+  // which is default-on — see `ShowsEntry`.
+  const [posterVisible, setPosterVisible] = useState(profile.show_poster_url_visible)
 
   function toggle(key: string, on: boolean) {
     const next = on ? [...visible, key] : visible.filter((k) => k !== key)
     setVisible(next)
     void save({ show_visible_fields: next })
+  }
+
+  function togglePoster(on: boolean) {
+    setPosterVisible(on)
+    void save({ show_poster_url_visible: on })
   }
 
   return (
@@ -66,6 +74,10 @@ function Picker({
             />
           </div>
         ))}
+        <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-2.5 last:border-b-0">
+          <span className="text-[15px] text-text-primary">Poster URL</span>
+          <Toggle checked={posterVisible} onChange={togglePoster} label="Poster URL" />
+        </div>
       </div>
     </div>
   )

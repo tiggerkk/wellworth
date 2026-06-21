@@ -214,8 +214,10 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
     !!draft.director ||
     !!draft.cast?.length ||
     draft.runtime_min != null
-  // Poster URL field: shown when forced on in Settings, or when there's no poster yet, or when the
-  // current value is a manually pasted URL (so it stays editable). Hidden once TMDB supplied a path.
+  // Poster URL field visibility: shown automatically when TMDB supplied no poster (the field is empty
+  // or holds a manually pasted absolute URL), OR forced always-on via the Visible-Fields "Poster URL"
+  // toggle (`profile.show_poster_url_visible`, default off — stored separately from `show_visible_fields`,
+  // which is default-on, so the toggle itself can default to off).
   const posterUrlVisible =
     !!profile?.show_poster_url_visible ||
     !draft.poster_path ||

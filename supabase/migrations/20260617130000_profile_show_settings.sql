@@ -9,8 +9,9 @@
 --     from visible_nutrients, which defaults to '{}' = none, because hiding-by-default is wrong
 --     for an entry form — a new title should show every field until the owner trims it.)
 --   * show_importer_enabled — surfaces the in-app CSV importer in Shows Settings.
---   * show_poster_url_visible — DISPLAY setting: force the Entry "Poster URL" field always
---     visible (it otherwise shows only when TMDB supplied no poster). Default off.
+--   * show_poster_url_visible — Visible-Fields toggle that FORCES the Entry "Poster URL" field always
+--     visible. Default off; the field still auto-shows whenever TMDB supplied no poster. Stored
+--     separately from show_visible_fields (which is default-on) so the toggle can default to off.
 
 alter table public.profile
   add column show_visible_fields     text[],

@@ -15,7 +15,7 @@ export type BookUpdate = TablesUpdate<'book'>
 export const BOOK_STATUSES = ['want', 'reading', 'read', 'dropped'] as const
 export type BookStatus = (typeof BOOK_STATUSES)[number]
 export const BOOK_STATUS_LABELS: Record<BookStatus, string> = {
-  want: 'Want to Read',
+  want: 'Want',
   reading: 'Reading',
   read: 'Read',
   dropped: 'Dropped',
@@ -31,10 +31,10 @@ export const LGBTQ_REP_LABELS: Record<LgbtqRep, string> = {
   significant: 'Significant',
 }
 
-/** Status-chip palette (Tailwind classes on the design tokens): want = neutral, reading =
+/** Status-chip palette (Tailwind classes on the design tokens): want = blue (planned), reading =
  * coral (active), read = teal (positive), dropped = grey (muted). */
 export const BOOK_STATUS_CHIP: Record<BookStatus, string> = {
-  want: 'bg-input text-text-secondary',
+  want: 'bg-info text-bg',
   reading: 'bg-accent text-bg',
   read: 'bg-positive text-bg',
   dropped: 'bg-track text-text-secondary',

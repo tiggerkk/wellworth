@@ -605,11 +605,11 @@ documentaries / CCTV series). To add one (**Shows → New Show**):
    - **(Preferred, durable) Contribute to TMDB:** create the entry at themoviedb.org (title, episode
      count, upload a poster). It may take from minutes to a day or two to clear moderation. Either log the
      show now poster-less and **Refresh from TMDB** once it appears, or wait and then Search TMDB.
-   - **(Immediate) Manual entry + paste a Poster URL:** type title / status / rating, then on Douban or
-     the streaming page **Copy Image Address** and paste it into the **Poster URL** field. (The field
-     shows automatically when TMDB supplied no poster; to keep it always visible, turn on **Shows
-     Settings → Display → Visible Poster URL**.) Saves instantly; rendered via `no-referrer`. (Prefer a
-     streaming-site `og:image` or TMDB URL over a Baidu/Douban _search_ URL — those can expire.)
+   - **(Immediate) Manual entry + paste a Poster URL:** the **Poster URL** field is **off by default** —
+     turn it on once in **Shows Settings → Visible Fields → Poster URL**. Then type title / status /
+     rating, and on Douban or the streaming page **Copy Image Address** and paste it into the field.
+     Saves instantly; rendered via `no-referrer`. (Prefer a streaming-site `og:image` or TMDB URL over a
+     Baidu/Douban _search_ URL — those can expire.)
 4. **⟳ Refresh from TMDB** (the button beside Search; enabled once a `tmdb_id` exists): use it when your
    contributed entry clears moderation, or when a show adds seasons/episodes. It updates TMDB-sourced
    fields only and **never** overwrites your status, rating, dates, comments, favourite flag, or a

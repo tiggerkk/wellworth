@@ -1104,10 +1104,14 @@ master_series)` index from `20260617120000_shows_schema.sql`; removed `masterSer
   filter (`favoritesOnly` on `LibraryCriteria`), a ♥ on list rows, and a trailing **`is_favorite`**
   importer CSV column (Shows, Books **and** Quotes — Quotes already had the column/UI, only the importer
   needed it; lenient `true/1/yes/y` parse).
-- **Shows Poster URL is now conditional.** The Entry field shows only when there's no poster, when the
-  value is a manually pasted absolute URL, or when forced on via the new **Shows Settings → Display →
-  Visible Poster URL** toggle (`profile.show_poster_url_visible`, default off). Hidden once TMDB supplied
-  a path (the common case), de-cluttering the form.
+- **Shows Poster URL — auto-show + a force-on toggle.** The Entry field **auto-shows whenever TMDB
+  supplied no poster** (`poster_path` is null or a manually pasted absolute URL), and the **Shows
+  Settings → Visible Fields → Poster URL** toggle (`profile.show_poster_url_visible`, default false)
+  **forces it always visible** even when TMDB has a poster. The toggle needs its own boolean because
+  `show_visible_fields` is **default-on** (NULL = all visible) and so can't express a default-off field.
+  (Iteration history: first shipped as a separate "Display → Visible Poster URL" section, then the toggle
+  was moved into the Visible Fields sheet; the auto-show conditional was briefly removed and then
+  restored alongside the toggle.)
 - **Shows Start-Date defaulting.** A new show defaults to **Want with a blank Start Date** (it hasn't
   started); `changeStatus` now defaults Start Date to today when moving to Watching/Watched/Dropped (the
   same pattern the Finish date already used).

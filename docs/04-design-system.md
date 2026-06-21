@@ -17,6 +17,7 @@ Dark, calm, Cronometer-like. These tokens are taken directly from the approved w
 | `text-tertiary`   | `#5b6172`                | Disabled / future dates                                    |
 | `accent` (coral)  | `#e8623c`                | Brand, active tab, links, energy-negative, favorites heart |
 | `positive` (teal) | `#5dcaa5`                | Add `+`, activity/supplement accents, "food logged" dot    |
+| `info` (blue)     | `#5b8def`                | "Want" status chip (planned) on Shows/Books                |
 | `danger`          | `#e2574c`                | Over-limit bars and % text, destructive text               |
 | `delete`          | `#e24b4a`                | Swipe-to-delete background                                 |
 | `track`           | `#3a4253`                | Progress-bar track, off-toggle                             |
@@ -78,9 +79,12 @@ _not_ the primary-button color; it's for emphasis, active states, and energy.
 - **Refresh from TMDB** — a small `⟳` (`IconRefresh`) action beside Search TMDB on the Shows Entry form,
   greyed/disabled until a `tmdb_id` exists; spins while fetching and reports "Updated" / "Already up to date".
 - **StatusChip** — a **presentational** status pill taking a `label` + palette `className`, so Shows,
-  Books, and Quotes share one chip. Shows/Books use the per-status palette tokens: neutral (`input`) /
-  coral (`accent`, active) / teal (`positive`) / grey (`track`) — Shows = Want/Watching/Watched/Dropped,
-  Books = Want to Read/Reading/Read/Dropped. **Quotes** reuses the same chip for its **Category badge**
+  Books, and Quotes share one chip. Shows/Books use the per-status palette tokens: **Want** = blue
+  (`info`, planned) / **Watching·Reading** = coral (`accent`, active) / **Watched·Read** = teal
+  (`positive`) / **Dropped** = grey (`track`). The "Want" label is deliberately short ("Want", not "Want
+  to Watch"/"Want to Read") so the chip stays compact; the shelf titles still spell it out. Chips appear
+  on every Library row **and** every Dashboard row (Shows = Favourites/Up Next/Watching/Want shelves,
+  Books = all shelves). **Quotes** reuses the same chip for its **Category badge**
   (a single neutral palette; a fixed colour per category is an optional, deferred nicety) and the
   importer/linker type pills.
 - **Thumb** — the shared presentational 2:3 rounded image-or-placeholder (`src/components/Thumb.tsx`,

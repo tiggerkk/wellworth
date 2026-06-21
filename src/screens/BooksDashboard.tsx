@@ -111,12 +111,7 @@ export function BooksDashboard() {
                   key={b.id}
                   book={b}
                   onEdit={() => editBook(b.id)}
-                  secondary={
-                    <StatusChip
-                      label={BOOK_STATUS_LABELS[b.status as BookStatus]}
-                      className={BOOK_STATUS_CHIP[b.status as BookStatus]}
-                    />
-                  }
+                  secondary={<BookStatusChip status={b.status} />}
                 />
               ))}
             </SectionCard>
@@ -129,7 +124,14 @@ export function BooksDashboard() {
                   key={b.id}
                   book={b}
                   onEdit={() => editBook(b.id)}
-                  secondary={b.authors?.length ? b.authors.join(', ') : null}
+                  secondary={
+                    <>
+                      <BookStatusChip status={b.status} />
+                      {b.authors?.length ? (
+                        <span className="min-w-0 truncate">{b.authors.join(', ')}</span>
+                      ) : null}
+                    </>
+                  }
                   action={
                     <ActionButton
                       label="Mark Read"
@@ -151,6 +153,7 @@ export function BooksDashboard() {
                   onEdit={() => editBook(b.id)}
                   secondary={
                     <>
+                      <BookStatusChip status={b.status} />
                       {b.rating ? <StarRating value={b.rating} size={12} /> : null}
                       {b.end_date && <span>{formatDayLabel(b.end_date)}</span>}
                     </>
@@ -167,7 +170,14 @@ export function BooksDashboard() {
                   key={b.id}
                   book={b}
                   onEdit={() => editBook(b.id)}
-                  secondary={b.authors?.length ? b.authors.join(', ') : null}
+                  secondary={
+                    <>
+                      <BookStatusChip status={b.status} />
+                      {b.authors?.length ? (
+                        <span className="min-w-0 truncate">{b.authors.join(', ')}</span>
+                      ) : null}
+                    </>
+                  }
                   action={
                     <ActionButton
                       label="Start Reading"
@@ -219,6 +229,17 @@ function DashRow({
       </button>
       {action}
     </div>
+  )
+}
+
+/** The status pill (Want to Read / Reading / Read / Dropped) — shown on every dashboard row so the
+ * status reads the same here as in the Library, not just implied by the shelf title. */
+function BookStatusChip({ status }: { status: string }) {
+  return (
+    <StatusChip
+      label={BOOK_STATUS_LABELS[status as BookStatus]}
+      className={BOOK_STATUS_CHIP[status as BookStatus]}
+    />
   )
 }
 

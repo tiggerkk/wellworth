@@ -144,22 +144,26 @@ the cloud is authoritative (this also sidesteps iOS PWA storage eviction).
   shared `Thumb`, plus the Entry detail `<img>`), so hotlink-protected CDNs (a pasted Douban/streaming
   poster) still serve. The app stores image URLs/paths only, never files.
 - **UI:** `ShowsDashboard` (Favourites / Up Next / Watching / Want / Recently-Watched shelves + type
-  filter incl. Docs + Mark Watched / Start Watching quick actions; watching rows show the "Watching" chip
-  - season·episode progress, ♥ marks favourites), `ShowsLibrary` (search + swipe-delete list +
-    documentary type filter + a **Favourites only** filter + ♥ on rows), `ShowsEntry` (create/edit form
-    with a header **favourite heart**, Chinese-aware TMDB title search, a **Poster URL** field shown only
-    when TMDB has no poster or forced on in Settings, a **⟳ Refresh from TMDB** button enabled once
-    `tmdb_id` is set, status-driven Start-Date defaulting (Want ⇒ blank), and
-    `?title=&poster=&overview=&type=` **prefill**; outer-loader + inner-form with dirty RESET/SAVE). The
-    Type/Status/LGBT+ controls reuse `SegmentedTabs` (Type is three-way); dates reuse the generalized
-    `Calendar`; posters use the shared `PosterThumb`. **TMDB** client + `TitleSearchSheet` live in
-    `src/lib/tmdb-api.ts` and `src/components/TitleSearchSheet.tsx`.
+  filter incl. Docs + Mark Watched / Start Watching quick actions; a shared `ShowStatusChip` puts the
+  status pill on every row, watching rows additionally show season·episode progress, ♥ marks
+  favourites), `ShowsLibrary` (search + swipe-delete list +
+  documentary type filter + a **Favourites only** filter + ♥ on rows), `ShowsEntry` (create/edit form
+  with a header **favourite heart**, Chinese-aware TMDB title search, a **Poster URL** field (auto-shown
+  when TMDB has no poster; its Visible-Fields toggle — **off by default** — forces it always visible), a
+  **⟳ Refresh from TMDB** button enabled once
+  `tmdb_id` is set, status-driven Start-Date defaulting (Want ⇒ blank), and
+  `?title=&poster=&overview=&type=` **prefill**; outer-loader + inner-form with dirty RESET/SAVE). The
+  Type/Status/LGBT+ controls reuse `SegmentedTabs` (Type is three-way); dates reuse the generalized
+  `Calendar`; posters use the shared `PosterThumb`. **TMDB** client + `TitleSearchSheet` live in
+  `src/lib/tmdb-api.ts` and `src/components/TitleSearchSheet.tsx`.
 - **Settings (split, like Wellness):** `ShowsSettings` (gear in the Shows headers) hosts **Entry field
-  visibility** (`ShowsFieldsSheet`, a route sheet of toggles), a **Display** section with a **Visible
-  Poster URL** toggle, and an **importer enable** toggle. Prefs sync on `profile` —
-  `show_visible_fields` (`text[]`, **NULL = all visible**), `show_poster_url_visible` (`boolean`), and
-  `show_importer_enabled` (`boolean`); saved via `useProfileEditor`. Entry reads them through
-  `useProfile` + the pure `isFieldVisible` helper.
+  visibility** (`ShowsFieldsSheet`, a route sheet of toggles — including the **Poster URL** toggle) and
+  an **importer enable** toggle. Prefs sync on `profile` — `show_visible_fields` (`text[]`, **NULL = all
+  visible**, default-on), `show_poster_url_visible` (`boolean`, **default off** — backs the Poster URL
+  toggle, which can't live in the default-on `show_visible_fields`; means "force always visible", and the
+  field still auto-shows when TMDB has no poster), and `show_importer_enabled` (`boolean`); saved via
+  `useProfileEditor`. Entry reads them through `useProfile` + the pure `isFieldVisible` helper (Poster URL
+  uses `show_poster_url_visible || no-TMDB-poster`).
 - **CSV importer (in-app):** enabled by the Settings toggle → `ImportShowsSheet`. One CSV covers English +
   Chinese across all three types. Pure parse/build in `src/lib/shows-import.ts` (`parseShowsCsv` via the
   shared `src/lib/csv.ts`, `buildImportRow`, `dedupKey`); the sheet resolves each row against TMDB
@@ -193,7 +197,8 @@ _Books re-skins Shows (see the Shows section); only the differences are noted._
   rating reuses `StarRating`). `BooksLibrary` (search + a collapsible filter panel of `SelectMenu`s + a
   **Favourites only** toggle + a Sort menu + cover rows with ♥; swipe-delete). `BooksDashboard`
   (Favourites / Currently Reading / Recently Read / Want to Read shelves + Mark Read / Start Reading
-  quick actions + an "N read this year" stat; no type filter).
+  quick actions + an "N read this year" stat; no type filter; a shared `BookStatusChip` puts the
+  status pill on every row, like the Library).
 - **Shared 2:3 thumbnail:** the poster/cover tile was extracted into a presentational
   `src/components/Thumb.tsx` (`url` + `className`); `PosterThumb` (Shows, TMDB sizing via `posterUrl`)
   and `CoverThumb` (Books, the full `cover_url`) both render it. `StatusChip` was likewise made
