@@ -153,6 +153,31 @@ export function progressLabel(
   return `S${show.watched_seasons ?? 0} · ${show.watched_episodes ?? 0}/${show.total_episodes ?? 0}`
 }
 
+/** A runtime in minutes as "2h 10m" / "1h" / "45m" (no leading zero hour). */
+export function formatRuntime(min: number): string {
+  const h = Math.floor(min / 60)
+  const m = min % 60
+  if (h === 0) return `${m}m`
+  return m === 0 ? `${h}h` : `${h}h ${m}m`
+}
+
+/**
+ * A compact "what am I getting into" length cue for a row: `~2h 10m` for a movie (its runtime),
+ * `3 seasons` (or `1 season`) / `12 eps` for episodic types. Null when there's no length data.
+ */
+export function lengthHint(
+  show: Pick<ShowRow, 'type' | 'runtime_min' | 'total_seasons' | 'total_episodes'>,
+): string | null {
+  if (!usesEpisodes(show.type)) {
+    return show.runtime_min ? `~${formatRuntime(show.runtime_min)}` : null
+  }
+  if (show.total_seasons) {
+    return `${show.total_seasons} season${show.total_seasons === 1 ? '' : 's'}`
+  }
+  if (show.total_episodes) return `${show.total_episodes} eps`
+  return null
+}
+
 /** Dashboard "Up Next": an in-progress TV show with episodes still to watch. */
 export function isUpNext(
   show: Pick<ShowRow, 'status' | 'type' | 'watched_episodes' | 'total_episodes'>,

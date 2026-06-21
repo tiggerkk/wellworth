@@ -39,7 +39,7 @@ its `docs/07-quotes.md` staging spec has been merged into the permanent docs and
   `VITE_GOOGLE_BOOKS_API_KEY` (Books), and the optional `VITE_ALLOWED_EMAILS` (email allowlist —
   empty ⇒ no restriction). All build-time `VITE_` vars.
 - **Gates:** husky `.husky/pre-commit` → lint-staged + `typecheck` + `test`; GitHub Actions
-  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 254 Vitest tests (pure helpers).
+  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 259 Vitest tests (pure helpers).
 - **Deploy status:** Deployed. GitHub `main` → Vercel auto-deploy; the production URL is in the
   Supabase redirect URLs + Google JS origins (see `OWNER-RUNBOOK.md`). Installed + tested on iPhone (PWA).
 - Conventions (DB-access-via-`src/data`, metric storage, generated `database.ts` contract, etc.) live
@@ -1172,6 +1172,25 @@ convenience layer (the real locks are dashboard-side — see `OWNER-RUNBOOK.md` 
 - **Build-time var** (`VITE_`), so it's baked into the bundle — changing it needs a redeploy / dev
   restart. Documented in `.env.example`, `OWNER-RUNBOOK.md` (Parts D/H3/K + quick-ref), and the
   `CLAUDE.md` Security section. Typed in `src/vite-env.d.ts`.
+
+## Shows row secondary-text scheme (Dashboard vs Library)
+
+The per-row "secondary" metadata had grown ad-hoc — each Dashboard shelf showed a different mix and
+the Library row showed another — so the owner asked for a deliberate scheme. Chose **purpose-tailored**
+over uniform-per-show: the **Library** is one uniform catalog row for every status, while the
+**Dashboard** keeps a baseline (type badge + status chip, matching the Library) and each shelf adds
+the single most useful detail. No schema/data change — all fields already on `ShowRow`. 254 → **259**.
+
+- Two new pure helpers in `src/lib/shows.ts`: `formatRuntime(min)` (`"2h 10m"`/`"1h"`/`"45m"`) and
+  `lengthHint(show)` — a compact "what am I getting into" cue (`~2h 10m` movie, `3 seasons`/`12 eps`
+  episodic, null when no data). 5 unit tests.
+- **Dashboard** (`ShowsDashboard.tsx`): Favourites now adds the star rating; the **Want** shelf adds
+  the length hint after the genre; **Recently Watched** labels the date **"Finished …"**; and
+  `WatchingSecondary` now shows progress only for episodic titles **with a known total**, otherwise
+  **"Started {start date}"** — so a watching **movie** (no episodes) is no longer a blank dead end.
+- **Library** (`ShowsLibrary.tsx`): the bare date gained a context label — **"Finished {date}"** when
+  there's an `end_date`, else **"Updated {date}"** (`last_update_date`).
+- Scope was Shows only; Books/Quotes rows were left as-is.
 
 ## Known limitations / deferred (not spec issues — future work)
 

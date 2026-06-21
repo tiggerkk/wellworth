@@ -309,6 +309,7 @@ export function ShowsLibrary() {
                         {s.genres?.[0] && <span>{s.genres[0]}</span>}
                         {(s.end_date ?? s.last_update_date) && (
                           <span>
+                            {s.end_date ? 'Finished ' : 'Updated '}
                             {formatDayLabel((s.end_date ?? s.last_update_date)!)}
                           </span>
                         )}

@@ -5,9 +5,11 @@ import {
   countWatchedThisYear,
   DEFAULT_LIBRARY_CRITERIA,
   favoriteShows,
+  formatRuntime,
   isAbsoluteUrl,
   isFieldVisible,
   isUpNext,
+  lengthHint,
   markWatched,
   posterUrl,
   progressLabel,
@@ -155,6 +157,73 @@ describe('progressLabel', () => {
         total_episodes: null,
       }),
     ).toBe('S0 · 0/0')
+  })
+})
+
+describe('formatRuntime', () => {
+  it('formats hours and minutes, dropping zero parts', () => {
+    expect(formatRuntime(130)).toBe('2h 10m')
+    expect(formatRuntime(60)).toBe('1h')
+    expect(formatRuntime(45)).toBe('45m')
+  })
+})
+
+describe('lengthHint', () => {
+  it('uses runtime for a movie', () => {
+    expect(
+      lengthHint({
+        type: 'movie',
+        runtime_min: 95,
+        total_seasons: null,
+        total_episodes: null,
+      }),
+    ).toBe('~1h 35m')
+  })
+  it('prefers seasons for episodic types, singular when one', () => {
+    expect(
+      lengthHint({
+        type: 'tv',
+        runtime_min: null,
+        total_seasons: 3,
+        total_episodes: 24,
+      }),
+    ).toBe('3 seasons')
+    expect(
+      lengthHint({
+        type: 'documentary',
+        runtime_min: null,
+        total_seasons: 1,
+        total_episodes: 6,
+      }),
+    ).toBe('1 season')
+  })
+  it('falls back to episodes when there are no seasons', () => {
+    expect(
+      lengthHint({
+        type: 'tv',
+        runtime_min: null,
+        total_seasons: null,
+        total_episodes: 12,
+      }),
+    ).toBe('12 eps')
+  })
+  it('returns null when there is no length data', () => {
+    expect(
+      lengthHint({
+        type: 'movie',
+        runtime_min: null,
+        total_seasons: null,
+        total_episodes: null,
+      }),
+    ).toBeNull()
+    expect(
+      lengthHint({
+        type: 'tv',
+        runtime_min: null,
+        total_seasons: null,
+        total_episodes: null,
+      }),
+    ).toBeNull()
   })
 })
 

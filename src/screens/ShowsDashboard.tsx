@@ -9,6 +9,7 @@ import {
   countWatchedThisYear,
   favoriteShows,
   isUpNext,
+  lengthHint,
   markWatched,
   progressLabel,
   recentlyWatched,
@@ -119,7 +120,12 @@ export function ShowsDashboard() {
                   key={s.id}
                   show={s}
                   onEdit={() => editShow(s.id)}
-                  secondary={<ShowStatusChip status={s.status} />}
+                  secondary={
+                    <>
+                      <ShowStatusChip status={s.status} />
+                      {s.rating ? <StarRating value={s.rating} size={12} /> : null}
+                    </>
+                  }
                 />
               ))}
             </SectionCard>
@@ -178,6 +184,7 @@ export function ShowsDashboard() {
                       {s.genres?.[0] ? (
                         <span className="min-w-0 truncate">{s.genres[0]}</span>
                       ) : null}
+                      {lengthHint(s) && <span>{lengthHint(s)}</span>}
                     </>
                   }
                   action={
@@ -203,7 +210,7 @@ export function ShowsDashboard() {
                     <>
                       <ShowStatusChip status={s.status} />
                       {s.rating ? <StarRating value={s.rating} size={12} /> : null}
-                      {s.end_date && <span>{formatDayLabel(s.end_date)}</span>}
+                      {s.end_date && <span>Finished {formatDayLabel(s.end_date)}</span>}
                     </>
                   }
                 />
@@ -265,15 +272,22 @@ function ShowStatusChip({ status }: { status: string }) {
   )
 }
 
-/** Secondary line for a watching row: the "Watching" chip + (episodic) season/episode progress. */
+/** Secondary line for a watching row: the "Watching" chip + the most useful progress cue —
+ * season/episode progress for an episodic title with a known total, otherwise the start date so a
+ * watching movie (or a total-less title) isn't a dead end. */
 function WatchingSecondary({ show }: { show: ShowRow }) {
+  const hasProgress = usesEpisodes(show.type) && (show.total_episodes ?? 0) > 0
   return (
     <>
       <StatusChip
         label={SHOW_STATUS_LABELS.watching}
         className={SHOW_STATUS_CHIP.watching}
       />
-      {usesEpisodes(show.type) && <span>{progressLabel(show)}</span>}
+      {hasProgress ? (
+        <span>{progressLabel(show)}</span>
+      ) : show.start_date ? (
+        <span>Started {formatDayLabel(show.start_date)}</span>
+      ) : null}
     </>
   )
 }

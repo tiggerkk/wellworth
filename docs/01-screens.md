@@ -211,20 +211,26 @@ Wellness-module sub-settings. Auto-save on change. A back chevron returns to the
 
 - Shelves, each a card shown only when it has items, scoped by a **type filter** (All / TV / Movies /
   Docs). (New Show and Settings live in the bottom nav, not a page header.)
-  - **Favourites** — every `is_favorite` title (any status), each row showing its status chip. (A
-    favourite also still appears in its status shelf below.)
+  Every row carries a baseline of **type badge + status chip** (so status reads the same here as in
+  the Library); on top of that each shelf adds the one detail that matters there:
+  - **Favourites** — every `is_favorite` title (any status), each row showing its status chip + the
+    **star rating** when set. (A favourite also still appears in its status shelf below.)
   - **Up Next** — an in-progress episodic title (TV or documentary) with episodes remaining; each row
     shows the poster, title, type badge, a **"Watching"** chip, and **"S{watched_seasons} ·
     {watched_episodes}/{total_episodes}"** progress + a **Mark Watched** action (status → watched,
     finish → today, watched counts → totals).
   - **Watching** — the remaining `status=watching` titles (movies + TV without episode totals); each row
-    shows the **"Watching"** chip (and, for episodic titles, the season·episode progress) + a **Mark
-    Watched** action. (Up Next is de-duplicated out of Watching so a show isn't listed twice.) Every
-    watching title — whether started from the Want shelf or set to Watching manually — gets the chip.
+    shows the **"Watching"** chip + the most useful cue — season·episode progress for an episodic title
+    with a known total, otherwise **"Started {start date}"** (so a watching movie isn't a dead end) —
+    plus a **Mark Watched** action. (Up Next is de-duplicated out of Watching so a show isn't listed
+    twice.) Every watching title — whether started from the Want shelf or set to Watching manually —
+    gets the chip.
   - **Want to Watch** — a short shelf of `status=want`, each showing the blue **"Want"** chip + first
-    genre and a **Start Watching** action (status → watching, start → today).
-  - **Recently Watched** — the last 5 by finish date (rows show the **"Watched"** chip + stars + finish
-    date). Imported rows with no `end_date` don't appear here (they live in the Library).
+    genre + a compact **length hint** (`~2h 10m` for a movie, `3 seasons` / `12 eps` for episodic) and
+    a **Start Watching** action (status → watching, start → today).
+  - **Recently Watched** — the last 5 by finish date (rows show the **"Watched"** chip + stars +
+    **"Finished {date}"**). Imported rows with no `end_date` don't appear here (they live in the
+    Library).
 - Every Dashboard row shows its **status chip** (like the Library), and a favourite row anywhere shows a
   small filled **♥** before the title. The status chips use a shared palette — **Want** = blue,
   **Watching** = coral, **Watched** = teal, **Dropped** = grey — with the short label "Want" (the shelf
@@ -242,9 +248,11 @@ Wellness-module sub-settings. Auto-save on change. A back chevron returns to the
   filters** resets them.
 - A **Sort** menu over { Date, Title, Type, Year, Status, Rating, Genre } with an **asc/desc** toggle
   (nulls sort last); default is **Date** descending.
-- Each row: a **poster thumbnail**, the title (+ year) with a small filled **♥** when favourited, a
-  **TV/Movie/Documentary type badge**, a **status chip**, the **star rating**, the first genre, and the
-  finish/updated date. Tap a row → **Entry/Edit**; **swipe-left → Delete** (hard, with a confirm).
+- Each row is a **uniform catalog row** (same fields for every status): a **poster thumbnail**, the
+  title (+ year) with a small filled **♥** when favourited, then **type badge · status chip · star
+  rating** (when set) and a second line of **first genre · date** — labelled **"Finished {date}"**
+  when there's an end date, else **"Updated {date}"**. Tap a row → **Entry/Edit**; **swipe-left →
+  Delete** (hard, with a confirm).
 - A **Settings** tab in the Shows bottom nav opens **Shows Settings**.
 - _Filter/sort state is per-visit (not persisted); a wide-screen sortable table is parked — see
   `PARKED.md`._
