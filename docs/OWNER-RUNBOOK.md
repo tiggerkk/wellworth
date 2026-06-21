@@ -549,9 +549,7 @@ update public.profile
 > data; you refresh with `supabase db reset --linked`). Because `supabase db push` won't re-run an
 > already-applied migration, apply edits with a full reset: **`supabase db reset --linked`** re-runs
 > every migration from scratch (wipes all modules), then run **Part G** (`npm run gen:types`) so
-> `src/types/database.ts` matches. The Shows schema has since dropped the unused `master_series` and
-> `content_rating` columns and added `is_favorite`; Books added `is_favorite`; `profile` gained
-> `show_poster_url_visible`.
+> `src/types/database.ts` matches.
 
 **Books** — wipes every tracked book:
 
@@ -591,21 +589,25 @@ The Shows module covers TV, movies, and **documentaries** (incl. Chinese titles 
 documentaries / CCTV series). To add one (**Shows → New Show**):
 
 1. **Search TMDB** in the Add Show form — works for any title; a **Chinese (CJK) query returns Chinese
-   titles**. For a documentary, set Type → **Documentary** first (it searches TMDB's TV catalogue) and,
-   if it belongs to a parent series, fill **Master Series** (e.g. `国宝档案`).
-2. **Found → select** → metadata + poster auto-fill → set status / rating / etc. → **Save**. Done.
+   titles**. For a documentary, set Type → **Documentary** first (it searches TMDB's TV catalogue). If a
+   documentary belongs to a parent series, just fold the series into the **Title** yourself (e.g.
+   `国宝档案 — 从东晋到北魏`).
+2. **Found → select** → metadata + poster auto-fill → set status / rating / **♥ favourite** / etc. →
+   **Save**. Done. (A new show defaults to **Want** with a blank Start Date; pick Watching/Watched and
+   the Start Date defaults to today.)
 3. **Not found** (common for niche documentaries), choose one:
    - **(Preferred, durable) Contribute to TMDB:** create the entry at themoviedb.org (title, episode
      count, upload a poster). It may take from minutes to a day or two to clear moderation. Either log the
      show now poster-less and **Refresh from TMDB** once it appears, or wait and then Search TMDB.
-   - **(Immediate) Manual entry + paste a Poster URL:** type title / master series / status / rating, then
-     on Douban or the streaming page **Copy Image Address** and paste it into the **Poster URL** field.
-     Saves instantly; rendered via `no-referrer`. (Prefer a streaming-site `og:image` or TMDB URL over a
-     Baidu/Douban _search_ URL — those can expire.)
+   - **(Immediate) Manual entry + paste a Poster URL:** type title / status / rating, then on Douban or
+     the streaming page **Copy Image Address** and paste it into the **Poster URL** field. (The field
+     shows automatically when TMDB supplied no poster; to keep it always visible, turn on **Shows
+     Settings → Display → Visible Poster URL**.) Saves instantly; rendered via `no-referrer`. (Prefer a
+     streaming-site `og:image` or TMDB URL over a Baidu/Douban _search_ URL — those can expire.)
 4. **⟳ Refresh from TMDB** (the button beside Search; enabled once a `tmdb_id` exists): use it when your
    contributed entry clears moderation, or when a show adds seasons/episodes. It updates TMDB-sourced
-   fields only and **never** overwrites your status, rating, dates, comments, master series, or a manually
-   pasted poster. (Bulk "refresh everything" is intentionally not built — see `PARKED.md`.)
+   fields only and **never** overwrites your status, rating, dates, comments, favourite flag, or a
+   manually pasted poster. (Bulk "refresh everything" is intentionally not built — see `PARKED.md`.)
 
 **Bulk import:** to seed a back-catalogue, enable **Shows Settings → Enable CSV import** and use one CSV
 spanning English + Chinese across all three types — see `templates/shows-import-guide.md`.

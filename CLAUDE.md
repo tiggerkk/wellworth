@@ -58,7 +58,7 @@ append a `ModuleDef` to `src/constants/modules.ts` + its routes.
   `ImportNetWorthSheet`.
 - **Shows (built):** TV, movies & **documentaries**. One table `show` (migration
   `supabase/migrations/20260617120000_shows_schema.sql` — `type` ∈ `tv|movie|documentary`, an
-  `is_favorite` boolean + a `(user_id, is_favorite)` index, **no** `content_rating`/`master_series`;
+  `is_favorite` boolean + a `(user_id, is_favorite)` index, **no** `content_rating`;
   `poster_path` holds **either** a TMDB path **or** a full pasted image URL) plus three `profile` columns
   `show_visible_fields` / `show_importer_enabled` / `show_poster_url_visible`
   (`20260617130000_profile_show_settings.sql`). Data `src/data/show.ts` (CRUD + idempotent

@@ -168,7 +168,7 @@ The migration is `supabase/migrations/20260615120000_networth_schema.sql`.
 - `created_at`, `updated_at`
 - Index on (`user_id`, `status`) and on (`user_id`, `is_favorite`) — the latter backs the favourites filter.
 
-Standard rules apply: own `user_id` for direct RLS, four owner policies using `(select auth.uid()) = user_id`, `CHECK` on the enum columns, `moddatetime` trigger on `updated_at`, explicit `GRANT` to `anon`/`authenticated`. Imported back-catalogue rows leave the three dates NULL (genuinely unknown). The migration is `supabase/migrations/20260617120000_shows_schema.sql` (the Shows DB carries no live data and is refreshed via `supabase db reset --linked`, so schema changes — the documentary type, `is_favorite`, the removal of the parked `master_series`/`content_rating` columns — are folded into this original migration rather than shipping additive ones).
+Standard rules apply: own `user_id` for direct RLS, four owner policies using `(select auth.uid()) = user_id`, `CHECK` on the enum columns, `moddatetime` trigger on `updated_at`, explicit `GRANT` to `anon`/`authenticated`. Imported back-catalogue rows leave the three dates NULL (genuinely unknown). The migration is `supabase/migrations/20260617120000_shows_schema.sql`.
 
 ### book (one row per tracked book)
 

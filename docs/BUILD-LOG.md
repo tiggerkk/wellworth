@@ -9,12 +9,14 @@ now encodes the correct approach.
 Net Worth is **feature-complete** (M1–M6) — see "Net Worth (build sequence)" below.
 **Shows** (TV, movies & documentaries) is **feature-complete (M1–M7 + the M8 enhancement)** — see "Shows
 Build Sequence" below: schema, module scaffold, manual CRUD, TMDB metadata, Dashboard, Library
-filters/sort, Settings, CSV importer, then M8 (documentary type + master series, Chinese-aware TMDB,
-pasted Poster URL, per-show Refresh, prefill).
+filters/sort, Settings, CSV importer, then M8 (documentary type, Chinese-aware TMDB, pasted Poster URL,
+per-show Refresh, prefill). A later cross-module pass added **favourites**, removed the documentary
+`master_series` column (folded into the title), made the Poster URL field conditional, and fixed the
+Watching-badge/Start-Date behaviour — see "Shows / Books / global enhancement" near the end.
 **Books** (books read / to read) is **feature-complete (M1–M7)** — see "Books Build Sequence" below:
 schema, module scaffold, manual CRUD, Google Books / Open Library metadata, Dashboard, Library
-filters/sort, Settings, CSV importer. It re-skinned Shows; its `docs/06-books.md` staging spec has been
-merged into the permanent docs and deleted.
+filters/sort, Settings, CSV importer, plus the later **favourites** pass. It re-skinned Shows; its
+`docs/06-books.md` staging spec has been merged into the permanent docs and deleted.
 **Quotes** (favourite quotes from screen/page/sound, English or Chinese) is **feature-complete (M1–M7)**
 — see "Quotes Build Sequence" below: schema + module scaffold, data layer + manual Entry/Edit, the
 cross-module Show/Book linker, the Moment-of-Zen dashboard, the Library filters/facets, Settings + Entry
