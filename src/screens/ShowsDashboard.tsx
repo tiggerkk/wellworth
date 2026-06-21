@@ -1,6 +1,6 @@
 import { useCallback, useState, type ReactNode } from 'react'
-import { Link, useNavigate } from 'react-router'
-import { IconHeartFilled, IconPlus, IconSettings } from '@tabler/icons-react'
+import { useNavigate } from 'react-router'
+import { IconHeartFilled } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useShowsVersion, bumpShows } from '../lib/shows-refresh'
@@ -81,24 +81,6 @@ export function ShowsDashboard() {
   return (
     <div className="pb-4">
       <header className="sticky top-0 z-10 flex flex-col gap-3 bg-bg/90 px-4 py-3 backdrop-blur">
-        <div className="flex items-center justify-between">
-          <h1 className="text-lg font-medium text-text-primary">Shows</h1>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate(routes.shows.entry)}
-              className="flex items-center gap-1 text-sm text-positive"
-            >
-              <IconPlus size={18} /> New
-            </button>
-            <Link
-              to={routes.shows.settings}
-              aria-label="Shows settings"
-              className="p-1 text-text-secondary"
-            >
-              <IconSettings size={18} />
-            </Link>
-          </div>
-        </div>
         <SegmentedTabs
           value={filter}
           onChange={setFilter}

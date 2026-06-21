@@ -7,17 +7,19 @@ Quotes; more later). Selecting a module enters it and the **bottom tab bar becom
 tabs**, with a **Home** item to return to the hub. On launch the app reopens the **last-used module**,
 so daily Wellness use skips the hub.
 
-- **Wellness** tabs: **Home**, **Diary**, **Dashboard**, **Library**. A **gear** in each Wellness
+- **Wellness** tabs: **Home**, **Dashboard**, **Diary**, **Library**. A **gear** in each Wellness
   header opens Wellness Settings.
 - **Net Worth** tabs: **Home**, **Dashboard**, **Monthly Entry**.
-- **Shows** tabs: **Home**, **Dashboard**, **Library**. The Entry/Edit screen is a form reached from
-  a `+` (new) or by tapping a Library/Dashboard row (edit).
-- **Books** tabs: **Home**, **Dashboard**, **Library**. Same shape as Shows; the Entry/Edit screen is
-  a form reached from a `+` (new) or by tapping a row (edit). A **gear** in the Books headers opens
-  Books Settings.
-- **Quotes** tabs: **Home**, **Zen** (the Moment-of-Zen dashboard), **Library**. The Add/Edit screen is
-  a form reached from a `+` (new) or by tapping a row (edit). A **gear** in the Quotes headers opens
-  Quotes Settings.
+- **Shows** tabs: **Home**, **Dashboard**, **Library**, **New Show**, **Settings**. The Entry/Edit
+  screen is reached from the **New Show** tab (new) or by tapping a Library/Dashboard row (edit);
+  **Settings** opens Shows Settings. The Dashboard/Library pages carry no title bar (the active tab
+  signals location).
+- **Books** tabs: **Home**, **Dashboard**, **Library**, **New Book**, **Settings**. Same shape as
+  Shows; the Entry/Edit screen is reached from the **New Book** tab (new) or by tapping a row (edit),
+  and **Settings** opens Books Settings.
+- **Quotes** tabs: **Home**, **Zen** (the Moment-of-Zen dashboard), **Library**, **New Quote**,
+  **Settings**. The Add/Edit screen is reached from the **New Quote** tab (new) or by tapping a row
+  (edit), and **Settings** opens Quotes Settings.
 - **Settings is global**, reached from a gear on the Home hub (profile, units, account — app-wide).
   Wellness-specific settings (protein target, nutrient display) live in **Wellness Settings**.
 
@@ -208,7 +210,7 @@ Wellness-module sub-settings. Auto-save on change. A back chevron returns to the
 ## Shows - Dashboard
 
 - Shelves, each a card shown only when it has items, scoped by a **type filter** (All / TV / Movies /
-  Docs) and a `+` that opens a blank Entry:
+  Docs). (New Show and Settings live in the bottom nav, not a page header.)
   - **Favourites** — every `is_favorite` title (any status), each row showing its status chip. (A
     favourite also still appears in its status shelf below.)
   - **Up Next** — an in-progress episodic title (TV or documentary) with episodes remaining; each row
@@ -232,7 +234,7 @@ Wellness-module sub-settings. Auto-save on change. A back chevron returns to the
 ## Shows - Library
 
 - **Search bar** over a list of every tracked title — matches **Title, Director, and Cast** (when
-  TMDB returned them); a **`+ New Show`** opens the blank Entry.
+  TMDB returned them). (New Show opens the blank Entry from the bottom nav.)
 - A **Filters** toggle opens a panel: **Type** (All/TV/Movies/Docs), **Status**, **Genre** (the genres
   present in your own rows), **Rating** (minimum: Any / 1★+ … / 5★), **LGBT+** (Any/None/Some/Significant),
   a **Favourites only** toggle, and **Started-between** + **Finished-between** date ranges (each bound via
@@ -243,13 +245,13 @@ Wellness-module sub-settings. Auto-save on change. A back chevron returns to the
 - Each row: a **poster thumbnail**, the title (+ year) with a small filled **♥** when favourited, a
   **TV/Movie/Documentary type badge**, a **status chip**, the **star rating**, the first genre, and the
   finish/updated date. Tap a row → **Entry/Edit**; **swipe-left → Delete** (hard, with a confirm).
-- A **gear** in the Shows Dashboard/Library headers opens **Shows Settings**.
+- A **Settings** tab in the Shows bottom nav opens **Shows Settings**.
 - _Filter/sort state is per-visit (not persisted); a wide-screen sortable table is parked — see
   `PARKED.md`._
 
 ## Shows - Entry / Edit (form)
 
-- Reached from the Library `+` (new, `/shows/entry`) or by tapping a row (edit, `/shows/:id`). A new
+- Reached from the **New Show** bottom-nav tab (new, `/shows/entry`) or by tapping a row (edit, `/shows/:id`). A new
   show can be **prefilled** from `?title=&poster=&overview=&type=` (copy-paste / a future
   iOS Shortcut; only the param support is built).
 - A **favourite heart** in the header (filled when on) toggles `is_favorite` — surfaces a "Favourites"
@@ -299,7 +301,7 @@ Wellness-module sub-settings. Auto-save on change. A back chevron returns to the
   selects it (triggers the TMDB details fetch + field population) and closes the modal; **X**/Esc/scrim
   cancels. Shows a configuration hint if `VITE_TMDB_API_KEY` is unset.
 
-## Shows - Settings (from the gear in the Shows headers)
+## Shows - Settings (from the Settings tab in the Shows bottom nav)
 
 Shows-specific sub-settings (mirrors the Wellness Settings split; app-wide profile/units/account stay
 in the global Settings at the Home level).
@@ -335,8 +337,8 @@ Chinese across all three types. Columns:
 
 ## Books - Dashboard
 
-- Shelves, each a card shown only when it has items, with a `+` (top-right) that opens a blank Entry.
-  There is no type filter (books are one kind). Every row shows its **status chip** (Want / Reading /
+- Shelves, each a card shown only when it has items. There is no page header (New Book and Settings
+  live in the bottom nav) and no type filter (books are one kind). Every row shows its **status chip** (Want / Reading /
   Read / Dropped) — the same chip as the Library, so the status reads consistently rather than
   being only implied by the shelf title:
   - **Favourites** — every `is_favorite` book (any status), each row showing its status chip. (A
@@ -354,8 +356,8 @@ Chinese across all three types. Columns:
 
 ## Books - Library
 
-- **Search bar** over a list of every tracked book — matches **Title and Author(s)**; a
-  **`+ New Book`** opens the blank Entry.
+- **Search bar** over a list of every tracked book — matches **Title and Author(s)**. (New Book opens
+  the blank Entry from the bottom nav.)
 - A **Filters** toggle opens a panel: **Status**, **Genre** (the genres present in your own rows),
   **Rating** (minimum: Any / 1★+ … / 5★), **LGBT+** (Any/None/Some/Significant), **Author** (the
   authors present in your own rows), a **Favourites only** toggle, and **Started-between** +
@@ -367,13 +369,13 @@ Chinese across all three types. Columns:
   a small filled **♥** when favourited, the author(s), a **status chip** (Want / Reading / Read /
   Dropped — Want is blue), the **star rating** when rated, the first genre, and the finish/updated date. Tap a row →
   **Entry/Edit**; **swipe-left → Delete** (hard, with a confirm).
-- A **gear** in the Books Dashboard/Library headers opens **Books Settings**.
+- A **Settings** tab in the Books bottom nav opens **Books Settings**.
 - _Filter/sort state is per-visit (not persisted); a wide-screen sortable table is parked — see
   `PARKED.md`._
 
 ## Books - Entry / Edit (form)
 
-- Reached from the Library `+` (new, `/books/entry`) or by tapping a row (edit, `/books/:id`).
+- Reached from the **New Book** bottom-nav tab (new, `/books/entry`) or by tapping a row (edit, `/books/:id`).
 - A **favourite heart** in the header (filled when on) toggles `is_favorite` — surfaces a "Favourites"
   Dashboard shelf and a "Favourites only" Library filter (mirrors Quotes / Shows).
 - **Search Google Books** (a button) opens the **Title Search** modal; selecting a result fetches
@@ -404,11 +406,11 @@ Chinese across all three types. Columns:
   The `VITE_GOOGLE_BOOKS_API_KEY` is **optional** (search works keyless at a lower quota), so a failure
   is a network/quota issue, not a missing key.
 
-## Books - Settings (from the gear in the Books headers)
+## Books - Settings (from the Settings tab in the Books bottom nav)
 
 Books-specific sub-settings (mirrors the Wellness/Shows Settings split; app-wide profile/units/account
-stay in the global Settings at the Home level). Reached from a **gear** in the Books Dashboard/Library
-headers.
+stay in the global Settings at the Home level). Reached from the **Settings** tab in the Books bottom
+nav.
 
 - **Entry Form → Visible Fields** opens a sub-screen of toggles over the optional Entry/Edit fields
   (Author(s), Year, Rating, LGBT+, the three dates, Comments, Book metadata display). Stored on
@@ -438,8 +440,9 @@ An in-app bulk importer (the owner's choice over a script — same as Net Worth 
 
 - **First load**: one random quote where `is_favorite = true`; falls back to the whole pool if no
   favourites.
-- **Refresh**: a **Shuffle** button (works everywhere) and **pull-to-refresh** (touch) rotate to a new
-  random quote from the **entire pool** (no immediate repeat).
+- **Refresh**: a floating **Shuffle** button at the **bottom-right** of the quote area (works
+  everywhere) and **pull-to-refresh** (touch) rotate to a new random quote from the **entire pool**
+  (no immediate repeat). (New Quote and Settings live in the bottom nav, not a page header.)
 - **Card**: the quote text (large, centred; renders Chinese + multi-line correctly); a metadata cluster
   — **Author · Source type · Title**, where **tapping the Title navigates to the linked Show/Book
   detail** (only when a link exists); the single **Category** badge and any **Tags**; a **heart** to
@@ -471,7 +474,7 @@ An in-app bulk importer (the owner's choice over a script — same as Net Worth 
   exactly one Category. A duplicate (same normalised text) is rejected inline.
 - Which fields are visible is controlled in **Quotes Settings** (Quote Text + Category always shown).
 
-## Quotes - Settings (from the gear in the Quotes headers)
+## Quotes - Settings (from the Settings tab in the Quotes bottom nav)
 
 - **Visible Fields**: choose which Add/Edit fields appear (Quote Text + Category always shown).
 - **Enable CSV import**: surfaces the **Import CSV…** launcher.

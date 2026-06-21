@@ -5,7 +5,6 @@ import {
   IconHeart,
   IconHeartFilled,
   IconPlus,
-  IconSettings,
 } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
@@ -116,27 +115,6 @@ export function QuotesZen() {
 
   return (
     <div className="flex h-full flex-col">
-      <header className="flex shrink-0 items-center justify-between border-b border-border px-4 py-3">
-        <h1 className="text-lg font-medium text-text-primary">Moment of Zen</h1>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={shuffle}
-            disabled={all.length === 0}
-            aria-label="Shuffle"
-            className="flex items-center gap-1 text-sm text-accent disabled:opacity-40"
-          >
-            <IconArrowsShuffle size={18} /> Shuffle
-          </button>
-          <Link
-            to={routes.quotes.settings}
-            aria-label="Quotes settings"
-            className="p-1 text-text-secondary"
-          >
-            <IconSettings size={18} />
-          </Link>
-        </div>
-      </header>
-
       {loading && <p className="px-4 py-6 text-sm text-text-secondary">Loading…</p>}
       {error && (
         <p className="px-4 py-6 text-sm text-danger">Couldn’t load your quotes.</p>
@@ -187,6 +165,15 @@ export function QuotesZen() {
               onToggleFavorite={() => void toggleFavorite(current)}
             />
           </div>
+
+          <button
+            onClick={shuffle}
+            disabled={all.length === 0}
+            aria-label="Shuffle"
+            className="absolute right-4 bottom-4 z-10 flex items-center gap-1 rounded-pill bg-input px-3 py-1.5 text-sm text-accent shadow-sm disabled:opacity-40"
+          >
+            <IconArrowsShuffle size={18} /> Shuffle
+          </button>
         </div>
       )}
     </div>

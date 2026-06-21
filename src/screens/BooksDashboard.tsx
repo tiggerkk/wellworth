@@ -1,6 +1,6 @@
 import { useCallback, useState, type ReactNode } from 'react'
-import { Link, useNavigate } from 'react-router'
-import { IconHeartFilled, IconPlus, IconSettings } from '@tabler/icons-react'
+import { useNavigate } from 'react-router'
+import { IconHeartFilled } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useBooksVersion, bumpBooks } from '../lib/books-refresh'
@@ -68,25 +68,6 @@ export function BooksDashboard() {
 
   return (
     <div className="pb-4">
-      <header className="sticky top-0 z-10 flex items-center justify-between bg-bg/90 px-4 py-3 backdrop-blur">
-        <h1 className="text-lg font-medium text-text-primary">Books</h1>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate(routes.books.entry)}
-            className="flex items-center gap-1 text-sm text-positive"
-          >
-            <IconPlus size={18} /> New
-          </button>
-          <Link
-            to={routes.books.settings}
-            aria-label="Books settings"
-            className="p-1 text-text-secondary"
-          >
-            <IconSettings size={18} />
-          </Link>
-        </div>
-      </header>
-
       {loading && <p className="px-4 py-6 text-sm text-text-secondary">Loading…</p>}
       {error && (
         <p className="px-4 py-6 text-sm text-danger">Couldn’t load your books.</p>

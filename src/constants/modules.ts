@@ -7,6 +7,7 @@ import {
   IconList,
   IconNotebook,
   IconQuote,
+  IconSettings,
   IconSparkles,
   IconWallet,
   type Icon,
@@ -46,8 +47,8 @@ export const MODULES: ModuleDef[] = [
     base: routes.wellness.base,
     description: 'Food, supplements & activity with full nutrient reporting.',
     tabs: [
-      { to: routes.wellness.diary, label: 'Diary', Icon: IconNotebook, end: true },
       { to: routes.wellness.dashboard, label: 'Dashboard', Icon: IconChartBar },
+      { to: routes.wellness.diary, label: 'Diary', Icon: IconNotebook, end: true },
       { to: routes.wellness.library, label: 'Library', Icon: IconApple },
     ],
   },
@@ -76,6 +77,8 @@ export const MODULES: ModuleDef[] = [
     tabs: [
       { to: routes.shows.dashboard, label: 'Dashboard', Icon: IconChartBar, end: true },
       { to: routes.shows.library, label: 'Library', Icon: IconList },
+      { to: routes.shows.entry, label: 'New Show', Icon: IconDeviceTv },
+      { to: routes.shows.settings, label: 'Settings', Icon: IconSettings },
     ],
   },
   {
@@ -87,6 +90,8 @@ export const MODULES: ModuleDef[] = [
     tabs: [
       { to: routes.books.dashboard, label: 'Dashboard', Icon: IconChartBar, end: true },
       { to: routes.books.library, label: 'Library', Icon: IconList },
+      { to: routes.books.entry, label: 'New Book', Icon: IconBook },
+      { to: routes.books.settings, label: 'Settings', Icon: IconSettings },
     ],
   },
   {
@@ -98,6 +103,8 @@ export const MODULES: ModuleDef[] = [
     tabs: [
       { to: routes.quotes.zen, label: 'Zen', Icon: IconSparkles, end: true },
       { to: routes.quotes.library, label: 'Library', Icon: IconList },
+      { to: routes.quotes.entry, label: 'New Quote', Icon: IconQuote },
+      { to: routes.quotes.settings, label: 'Settings', Icon: IconSettings },
     ],
   },
 ]

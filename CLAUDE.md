@@ -38,16 +38,20 @@ append a `ModuleDef` to `src/constants/modules.ts` + its routes.
 
 - **Routing:** flat children of one `<AppShell/>` in `src/router.tsx`; **all path strings live in
   `src/constants/routes.ts`** (single source of truth). `src/constants/modules.ts` (`MODULES` +
-  `moduleForPath`) drives the hub cards + per-module `BottomNav`. Modal **sheets** use the
+  `moduleForPath`) drives the hub cards + per-module `BottomNav` (Shows/Books/Quotes each append a
+  **New X** tab — reusing the module's hub icon — and a **Settings** tab to their `tabs`, so the
+  Dashboard/Zen/Library screens carry no title/New/Settings header of their own; Wellness orders its
+  tabs **Dashboard, Diary, Library**). Modal **sheets** use the
   background-location pattern (`useSheetNavigate`); `AppShell.TAB_FOR_PATH` paints the tab behind a
   sheet. `/` → `RootRedirect` (last-used module via `src/lib/last-module.ts`, else `/home`).
   **Escape-to-dismiss** is centralised in `src/hooks/useEscapeKey.ts` (one document listener over a LIFO
   stack so the innermost overlay wins): sheets/Calendar/SelectMenu close themselves, and the Add/Edit
   screens `navigate(-1)` only when nothing is layered above them.
 - **Settings is split:** global `/settings` (profile, units, account) from the hub gear; per-module
-  sub-settings from a gear in the module header — Wellness at `/wellness/settings` (protein target,
-  nutrient display), Shows at `/shows/settings`, Books at `/books/settings`, and Quotes at
-  `/quotes/settings` (each of the latter three: Entry field-visibility + CSV-importer toggle).
+  sub-settings — Wellness from a gear in the module header at `/wellness/settings` (protein target,
+  nutrient display); Shows/Books/Quotes from a **Settings tab in the module bottom nav** at
+  `/shows/settings`, `/books/settings`, and `/quotes/settings` (each of the latter three: Entry
+  field-visibility + CSV-importer toggle).
 - **Net Worth (built):** two tables `networth_snapshot` + `asset_entry` (migration `supabase/migrations/20260615120000_networth_schema.sql`). Data:
   `src/data/networth-snapshot.ts` + `asset-entry.ts` — write path `saveSnapshotEntries` is an
   **idempotent create-or-replace per month** (reused by the importer). Calc `src/lib/networth.ts`; FX

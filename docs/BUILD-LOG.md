@@ -1130,6 +1130,28 @@ master_series)` index from `20260617120000_shows_schema.sql`; removed `masterSer
   `QuotesEntry`) were migrated onto it, so the screen-level `navigate(-1)` fires only when nothing is
   layered above it — no per-screen "is an overlay open?" guard needed.
 
+## Bottom-nav New/Settings tabs + header cleanup (Shows/Books/Quotes, Wellness reorder)
+
+The owner moved each module's per-page actions into the **bottom navigation** so they're reachable
+from every screen. Because `BottomNav` already renders `module.tabs` generically, this was a pure
+data change in `src/constants/modules.ts` plus header deletions — **no `BottomNav` change**:
+
+- **Shows/Books/Quotes** each gained two trailing `NavItem`s: a **New X** tab (reusing the module's
+  Home-hub icon — `IconDeviceTv` / `IconBook` / `IconQuote` — pointing at `…/entry`) and a **Settings**
+  tab (`IconSettings` → `…/settings`). Per-module order is now `Home | Dashboard/Zen | Library | New X
+| Settings`. The entry/settings routes already render the bottom nav (their paths match
+  `moduleForPath`) and keep their own back button, so navigation in/out is unchanged.
+- **Title rows removed** from `ShowsDashboard` / `BooksDashboard` / `QuotesZen` and the three Libraries
+  (the title + "+ New" + Settings-gear row only). **Functional controls were kept**: the Library
+  search/filter/sort rows, the Shows-Dashboard `All/TV/Movies/Docs` `SegmentedTabs`, and the Quotes-Zen
+  Shuffle button. **Quotes-Zen Shuffle** moved to a floating `absolute bottom-4 right-4` button inside
+  the existing scroll container (pull-to-refresh + the centered card untouched). Page titles were
+  dropped entirely (the active bottom-nav tab signals location).
+- **Wellness** bottom nav reordered to **Dashboard, Diary, Library** (Diary keeps `end: true` as the
+  `/wellness` index). No other Wellness change.
+
+No tests asserted on these headers/nav, so none needed updating.
+
 ## Known limitations / deferred (not spec issues — future work)
 
 - Barcode scanning needs an HTTPS origin: works on the deployed PWA (or an HTTPS tunnel), not over a

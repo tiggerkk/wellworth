@@ -1,6 +1,6 @@
 import { useCallback, useState, type ReactNode } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router'
-import { IconFilter, IconPlus, IconSettings, IconX } from '@tabler/icons-react'
+import { useNavigate, useSearchParams } from 'react-router'
+import { IconFilter, IconX } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { bumpQuotes, useQuotesVersion } from '../lib/quotes-refresh'
@@ -105,24 +105,6 @@ export function QuotesLibrary() {
   return (
     <div className="flex flex-col gap-3 px-4 py-4">
       <div className="sticky top-0 z-10 -mx-4 flex flex-col gap-3 bg-bg/90 px-4 py-3 backdrop-blur">
-        <div className="flex items-center justify-between">
-          <h1 className="text-lg font-medium text-text-primary">Library</h1>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate(routes.quotes.entry)}
-              className="flex items-center gap-1 text-sm text-positive"
-            >
-              <IconPlus size={16} /> New Quote
-            </button>
-            <Link
-              to={routes.quotes.settings}
-              aria-label="Quotes settings"
-              className="p-1 text-text-secondary"
-            >
-              <IconSettings size={18} />
-            </Link>
-          </div>
-        </div>
         <SearchBar
           value={criteria.query}
           onChange={(q) => setCrit({ query: q })}

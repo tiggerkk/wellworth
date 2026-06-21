@@ -1,12 +1,10 @@
 import { useCallback, useState } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { useNavigate } from 'react-router'
 import {
   IconArrowDown,
   IconArrowUp,
   IconFilter,
   IconHeartFilled,
-  IconPlus,
-  IconSettings,
   IconX,
 } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
@@ -152,24 +150,6 @@ export function ShowsLibrary() {
   return (
     <div className="flex flex-col gap-3 px-4 py-4">
       <div className="sticky top-0 z-10 -mx-4 flex flex-col gap-3 bg-bg/90 px-4 py-3 backdrop-blur">
-        <div className="flex items-center justify-between">
-          <h1 className="text-lg font-medium text-text-primary">Library</h1>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate(routes.shows.entry)}
-              className="flex items-center gap-1 text-sm text-positive"
-            >
-              <IconPlus size={16} /> New Show
-            </button>
-            <Link
-              to={routes.shows.settings}
-              aria-label="Shows settings"
-              className="p-1 text-text-secondary"
-            >
-              <IconSettings size={18} />
-            </Link>
-          </div>
-        </div>
         <SearchBar
           value={criteria.query}
           onChange={(q) => setCrit({ query: q })}
