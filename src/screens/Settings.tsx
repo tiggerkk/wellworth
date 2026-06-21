@@ -37,17 +37,64 @@ export function Settings() {
       </header>
       {loading && <p className="text-sm text-text-secondary">Loading…</p>}
       {!loading && !profile && (
-        <p className="text-sm text-danger">Couldn’t load your profile.</p>
+        <p className="text-sm text-danger">
+          Couldn’t load your profile. If you just reset the database, sign out below and
+          sign back in to recreate it.
+        </p>
       )}
       {profile && <SettingsBody profile={profile} save={save} />}
+      {/* Account/sign-out is driven by the session, not the profile, so it stays usable
+          even when the profile fails to load (e.g. after a DB reset deletes the user). */}
+      {!loading && <AccountCard />}
     </div>
   )
 }
 
-function SettingsBody({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
+function AccountCard() {
   const { session } = useAuth()
   const [signingOut, setSigningOut] = useState(false)
 
+  async function signOut() {
+    setSigningOut(true)
+    try {
+      // `scope: 'local'` only needs to clear the browser session — it doesn't depend on the
+      // server accepting the request, which it won't for a user deleted by a DB reset.
+      await supabase.auth.signOut({ scope: 'local' })
+    } catch {
+      // Ignore — the hard clear below guarantees the stale session is gone.
+    } finally {
+      // Bulletproof fallback: drop any persisted Supabase auth token and reload, so a stale
+      // session for a now-deleted user is always cleared and the app returns to the login screen.
+      try {
+        for (const key of Object.keys(localStorage)) {
+          if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
+            localStorage.removeItem(key)
+          }
+        }
+      } catch {
+        // localStorage unavailable — the signOut above already handled the common case.
+      }
+      window.location.reload()
+    }
+  }
+
+  return (
+    <SectionCard title="Account">
+      <FieldRow label="Google account">{session?.user.email ?? '—'}</FieldRow>
+      <div className="px-4 py-3">
+        <button
+          onClick={signOut}
+          disabled={signingOut}
+          className="text-sm text-accent disabled:opacity-50"
+        >
+          {signingOut ? 'Signing out…' : 'Sign out'}
+        </button>
+      </div>
+    </SectionCard>
+  )
+}
+
+function SettingsBody({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
   const [units, setUnits] = useState(profile.units)
   const [birthday, setBirthday] = useState(profile.birthday ?? '')
   const [sex, setSex] = useState(profile.sex ?? 'female')
@@ -100,11 +147,6 @@ function SettingsBody({ profile, save }: { profile: Tables<'profile'>; save: Sav
           ? poundsToKg(n)
           : n
     void save({ weight_kg: kg })
-  }
-
-  async function signOut() {
-    setSigningOut(true)
-    await supabase.auth.signOut()
   }
 
   const inputCls =
@@ -161,7 +203,7 @@ function SettingsBody({ profile, save }: { profile: Tables<'profile'>; save: Sav
         </FieldRow>
       </SectionCard>
 
-      <SectionCard title="Account">
+      <SectionCard title="Preferences">
         <FieldRow label="Units">
           <div className="w-40">
             <SegmentedTabs
@@ -174,16 +216,6 @@ function SettingsBody({ profile, save }: { profile: Tables<'profile'>; save: Sav
             />
           </div>
         </FieldRow>
-        <FieldRow label="Google account">{session?.user.email ?? '—'}</FieldRow>
-        <div className="px-4 py-3">
-          <button
-            onClick={signOut}
-            disabled={signingOut}
-            className="text-sm text-accent disabled:opacity-50"
-          >
-            {signingOut ? 'Signing out…' : 'Sign out'}
-          </button>
-        </div>
       </SectionCard>
     </>
   )

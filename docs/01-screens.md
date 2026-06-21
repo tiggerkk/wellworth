@@ -38,8 +38,12 @@ Diary groups, in order: **Breakfast, Lunch, Dinner, Snacks, Supplements, Activit
 App-wide; shared across all modules. Auto-save on change. A back chevron returns to the hub.
 
 - **PROFILE**: Birthday, Sex, Height, Weight (all editable).
-- **ACCOUNT**: **Units** (Metric / Imperial — editable; display-only, DB stays metric), Google account,
-  Sign out.
+- **PREFERENCES**: **Units** (Metric / Imperial — editable; display-only, DB stays metric).
+- **ACCOUNT**: Google account + **Sign out**. This card is driven by the **session, not the profile**,
+  so it renders even when the profile fails to load (e.g. after a DB reset deletes the user) — the
+  error message points here. Sign out clears the session **locally** (`scope: 'local'`) and, as a
+  guaranteed fallback, removes the persisted `sb-*-auth-token` and reloads, so a stale token for a
+  deleted user can always be cleared.
 
 ---
 

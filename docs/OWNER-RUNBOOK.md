@@ -402,7 +402,7 @@ and run the two commands again. Once the commit succeeds:
    - `VITE_SUPABASE_ANON_KEY` = your anon key
    - `VITE_USDA_API_KEY` = your USDA key
    - `VITE_TMDB_API_KEY` = your TMDB v3 key
-   - `VITE_GOOGLE_BOOKS_API_KEY` = your Google Books key (optional — omit if you skipped Part C3)
+   - `VITE_GOOGLE_BOOKS_API_KEY` = your Google Books key
 4. Click **Deploy**. When it finishes, copy your app's address, e.g.
    `https://wellworth-xxxx.vercel.app`.
 5. **Point Google + Supabase at the live address** (sign-in will fail until you do):
@@ -468,11 +468,17 @@ up automatically.)
 
 - ✅ Check:
   1. `> supabase migration list` shows the same migrations locally and remotely.
-  2. Reload the app and sign in → you land on the Diary; your **profile** and the **activity library**
-     have been re-seeded; SQL `select count(*) from nutrient;` returns **80**.
+  2. **Sign out, then sign back in** → you land on the Diary; your **profile** and the **activity
+     library** have been re-seeded; SQL `select count(*) from nutrient;` returns **80**.
 
-> If sign-in itself was wiped, just sign in again with Google — a fresh profile + activities are
-> created on first login.
+> **You must sign out first.** A full reset deletes the auth users too, but the browser still holds the
+> old login (a cached token in `localStorage`), so reloading — even after closing/reopening the browser
+> — keeps you "logged in" against a user that no longer exists, and the app shows **"Couldn't load your
+> profile."** Go to the Home-hub **gear → Settings → Account → Sign out** (that card is always
+> available, even when the profile fails to load), which clears the cached token and reloads to the
+> login screen. Then sign in with Google — a fresh profile + activities are created on first login. (If
+> you ever need to clear it by hand: DevTools → Application → Local Storage → delete the
+> `sb-…-auth-token` key, then reload.)
 
 ### M2 — Re-seed activities after changing `seed-activities.ts`
 
@@ -644,3 +650,47 @@ spanning English + Chinese across all three types — see `templates/shows-impor
 If something breaks, the most common causes: a value mistyped in `.env` or Vercel; the Vercel URL not
 added to Google origins / Supabase redirect URLs (sign-in fails); or `SUPABASE_DB_PASSWORD` not set
 (`db push` prompts/hangs).
+
+**"Title search unavailable — is VITE_TMDB_API_KEY set?" (or Books search fails) on the deployed app
+but not locally.** `VITE_` keys are **baked into the bundle at build time**, and Vercel builds with
+**Vercel's** Environment Variables — it never sees your local `.env` (it's gitignored). If sign-in works
+in production, your Supabase vars are set, but `VITE_TMDB_API_KEY` / `VITE_GOOGLE_BOOKS_API_KEY` /
+`VITE_USDA_API_KEY` may be missing. Fix: **Vercel → Project → Settings → Environment Variables**, add
+the missing keys (scope **Production**), then **redeploy** — env-var changes don't affect existing
+builds (Deployments → ⋯ → **Redeploy**, and **uncheck "Use existing Build Cache"** so the bundle is
+rebuilt with the new values). For **Google Books** specifically, also check the key's **Application
+restrictions → Websites** in Google Cloud includes your production origin
+(`https://<your-app>.vercel.app/*`); a key restricted to `localhost` only returns 403 in production.
+
+**Still "not set" after you redeployed with the keys?** The app is an installable **PWA**, so the
+**service worker serves the previously-cached bundle** (built without the keys) even after a new deploy —
+logging out/in or a hard refresh won't replace it.
+
+**Diagnose:** open the prod URL in an **incognito window** (no service worker / cache).
+
+- **If it _still_ fails in incognito**, the Vercel build genuinely lacks the keys — recheck the exact var
+  names (`VITE_TMDB_API_KEY` / `VITE_GOOGLE_BOOKS_API_KEY`, case-sensitive, **Production** scope) and
+  redeploy without build cache (see the "empty value" note below).
+- **If it works in incognito but not your normal browser**, it's the stale service-worker cache. Clear it
+  (Chrome/Edge on Windows — nearly identical):
+  1. Open the prod URL in the normal browser and press **F12** (or right-click → **Inspect**) to open
+     DevTools.
+  2. Click the **Application** tab (use the **»** overflow chevron if it's hidden).
+  3. Left sidebar → **Storage** → click the **Clear site data** button. (This unregisters the service
+     worker **and** clears all caches/storage in one go — a separate Service Workers → **Unregister** is
+     then unnecessary.)
+  4. **Close every tab** of the site, then reopen the URL — the browser now fetches the fresh bundle.
+  - **No-DevTools alternative:** click the **padlock / site-info icon** left of the URL → **Site
+    settings** (Chrome) / **Permissions for this site** (Edge) → **Delete data**, then close all tabs and
+    reopen.
+  - **If you installed the PWA** (desktop/taskbar/home screen): that installed window keeps its **own**
+    service worker — clear site data from inside the installed window's DevTools, or uninstall and
+    reinstall it.
+
+> **Watch out for an _empty value_ hidden by "Sensitive".** A Vercel env var marked **Sensitive**
+> shows its value as **blank in the UI even when set** — you can't read it back to confirm. If the build
+> baked an empty string, you get the same "not set" error. To be sure: **delete and re-add** the var,
+> pasting your **actual API key** as the value (no spaces/quotes/newline) — paste the _key_, not the
+> variable name — then redeploy. **Definitive check:** in an incognito DevTools → **Network** → open the
+> main `index-*.js` → **Response** → search for the first characters of your real key; if it isn't in
+> the bundle, the value never made it into the build.
