@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { IconX } from '@tabler/icons-react'
+import { useEscapeKey } from '../hooks/useEscapeKey'
 import { SearchBar } from './SearchBar'
 import { CoverThumb } from './CoverThumb'
 import {
@@ -67,13 +68,7 @@ export function BookSearchSheet({ onSelect, onClose }: BookSearchSheetProps) {
     }
   }, [debounced])
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
-  }, [onClose])
+  useEscapeKey(onClose)
 
   return (
     <div className="fixed inset-0 z-30">

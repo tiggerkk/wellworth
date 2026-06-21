@@ -8,7 +8,7 @@ re-runs are safe.
 ## Columns
 
 ```
-Quote,Author,Source,Title,Category,Tags
+Quote,Author,Source,Title,Category,Tags,is_favorite
 ```
 
 - **Quote** — the quote text. **Required.** May contain commas, double-quotes, and even line breaks —
@@ -24,9 +24,11 @@ Quote,Author,Source,Title,Category,Tags
   `observation` (case-insensitive). A blank or unrecognised value flags the row.
 - **Tags** — a single cell of comma-separated tags, e.g. `"wisdom, humility"`. Optional (blank = none).
   Wrap it in quotes so the commas stay inside one cell; each tag is then trimmed and de-duplicated.
+- **is_favorite** — `true`/`1`/`yes` marks the quote a favourite (the ♥). Optional (blank = not a
+  favourite).
 
 The **language** (English / Chinese) is detected automatically from the text — any CJK character marks
-the quote as Chinese. Imported quotes are not favourited; toggle the heart later if you want.
+the quote as Chinese.
 
 ## What gets imported
 

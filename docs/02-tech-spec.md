@@ -53,6 +53,10 @@ docs/                # the spec bundle
   **background-location** pattern — opening a sheet stashes the current location as
   `state.background`, and `AppShell` paints that tab (via `TAB_FOR_PATH`) behind the sheet. New sheets
   live under their module's prefix and are opened with `useSheetNavigate`.
+- **Escape-to-dismiss** is centralised in `useEscapeKey` (`src/hooks/useEscapeKey.ts`): one document
+  listener over a LIFO handler stack, so the innermost overlay wins. Route `Sheet`s + local search
+  sheets close themselves, the `Calendar` closes, an open `SelectMenu` collapses, and the Add/Edit
+  screens `navigate(-1)` only when nothing is layered above them.
 
 ## Data flow
 
@@ -127,9 +131,10 @@ the cloud is authoritative (this also sidesteps iOS PWA storage eviction).
   (`type` includes **documentary**), the status-chip palette, `usesEpisodes` (TV + documentary carry the
   season/episode UI), `posterUrl` (an absolute pasted URL is returned as-is; a TMDB path gets the fixed
   CDN base — `isAbsoluteUrl` distinguishes them), `buildRefreshPatch` (the per-show Refresh merge:
-  TMDB-sourced fields only, preserving owner fields + a manual poster), `masterSeriesOptions` (Library
-  filter), and transitions/selectors — `startWatching`, `markWatched` (status `watched` + `end_date = today`
-  - episodic watched counts → totals), `progressLabel`, `isUpNext`, `recentlyWatched`, `countWatchedThisYear`.
+  TMDB-sourced fields only, preserving owner fields + a manual poster), the `favoritesOnly`
+  `LibraryCriteria` filter, and transitions/selectors — `startWatching`, `markWatched` (status `watched`
+  - `end_date = today` + episodic watched counts → totals), `favoriteShows`, `progressLabel`, `isUpNext`,
+    `recentlyWatched`, `countWatchedThisYear`.
 - **TMDB (Chinese-aware)** (`src/lib/tmdb-api.ts`): a query/title containing CJK is sent with
   `language=zh-CN` (`containsCjk`/`tmdbLanguage`), so results + stored metadata use the Chinese title.
   `documentary` shares the `/tv` endpoint (`endpointFor`). `refreshFromTmdb(show)` re-pulls a title that
@@ -138,18 +143,21 @@ the cloud is authoritative (this also sidesteps iOS PWA storage eviction).
 - **Posters:** every `<img>` bound to `poster_path` sets `referrerpolicy="no-referrer"` (added once on the
   shared `Thumb`, plus the Entry detail `<img>`), so hotlink-protected CDNs (a pasted Douban/streaming
   poster) still serve. The app stores image URLs/paths only, never files.
-- **UI:** `ShowsDashboard` (Up Next / Watching / Want / Recently-Watched shelves + type filter incl.
-  Docs + Mark Watched / Start Watching quick actions), `ShowsLibrary` (search + swipe-delete list +
-  documentary type filter + **master-series filter** + a master-series eyebrow on rows), `ShowsEntry`
-  (create/edit form with Chinese-aware TMDB title search, a documentary-only **Master Series** field, an
-  always-editable **Poster URL** field, a **⟳ Refresh from TMDB** button enabled once `tmdb_id` is set,
-  and `?title=&poster=&overview=&master_series=&type=` **prefill**; outer-loader + inner-form with dirty
-  RESET/SAVE). The Type/Status/LGBT+ controls reuse `SegmentedTabs` (Type is now three-way); dates reuse
-  the generalized `Calendar`; posters use the shared `PosterThumb`. **TMDB** client + `TitleSearchSheet`
-  live in `src/lib/tmdb-api.ts` and `src/components/TitleSearchSheet.tsx`.
+- **UI:** `ShowsDashboard` (Favourites / Up Next / Watching / Want / Recently-Watched shelves + type
+  filter incl. Docs + Mark Watched / Start Watching quick actions; watching rows show the "Watching" chip
+  - season·episode progress, ♥ marks favourites), `ShowsLibrary` (search + swipe-delete list +
+    documentary type filter + a **Favourites only** filter + ♥ on rows), `ShowsEntry` (create/edit form
+    with a header **favourite heart**, Chinese-aware TMDB title search, a **Poster URL** field shown only
+    when TMDB has no poster or forced on in Settings, a **⟳ Refresh from TMDB** button enabled once
+    `tmdb_id` is set, status-driven Start-Date defaulting (Want ⇒ blank), and
+    `?title=&poster=&overview=&type=` **prefill**; outer-loader + inner-form with dirty RESET/SAVE). The
+    Type/Status/LGBT+ controls reuse `SegmentedTabs` (Type is three-way); dates reuse the generalized
+    `Calendar`; posters use the shared `PosterThumb`. **TMDB** client + `TitleSearchSheet` live in
+    `src/lib/tmdb-api.ts` and `src/components/TitleSearchSheet.tsx`.
 - **Settings (split, like Wellness):** `ShowsSettings` (gear in the Shows headers) hosts **Entry field
-  visibility** (`ShowsFieldsSheet`, a route sheet of toggles) + an **importer enable** toggle. Both
-  prefs sync on `profile` — `show_visible_fields` (`text[]`, **NULL = all visible**) and
+  visibility** (`ShowsFieldsSheet`, a route sheet of toggles), a **Display** section with a **Visible
+  Poster URL** toggle, and an **importer enable** toggle. Prefs sync on `profile` —
+  `show_visible_fields` (`text[]`, **NULL = all visible**), `show_poster_url_visible` (`boolean`), and
   `show_importer_enabled` (`boolean`); saved via `useProfileEditor`. Entry reads them through
   `useProfile` + the pure `isFieldVisible` helper.
 - **CSV importer (in-app):** enabled by the Settings toggle → `ImportShowsSheet`. One CSV covers English +
@@ -157,9 +165,10 @@ the cloud is authoritative (this also sidesteps iOS PWA storage eviction).
   shared `src/lib/csv.ts`, `buildImportRow`, `dedupKey`); the sheet resolves each row against TMDB
   (Chinese-aware `searchTitles` top hit + `getTitleDetails`, small concurrency pool) with an inline fix
   (`TitleSearchSheet`) for no-match / review rows — a niche documentary with no match imports with null
-  TMDB metadata + null poster (top up later via a pasted Poster URL or Refresh). Commit is the
-  **idempotent** `saveImportedShows` (`src/data/show.ts`) — dedup on lower(title) + lower(master_series),
-  update-not-duplicate. Imported rows get **NULL dates**. Sanitized template + guide in `templates/`.
+  TMDB metadata + null poster (top up later via a pasted Poster URL or Refresh). The CSV's trailing
+  `is_favorite` column is carried through. Commit is the **idempotent** `saveImportedShows`
+  (`src/data/show.ts`) — dedup on lower(title), update-not-duplicate. Imported rows get **NULL dates**.
+  Sanitized template + guide in `templates/`.
 
 ## Books
 
@@ -174,16 +183,17 @@ _Books re-skins Shows (see the Shows section); only the differences are noted._
   `start_date = today`) and `markRead` (status `read` + `end_date = today`). No watched-count logic —
   books are status-only. The 3-value `LGBTQ_REP*` enum is defined locally (not imported from `shows.ts`)
   to keep the modules decoupled. Dashboard selectors `currentlyReading`/`recentlyRead`/`wantToRead`/
-  `countReadThisYear` mirror the Shows ones; the Library view is `applyLibraryView(books, criteria)`
-  (query over title+authors; Status/Genre/Rating-min/LGBT+/**Author** filters; start & finish date
-  ranges; sort field×dir, nulls-last, stable title tiebreak) with `bookGenres`/`bookAuthors` driving the
-  facet dropdowns. The **Author** filter + sort field are the only divergence from the Shows view (which
-  has Type instead).
-- **UI:** `BooksEntry` (create/edit form; outer-loader + inner-form with the `JSON.stringify` dirty
-  RESET/SAVE; Status/LGBT+ reuse `SegmentedTabs`, dates reuse `Calendar`, rating reuses `StarRating`).
-  `BooksLibrary` (search + a collapsible filter panel of `SelectMenu`s + a Sort menu + cover rows;
-  swipe-delete). `BooksDashboard` (Currently Reading / Recently Read / Want to Read shelves + Mark Read
-  / Start Reading quick actions + an "N read this year" stat; no type filter).
+  `countReadThisYear` (plus `favoriteBooks`) mirror the Shows ones; the Library view is
+  `applyLibraryView(books, criteria)` (query over title+authors; Status/Genre/Rating-min/LGBT+/**Author**
+  filters + a `favoritesOnly` toggle; start & finish date ranges; sort field×dir, nulls-last, stable title
+  tiebreak) with `bookGenres`/`bookAuthors` driving the facet dropdowns. The **Author** filter + sort
+  field are the only divergence from the Shows view (which has Type instead).
+- **UI:** `BooksEntry` (create/edit form with a header **favourite heart**; outer-loader + inner-form
+  with the `JSON.stringify` dirty RESET/SAVE; Status/LGBT+ reuse `SegmentedTabs`, dates reuse `Calendar`,
+  rating reuses `StarRating`). `BooksLibrary` (search + a collapsible filter panel of `SelectMenu`s + a
+  **Favourites only** toggle + a Sort menu + cover rows with ♥; swipe-delete). `BooksDashboard`
+  (Favourites / Currently Reading / Recently Read / Want to Read shelves + Mark Read / Start Reading
+  quick actions + an "N read this year" stat; no type filter).
 - **Shared 2:3 thumbnail:** the poster/cover tile was extracted into a presentational
   `src/components/Thumb.tsx` (`url` + `className`); `PosterThumb` (Shows, TMDB sizing via `posterUrl`)
   and `CoverThumb` (Books, the full `cover_url`) both render it. `StatusChip` was likewise made
@@ -214,7 +224,7 @@ _Books re-skins Shows (see the Shows section); only the differences are noted._
   shown).
 - **CSV importer (in-app):** enabled by the Settings toggle → `ImportBooksSheet`. Pure
   parse/build in `src/lib/books-import.ts` (`parseBooksCsv` via the shared `src/lib/csv.ts`,
-  `buildImportRow`, `dedupKey`) — columns `title,author,rating,lgbtq_rep,end_date`; the sheet resolves
+  `buildImportRow`, `dedupKey`) — columns `title,author,rating,lgbtq_rep,end_date,is_favorite`; the sheet resolves
   each row against Google Books (`searchBooks` of `title author` top hit + `getBookDetails`, a small
   concurrency pool) with an inline fix (`BookSearchSheet`) for no-match / review rows; commit is the
   **idempotent** `saveImportedBooks` (`src/data/book.ts`) — dedup on lower(title) + lower(author),
@@ -269,8 +279,9 @@ _Quotes re-skins Books/Shows; only the differences are noted. There is **no exte
   Entry reads them through `useProfile` + `isFieldVisible` (Quote Text + Category always shown).
 - **CSV importer (in-app):** enabled by the Settings toggle → `ImportQuotesSheet`. Pure parse/validate
   in `src/lib/quotes-import.ts` (`parseQuotesCsv` via the shared `src/lib/csv.ts`; columns
-  `Quote,Author,Source,Title,Category,Tags`; Category/Source validated, **Tags read-whole-cell-then-
-  split-on-`,`**, Language auto-detected), `partitionNewRows` (existing + in-file dedup on
+  `Quote,Author,Source,Title,Category,Tags,is_favorite`; Category/Source validated, **Tags
+  read-whole-cell-then-split-on-`,`**, Language auto-detected, the trailing `is_favorite` boolean carried
+  through), `partitionNewRows` (existing + in-file dedup on
   `lower(trim(text))`), and `buildTitleIndex`/`resolveLink` (optional Title→Show/Book link **by source
   type**: tv/movie→Show, book→Book, others→none). The sheet loads existing-norms + the local title index
   once (no external API, no concurrency pool), previews **new / duplicate / flagged** counts, and commits

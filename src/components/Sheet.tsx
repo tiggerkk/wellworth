@@ -1,5 +1,6 @@
-import { useEffect, type ReactNode } from 'react'
+import { type ReactNode } from 'react'
 import { useNavigate } from 'react-router'
+import { useEscapeKey } from '../hooks/useEscapeKey'
 
 interface SheetProps {
   children: ReactNode
@@ -14,14 +15,7 @@ interface SheetProps {
  */
 export function Sheet({ children, variant = 'bottom', label }: SheetProps) {
   const navigate = useNavigate()
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') navigate(-1)
-    }
-    document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
-  }, [navigate])
+  useEscapeKey(() => navigate(-1))
 
   // Full-screen sheets are fixed overlays (outside the app shell's padded flow), so they reserve
   // the top safe-area inset themselves to keep their header clear of the iOS status bar.

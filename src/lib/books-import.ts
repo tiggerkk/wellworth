@@ -3,7 +3,7 @@
  * `templates/books-import-guide.md`). No I/O and no Google Books calls — the import screen reads the
  * file, resolves each row against Google Books, and writes via `saveImportedBooks`.
  *
- * Column spec: `title,author,rating,lgbtq_rep,end_date`. Every imported row is a **Read** book; the
+ * Column spec: `title,author,rating,lgbtq_rep,end_date,is_favorite`. Every imported row is a **Read** book; the
  * per-row lookup uses title **and** author to disambiguate (book titles collide far more than shows).
  */
 import { LGBTQ_REPS, type BookInsert, type LgbtqRep } from './books'
@@ -18,6 +18,7 @@ export interface ParsedBookRow {
   rating: number | null
   lgbtq_rep: LgbtqRep
   end_date: IsoDate | null
+  is_favorite: boolean
 }
 
 export interface BooksImportResult {
@@ -30,6 +31,11 @@ export type ImportBookRow = Omit<BookInsert, 'user_id'>
 
 const lgbtqSet = new Set<string>(LGBTQ_REPS)
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
+
+/** Lenient truthy parse for a CSV boolean cell: `true/1/yes/y` (case-insensitive) ⇒ true. */
+function parseBool(raw: string): boolean {
+  return ['true', '1', 'yes', 'y'].includes(raw.trim().toLowerCase())
+}
 
 export function parseBooksCsv(rows: string[][]): BooksImportResult {
   const errors: string[] = []
@@ -94,7 +100,14 @@ export function parseBooksCsv(rows: string[][]): BooksImportResult {
       end_date = endRaw
     }
 
-    out.push({ title, author, rating, lgbtq_rep: lgbtq_rep as LgbtqRep, end_date })
+    out.push({
+      title,
+      author,
+      rating,
+      lgbtq_rep: lgbtq_rep as LgbtqRep,
+      end_date,
+      is_favorite: parseBool(col(cells, 'is_favorite')),
+    })
   }
 
   return { rows: out, errors }
@@ -130,6 +143,7 @@ export function buildImportRow(
     open_library_id: match?.open_library_id ?? null,
     rating: input.rating,
     lgbtq_rep: input.lgbtq_rep,
+    is_favorite: input.is_favorite,
     start_date: null,
     end_date: input.end_date,
     last_update_date: null,

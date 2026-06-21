@@ -1,7 +1,7 @@
-Quote,Author,Source,Title,Category,Tags
-The only true wisdom is in knowing you know nothing.,Socrates,book,Apology,Philosophy,"wisdom, humility"
-"Float like a butterfly, sting like a bee.",Muhammad Ali,video,Interview,Wit,"sport, confidence"
-知之为知之，不知为不知，是知也。,Confucius,book,The Analects,Philosophy,"wisdom, honesty"
-"""Wherever you go, there you are.""",Anonymous,podcast,Mindful Minutes,Observation,"presence, mindfulness"
+Quote,Author,Source,Title,Category,Tags,is_favorite
+The only true wisdom is in knowing you know nothing.,Socrates,book,Apology,Philosophy,"wisdom, humility",true
+"Float like a butterfly, sting like a bee.",Muhammad Ali,video,Interview,Wit,"sport, confidence",
+知之为知之，不知为不知，是知也。,Confucius,book,The Analects,Philosophy,"wisdom, honesty",true
+"""Wherever you go, there you are.""",Anonymous,podcast,Mindful Minutes,Observation,"presence, mindfulness",
 "First line of a two-line quote.
-Second line of the same quote.",Anonymous,tv,Example Show,Heart,"example, multiline"
+Second line of the same quote.",Anonymous,tv,Example Show,Heart,"example, multiline",

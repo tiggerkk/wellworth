@@ -4,8 +4,9 @@
  * (via the shared RFC-4180 `parseCsv`), resolves each row's Title against the user's local Show/Book
  * rows, and writes via `saveImportedQuotes`.
  *
- * Column spec: `Quote,Author,Source,Title,Category,Tags`. Quote + Category are required; Source must
- * normalise to the seven source types; Tags is a single (quoted) cell of comma-separated tags.
+ * Column spec: `Quote,Author,Source,Title,Category,Tags,is_favorite`. Quote + Category are required;
+ * Source must normalise to the seven source types; Tags is a single (quoted) cell of comma-separated
+ * tags; is_favorite is an optional trailing boolean (`true/1/yes/y`).
  */
 import { detectLanguage, type QuoteInsert } from './quotes'
 import {
@@ -29,8 +30,14 @@ export interface ParsedQuoteRow {
   category: QuoteCategory
   tags: string[]
   language: QuoteLanguage
+  is_favorite: boolean
   /** lower(trim(text)) — the app-side mirror of the DB's generated `text_norm`. */
   text_norm: string
+}
+
+/** Lenient truthy parse for a CSV boolean cell: `true/1/yes/y` (case-insensitive) ⇒ true. */
+function parseBool(raw: string): boolean {
+  return ['true', '1', 'yes', 'y'].includes(raw.trim().toLowerCase())
 }
 
 export interface QuotesImportResult {
@@ -103,6 +110,7 @@ export function parseQuotesCsv(rows: string[][]): QuotesImportResult {
       category: categoryRaw as QuoteCategory,
       tags,
       language: detectLanguage(text),
+      is_favorite: parseBool(col(cells, 'is_favorite')),
       text_norm: normalizeQuoteText(text),
     })
   }
@@ -193,7 +201,7 @@ export function buildImportPayload(
     category: row.category,
     tags: row.tags,
     language: row.language,
-    is_favorite: false,
+    is_favorite: row.is_favorite,
     show_id,
     book_id,
   }

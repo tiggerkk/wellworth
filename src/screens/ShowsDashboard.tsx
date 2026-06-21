@@ -1,12 +1,13 @@
 import { useCallback, useState, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { IconPlus, IconSettings } from '@tabler/icons-react'
+import { IconHeartFilled, IconPlus, IconSettings } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useShowsVersion, bumpShows } from '../lib/shows-refresh'
 import { listShows, updateShow } from '../data/show'
 import {
   countWatchedThisYear,
+  favoriteShows,
   isUpNext,
   markWatched,
   progressLabel,
@@ -14,6 +15,7 @@ import {
   SHOW_STATUS_CHIP,
   SHOW_STATUS_LABELS,
   startWatching,
+  usesEpisodes,
   type ShowRow,
   type ShowStatus,
   type ShowType,
@@ -56,6 +58,7 @@ export function ShowsDashboard() {
   const all = shows ?? []
   const filtered = filter === 'all' ? all : all.filter((s) => s.type === filter)
 
+  const favorites = favoriteShows(filtered)
   const upNext = filtered.filter(isUpNext)
   const upNextIds = new Set(upNext.map((s) => s.id))
   const watching = filtered.filter((s) => s.status === 'watching' && !upNextIds.has(s.id))
@@ -127,6 +130,24 @@ export function ShowsDashboard() {
             </p>
           )}
 
+          {favorites.length > 0 && (
+            <SectionCard title="Favourites">
+              {favorites.map((s) => (
+                <DashRow
+                  key={s.id}
+                  show={s}
+                  onEdit={() => editShow(s.id)}
+                  secondary={
+                    <StatusChip
+                      label={SHOW_STATUS_LABELS[s.status as ShowStatus]}
+                      className={SHOW_STATUS_CHIP[s.status as ShowStatus]}
+                    />
+                  }
+                />
+              ))}
+            </SectionCard>
+          )}
+
           {upNext.length > 0 && (
             <SectionCard title="Up Next">
               {upNext.map((s) => (
@@ -134,7 +155,7 @@ export function ShowsDashboard() {
                   key={s.id}
                   show={s}
                   onEdit={() => editShow(s.id)}
-                  secondary={progressLabel(s)}
+                  secondary={<WatchingSecondary show={s} />}
                   action={
                     <ActionButton
                       label="Mark Watched"
@@ -154,12 +175,7 @@ export function ShowsDashboard() {
                   key={s.id}
                   show={s}
                   onEdit={() => editShow(s.id)}
-                  secondary={
-                    <StatusChip
-                      label={SHOW_STATUS_LABELS[s.status as ShowStatus]}
-                      className={SHOW_STATUS_CHIP[s.status as ShowStatus]}
-                    />
-                  }
+                  secondary={<WatchingSecondary show={s} />}
                   action={
                     <ActionButton
                       label="Mark Watched"
@@ -230,14 +246,18 @@ function DashRow({
     <div className="flex items-center gap-3 border-b border-border px-3 py-2.5 last:border-b-0">
       <PosterThumb path={show.poster_path} size="w92" className="h-14 w-10" />
       <button onClick={onEdit} className="min-w-0 flex-1 text-left">
-        {show.master_series && (
-          <span className="block truncate text-[11px] uppercase tracking-wide text-text-tertiary">
-            {show.master_series}
+        <span className="flex items-center gap-1.5 text-[15px] text-text-primary">
+          {show.is_favorite && (
+            <IconHeartFilled
+              size={13}
+              className="shrink-0 text-accent"
+              aria-label="Favourite"
+            />
+          )}
+          <span className="min-w-0 truncate">
+            {show.title}
+            {show.year ? ` (${show.year})` : ''}
           </span>
-        )}
-        <span className="block truncate text-[15px] text-text-primary">
-          {show.title}
-          {show.year ? ` (${show.year})` : ''}
         </span>
         <span className="mt-0.5 flex items-center gap-2 text-xs text-text-secondary">
           <ShowTypeBadge type={show.type as ShowType} />
@@ -246,6 +266,19 @@ function DashRow({
       </button>
       {action}
     </div>
+  )
+}
+
+/** Secondary line for a watching row: the "Watching" chip + (episodic) season/episode progress. */
+function WatchingSecondary({ show }: { show: ShowRow }) {
+  return (
+    <>
+      <StatusChip
+        label={SHOW_STATUS_LABELS.watching}
+        className={SHOW_STATUS_CHIP.watching}
+      />
+      {usesEpisodes(show.type) && <span>{progressLabel(show)}</span>}
+    </>
   )
 }
 

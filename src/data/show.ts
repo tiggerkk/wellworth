@@ -46,9 +46,9 @@ export async function deleteShow(id: string): Promise<void> {
 }
 
 /**
- * Idempotent bulk upsert for the CSV importer. Dedups on case-insensitive title + master series
- * against the user's existing rows (and within the batch — last wins): an existing match is
- * **updated**, a new title is **inserted**. Re-running the same file therefore never duplicates.
+ * Idempotent bulk upsert for the CSV importer. Dedups on case-insensitive title against the
+ * user's existing rows (and within the batch — last wins): an existing match is **updated**, a
+ * new title is **inserted**. Re-running the same file therefore never duplicates.
  */
 export async function saveImportedShows(
   userId: string,
@@ -57,15 +57,15 @@ export async function saveImportedShows(
   // Existing rows keyed by dedupKey → id.
   const { data: existing, error: listError } = await supabase
     .from('show')
-    .select('id, title, master_series')
+    .select('id, title')
     .eq('user_id', userId)
   if (listError) throw listError
   const idByKey = new Map<string, string>()
-  for (const s of existing ?? []) idByKey.set(dedupKey(s.title, s.master_series), s.id)
+  for (const s of existing ?? []) idByKey.set(dedupKey(s.title), s.id)
 
   // Collapse in-file duplicates (same key) — last wins.
   const byKey = new Map<string, ImportShowRow>()
-  for (const p of payloads) byKey.set(dedupKey(p.title, p.master_series), p)
+  for (const p of payloads) byKey.set(dedupKey(p.title), p)
 
   let created = 0
   let updated = 0

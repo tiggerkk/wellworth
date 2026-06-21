@@ -205,31 +205,36 @@ Wellness-module sub-settings. Auto-save on change. A back chevron returns to the
 
 - Shelves, each a card shown only when it has items, scoped by a **type filter** (All / TV / Movies /
   Docs) and a `+` that opens a blank Entry:
+  - **Favourites** — every `is_favorite` title (any status), each row showing its status chip. (A
+    favourite also still appears in its status shelf below.)
   - **Up Next** — an in-progress episodic title (TV or documentary) with episodes remaining; each row
-    shows the poster, a master-series eyebrow (when set), title, type badge, and **"S{watched_seasons} ·
+    shows the poster, title, type badge, a **"Watching"** chip, and **"S{watched_seasons} ·
     {watched_episodes}/{total_episodes}"** progress + a **Mark Watched** action (status → watched,
     finish → today, watched counts → totals).
-  - **Watching** — the remaining `status=watching` titles (movies + TV without episode totals); also
-    offers **Mark Watched**. (Up Next is de-duplicated out of Watching so a show isn't listed twice.)
+  - **Watching** — the remaining `status=watching` titles (movies + TV without episode totals); each row
+    shows the **"Watching"** chip (and, for episodic titles, the season·episode progress) + a **Mark
+    Watched** action. (Up Next is de-duplicated out of Watching so a show isn't listed twice.) Every
+    watching title — whether started from the Want shelf or set to Watching manually — gets the chip.
   - **Want to Watch** — a short shelf of `status=want`, each with a **Start Watching** action (status
     → watching, start → today).
   - **Recently Watched** — the last 5 by finish date (rows show stars + finish date). Imported rows
     with no `end_date` don't appear here (they live in the Library).
+- A favourite row anywhere shows a small filled **♥** before the title.
 - A small stat line: "**N watched this year**".
 
 ## Shows - Library
 
 - **Search bar** over a list of every tracked title — matches **Title, Director, and Cast** (when
   TMDB returned them); a **`+ New Show`** opens the blank Entry.
-- A **Filters** toggle opens a panel: **Type** (All/TV/Movies/Docs), **Master Series** (shown only when
-  some title has one — the distinct values in your own rows), **Status**, **Genre** (the genres present
-  in your own rows), **Rating** (minimum: Any / 1★+ … / 5★), **LGBT+** (Any/None/Some/Significant), and
-  **Started-between** + **Finished-between** date ranges (each bound via the Calendar modal, clearable).
-  A count on the Filters button shows how many are active; **Clear filters** resets them.
+- A **Filters** toggle opens a panel: **Type** (All/TV/Movies/Docs), **Status**, **Genre** (the genres
+  present in your own rows), **Rating** (minimum: Any / 1★+ … / 5★), **LGBT+** (Any/None/Some/Significant),
+  a **Favourites only** toggle, and **Started-between** + **Finished-between** date ranges (each bound via
+  the Calendar modal, clearable). A count on the Filters button shows how many are active; **Clear
+  filters** resets them.
 - A **Sort** menu over { Date, Title, Type, Year, Status, Rating, Genre } with an **asc/desc** toggle
   (nulls sort last); default is **Date** descending.
-- Each row: a **poster thumbnail**, a **master-series eyebrow** over the title (when set), title (+ year),
-  a **TV/Movie/Documentary type badge**, a **status chip**, the **star rating**, the first genre, and the
+- Each row: a **poster thumbnail**, the title (+ year) with a small filled **♥** when favourited, a
+  **TV/Movie/Documentary type badge**, a **status chip**, the **star rating**, the first genre, and the
   finish/updated date. Tap a row → **Entry/Edit**; **swipe-left → Delete** (hard, with a confirm).
 - A **gear** in the Shows Dashboard/Library headers opens **Shows Settings**.
 - _Filter/sort state is per-visit (not persisted); a wide-screen sortable table is parked — see
@@ -238,23 +243,27 @@ Wellness-module sub-settings. Auto-save on change. A back chevron returns to the
 ## Shows - Entry / Edit (form)
 
 - Reached from the Library `+` (new, `/shows/entry`) or by tapping a row (edit, `/shows/:id`). A new
-  show can be **prefilled** from `?title=&poster=&overview=&master_series=&type=` (copy-paste / a future
+  show can be **prefilled** from `?title=&poster=&overview=&type=` (copy-paste / a future
   iOS Shortcut; only the param support is built).
+- A **favourite heart** in the header (filled when on) toggles `is_favorite` — surfaces a "Favourites"
+  Dashboard shelf and a "Favourites only" Library filter (mirrors Quotes).
 - **Type** three-segment control (TV Show / Movie / Documentary) — Movie hides the season/episode
-  fields; Documentary shows them (optional, often N/A) plus the **Master Series** field.
-- **Master Series** (documentary only, optional): the parent series for a sub-series/thematic block
-  (e.g. `master_series` = 国宝档案, `title` = 从东晋到北魏).
+  fields; Documentary shows them (optional, often N/A). (A documentary sub-series is folded into the
+  **Title** by the owner, e.g. `国宝档案 — 从东晋到北魏`.)
 - **Title** (required for CREATE), **Original Title**, **Year**.
-- **Poster URL** (always editable): paste a direct image URL ("Copy Image Address" from Douban / a
-  streaming page) into `poster_path`; rendered everywhere with `referrerpolicy="no-referrer"`. Editable
-  even when other fields came from TMDB, so TMDB metadata + a manually chosen poster compose.
-- **Status** (Want / Watching / Watched / Dropped): choosing Watched or Dropped defaults the
+- **Poster URL**: paste a direct image URL ("Copy Image Address" from Douban / a streaming page) into
+  `poster_path`; rendered everywhere with `referrerpolicy="no-referrer"`. **Shown only when needed** —
+  when there's no poster yet, when the current value is a manually pasted URL, or when forced on via
+  **Shows Settings → Display → Visible Poster URL** — and hidden once TMDB supplied a poster path.
+- **Status** (Want / Watching / Watched / Dropped): choosing Watching / Watched / Dropped defaults the
+  **Start date** to today (the title has been started); choosing Watched or Dropped also defaults the
   **Finish/Drop date** to today; choosing **Watched** on an episodic title (TV / documentary) snaps the
-  watched counts to the totals.
+  watched counts to the totals. **Want leaves Start Date blank** (not started yet).
 - **Rating**: a 0–5 **half-star** picker. **LGBT+ representation**: a None / Some / Significant
   segmented control.
 - **Start Date**, **Finish / Drop Date**, **Last Update** — each opens the **Calendar** modal;
-  clearable. Start + Last Update default to today on a new entry.
+  clearable. Last Update defaults to today on a new entry; Start Date stays blank until the status leaves
+  Want.
 - **Watched/Total Seasons & Episodes** (episodic types — TV + documentary); **Comments** (textarea).
 - **Search TMDB** (Chinese-aware: a CJK query is sent with `language=zh-CN`; documentary uses the /tv
   endpoint) opens the **Title Search** modal; selecting a result fetches details and populates the
@@ -264,12 +273,13 @@ Wellness-module sub-settings. Auto-save on change. A back chevron returns to the
 - **⟳ Refresh from TMDB** (beside Search; enabled only when a `tmdb_id` exists): re-fetches TMDB metadata
   and updates **only the TMDB-sourced fields** (title, original_title, overview, genres, director, cast,
   season/episode totals, runtime, original_language, and the TMDB poster). It **never** touches owner
-  fields (status, rating, lgbtq_rep, dates, comments, watched counts, master_series) or a **manually
+  fields (status, rating, lgbtq_rep, dates, comments, watched counts, is_favorite) or a **manually
   pasted** poster. Reports "Updated" / "Already up to date".
-- Top-right **RESET** + **CREATE/SAVE**, enabled only once something changes; CREATE needs a Title.
-- Which optional fields appear is controlled by **Shows Settings → Visible Fields** (Type, Title and
-  Status are always shown; Master Series + Poster URL + Refresh are always available); hiding a field is
-  display-only and never drops saved data.
+- Top-right **favourite heart** + **RESET** + **CREATE/SAVE**, enabled only once something changes;
+  CREATE needs a Title.
+- Which optional fields appear is controlled by **Shows Settings → Visible Fields** (Type, Title, Status
+  and the favourite heart are always shown; the Poster URL field follows the Display rule above + the
+  Refresh action is always available); hiding a field is display-only and never drops saved data.
 
 ## Shows - Title Search (modal)
 
@@ -288,7 +298,10 @@ in the global Settings at the Home level).
 - **Entry Form → Visible Fields** opens a sub-screen of toggles over the optional Entry/Edit fields
   (Original Title, Year, Rating, LGBT+, the three dates, Season & Episode counts, Comments, TMDB
   metadata display). Stored on `profile.show_visible_fields` (**NULL = all visible**); auto-saves per
-  toggle. Type, Title, Status, Master Series, and Poster URL are always shown and not listed.
+  toggle. Type, Title, Status, and the favourite heart are always shown and not listed.
+- **Display → Visible Poster URL** toggle (`profile.show_poster_url_visible`, default off): when on, the
+  Entry **Poster URL** field is always shown; when off, it appears only when TMDB supplied no poster (or
+  the current value is a manually pasted URL).
 - **Import → Enable CSV import** toggle (`profile.show_importer_enabled`); when on, an **Import CSV…**
   launcher appears that opens the importer sheet.
 
@@ -296,30 +309,33 @@ in the global Settings at the Home level).
 
 An in-app bulk importer (the owner's choice over a script — same as Net Worth). One CSV covers English +
 Chinese across all three types. Columns:
-`title,master_series,type,status,rating,lgbtq_rep,watched_seasons,watched_episodes` (`type` ∈
-`tv|movie|documentary`; `master_series` optional — see `templates/shows-import-guide.md`).
+`title,type,status,rating,lgbtq_rep,watched_seasons,watched_episodes,is_favorite` (`type` ∈
+`tv|movie|documentary`; `is_favorite` optional trailing boolean — see `templates/shows-import-guide.md`).
 
 - **Choose CSV** → rows are parsed/validated (bad rows listed as skipped) and each is **matched
   against TMDB** (Chinese-aware top hit + details) with a progress count.
-- A **preview list** shows each row's poster + a master-series eyebrow + matched title/year + type/status
-  - (episodic) season·episode totals; rows TMDB couldn't find are flagged **No match** and rows whose top
-    hit differs from the CSV title are flagged **review**. **Change** on any row opens the **Title Search**
-    modal to pick the correct title (or leave it as-is to import with no metadata — common for niche
-    documentaries, topped up later via a pasted Poster URL or Refresh).
-- **Import** writes all rows **idempotently** (dedup on lower(title) + lower(master_series) — re-running
-  the same file updates in place, never duplicates). Imported rows have **NULL dates**, so they appear in
-  the Library but not the Dashboard's "Recently Watched".
+- A **preview list** shows each row's poster + matched title/year + type/status + (episodic)
+  season·episode totals; rows TMDB couldn't find are flagged **No match** and rows whose top hit differs
+  from the CSV title are flagged **review**. **Change** on any row opens the **Title Search** modal to
+  pick the correct title (or leave it as-is to import with no metadata — common for niche documentaries,
+  topped up later via a pasted Poster URL or Refresh).
+- **Import** writes all rows **idempotently** (dedup on lower(title) — re-running the same file updates
+  in place, never duplicates). Imported rows have **NULL dates**, so they appear in the Library but not
+  the Dashboard's "Recently Watched".
 
 ## Books - Dashboard
 
 - Shelves, each a card shown only when it has items, with a `+` (top-right) that opens a blank Entry.
   There is no type filter (books are one kind):
+  - **Favourites** — every `is_favorite` book (any status), each row showing its status chip. (A
+    favourite also still appears in its status shelf below.)
   - **Currently Reading** — all `status=reading`; each row shows the cover, title (+ year), and
     author(s), plus a **Mark Read** action (status → read, finish → today).
   - **Recently Read** — the last 5 by finish date (rows show the star rating + finish date). Imported
     rows with no `end_date` don't appear here (they live in the Library).
   - **Want to Read** — a short shelf of `status=want`, each with a **Start Reading** action (status →
     reading, start → today).
+- A favourite row anywhere shows a small filled **♥** before the title.
 - A small stat line: "**N read this year**".
 
 ## Books - Library
@@ -328,15 +344,15 @@ Chinese across all three types. Columns:
   **`+ New Book`** opens the blank Entry.
 - A **Filters** toggle opens a panel: **Status**, **Genre** (the genres present in your own rows),
   **Rating** (minimum: Any / 1★+ … / 5★), **LGBT+** (Any/None/Some/Significant), **Author** (the
-  authors present in your own rows), and **Started-between** + **Finished-between** date ranges (each
-  bound via the Calendar modal, clearable). A count on the Filters button shows how many are active;
-  **Clear filters** resets them.
+  authors present in your own rows), a **Favourites only** toggle, and **Started-between** +
+  **Finished-between** date ranges (each bound via the Calendar modal, clearable). A count on the
+  Filters button shows how many are active; **Clear filters** resets them.
 - A **Sort** menu over { Date, Title, Author, Year, Status, Rating, Genre } with an **asc/desc** toggle
   (nulls sort last); default is **Date** descending.
-- Each row: a **cover thumbnail** (2:3, neutral placeholder when there's no cover), title (+ year),
-  the author(s), a **status chip** (Want to Read / Reading / Read / Dropped), the **star rating** when
-  rated, the first genre, and the finish/updated date. Tap a row → **Entry/Edit**; **swipe-left →
-  Delete** (hard, with a confirm).
+- Each row: a **cover thumbnail** (2:3, neutral placeholder when there's no cover), title (+ year) with
+  a small filled **♥** when favourited, the author(s), a **status chip** (Want to Read / Reading / Read /
+  Dropped), the **star rating** when rated, the first genre, and the finish/updated date. Tap a row →
+  **Entry/Edit**; **swipe-left → Delete** (hard, with a confirm).
 - A **gear** in the Books Dashboard/Library headers opens **Books Settings**.
 - _Filter/sort state is per-visit (not persisted); a wide-screen sortable table is parked — see
   `PARKED.md`._
@@ -344,6 +360,8 @@ Chinese across all three types. Columns:
 ## Books - Entry / Edit (form)
 
 - Reached from the Library `+` (new, `/books/entry`) or by tapping a row (edit, `/books/:id`).
+- A **favourite heart** in the header (filled when on) toggles `is_favorite` — surfaces a "Favourites"
+  Dashboard shelf and a "Favourites only" Library filter (mirrors Quotes / Shows).
 - **Search Google Books** (a button) opens the **Title Search** modal; selecting a result fetches
   details and populates the **metadata** — a cover thumbnail + Genres, Page count, Language,
   Description (read-only display) — plus Title / Author(s) / Year (editable). Nothing is saved until
@@ -356,9 +374,11 @@ Chinese across all three types. Columns:
 - **Start Date**, **Finish / Drop Date**, **Last Update** — each opens the **Calendar** modal;
   clearable. Start + Last Update default to today on a new entry.
 - **Comments** (textarea).
-- Top-right **RESET** + **CREATE/SAVE**, enabled only once something changes; CREATE needs a Title.
-- Which optional fields appear is controlled by **Books Settings → Visible Fields** (Title, Status and
-  the Search button are always shown); hiding a field is display-only and never drops saved data.
+- Top-right **favourite heart** + **RESET** + **CREATE/SAVE**, enabled only once something changes;
+  CREATE needs a Title.
+- Which optional fields appear is controlled by **Books Settings → Visible Fields** (Title, Status, the
+  Search button and the favourite heart are always shown); hiding a field is display-only and never drops
+  saved data.
 
 ## Books - Title Search (modal)
 
@@ -386,7 +406,8 @@ headers.
 ## Books - Import CSV (sheet, from Books Settings)
 
 An in-app bulk importer (the owner's choice over a script — same as Net Worth / Shows). Columns:
-`title,author,rating,lgbtq_rep,end_date` (see `templates/books-import-guide.md`).
+`title,author,rating,lgbtq_rep,end_date,is_favorite` (`is_favorite` optional trailing boolean — see
+`templates/books-import-guide.md`).
 
 - **Choose CSV** → rows are parsed/validated (bad rows listed as skipped) and each is **matched against
   Google Books** (searching `title author` for the top hit, Open Library fallback) with a progress count.
@@ -444,7 +465,7 @@ An in-app bulk importer (the owner's choice over a script — same as Net Worth 
 ## Quotes - Import CSV (sheet, from Quotes Settings)
 
 An in-app bulk importer (the owner's choice over a script — same as Net Worth / Shows / Books). Columns:
-`Quote,Author,Source,Title,Category,Tags` (see `templates/quotes-import-guide.md`). **No external API** —
+`Quote,Author,Source,Title,Category,Tags,is_favorite` (`is_favorite` optional trailing boolean — see `templates/quotes-import-guide.md`). **No external API** —
 unlike Shows/Books, links resolve against the user's own Show/Book rows.
 
 - **Choose CSV** → rows are parsed/validated; the **Category** is checked against the six and **Source**

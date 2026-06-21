@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { IconX } from '@tabler/icons-react'
+import { useEscapeKey } from '../hooks/useEscapeKey'
 import { SearchBar } from './SearchBar'
 import { ShowTypeBadge } from './ShowTypeBadge'
 import { PosterThumb } from './PosterThumb'
@@ -57,13 +58,7 @@ export function TitleSearchSheet({ type, onSelect, onClose }: TitleSearchSheetPr
     }
   }, [type, debounced])
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
-  }, [onClose])
+  useEscapeKey(onClose)
 
   const typeLabel = SHOW_TYPE_LABELS[type]
 

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { IconChevronDown } from '@tabler/icons-react'
+import { useEscapeKey } from '../hooks/useEscapeKey'
 
 interface SelectMenuProps<T extends string> {
   value: T
@@ -22,6 +23,7 @@ export function SelectMenu<T extends string>({
 }: SelectMenuProps<T>) {
   const [open, setOpen] = useState(false)
   const current = options.find((o) => o.value === value)
+  useEscapeKey(() => setOpen(false), open)
 
   return (
     <div className={`relative ${className}`}>

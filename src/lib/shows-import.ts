@@ -3,7 +3,7 @@
  * `templates/shows-import-guide.md`). No I/O and no TMDB calls — the import screen reads the file,
  * resolves each row against TMDB, and writes via `saveImportedShows`.
  *
- * Column spec: `title,master_series,type,status,rating,lgbtq_rep,watched_seasons,watched_episodes`.
+ * Column spec: `title,type,status,rating,lgbtq_rep,watched_seasons,watched_episodes,is_favorite`.
  */
 import {
   LGBTQ_REPS,
@@ -21,13 +21,13 @@ const REQUIRED_COLUMNS = ['title', 'type', 'status']
 
 export interface ParsedShowRow {
   title: string
-  master_series: string | null
   type: ShowType
   status: ShowStatus
   rating: number | null
   lgbtq_rep: LgbtqRep
   watched_seasons: number | null
   watched_episodes: number | null
+  is_favorite: boolean
 }
 
 export interface ShowsImportResult {
@@ -47,6 +47,11 @@ function intOrNull(raw: string): number | null {
   if (s === '') return null
   const n = Number(s)
   return Number.isFinite(n) ? Math.trunc(n) : null
+}
+
+/** Lenient truthy parse for a CSV boolean cell: `true/1/yes/y` (case-insensitive) ⇒ true. */
+function parseBool(raw: string): boolean {
+  return ['true', '1', 'yes', 'y'].includes(raw.trim().toLowerCase())
 }
 
 export function parseShowsCsv(rows: string[][]): ShowsImportResult {
@@ -119,13 +124,13 @@ export function parseShowsCsv(rows: string[][]): ShowsImportResult {
 
     out.push({
       title,
-      master_series: col(cells, 'master_series') || null,
       type: type as ShowType,
       status: status as ShowStatus,
       rating,
       lgbtq_rep: lgbtq_rep as LgbtqRep,
       watched_seasons: intOrNull(col(cells, 'watched_seasons')),
       watched_episodes: intOrNull(col(cells, 'watched_episodes')),
+      is_favorite: parseBool(col(cells, 'is_favorite')),
     })
   }
 
@@ -133,12 +138,11 @@ export function parseShowsCsv(rows: string[][]): ShowsImportResult {
 }
 
 /**
- * Idempotency key — a row updates an existing show with the same case-insensitive title +
- * master series (type-agnostic), so an English/Chinese pair under one 国宝档案 series stays
- * distinct while a re-import of the same title+series updates in place.
+ * Idempotency key — a row updates an existing show with the same case-insensitive title
+ * (type-agnostic), so a re-import of the same title updates in place rather than duplicating.
  */
-export function dedupKey(title: string, masterSeries: string | null | undefined): string {
-  return `${title.trim().toLowerCase()}|${(masterSeries ?? '').trim().toLowerCase()}`
+export function dedupKey(title: string): string {
+  return title.trim().toLowerCase()
 }
 
 /**
@@ -167,9 +171,9 @@ export function buildImportRow(
     type: input.type,
     status: input.status,
     title: match?.title ?? input.title,
-    master_series: input.master_series,
     rating: input.rating,
     lgbtq_rep: input.lgbtq_rep,
+    is_favorite: input.is_favorite,
     original_title: match?.original_title ?? null,
     year: match?.year ?? null,
     poster_path: match?.poster_path ?? null,

@@ -4,6 +4,7 @@ import {
   IconArrowDown,
   IconArrowUp,
   IconFilter,
+  IconHeartFilled,
   IconPlus,
   IconSettings,
   IconX,
@@ -17,7 +18,6 @@ import {
   DEFAULT_LIBRARY_CRITERIA,
   LGBTQ_REP_LABELS,
   LGBTQ_REPS,
-  masterSeriesOptions,
   SHOW_STATUS_CHIP,
   SHOW_STATUS_LABELS,
   SHOW_STATUSES,
@@ -33,6 +33,7 @@ import { SearchBar } from '../components/SearchBar'
 import { SwipeRow } from '../components/SwipeRow'
 import { SegmentedTabs } from '../components/SegmentedTabs'
 import { SelectMenu } from '../components/SelectMenu'
+import { Toggle } from '../components/Toggle'
 import { Calendar } from '../components/Calendar'
 import { ShowTypeBadge } from '../components/ShowTypeBadge'
 import { StatusChip } from '../components/StatusChip'
@@ -129,20 +130,15 @@ export function ShowsLibrary() {
     { value: 'all', label: 'All genres' },
     ...showGenres(allShows).map((g) => ({ value: g, label: g })),
   ]
-  const seriesList = masterSeriesOptions(allShows)
-  const seriesOptions = [
-    { value: 'all', label: 'All series' },
-    ...seriesList.map((m) => ({ value: m, label: m })),
-  ]
   const view = applyLibraryView(allShows, criteria)
 
   const activeCount =
     (criteria.type !== 'all' ? 1 : 0) +
-    (criteria.masterSeries !== 'all' ? 1 : 0) +
     (criteria.genre !== 'all' ? 1 : 0) +
     (criteria.minRating > 0 ? 1 : 0) +
     (criteria.lgbtq !== 'all' ? 1 : 0) +
     (criteria.status !== 'all' ? 1 : 0) +
+    (criteria.favoritesOnly ? 1 : 0) +
     (criteria.startFrom || criteria.startTo ? 1 : 0) +
     (criteria.endFrom || criteria.endTo ? 1 : 0)
 
@@ -252,16 +248,15 @@ export function ShowsLibrary() {
                 onChange={(l) => setCrit({ lgbtq: l })}
               />
             </Field>
-          </div>
-          {seriesList.length > 0 && (
-            <Field label="Master series">
-              <SelectMenu
-                value={criteria.masterSeries}
-                options={seriesOptions}
-                onChange={(m) => setCrit({ masterSeries: m })}
+            <label className="flex items-center justify-between self-end py-1.5">
+              <span className="text-text-secondary">Favourites only</span>
+              <Toggle
+                checked={criteria.favoritesOnly}
+                onChange={(v) => setCrit({ favoritesOnly: v })}
+                label="Favourites only"
               />
-            </Field>
-          )}
+            </label>
+          </div>
           <DateRange
             label="Started between"
             from={criteria.startFrom}
@@ -308,14 +303,18 @@ export function ShowsLibrary() {
                 >
                   <PosterThumb path={s.poster_path} size="w92" />
                   <span className="min-w-0 flex-1">
-                    {s.master_series && (
-                      <span className="block truncate text-[11px] uppercase tracking-wide text-text-tertiary">
-                        {s.master_series}
+                    <span className="flex items-center gap-1.5 text-[15px] text-text-primary">
+                      {s.is_favorite && (
+                        <IconHeartFilled
+                          size={13}
+                          className="shrink-0 text-accent"
+                          aria-label="Favourite"
+                        />
+                      )}
+                      <span className="min-w-0 truncate">
+                        {s.title}
+                        {s.year ? ` (${s.year})` : ''}
                       </span>
-                    )}
-                    <span className="block truncate text-[15px] text-text-primary">
-                      {s.title}
-                      {s.year ? ` (${s.year})` : ''}
                     </span>
                     <span className="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-secondary">
                       <ShowTypeBadge type={s.type as ShowType} />

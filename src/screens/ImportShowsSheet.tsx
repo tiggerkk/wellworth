@@ -243,11 +243,6 @@ export function ImportShowsSheet() {
                         className="h-14 w-10"
                       />
                       <div className="min-w-0 flex-1">
-                        {r.input.master_series && (
-                          <p className="truncate text-[11px] uppercase tracking-wide text-text-tertiary">
-                            {r.input.master_series}
-                          </p>
-                        )}
                         <p className="truncate text-[15px] text-text-primary">
                           {r.match?.title ?? r.input.title}
                           {r.match?.year ? ` (${r.match.year})` : ''}

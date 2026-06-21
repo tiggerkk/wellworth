@@ -64,6 +64,11 @@ export function currentlyReading<T extends Pick<BookRow, 'status'>>(books: T[]):
   return books.filter((b) => b.status === 'reading')
 }
 
+/** Dashboard "Favourites": starred books (incoming order preserved). */
+export function favoriteBooks<T extends Pick<BookRow, 'is_favorite'>>(books: T[]): T[] {
+  return books.filter((b) => b.is_favorite)
+}
+
 /** Dashboard "Want to Read": the to-read shelf, capped to `limit`. */
 export function wantToRead<T extends Pick<BookRow, 'status'>>(
   books: T[],
@@ -136,6 +141,7 @@ export interface LibraryCriteria {
   lgbtq: 'all' | LgbtqRep
   status: 'all' | BookStatus
   author: 'all' | string
+  favoritesOnly: boolean
   startFrom: IsoDate | null
   startTo: IsoDate | null
   endFrom: IsoDate | null
@@ -151,6 +157,7 @@ export const DEFAULT_LIBRARY_CRITERIA: LibraryCriteria = {
   lgbtq: 'all',
   status: 'all',
   author: 'all',
+  favoritesOnly: false,
   startFrom: null,
   startTo: null,
   endFrom: null,
@@ -166,6 +173,7 @@ function matchesCriteria(book: BookRow, c: LibraryCriteria): boolean {
   if (c.lgbtq !== 'all' && (book.lgbtq_rep ?? 'none') !== c.lgbtq) return false
   if (c.genre !== 'all' && !(book.genres ?? []).includes(c.genre)) return false
   if (c.author !== 'all' && !(book.authors ?? []).includes(c.author)) return false
+  if (c.favoritesOnly && !book.is_favorite) return false
   if (c.minRating > 0 && (book.rating ?? 0) < c.minRating) return false
   if (c.startFrom && (!book.start_date || book.start_date < c.startFrom)) return false
   if (c.startTo && (!book.start_date || book.start_date > c.startTo)) return false

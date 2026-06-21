@@ -17,10 +17,9 @@
 -- =====================================================================================
 -- show — one row per tracked title (TV show, movie or documentary). `type` chooses the
 -- TMDB endpoint (documentary → /tv) and the season/episode UI; `watched_*`/`total_*` are
--- for episodic types (TV + documentary). `master_series` groups documentary sub-series
--- (e.g. 国宝档案 → 从东晋到北魏); NULL for standalone titles. Dates are NULL for imported
--- back-catalogue rows (genuinely unknown — fabricating "today" would pollute "Recently
--- Watched" and date sorts).
+-- for episodic types (TV + documentary). `is_favorite` flags a starred title. Dates are
+-- NULL for imported back-catalogue rows (genuinely unknown — fabricating "today" would
+-- pollute "Recently Watched" and date sorts).
 -- =====================================================================================
 create table public.show (
   id               uuid primary key default gen_random_uuid(),
@@ -30,7 +29,6 @@ create table public.show (
   tmdb_id          integer,                  -- TMDB id (enables per-show "Refresh from TMDB")
   imdb_id          text,                     -- stable cross-reference
   title            text not null,
-  master_series    text,                     -- parent series for a documentary sub-series; else NULL
   original_title   text,
   year             integer,
   poster_path      text,                     -- TMDB path OR a full pasted image URL (no-referrer render)
@@ -49,6 +47,7 @@ create table public.show (
                    ),                         -- user stars, 0–5 in 0.5 steps
   lgbtq_rep        text not null default 'none'
                      check (lgbtq_rep in ('none', 'some', 'significant')),
+  is_favorite      boolean not null default false,
   start_date       date,
   end_date         date,                     -- finish / drop date
   last_update_date date,
@@ -58,7 +57,7 @@ create table public.show (
 );
 
 create index on public.show (user_id, status);
-create index on public.show (user_id, master_series);  -- master-series grouping/filter
+create index on public.show (user_id, is_favorite);  -- favourites-first / favourites filter
 
 alter table public.show enable row level security;
 

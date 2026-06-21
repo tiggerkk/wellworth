@@ -71,9 +71,10 @@ _not_ the primary-button color; it's for emphasis, active states, and energy.
 - **ShowTypeBadge** — small chip with a TV (`IconDeviceTv`), movie (`IconMovie`), or documentary
   (`IconVideo`) icon, on every Shows row/poster. The Entry **Type** control is a three-segment
   `SegmentedTabs` (TV Show / Movie / Documentary). (Books have no type badge — all books are one kind.)
-- **Master-series eyebrow** — when `master_series` is set (documentary sub-series), a small uppercased
-  `text-tertiary` label is rendered above the title on Library / Dashboard / importer rows and the Entry
-  form (e.g. "国宝档案" over "从东晋到北魏").
+- **Favourite heart** — an `IconHeart`/`IconHeartFilled` toggle (filled `accent` when on, `text-tertiary`
+  when off) in the Shows/Books/Quotes Entry header sets `is_favorite`; a small filled ♥ marks favourite
+  rows on Library/Dashboard lists, and a "Favourites" Dashboard shelf + "Favourites only" Library filter
+  surface them (the shared pattern across all three media modules).
 - **Refresh from TMDB** — a small `⟳` (`IconRefresh`) action beside Search TMDB on the Shows Entry form,
   greyed/disabled until a `tmdb_id` exists; spins while fetching and reports "Updated" / "Already up to date".
 - **StatusChip** — a **presentational** status pill taking a `label` + palette `className`, so Shows,
@@ -104,7 +105,12 @@ _not_ the primary-button color; it's for emphasis, active states, and energy.
   button + a hand-rolled pull-to-refresh gesture.
 - **SelectMenu** — a compact dropdown (button + label + chevron → scrim + absolute menu of
   `{value,label}` options); generic over string options. Used by the Shows, Books, and Quotes Library
-  filters/sort.
+  filters/sort. **Esc** collapses an open menu (via `useEscapeKey`).
+- **useEscapeKey(handler, enabled?)** (`src/hooks/useEscapeKey.ts`) — shared **Escape-to-dismiss**.
+  One document listener drives a LIFO stack so the **innermost** overlay handles Esc: route `Sheet`s
+  and the local search sheets close themselves, the `Calendar` closes, an open `SelectMenu` collapses,
+  and the Add/Edit screens (`ShowsEntry`/`BooksEntry`/`QuotesEntry`) `navigate(-1)` — but only when no
+  overlay is layered above them (the layered overlay consumes the key first).
 - **MonthPicker** — month/year picker (year stepper over a month grid, OK/Cancel) for the Net Worth month selector (a local overlay, not a route).
 - **EnergyBalanceCard** — Consumed / BMR / Activity / bold Net.
 - **NutrientReport** — shared body of Dashboard + Daily Report (energy card + visible-nutrient sections).

@@ -10,12 +10,12 @@ One CSV covers **English and Chinese** titles across **all three types** (TV / m
 ## Columns
 
 ```
-title,master_series,type,status,rating,lgbtq_rep,watched_seasons,watched_episodes
+title,type,status,rating,lgbtq_rep,watched_seasons,watched_episodes,is_favorite
 ```
 
-- **title** — the title to look up on TMDB. Required. (A CJK title is searched in Chinese.)
-- **master_series** — for a documentary sub-series, the parent series (e.g. `国宝档案`). Optional
-  (blank for standalone titles).
+- **title** — the title to look up on TMDB. Required. (A CJK title is searched in Chinese.) For a
+  documentary sub-series, fold the parent series into the title yourself (e.g.
+  `国宝档案 — 从东晋到北魏`).
 - **type** — `tv`, `movie`, or `documentary`. Required (it picks the TMDB endpoint — documentary uses
   `/tv`).
 - **status** — `want`, `watching`, `watched`, or `dropped`. Required.
@@ -24,6 +24,8 @@ title,master_series,type,status,rating,lgbtq_rep,watched_seasons,watched_episode
 - **watched_seasons / watched_episodes** — episodic progress (TV + documentary). **Leave blank for
   `watched` rows** (the importer sets them to the TMDB totals) and for movies / `want` rows. For
   `watching` and `dropped` rows, enter how far you got.
+- **is_favorite** — `true`/`1`/`yes` marks the title a favourite (the ♥). Optional (blank = not a
+  favourite).
 
 Rows with an unknown `type`/`status`/`lgbtq_rep`, a missing `title`, or a bad `rating` are listed as
 skipped in the preview; everything else imports.
@@ -40,7 +42,7 @@ been contributed to TMDB. **Dates are left empty** for every imported row (start
 genuinely unknown), so imported history shows in the Library but not the Dashboard's "Recently Watched".
 
 Re-importing is **idempotent**: a row updates the existing show with the same case-insensitive
-**title + master series** (type-agnostic), never a duplicate.
+**title** (type-agnostic), never a duplicate.
 
 ## Keep your real file private
 

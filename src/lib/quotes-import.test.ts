@@ -9,7 +9,7 @@ import {
   type ParsedQuoteRow,
 } from './quotes-import'
 
-const HEADER = 'Quote,Author,Source,Title,Category,Tags'
+const HEADER = 'Quote,Author,Source,Title,Category,Tags,is_favorite'
 
 describe('parseQuotesCsv', () => {
   it('parses a simple valid row (tags split, language en)', () => {
@@ -47,6 +47,14 @@ Roland: That's the sonogram!",Moira Rose,tv,Schitt's Creek,Wit,"clever, irony"`
       "Moira: Who put a ghost on my desk?\nRoland: That's the sonogram!",
     )
     expect(rows[2]!.tags).toEqual(['clever', 'irony'])
+  })
+
+  it('parses a trailing is_favorite flag (else false)', () => {
+    const { rows } = parseQuotesCsv(
+      parseCsv(`${HEADER}\nFav line,A,tv,T,Wit,,yes\nPlain line,A,tv,T,Wit,,`),
+    )
+    expect(rows[0]!.is_favorite).toBe(true)
+    expect(rows[1]!.is_favorite).toBe(false)
   })
 
   it('auto-detects Chinese from CJK text', () => {
@@ -97,6 +105,7 @@ const row = (text: string): ParsedQuoteRow => ({
   category: 'wit',
   tags: [],
   language: 'en',
+  is_favorite: false,
   text_norm: text.trim().toLowerCase(),
 })
 
@@ -150,15 +159,15 @@ describe('resolveLink / buildTitleIndex', () => {
     expect(resolveLink('tv', null, index).show_id).toBeNull()
   })
 
-  it('buildImportPayload applies the link + defaults is_favorite false', () => {
+  it('buildImportPayload applies the link + carries is_favorite through', () => {
     const payload = buildImportPayload(
-      { ...row('A line'), source_type: 'tv', title: 'House of Cards' },
+      { ...row('A line'), source_type: 'tv', title: 'House of Cards', is_favorite: true },
       index,
     )
     expect(payload).toMatchObject({
       show_id: 'show-1',
       book_id: null,
-      is_favorite: false,
+      is_favorite: true,
     })
   })
 })

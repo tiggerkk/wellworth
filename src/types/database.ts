@@ -126,6 +126,7 @@ export type Database = {
           genres: string[] | null
           google_books_id: string | null
           id: string
+          is_favorite: boolean
           isbn: string | null
           language: string | null
           last_update_date: string | null
@@ -150,6 +151,7 @@ export type Database = {
           genres?: string[] | null
           google_books_id?: string | null
           id?: string
+          is_favorite?: boolean
           isbn?: string | null
           language?: string | null
           last_update_date?: string | null
@@ -174,6 +176,7 @@ export type Database = {
           genres?: string[] | null
           google_books_id?: string | null
           id?: string
+          is_favorite?: boolean
           isbn?: string | null
           language?: string | null
           last_update_date?: string | null
@@ -393,6 +396,7 @@ export type Database = {
           quote_visible_fields: string[] | null
           sex: string | null
           show_importer_enabled: boolean
+          show_poster_url_visible: boolean
           show_visible_fields: string[] | null
           units: string
           updated_at: string
@@ -413,6 +417,7 @@ export type Database = {
           quote_visible_fields?: string[] | null
           sex?: string | null
           show_importer_enabled?: boolean
+          show_poster_url_visible?: boolean
           show_visible_fields?: string[] | null
           units?: string
           updated_at?: string
@@ -433,6 +438,7 @@ export type Database = {
           quote_visible_fields?: string[] | null
           sex?: string | null
           show_importer_enabled?: boolean
+          show_poster_url_visible?: boolean
           show_visible_fields?: string[] | null
           units?: string
           updated_at?: string
@@ -550,9 +556,9 @@ export type Database = {
           genres: string[] | null
           id: string
           imdb_id: string | null
+          is_favorite: boolean
           last_update_date: string | null
           lgbtq_rep: string
-          master_series: string | null
           original_language: string | null
           original_title: string | null
           overview: string | null
@@ -581,9 +587,9 @@ export type Database = {
           genres?: string[] | null
           id?: string
           imdb_id?: string | null
+          is_favorite?: boolean
           last_update_date?: string | null
           lgbtq_rep?: string
-          master_series?: string | null
           original_language?: string | null
           original_title?: string | null
           overview?: string | null
@@ -612,9 +618,9 @@ export type Database = {
           genres?: string[] | null
           id?: string
           imdb_id?: string | null
+          is_favorite?: boolean
           last_update_date?: string | null
           lgbtq_rep?: string
-          master_series?: string | null
           original_language?: string | null
           original_title?: string | null
           overview?: string | null

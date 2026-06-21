@@ -8,7 +8,7 @@ duplicates), so partial re-runs are safe.
 ## Columns
 
 ```
-title,author,rating,lgbtq_rep,end_date
+title,author,rating,lgbtq_rep,end_date,is_favorite
 ```
 
 - **title** — the book title to look up. Required.
@@ -17,6 +17,8 @@ title,author,rating,lgbtq_rep,end_date
 - **rating** — your stars, `0`–`5` in `0.5` steps. Optional (blank = unrated).
 - **lgbtq_rep** — LGBT+ representation: `none`, `some`, or `significant`. Optional (blank = `none`).
 - **end_date** — the date you finished, as `YYYY-MM-DD` text. Optional (blank = unknown).
+- **is_favorite** — `true`/`1`/`yes` marks the book a favourite (the ♥). Optional (blank = not a
+  favourite).
 
 Every imported row is recorded as **Read**. Rows with a missing `title`/`author`, a bad `rating`, an
 unknown `lgbtq_rep`, or a malformed `end_date` are listed as skipped in the preview; everything else

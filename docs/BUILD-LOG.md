@@ -36,7 +36,7 @@ its `docs/07-quotes.md` staging spec has been merged into the permanent docs and
   `VITE_SUPABASE_ANON_KEY`, `VITE_USDA_API_KEY`, `VITE_TMDB_API_KEY`, and the optional
   `VITE_GOOGLE_BOOKS_API_KEY` (Books). All build-time `VITE_` vars.
 - **Gates:** husky `.husky/pre-commit` → lint-staged + `typecheck` + `test`; GitHub Actions
-  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 242 Vitest tests (pure helpers).
+  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 249 Vitest tests (pure helpers).
 - **Deploy status:** Deployed. GitHub `main` → Vercel auto-deploy; the production URL is in the
   Supabase redirect URLs + Google JS origins (see `OWNER-RUNBOOK.md`). Installed + tested on iPhone (PWA).
 - Conventions (DB-access-via-`src/data`, metric storage, generated `database.ts` contract, etc.) live
@@ -1082,6 +1082,47 @@ migration, no env.
   the scroll pane (Import button, Exchange-rates card, empty note, each asset-group card). Exact same
   root cause as F6(c): a `flex-col` scroll pane needs `min-h-0` on itself **and** `shrink-0` on its
   children. Don't reach for a fixed pixel height.
+
+## Shows / Books / global enhancement (favourites, Esc, master-series removal)
+
+A cross-cutting enhancement pass (one batch; the owner refreshes the DB via `supabase db reset
+--linked`, so schema changes were **folded into the existing migration files** rather than shipping
+additive ones — see `memory/db-migration-workflow.md`). 242 → **249** Vitest tests.
+
+- **Removed `master_series` from Shows.** The documentary sub-series text now lives in the **title**
+  itself (owner folds it in, e.g. `国宝档案 — 从东晋到北魏`). Dropped the column + its `(user_id,
+master_series)` index from `20260617120000_shows_schema.sql`; removed `masterSeriesOptions`, the
+  `masterSeries` `LibraryCriteria` filter, the Entry field, the Library filter, the Dashboard/Library/
+  importer eyebrow, and the `?master_series=` prefill param. `dedupKey` is now **title-only**
+  (`saveImportedShows` selects just `id, title`). Existing master_series values were **not** migrated
+  (owner chose a clean drop).
+- **`is_favorite` on Shows + Books**, mirroring Quotes: `boolean not null default false` + a
+  `(user_id, is_favorite)` index in each table's original migration; a heart toggle in the Entry header,
+  a **Favourites** Dashboard shelf (`favoriteShows`/`favoriteBooks`), a **Favourites only** Library
+  filter (`favoritesOnly` on `LibraryCriteria`), a ♥ on list rows, and a trailing **`is_favorite`**
+  importer CSV column (Shows, Books **and** Quotes — Quotes already had the column/UI, only the importer
+  needed it; lenient `true/1/yes/y` parse).
+- **Shows Poster URL is now conditional.** The Entry field shows only when there's no poster, when the
+  value is a manually pasted absolute URL, or when forced on via the new **Shows Settings → Display →
+  Visible Poster URL** toggle (`profile.show_poster_url_visible`, default off). Hidden once TMDB supplied
+  a path (the common case), de-cluttering the form.
+- **Shows Start-Date defaulting.** A new show defaults to **Want with a blank Start Date** (it hasn't
+  started); `changeStatus` now defaults Start Date to today when moving to Watching/Watched/Dropped (the
+  same pattern the Finish date already used).
+- **Dashboard watching badge + progress (bug fix).** A `status=watching` title set manually (not via
+  "Start Watching") landed in **Up Next** with only a progress label and **no "Watching" chip** — read
+  as "no badge". Fix: a shared `WatchingSecondary` renders the **chip + season·episode progress
+  together** on both the Up Next and Watching shelves, so every watching title shows the badge regardless
+  of shelf.
+- **F — Escape-to-dismiss needs a LIFO handler stack, not N independent listeners.** Calendar +
+  SelectMenu had no Esc; the Add/Edit screens needed Esc-to-close too — but a naïve per-component
+  `document.addEventListener('keydown')` means **every** open overlay's handler fires on one press (a
+  dropdown-open Entry screen would both close the dropdown **and** navigate away). Fix: a single shared
+  `src/hooks/useEscapeKey.ts` — one document listener over a module-level **LIFO stack**; only the
+  top (innermost, most-recently-mounted) enabled handler runs and `preventDefault`s. All overlays
+  (`Sheet`, `Calendar`, `SelectMenu`, the three local search sheets, and `ShowsEntry`/`BooksEntry`/
+  `QuotesEntry`) were migrated onto it, so the screen-level `navigate(-1)` fires only when nothing is
+  layered above it — no per-screen "is an overlay open?" guard needed.
 
 ## Known limitations / deferred (not spec issues — future work)
 

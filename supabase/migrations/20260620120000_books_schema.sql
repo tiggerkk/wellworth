@@ -41,6 +41,7 @@ create table public.book (
                    ),                         -- user stars, 0–5 in 0.5 steps
   lgbtq_rep        text not null default 'none'
                      check (lgbtq_rep in ('none', 'some', 'significant')),
+  is_favorite      boolean not null default false,
   start_date       date,
   end_date         date,                     -- finish / drop date
   last_update_date date,
@@ -50,6 +51,7 @@ create table public.book (
 );
 
 create index on public.book (user_id, status);
+create index on public.book (user_id, is_favorite);  -- favourites-first / favourites filter
 
 alter table public.book enable row level security;
 

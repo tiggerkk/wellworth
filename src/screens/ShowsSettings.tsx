@@ -56,6 +56,19 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
         </button>
       </SectionCard>
 
+      <SectionCard title="Display">
+        <FieldRow label="Visible Poster URL">
+          <Toggle
+            checked={profile.show_poster_url_visible}
+            onChange={(on) => void save({ show_poster_url_visible: on })}
+            label="Visible Poster URL"
+          />
+        </FieldRow>
+        <div className="px-4 py-2 text-xs text-text-tertiary">
+          Always show the Poster URL field. Off: it appears only when TMDB has no poster.
+        </div>
+      </SectionCard>
+
       <SectionCard title="Import">
         <FieldRow label="Enable CSV import">
           <Toggle

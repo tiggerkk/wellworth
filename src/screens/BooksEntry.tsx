@@ -1,9 +1,16 @@
 import { useCallback, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
-import { IconQuote, IconSearch, IconX } from '@tabler/icons-react'
+import {
+  IconHeart,
+  IconHeartFilled,
+  IconQuote,
+  IconSearch,
+  IconX,
+} from '@tabler/icons-react'
 import { routes } from '../constants/routes'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
+import { useEscapeKey } from '../hooks/useEscapeKey'
 import { createBook, getBook, updateBook } from '../data/book'
 import {
   BOOK_STATUS_LABELS,
@@ -34,6 +41,7 @@ interface BookDraft {
   status: BookStatus
   rating: number
   lgbtq_rep: LgbtqRep
+  is_favorite: boolean
   start_date: IsoDate | null
   end_date: IsoDate | null
   last_update_date: IsoDate | null
@@ -60,6 +68,7 @@ function blankDraft(): BookDraft {
     status: 'want',
     rating: 0,
     lgbtq_rep: 'none',
+    is_favorite: false,
     start_date: today,
     end_date: null,
     last_update_date: today,
@@ -83,6 +92,7 @@ function draftFromRow(row: BookRow): BookDraft {
     status: row.status as BookStatus,
     rating: row.rating ?? 0,
     lgbtq_rep: (row.lgbtq_rep as LgbtqRep) ?? 'none',
+    is_favorite: row.is_favorite,
     start_date: row.start_date,
     end_date: row.end_date,
     last_update_date: row.last_update_date,
@@ -141,6 +151,7 @@ function BookForm({ id, initial }: { id: string | undefined; initial: BookDraft 
   const [searchOpen, setSearchOpen] = useState(false)
   const [metaLoading, setMetaLoading] = useState(false)
   const [metaError, setMetaError] = useState(false)
+  useEscapeKey(() => navigate(-1))
 
   const update = (patch: Partial<BookDraft>) => setDraft((d) => ({ ...d, ...patch }))
   const dirty = JSON.stringify(draft) !== JSON.stringify(initial)
@@ -216,6 +227,7 @@ function BookForm({ id, initial }: { id: string | undefined; initial: BookDraft 
         status: draft.status,
         rating: draft.rating || null,
         lgbtq_rep: draft.lgbtq_rep,
+        is_favorite: draft.is_favorite,
         start_date: draft.start_date,
         end_date: draft.end_date,
         last_update_date: draft.last_update_date,
@@ -258,6 +270,16 @@ function BookForm({ id, initial }: { id: string | undefined; initial: BookDraft 
         <h1 className="flex-1 truncate text-[17px] font-medium text-text-primary">
           {id ? 'Edit Book' : 'Add Book'}
         </h1>
+        <button
+          onClick={() => update({ is_favorite: !draft.is_favorite })}
+          aria-label="Favourite"
+        >
+          {draft.is_favorite ? (
+            <IconHeartFilled size={20} className="text-accent" />
+          ) : (
+            <IconHeart size={20} className="text-text-tertiary" />
+          )}
+        </button>
         <SecondaryButton
           size="sm"
           onClick={() => setDraft(initial)}

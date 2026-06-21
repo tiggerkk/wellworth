@@ -4,6 +4,7 @@ import {
   IconArrowDown,
   IconArrowUp,
   IconFilter,
+  IconHeartFilled,
   IconPlus,
   IconSettings,
   IconX,
@@ -31,6 +32,7 @@ import { routes } from '../constants/routes'
 import { SearchBar } from '../components/SearchBar'
 import { SwipeRow } from '../components/SwipeRow'
 import { SelectMenu } from '../components/SelectMenu'
+import { Toggle } from '../components/Toggle'
 import { Calendar } from '../components/Calendar'
 import { StatusChip } from '../components/StatusChip'
 import { StarRating } from '../components/StarRating'
@@ -131,6 +133,7 @@ export function BooksLibrary() {
     (criteria.minRating > 0 ? 1 : 0) +
     (criteria.lgbtq !== 'all' ? 1 : 0) +
     (criteria.status !== 'all' ? 1 : 0) +
+    (criteria.favoritesOnly ? 1 : 0) +
     (criteria.startFrom || criteria.startTo ? 1 : 0) +
     (criteria.endFrom || criteria.endTo ? 1 : 0)
 
@@ -239,6 +242,14 @@ export function BooksLibrary() {
                 onChange={(a) => setCrit({ author: a })}
               />
             </Field>
+            <label className="flex items-center justify-between self-end py-1.5">
+              <span className="text-text-secondary">Favourites only</span>
+              <Toggle
+                checked={criteria.favoritesOnly}
+                onChange={(v) => setCrit({ favoritesOnly: v })}
+                label="Favourites only"
+              />
+            </label>
           </div>
           <DateRange
             label="Started between"
@@ -286,9 +297,18 @@ export function BooksLibrary() {
                 >
                   <CoverThumb url={b.cover_url} />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[15px] text-text-primary">
-                      {b.title}
-                      {b.year ? ` (${b.year})` : ''}
+                    <span className="flex items-center gap-1.5 text-[15px] text-text-primary">
+                      {b.is_favorite && (
+                        <IconHeartFilled
+                          size={13}
+                          className="shrink-0 text-accent"
+                          aria-label="Favourite"
+                        />
+                      )}
+                      <span className="min-w-0 truncate">
+                        {b.title}
+                        {b.year ? ` (${b.year})` : ''}
+                      </span>
                     </span>
                     {b.authors?.length ? (
                       <span className="block truncate text-xs text-text-secondary">

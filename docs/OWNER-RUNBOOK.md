@@ -539,24 +539,19 @@ truncate public.networth_snapshot, public.asset_entry cascade;
 ```sql
 truncate public.show cascade;
 -- optional: also reset the Shows settings on your profile to defaults
-update public.profile set show_visible_fields = null, show_importer_enabled = false;
+update public.profile
+  set show_visible_fields = null,
+      show_importer_enabled = false,
+      show_poster_url_visible = false;
 ```
 
-> **One-time Shows schema update (the documentaries enhancement).** That enhancement added the
-> `documentary` type + a `master_series` column and **removed** the unused `content_rating` column by
-> **editing the original** `…_shows_schema.sql` (the Shows table had no live data) rather than shipping a
-> new migration. Editing an already-applied migration means `supabase db push` won't re-run it, so apply
-> the new shape by **recreating the `show` table** once: either run a full **M1 reset**
-> (`supabase db reset --linked`, which re-runs every migration from scratch — wipes all modules), or, to
-> touch only Shows, drop and re-create just that table from the edited migration:
->
-> ```sql
-> drop table if exists public.show cascade;
-> ```
->
-> then re-run the `show` portion of `supabase/migrations/20260617120000_shows_schema.sql` in the SQL
-> Editor (table + indexes + RLS policies + grants + trigger). Afterwards run **Part G** again
-> (`npm run gen:types`) so `src/types/database.ts` matches (gains `master_series`, loses `content_rating`).
+> **Schema changes are folded into the existing migration files** (the media tables hold no precious
+> data; you refresh with `supabase db reset --linked`). Because `supabase db push` won't re-run an
+> already-applied migration, apply edits with a full reset: **`supabase db reset --linked`** re-runs
+> every migration from scratch (wipes all modules), then run **Part G** (`npm run gen:types`) so
+> `src/types/database.ts` matches. The Shows schema has since dropped the unused `master_series` and
+> `content_rating` columns and added `is_favorite`; Books added `is_favorite`; `profile` gained
+> `show_poster_url_visible`.
 
 **Books** — wipes every tracked book:
 

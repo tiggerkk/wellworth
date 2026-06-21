@@ -113,7 +113,7 @@ const sameArray = (a: string[] | null, b: string[] | null): boolean =>
 /**
  * Build the patch for a per-show Refresh: only the TMDB-sourced fields above, plus the poster.
  * Never `year`/`imdb_id` (per spec) and never owner fields (status, rating, lgbtq_rep, dates,
- * comments, watched counts, master_series). A **manually pasted** poster (an absolute URL) is
+ * comments, watched counts, is_favorite). A **manually pasted** poster (an absolute URL) is
  * preserved; otherwise the TMDB poster is applied. `changed` is false when nothing differs, so
  * the caller can skip the write and report "no changes" (idempotent + non-destructive).
  */
@@ -164,6 +164,11 @@ export function isUpNext(
   )
 }
 
+/** Dashboard "Favourites": starred titles (incoming order preserved). */
+export function favoriteShows<T extends Pick<ShowRow, 'is_favorite'>>(shows: T[]): T[] {
+  return shows.filter((s) => s.is_favorite)
+}
+
 /**
  * Dashboard "Recently Watched": the most-recently-finished titles. Imported rows with no
  * `end_date` are excluded by design — they live in the Library, not the recent shelf.
@@ -205,16 +210,6 @@ export function showGenres(shows: Pick<ShowRow, 'genres'>[]): string[] {
   return [...set].sort((a, b) => a.localeCompare(b))
 }
 
-/** Sorted unique non-empty `master_series` values (drives the Library Master-Series filter). */
-export function masterSeriesOptions(shows: Pick<ShowRow, 'master_series'>[]): string[] {
-  const set = new Set<string>()
-  for (const s of shows) {
-    const m = s.master_series?.trim()
-    if (m) set.add(m)
-  }
-  return [...set].sort((a, b) => a.localeCompare(b))
-}
-
 /** Lowercased text the Library search matches: title + original title + director + cast. */
 export function searchableText(
   show: Pick<ShowRow, 'title' | 'original_title' | 'director' | 'cast'>,
@@ -231,11 +226,11 @@ export type SortDir = 'asc' | 'desc'
 export interface LibraryCriteria {
   query: string
   type: 'all' | ShowType
-  masterSeries: 'all' | string
   genre: 'all' | string
   minRating: number // 0 = any
   lgbtq: 'all' | LgbtqRep
   status: 'all' | ShowStatus
+  favoritesOnly: boolean
   startFrom: IsoDate | null
   startTo: IsoDate | null
   endFrom: IsoDate | null
@@ -247,11 +242,11 @@ export interface LibraryCriteria {
 export const DEFAULT_LIBRARY_CRITERIA: LibraryCriteria = {
   query: '',
   type: 'all',
-  masterSeries: 'all',
   genre: 'all',
   minRating: 0,
   lgbtq: 'all',
   status: 'all',
+  favoritesOnly: false,
   startFrom: null,
   startTo: null,
   endFrom: null,
@@ -264,9 +259,8 @@ function matchesCriteria(show: ShowRow, c: LibraryCriteria): boolean {
   const q = c.query.trim().toLowerCase()
   if (q && !searchableText(show).includes(q)) return false
   if (c.type !== 'all' && show.type !== c.type) return false
-  if (c.masterSeries !== 'all' && (show.master_series ?? '') !== c.masterSeries)
-    return false
   if (c.status !== 'all' && show.status !== c.status) return false
+  if (c.favoritesOnly && !show.is_favorite) return false
   if (c.lgbtq !== 'all' && (show.lgbtq_rep ?? 'none') !== c.lgbtq) return false
   if (c.genre !== 'all' && !(show.genres ?? []).includes(c.genre)) return false
   if (c.minRating > 0 && (show.rating ?? 0) < c.minRating) return false

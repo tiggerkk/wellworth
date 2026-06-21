@@ -10,6 +10,7 @@ import {
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useProfile } from '../hooks/useProfile'
+import { useEscapeKey } from '../hooks/useEscapeKey'
 import { createQuote, getQuote, listDistinctTags, updateQuote } from '../data/quote'
 import {
   detectLanguage,
@@ -140,6 +141,7 @@ function QuoteForm({ id, initial }: { id: string | undefined; initial: QuoteDraf
   const [languageTouched, setLanguageTouched] = useState(!!id)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [linkOpen, setLinkOpen] = useState(false)
+  useEscapeKey(() => navigate(-1))
 
   const update = (patch: Partial<QuoteDraft>) => setDraft((d) => ({ ...d, ...patch }))
   const dirty = JSON.stringify(draft) !== JSON.stringify(initial)

@@ -11,6 +11,7 @@ import {
   countReadThisYear,
   currentlyReading,
   DEFAULT_LIBRARY_CRITERIA,
+  favoriteBooks,
   isFieldVisible,
   LGBTQ_REP_LABELS,
   LGBTQ_REPS,
@@ -45,6 +46,7 @@ function makeBook(p: Partial<BookRow>): BookRow {
     language: null,
     rating: null,
     lgbtq_rep: 'none',
+    is_favorite: false,
     start_date: null,
     end_date: null,
     last_update_date: null,
@@ -138,6 +140,15 @@ describe('dashboard selectors', () => {
     expect(countReadThisYear(books, 2025)).toBe(1)
     expect(countReadThisYear(books, 2024)).toBe(0)
   })
+
+  it('favoriteBooks keeps only starred books, preserving order', () => {
+    const list = [
+      makeBook({ title: 'a', is_favorite: true }),
+      makeBook({ title: 'b', is_favorite: false }),
+      makeBook({ title: 'c', is_favorite: true }),
+    ]
+    expect(favoriteBooks(list).map((b) => b.title)).toEqual(['a', 'c'])
+  })
 })
 
 describe('bookGenres / bookAuthors', () => {
@@ -209,6 +220,13 @@ describe('applyLibraryView', () => {
     expect(applyLibraryView(lib, crit({ minRating: 5 })).map((b) => b.title)).toEqual([
       'Dune',
     ])
+  })
+
+  it('filters by favourites only', () => {
+    const fav = makeBook({ title: 'Starred', is_favorite: true })
+    expect(
+      applyLibraryView([...lib, fav], crit({ favoritesOnly: true })).map((b) => b.title),
+    ).toEqual(['Starred'])
   })
 
   it('filters by a finish-date range', () => {

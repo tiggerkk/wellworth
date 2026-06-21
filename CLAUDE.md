@@ -41,6 +41,9 @@ append a `ModuleDef` to `src/constants/modules.ts` + its routes.
   `moduleForPath`) drives the hub cards + per-module `BottomNav`. Modal **sheets** use the
   background-location pattern (`useSheetNavigate`); `AppShell.TAB_FOR_PATH` paints the tab behind a
   sheet. `/` → `RootRedirect` (last-used module via `src/lib/last-module.ts`, else `/home`).
+  **Escape-to-dismiss** is centralised in `src/hooks/useEscapeKey.ts` (one document listener over a LIFO
+  stack so the innermost overlay wins): sheets/Calendar/SelectMenu close themselves, and the Add/Edit
+  screens `navigate(-1)` only when nothing is layered above them.
 - **Settings is split:** global `/settings` (profile, units, account) from the hub gear; per-module
   sub-settings from a gear in the module header — Wellness at `/wellness/settings` (protein target,
   nutrient display), Shows at `/shows/settings`, Books at `/books/settings`, and Quotes at
@@ -54,41 +57,47 @@ append a `ModuleDef` to `src/constants/modules.ts` + its routes.
   `src/components/NetWorthTrendChart.tsx`; screens `NetWorthDashboard` / `NetWorthEntry` /
   `ImportNetWorthSheet`.
 - **Shows (built):** TV, movies & **documentaries**. One table `show` (migration
-  `supabase/migrations/20260617120000_shows_schema.sql` — `type` ∈ `tv|movie|documentary`, a
-  `master_series` text col for documentary sub-series + a `(user_id, master_series)` index, **no**
-  `content_rating`; `poster_path` holds **either** a TMDB path **or** a full pasted image URL) plus two
-  `profile` columns `show_visible_fields` / `show_importer_enabled`
+  `supabase/migrations/20260617120000_shows_schema.sql` — `type` ∈ `tv|movie|documentary`, an
+  `is_favorite` boolean + a `(user_id, is_favorite)` index, **no** `content_rating`/`master_series`;
+  `poster_path` holds **either** a TMDB path **or** a full pasted image URL) plus three `profile` columns
+  `show_visible_fields` / `show_importer_enabled` / `show_poster_url_visible`
   (`20260617130000_profile_show_settings.sql`). Data `src/data/show.ts` (CRUD + idempotent
-  `saveImportedShows`, dedup on lower(title)+lower(master_series)). Pure logic `src/lib/shows.ts`
+  `saveImportedShows`, dedup on lower(title)). Pure logic `src/lib/shows.ts`
   (status/type/LGBT+ enums, `usesEpisodes` (TV + documentary), status-chip palette, `posterUrl` +
   `isAbsoluteUrl` (pasted URL passthrough), `buildRefreshPatch` (per-show Refresh merge — TMDB fields
   only, preserves owner fields + a manual poster), transitions `markWatched`/`startWatching`, selectors
-  `applyLibraryView` (incl. `masterSeries` filter)/`recentlyWatched`/`masterSeriesOptions`,
+  `applyLibraryView` (incl. `favoritesOnly` filter)/`recentlyWatched`/`favoriteShows`,
   `SHOW_ENTRY_FIELDS`/`isFieldVisible`); refresh tick `src/lib/shows-refresh.ts`. **TMDB** browser client
   `src/lib/tmdb-api.ts` (`VITE_TMDB_API_KEY`; **Chinese-aware** — `containsCjk`/`tmdbLanguage` send
   `language=zh-CN`; documentary → `/tv` via `endpointFor`; search + details on demand; `refreshFromTmdb`;
   persist only on CREATE/SAVE); CSV importer `src/lib/shows-import.ts`. Posters render with
   `referrerpolicy="no-referrer"` (set on the shared `Thumb`). Components `StarRating` / `ShowTypeBadge`
   (TV/Movie/Documentary glyphs) / `StatusChip` / `PosterThumb` / `SelectMenu` / `TitleSearchSheet` (local
-  overlay — **not** a route sheet, so the Entry form survives). Screens `ShowsDashboard` / `ShowsLibrary`
-  / `ShowsEntry` (three-way Type, documentary Master Series field, always-editable Poster URL, ⟳ Refresh,
-  `?title=&poster=&overview=&master_series=&type=` prefill) / `ShowsSettings` / `ShowsFieldsSheet` /
-  `ImportShowsSheet`. **Calendar** was generalized to a presentational component with an optional
+  overlay — **not** a route sheet, so the Entry form survives). Screens `ShowsDashboard` (Favourites shelf;
+  watching rows show the Watching chip + progress) / `ShowsLibrary` (favourites filter) / `ShowsEntry`
+  (three-way Type, favourite heart, Poster URL shown only when TMDB lacks one or forced on in Settings,
+  Want⇒blank Start Date, ⟳ Refresh, `?title=&poster=&overview=&type=` prefill) / `ShowsSettings` (incl. a
+  Display → Visible Poster URL toggle) / `ShowsFieldsSheet` / `ImportShowsSheet` (CSV ends with an
+  `is_favorite` column). **Calendar** was generalized to a presentational component with an optional
   `loadCues` (Wellness Diary injects food/activity dots; Shows date pickers pass none).
-- **Books (built):** one table `book` (migration `supabase/migrations/20260620120000_books_schema.sql`)
-  plus two `profile` columns `book_visible_fields` / `book_importer_enabled`
+- **Books (built):** one table `book` (migration `supabase/migrations/20260620120000_books_schema.sql` —
+  incl. an `is_favorite` boolean + `(user_id, is_favorite)` index) plus two `profile` columns
+  `book_visible_fields` / `book_importer_enabled`
   (`20260620130000_profile_book_settings.sql`). Data `src/data/book.ts` (CRUD + idempotent
   `saveImportedBooks`). Pure logic `src/lib/books.ts` (status/LGBT+ enums, status-chip palette,
-  transitions `markRead`/`startReading`, selectors `applyLibraryView`/`recentlyRead`/`currentlyReading`/
-  `wantToRead`, `bookGenres`/`bookAuthors`, `BOOK_ENTRY_FIELDS`/`isFieldVisible`); refresh tick
+  transitions `markRead`/`startReading`, selectors `applyLibraryView` (incl. `favoritesOnly` filter)/
+  `recentlyRead`/`currentlyReading`/`wantToRead`/`favoriteBooks`,
+  `bookGenres`/`bookAuthors`, `BOOK_ENTRY_FIELDS`/`isFieldVisible`); refresh tick
   `src/lib/books-refresh.ts`. **Google Books** (Open Library fallback) browser client
   `src/lib/books-api.ts` (**optional** `VITE_GOOGLE_BOOKS_API_KEY` — never throws when unset; search +
   details on demand; `cover_url` is a full image URL, no CDN base; persist only on CREATE/SAVE);
   CSV importer `src/lib/books-import.ts`. Books **re-skins Shows**: it reuses `StarRating` / `Calendar` /
   `SegmentedTabs` / `SelectMenu` / `SwipeRow`, the shared `Thumb` (via `CoverThumb`), the presentational
   `StatusChip`, and `BookSearchSheet` (local overlay — **not** a route sheet, so the Entry form
-  survives). No type badge (all books). Screens `BooksDashboard` / `BooksLibrary` / `BooksEntry` /
-  `BooksSettings` / `BooksFieldsSheet` / `ImportBooksSheet`.
+  survives). No type badge (all books). Favourites mirror Shows/Quotes (heart in Entry header,
+  Favourites filter + Dashboard shelf, trailing `is_favorite` importer column). Screens
+  `BooksDashboard` / `BooksLibrary` / `BooksEntry` / `BooksSettings` / `BooksFieldsSheet` /
+  `ImportBooksSheet`.
 - **Quotes (built):** one table `quote` (migration `supabase/migrations/20260621120000_quotes_schema.sql`)
   plus two `profile` columns `quote_visible_fields` / `quote_importer_enabled`
   (`20260621130000_profile_quote_settings.sql`). The `quote` table denormalises `author`/`title`/
@@ -100,7 +109,7 @@ append a `ModuleDef` to `src/constants/modules.ts` + its routes.
   `nextZenPool`/`randomItem`, Library `applyLibraryView`/`quoteTags`, `QUOTE_ENTRY_FIELDS`/
   `isFieldVisible`); enums in `src/constants/quotes.ts`; refresh tick `src/lib/quotes-refresh.ts`;
   CSV importer `src/lib/quotes-import.ts` (**no external API** — links resolve against local Show/Book
-  rows). **No metadata API** ("Discover Quotes" is out of scope). Quotes **re-skins Books/Shows**: it
+  rows; CSV ends with an `is_favorite` column). **No metadata API** ("Discover Quotes" is out of scope). Quotes **re-skins Books/Shows**: it
   reuses `SelectMenu` / `SegmentedTabs` / `SwipeRow` / `Toggle` / `StatusChip` and the shared `Thumb`,
   and adds the new shared **`TagInput`**. `QuoteSourceLinkSheet` (local overlay — **not** a route sheet)
   searches local shows/books. **Moment-of-Zen** dashboard (favourites-first random + shuffle/pull-to-

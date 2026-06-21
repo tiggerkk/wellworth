@@ -1,12 +1,21 @@
 import { useCallback, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
-import { IconQuote, IconRefresh, IconSearch, IconX } from '@tabler/icons-react'
+import {
+  IconHeart,
+  IconHeartFilled,
+  IconQuote,
+  IconRefresh,
+  IconSearch,
+  IconX,
+} from '@tabler/icons-react'
 import { routes } from '../constants/routes'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
+import { useEscapeKey } from '../hooks/useEscapeKey'
 import { createShow, getShow, updateShow } from '../data/show'
 import {
   buildRefreshPatch,
+  isAbsoluteUrl,
   isFieldVisible,
   LGBTQ_REP_LABELS,
   LGBTQ_REPS,
@@ -38,12 +47,12 @@ import { TitleSearchSheet } from '../components/TitleSearchSheet'
 interface ShowDraft {
   type: ShowType
   title: string
-  master_series: string
   original_title: string
   year: string
   status: ShowStatus
   rating: number
   lgbtq_rep: LgbtqRep
+  is_favorite: boolean
   start_date: IsoDate | null
   end_date: IsoDate | null
   last_update_date: IsoDate | null
@@ -66,12 +75,11 @@ interface ShowDraft {
 
 const numStr = (n: number | null): string => (n != null ? String(n) : '')
 
-/** A new show, optionally prefilled from `?title=&poster=&overview=&master_series=&type=`. */
+/** A new show, optionally prefilled from `?title=&poster=&overview=&type=`. */
 interface ShowPrefill {
   title: string
   poster: string
   overview: string
-  master_series: string
   type: ShowType | null
 }
 
@@ -80,13 +88,15 @@ function blankDraft(prefill?: ShowPrefill): ShowDraft {
   return {
     type: prefill?.type ?? 'tv',
     title: prefill?.title ?? '',
-    master_series: prefill?.master_series ?? '',
     original_title: '',
     year: '',
     status: 'want',
     rating: 0,
     lgbtq_rep: 'none',
-    start_date: today,
+    is_favorite: false,
+    // A new show defaults to "Want", which hasn't started — so Start Date stays blank until
+    // the status moves to Watching/Watched/Dropped (see `changeStatus`).
+    start_date: null,
     end_date: null,
     last_update_date: today,
     total_seasons: '',
@@ -110,12 +120,12 @@ function draftFromRow(row: ShowRow): ShowDraft {
   return {
     type: row.type as ShowType,
     title: row.title,
-    master_series: row.master_series ?? '',
     original_title: row.original_title ?? '',
     year: numStr(row.year),
     status: row.status as ShowStatus,
     rating: row.rating ?? 0,
     lgbtq_rep: (row.lgbtq_rep as LgbtqRep) ?? 'none',
+    is_favorite: row.is_favorite,
     start_date: row.start_date,
     end_date: row.end_date,
     last_update_date: row.last_update_date,
@@ -147,17 +157,16 @@ export function ShowsEntry() {
   const title = params.get('title') ?? ''
   const poster = params.get('poster') ?? ''
   const overview = params.get('overview') ?? ''
-  const master_series = params.get('master_series') ?? ''
   const typeParam = params.get('type')
   const type = (SHOW_TYPES as readonly string[]).includes(typeParam ?? '')
     ? (typeParam as ShowType)
     : null
 
   const loadFn = useCallback(async (): Promise<ShowDraft | null> => {
-    if (!id) return blankDraft({ title, poster, overview, master_series, type })
+    if (!id) return blankDraft({ title, poster, overview, type })
     const row = await getShow(id)
     return row ? draftFromRow(row) : null
-  }, [id, title, poster, overview, master_series, type])
+  }, [id, title, poster, overview, type])
   const { data: initial, loading, error } = useAsync(loadFn)
 
   return (
@@ -193,10 +202,11 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
     null | 'updated' | 'nochange' | 'error'
   >(null)
 
+  useEscapeKey(() => navigate(-1))
+
   const update = (patch: Partial<ShowDraft>) => setDraft((d) => ({ ...d, ...patch }))
   const dirty = JSON.stringify(draft) !== JSON.stringify(initial)
   const episodic = usesEpisodes(draft.type)
-  const isDocumentary = draft.type === 'documentary'
   const hasMeta =
     !!draft.poster_path ||
     !!draft.overview ||
@@ -204,6 +214,12 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
     !!draft.director ||
     !!draft.cast?.length ||
     draft.runtime_min != null
+  // Poster URL field: shown when forced on in Settings, or when there's no poster yet, or when the
+  // current value is a manually pasted URL (so it stays editable). Hidden once TMDB supplied a path.
+  const posterUrlVisible =
+    !!profile?.show_poster_url_visible ||
+    !draft.poster_path ||
+    isAbsoluteUrl(draft.poster_path)
 
   // Selecting a TMDB result fetches details and overwrites the metadata fields (incl. Title /
   // Original Title / Year + TV totals), keeping the user's Status / Rating / LGBT+ / dates / comments.
@@ -304,10 +320,12 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
     }
   }
 
-  // Status convenience: entering Watched/Dropped defaults the finish date to today, and
-  // marking an episodic title (TV / documentary) Watched snaps the watched counts to the totals.
+  // Status convenience: entering Watching/Watched/Dropped defaults the start date to today (the
+  // title has now been started); entering Watched/Dropped also defaults the finish date to today;
+  // and marking an episodic title (TV / documentary) Watched snaps the watched counts to the totals.
   function changeStatus(next: ShowStatus) {
     const patch: Partial<ShowDraft> = { status: next }
+    if (next !== 'want' && !draft.start_date) patch.start_date = todayLocal()
     if ((next === 'watched' || next === 'dropped') && !draft.end_date) {
       patch.end_date = todayLocal()
     }
@@ -335,12 +353,12 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
       const row = {
         type: draft.type,
         title: draft.title.trim(),
-        master_series: draft.master_series.trim() || null,
         original_title: draft.original_title.trim() || null,
         year: intOrNull(draft.year),
         status: draft.status,
         rating: draft.rating || null,
         lgbtq_rep: draft.lgbtq_rep,
+        is_favorite: draft.is_favorite,
         start_date: draft.start_date,
         end_date: draft.end_date,
         last_update_date: draft.last_update_date,
@@ -388,6 +406,16 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
         <h1 className="flex-1 truncate text-[17px] font-medium text-text-primary">
           {id ? 'Edit Show' : 'Add Show'}
         </h1>
+        <button
+          onClick={() => update({ is_favorite: !draft.is_favorite })}
+          aria-label="Favourite"
+        >
+          {draft.is_favorite ? (
+            <IconHeartFilled size={20} className="text-accent" />
+          ) : (
+            <IconHeart size={20} className="text-text-tertiary" />
+          )}
+        </button>
         <SecondaryButton
           size="sm"
           onClick={() => setDraft(initial)}
@@ -445,18 +473,6 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
             <p className="mt-1 text-xs text-danger">Couldn’t refresh from TMDB.</p>
           )}
         </div>
-
-        {isDocumentary && (
-          <label className="text-xs text-text-secondary">
-            Master Series
-            <input
-              value={draft.master_series}
-              onChange={(e) => update({ master_series: e.target.value })}
-              placeholder="Parent series, e.g. 国宝档案 (optional)"
-              className={`mt-1 ${inputClass}`}
-            />
-          </label>
-        )}
 
         <label className="text-xs text-text-secondary">
           Title
@@ -539,15 +555,17 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
           </div>
         )}
 
-        <label className="text-xs text-text-secondary">
-          Poster URL
-          <input
-            value={draft.poster_path ?? ''}
-            onChange={(e) => update({ poster_path: e.target.value.trim() || null })}
-            placeholder="Paste a direct image URL (optional)"
-            className={`mt-1 ${inputClass}`}
-          />
-        </label>
+        {posterUrlVisible && (
+          <label className="text-xs text-text-secondary">
+            Poster URL
+            <input
+              value={draft.poster_path ?? ''}
+              onChange={(e) => update({ poster_path: e.target.value.trim() || null })}
+              placeholder="Paste a direct image URL (optional)"
+              className={`mt-1 ${inputClass}`}
+            />
+          </label>
+        )}
 
         <div>
           <p className="mb-1 text-xs text-text-secondary">Status</p>

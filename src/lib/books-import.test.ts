@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { buildImportRow, dedupKey, parseBooksCsv } from './books-import'
 import type { BookMetadata } from './books-api'
 
-const HEADER = ['title', 'author', 'rating', 'lgbtq_rep', 'end_date']
+const HEADER = ['title', 'author', 'rating', 'lgbtq_rep', 'end_date', 'is_favorite']
 
 describe('parseBooksCsv', () => {
   it('reports a missing required column', () => {
@@ -12,7 +12,10 @@ describe('parseBooksCsv', () => {
   })
 
   it('parses a valid row and defaults blank lgbtq_rep to none', () => {
-    const res = parseBooksCsv([HEADER, ['Dune', 'Frank Herbert', '5', '', '2026-03-01']])
+    const res = parseBooksCsv([
+      HEADER,
+      ['Dune', 'Frank Herbert', '5', '', '2026-03-01', 'true'],
+    ])
     expect(res.errors).toEqual([])
     expect(res.rows[0]).toEqual({
       title: 'Dune',
@@ -20,7 +23,13 @@ describe('parseBooksCsv', () => {
       rating: 5,
       lgbtq_rep: 'none',
       end_date: '2026-03-01',
+      is_favorite: true,
     })
+  })
+
+  it('defaults a blank/omitted is_favorite to false', () => {
+    const res = parseBooksCsv([HEADER, ['Solo', 'Author', '', '', '']])
+    expect(res.rows[0]?.is_favorite).toBe(false)
   })
 
   it('skips rows missing title or author', () => {
@@ -73,6 +82,7 @@ describe('buildImportRow', () => {
     rating: 4.5,
     lgbtq_rep: 'none' as const,
     end_date: '2026-03-01',
+    is_favorite: true,
   }
 
   it('uses the Google Books match and is always status read with NULL start/last-update', () => {
@@ -104,6 +114,7 @@ describe('buildImportRow', () => {
       open_library_id: null,
       rating: 4.5,
       lgbtq_rep: 'none',
+      is_favorite: true,
       start_date: null,
       end_date: '2026-03-01',
       last_update_date: null,

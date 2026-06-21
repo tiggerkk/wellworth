@@ -4,11 +4,11 @@ import {
   buildRefreshPatch,
   countWatchedThisYear,
   DEFAULT_LIBRARY_CRITERIA,
+  favoriteShows,
   isAbsoluteUrl,
   isFieldVisible,
   isUpNext,
   markWatched,
-  masterSeriesOptions,
   posterUrl,
   progressLabel,
   recentlyWatched,
@@ -29,7 +29,6 @@ function makeShow(p: Partial<ShowRow>): ShowRow {
     tmdb_id: null,
     imdb_id: null,
     title: 'Untitled',
-    master_series: null,
     original_title: null,
     year: null,
     poster_path: null,
@@ -45,6 +44,7 @@ function makeShow(p: Partial<ShowRow>): ShowRow {
     watched_episodes: null,
     rating: null,
     lgbtq_rep: 'none',
+    is_favorite: false,
     start_date: null,
     end_date: null,
     last_update_date: null,
@@ -239,18 +239,12 @@ describe('showGenres', () => {
   })
 })
 
-describe('masterSeriesOptions', () => {
-  it('returns unique non-empty master series', () => {
-    const opts = masterSeriesOptions([
-      makeShow({ master_series: '国宝档案' }),
-      makeShow({ master_series: '消失的古国' }),
-      makeShow({ master_series: '国宝档案' }),
-      makeShow({ master_series: null }),
-      makeShow({ master_series: '  ' }),
-    ])
-    expect(opts).toHaveLength(2)
-    expect(opts).toContain('国宝档案')
-    expect(opts).toContain('消失的古国')
+describe('favoriteShows', () => {
+  it('returns only starred titles, preserving order', () => {
+    const a = makeShow({ title: 'A', is_favorite: true })
+    const b = makeShow({ title: 'B', is_favorite: false })
+    const c = makeShow({ title: 'C', is_favorite: true })
+    expect(favoriteShows([a, b, c]).map((s) => s.title)).toEqual(['A', 'C'])
   })
 })
 
@@ -361,20 +355,15 @@ describe('applyLibraryView', () => {
     expect(applyLibraryView(all, crit({ type: 'tv' }))).toEqual([bb])
     expect(applyLibraryView(all, crit({ status: 'want' }))).toEqual([heat])
   })
-  it('filters by documentary type and by master series', () => {
-    const doc1 = makeShow({
-      title: '从东晋到北魏',
-      type: 'documentary',
-      master_series: '国宝档案',
-    })
-    const doc2 = makeShow({
-      title: '消失的楼兰',
-      type: 'documentary',
-      master_series: '消失的古国',
-    })
+  it('filters by documentary type', () => {
+    const doc1 = makeShow({ title: '从东晋到北魏', type: 'documentary' })
+    const doc2 = makeShow({ title: '消失的楼兰', type: 'documentary' })
     const set = [doc1, doc2, matrix]
     expect(applyLibraryView(set, crit({ type: 'documentary' }))).toHaveLength(2)
-    expect(applyLibraryView(set, crit({ masterSeries: '国宝档案' }))).toEqual([doc1])
+  })
+  it('filters by favourites only', () => {
+    const fav = makeShow({ title: 'Fav', is_favorite: true })
+    expect(applyLibraryView([...all, fav], crit({ favoritesOnly: true }))).toEqual([fav])
   })
   it('filters by genre and minimum rating', () => {
     expect(applyLibraryView(all, crit({ genre: 'Drama' }))).toEqual([bb])

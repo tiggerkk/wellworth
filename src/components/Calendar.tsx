@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react'
 import { useAsync } from '../hooks/useAsync'
+import { useEscapeKey } from '../hooks/useEscapeKey'
 import {
   addDays,
   addMonths,
@@ -33,6 +34,7 @@ export function Calendar({ day, onSelect, onClose, loadCues }: CalendarProps) {
   const [viewMonth, setViewMonth] = useState<IsoDate>(startOfMonth(day))
   const [selected, setSelected] = useState<IsoDate>(day)
   const today = todayLocal()
+  useEscapeKey(onClose)
 
   const monthStart = fromIsoDate(viewMonth)
   const year = monthStart.getFullYear()

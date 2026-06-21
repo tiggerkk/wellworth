@@ -1,24 +1,29 @@
 import { useCallback, useState, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { IconPlus, IconSettings } from '@tabler/icons-react'
+import { IconHeartFilled, IconPlus, IconSettings } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useBooksVersion, bumpBooks } from '../lib/books-refresh'
 import { listBooks, updateBook } from '../data/book'
 import {
+  BOOK_STATUS_CHIP,
+  BOOK_STATUS_LABELS,
   countReadThisYear,
   currentlyReading,
+  favoriteBooks,
   markRead,
   recentlyRead,
   startReading,
   wantToRead,
   type BookRow,
+  type BookStatus,
   type BookUpdate,
 } from '../lib/books'
 import { formatDayLabel, todayLocal } from '../lib/date'
 import { routes } from '../constants/routes'
 import { SectionCard } from '../components/SectionCard'
 import { StarRating } from '../components/StarRating'
+import { StatusChip } from '../components/StatusChip'
 import { CoverThumb } from '../components/CoverThumb'
 
 const WANT_SHELF_LIMIT = 6
@@ -43,6 +48,7 @@ export function BooksDashboard() {
   const { data: books, loading, error } = useAsync(fn)
 
   const all = books ?? []
+  const favorites = favoriteBooks(all)
   const reading = currentlyReading(all)
   const recent = recentlyRead(all, 5)
   const want = wantToRead(all, WANT_SHELF_LIMIT)
@@ -96,6 +102,24 @@ export function BooksDashboard() {
         <div className="flex flex-col gap-4 px-4">
           {readYear > 0 && (
             <p className="px-1 text-xs text-text-secondary">{readYear} read this year</p>
+          )}
+
+          {favorites.length > 0 && (
+            <SectionCard title="Favourites">
+              {favorites.map((b) => (
+                <DashRow
+                  key={b.id}
+                  book={b}
+                  onEdit={() => editBook(b.id)}
+                  secondary={
+                    <StatusChip
+                      label={BOOK_STATUS_LABELS[b.status as BookStatus]}
+                      className={BOOK_STATUS_CHIP[b.status as BookStatus]}
+                    />
+                  }
+                />
+              ))}
+            </SectionCard>
           )}
 
           {reading.length > 0 && (
@@ -176,9 +200,18 @@ function DashRow({
     <div className="flex items-center gap-3 border-b border-border px-3 py-2.5 last:border-b-0">
       <CoverThumb url={book.cover_url} className="h-14 w-10" />
       <button onClick={onEdit} className="min-w-0 flex-1 text-left">
-        <span className="block truncate text-[15px] text-text-primary">
-          {book.title}
-          {book.year ? ` (${book.year})` : ''}
+        <span className="flex items-center gap-1.5 text-[15px] text-text-primary">
+          {book.is_favorite && (
+            <IconHeartFilled
+              size={13}
+              className="shrink-0 text-accent"
+              aria-label="Favourite"
+            />
+          )}
+          <span className="min-w-0 truncate">
+            {book.title}
+            {book.year ? ` (${book.year})` : ''}
+          </span>
         </span>
         <span className="mt-0.5 flex items-center gap-2 text-xs text-text-secondary">
           {secondary}

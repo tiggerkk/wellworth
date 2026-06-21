@@ -17,7 +17,9 @@ Nutrient sets are stored as JSONB maps (`nutrient_key → amount`), validated ag
 - `show_visible_fields` TEXT[] NULL — Shows Entry-form field visibility; **NULL = all visible**
   (default-on, no seeding); an explicit array once trimmed in Shows Settings
 - `show_importer_enabled` BOOLEAN NOT NULL DEFAULT false — surfaces the Shows in-app CSV importer
-  (the two `show_*` columns are added by `supabase/migrations/20260617130000_profile_show_settings.sql`)
+- `show_poster_url_visible` BOOLEAN NOT NULL DEFAULT false — Shows Settings → Display: force the Entry
+  "Poster URL" field always visible (off = shown only when TMDB has no poster)
+  (the three `show_*` columns are added by `supabase/migrations/20260617130000_profile_show_settings.sql`)
 - `book_visible_fields` TEXT[] NULL — Books Entry-form field visibility; **NULL = all visible**
   (default-on, no seeding); an explicit array once trimmed in Books Settings
 - `book_importer_enabled` BOOLEAN NOT NULL DEFAULT false — surfaces the Books in-app CSV importer
@@ -148,7 +150,6 @@ The migration is `supabase/migrations/20260615120000_networth_schema.sql`.
 - `tmdb_id` INT NULL — TMDB id (enables the per-show "Refresh from TMDB")
 - `imdb_id` TEXT NULL — stable cross-reference
 - `title` TEXT, `original_title` TEXT NULL, `year` INT NULL
-- `master_series` TEXT NULL — parent series for a documentary sub-series (e.g. 国宝档案 → 从东晋到北魏); NULL for standalone titles
 - `poster_path` TEXT NULL — **either** a TMDB path (URL built from the fixed CDN base) **or** a full pasted image URL; always rendered with `referrerpolicy="no-referrer"`
 - `overview` TEXT NULL
 - `genres` TEXT[] NULL
@@ -160,13 +161,14 @@ The migration is `supabase/migrations/20260615120000_networth_schema.sql`.
 - `watched_seasons` INT NULL, `watched_episodes` INT NULL — episodic types only; set to totals on Watched
 - `rating` NUMERIC NULL — user stars, 0–5 in 0.5 steps (CHECK)
 - `lgbtq_rep` TEXT DEFAULT 'none' — LGBT+ representation: 'none' | 'some' | 'significant' (CHECK)
+- `is_favorite` BOOLEAN NOT NULL DEFAULT false — starred title (the ♥; favourites filter + Dashboard shelf)
 - `start_date` DATE NULL, `end_date` DATE NULL — finish/drop date
 - `last_update_date` DATE NULL — defaults to today in the UI, editable; NULL for imported rows
 - `comments` TEXT NULL
 - `created_at`, `updated_at`
-- Index on (`user_id`, `status`) and on (`user_id`, `master_series`) — the latter backs master-series filtering.
+- Index on (`user_id`, `status`) and on (`user_id`, `is_favorite`) — the latter backs the favourites filter.
 
-Standard rules apply: own `user_id` for direct RLS, four owner policies using `(select auth.uid()) = user_id`, `CHECK` on the enum columns, `moddatetime` trigger on `updated_at`, explicit `GRANT` to `anon`/`authenticated`. Imported back-catalogue rows leave the three dates NULL (genuinely unknown). The migration is `supabase/migrations/20260617120000_shows_schema.sql` (the Shows DB held no live data, so the documentary/`master_series` additions and the `content_rating` removal were folded into this original migration and the table recreated, rather than shipping an additive migration).
+Standard rules apply: own `user_id` for direct RLS, four owner policies using `(select auth.uid()) = user_id`, `CHECK` on the enum columns, `moddatetime` trigger on `updated_at`, explicit `GRANT` to `anon`/`authenticated`. Imported back-catalogue rows leave the three dates NULL (genuinely unknown). The migration is `supabase/migrations/20260617120000_shows_schema.sql` (the Shows DB carries no live data and is refreshed via `supabase db reset --linked`, so schema changes — the documentary type, `is_favorite`, the removal of the parked `master_series`/`content_rating` columns — are folded into this original migration rather than shipping additive ones).
 
 ### book (one row per tracked book)
 
@@ -185,11 +187,12 @@ Standard rules apply: own `user_id` for direct RLS, four owner policies using `(
 - `language` TEXT NULL
 - `rating` NUMERIC NULL — user stars, 0–5 in 0.5 steps (CHECK)
 - `lgbtq_rep` TEXT DEFAULT 'none' — LGBT+ representation: 'none' | 'some' | 'significant' (CHECK)
+- `is_favorite` BOOLEAN NOT NULL DEFAULT false — starred book (the ♥; favourites filter + Dashboard shelf)
 - `start_date` DATE NULL, `end_date` DATE NULL — finish/drop date
 - `last_update_date` DATE NULL — defaults to today in the UI, editable; NULL for imported rows
 - `comments` TEXT NULL
 - `created_at`, `updated_at`
-- Index on (`user_id`, `status`).
+- Index on (`user_id`, `status`) and on (`user_id`, `is_favorite`).
 
 Standard rules apply: own `user_id` for direct RLS, four owner policies using `(select auth.uid()) = user_id`, `CHECK` on the enum columns, `moddatetime` trigger on `updated_at`, explicit `GRANT` to `anon`/`authenticated`. **Hard delete** (leaf table — nothing references `book`; no `deleted_at`). The Quotes module's optional `quote.book_id` link is declared `ON DELETE SET NULL` on `quote`, so it imposes no FK here. Imported back-catalogue rows get `status = 'read'`, the file's `end_date`, and NULL `start_date`/`last_update_date`. The migration is `supabase/migrations/20260620120000_books_schema.sql`.
 

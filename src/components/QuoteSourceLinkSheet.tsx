@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { IconX } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
+import { useEscapeKey } from '../hooks/useEscapeKey'
 import { listShows } from '../data/show'
 import { listBooks } from '../data/book'
 import { posterUrl } from '../lib/shows'
@@ -61,14 +62,7 @@ export function QuoteSourceLinkSheet({ onSelect, onClose }: QuoteSourceLinkSheet
     return [...showCands, ...bookCands]
   }, [userId])
   const { data: candidates, loading, error } = useAsync(loadFn)
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
-  }, [onClose])
+  useEscapeKey(onClose)
 
   const all = candidates ?? []
   const results = filterLinkCandidates(all, query)
