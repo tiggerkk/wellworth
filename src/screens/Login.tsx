@@ -7,7 +7,7 @@ import { PrimaryButton } from '../components/PrimaryButton'
 import { Splash } from '../components/Splash'
 
 export function Login() {
-  const { session, loading } = useAuth()
+  const { session, loading, deniedEmail } = useAuth()
   const [signingIn, setSigningIn] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -42,6 +42,12 @@ export function Login() {
         {signingIn ? 'Connecting…' : 'Sign in with Google'}
       </PrimaryButton>
 
+      {deniedEmail && (
+        <p className="text-xs text-danger">
+          {deniedEmail} isn’t authorized to use this app. Sign in with an approved
+          account.
+        </p>
+      )}
       {error && <p className="text-xs text-danger">{error}</p>}
     </div>
   )

@@ -130,13 +130,17 @@ The app reads its configuration from a file named `.env` in the project root. It
    VITE_USDA_API_KEY=your-usda-key
    VITE_TMDB_API_KEY=your-tmdb-v3-key
    VITE_GOOGLE_BOOKS_API_KEY=your-google-books-key
+   VITE_ALLOWED_EMAILS=you@gmail.com
    ```
    - `VITE_SUPABASE_URL` — the Project URL from Part B.
    - `VITE_SUPABASE_ANON_KEY` — the anon public key from Part B.
    - `VITE_USDA_API_KEY` — the USDA key from Part C.
    - `VITE_TMDB_API_KEY` — the TMDB v3 key from Part C2.
    - `VITE_GOOGLE_BOOKS_API_KEY` — Google Books key from Part C3 (recommended; blank works but
-     rate-limits quickly). Save and close.
+     rate-limits quickly).
+   - `VITE_ALLOWED_EMAILS` — optional email allowlist that keeps the app **yours** (see Part H3).
+     Comma-separate multiple addresses (`you@gmail.com, partner@gmail.com`); leave blank for no
+     restriction. Save and close.
 
 - ✅ Check: `.env` exists with the four required lines filled (the Google Books line is optional but
   recommended). (These get baked into the app when it builds, so if you change them later you must
@@ -260,6 +264,36 @@ and Supabase needs Google's client ID + secret.**
      > ⚠️ Use `localhost`, never `127.0.0.1` — they're different origins and only one is allow-listed.
 
 - ✅ Check: the Google provider shows "Enabled" in Supabase. (You'll fully test sign-in in Part I.)
+
+### H3 — Restrict who can sign in (so the app stays _yours_)
+
+By default, once your Google consent screen is published, **any** Google account can sign in and
+create its own account on your project. Row-Level Security still isolates data — a stranger never
+sees _your_ rows — but they could create their own account and burn your free-tier quota. Three
+**independent** layers close that door; using more than one is healthy defense-in-depth:
+
+1. **Google OAuth audience — who Google lets through.** Google Cloud → **Google Auth Platform →
+   Audience**:
+   - **Testing**: only addresses you add under **Test users** can sign in; everyone else is blocked
+     **by Google** before they reach your app. Best for a private app. (Cap: 100 test users; for our
+     non-sensitive scopes there's no weekly token expiry to worry about.)
+   - **In production / Published**: **any** Google account can complete sign-in. If you clicked
+     "Publish app" in H1, you're here.
+     → For a personal/family app, prefer **Testing** and add your own + family Gmail as **Test
+     users**.
+2. **Supabase sign-ups — whether a brand-new account is created.** Supabase → **Authentication →
+   Sign In / Providers → "Allow new users to sign up"** (default **ON**). Turn it **OFF** once your
+   own account(s) exist: existing users keep working, but a never-seen Google account can't create a
+   new Supabase user. Flip it on for a minute when onboarding a family member, then off again.
+3. **App-level email allowlist — the only layer visible in the repo.** Set **`VITE_ALLOWED_EMAILS`**
+   (Part D locally; Part K in Vercel) to a comma-separated list of approved emails. The app signs
+   out any signed-in account whose email isn't listed and shows "… isn't authorized to use this
+   app." Leaving it blank means no restriction. Because it lives in the codebase (logic in
+   `src/lib/access.ts`, enforced in `src/auth/AuthProvider.tsx`), it documents intent and keeps
+   working even if a dashboard toggle later drifts.
+
+> Remember `VITE_ALLOWED_EMAILS` is **baked in at build time** — change it and you must redeploy
+> (Part K) for production to pick it up, and restart `npm run dev` locally.
 
 ---
 
@@ -403,6 +437,8 @@ and run the two commands again. Once the commit succeeds:
    - `VITE_USDA_API_KEY` = your USDA key
    - `VITE_TMDB_API_KEY` = your TMDB v3 key
    - `VITE_GOOGLE_BOOKS_API_KEY` = your Google Books key
+   - `VITE_ALLOWED_EMAILS` = your email allowlist (optional; see Part H3 — set it to keep prod
+     restricted to you/family)
 4. Click **Deploy**. When it finishes, copy your app's address, e.g.
    `https://wellworth-xxxx.vercel.app`.
 5. **Point Google + Supabase at the live address** (sign-in will fail until you do):
@@ -631,6 +667,7 @@ spanning English + Chinese across all three types — see `templates/shows-impor
 | USDA key                  | api.data.gov/signup            | `.env` `VITE_USDA_API_KEY` + Vercel env         |
 | TMDB key                  | themoviedb.org → Settings→API  | `.env` `VITE_TMDB_API_KEY` + Vercel env         |
 | Google Books key (opt.)   | Google Cloud → Books API       | `.env` `VITE_GOOGLE_BOOKS_API_KEY` + Vercel env |
+| Email allowlist (opt.)    | you choose (Part H3)           | `.env` `VITE_ALLOWED_EMAILS` + Vercel env       |
 | Google Client ID + secret | Google Cloud → Clients         | Supabase → Auth → Providers → Google            |
 | Supabase callback URL     | Supabase Google provider page  | Google Cloud → Authorized redirect URIs         |
 | Vercel app URL            | after first deploy             | Google JS origins + Supabase Site/Redirect URLs |

@@ -6,6 +6,8 @@ interface ImportMetaEnv {
   readonly VITE_USDA_API_KEY: string
   readonly VITE_TMDB_API_KEY: string
   readonly VITE_GOOGLE_BOOKS_API_KEY?: string
+  /** Comma/space-separated email allowlist; empty/unset ⇒ any signed-in account is allowed. */
+  readonly VITE_ALLOWED_EMAILS?: string
 }
 
 interface ImportMeta {

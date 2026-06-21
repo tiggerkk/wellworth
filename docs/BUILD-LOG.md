@@ -35,10 +35,11 @@ its `docs/07-quotes.md` staging spec has been merged into the permanent docs and
 - **Scripts:** `dev`, `build` (`tsc -b && vite build`), `preview`, `lint`, `format`, `typecheck`,
   `test`, `check` (all gates), `gen:types` (Supabase → `src/types/database.ts`), `prepare` (husky).
 - **Env (`.env`, gitignored; `.env.example` documents):** `VITE_SUPABASE_URL`,
-  `VITE_SUPABASE_ANON_KEY`, `VITE_USDA_API_KEY`, `VITE_TMDB_API_KEY`, and the optional
-  `VITE_GOOGLE_BOOKS_API_KEY` (Books). All build-time `VITE_` vars.
+  `VITE_SUPABASE_ANON_KEY`, `VITE_USDA_API_KEY`, `VITE_TMDB_API_KEY`, the optional
+  `VITE_GOOGLE_BOOKS_API_KEY` (Books), and the optional `VITE_ALLOWED_EMAILS` (email allowlist —
+  empty ⇒ no restriction). All build-time `VITE_` vars.
 - **Gates:** husky `.husky/pre-commit` → lint-staged + `typecheck` + `test`; GitHub Actions
-  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 249 Vitest tests (pure helpers).
+  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 254 Vitest tests (pure helpers).
 - **Deploy status:** Deployed. GitHub `main` → Vercel auto-deploy; the production URL is in the
   Supabase redirect URLs + Google JS origins (see `OWNER-RUNBOOK.md`). Installed + tested on iPhone (PWA).
 - Conventions (DB-access-via-`src/data`, metric storage, generated `database.ts` contract, etc.) live
@@ -1151,6 +1152,26 @@ data change in `src/constants/modules.ts` plus header deletions — **no `Bottom
   `/wellness` index). No other Wellness change.
 
 No tests asserted on these headers/nav, so none needed updating.
+
+## App-level email allowlist (`VITE_ALLOWED_EMAILS`)
+
+Google OAuth + Supabase mint a session for **any** Google account once the consent screen is
+published and sign-ups are enabled; RLS isolates each user's rows, but a stranger could still create
+their own account on the project and consume its quota. Added an **optional** email allowlist as a
+convenience layer (the real locks are dashboard-side — see `OWNER-RUNBOOK.md` Part H3):
+
+- **`src/lib/access.ts`** — pure `parseAllowlist` + `isEmailAllowed` (comma/whitespace-split,
+  case-insensitive) and `ALLOWED_EMAILS = parseAllowlist(import.meta.env.VITE_ALLOWED_EMAILS)`. An
+  **empty/unset** list means **no restriction**, so a fresh clone / local dev keeps working until the
+  owner opts in. 5 unit tests (`access.test.ts`); 249 → **254**.
+- **Enforced in `src/auth/AuthProvider.tsx`**, not `RequireAuth`: the provider only exposes a session
+  whose email passes the allowlist; an off-list session is signed straight back out and its email
+  stashed in a new `deniedEmail` context field. Doing it here (rather than in `RequireAuth`) avoids a
+  Login↔RequireAuth redirect loop — Login's `session ⇒ Navigate('/')` never sees a denied session.
+  `Login.tsx` renders "… isn't authorized to use this app." from `deniedEmail`.
+- **Build-time var** (`VITE_`), so it's baked into the bundle — changing it needs a redeploy / dev
+  restart. Documented in `.env.example`, `OWNER-RUNBOOK.md` (Parts D/H3/K + quick-ref), and the
+  `CLAUDE.md` Security section. Typed in `src/vite-env.d.ts`.
 
 ## Known limitations / deferred (not spec issues — future work)
 

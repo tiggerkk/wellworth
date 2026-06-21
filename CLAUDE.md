@@ -149,6 +149,10 @@ append a `ModuleDef` to `src/constants/modules.ts` + its routes.
   inherit Supabase's default grants, so an explicit grant migration is required (see `03-data-model.md`).
 - The client uses only the **public anon key** (RLS-respecting), injected via a `VITE_`-prefixed env var.
 - The **service-role key bypasses RLS** — it must never appear in client code or the repo. Secrets in `.env` (gitignored). Only `VITE_`-prefixed vars are exposed to the browser.
+- **App access is gated to an optional email allowlist** (`VITE_ALLOWED_EMAILS`): `src/lib/access.ts`
+  (`isEmailAllowed`) + enforcement in `src/auth/AuthProvider.tsx` sign out any account whose email
+  isn't listed (empty list ⇒ no restriction). This is a convenience layer over RLS + the Supabase/
+  Google sign-up controls (see `OWNER-RUNBOOK.md` Part H3), not a replacement for them.
 
 ## Database workflow
 
