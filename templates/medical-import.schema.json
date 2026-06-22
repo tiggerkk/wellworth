@@ -1,0 +1,173 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "WellWorth Medical Report Import",
+  "description": "Structured medical-report extraction produced by any vision-capable AI tool and imported into the WellWorth Medical module. One file = one report (one visit). Numbers must be transcribed exactly; never rounded or inferred.",
+  "type": "object",
+  "required": ["report_type", "results"],
+  "additionalProperties": false,
+  "properties": {
+    "report_date": {
+      "type": ["string", "null"],
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+      "description": "Examination/collection date, YYYY-MM-DD (text; no Excel date cells)."
+    },
+    "report_type": {
+      "type": "string",
+      "enum": ["health_screening", "mri", "ultrasound", "mammogram", "eye", "other"]
+    },
+    "provider": { "type": ["string", "null"] },
+    "body_part": {
+      "type": ["string", "null"],
+      "description": "For mri/ultrasound/mammogram: organ/region, e.g. neck, breast, pelvis. Null otherwise."
+    },
+    "narrative": {
+      "type": ["string", "null"],
+      "description": "Free-text findings/impressions (MRI, imaging, doctor's comments). Not a test row."
+    },
+    "results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["test_name", "category"],
+        "additionalProperties": false,
+        "properties": {
+          "test_name": { "type": "string", "description": "English name as printed." },
+          "category": {
+            "type": "string",
+            "enum": [
+              "general",
+              "vitals",
+              "lipids",
+              "glucose",
+              "liver",
+              "renal",
+              "electrolytes",
+              "cbc",
+              "thyroid",
+              "bone",
+              "tumour_markers",
+              "hepatitis",
+              "inflammation",
+              "urine",
+              "stool",
+              "imaging",
+              "eye",
+              "other"
+            ]
+          },
+          "value_num": {
+            "type": ["number", "null"],
+            "description": "Exact numeric value, decimals preserved. Null for qualitative/uncertain."
+          },
+          "value_text": {
+            "type": ["string", "null"],
+            "description": "Qualitative result (Normal, Negative, Not found) or unreadable raw text."
+          },
+          "unit": { "type": ["string", "null"] },
+          "ref_low": { "type": ["number", "null"] },
+          "ref_high": { "type": ["number", "null"] },
+          "ref_text": {
+            "type": ["string", "null"],
+            "description": "Reference range exactly as printed, incl. one-sided (<5.2, >0.9)."
+          },
+          "flag": {
+            "type": ["string", "null"],
+            "enum": ["high", "low", "abnormal", null]
+          },
+          "uncertain": {
+            "type": "boolean",
+            "default": false,
+            "description": "True if the model was unsure; surfaced for review."
+          }
+        }
+      }
+    }
+  },
+
+  "x-csv-equivalent": {
+    "description": "Optional CSV form, one row per result. Report-level fields repeat on every row. Parse with an RFC-4180-compliant parser; quote fields containing commas/newlines; dates as YYYY-MM-DD text.",
+    "header": "report_date,report_type,provider,body_part,narrative,test_name,category,value_num,value_text,unit,ref_low,ref_high,ref_text,flag,uncertain"
+  },
+
+  "x-example": {
+    "report_date": "2026-05-04",
+    "report_type": "health_screening",
+    "provider": "Mobile Medical and Health Check Centre",
+    "body_part": null,
+    "narrative": "Ultrasound upper abdomen & pelvis: normal. Breast ultrasound: fibrocystic change, otherwise normal.",
+    "results": [
+      {
+        "test_name": "Total Cholesterol",
+        "category": "lipids",
+        "value_num": 5.5,
+        "value_text": null,
+        "unit": "mmol/L",
+        "ref_low": null,
+        "ref_high": null,
+        "ref_text": "Desirable <5.2",
+        "flag": "high",
+        "uncertain": false
+      },
+      {
+        "test_name": "LDL-Cholesterol",
+        "category": "lipids",
+        "value_num": 3.2,
+        "value_text": null,
+        "unit": "mmol/L",
+        "ref_low": null,
+        "ref_high": null,
+        "ref_text": "More Desirable <2.6",
+        "flag": "high",
+        "uncertain": false
+      },
+      {
+        "test_name": "HDL-Cholesterol",
+        "category": "lipids",
+        "value_num": 2.41,
+        "value_text": null,
+        "unit": "mmol/L",
+        "ref_low": null,
+        "ref_high": null,
+        "ref_text": "Desirable >0.9",
+        "flag": null,
+        "uncertain": false
+      },
+      {
+        "test_name": "Fasting Blood Glucose",
+        "category": "glucose",
+        "value_num": 4.8,
+        "value_text": null,
+        "unit": "mmol/L",
+        "ref_low": 3.6,
+        "ref_high": 6.2,
+        "ref_text": "3.6-6.2",
+        "flag": null,
+        "uncertain": false
+      },
+      {
+        "test_name": "Creatinine",
+        "category": "renal",
+        "value_num": 71.9,
+        "value_text": null,
+        "unit": "umol/L",
+        "ref_low": 50.4,
+        "ref_high": 98.1,
+        "ref_text": "50.4 - 98.1",
+        "flag": null,
+        "uncertain": false
+      },
+      {
+        "test_name": "Bone Density T-score",
+        "category": "bone",
+        "value_num": -0.9,
+        "value_text": null,
+        "unit": null,
+        "ref_low": null,
+        "ref_high": null,
+        "ref_text": "T-score",
+        "flag": null,
+        "uncertain": false
+      }
+    ]
+  }
+}

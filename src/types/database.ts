@@ -317,6 +317,156 @@ export type Database = {
         }
         Relationships: []
       }
+      medical_lab_test: {
+        Row: {
+          category: string
+          default_tracked: boolean
+          default_unit: string | null
+          display_name: string
+          key: string
+          sort_order: number
+          value_kind: string
+        }
+        Insert: {
+          category: string
+          default_tracked?: boolean
+          default_unit?: string | null
+          display_name: string
+          key: string
+          sort_order: number
+          value_kind?: string
+        }
+        Update: {
+          category?: string
+          default_tracked?: boolean
+          default_unit?: string | null
+          display_name?: string
+          key?: string
+          sort_order?: number
+          value_kind?: string
+        }
+        Relationships: []
+      }
+      medical_report: {
+        Row: {
+          body_part: string | null
+          created_at: string
+          document_urls: string[]
+          id: string
+          narrative: string | null
+          provider: string | null
+          report_date: string
+          report_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body_part?: string | null
+          created_at?: string
+          document_urls?: string[]
+          id?: string
+          narrative?: string | null
+          provider?: string | null
+          report_date: string
+          report_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body_part?: string | null
+          created_at?: string
+          document_urls?: string[]
+          id?: string
+          narrative?: string | null
+          provider?: string | null
+          report_date?: string
+          report_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      medical_result: {
+        Row: {
+          category: string
+          created_at: string
+          flag: string | null
+          id: string
+          normalized: boolean
+          ref_high: number | null
+          ref_low: number | null
+          ref_text: string | null
+          report_id: string
+          test_key: string | null
+          test_name: string
+          uncertain: boolean
+          unit: string | null
+          unit_original: string | null
+          updated_at: string
+          user_id: string
+          value_num: number | null
+          value_num_original: number | null
+          value_text: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          flag?: string | null
+          id?: string
+          normalized?: boolean
+          ref_high?: number | null
+          ref_low?: number | null
+          ref_text?: string | null
+          report_id: string
+          test_key?: string | null
+          test_name: string
+          uncertain?: boolean
+          unit?: string | null
+          unit_original?: string | null
+          updated_at?: string
+          user_id: string
+          value_num?: number | null
+          value_num_original?: number | null
+          value_text?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          flag?: string | null
+          id?: string
+          normalized?: boolean
+          ref_high?: number | null
+          ref_low?: number | null
+          ref_text?: string | null
+          report_id?: string
+          test_key?: string | null
+          test_name?: string
+          uncertain?: boolean
+          unit?: string | null
+          unit_original?: string | null
+          updated_at?: string
+          user_id?: string
+          value_num?: number | null
+          value_num_original?: number | null
+          value_text?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medical_result_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "medical_report"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "medical_result_test_key_fkey"
+            columns: ["test_key"]
+            isOneToOne: false
+            referencedRelation: "medical_lab_test"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
       networth_snapshot: {
         Row: {
           created_at: string
@@ -391,6 +541,15 @@ export type Database = {
           created_at: string
           height_cm: number | null
           highlighted_nutrients: string[]
+          medical_importer_enabled: boolean
+          medical_lock_enabled: boolean
+          medical_lock_pin_hash: string | null
+          medical_lock_timeout_minutes: number | null
+          medical_lock_webauthn_id: string | null
+          medical_section_order: string[] | null
+          medical_test_order: string[] | null
+          medical_tracked_tests: string[] | null
+          medical_visible_fields: string[] | null
           protein_target_g: number | null
           quote_importer_enabled: boolean
           quote_visible_fields: string[] | null
@@ -412,6 +571,15 @@ export type Database = {
           created_at?: string
           height_cm?: number | null
           highlighted_nutrients?: string[]
+          medical_importer_enabled?: boolean
+          medical_lock_enabled?: boolean
+          medical_lock_pin_hash?: string | null
+          medical_lock_timeout_minutes?: number | null
+          medical_lock_webauthn_id?: string | null
+          medical_section_order?: string[] | null
+          medical_test_order?: string[] | null
+          medical_tracked_tests?: string[] | null
+          medical_visible_fields?: string[] | null
           protein_target_g?: number | null
           quote_importer_enabled?: boolean
           quote_visible_fields?: string[] | null
@@ -433,6 +601,15 @@ export type Database = {
           created_at?: string
           height_cm?: number | null
           highlighted_nutrients?: string[]
+          medical_importer_enabled?: boolean
+          medical_lock_enabled?: boolean
+          medical_lock_pin_hash?: string | null
+          medical_lock_timeout_minutes?: number | null
+          medical_lock_webauthn_id?: string | null
+          medical_section_order?: string[] | null
+          medical_test_order?: string[] | null
+          medical_tracked_tests?: string[] | null
+          medical_visible_fields?: string[] | null
           protein_target_g?: number | null
           quote_importer_enabled?: boolean
           quote_visible_fields?: string[] | null

@@ -30,6 +30,23 @@ Nutrient sets are stored as JSONB maps (`nutrient_key → amount`), validated ag
   (default-on, no seeding); an explicit array once trimmed in Quotes Settings
 - `quote_importer_enabled` BOOLEAN NOT NULL DEFAULT false — surfaces the Quotes in-app CSV importer
   (the two `quote_*` columns are added by `supabase/migrations/20260621130000_profile_quote_settings.sql`)
+- `medical_tracked_tests` TEXT[] NULL — `medical_lab_test.key`s whose trends show on the Medical
+  Dashboard. NULL until first-run, then seeded from `medical_lab_test.default_tracked` (like
+  `visible_nutrients`)
+- `medical_section_order` TEXT[] NULL — personal category-section order override (null/empty = seeded
+  order)
+- `medical_test_order` TEXT[] NULL — personal flat ordered list of test keys (null/empty = seeded order)
+- `medical_visible_fields` TEXT[] NULL — Medical Add/Edit-Report field visibility; **NULL = all visible**
+  (default-on)
+- `medical_importer_enabled` BOOLEAN NOT NULL DEFAULT false — surfaces the Medical structured importer
+- `medical_lock_enabled` BOOLEAN NOT NULL DEFAULT false — biometric-lock master toggle
+- `medical_lock_pin_hash` TEXT NULL — salted PBKDF2-SHA-256 hash of the fallback PIN (never the PIN)
+- `medical_lock_webauthn_id` TEXT NULL — registered platform-authenticator credential id (optional
+  faster unlock; always falls back to the PIN)
+- `medical_lock_timeout_minutes` INT NULL — auto-lock idle timeout; **NULL = Indefinite** (re-lock only
+  on cold start); UI default 5. Choices: Immediately(0)/1/5/15/Indefinite(NULL)
+  (the nine `medical_*` columns are added by
+  `supabase/migrations/20260622130000_profile_medical_settings.sql`)
 - `created_at`, `updated_at` TIMESTAMPTZ
 
 ### food (custom items + cached USDA/Off items the user favorited or logged)
@@ -218,12 +235,66 @@ Standard rules apply: own `user_id` for direct RLS, four owner policies using `(
 
 Standard rules apply: own `user_id` for direct RLS, four owner policies using `(select auth.uid()) = user_id`, `CHECK` on the enum columns, `moddatetime` trigger on `updated_at`, explicit `GRANT` to `anon`/`authenticated`. **Hard delete** (leaf table; no `deleted_at`). `show_id`/`book_id` are optional enrichment — because `author`, `title`, and `source_type` live on the quote, it stays complete after a linked Show/Book is hard-deleted (the FK just nulls). The migration is `supabase/migrations/20260621120000_quotes_schema.sql`.
 
+### medical_lab_test (reference / seed — not user data; RLS on, read-only to clients)
+
+- `key` TEXT PK — e.g. 'ldl_cholesterol'
+- `display_name` TEXT, `default_unit` TEXT NULL — the **canonical unit** the importer normalizes values
+  to (see `02-tech-spec.md` → "Unit normalization")
+- `category` TEXT — 18 values (CHECK): `general | vitals | lipids | glucose | liver | renal |
+electrolytes | cbc | thyroid | bone | tumour_markers | hepatitis | inflammation | urine | stool |
+imaging | eye | other`
+- `sort_order` INT — within category; seeded from the provider order
+- `default_tracked` BOOLEAN NOT NULL DEFAULT false — appears on the Dashboard by default
+- `value_kind` TEXT — 'numeric' | 'qualitative' | 'either' (CHECK)
+- RLS **enabled** with a single permissive SELECT policy for `anon`/`authenticated` (no write policies →
+  read-only to clients; rows written only by migrations). `GRANT select` only.
+  (See `05-seed-data.md` for the seed; the list is mirrored from `src/lib/medical.ts` `MEDICAL_LAB_TESTS`
+  and cross-checked by `src/lib/medical.test.ts`.)
+
+### medical_report (one row per visit / document set)
+
+- `id` UUID PK · `user_id` UUID → auth.users (ON DELETE CASCADE)
+- `report_date` DATE
+- `report_type` TEXT — 'health_screening' | 'mri' | 'ultrasound' | 'mammogram' | 'eye' | 'other' (CHECK)
+- `body_part` TEXT NULL · `provider` TEXT NULL · `narrative` TEXT NULL
+- `document_urls` TEXT[] NOT NULL DEFAULT '{}' — Google Drive link(s); **never a stored file** (no
+  Supabase Storage)
+- `created_at`, `updated_at` · Index on (`user_id`, `report_date`)
+
+### medical_result (one row per test per report; numeric OR qualitative)
+
+- `id` UUID PK · `user_id` UUID → auth.users (ON DELETE CASCADE)
+- `report_id` UUID → medical_report (**ON DELETE CASCADE** — deleting a report hard-deletes its results)
+- `test_key` TEXT NULL → medical_lab_test.key (null for ad-hoc tests not in the reference)
+- `test_name` TEXT — display name as printed/captured (may be bilingual)
+- `category` TEXT (same 18-value enum, CHECK)
+- `value_num` NUMERIC NULL — normalized to the test's canonical unit · `value_text` TEXT NULL
+- `unit` TEXT NULL — canonical unit after normalization
+- `ref_low` NUMERIC NULL · `ref_high` NUMERIC NULL — converted by the same factor as the value ·
+  `ref_text` TEXT NULL — reference range **exactly as printed** (verbatim; the app never computes a range)
+- `flag` TEXT NULL — 'high' | 'low' | 'abnormal' (CHECK)
+- `uncertain` BOOLEAN NOT NULL DEFAULT false
+- `normalized` BOOLEAN NOT NULL DEFAULT false — true if the value/unit was unit-converted on import ·
+  `value_num_original` NUMERIC NULL · `unit_original` TEXT NULL — the printed value/unit before
+  normalization (preserved so the conversion is auditable/reversible)
+- `created_at`, `updated_at` · Indexes on (`user_id`, `test_key`) and (`report_id`)
+
+Eye refraction is stored as `medical_result` rows with `test_key`s `sphere_od, cylinder_od,
+addition_od, sphere_os, cylinder_os, addition_os`, category `eye`, so they trend like any measurement.
+
+Standard rules apply to `medical_report`/`medical_result`: own `user_id` for direct RLS, four owner
+policies using `(select auth.uid()) = user_id`, `CHECK` on the enum columns, `moddatetime` trigger on
+`updated_at`, explicit `GRANT` to `anon`/`authenticated`. **Hard delete** (deleting a report cascades
+its results). The migration is `supabase/migrations/20260622120000_medical_schema.sql`.
+
 ## Relationships
 
 profile 1—_ food, activity, diary_entry · food 1—_ serving · food 1—_ diary_entry ·
 activity 1—_ diary_entry · diary_entry 1—\* strength_set · profile 1—\* show ·
 profile 1—\* book · profile 1—\* quote · show 1—\* quote and book 1—\* quote
-(both optional, ON DELETE SET NULL).
+(both optional, ON DELETE SET NULL) · profile 1—\* medical_report ·
+medical_report 1—\* medical_result · medical_lab_test 1—\* medical_result
+(optional, `test_key` NULL for ad-hoc tests).
 
 ## Soft deletes
 

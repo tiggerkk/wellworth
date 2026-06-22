@@ -3,9 +3,9 @@
 ## Navigation
 
 The app opens to a **Home hub** — a launcher of module cards (Wellness, Net Worth, Shows, Books,
-Quotes; more later). Selecting a module enters it and the **bottom tab bar becomes that module's
-tabs**, with a **Home** item to return to the hub. On launch the app reopens the **last-used module**,
-so daily Wellness use skips the hub.
+Quotes, Medical; more later). Selecting a module enters it and the **bottom tab bar becomes that
+module's tabs**, with a **Home** item to return to the hub. On launch the app reopens the **last-used
+module**, so daily Wellness use skips the hub.
 
 - **Wellness** tabs: **Home**, **Dashboard**, **Diary**, **Library**. A **gear** in each Wellness
   header opens Wellness Settings.
@@ -20,11 +20,16 @@ so daily Wellness use skips the hub.
 - **Quotes** tabs: **Home**, **Zen** (the Moment-of-Zen dashboard), **Library**, **New Quote**,
   **Settings**. The Add/Edit screen is reached from the **New Quote** tab (new) or by tapping a row
   (edit), and **Settings** opens Quotes Settings.
+- **Medical** tabs: **Home**, **Dashboard**, **Reports**, **New Medical**, **Settings**. The Add/Edit
+  Report screen is reached from the **New Medical** tab (new) or by tapping a report (edit), and
+  **Settings** opens Medical Settings. The **biometric lock** gates entry to the whole module (see
+  `docs/medical.md` → tech-spec). _(Module built in milestones — see `docs/medical.md` for the full
+  screen spec + build order; M1 ships the scaffold, screens flesh out across M2–M7.)_
 - **Settings is global**, reached from a gear on the Home hub (profile, units, account — app-wide).
   Wellness-specific settings (protein target, nutrient display) live in **Wellness Settings**.
 
 Routing is URL-namespaced per module (`/wellness/*`, `/networth/*`, `/shows/*`, `/books/*`,
-`/quotes/*`); a future module drops in as a card + routes with no structural change. Modals (sheets)
+`/quotes/*`, `/medical/*`); a future module drops in as a card + routes with no structural change. Modals (sheets)
 slide up over a module's tabs: Calendar, Add Food, Food Detail, Add Activity, Activity Log, New Food,
 New Activity, Month Picker (Net Worth), Title Search (Shows), Book Search (Books), Source Link (Quotes).
 
@@ -500,3 +505,63 @@ unlike Shows/Books, links resolve against the user's own Show/Book rows.
   (snippet + category + a "linked" marker) and the flagged rows with reasons.
 - **Import** writes only the new, valid rows **idempotently** (dedup on `lower(trim(text))` via the DB
   `UNIQUE` + `ON CONFLICT DO NOTHING`) — re-running the same file imports nothing.
+
+## Medical - Dashboard (`/medical`)
+
+_Built in M4 (trend charts for tracked tests, latest values by category, reports timeline). Through M3
+this shows a scaffold placeholder._
+
+## Medical - Reports (`/medical/reports`)
+
+Chronological list, newest report-date first. Each row: the **full date** (with year — reports span
+years), the **type** label, and `provider · body part` as a secondary line. Tap → **Report detail**;
+swipe-left → confirm → **delete** (hard; the FK cascades the report's results). New reports come from the
+**New Medical** bottom-nav tab. Explicit loading / empty / error states.
+
+## Medical - Report detail (`/medical/:id`)
+
+Read-only view. Header shows date · type · body part · provider with an **Edit** button (→ the form).
+Below: **Open original** link(s) for each Google Drive URL (`target="_blank" rel="noreferrer"`); a
+**Narrative** block when present; then **results grouped under uppercase category headers** in the
+seeded section + sort order (filtered to the tests this report contains). Each result row shows
+`test name · reference range` on the left and `value (+ unit)` on the right, the **value coloured by
+flag** (high/abnormal red, low a distinct accent) using the report's own range; a small "normalized
+from …" note appears when the value was unit-converted on import, and an "uncertain" marker when set.
+
+## Medical - Add / Edit Report (`/medical/entry`, `/medical/:id/edit`)
+
+Reached from the **New Medical** tab (new) or the Report detail **Edit** button. When the importer is
+enabled (Settings), a **Import from JSON / CSV…** button at the top opens the import sheet. Top-right **RESET** + **CREATE** (new) / **SAVE** (editing); close
+(✕) / Escape returns without saving.
+
+- **Parent fields:** **Report Date** (Calendar; defaults today), **Type** (dropdown over the six report
+  types), **Body Part** (shown for mri/ultrasound/mammogram/other), **Provider**, **Narrative**, and
+  **Document Links** (repeatable Google-Drive URL rows). The optional fields are hidden when trimmed off
+  in Medical Settings → Visible Fields (M3); date/type/results are always shown.
+- **Results:** an **Add result** button opens a searchable **test picker** (the seeded reference grouped
+  by category) or **Add custom test** (an ad-hoc row with an editable name + category). Each result row
+  edits the value (number and/or text, by the test's kind), unit, reference range (as printed), a flag
+  (none/high/low/abnormal), and an uncertain toggle; rows can be removed. Manual values are stored
+  as-entered (no unit normalization — that's the importer's job).
+
+## Medical - Import (`/medical/import`, sheet)
+
+Reached from **Medical Settings → Import JSON / CSV…** or the **Import** button on the New-Report form
+(both gated by the importer toggle). Choose a `.json` (preferred) or `.csv` file generated outside the
+app by an AI tool (see `templates/medical-extraction-prompt.md`). The parse applies **tolerant JSON
+repair** (auto-fixes a stray quote after a number, e.g. `8.6"`); an unparseable file shows a **specific
+error** (line/column). Each result is **matched to a reference test** (fuzzy, CJK-aware, with a
+provider-alias map) and **unit-normalized** to the test's canonical unit (flagged, original kept). The
+**review** then shows **counts per category** (to catch a skipped section), every parsed row in the same
+editor as manual entry (edit/add/remove; uncertain + normalized noted), and the report header — where
+you **paste the Drive link(s)**. **Save** writes idempotently: a report with the same date + type is
+**replaced**, so re-importing the same file never duplicates.
+
+## Medical - Settings (`/medical/settings`)
+
+- **Report Form → Visible Fields**: choose which optional Add/Edit-Report fields appear (date, type,
+  results always shown). NULL = all visible.
+- **Enable structured import**: surfaces the **Import JSON / CSV…** launcher (and the Import button on
+  the New-Report form).
+
+_Tracked tests, drag-to-reorder display order, and the biometric lock land in M4–M6._

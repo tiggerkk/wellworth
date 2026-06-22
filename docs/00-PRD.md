@@ -2,7 +2,7 @@
 
 ## Overview
 
-**WellWorth** is a personal mobile app — a private "super-app" of self-contained modules for one household. It launches to a Home hub of module cards; the modules are (1) Wellness — food, supplements, and activity with full nutrient reporting — (2) Net Worth, (3) Shows — tracking TV shows and movies watched or to watch — (4) Books — tracking books read or to read — and (5) Quotes — favourite quotes from screen, page, and sound. Further modules may be added later as new cards with no structural change. The Wellness module is modeled on the Cronometer app's look and feel, simplified to one person's needs. It is delivered as an installable PWA (web app added to the iPhone/iPad home screen) so it needs no Apple Developer account and is free to run.
+**WellWorth** is a personal mobile app — a private "super-app" of self-contained modules for one household. It launches to a Home hub of module cards; the modules are (1) Wellness — food, supplements, and activity with full nutrient reporting — (2) Net Worth, (3) Shows — tracking TV shows and movies watched or to watch — (4) Books — tracking books read or to read — (5) Quotes — favourite quotes from screen, page, and sound — and (6) Medical — multi-year lab results and narrative reports with trend charts. Further modules may be added later as new cards with no structural change. The Wellness module is modeled on the Cronometer app's look and feel, simplified to one person's needs. It is delivered as an installable PWA (web app added to the iPhone/iPad home screen) so it needs no Apple Developer account and is free to run.
 
 ## Users
 
@@ -17,16 +17,17 @@
 - Shows: track **TV shows, movies, and documentaries** (incl. Chinese-language titles and Chinese documentaries / cultural programs — a documentary sub-series is just folded into its title, e.g. `国宝档案 — 从东晋到北魏`) across a single **status** (Want to Watch / Watching / Watched / Dropped); a **favourite** ♥ flag; a three-level **LGBT+ representation** rating (None / Some / Significant); pull metadata (poster, genres, director/creator, cast, seasons & episode counts) from **TMDB** on demand (Chinese-aware), with **manual entry + a pasted Poster URL** as the fallback and a **per-show Refresh from TMDB**; a Dashboard of favourites / what's in progress / recently finished, and a searchable, filterable, sortable Library. A back-catalogue of hundreds of titles is seeded via an in-app importer.
 - Books: track books across a single **status** (Want to Read / Reading / Read / Dropped); a three-level **LGBT+ representation** rating (None / Some / Significant); pull metadata (cover, authors, year, description, genres, page count) from **Google Books** (Open Library fallback) on demand; a Dashboard of what's in progress and recently read, and a searchable, filterable, sortable Library. A back-catalogue is seeded via an in-app importer.
 - Quotes: collect favourite quotes (English or Chinese) from TV shows, films, books, podcasts, articles, videos, and songs; each filed under **exactly one** of six categories with optional free-form tags, and optionally **linked to a Show or Book** record; a "Moment of Zen" dashboard, a searchable/filterable Library, and a recurring **CSV import**.
+- Medical: keep a private, multi-year record of test results (blood panels, vitals, bone density, body composition, etc.) and narrative reports (MRI, imaging, eye); a **dashboard of trends** for chosen tests, values flagged high/low/abnormal against **each report's own printed reference range** (the app never computes or interprets a range — not a medical device); intake via **manual entry** or a **structured JSON/CSV import** the owner generates from a report with any vision-capable AI tool (**no in-app OCR**); cross-provider values **normalized to a canonical unit** (flagged, original preserved); originals kept as **Google Drive links**, not files. Protected by a **biometric lock**.
 - Works identically on iPhone and iPad, with data synced across both devices.
 - Modular by design: each feature is a self-contained module under the Home hub, so new modules drop in as a card + route without restructuring existing ones.
 - Entirely free to run; easy to maintain by one non-expert owner.
 
 ## Navigation model
 
-- The app launches to a Home hub — a launcher of module cards (Wellness, Net Worth, Shows, Books, Quotes, and future modules), styled with the existing dark surface cards and Tabler icons.
+- The app launches to a Home hub — a launcher of module cards (Wellness, Net Worth, Shows, Books, Quotes, Medical, and future modules), styled with the existing dark surface cards and Tabler icons.
 - Selecting a module enters it; the bottom nav then shows that module's own tabs (Wellness keeps Dashboard / Diary / Library; Net Worth, Shows, Books, and Quotes show their own), with a persistent way back to Home.
 - Settings is global, lifted to the Home level (profile, units, account apply across all modules); a module may add its own sub-settings (e.g. Wellness targets/display; Shows, Books, and Quotes field-visibility + importer).
-- Routing is URL-driven per module (/wellness/_, /networth/_, /shows/_, /books/_, /quotes/\_).
+- Routing is URL-driven per module (/wellness/_, /networth/_, /shows/_, /books/_, /quotes/\_, /medical/\_).
 - On launch, the app reopens the last-used module so daily Wellness use isn't slowed by the hub.
 - The hub makes adding future modules a drop-in (a `ModuleDef` + its routes).
 
@@ -71,6 +72,16 @@
 - **Add / Edit** (`/quotes/entry`, `/quotes/:id`): quote text (required), an optional **Source link** that searches local **Show** and **Book** records (binds `show_id`/`book_id` and auto-fills Source Type + Title; Author stays manual — the speaker/character), Author, Source Type (TV Show / Movie / Book / Podcast / Article / Video / Song), Title, one **Category** (required), optional **Tags** (autocomplete over existing tags), **Language** (auto-detected, editable), and a **Favourite** toggle; **RESET / CREATE / SAVE**. Accepts a `?text=&author=&title=` prefill (copy-paste / an Apple Books Shortcut) and a **Paste from clipboard** button. An **Import** button opens the importer.
 - **Settings** (`/quotes/settings`): choose which Entry fields are visible; enable a **CSV importer** (`/quotes/import`) that validates each row, optionally links the title to a Show/Book by source type, and commits idempotently (no exact duplicates). Columns + rules: `templates/quotes-import-guide.md`.
 - **Cross-module links are optional enrichment.** `author`, `title`, and `source_type` are denormalised onto the quote, so a quote stays complete (and still renders) after a linked Show or Book is hard-deleted — the FK just goes null.
+
+## Medical
+
+_Module built in milestones (see `docs/medical.md` for the staging spec + build order). M1 ships the schema, the seeded `medical_lab_test` reference, and the module scaffold; the screens below flesh out across M2–M7._
+
+- **Dashboard** (`/medical`): trend charts (recharts) for each **tracked** test across reports; latest values grouped by category, coloured by flag (high/low/abnormal) using **the report's own range**; a reports-timeline entry point.
+- **Reports** (`/medical/reports`): chronological list (date · type · provider · body part); tap → Report detail (results in the user's section + test order, filtered to the tests that report contains, each with name · value/text · unit · the report's reference range · flag; plus the narrative block and **Open original** Google Drive link[s]); swipe-left to delete (hard, cascades its results).
+- **Add / Edit Report** (`/medical/entry`, `/medical/:id`): **manual** result entry, or **Import** a JSON (primary) / CSV → a **mandatory review-before-save** screen (parsed-result counts per category to catch omitted sections, uncertain rows highlighted, add/correct anything) → save + paste Drive URL[s]. Eye reports surface the six structured **refraction** values (Sphere/Cylinder/Addition × OD/OS). **RESET / CREATE / SAVE**.
+- **Settings** (`/medical/settings`): pick **tracked tests** (seeded from `default_tracked`, like Visible Nutrients); **drag-to-reorder** the category sections and tests within each; the importer toggle; the **biometric lock** (toggle, set/reset PIN, adjustable auto-lock timeout).
+- **Intake is a structured import, not in-app OCR** (OCR mangles medical decimals); extraction is done outside the app by any vision-capable AI tool using `templates/medical-extraction-prompt.md` + `medical-import.schema.json`. **Reference ranges are stored exactly as printed**; cross-provider values are **normalized to a canonical unit** at import (flagged, original preserved). Originals are **Google Drive links**, never stored files.
 
 ## Out of scope / non-goals
 
@@ -117,6 +128,15 @@
 - **Traditional vs Simplified** Chinese distinction — one `zh` value is enough for now.
 - **Quotes from Articles** — the source type exists, but there's no data in the import file yet.
 - **Direct Apple Books integration** — not possible from a PWA; copy-paste + the optional `?text=` Shortcut are the ingestion path.
+
+### Medical
+
+- **In-app OCR / Tesseract** — rejected (mangles decimals; dangerous for medical numbers). Extraction is done outside the app by a vision AI tool; the app imports the structured result.
+- **Storing original files** — not stored; Google Drive URL(s) per report instead. (No Supabase Storage.)
+- **Diagnosis / medical advice** — the app records and trends data only; it is not a medical device. Reference ranges are stored exactly as printed on each report (labs differ); the app never computes a range or interprets a result.
+- **Auto stock of normal ranges / eGFR computation** — values come only from the report (or manual entry).
+- **Display-only unit normalization toggle** — out of scope: cross-provider values are normalized to a canonical unit **at import** (flagged, original preserved); the app does not offer an on/off "compute another unit" view.
+- **Server-verified WebAuthn / true background lock** — a PWA has no background-lock lifecycle and no relying-party backend; the biometric lock is a client-side UX gate over RLS-protected data (re-locks on cold start / idle timeout), with a mandatory PIN fallback.
 
 ## Key constraints
 

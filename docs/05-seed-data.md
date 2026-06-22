@@ -267,3 +267,47 @@ Your real balances stay **out of the repo**. An **in-app importer** (in the Net 
   - The importer asks you for the snapshot month (e.g. `2026-06`) and normalizes it to the **first day** of that month.
   - Full column rules + examples: `templates/networth-import-guide.md`. (Implemented in
     `src/lib/networth-import.ts` + `src/screens/ImportNetWorthSheet.tsx`.)
+
+---
+
+## Medical - lab-test reference (seed the `medical_lab_test` table)
+
+The reference list is the SQL mirror of `src/lib/medical.ts` `MEDICAL_LAB_TESTS` (the front-end source
+of truth); `src/lib/medical.test.ts` cross-checks the two so they can't drift. It was built from the
+owner's **2021–2026** reports across three providers (MediFast HK, Mobile Medical HK, Global HealthCare
+Shanghai). The seed migration is `supabase/migrations/20260622121000_seed_medical_lab_test.sql`
+(idempotent `ON CONFLICT (key) DO UPDATE`).
+
+- **Section order** (categories): `general, vitals, lipids, glucose, liver, renal, electrolytes, cbc,
+thyroid, bone, tumour_markers, hepatitis, inflammation, urine, stool, imaging, eye, other`.
+  `sort_order` orders tests within a category (10, 20, 30, … per the provider order).
+- **`default_unit` is the canonical unit** the importer normalizes incoming values to (e.g. Haemoglobin
+  `g/dL`, uric acid `mmol/L`, creatinine `umol/L`, enzymes `U/L`, blood counts `K/uL`) — chosen from the
+  consistent HK convention where one exists. See `02-tech-spec.md` → "Unit normalization".
+- **`default_tracked`** is the Dashboard starter set (seeds `profile.medical_tracked_tests` on first
+  run): `bmi, blood_pressure_systolic, blood_pressure_diastolic, total_cholesterol, ldl_cholesterol,
+hdl_cholesterol, triglycerides, fasting_glucose, hba1c, alt_sgpt, ast_sgot, creatinine, urea,
+uric_acid, haemoglobin, wbc, platelet, tsh, bone_t_score, vitamin_d_25oh`.
+- **`value_kind`** marks each test `numeric` | `qualitative` | `either`. Eye refraction
+  (`sphere_od … addition_os`) is seeded so eye reports trend like any measurement.
+
+Canonicalization notes (decided during seeding): blood pressure is split into two numeric keys; thyroid
+keeps `t4_total` vs `free_t4`/`free_t3` as distinct analytes; H. pylori serology and the C-13 breath
+test are separate keys; cardiac/pancreatic/iron markers and the radiation-scan rows live in `other`;
+ECG numeric intervals live in `imaging` with the impression as `ecg_finding`.
+
+## Medical - structured import (no in-app OCR)
+
+Real lab results stay **out of the repo**. Extraction is done outside the app by any vision-capable AI
+tool, then imported. Templates (all gitignored except the sanitized ones):
+
+- `templates/medical-extraction-prompt.md` — the model-agnostic prompt (tracked).
+- `templates/medical-import.schema.json` — JSON shape + CSV header + example (tracked).
+- `templates/medical-import-template.json` — sanitized, fictional example (tracked).
+- `templates/medical-import-2021.json … -2026.json` and any report PDFs — **real PII; gitignored**
+  (`medical-import-20*.json`, `templates/*.pdf`).
+
+The importer (M3) accepts JSON (primary) + CSV (RFC-4180), auto-repairs the known AI glitch (a stray
+quote after a number, e.g. `8.6"`), normalizes provider names to `test_key` via an alias map and values
+to the canonical unit, and requires a **review-before-save** step (counts per category; catches omitted
+sections).

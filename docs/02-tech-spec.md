@@ -294,6 +294,59 @@ _Quotes re-skins Books/Shows; only the differences are noted. There is **no exte
 ignoreDuplicates: true })` = the spec's `ON CONFLICT DO NOTHING`. Sanitized template + guide in
   `templates/`.
 
+## Medical
+
+_Module built in milestones — full spec + build order in `docs/medical.md` (the staging doc, kept until
+the module is feature-complete, then merged here and deleted). Key tech decisions, recorded now because
+they shape the M1 schema:_
+
+- **Intake is a structured import, not in-app OCR.** Extraction is done **outside** the app by any
+  vision-capable AI tool (model-agnostic prompt + JSON schema in `templates/`); the app imports the
+  result. OCR (Tesseract) is rejected — it mangles medical decimals (LDL 2.9 → 29). The importer (M3)
+  accepts **JSON (primary)** + **CSV** (RFC-4180, the schema's `x-csv-equivalent` header), with a
+  **tolerant JSON-repair** pre-pass for the observed AI glitch (a stray quote after a number, e.g.
+  `8.6"`, and the resulting missing comma) before `JSON.parse`; an unparseable file shows a specific
+  error. **Decimals are preserved exactly** — never re-derived.
+- **Unit normalization (cross-provider).** Each `medical_lab_test.default_unit` is the **canonical
+  unit**. At import a result is converted to it: the normalized value is stored in `value_num`/`unit`,
+  `normalized` is set true, and the **printed original is preserved** in
+  `value_num_original`/`unit_original`; `ref_low`/`ref_high` are converted by the same factor while
+  `ref_text` stays verbatim. Conversions that change the number are a small explicit table (e.g.
+  Haemoglobin & MCHC `g/L→g/dL` ÷10, uric acid `µmol/L→mmol/L` ÷1000); the rest are label-only
+  canonicalizations so points trend together (`µmol/L`≡`umol/L`, `international unit/L`≡`U/L`,
+  `K/mcl`≡`K/uL`, `ng/mL`≡`µg/L`, `kU/L`≡`U/mL`). Pure converter in `src/lib/medical-units.ts` (unit
+  tested), applied in `medical-import.ts` and surfaced on the review screen. This **amends** the global
+  "never recompute" rule to "unit conversion is an explicit, flagged, reversible transform"; the app
+  still never **invents/derives** clinical values (no eGFR, no computed ranges).
+- **Review-before-save is mandatory** and its real job is catching **omitted sections** — the review
+  screen shows parsed-result **counts per category**, highlights `uncertain` rows, and allows
+  add/correct before anything is written. Each result fuzzy-matches a `test_key` (case-insensitive,
+  ignoring the Chinese portion + punctuation, via a provider name-alias map); unmatched names keep their
+  printed `test_name`/`category` with `test_key` NULL.
+- **Display ordering.** Render results/dashboard by the user's `medical_section_order` +
+  `medical_test_order` when set, else by each test's seeded `category` + `sort_order`. Report detail
+  shows the canonical order filtered to the tests present, so every report reads consistently regardless
+  of provider layout.
+- **Biometric lock.** A **client-side UX gate** over RLS-protected data (no relying-party backend): a
+  WebAuthn **platform authenticator** (`userVerification:'required'`, feature-detected via
+  `isUserVerifyingPlatformAuthenticatorAvailable()`) as an optional faster unlock, always falling back
+  to a **mandatory PIN** (salted PBKDF2-SHA-256 via `crypto.subtle`; only the hash is stored). Honest
+  limitation: a PWA has no background-lock lifecycle, so it locks on **module entry / cold start** and
+  after the configurable idle timeout (`medical_lock_timeout_minutes`; NULL = Indefinite = cold-start
+  only; UI default 5). No new dependency.
+- **Data layer (`src/data/medical.ts`).** A report is a **parent + children** write: `saveReport`
+  create-or-updates the `medical_report` row, then `saveReportResults` does an **idempotent
+  delete-then-insert** of its `medical_result` rows (mirrors `asset-entry.saveSnapshotEntries`;
+  non-transactional — the accepted solo-app trade-off — and reused by the M3 importer). The
+  `medical_lab_test` reference is **not fetched at runtime**: the static `MEDICAL_LAB_TESTS` in
+  `src/lib/medical.ts` (identical to the seed, guarded by the `medical.test.ts` drift check) is the
+  read-only source for the test picker + the `orderResultsForDisplay` section/sort ordering. Module
+  refresh uses a `medical-refresh.ts` tick (`bumpMedical`/`useMedicalVersion`), like the other modules.
+- **Routing.** A report has a **read-only detail** at `/medical/:id` and the **Add/Edit form** at
+  `/medical/entry` (new) and `/medical/:id/edit` (edit) — the detail's Edit button opens the latter.
+- **No new external API.** No Tesseract, no Supabase Storage; originals are Google Drive URL(s) on
+  `medical_report.document_urls`.
+
 ## External APIs
 
 - **Called directly from the browser** (no server proxy): the USDA key is a `VITE_` var and Open Food Facts allows browser requests. Results are cached into `food` on favorite/log to limit calls.

@@ -1,0 +1,94 @@
+{
+  "_comment": "SANITIZED EXAMPLE — fictional data. Copy the shape, not the values. See medical-import.schema.json for the full field spec and medical-extraction-prompt.md for the AI prompt that produces this. Your real exports (medical-import-2025.json etc.) are gitignored.",
+  "report_date": "2025-01-15",
+  "report_type": "health_screening",
+  "provider": "Example Health Centre",
+  "body_part": null,
+  "narrative": "Ultrasound upper abdomen: normal. ECG: sinus rhythm.",
+  "results": [
+    {
+      "test_name": "Total Cholesterol",
+      "category": "lipids",
+      "value_num": 4.6,
+      "value_text": null,
+      "unit": "mmol/L",
+      "ref_low": null,
+      "ref_high": null,
+      "ref_text": "Desirable <5.2",
+      "flag": null,
+      "uncertain": false
+    },
+    {
+      "test_name": "LDL-Cholesterol",
+      "category": "lipids",
+      "value_num": 2.9,
+      "value_text": null,
+      "unit": "mmol/L",
+      "ref_low": null,
+      "ref_high": null,
+      "ref_text": "More Desirable <2.6",
+      "flag": "high",
+      "uncertain": false
+    },
+    {
+      "test_name": "Fasting Blood Glucose",
+      "category": "glucose",
+      "value_num": 4.8,
+      "value_text": null,
+      "unit": "mmol/L",
+      "ref_low": 3.6,
+      "ref_high": 6.2,
+      "ref_text": "3.6-6.2",
+      "flag": null,
+      "uncertain": false
+    },
+    {
+      "test_name": "Creatinine",
+      "category": "renal",
+      "value_num": 71.9,
+      "value_text": null,
+      "unit": "umol/L",
+      "ref_low": 50.4,
+      "ref_high": 98.1,
+      "ref_text": "50.4 - 98.1",
+      "flag": null,
+      "uncertain": false
+    },
+    {
+      "test_name": "Haemoglobin",
+      "category": "cbc",
+      "value_num": 13.9,
+      "value_text": null,
+      "unit": "g/dL",
+      "ref_low": 11.5,
+      "ref_high": 16.0,
+      "ref_text": "11.5-16.0",
+      "flag": null,
+      "uncertain": false
+    },
+    {
+      "test_name": "Bone Density T-score",
+      "category": "bone",
+      "value_num": -0.9,
+      "value_text": null,
+      "unit": null,
+      "ref_low": null,
+      "ref_high": null,
+      "ref_text": "T-score",
+      "flag": null,
+      "uncertain": false
+    },
+    {
+      "test_name": "Urine Protein",
+      "category": "urine",
+      "value_num": null,
+      "value_text": "Negative",
+      "unit": null,
+      "ref_low": null,
+      "ref_high": null,
+      "ref_text": "Negative",
+      "flag": null,
+      "uncertain": false
+    }
+  ]
+}

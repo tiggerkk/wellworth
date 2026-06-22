@@ -42,6 +42,12 @@ quotes-import*.csv
 quotes-seed-local.csv
 !templates/quotes-import-template.csv
 
+# Medical — real lab results & report PDFs (contain name / HKID / DOB) must never be
+# committed. Only templates/medical-import.schema.json, medical-extraction-prompt.md,
+# and the sanitized templates/medical-import-template.json are tracked.
+medical-import-20*.json
+templates/*.pdf
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

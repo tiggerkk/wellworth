@@ -39,7 +39,7 @@ its `docs/07-quotes.md` staging spec has been merged into the permanent docs and
   `VITE_GOOGLE_BOOKS_API_KEY` (Books), and the optional `VITE_ALLOWED_EMAILS` (email allowlist —
   empty ⇒ no restriction). All build-time `VITE_` vars.
 - **Gates:** husky `.husky/pre-commit` → lint-staged + `typecheck` + `test`; GitHub Actions
-  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 259 Vitest tests (pure helpers).
+  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 295 Vitest tests (pure helpers).
 - **Deploy status:** Deployed. GitHub `main` → Vercel auto-deploy; the production URL is in the
   Supabase redirect URLs + Google JS origins (see `OWNER-RUNBOOK.md`). Installed + tested on iPhone (PWA).
 - Conventions (DB-access-via-`src/data`, metric storage, generated `database.ts` contract, etc.) live
@@ -1009,6 +1009,107 @@ migration, no env.
   **deleted**; CLAUDE.md / README mark Quotes built; OWNER-RUNBOOK gained the optional Apple Books
   `?text=` Shortcut note.
 - **Quotes is now feature-complete (M1–M7).** Verified by `npm run check` (all gates, **231** tests).
+
+## Medical Build Sequence (per milestone)
+
+Staging spec + build order: `docs/medical.md` (kept until the module is feature-complete, then merged
+
+- deleted like `06-books.md`/`07-quotes.md`). Milestones: 1 schema+seed+scaffold · 2 manual report
+  CRUD + detail · 3 structured import + tolerant repair + review-confirm · 4 dashboard trends +
+  tracked-test selection · 5 drag-to-reorder settings · 6 biometric lock · 7 narrative + eye refraction.
+
+### M1 — Schema + RLS + seed + module scaffold
+
+Goal: the three tables, the seeded reference list, and a navigable module behind the Home hub.
+
+- **Migrations:** `20260622120000_medical_schema.sql` (three tables — `medical_lab_test` reference
+  [read-only to clients: single permissive SELECT policy + `grant select` only],
+  `medical_report`, `medical_result` — RLS + 4 owner policies each on the user-owned tables, 18-value
+  `category` CHECK, `moddatetime`, grants; `medical_result` cascades on report delete and carries the
+  unit-normalization columns `normalized`/`value_num_original`/`unit_original`);
+  `20260622130000_profile_medical_settings.sql` (nine `medical_*` profile columns incl. the lock +
+  `medical_lock_timeout_minutes`); `20260622121000_seed_medical_lab_test.sql` (~150 tests, idempotent
+  `ON CONFLICT (key) DO UPDATE`).
+- **Source of truth + drift guard:** the seed mirrors `src/lib/medical.ts` `MEDICAL_LAB_TESTS`;
+  `src/lib/medical.test.ts` reads the seed `.sql` via a `?raw` import (declared by `vite/client`, so no
+  node fs types are needed under `tsconfig.app.json`) and asserts the SQL keys exactly equal the TS
+  list — catching any hand-edit drift between the two.
+- **Seed scope:** built from the owner's **2021–2026** reports across **three providers** (MediFast HK,
+  Mobile Medical HK, Global HealthCare Shanghai). `default_unit` is the **canonical unit** the M3
+  importer will normalize to; a few canonicalization calls are recorded in `05-seed-data.md` (BP split
+  into two keys; thyroid `t4_total` vs `free_t4`/`free_t3`; H. pylori serology vs C-13 breath test;
+  cardiac/iron markers + radiation rows → `other`; ECG intervals → `imaging`).
+- **Scaffold:** `routes.medical` + a `ModuleDef` (Home card + bottom nav: Dashboard / Reports / New
+  Medical / Settings, derived automatically) + flat routes in `router.tsx` → stub screens
+  (`MedicalDashboard`/`MedicalReports`/`MedicalEntry`/`MedicalSettings`). `src/lib/medical.ts` holds the
+  enums (categories, report types, flags, value kinds) + the seed list; the typed `Tables<'medical_*'>`
+  Row/Insert/Update aliases + `src/data/medical.ts` land in **M2**, after the owner applies the
+  migrations and regenerates `database.ts` (`gen:types` is `--linked`, so it can't run until the schema
+  is pushed).
+- **Privacy:** the owner's real extractions (`templates/medical-import-20*.json`) and report PDFs are
+  **gitignored** (`medical-import-20*.json`, `templates/*.pdf`); only the prompt, the JSON schema, and a
+  sanitized `medical-import-template.json` are tracked.
+- Verified by `npm run check` (all gates, **266** tests). Owner step before M2: apply the three
+  migrations (`supabase db reset --linked` or `db push`) then `npm run gen:types`.
+
+### M2 — Manual report CRUD + Report detail
+
+Goal: Medical usable by hand — create/edit a report (parent + many result rows), list reports, a
+read-only Report detail, delete (cascades results). No import/trends/lock yet.
+
+- **Data layer** `src/data/medical.ts`: `listReports`, `getReportWithResults`, `createReport`/
+  `updateReport`/`deleteReport`, and the idempotent **`saveReportResults`** (delete-then-insert of a
+  report's `medical_result` rows — mirrors `asset-entry.saveSnapshotEntries`; non-transactional, the
+  accepted solo-app trade-off) wrapped by **`saveReport`** (parent then children). Types alias off
+  `database.ts` in `src/lib/medical.ts` (the data layer imports them, like `data/show.ts` ←
+  `lib/shows.ts`). Refresh tick `src/lib/medical-refresh.ts` (`bumpMedical`/`useMedicalVersion`).
+- **Pure helpers** in `src/lib/medical.ts`: `labTestByKey`, `medicalTestsByCategory`,
+  `orderResultsForDisplay` (category section order → seeded `sort_order`; ad-hoc/unknown last; honours
+  the M5 override params), `MEDICAL_REPORT_FIELDS` + `isMedicalFieldVisible`, `formatResultValue`/
+  `formatRefRange`. The static `MEDICAL_LAB_TESTS` is the runtime reference (no DB fetch for the
+  picker/ordering). New `formatFullDate` in `src/lib/date.ts` (reports span years).
+- **Screens:** `MedicalReports` (swipe-delete list) → new `MedicalReportDetail` (results grouped by
+  category in seeded order, flag-coloured values, Open-original links, narrative, Edit) and
+  `MedicalEntry` (NetWorthEntry-style parent+children draft, RESET/CREATE/SAVE) + a new local-overlay
+  `MedicalTestPickerSheet` (search the seed grouped by category + Add custom test — modelled on
+  `TitleSearchSheet` so the draft survives).
+- **Routing split** detail vs edit: `/medical/:id` → detail, `/medical/:id/edit` + `/medical/entry` →
+  form (the M1 scaffold had `/medical/:id` pointing at the form).
+- **Decision:** manual entry stores values **as-entered** (`normalized=false`); ref ranges via a single
+  "as printed" `ref_text` field (the numeric `ref_low`/`ref_high` are populated by the M3 importer's
+  unit normalization, and are carried through unchanged on a manual edit).
+- Verified by `npm run check` (all gates, **275** tests).
+
+### M3 — Structured import (JSON/CSV) + review-confirm
+
+Goal: import a report from a JSON (primary) or CSV file produced outside the app, with tolerant repair,
+fuzzy test matching, unit normalization, and a mandatory review.
+
+- **`src/lib/medical-units.ts`** — `normalizeResult` converts a value (+ numeric ref) to the test's
+  canonical `default_unit`: a scale table (g/L→g/dL ÷10 for Hgb/MCHC, µmol/L→mmol/L ÷1000 for uric acid)
+  - label-only folds (`µmol/L`≡`umol/L`, `international unit/L`≡`U/L`, `K/mcl`≡`K/uL`, `M/mcl`≡`M/uL`,
+    `ng/mL`≡`µg/L`, `kU/L`≡`U/mL`); flags `normalized`, keeps `value_num_original`/`unit_original`; rounds
+    to 6 dp; **unknown unit pair or no test_key → left as-is** (never guesses).
+- **`src/lib/medical-import.ts`** — `repairMedicalJson` (strip a stray quote after a number, e.g.
+  `8.6"`; plus a fallback comma-insert), `parseMedicalJson`/`parseMedicalCsv` (RFC-4180 via `csv.ts`) →
+  a `ParsedReport` with enum validation (safe fallbacks), `matchTestKey` (alnum index over
+  `MEDICAL_LAB_TESTS` + curated global/category alias maps; **CJK stripped**, `%`→pct/`#`→abs so the
+  differential survives; category-first to disambiguate urine/stool "Albumin"/"RBC"…), and unit
+  normalization wired in. `parseMedicalFile` dispatches by extension/content; specific line/column error
+  on unparseable JSON.
+- **Shared editor (DRY):** `src/lib/medical-draft.ts` (ReportDraft/ResultDraft + blank/from-report/
+  **from-parsed** mappers + `draftToSaveInput`) and `src/components/MedicalResultCard.tsx` were extracted
+  from `MedicalEntry` so the **import review reuses the exact same row editor**; `MedicalEntry` refactored
+  onto them.
+- **`src/screens/ImportMedicalSheet.tsx`** (route `Sheet`) — file → tolerant parse (+ specific error) →
+  editable header + **document_urls paste** + **counts per category** (anti-omission) + the result list
+  (edit/add/remove via the picker) → idempotent save. Data: `findReportByDateType` + `saveImportedReport`
+  (reuses `saveReport`, replacing a same-date+type report) in `src/data/medical.ts`.
+- **Settings:** `MedicalSettings` gained the **Visible Fields** sheet (`MedicalFieldsSheet`, over
+  `MEDICAL_REPORT_FIELDS`) + the **importer toggle** (`medical_importer_enabled`) gating the Import
+  launcher; the New-Report form shows an Import button when enabled. Routes `/medical/import`,
+  `/medical/settings/visible`.
+- Verified by `npm run check` (all gates, **295** tests).
 
 ## Failures & gotchas to not repeat
 

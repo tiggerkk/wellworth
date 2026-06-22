@@ -66,4 +66,16 @@ export const routes = {
     settingsVisible: '/quotes/settings/visible',
     import: '/quotes/import', // CSV importer (sheet)
   },
+  medical: {
+    base: '/medical',
+    dashboard: '/medical', // trends + latest values + reports timeline
+    reports: '/medical/reports',
+    entry: '/medical/entry', // blank Add Report (new)
+    detail: (id: string) => `/medical/${id}`, // read-only Report detail
+    edit: (id: string) => `/medical/${id}/edit`, // Add/Edit Report form (editing)
+    settings: '/medical/settings', // tracked tests, display order, biometric lock
+    settingsVisible: '/medical/settings/visible',
+    settingsTracked: '/medical/settings/tracked',
+    import: '/medical/import', // structured JSON/CSV importer (sheet)
+  },
 } as const

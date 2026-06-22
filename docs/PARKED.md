@@ -31,6 +31,28 @@ Status legend: **Net Worth** (built) · **Deferred** (Phase-1-adjacent, do later
 
 ---
 
+## Medical · Building (M1 shipped; M2–M7 in progress)
+
+**What:** A private multi-year record of lab results + narrative reports, with trend charts; intake via
+manual entry or a structured JSON/CSV import (no in-app OCR); Google-Drive-URL storage; a biometric
+lock. Staging spec + build order in `docs/medical.md`; M1 (schema + seeded `medical_lab_test` reference
+
+- module scaffold) is shipped (see BUILD-LOG → "Medical Build Sequence"). The items below are decided
+  **Medical** non-goals so they aren't re-litigated:
+
+* **Display-only unit-normalization toggle** — **Out of scope.** Cross-provider values are normalized to
+  each test's canonical `default_unit` **at import** (flagged via `medical_result.normalized`, original
+  kept in `value_num_original`/`unit_original`). The app does **not** offer an on/off "show another unit"
+  view — that would be computing a clinical value on the fly, which the module forbids (it never invents
+  or derives values, e.g. no eGFR, no computed reference ranges).
+* **Server-verified WebAuthn / true background lock** — **Out of scope (hard PWA limit).** A PWA has no
+  background-lock lifecycle and there is no relying-party backend, so the biometric lock is a
+  **client-side UX gate** over already-RLS-protected data: it challenges on cold start / after the
+  configurable idle timeout, with a **mandatory PIN fallback** (biometric is an optional faster unlock
+  that always degrades to the PIN). It is a convenience layer over RLS, not a cryptographic boundary.
+
+---
+
 ## Deferred (Phase-1-adjacent)
 
 ### "Log this again" re-log · Deferred

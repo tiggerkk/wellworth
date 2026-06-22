@@ -198,16 +198,18 @@ This creates the tables, security rules, and the nutrient reference data in your
    > supabase db push --dry-run
    > supabase db push
    ```
-   This applies the migration files: `…_init_schema.sql` (schema + RLS + API-role grants),
-   `…_seed_nutrient.sql` (the nutrient reference rows), `…_networth_schema.sql` (the Net Worth
-   tables), `…_shows_schema.sql` (the Shows `show` table), and `…_profile_show_settings.sql` (the two
-   Shows preference columns on `profile`).
+   The CLI applies **every** file in `supabase/migrations/` — Wellness (`…_init_schema.sql` +
+   `…_seed_nutrient.sql`), Net Worth (`…_networth_schema.sql`), Shows, Books, Quotes (each a schema +
+   a `profile` settings migration), and **Medical** (`…_medical_schema.sql` — the three Medical tables;
+   `…_profile_medical_settings.sql` — the Medical `profile` columns; `…_seed_medical_lab_test.sql` —
+   the seeded lab-test reference). You never list them yourself; whatever is in the folder is applied.
 
 - ✅ Check (in the Supabase dashboard):
-  - **Table Editor** shows ten tables: `nutrient`, `profile`, `food`, `serving`, `activity`,
-    `diary_entry`, `strength_set`, the Net Worth pair `networth_snapshot`, `asset_entry`, and the
-    Shows table `show`.
-  - **SQL Editor** → run `select count(*) from nutrient;` → returns **80**.
+  - **Table Editor** shows the module tables: `nutrient`, `profile`, `food`, `serving`, `activity`,
+    `diary_entry`, `strength_set`; the Net Worth pair `networth_snapshot`, `asset_entry`; `show`;
+    `book`; `quote`; and the Medical trio `medical_lab_test`, `medical_report`, `medical_result`.
+  - **SQL Editor** → `select count(*) from nutrient;` → **80**; `select count(*) from
+medical_lab_test;` → the seeded reference count (the Medical Dashboard reads it).
   - **Advisors → Security** shows no "RLS disabled in public" warnings.
 
 ---
@@ -653,6 +655,34 @@ documentaries / CCTV series). To add one (**Shows → New Show**):
 
 **Bulk import:** to seed a back-catalogue, enable **Shows Settings → Enable CSV import** and use one CSV
 spanning English + Chinese across all three types — see `templates/shows-import-guide.md`.
+
+---
+
+## Part O — Logging a medical report (the Medical workflow)
+
+The Medical module trends lab results over the years and keeps narrative reports (MRI, imaging, eye).
+Originals are **not** uploaded — you keep Google Drive links. Extraction happens **outside** the app
+(the app does no OCR), because a vision AI reads decimals accurately where OCR mangles them.
+
+1. After you receive a report PDF, save the file to **Google Drive** and copy its share link(s).
+2. Open any vision-capable AI tool (Claude, Gemini, GPT, …), upload the PDF, and paste the prompt from
+   `templates/medical-extraction-prompt.md`. Save the output as `YYYY-MM-DD_<type>.json`. (The JSON
+   shape + a CSV alternative are in `templates/medical-import.schema.json`; a sanitized example is
+   `templates/medical-import-template.json`.)
+3. **Spot-check the JSON** against the PDF — especially decimals (LDL / HDL / glucose / creatinine) and
+   that no section was skipped (bone density, BMI, vitals, imaging findings). Fix any `uncertain` rows.
+4. First time only: in **Medical → Settings**, turn on **Enable structured import**. Then open the
+   importer from there (**Import JSON / CSV…**) or the **Import** button on the New-Report form.
+5. Choose the file. The importer auto-repairs the known AI glitch (a stray quote after a number),
+   normalizes provider names + units, and shows a **review screen** (counts by category, so a missing
+   group is obvious). Correct/add anything, set type / date / provider, paste the **Drive link(s)**,
+   and **Save**. Re-importing the same date+type replaces it (no duplicates).
+6. Manual entry is always available for a single value or a screening the PDF doesn't cover.
+7. Once the biometric lock ships (a later milestone), enable it in **Medical → Settings** with a PIN.
+
+> **Privacy:** your extracted JSONs (`templates/medical-import-20*.json`) and report PDFs contain your
+> name / HKID / DOB and are **gitignored** — they never go into the repo. Only the prompt, the schema,
+> and the sanitized template are tracked.
 
 ---
 
