@@ -173,25 +173,33 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
 
   return (
     <div className="flex flex-col gap-5 overflow-y-auto p-4">
-      <SectionCard title="Auto-lock">
-        <FieldRow label="Lock after">
-          <SelectMenu
-            value={timeoutToValue(profile.medical_lock_timeout_minutes)}
-            options={LOCK_TIMEOUT_OPTIONS.map((o) => ({
-              value: o.value,
-              label: o.label,
-            }))}
-            onChange={(v) =>
-              void save({ medical_lock_timeout_minutes: valueToTimeoutMinutes(v) })
-            }
-            ariaLabel="Auto-lock timeout"
-            className="w-44"
-          />
-        </FieldRow>
-        <div className="px-4 py-2 text-xs text-text-tertiary">
-          Always re-locks when the app is restarted.
+      {/* Plain (non-overflow-hidden) card so the SelectMenu dropdown isn't clipped — a SectionCard's
+          `overflow-hidden` would cut off all but the first option or two. */}
+      <div>
+        <h2 className="mb-2 px-1 text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
+          Auto-lock
+        </h2>
+        <div className="rounded-card border border-border bg-surface">
+          <div className="flex items-center justify-between gap-3 px-4 py-3">
+            <span className="text-[15px] text-text-primary">Lock after</span>
+            <SelectMenu
+              value={timeoutToValue(profile.medical_lock_timeout_minutes)}
+              options={LOCK_TIMEOUT_OPTIONS.map((o) => ({
+                value: o.value,
+                label: o.label,
+              }))}
+              onChange={(v) =>
+                void save({ medical_lock_timeout_minutes: valueToTimeoutMinutes(v) })
+              }
+              ariaLabel="Auto-lock timeout"
+              className="w-44"
+            />
+          </div>
+          <div className="px-4 pb-3 text-xs text-text-tertiary">
+            Always re-locks when the app is restarted.
+          </div>
         </div>
-      </SectionCard>
+      </div>
 
       {bioAvailable && (
         <SectionCard title="Biometric">

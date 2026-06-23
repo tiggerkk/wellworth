@@ -26,15 +26,12 @@ After the Phase-1 build, three living docs sit alongside the spec in `docs/`:
 - [`docs/OWNER-RUNBOOK.md`](docs/OWNER-RUNBOOK.md) — non-developer, step-by-step setup: Supabase,
   Google OAuth, the USDA key, env vars, migrations, running locally, GitHub, and the Vercel + iOS
   deploy. Enough to stand up the whole app from a fresh clone.
-- [`CONTINUITY.md`](CONTINUITY.md) — **transient session handoff** for the in-progress **Medical**
-  module: what's shipped (M1–M3) vs. next (M4–M7), the file map, key decisions, and gotchas. Read it
-  before continuing Medical; delete it when the module is feature-complete.
 
 ## How to use it
 
 1. Unzip into your project folder (`CLAUDE.md` at the root, `docs/` beside it).
 2. Open the folder in Trae.ai and follow **SETUP.md**.
-3. Build **one milestone at a time**. Wellness, Net Worth, Shows, Books, and Quotes shipped; Medical is building (M1 done).
+3. Build **one milestone at a time**. Wellness, Net Worth, Shows, Books, Quotes, and Medical have all shipped (feature-complete).
 
 ## Phasing
 
@@ -44,4 +41,4 @@ Net Worth (separate tables; reached via the Home hub; shares only auth/profile a
 Shows (TV, movies & documentaries, incl. Chinese titles; Chinese-aware TMDB metadata, favourites (♥), an optional Poster URL field (a Visible-Fields toggle, off by default) + per-show Refresh, dashboard shelves, a filterable/sortable library, field-visibility settings, and a CSV importer; shares only auth/profile and the app shell).
 Books (books read / to read; TV-show re-skin — Google Books / Open Library metadata, favourites (♥), dashboard shelves, a filterable/sortable library, field-visibility settings, and a CSV importer; shares only auth/profile and the app shell).
 Quotes (favourite quotes from screen/page/sound, English or Chinese; favourites (♥), a Moment-of-Zen random-quote dashboard, a filterable library, an optional cross-module link to a local Show/Book, field-visibility settings, and a CSV importer — no external metadata API; shares only auth/profile and the app shell).
-Medical (multi-year lab results + narrative reports with trend charts; structured JSON/CSV import — no in-app OCR — with cross-provider unit normalization, Google-Drive-URL storage, and a biometric lock; building one milestone at a time, M1 schema+seed+scaffold shipped; shares only auth/profile and the app shell).
+Medical (multi-year lab results + narrative reports; a trend Dashboard — inline-SVG sparklines + a lazy-recharts expanded chart, tracked-test picker, latest values by category, reports timeline; structured JSON/CSV import — no in-app OCR — with cross-provider unit normalization; drag-to-reorder display order; Google-Drive-URL storage; a biometric/PIN lock; and a structured eye-refraction form; feature-complete; shares only auth/profile and the app shell).
