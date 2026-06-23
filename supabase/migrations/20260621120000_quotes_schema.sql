@@ -19,17 +19,20 @@
 -- the medium; language is 'en' | 'zh' (auto-detected from the text in the UI, CJK -> zh).
 -- text_norm (generated, lower+trimmed) backs the UNIQUE that enforces "no exact duplicates"
 -- and the importer's idempotency (ON CONFLICT DO NOTHING).
+--
+-- source_type / category are plain TEXT with NO CHECK constraint (since M8): the allowed values
+-- are owner-configurable in Quotes Settings (add/rename/delete/reorder), stored on
+-- profile.quote_source_types / quote_categories. The app validates against that configured list;
+-- each column stores the stable text key (e.g. 'tv', 'philosophy'). See src/lib/quotes-config.ts.
 -- =====================================================================================
 create table public.quote (
   id          uuid primary key default gen_random_uuid(),
   user_id     uuid not null references auth.users (id) on delete cascade,
   text        text not null,
   author      text,
-  source_type text not null
-                check (source_type in ('tv', 'movie', 'book', 'podcast', 'article', 'video', 'song')),
+  source_type text not null,                         -- configurable key (no CHECK; app-validated)
   title       text,                                  -- source title (denormalised; survives a linked record's deletion)
-  category    text not null
-                check (category in ('philosophy', 'heart', 'connection', 'growth', 'wit', 'observation')),
+  category    text not null,                         -- configurable key (no CHECK; app-validated)
   tags        text[] not null default '{}',          -- optional; autocomplete reads distinct unnest(tags)
   language    text not null default 'en' check (language in ('en', 'zh')),
   is_favorite boolean not null default false,

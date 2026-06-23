@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isEmailAllowed, parseAllowlist } from './access'
+import { isEmailAllowed, parseAllowlist, parseOAuthError } from './access'
 
 describe('parseAllowlist', () => {
   it('returns an empty list for unset / blank input', () => {
@@ -33,5 +33,28 @@ describe('isEmailAllowed', () => {
   it('denies a missing email when the list is non-empty', () => {
     expect(isEmailAllowed(null, ['owner@gmail.com'])).toBe(false)
     expect(isEmailAllowed(undefined, ['owner@gmail.com'])).toBe(false)
+  })
+})
+
+describe('parseOAuthError', () => {
+  it('returns null when there is no error in the URL', () => {
+    expect(parseOAuthError('', '')).toBeNull()
+    expect(parseOAuthError('?code=abc', '')).toBeNull()
+  })
+
+  it('gives a tailored message for a disabled-signups redirect (query or hash)', () => {
+    const search =
+      '?error=access_denied&error_code=signup_disabled&error_description=Signups+not+allowed+for+this+instance'
+    expect(parseOAuthError(search, '')).toContain('sign-ups are disabled')
+    expect(parseOAuthError('', search.replace(/^\?/, '#'))).toContain(
+      'sign-ups are disabled',
+    )
+  })
+
+  it('falls back to the decoded error_description, then error', () => {
+    expect(
+      parseOAuthError('?error=server_error&error_description=Something+broke', ''),
+    ).toBe('Something broke')
+    expect(parseOAuthError('?error=access_denied', '')).toBe('access_denied')
   })
 })

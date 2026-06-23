@@ -4,7 +4,7 @@
  * the category/source/language enums + labels live in `src/constants/quotes.ts`.
  */
 import type { Tables, TablesInsert, TablesUpdate } from '../types/database'
-import type { QuoteCategory, QuoteLanguage, QuoteSourceType } from '../constants/quotes'
+import type { QuoteLanguage, QuoteSourceType } from '../constants/quotes'
 
 export type QuoteRow = Tables<'quote'>
 export type QuoteInsert = TablesInsert<'quote'>
@@ -100,11 +100,13 @@ export function randomItem<T>(items: T[], random: () => number = Math.random): T
 
 export interface LibraryCriteria {
   query: string
-  category: 'all' | QuoteCategory
+  /** A configured category key, or 'all' (the values are owner-configurable — see quotes-config.ts). */
+  category: 'all' | string
   /** Multi-select tags, OR semantics: a quote matches if it has ANY selected tag. */
   tags: string[]
   favoritesOnly: boolean
-  sourceType: 'all' | QuoteSourceType
+  /** A configured source-type key, or 'all'. */
+  sourceType: 'all' | string
   language: 'all' | QuoteLanguage
   /** "Quotes from this title" constraint (URL-driven, not a panel control). */
   showId: string | null

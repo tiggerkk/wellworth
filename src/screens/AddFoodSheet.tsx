@@ -1,6 +1,7 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useLocation, useNavigate, useSearchParams, type Location } from 'react-router'
 import { IconHeart, IconHeartFilled, IconX } from '@tabler/icons-react'
+import { lazyWithReload } from '../lib/lazy-with-reload'
 import { Sheet } from '../components/Sheet'
 import { SearchBar } from '../components/SearchBar'
 import { SegmentedTabs } from '../components/SegmentedTabs'
@@ -13,7 +14,7 @@ import { todayLocal } from '../lib/date'
 import { routes } from '../constants/routes'
 
 // Lazy-loaded so the ZXing barcode library is a separate chunk, fetched only when scanning.
-const BarcodeScanner = lazy(() =>
+const BarcodeScanner = lazyWithReload(() =>
   import('../components/BarcodeScanner').then((m) => ({ default: m.BarcodeScanner })),
 )
 

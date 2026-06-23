@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { parseCsv } from './csv'
+import { defaultCategories, defaultSourceTypes } from './quotes-config'
 import {
   buildImportPayload,
   buildTitleIndex,
@@ -10,13 +11,14 @@ import {
 } from './quotes-import'
 
 const HEADER = 'Quote,Author,Source,Title,Category,Tags,is_favorite'
+const SRC = defaultSourceTypes()
+const CATS = defaultCategories()
+const parse = (csv: string) => parseQuotesCsv(parseCsv(csv), SRC, CATS)
 
 describe('parseQuotesCsv', () => {
   it('parses a simple valid row (tags split, language en)', () => {
-    const { rows, errors } = parseQuotesCsv(
-      parseCsv(
-        `${HEADER}\nWork harder on yourself.,Jim Rohn,video,Best Life,Growth,"discipline, success"`,
-      ),
+    const { rows, errors } = parse(
+      `${HEADER}\nWork harder on yourself.,Jim Rohn,video,Best Life,Growth,"discipline, success"`,
     )
     expect(errors).toEqual([])
     expect(rows).toHaveLength(1)
@@ -38,7 +40,7 @@ describe('parseQuotesCsv', () => {
 """You said autonomy."" ""I said empower.""",Francis Underwood,tv,House of Cards,Growth,leadership
 "Moira: Who put a ghost on my desk?
 Roland: That's the sonogram!",Moira Rose,tv,Schitt's Creek,Wit,"clever, irony"`
-    const { rows, errors } = parseQuotesCsv(parseCsv(csv))
+    const { rows, errors } = parse(csv)
     expect(errors).toEqual([])
     expect(rows).toHaveLength(3)
     expect(rows[0]!.text).toContain(', including you')
@@ -50,18 +52,22 @@ Roland: That's the sonogram!",Moira Rose,tv,Schitt's Creek,Wit,"clever, irony"`
   })
 
   it('parses a trailing is_favorite flag (else false)', () => {
-    const { rows } = parseQuotesCsv(
-      parseCsv(`${HEADER}\nFav line,A,tv,T,Wit,,yes\nPlain line,A,tv,T,Wit,,`),
-    )
+    const { rows } = parse(`${HEADER}\nFav line,A,tv,T,Wit,,yes\nPlain line,A,tv,T,Wit,,`)
     expect(rows[0]!.is_favorite).toBe(true)
     expect(rows[1]!.is_favorite).toBe(false)
   })
 
   it('auto-detects Chinese from CJK text', () => {
-    const { rows } = parseQuotesCsv(
-      parseCsv(`${HEADER}\n知者不惑,Confucius,book,Analects,Philosophy,wisdom`),
+    const { rows } = parse(
+      `${HEADER}\n知者不惑,Confucius,book,Analects,Philosophy,wisdom`,
     )
     expect(rows[0]!.language).toBe('zh')
+  })
+
+  it('matches Source/Category by label too (not just key)', () => {
+    const { rows, errors } = parse(`${HEADER}\nA quote,,TV Show,,Observation,`)
+    expect(errors).toEqual([])
+    expect(rows[0]).toMatchObject({ source_type: 'tv', category: 'observation' })
   })
 
   it('flags blank/invalid category, unknown source, and empty quote with line numbers', () => {
@@ -69,7 +75,7 @@ Roland: That's the sonogram!",Moira Rose,tv,Schitt's Creek,Wit,"clever, irony"`
 Good quote,A,tv,T,NotACategory,
 Another,A,clipboard,T,Wit,
 ,A,tv,T,Wit,`
-    const { rows, errors } = parseQuotesCsv(parseCsv(csv))
+    const { rows, errors } = parse(csv)
     expect(rows).toHaveLength(0)
     expect(errors).toHaveLength(3)
     expect(errors[0]).toContain('Row 2')
@@ -81,12 +87,12 @@ Another,A,clipboard,T,Wit,
   })
 
   it('errors on a missing required column', () => {
-    const { errors } = parseQuotesCsv(parseCsv('Quote,Author,Title,Tags\nx,y,z,w'))
+    const { errors } = parse('Quote,Author,Title,Tags\nx,y,z,w')
     expect(errors[0]).toContain('Missing required column')
   })
 
   it('normalises category/source case and treats blank author/title as null', () => {
-    const { rows } = parseQuotesCsv(parseCsv(`${HEADER}\nA quote,,TV,,WIT,`))
+    const { rows } = parse(`${HEADER}\nA quote,,TV,,WIT,`)
     expect(rows[0]).toMatchObject({
       author: null,
       title: null,
@@ -136,33 +142,34 @@ describe('resolveLink / buildTitleIndex', () => {
   )
 
   it('links tv/movie to a Show by title', () => {
-    expect(resolveLink('tv', 'House of Cards', index)).toEqual({
+    expect(resolveLink('tv', 'House of Cards', index, SRC)).toEqual({
       show_id: 'show-1',
       book_id: null,
     })
-    expect(resolveLink('movie', 'house of cards', index).show_id).toBe('show-1')
+    expect(resolveLink('movie', 'house of cards', index, SRC).show_id).toBe('show-1')
   })
 
   it('links book to a Book by title', () => {
-    expect(resolveLink('book', 'Dune', index)).toEqual({
+    expect(resolveLink('book', 'Dune', index, SRC)).toEqual({
       show_id: null,
       book_id: 'book-1',
     })
   })
 
   it('does not link other source types or unmatched titles', () => {
-    expect(resolveLink('song', 'House of Cards', index)).toEqual({
+    expect(resolveLink('song', 'House of Cards', index, SRC)).toEqual({
       show_id: null,
       book_id: null,
     })
-    expect(resolveLink('tv', 'Unknown Show', index).show_id).toBeNull()
-    expect(resolveLink('tv', null, index).show_id).toBeNull()
+    expect(resolveLink('tv', 'Unknown Show', index, SRC).show_id).toBeNull()
+    expect(resolveLink('tv', null, index, SRC).show_id).toBeNull()
   })
 
   it('buildImportPayload applies the link + carries is_favorite through', () => {
     const payload = buildImportPayload(
       { ...row('A line'), source_type: 'tv', title: 'House of Cards', is_favorite: true },
       index,
+      SRC,
     )
     expect(payload).toMatchObject({
       show_id: 'show-1',

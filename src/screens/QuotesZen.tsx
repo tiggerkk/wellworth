@@ -8,6 +8,7 @@ import {
 } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
+import { useProfile } from '../hooks/useProfile'
 import { listQuotes, updateQuote } from '../data/quote'
 import {
   initialZenPool,
@@ -16,13 +17,15 @@ import {
   QUOTE_CATEGORY_CHIP,
   type QuoteRow,
 } from '../lib/quotes'
-import { bumpQuotes, useQuotesVersion } from '../lib/quotes-refresh'
 import {
-  QUOTE_CATEGORY_LABELS,
-  QUOTE_SOURCE_TYPE_LABELS,
-  type QuoteCategory,
-  type QuoteSourceType,
-} from '../constants/quotes'
+  categoryLabel,
+  effectiveCategories,
+  effectiveSourceTypes,
+  sourceTypeLabel,
+  type QuoteCategoryConfig,
+  type QuoteSourceTypeConfig,
+} from '../lib/quotes-config'
+import { bumpQuotes, useQuotesVersion } from '../lib/quotes-refresh'
 import { routes } from '../constants/routes'
 import { StatusChip } from '../components/StatusChip'
 
@@ -46,6 +49,17 @@ export function QuotesZen() {
     return listQuotes(userId)
   }, [userId, version])
   const { data: quotes, loading, error } = useAsync(fn)
+
+  // Source-type / category labels are owner-configurable — resolve via the profile lists (tolerant).
+  const { data: profile } = useProfile()
+  const sourceTypes = useMemo(
+    () => effectiveSourceTypes(profile?.quote_source_types ?? null),
+    [profile],
+  )
+  const categories = useMemo(
+    () => effectiveCategories(profile?.quote_categories ?? null),
+    [profile],
+  )
 
   const [currentId, setCurrentId] = useState<string | null>(null)
   // Optimistic favourite overrides so the heart flips instantly (reconciled by the refetch).
@@ -163,6 +177,8 @@ export function QuotesZen() {
               quote={current}
               favorite={favOverride[current.id] ?? current.is_favorite}
               onToggleFavorite={() => void toggleFavorite(current)}
+              sourceTypes={sourceTypes}
+              categories={categories}
             />
           </div>
 
@@ -184,12 +200,16 @@ function QuoteCard({
   quote,
   favorite,
   onToggleFavorite,
+  sourceTypes,
+  categories,
 }: {
   quote: QuoteRow
   favorite: boolean
   onToggleFavorite: () => void
+  sourceTypes: QuoteSourceTypeConfig[]
+  categories: QuoteCategoryConfig[]
 }) {
-  const sourceLabel = QUOTE_SOURCE_TYPE_LABELS[quote.source_type as QuoteSourceType]
+  const sourceLabel = sourceTypeLabel(sourceTypes, quote.source_type)
   const titleNode = quote.title ? (
     quote.show_id ? (
       <Link to={routes.shows.edit(quote.show_id)} className="text-accent underline">
@@ -231,7 +251,7 @@ function QuoteCard({
 
       <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
         <StatusChip
-          label={QUOTE_CATEGORY_LABELS[quote.category as QuoteCategory]}
+          label={categoryLabel(categories, quote.category)}
           className={QUOTE_CATEGORY_CHIP}
         />
         {quote.tags.map((tag) => (

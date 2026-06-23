@@ -594,6 +594,14 @@ update public.profile
 > already-applied migration, apply edits with a full reset: **`supabase db reset --linked`** re-runs
 > every migration from scratch (wipes all modules), then run **Part G** (`npm run gen:types`) so
 > `src/types/database.ts` matches.
+>
+> ⚠️ **`supabase db reset --linked` also wipes `auth.users` — it deletes your own account.** If
+> **"Allow new users to sign up" is OFF** (Part H3, the recommended lockdown), your next Google
+> sign-in is treated as a _new signup_ and is **blocked** — the app loops back to "Sign in with
+> Google" (the redirect carries `?error=access_denied&error_code=signup_disabled`). **Fix:** Supabase
+> → **Authentication → Sign In / Providers → enable "Allow new users to sign up"**, sign in once to
+> recreate your account, then turn it **off** again. (The `VITE_ALLOWED_EMAILS` allowlist still gates
+> who's admitted.)
 
 **Books** — wipes every tracked book:
 

@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Link, useSearchParams } from 'react-router'
+import { useSearchParams } from 'react-router'
 import {
   IconChevronLeft,
   IconChevronRight,
   IconDots,
-  IconSettings,
   IconSquare,
   IconSquareCheckFilled,
 } from '@tabler/icons-react'
@@ -210,13 +209,6 @@ export function Diary() {
             </button>
           </div>
           <div className="absolute right-3 flex items-center gap-1">
-            <Link
-              to={routes.wellness.settings}
-              aria-label="Wellness settings"
-              className="p-1 text-text-secondary"
-            >
-              <IconSettings size={20} />
-            </Link>
             <div className="relative">
               <button
                 onClick={() => setMenuOpen((o) => !o)}

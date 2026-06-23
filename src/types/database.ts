@@ -551,7 +551,9 @@ export type Database = {
           medical_tracked_tests: string[] | null
           medical_visible_fields: string[] | null
           protein_target_g: number | null
+          quote_categories: Json | null
           quote_importer_enabled: boolean
+          quote_source_types: Json | null
           quote_visible_fields: string[] | null
           sex: string | null
           show_importer_enabled: boolean
@@ -581,7 +583,9 @@ export type Database = {
           medical_tracked_tests?: string[] | null
           medical_visible_fields?: string[] | null
           protein_target_g?: number | null
+          quote_categories?: Json | null
           quote_importer_enabled?: boolean
+          quote_source_types?: Json | null
           quote_visible_fields?: string[] | null
           sex?: string | null
           show_importer_enabled?: boolean
@@ -611,7 +615,9 @@ export type Database = {
           medical_tracked_tests?: string[] | null
           medical_visible_fields?: string[] | null
           protein_target_g?: number | null
+          quote_categories?: Json | null
           quote_importer_enabled?: boolean
+          quote_source_types?: Json | null
           quote_visible_fields?: string[] | null
           sex?: string | null
           show_importer_enabled?: boolean

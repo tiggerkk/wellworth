@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
-import { Link, useSearchParams } from 'react-router'
-import { IconPlus, IconSettings, IconUpload } from '@tabler/icons-react'
+import { useSearchParams } from 'react-router'
+import { IconPlus, IconUpload } from '@tabler/icons-react'
 import { useAsync } from '../hooks/useAsync'
 import { useSheetNavigate } from '../hooks/useSheetNavigate'
 import { useDiaryVersion, bumpDiary } from '../lib/diary-refresh'
@@ -99,13 +99,6 @@ export function Library() {
               <IconUpload size={16} /> Import CSV
             </button>
           )}
-          <Link
-            to={routes.wellness.settings}
-            aria-label="Wellness settings"
-            className="ml-auto p-1 text-text-secondary"
-          >
-            <IconSettings size={18} />
-          </Link>
         </div>
       </div>
 

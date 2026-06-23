@@ -7,7 +7,7 @@ import { PrimaryButton } from '../components/PrimaryButton'
 import { Splash } from '../components/Splash'
 
 export function Login() {
-  const { session, loading, deniedEmail } = useAuth()
+  const { session, loading, deniedEmail, authError } = useAuth()
   const [signingIn, setSigningIn] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -48,6 +48,7 @@ export function Login() {
           account.
         </p>
       )}
+      {authError && <p className="text-xs text-danger">{authError}</p>}
       {error && <p className="text-xs text-danger">{error}</p>}
     </div>
   )

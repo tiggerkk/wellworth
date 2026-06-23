@@ -1,8 +1,9 @@
-import { useCallback, useState, type ReactNode } from 'react'
+import { useCallback, useMemo, useState, type ReactNode } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { IconFilter, IconX } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
+import { useProfile } from '../hooks/useProfile'
 import { bumpQuotes, useQuotesVersion } from '../lib/quotes-refresh'
 import { deleteQuote, listQuotes } from '../data/quote'
 import {
@@ -13,14 +14,11 @@ import {
   type LibraryCriteria,
 } from '../lib/quotes'
 import {
-  QUOTE_CATEGORIES,
-  QUOTE_CATEGORY_LABELS,
-  QUOTE_LANGUAGES,
-  QUOTE_LANGUAGE_LABELS,
-  QUOTE_SOURCE_TYPES,
-  QUOTE_SOURCE_TYPE_LABELS,
-  type QuoteCategory,
-} from '../constants/quotes'
+  categoryLabel,
+  effectiveCategories,
+  effectiveSourceTypes,
+} from '../lib/quotes-config'
+import { QUOTE_LANGUAGES, QUOTE_LANGUAGE_LABELS } from '../constants/quotes'
 import { routes } from '../constants/routes'
 import { SearchBar } from '../components/SearchBar'
 import { SwipeRow } from '../components/SwipeRow'
@@ -28,14 +26,6 @@ import { SelectMenu } from '../components/SelectMenu'
 import { Toggle } from '../components/Toggle'
 import { StatusChip } from '../components/StatusChip'
 
-const CATEGORY_OPTIONS: { value: string; label: string }[] = [
-  { value: 'all', label: 'All categories' },
-  ...QUOTE_CATEGORIES.map((c) => ({ value: c, label: QUOTE_CATEGORY_LABELS[c] })),
-]
-const SOURCE_OPTIONS: { value: string; label: string }[] = [
-  { value: 'all', label: 'All sources' },
-  ...QUOTE_SOURCE_TYPES.map((s) => ({ value: s, label: QUOTE_SOURCE_TYPE_LABELS[s] })),
-]
 const LANGUAGE_OPTIONS: { value: string; label: string }[] = [
   { value: 'all', label: 'All languages' },
   ...QUOTE_LANGUAGES.map((l) => ({ value: l, label: QUOTE_LANGUAGE_LABELS[l] })),
@@ -66,6 +56,32 @@ export function QuotesLibrary() {
     return listQuotes(userId)
   }, [userId, version])
   const { data: quotes, loading, error } = useAsync(fn)
+
+  // Category / Source-type values are owner-configurable (Quotes Settings) — derive options + labels
+  // from the profile lists (NULL ⇒ canonical defaults), tolerant of orphaned keys.
+  const { data: profile } = useProfile()
+  const categories = useMemo(
+    () => effectiveCategories(profile?.quote_categories ?? null),
+    [profile],
+  )
+  const sourceTypes = useMemo(
+    () => effectiveSourceTypes(profile?.quote_source_types ?? null),
+    [profile],
+  )
+  const categoryOptions = useMemo(
+    () => [
+      { value: 'all', label: 'All categories' },
+      ...categories.map((c) => ({ value: c.key, label: c.label })),
+    ],
+    [categories],
+  )
+  const sourceOptions = useMemo(
+    () => [
+      { value: 'all', label: 'All sources' },
+      ...sourceTypes.map((s) => ({ value: s.key, label: s.label })),
+    ],
+    [sourceTypes],
+  )
 
   async function remove(id: string) {
     if (!confirm('Delete this quote? This can’t be undone.')) return
@@ -140,17 +156,15 @@ export function QuotesLibrary() {
             <Field label="Category">
               <SelectMenu
                 value={criteria.category}
-                options={CATEGORY_OPTIONS}
-                onChange={(v) => setCrit({ category: v as LibraryCriteria['category'] })}
+                options={categoryOptions}
+                onChange={(v) => setCrit({ category: v })}
               />
             </Field>
             <Field label="Source type">
               <SelectMenu
                 value={criteria.sourceType}
-                options={SOURCE_OPTIONS}
-                onChange={(v) =>
-                  setCrit({ sourceType: v as LibraryCriteria['sourceType'] })
-                }
+                options={sourceOptions}
+                onChange={(v) => setCrit({ sourceType: v })}
               />
             </Field>
             <Field label="Language">
@@ -220,7 +234,7 @@ export function QuotesLibrary() {
                 </span>
                 <span className="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-secondary">
                   <StatusChip
-                    label={QUOTE_CATEGORY_LABELS[quote.category as QuoteCategory]}
+                    label={categoryLabel(categories, quote.category)}
                     className={QUOTE_CATEGORY_CHIP}
                   />
                   {quote.author && <span className="truncate">{quote.author}</span>}

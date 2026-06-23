@@ -62,8 +62,10 @@ export const routes = {
     library: '/quotes/library',
     entry: '/quotes/entry', // blank Entry (new)
     edit: (id: string) => `/quotes/${id}`,
-    settings: '/quotes/settings', // quotes sub-settings: field visibility, importer
+    settings: '/quotes/settings', // quotes sub-settings: field visibility, lists, importer
     settingsVisible: '/quotes/settings/visible',
+    settingsSourceTypes: '/quotes/settings/source-types', // manage Source Type list (sheet)
+    settingsCategories: '/quotes/settings/categories', // manage Category list (sheet)
     import: '/quotes/import', // CSV importer (sheet)
   },
   medical: {

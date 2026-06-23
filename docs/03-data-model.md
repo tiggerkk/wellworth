@@ -29,7 +29,13 @@ Nutrient sets are stored as JSONB maps (`nutrient_key → amount`), validated ag
 - `quote_visible_fields` TEXT[] NULL — Quotes Entry-form field visibility; **NULL = all visible**
   (default-on, no seeding); an explicit array once trimmed in Quotes Settings
 - `quote_importer_enabled` BOOLEAN NOT NULL DEFAULT false — surfaces the Quotes in-app CSV importer
-  (the two `quote_*` columns are added by `supabase/migrations/20260621130000_profile_quote_settings.sql`)
+- `quote_source_types` JSONB NULL — the owner's configurable Source Type list, a JSONB array of
+  `{key, label, linkKind}` in display order (`linkKind` ∈ `'show' | 'book' | null` drives Show/Book
+  auto-linking). **NULL = canonical seed defaults** (`src/constants/quotes.ts`), resolved
+  partial-tolerantly by `src/lib/quotes-config.ts`
+- `quote_categories` JSONB NULL — the owner's configurable Category list, a JSONB array of
+  `{key, label}` in display order; **NULL = canonical seed defaults**
+  (the four `quote_*` columns are added by `supabase/migrations/20260621130000_profile_quote_settings.sql`)
 - `medical_tracked_tests` TEXT[] NULL — `medical_lab_test.key`s whose trends show on the Medical
   Dashboard. NULL until first-run, then seeded from `medical_lab_test.default_tracked` (like
   `visible_nutrients`)
@@ -221,9 +227,13 @@ Standard rules apply: own `user_id` for direct RLS, four owner policies using `(
 - `user_id` UUID → auth.users (ON DELETE CASCADE)
 - `text` TEXT — the quote
 - `author` TEXT NULL
-- `source_type` TEXT — 'tv' | 'movie' | 'book' | 'podcast' | 'article' | 'video' | 'song' (CHECK)
+- `source_type` TEXT — a **configurable** Source Type `key` (NO CHECK; the allowed values are
+  owner-configurable, stored on `profile.quote_source_types`, app-validated). Seed defaults: book,
+  podcast, tv, movie, interview, article, song, video
 - `title` TEXT NULL — source title (denormalised; survives a linked record's deletion)
-- `category` TEXT — 'philosophy' | 'heart' | 'connection' | 'growth' | 'wit' | 'observation' (CHECK; required)
+- `category` TEXT — a **configurable** Category `key` (NO CHECK; owner-configurable via
+  `profile.quote_categories`, app-validated; required). Seed defaults: wit, observation, philosophy,
+  heart, connection, growth
 - `tags` TEXT[] DEFAULT '{}' — optional; autocomplete reads distinct `unnest(tags)`
 - `language` TEXT DEFAULT 'en' — 'en' | 'zh' (CHECK)
 - `is_favorite` BOOLEAN DEFAULT false
@@ -233,7 +243,7 @@ Standard rules apply: own `user_id` for direct RLS, four owner policies using `(
 - **UNIQUE (`user_id`, `text_norm`)** — enforces "no exact duplicates" and import idempotency.
 - Indexes on (`user_id`, `category`) and (`user_id`, `is_favorite`).
 
-Standard rules apply: own `user_id` for direct RLS, four owner policies using `(select auth.uid()) = user_id`, `CHECK` on the enum columns, `moddatetime` trigger on `updated_at`, explicit `GRANT` to `anon`/`authenticated`. **Hard delete** (leaf table; no `deleted_at`). `show_id`/`book_id` are optional enrichment — because `author`, `title`, and `source_type` live on the quote, it stays complete after a linked Show/Book is hard-deleted (the FK just nulls). The migration is `supabase/migrations/20260621120000_quotes_schema.sql`.
+Standard rules apply: own `user_id` for direct RLS, four owner policies using `(select auth.uid()) = user_id`, `moddatetime` trigger on `updated_at`, explicit `GRANT` to `anon`/`authenticated`. Only `language` keeps a `CHECK` ('en' | 'zh'); `source_type` and `category` are **plain TEXT with no CHECK** since their values are owner-configurable (see `profile.quote_source_types`/`quote_categories`) — validation moves to the app (`src/lib/quotes-config.ts`). **Hard delete** (leaf table; no `deleted_at`). `show_id`/`book_id` are optional enrichment — because `author`, `title`, and `source_type` live on the quote, it stays complete after a linked Show/Book is hard-deleted (the FK just nulls). The migration is `supabase/migrations/20260621120000_quotes_schema.sql`.
 
 ### medical_lab_test (reference / seed — not user data; RLS on, read-only to clients)
 

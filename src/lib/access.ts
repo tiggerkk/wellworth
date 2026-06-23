@@ -35,3 +35,23 @@ export function isEmailAllowed(
 
 /** The allowlist configured for this build (empty ⇒ no restriction). */
 export const ALLOWED_EMAILS = parseAllowlist(import.meta.env.VITE_ALLOWED_EMAILS)
+
+/**
+ * Read an OAuth error the provider handed back on the redirect (e.g.
+ * `?error=access_denied&error_code=signup_disabled&error_description=...`, in the query or the hash)
+ * into a human message, or null when there's none. Surfaced on Login so a failed sign-in explains
+ * itself instead of silently looping. `signup_disabled` is the common one after a DB reset wipes
+ * `auth.users` while Supabase sign-ups are turned off (see OWNER-RUNBOOK Part H3 / M1).
+ */
+export function parseOAuthError(search: string, hash: string): string | null {
+  const q = new URLSearchParams(search.replace(/^\?/, ''))
+  const h = new URLSearchParams(hash.replace(/^#/, ''))
+  const code = q.get('error_code') ?? h.get('error_code')
+  const desc = q.get('error_description') ?? h.get('error_description')
+  const err = q.get('error') ?? h.get('error')
+  if (!code && !desc && !err) return null
+  if (code === 'signup_disabled') {
+    return 'New sign-ups are disabled for this app. Ask the owner to enable sign-ups in Supabase (then sign in again).'
+  }
+  return desc ?? err ?? 'Sign-in failed — please try again.'
+}

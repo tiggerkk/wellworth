@@ -4,46 +4,53 @@
  * (language detection, category-chip palette, selectors) live in `src/lib/quotes.ts`.
  */
 
-/** The six categories; exactly one is required per quote. */
+/**
+ * The default categories + their initial display order. Exactly one category is required per quote.
+ * Since M8 these are only the **seed defaults**: the owner can add/rename/delete/reorder them in Quotes
+ * Settings (stored on `profile.quote_categories`). The literal-union type describes the defaults' shape;
+ * stored values are plain `string` keys (see `src/lib/quotes-config.ts`).
+ */
 export const QUOTE_CATEGORIES = [
+  'wit',
+  'observation',
   'philosophy',
   'heart',
   'connection',
   'growth',
-  'wit',
-  'observation',
 ] as const
 export type QuoteCategory = (typeof QUOTE_CATEGORIES)[number]
 
 export const QUOTE_CATEGORY_LABELS: Record<QuoteCategory, string> = {
+  wit: 'Wit',
+  observation: 'Observation',
   philosophy: 'Philosophy',
   heart: 'Heart',
   connection: 'Connection',
   growth: 'Growth',
-  wit: 'Wit',
-  observation: 'Observation',
 }
 
-/** The medium a quote came from. */
+/** The default source types (the medium a quote came from) + their initial display order (seed defaults). */
 export const QUOTE_SOURCE_TYPES = [
-  'tv',
-  'movie',
   'book',
   'podcast',
+  'tv',
+  'movie',
+  'interview',
   'article',
-  'video',
   'song',
+  'video',
 ] as const
 export type QuoteSourceType = (typeof QUOTE_SOURCE_TYPES)[number]
 
 export const QUOTE_SOURCE_TYPE_LABELS: Record<QuoteSourceType, string> = {
-  tv: 'TV Show',
-  movie: 'Movie',
   book: 'Book',
   podcast: 'Podcast',
+  tv: 'TV Show',
+  movie: 'Movie',
+  interview: 'Interview',
   article: 'Article',
-  video: 'Video',
   song: 'Song',
+  video: 'Video',
 }
 
 /** Language of a quote; auto-detected from the text (CJK -> 'zh'), editable on the form. */

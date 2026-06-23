@@ -1,5 +1,6 @@
-import { lazy, Suspense, useCallback, useState } from 'react'
+import { Suspense, useCallback, useState } from 'react'
 import { IconChevronDown } from '@tabler/icons-react'
+import { lazyWithReload } from '../lib/lazy-with-reload'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useNetWorthVersion } from '../lib/networth-refresh'
@@ -21,7 +22,7 @@ import { SegmentedTabs } from '../components/SegmentedTabs'
 import type { TrendRow } from '../components/NetWorthTrendChart'
 
 // Lazy so recharts is fetched only when the dashboard renders (own chunk).
-const NetWorthTrendChart = lazy(() =>
+const NetWorthTrendChart = lazyWithReload(() =>
   import('../components/NetWorthTrendChart').then((m) => ({
     default: m.NetWorthTrendChart,
   })),

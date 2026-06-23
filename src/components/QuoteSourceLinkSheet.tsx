@@ -12,14 +12,12 @@ import { SearchBar } from './SearchBar'
 import { Thumb } from './Thumb'
 import { StatusChip } from './StatusChip'
 
-const KIND_LABEL: Record<QuoteSourceType, string> = {
+// Link candidates only ever carry a linking source type (tv/movie for shows, book for books); these
+// are the protected keys, so a short fixed label is enough (fallback to the raw value for safety).
+const KIND_LABEL: Partial<Record<QuoteSourceType, string>> = {
   tv: 'TV',
   movie: 'Movie',
   book: 'Book',
-  podcast: 'Podcast',
-  article: 'Article',
-  video: 'Video',
-  song: 'Song',
 }
 
 interface QuoteSourceLinkSheetProps {
@@ -105,7 +103,7 @@ export function QuoteSourceLinkSheet({ onSelect, onClose }: QuoteSourceLinkSheet
                   </span>
                   <span className="mt-0.5 flex items-center gap-2">
                     <StatusChip
-                      label={KIND_LABEL[c.sourceType]}
+                      label={KIND_LABEL[c.sourceType] ?? c.sourceType}
                       className="bg-input text-text-secondary"
                     />
                     {c.authors.length > 0 && (

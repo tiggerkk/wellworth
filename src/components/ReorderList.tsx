@@ -10,6 +10,8 @@ interface ReorderListProps {
   renderLabel: (id: string) => ReactNode
   /** Accessible label for a row's drag handle. */
   handleLabel?: (id: string) => string
+  /** Optional trailing controls for a row (e.g. rename / delete), rendered outside the truncated body. */
+  renderTrailing?: (id: string) => ReactNode
 }
 
 interface DragState {
@@ -31,6 +33,7 @@ export function ReorderList({
   onReorder,
   renderLabel,
   handleLabel,
+  renderTrailing,
 }: ReorderListProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const startY = useRef(0)
@@ -112,6 +115,7 @@ export function ReorderList({
             <div className="min-w-0 flex-1 truncate text-[15px] text-text-primary">
               {renderLabel(id)}
             </div>
+            {renderTrailing && <div className="shrink-0">{renderTrailing(id)}</div>}
           </div>
         )
       })}

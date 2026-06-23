@@ -15,13 +15,16 @@ Quote,Author,Source,Title,Category,Tags,is_favorite
   keep the whole cell wrapped in `"…"` (Excel/Numbers do this automatically on **Save As CSV UTF-8**),
   and double any internal quote as `""`.
 - **Author** — who said or wrote it (the speaker/character for screen quotes). Optional.
-- **Source** — the medium. **Required**, one of: `tv`, `movie`, `book`, `podcast`, `article`, `video`,
-  `song` (case-insensitive). An unknown or blank value flags the row.
+- **Source** — the medium. **Required**, and must match one of your configured **Source Types**
+  (Quotes Settings → Values → Source Types) by its **key or label**, case-insensitive — so both `tv`
+  and `TV Show` work. Default values: Book, Podcast, TV Show, Movie, Interview, Article, Song, Video. An
+  unknown or blank value flags the row.
 - **Title** — the source title (show, film, book, podcast…). Optional. If it matches one of your
-  existing **Shows** (for `tv`/`movie`) or **Books** (for `book`) by title, the quote is **linked** to
-  that record automatically.
-- **Category** — **Required**, exactly one of: `philosophy`, `heart`, `connection`, `growth`, `wit`,
-  `observation` (case-insensitive). A blank or unrecognised value flags the row.
+  existing **Shows** (for the Show-linking sources TV/Movie) or **Books** (for Book) by title, the quote
+  is **linked** to that record automatically.
+- **Category** — **Required**, and must match one of your configured **Categories** (Quotes Settings →
+  Values → Categories) by key or label, case-insensitive. Default values: Wit, Observation, Philosophy,
+  Heart, Connection, Growth. A blank or unrecognised value flags the row.
 - **Tags** — a single cell of comma-separated tags, e.g. `"wisdom, humility"`. Optional (blank = none).
   Wrap it in quotes so the commas stay inside one cell; each tag is then trimmed and de-duplicated.
 - **is_favorite** — `true`/`1`/`yes` marks the quote a favourite (the ♥). Optional (blank = not a

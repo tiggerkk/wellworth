@@ -45,6 +45,42 @@ export async function deleteQuote(id: string): Promise<void> {
   if (error) throw error
 }
 
+/** A field whose value is a configurable Source Type / Category key (see `src/lib/quotes-config.ts`). */
+export type ConfigurableQuoteField = 'source_type' | 'category'
+
+/** How many of the user's quotes use a given source-type / category key — gates a value's deletion. */
+export async function countQuotesByField(
+  userId: string,
+  field: ConfigurableQuoteField,
+  key: string,
+): Promise<number> {
+  const { count, error } = await supabase
+    .from('quote')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .eq(field, key)
+  if (error) throw error
+  return count ?? 0
+}
+
+/**
+ * Reassign every quote using `fromKey` to `toKey` for the given field — the migration step when the
+ * owner deletes an in-use Source Type / Category. `field` is a fixed union (no injection surface).
+ */
+export async function reassignQuoteField(
+  userId: string,
+  field: ConfigurableQuoteField,
+  fromKey: string,
+  toKey: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from('quote')
+    .update({ [field]: toKey } as QuoteUpdate)
+    .eq('user_id', userId)
+    .eq(field, fromKey)
+  if (error) throw error
+}
+
 /**
  * Distinct tags across the user's quotes, sorted — drives the Entry tag autocomplete (and the M5
  * Library tag facet). Quotes data is small, so fetch the `tags` column and dedupe client-side.

@@ -46,7 +46,7 @@ the permanent docs and deleted (with the `CONTINUITY.md` handoff).
   `VITE_GOOGLE_BOOKS_API_KEY` (Books), and the optional `VITE_ALLOWED_EMAILS` (email allowlist —
   empty ⇒ no restriction). All build-time `VITE_` vars.
 - **Gates:** husky `.husky/pre-commit` → lint-staged + `typecheck` + `test`; GitHub Actions
-  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 329 Vitest tests (pure helpers).
+  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 351 Vitest tests (pure helpers).
 - **Deploy status:** Deployed. GitHub `main` → Vercel auto-deploy; the production URL is in the
   Supabase redirect URLs + Google JS origins (see `OWNER-RUNBOOK.md`). Installed + tested on iPhone (PWA).
 - Conventions (DB-access-via-`src/data`, metric storage, generated `database.ts` contract, etc.) live
@@ -1309,6 +1309,27 @@ already rendered on the form + detail since M2.) **No migration** — the six ke
   and a `PublicKeyCredentialDescriptor.id` both errored. Fix: annotate the byte helpers that feed those
   APIs as **`Uint8Array<ArrayBuffer>`** (a `new Uint8Array(n)` / `getRandomValues` result already is
   one — only the explicit `: Uint8Array` annotations widened it). Don't reach for `as unknown as` casts.
+- **F11 — Lazy chunk fails on the installed iPhone PWA after a deploy.** Tapping a lazy-loaded view
+  (Medical/Net Worth trend chart, barcode scanner) on the installed iOS PWA threw _"'text/html' is not
+  a valid JavaScript MIME type"_ (laptop was fine). Cause: `registerType: 'autoUpdate'`
+  (skipWaiting + clientsClaim) swaps in the new service worker mid-session and `cleanupOutdatedCaches`
+  drops the old precache; the already-loaded old page then `import()`s an **old hashed chunk** the new
+  SW doesn't have, so Vercel's SPA fallback returns `index.html` (text/html) for the missing
+  `/assets/*.js` and the browser refuses to execute it as a module. Fix: **`lazyWithReload`**
+  (`src/lib/lazy-with-reload.ts`) wraps every `React.lazy` and, on a chunk-load failure, forces a
+  one-time `location.reload()` (guarded by a `sessionStorage` flag against loops) to fetch the fresh
+  HTML + chunk names. Use it for all `lazy()` imports — don't call `React.lazy` directly.
+- **F12 — Google sign-in loops silently after `supabase db reset --linked`.** The reset wipes
+  `auth.users` (deletes your account); with Supabase **"Allow new users to sign up" OFF** (the intended
+  lockdown, OWNER-RUNBOOK H3) the next Google sign-in is a _new signup_ and is rejected — the provider
+  redirects to `…/?error=access_denied&error_code=signup_disabled` with no session, so the app bounces
+  back to Login. It looked like an app bug (loops on laptop dev + Safari + PWA, no on-screen message)
+  but was a project setting. **Operational fix:** re-enable sign-ups in Supabase, sign in once, turn it
+  back off. **Code fix:** `parseOAuthError` (`src/lib/access.ts`) reads the redirect's `error`/
+  `error_description` (query or hash), captured in `AuthProvider` via a `useState` initializer **during
+  the first render** (before the router strips the query) and shown on Login — so a failed sign-in
+  explains itself instead of looping silently. Don't debug an auth loop without first checking the
+  redirect URL's `?error=` and the Supabase sign-up toggle.
 
 ## Shows / Books / global enhancement (favourites, Esc, master-series removal)
 
@@ -1435,6 +1456,59 @@ still writes a plain INT to `watched_episodes`. 323 → **329**.
   that season (or there's no match), so a no-match row degrades gracefully rather than guessing.
 - Docs: `templates/shows-import-guide.md` + an `all` example row in the template CSV; `01-screens.md`
   Import section.
+
+## Wellness Settings → bottom-nav tab
+
+Owner request: move Wellness **Settings** off the top-right header **gear** and onto a **bottom-nav
+tab**, matching Shows/Books/Quotes/Medical. Pure UI/navigation — no schema, data, or route change
+(`/wellness/settings` already existed and stays in `AppShell.TAB_FOR_PATH` so its sub-sheets still
+paint over it).
+
+- **`modules.ts`**: appended `{ Settings → /wellness/settings, IconSettings }` to the Wellness
+  `tabs` (now Dashboard, Diary, Library, Settings + the Home item → 5 nav items, same as Medical).
+- Removed the `<Link to=settings>` gear (and now-unused `Link`/`IconSettings` imports) from the three
+  Wellness screen headers: `Dashboard.tsx`, `Diary.tsx`, `Library.tsx`.
+- `WellnessSettings.tsx` keeps its back-chevron + title header (same pattern as `ShowsSettings`,
+  reached as a tab); only its doc comment updated. No test change (no pure-logic change).
+
+## Quotes — owner-configurable Source Types & Categories
+
+Owner request: make the Quotes **Source Type** and **Category** dropdowns configurable
+(add/rename/delete/reorder) in Settings, migrating existing quotes when an in-use value is deleted.
+Chose **profile JSONB config + stable text key on the row** over dedicated tables (consistent with the
+Medical/Shows/Books precedent of additive `profile` columns; zero data migration since `quote.source_type`/
+`category` already hold the keys). 329 → **348**.
+
+- **Schema (existing migrations edited in place; DB reset workflow)**: dropped the `source_type` /
+  `category` CHECK constraints on `quote` (`20260621120000_quotes_schema.sql`); added
+  `quote_source_types jsonb` + `quote_categories jsonb` to `profile`
+  (`20260621130000_profile_quote_settings.sql`). NULL ⇒ canonical seed defaults (no per-user seeding /
+  backfill). Regenerated `src/types/database.ts` (both surface as `Json | null`).
+- **New seed order + value**: Source Types now Book, Podcast, TV Show, Movie, **Interview** (new),
+  Article, Song, Video; Categories Wit, Observation, Philosophy, Heart, Connection, Growth (in
+  `src/constants/quotes.ts`, which are now only the **seed defaults** — the literal-union types describe
+  the defaults' shape, while stored values are plain `string` keys).
+- **Pure model** `src/lib/quotes-config.ts` (+ tests): `{key,label,linkKind}` / `{key,label}` configs;
+  `effective*` resolution where **a non-null override is authoritative** (does NOT re-append missing
+  canonical defaults — otherwise a deleted default would resurrect; NULL still yields current defaults);
+  canonical keys keep their built-in `linkKind` even if an override corrupts it; tolerant `*Label`
+  lookups (raw-key fallback); `matchKeyOrLabel` (import), `generateKey` (slugify+uniquify), and
+  add/rename/remove/reorder transforms.
+- **Linking preserved**: `linkKind` (tv/movie→show, book→book) drives `resolveLink` (importer) +
+  `selectLink` (Entry); TV/Movie/Book are **protected from deletion** (`isProtectedSourceKey`).
+- **Delete migration**: `countQuotesByField` + `reassignQuoteField` (`src/data/quote.ts`) — deleting an
+  in-use value forces a reassignment picker that bulk-moves the affected quotes, then removes the value;
+  the last value in a list can't be deleted.
+- **Read sites** switched to config-driven, orphan-tolerant lookups: `QuotesEntry` (Category now defaults
+  to the first value like Source Type — the blank "Select category…" sentinel is gone), `QuotesLibrary`,
+  `QuotesZen`, `ImportQuotesSheet`. `QuotesEntry` now fetches `profile` once in the outer loader and
+  passes it down (avoids a double `useProfile`).
+- **UI**: new shared `QuoteListEditor` (add/rename/delete/reorder + reassignment modal) over an extended
+  `ReorderList` (added an optional `renderTrailing` per-row slot); new sheets `QuoteSourceTypesSheet` /
+  `QuoteCategoriesSheet` reached from a **Values** section in `QuotesSettings` (background-location sheets
+  over `/quotes/settings` — no `AppShell.TAB_FOR_PATH` change).
+- **Importer**: `parseQuotesCsv`/`resolveLink`/`buildImportPayload` take the effective lists; Source/
+  Category match by **key or label** (case-insensitive); unknown ⇒ skip-with-error (unchanged contract).
 
 ## Known limitations / deferred (not spec issues — future work)
 

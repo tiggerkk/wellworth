@@ -3,9 +3,14 @@
 ## Stack
 
 - **Frontend:** React + Vite + TypeScript (strict mode). Tailwind CSS (v4, CSS-first via
-  `@tailwindcss/vite`). `vite-plugin-pwa` for install/offline. **React Router** (the unified
-  `react-router` package) for routing + modal sheets. **Recharts** powers the Net Worth dashboard
-  trend chart; it's **lazy-loaded** (its own chunk) so it stays out of the initial bundle.
+  `@tailwindcss/vite`). `vite-plugin-pwa` (`registerType: 'autoUpdate'`) for install/offline. **React
+  Router** (the unified `react-router` package) for routing + modal sheets. **Recharts** powers the Net
+  Worth dashboard trend chart; it's **lazy-loaded** (its own chunk) so it stays out of the initial bundle.
+- **Lazy chunks load via `src/lib/lazy-with-reload.ts` (`lazyWithReload`), not bare `React.lazy`.** After
+  a deploy the installed PWA can reference the previous build's hashed chunk names; the missing
+  `/assets/*.js` then returns the SPA fallback HTML ("'text/html' is not a valid JavaScript MIME type").
+  `lazyWithReload` forces a **one-time** `location.reload()` (sessionStorage-guarded against loops) to pull
+  fresh chunk names. Used by the Net Worth / Medical trend charts and the barcode scanner.
 - **Barcode:** `@zxing/browser` (`BrowserMultiFormatReader`) + `@zxing/library` decoding the device
   camera via `getUserMedia`. Requires HTTPS (localhost is exempt for dev). The scanner is lazy-loaded
   so ZXing is a separate chunk, fetched only when scanning.
@@ -75,6 +80,13 @@ Supabase (Postgres + RLS). Components hold no SQL and never import the Supabase 
   library (the activities in `05-seed-data.md`) if the user has none. Both are idempotent
   (insert-if-missing), guarded against React StrictMode double-invoke; not DB triggers. The user then
   edits in Settings.
+- **Access control + error surfacing (`src/lib/access.ts`, enforced in `AuthProvider`).** An optional
+  build-time email allowlist (`VITE_ALLOWED_EMAILS`, parsed by `parseAllowlist`/`isEmailAllowed`) signs
+  out any account whose email isn't listed (empty ⇒ no restriction) — a convenience layer over RLS +
+  Supabase's sign-up controls, not a replacement (see `OWNER-RUNBOOK.md` H3). `parseOAuthError` reads an
+  error the provider hands back on the redirect (`?error=…`/`#error=…`, captured during the first render
+  before the router strips it) so Login explains a failed sign-in instead of looping silently — most
+  notably `signup_disabled` after a `db reset --linked` wipes `auth.users` while sign-ups are off.
 
 ## Sync
 
@@ -244,23 +256,34 @@ _Quotes re-skins Books/Shows; only the differences are noted. There is **no exte
 "Discover Quotes" external fetch is out of scope._
 
 - **Data:** `src/data/quote.ts` — `listQuotes`/`getQuote`/`createQuote`/`updateQuote`/`deleteQuote`
-  (hard delete) over the single `quote` table, plus `listDistinctTags` (Entry autocomplete) and the
+  (hard delete) over the single `quote` table, plus `listDistinctTags` (Entry autocomplete),
+  `countQuotesByField`/`reassignQuoteField` (the delete-a-value migration for configurable lists), and the
   idempotent `saveImportedQuotes`. `src/lib/quotes-refresh.ts` (`bumpQuotes`/`useQuotesVersion`) is the
   module's data-changed tick.
+- **Configurable lists** (`src/lib/quotes-config.ts`, pure + tested): Source Type and Category are
+  **owner-configurable** — stored as JSONB arrays on `profile.quote_source_types` (`{key,label,linkKind}`)
+  / `quote_categories` (`{key,label}`); `quote.source_type`/`category` store the stable `key` (no DB CHECK).
+  `effectiveSourceTypes`/`effectiveCategories` resolve the override (NULL ⇒ the seed defaults in
+  `src/constants/quotes.ts`; a non-null override is **authoritative** so a deleted default doesn't
+  resurrect); `sourceTypeLabel`/`categoryLabel` fall back to the raw key (orphan tolerance); `linkKindFor`
+  drives Show/Book linking; `matchKeyOrLabel` resolves an import cell; `generateKey` + add/rename/remove/
+  reorder transforms; `isProtectedSourceKey` (tv/movie/book — undeletable so linking can't break).
 - **Logic** (`src/lib/quotes.ts`, pure + tested): `detectLanguage(text)` (any CJK char ⇒ `zh`, else
   `en`); `quoteSearchText`; the `QUOTE_CATEGORY_CHIP` chip class (a single neutral palette — per-category
   colours are an optional, deferred nicety); the Library view `applyLibraryView(quotes, criteria)`
   (query over text+author+title+tags; Category / **multi-select Tags = OR** / Favourites / Source type /
-  Language; plus the `showId`/`bookId` URL constraint) with `quoteTags` driving the tag facet;
-  **filter-only** (no sort menu — newest-touched order preserved). The cross-module linker model is
-  `LinkCandidate` + `filterLinkCandidates` (the screen maps `ShowRow`/`BookRow` → candidates, so
-  `quotes.ts` stays decoupled from `shows.ts`/`books.ts`). The Zen randomiser is `initialZenPool`
-  (favourites first, else all), `nextZenPool` (whole pool minus current — no immediate repeat), and
-  `randomItem(items, random = Math.random)` (random injected for deterministic tests). Field visibility
-  is `QUOTE_ENTRY_FIELDS` + the pure `isFieldVisible` (NULL prefs ⇒ all visible).
-- **UI:** `QuotesEntry` (create/edit form; outer-loader + inner-form with the `JSON.stringify` dirty
-  RESET/SAVE; Source Type/Category reuse `SelectMenu`, Language reuses `SegmentedTabs`, a header
-  favourite heart; a **`23505` unique-violation** on save → inline "You already have this quote.").
+  Language — Category/Source compare configured keys; plus the `showId`/`bookId` URL constraint) with
+  `quoteTags` driving the tag facet; **filter-only** (no sort menu — newest-touched order preserved). The
+  cross-module linker model is `LinkCandidate` + `filterLinkCandidates` (the screen maps `ShowRow`/`BookRow`
+  → candidates, so `quotes.ts` stays decoupled from `shows.ts`/`books.ts`). The Zen randomiser is
+  `initialZenPool` (favourites first, else all), `nextZenPool` (whole pool minus current — no immediate
+  repeat), and `randomItem(items, random = Math.random)` (random injected for deterministic tests). Field
+  visibility is `QUOTE_ENTRY_FIELDS` + the pure `isFieldVisible` (NULL prefs ⇒ all visible).
+- **UI:** `QuotesEntry` (create/edit form; the outer loader fetches the quote **and** the profile once,
+  passing the effective Source Type/Category lists down; inner-form with the `JSON.stringify` dirty
+  RESET/SAVE; Source Type/Category reuse `SelectMenu` with options from the configured lists — **Category
+  defaults to the first value** like Source Type, no blank sentinel; Language reuses `SegmentedTabs`, a
+  header favourite heart; a **`23505` unique-violation** on save → inline "You already have this quote.").
   `QuotesLibrary` (search + a collapsible facet panel of `SelectMenu`s + a Favourites `Toggle` +
   Tag toggle-chips; swipe-delete; a "Quotes from this title" banner when constrained). `QuotesZen`
   (favourites-first random card; a **Shuffle** button + a hand-rolled **pull-to-refresh** Pointer-Events
@@ -277,19 +300,27 @@ _Quotes re-skins Books/Shows; only the differences are noted. There is **no exte
   prefill the form (copy-paste, or an optional Apple Books **Shortcut** that opens that URL — see the
   runbook). A **Paste from clipboard** button fills Quote Text from `navigator.clipboard`. No direct
   Apple Books API exists.
-- **Settings (split, like Shows/Books):** `QuotesSettings` (gear in the Quotes headers) hosts **Entry
-  field visibility** (`QuotesFieldsSheet`, a route sheet of toggles over `QUOTE_ENTRY_FIELDS`,
-  auto-saving via `useProfileEditor`) + an **importer enable** toggle. Both prefs sync on `profile` —
-  `quote_visible_fields` (`text[]`, **NULL = all visible**) and `quote_importer_enabled` (`boolean`).
-  Entry reads them through `useProfile` + `isFieldVisible` (Quote Text + Category always shown).
+- **Settings (split, like Shows/Books — a Settings tab in the bottom nav):** `QuotesSettings` hosts
+  **Entry field visibility** (`QuotesFieldsSheet`, a route sheet of toggles over `QUOTE_ENTRY_FIELDS`,
+  auto-saving via `useProfileEditor`), a **Values** section that manages the **Source Type** and
+  **Category** lists (`QuoteSourceTypesSheet`/`QuoteCategoriesSheet` route sheets over the shared
+  **`QuoteListEditor`**: add/rename/inline-edit + drag-reorder via `ReorderList` (extended with a
+  per-row `renderTrailing` slot) + delete; deleting an in-use value opens a reassignment picker that
+  bulk-moves quotes then removes the value, the last value can't be deleted, and tv/movie/book are
+  delete-protected), and an **importer enable** toggle. Prefs sync on `profile` —
+  `quote_visible_fields` (`text[]`, **NULL = all visible**), `quote_source_types`/`quote_categories`
+  (`jsonb`, **NULL = seed defaults**), and `quote_importer_enabled` (`boolean`). Entry reads visibility
+  through `useProfile` + `isFieldVisible` (Quote Text + Category always shown).
 - **CSV importer (in-app):** enabled by the Settings toggle → `ImportQuotesSheet`. Pure parse/validate
-  in `src/lib/quotes-import.ts` (`parseQuotesCsv` via the shared `src/lib/csv.ts`; columns
-  `Quote,Author,Source,Title,Category,Tags,is_favorite`; Category/Source validated, **Tags
-  read-whole-cell-then-split-on-`,`**, Language auto-detected, the trailing `is_favorite` boolean carried
-  through), `partitionNewRows` (existing + in-file dedup on
-  `lower(trim(text))`), and `buildTitleIndex`/`resolveLink` (optional Title→Show/Book link **by source
-  type**: tv/movie→Show, book→Book, others→none). The sheet loads existing-norms + the local title index
-  once (no external API, no concurrency pool), previews **new / duplicate / flagged** counts, and commits
+  in `src/lib/quotes-import.ts` (`parseQuotesCsv(rows, sourceTypes, categories)` via the shared
+  `src/lib/csv.ts`; columns `Quote,Author,Source,Title,Category,Tags,is_favorite`; **Category/Source
+  matched against the configured lists by key OR label (case-insensitive) via `matchKeyOrLabel`**, unknown
+  ⇒ skip-with-error; **Tags read-whole-cell-then-split-on-`,`**, Language auto-detected, the trailing
+  `is_favorite` boolean carried through), `partitionNewRows` (existing + in-file dedup on
+  `lower(trim(text))`), and `buildTitleIndex`/`resolveLink` (optional Title→Show/Book link **by the source
+  type's `linkKind`**: show→Show, book→Book, none→neither). The sheet (which also reads the profile lists)
+  loads existing-norms + the local title index once (no external API, no concurrency pool), previews
+  **new / duplicate / flagged** counts, and commits
   via the **idempotent** `saveImportedQuotes` — `upsert(..., { onConflict: 'user_id,text_norm',
 ignoreDuplicates: true })` = the spec's `ON CONFLICT DO NOTHING`. Sanitized template + guide in
   `templates/`.
@@ -415,8 +446,10 @@ VITE_GOOGLE_BOOKS_API_KEY=...  # optional, raises Google Books quota — Books
 local Docker stack). RLS is enabled in the first migration for every table, **and migrations must
 `GRANT` table privileges (select/insert/update/delete) to the `anon`/`authenticated` roles** — RLS
 alone is insufficient because raw-SQL-migration tables don't inherit Supabase's default grants.
-Enumerated TEXT columns use `CHECK` constraints (not Postgres enums); `updated_at` is maintained by
-the `moddatetime` trigger. Regenerate `src/types/database.ts` (`npm run gen:types`) after each push.
+Enumerated TEXT columns use `CHECK` constraints (not Postgres enums) — **except** the **owner-configurable**
+`quote.source_type`/`category`, which are plain TEXT (no CHECK) validated in-app against the configurable
+lists (see Quotes). `updated_at` is maintained by the `moddatetime` trigger. Regenerate
+`src/types/database.ts` (`npm run gen:types`) after each push.
 
 ## Quality gates (run automatically)
 

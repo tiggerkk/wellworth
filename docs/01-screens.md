@@ -175,7 +175,7 @@ Two sub-tabs:
 - **Icon**: an icon picker (the keys of `ACTIVITY_ICONS`); optional, defaults to `IconRun`.
 - Top-right: **RESET** + **CREATE** (new) / **SAVE** (editing). RESET (and, when editing **SAVE**) are enabled only when something changed; CREATE requires a name and a MET for the default effort.
 
-## Wellness - Settings
+## Wellness - Settings (from the Settings tab in the Wellness bottom nav)
 
 Wellness-module sub-settings. Auto-save on change. A back chevron returns to the previous Wellness screen.
 
@@ -488,6 +488,15 @@ An in-app bulk importer (the owner's choice over a script — same as Net Worth 
 ## Quotes - Settings (from the Settings tab in the Quotes bottom nav)
 
 - **Visible Fields**: choose which Add/Edit fields appear (Quote Text + Category always shown).
+- **Values** — manage the dropdown lists used on the Add/Edit form (each opens a sheet):
+  - **Source Types** and **Categories**: **add / rename / delete / reorder** (drag handle) the values;
+    order = display order in the dropdowns + Library filters. Changes auto-save. Seed defaults — Source
+    Types: Book, Podcast, TV Show, Movie, Interview, Article, Song, Video; Categories: Wit, Observation,
+    Philosophy, Heart, Connection, Growth.
+  - **Delete migration**: deleting a value still used by quotes prompts a **reassignment** — pick a
+    replacement and the affected quotes are moved to it before the value is removed. A value can't be
+    deleted if it's the last one in its list. **TV / Movie / Book** source types are **protected from
+    deletion** (they auto-link a quote to the Shows/Books library) — they can still be renamed/reordered.
 - **Enable CSV import**: surfaces the **Import CSV…** launcher.
 
 ## Quotes - Import CSV (sheet, from Quotes Settings)
@@ -496,9 +505,10 @@ An in-app bulk importer (the owner's choice over a script — same as Net Worth 
 `Quote,Author,Source,Title,Category,Tags,is_favorite` (`is_favorite` optional trailing boolean — see `templates/quotes-import-guide.md`). **No external API** —
 unlike Shows/Books, links resolve against the user's own Show/Book rows.
 
-- **Choose CSV** → rows are parsed/validated; the **Category** is checked against the six and **Source**
-  against the seven (blank/invalid → flagged), **Tags** is split from its quoted cell, **Language** is
-  auto-detected, and a **Title** matching an existing Show (tv/movie) or Book (book) **links** the quote.
+- **Choose CSV** → rows are parsed/validated; **Category** and **Source** are matched against the owner's
+  **configured** lists by **key or label** (case-insensitive; blank/unknown → flagged + skipped), **Tags**
+  is split from its quoted cell, **Language** is auto-detected, and a **Title** matching an existing Show
+  (a `linkKind: show` source) or Book (`linkKind: book`) **links** the quote.
 - A **preview** shows counts of **new / duplicate-skipped / flagged** rows + a sample of the new rows
   (snippet + category + a "linked" marker) and the flagged rows with reasons.
 - **Import** writes only the new, valid rows **idempotently** (dedup on `lower(trim(text))` via the DB

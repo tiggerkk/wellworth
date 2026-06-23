@@ -1,13 +1,13 @@
 # PARKED — deferred & out-of-scope work
 
-Things deliberately NOT built in Phase 1, with the rationale and any design decisions already made so we don't re-litigate them. The built app + `/docs` spec are the source of truth for what _exists_; this file is the backlog and the "we decided X, don't redo that analysis" record.
+Things deliberately NOT built yet, with the rationale and any design decisions already made so we don't re-litigate them. The built app + `/docs` spec are the source of truth for what _exists_; this file is the backlog and the "we decided X, don't redo that analysis" record.
 
-Status legend: **Net Worth** (built) · **Deferred** (Phase-1-adjacent, do later) ·
+Status legend: **Net Worth** (built) · **Deferred** (later) ·
 **Out of scope** (intentionally never, or a hard platform limit).
 
 ---
 
-## Net Worth · Built (feature-complete)
+## Net Worth (built)
 
 **What:** Monthly entry of asset values across categories — cash, time deposits, stocks, mutual funds, retirement, insurance, property — each held in one of three currencies (**HKD = base**, CNY, USD). A net-worth figure computed in the base currency, plus total and by-asset-type trend graphs with a selectable time window.
 
@@ -31,7 +31,7 @@ Status legend: **Net Worth** (built) · **Deferred** (Phase-1-adjacent, do later
 
 ---
 
-## Medical · Feature-complete (M1–M7) — recorded non-goals
+## Medical (built)
 
 **What:** A private multi-year record of lab results + narrative reports, with trend charts; intake via
 manual entry or a structured JSON/CSV import (no in-app OCR); Google-Drive-URL storage; a biometric/PIN
@@ -57,7 +57,7 @@ lock. **Shipped** end-to-end (see BUILD-LOG → "Medical Build Sequence"; behavi
 
 ---
 
-## Deferred (Phase-1-adjacent)
+## Deferred
 
 ### "Log this again" re-log · Deferred
 
@@ -223,12 +223,14 @@ persist.)
 ### Quotes — per-category badge colours · Deferred
 
 **What:** A fixed accent colour per Category badge on the Zen card / Library rows (instead of one
-neutral chip for all six).
+neutral chip for all categories).
 **Why deferred:** The spec marks it **optional**, and the dark theme has only ~4 semantic colour tokens,
-so six distinct category colours would need a new palette. The single neutral `QUOTE_CATEGORY_CHIP`
+so distinct category colours would need a new palette. The single neutral `QUOTE_CATEGORY_CHIP`
 (via the presentational `StatusChip`) ships now.
-**Decided:** Add a `Record<QuoteCategory, string>` palette in `src/lib/quotes.ts` and pass it to the
-existing chip — purely additive, no structural change.
+**Decided:** Categories are now **owner-configurable** (`profile.quote_categories`), so a static
+`Record<QuoteCategory, string>` no longer fits — add an optional `color` to each `QuoteCategoryConfig`
+entry (set in the Categories management sheet), defaulting to the neutral chip, and pass it to the
+existing chip. Purely additive.
 
 ### Automated tests beyond pure helpers · Deferred
 

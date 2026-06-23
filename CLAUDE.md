@@ -41,7 +41,8 @@ module is a **drop-in** — append a `ModuleDef` to `src/constants/modules.ts` +
   `moduleForPath`) drives the hub cards + per-module `BottomNav` (Shows/Books/Quotes/Medical each append
   a **New X** tab — reusing the module's hub icon — and a **Settings** tab to their `tabs`, so the
   Dashboard/Zen/Library/Reports screens carry no title/New/Settings header of their own; Wellness orders
-  its tabs **Dashboard, Diary, Library**, Medical **Dashboard, Reports, New Medical, Settings**). Modal
+  its tabs **Dashboard, Diary, Library, Settings**, Medical **Dashboard, Reports, New Medical, Settings**).
+  Modal
   **sheets** use the
   background-location pattern (`useSheetNavigate`); `AppShell.TAB_FOR_PATH` paints the tab behind a
   sheet. `/` → `RootRedirect` (last-used module via `src/lib/last-module.ts`, else `/home`).
@@ -49,8 +50,8 @@ module is a **drop-in** — append a `ModuleDef` to `src/constants/modules.ts` +
   stack so the innermost overlay wins): sheets/Calendar/SelectMenu close themselves, and the Add/Edit
   screens `navigate(-1)` only when nothing is layered above them.
 - **Settings is split:** global `/settings` (profile, units, account) from the hub gear; per-module
-  sub-settings — Wellness from a gear in the module header at `/wellness/settings` (protein target,
-  nutrient display); Shows/Books/Quotes from a **Settings tab in the module bottom nav** at
+  sub-settings — Wellness from a **Settings tab in the module bottom nav** at `/wellness/settings`
+  (protein target, nutrient display); Shows/Books/Quotes from a **Settings tab in the module bottom nav** at
   `/shows/settings`, `/books/settings`, and `/quotes/settings` (each of the latter three: Entry
   field-visibility + CSV-importer toggle); **Medical** from its Settings tab at `/medical/settings`
   (Tracked Tests, Display Order drag-reorder, the biometric/PIN Lock, Visible Fields, importer toggle —
@@ -107,22 +108,33 @@ module is a **drop-in** — append a `ModuleDef` to `src/constants/modules.ts` +
   `BooksDashboard` / `BooksLibrary` / `BooksEntry` / `BooksSettings` / `BooksFieldsSheet` /
   `ImportBooksSheet`.
 - **Quotes (built):** one table `quote` (migration `supabase/migrations/20260621120000_quotes_schema.sql`)
-  plus two `profile` columns `quote_visible_fields` / `quote_importer_enabled`
-  (`20260621130000_profile_quote_settings.sql`). The `quote` table denormalises `author`/`title`/
-  `source_type` and has optional `show_id`/`book_id` FKs (**ON DELETE SET NULL**) + a generated
-  `text_norm` with `UNIQUE(user_id, text_norm)` (no exact duplicates / import idempotency). Data
-  `src/data/quote.ts` (CRUD + `listDistinctTags` + idempotent `saveImportedQuotes` via
-  `onConflict:'user_id,text_norm'`). Pure logic `src/lib/quotes.ts` (`detectLanguage` CJK→zh,
-  `quoteSearchText`, category-chip class, `LinkCandidate`/`filterLinkCandidates`, Zen `initialZenPool`/
-  `nextZenPool`/`randomItem`, Library `applyLibraryView`/`quoteTags`, `QUOTE_ENTRY_FIELDS`/
-  `isFieldVisible`); enums in `src/constants/quotes.ts`; refresh tick `src/lib/quotes-refresh.ts`;
-  CSV importer `src/lib/quotes-import.ts` (**no external API** — links resolve against local Show/Book
-  rows; CSV ends with an `is_favorite` column). **No metadata API** ("Discover Quotes" is out of scope). Quotes **re-skins Books/Shows**: it
-  reuses `SelectMenu` / `SegmentedTabs` / `SwipeRow` / `Toggle` / `StatusChip` and the shared `Thumb`,
-  and adds the new shared **`TagInput`**. `QuoteSourceLinkSheet` (local overlay — **not** a route sheet)
-  searches local shows/books. **Moment-of-Zen** dashboard (favourites-first random + shuffle/pull-to-
-  refresh). Screens `QuotesZen` / `QuotesLibrary` / `QuotesEntry` / `QuotesSettings` / `QuotesFieldsSheet`
-  / `ImportQuotesSheet`.
+  plus four `profile` columns `quote_visible_fields` / `quote_importer_enabled` /
+  `quote_source_types` / `quote_categories` (`20260621130000_profile_quote_settings.sql`). The `quote`
+  table denormalises `author`/`title`/`source_type` and has optional `show_id`/`book_id` FKs (**ON
+  DELETE SET NULL**) + a generated `text_norm` with `UNIQUE(user_id, text_norm)` (no exact duplicates /
+  import idempotency). **`source_type` + `category` are owner-configurable** (no CHECK constraint):
+  add/rename/delete/reorder in Quotes Settings, stored as JSONB arrays on the two `profile` columns
+  (`quote_source_types` = `{key,label,linkKind}`, `quote_categories` = `{key,label}`; NULL ⇒ the
+  canonical seed defaults). `quote.source_type`/`category` store the stable `key`; **TV/Movie/Book are
+  protected from deletion** (their `linkKind` drives Show/Book auto-linking); deleting an in-use value
+  reassigns its quotes first (`countQuotesByField`/`reassignQuoteField`). Data `src/data/quote.ts` (CRUD
+  - `listDistinctTags` + count/reassign + idempotent `saveImportedQuotes` via
+    `onConflict:'user_id,text_norm'`). Pure logic `src/lib/quotes.ts` (`detectLanguage` CJK→zh,
+    `quoteSearchText`, category-chip class, `LinkCandidate`/`filterLinkCandidates`, Zen `initialZenPool`/
+    `nextZenPool`/`randomItem`, Library `applyLibraryView`/`quoteTags`, `QUOTE_ENTRY_FIELDS`/
+    `isFieldVisible`) + `src/lib/quotes-config.ts` (the configurable-list model: defaults, partial-tolerant
+    `effectiveSourceTypes`/`effectiveCategories`, tolerant `*Label` lookups with raw-key fallback, `linkKindFor`,
+    `matchKeyOrLabel`, `generateKey`, add/rename/remove/reorder transforms); enums (seed defaults only) in
+    `src/constants/quotes.ts`; refresh tick `src/lib/quotes-refresh.ts`; CSV importer
+    `src/lib/quotes-import.ts` (**no external API** — Source/Category match a configured key **or** label,
+    unknown rows skip; links resolve against local Show/Book rows; CSV ends with an `is_favorite` column).
+    **No metadata API** ("Discover Quotes" is out of scope). Quotes **re-skins Books/Shows**: it reuses
+    `SelectMenu` / `SegmentedTabs` / `SwipeRow` / `Toggle` / `StatusChip` / `ReorderList` and the shared
+    `Thumb`, and adds the shared **`TagInput`** + **`QuoteListEditor`** (add/rename/delete/reorder editor).
+    `QuoteSourceLinkSheet` (local overlay — **not** a route sheet) searches local shows/books.
+    **Moment-of-Zen** dashboard (favourites-first random + shuffle/pull-to-refresh). Screens `QuotesZen` /
+    `QuotesLibrary` / `QuotesEntry` / `QuotesSettings` / `QuotesFieldsSheet` / `QuoteSourceTypesSheet` /
+    `QuoteCategoriesSheet` / `ImportQuotesSheet`.
 - **Medical (built):** multi-year lab results + narrative reports. Three tables `medical_lab_test`
   (reference/seed, read-only to clients), `medical_report`, `medical_result` (migrations
   `20260622120000_medical_schema.sql` + `…121000_seed_medical_lab_test.sql`) plus nine `profile.medical_*`
@@ -180,7 +192,10 @@ module is a **drop-in** — append a `ModuleDef` to `src/constants/modules.ts` +
 - **App access is gated to an optional email allowlist** (`VITE_ALLOWED_EMAILS`): `src/lib/access.ts`
   (`isEmailAllowed`) + enforcement in `src/auth/AuthProvider.tsx` sign out any account whose email
   isn't listed (empty list ⇒ no restriction). This is a convenience layer over RLS + the Supabase/
-  Google sign-up controls (see `OWNER-RUNBOOK.md` Part H3), not a replacement for them.
+  Google sign-up controls (see `OWNER-RUNBOOK.md` Part H3), not a replacement for them. `access.ts`
+  also exposes `parseOAuthError`, which `AuthProvider` captures from the redirect URL on first render
+  so Login surfaces a failed sign-in (e.g. `signup_disabled` after a `db reset` wipes `auth.users`)
+  instead of looping silently.
 
 ## Database workflow
 

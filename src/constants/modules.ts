@@ -52,6 +52,7 @@ export const MODULES: ModuleDef[] = [
       { to: routes.wellness.dashboard, label: 'Dashboard', Icon: IconChartBar },
       { to: routes.wellness.diary, label: 'Diary', Icon: IconNotebook, end: true },
       { to: routes.wellness.library, label: 'Library', Icon: IconApple },
+      { to: routes.wellness.settings, label: 'Settings', Icon: IconSettings },
     ],
   },
   {

@@ -129,7 +129,14 @@ _not_ the primary-button color; it's for emphasis, active states, and energy.
   per row (`IconGripVertical`); drag it to move the row (Pointer Events, no dnd dependency — consistent
   with `SwipeRow`), rows shift to open a gap, commit on release. Uniform row height (rows truncate to one
   line) so the target slot is `round(dragΔ / rowHeight)`. `touch-action:none` is on the handle only, so
-  a row body still scrolls. Used by the Medical Display-Order sheet for sections + tests-in-section.
+  a row body still scrolls. An optional `renderTrailing(id)` slot adds per-row controls (rendered outside
+  the truncated body). Used by the Medical Display-Order sheet (sections + tests-in-section) and the
+  Quotes **`QuoteListEditor`**.
+- **QuoteListEditor** — the shared add / rename (inline) / delete / drag-reorder editor for a
+  configurable Quotes list (`src/components/QuoteListEditor.tsx`), generic over `{key,label}` entries.
+  Wraps `ReorderList` (rename + delete in the trailing slot) and auto-saves each change; deleting a
+  value still used by quotes opens a `SelectMenu` reassignment picker (bulk-moves quotes, then removes),
+  refuses the last value, and honours delete-protected keys. Used by the Source Types / Categories sheets.
 - **Sparkline** — a tiny dependency-free **inline-SVG** trend line (`src/components/Sparkline.tsx`):
   min–max normalized values, an end dot tintable by a flag colour. Used by the Medical Dashboard's
   tracked-test grid so many render cheaply without a chart library. The **full** trend chart

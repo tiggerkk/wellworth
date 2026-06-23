@@ -1,25 +1,35 @@
 import { createContext, use, useEffect, useState, type ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
-import { ALLOWED_EMAILS, isEmailAllowed } from '../lib/access'
+import { ALLOWED_EMAILS, isEmailAllowed, parseOAuthError } from '../lib/access'
 
 interface AuthState {
   session: Session | null
   loading: boolean
   /** The email of an account that signed in but isn't on the allowlist (so Login can explain). */
   deniedEmail: string | null
+  /** A human message for an OAuth error the provider returned on the redirect (else null). */
+  authError: string | null
 }
 
 const AuthContext = createContext<AuthState>({
   session: null,
   loading: true,
   deniedEmail: null,
+  authError: null,
 })
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
   const [deniedEmail, setDeniedEmail] = useState<string | null>(null)
+  // Captured during the first render — before the router navigates and strips the redirect's
+  // `?error=…` query — so a failed OAuth sign-in (e.g. sign-ups disabled) explains itself on Login.
+  const [authError] = useState<string | null>(() =>
+    typeof window === 'undefined'
+      ? null
+      : parseOAuthError(window.location.search, window.location.hash),
+  )
 
   useEffect(() => {
     // Apply a session only if its email passes the allowlist; an off-list account is signed back
@@ -48,7 +58,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => sub.subscription.unsubscribe()
   }, [])
 
-  return <AuthContext value={{ session, loading, deniedEmail }}>{children}</AuthContext>
+  return (
+    <AuthContext value={{ session, loading, deniedEmail, authError }}>
+      {children}
+    </AuthContext>
+  )
 }
 
 // eslint-disable-next-line react-refresh/only-export-components

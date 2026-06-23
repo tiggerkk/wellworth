@@ -5,29 +5,28 @@
  * rows, and writes via `saveImportedQuotes`.
  *
  * Column spec: `Quote,Author,Source,Title,Category,Tags,is_favorite`. Quote + Category are required;
- * Source must normalise to the seven source types; Tags is a single (quoted) cell of comma-separated
- * tags; is_favorite is an optional trailing boolean (`true/1/yes/y`).
+ * Source + Category must match one of the owner's configured Source Type / Category values (by key OR
+ * label, case-insensitive — the values are configurable in Quotes Settings); Tags is a single (quoted)
+ * cell of comma-separated tags; is_favorite is an optional trailing boolean (`true/1/yes/y`).
  */
 import { detectLanguage, type QuoteInsert } from './quotes'
 import {
-  QUOTE_CATEGORIES,
-  QUOTE_SOURCE_TYPES,
-  type QuoteCategory,
-  type QuoteLanguage,
-  type QuoteSourceType,
-} from '../constants/quotes'
+  linkKindFor,
+  matchKeyOrLabel,
+  type QuoteCategoryConfig,
+  type QuoteSourceTypeConfig,
+} from './quotes-config'
+import type { QuoteLanguage } from '../constants/quotes'
 
 const REQUIRED_COLUMNS = ['quote', 'source', 'category']
-
-const categorySet = new Set<string>(QUOTE_CATEGORIES)
-const sourceSet = new Set<string>(QUOTE_SOURCE_TYPES)
 
 export interface ParsedQuoteRow {
   text: string
   author: string | null
-  source_type: QuoteSourceType
+  // Configurable keys resolved from the owner's lists (see quotes-config.ts).
+  source_type: string
   title: string | null
-  category: QuoteCategory
+  category: string
   tags: string[]
   language: QuoteLanguage
   is_favorite: boolean
@@ -50,9 +49,15 @@ export function normalizeQuoteText(text: string): string {
   return text.trim().toLowerCase()
 }
 
-export function parseQuotesCsv(rows: string[][]): QuotesImportResult {
+export function parseQuotesCsv(
+  rows: string[][],
+  sourceTypes: QuoteSourceTypeConfig[],
+  categories: QuoteCategoryConfig[],
+): QuotesImportResult {
   const errors: string[] = []
   const out: ParsedQuoteRow[] = []
+  const categoryLabels = categories.map((c) => c.label).join('/')
+  const sourceLabels = sourceTypes.map((s) => s.label).join('/')
 
   if (rows.length === 0) return { rows: out, errors: ['The file is empty.'] }
 
@@ -78,18 +83,18 @@ export function parseQuotesCsv(rows: string[][]): QuotesImportResult {
       continue
     }
 
-    const categoryRaw = col(cells, 'category').toLowerCase()
-    if (!categorySet.has(categoryRaw)) {
+    const categoryKey = matchKeyOrLabel(categories, col(cells, 'category'))
+    if (!categoryKey) {
       errors.push(
-        `Row ${line}: Category "${col(cells, 'category')}" must be one of ${QUOTE_CATEGORIES.join('/')} — skipped.`,
+        `Row ${line}: Category "${col(cells, 'category')}" must be one of ${categoryLabels} — skipped.`,
       )
       continue
     }
 
-    const sourceRaw = col(cells, 'source').toLowerCase()
-    if (!sourceSet.has(sourceRaw)) {
+    const sourceKey = matchKeyOrLabel(sourceTypes, col(cells, 'source'))
+    if (!sourceKey) {
       errors.push(
-        `Row ${line}: Source "${col(cells, 'source')}" must be one of ${QUOTE_SOURCE_TYPES.join('/')} — skipped.`,
+        `Row ${line}: Source "${col(cells, 'source')}" must be one of ${sourceLabels} — skipped.`,
       )
       continue
     }
@@ -105,9 +110,9 @@ export function parseQuotesCsv(rows: string[][]): QuotesImportResult {
     out.push({
       text,
       author,
-      source_type: sourceRaw as QuoteSourceType,
+      source_type: sourceKey,
       title,
-      category: categoryRaw as QuoteCategory,
+      category: categoryKey,
       tags,
       language: detectLanguage(text),
       is_favorite: parseBool(col(cells, 'is_favorite')),
@@ -164,18 +169,23 @@ export function buildTitleIndex(
   return { showIdByTitle, bookIdByTitle }
 }
 
-/** Resolve an optional Show/Book link by source type (tv/movie → Show, book → Book, else neither). */
+/**
+ * Resolve an optional Show/Book link by the source type's configured `linkKind` (show → Show, book →
+ * Book, null → neither). Custom source types link to neither, exactly like the old non-tv/movie/book case.
+ */
 export function resolveLink(
-  sourceType: QuoteSourceType,
+  sourceType: string,
   title: string | null,
   index: TitleIndex,
+  sourceTypes: QuoteSourceTypeConfig[],
 ): { show_id: string | null; book_id: string | null } {
   if (!title) return { show_id: null, book_id: null }
   const key = title.trim().toLowerCase()
-  if (sourceType === 'tv' || sourceType === 'movie') {
+  const kind = linkKindFor(sourceTypes, sourceType)
+  if (kind === 'show') {
     return { show_id: index.showIdByTitle.get(key) ?? null, book_id: null }
   }
-  if (sourceType === 'book') {
+  if (kind === 'book') {
     return { show_id: null, book_id: index.bookIdByTitle.get(key) ?? null }
   }
   return { show_id: null, book_id: null }
@@ -191,8 +201,9 @@ export type QuoteImportPayload = Omit<
 export function buildImportPayload(
   row: ParsedQuoteRow,
   index: TitleIndex,
+  sourceTypes: QuoteSourceTypeConfig[],
 ): QuoteImportPayload {
-  const { show_id, book_id } = resolveLink(row.source_type, row.title, index)
+  const { show_id, book_id } = resolveLink(row.source_type, row.title, index, sourceTypes)
   return {
     text: row.text,
     author: row.author,

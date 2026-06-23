@@ -1,6 +1,7 @@
-import { lazy, Suspense, useState } from 'react'
+import { Suspense, useState } from 'react'
 import { Link } from 'react-router'
 import { IconChevronDown, IconChevronRight, IconX } from '@tabler/icons-react'
+import { lazyWithReload } from '../lib/lazy-with-reload'
 import { useMedicalTrends } from '../hooks/useMedicalTrends'
 import { Sparkline } from '../components/Sparkline'
 import { SectionCard } from '../components/SectionCard'
@@ -23,7 +24,7 @@ import { routes } from '../constants/routes'
 
 // Lazy so recharts is fetched only when a sparkline is expanded (its own chunk). The grid itself
 // draws cheap inline-SVG sparklines and never pulls in recharts.
-const MedicalTrendChart = lazy(() =>
+const MedicalTrendChart = lazyWithReload(() =>
   import('../components/MedicalTrendChart').then((m) => ({
     default: m.MedicalTrendChart,
   })),

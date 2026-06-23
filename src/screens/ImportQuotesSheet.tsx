@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { IconLink, IconUpload, IconX } from '@tabler/icons-react'
 import { Sheet } from '../components/Sheet'
@@ -6,6 +6,7 @@ import { PrimaryButton } from '../components/PrimaryButton'
 import { StatusChip } from '../components/StatusChip'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
+import { useProfile } from '../hooks/useProfile'
 import { parseCsv } from '../lib/csv'
 import {
   buildImportPayload,
@@ -18,7 +19,11 @@ import {
   type TitleIndex,
 } from '../lib/quotes-import'
 import { QUOTE_CATEGORY_CHIP } from '../lib/quotes'
-import { QUOTE_CATEGORY_LABELS, type QuoteCategory } from '../constants/quotes'
+import {
+  categoryLabel,
+  effectiveCategories,
+  effectiveSourceTypes,
+} from '../lib/quotes-config'
 import { listQuotes, saveImportedQuotes } from '../data/quote'
 import { listShows } from '../data/show'
 import { listBooks } from '../data/book'
@@ -58,6 +63,17 @@ export function ImportQuotesSheet() {
   }, [userId])
   const { data: ctx, loading: ctxLoading } = useAsync(ctxFn)
 
+  // The owner's configurable Source Type / Category lists drive validation + label display.
+  const { data: profile } = useProfile()
+  const sourceTypes = useMemo(
+    () => effectiveSourceTypes(profile?.quote_source_types ?? null),
+    [profile],
+  )
+  const categories = useMemo(
+    () => effectiveCategories(profile?.quote_categories ?? null),
+    [profile],
+  )
+
   const inputRef = useRef<HTMLInputElement>(null)
   const [fileName, setFileName] = useState<string | null>(null)
   const [preview, setPreview] = useState<Preview | null>(null)
@@ -70,9 +86,9 @@ export function ImportQuotesSheet() {
     setDone(null)
     if (!ctx) return
     try {
-      const result = parseQuotesCsv(parseCsv(await file.text()))
+      const result = parseQuotesCsv(parseCsv(await file.text()), sourceTypes, categories)
       const { newRows, duplicates } = partitionNewRows(result.rows, ctx.existingNorms)
-      const payloads = newRows.map((r) => buildImportPayload(r, ctx.index))
+      const payloads = newRows.map((r) => buildImportPayload(r, ctx.index, sourceTypes))
       setFileName(file.name)
       setPreview({ newRows, payloads, duplicates, errors: result.errors })
     } catch (e) {
@@ -184,7 +200,7 @@ export function ImportQuotesSheet() {
                       </p>
                       <p className="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-secondary">
                         <StatusChip
-                          label={QUOTE_CATEGORY_LABELS[r.category as QuoteCategory]}
+                          label={categoryLabel(categories, r.category)}
                           className={QUOTE_CATEGORY_CHIP}
                         />
                         {r.author && <span className="truncate">{r.author}</span>}

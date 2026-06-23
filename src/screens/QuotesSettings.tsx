@@ -57,6 +57,25 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
         </button>
       </SectionCard>
 
+      <SectionCard title="Values">
+        <button
+          onClick={() => openSheet(routes.quotes.settingsSourceTypes)}
+          className="w-full"
+        >
+          <FieldRow label="Source Types">
+            <IconChevronRight size={18} className="text-text-tertiary" />
+          </FieldRow>
+        </button>
+        <button
+          onClick={() => openSheet(routes.quotes.settingsCategories)}
+          className="w-full"
+        >
+          <FieldRow label="Categories">
+            <IconChevronRight size={18} className="text-text-tertiary" />
+          </FieldRow>
+        </button>
+      </SectionCard>
+
       <SectionCard title="Import">
         <FieldRow label="Enable CSV import">
           <Toggle

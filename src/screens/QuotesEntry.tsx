@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
 import {
   IconClipboard,
@@ -18,18 +18,20 @@ import {
   type LinkCandidate,
   type QuoteRow,
 } from '../lib/quotes'
+import {
+  effectiveCategories,
+  effectiveSourceTypes,
+  sourceTypeLabel,
+  type QuoteCategoryConfig,
+  type QuoteSourceTypeConfig,
+} from '../lib/quotes-config'
 import { bumpQuotes } from '../lib/quotes-refresh'
 import {
-  QUOTE_CATEGORIES,
-  QUOTE_CATEGORY_LABELS,
   QUOTE_LANGUAGE_LABELS,
   QUOTE_LANGUAGES,
-  QUOTE_SOURCE_TYPE_LABELS,
-  QUOTE_SOURCE_TYPES,
-  type QuoteCategory,
   type QuoteLanguage,
-  type QuoteSourceType,
 } from '../constants/quotes'
+import type { Tables } from '../types/database'
 import { PrimaryButton } from '../components/PrimaryButton'
 import { SecondaryButton } from '../components/SecondaryButton'
 import { SegmentedTabs } from '../components/SegmentedTabs'
@@ -39,10 +41,11 @@ import { QuoteSourceLinkSheet } from '../components/QuoteSourceLinkSheet'
 
 interface QuoteDraft {
   text: string
+  // source_type / category hold configurable keys (see quotes-config.ts), so they're plain strings.
+  source_type: string
   author: string
-  source_type: QuoteSourceType
   title: string
-  category: QuoteCategory | ''
+  category: string
   tags: string[]
   language: QuoteLanguage
   is_favorite: boolean
@@ -51,17 +54,18 @@ interface QuoteDraft {
   book_id: string | null
 }
 
-function blankDraft(prefill: {
-  text: string
-  author: string
-  title: string
-}): QuoteDraft {
+function blankDraft(
+  prefill: { text: string; author: string; title: string },
+  sourceTypes: QuoteSourceTypeConfig[],
+  categories: QuoteCategoryConfig[],
+): QuoteDraft {
   return {
     text: prefill.text,
+    // Default both dropdowns to their first configured value (Source Type and Category alike).
+    source_type: sourceTypes[0]?.key ?? '',
     author: prefill.author,
-    source_type: 'tv',
     title: prefill.title,
-    category: '',
+    category: categories[0]?.key ?? '',
     tags: [],
     language: detectLanguage(prefill.text),
     is_favorite: false,
@@ -73,10 +77,10 @@ function blankDraft(prefill: {
 function draftFromRow(row: QuoteRow): QuoteDraft {
   return {
     text: row.text,
+    source_type: row.source_type,
     author: row.author ?? '',
-    source_type: row.source_type as QuoteSourceType,
     title: row.title ?? '',
-    category: row.category as QuoteCategory,
+    category: row.category,
     tags: row.tags ?? [],
     language: row.language as QuoteLanguage,
     is_favorite: row.is_favorite,
@@ -86,9 +90,10 @@ function draftFromRow(row: QuoteRow): QuoteDraft {
 }
 
 /**
- * Quotes — Add / Edit (M2: manual). Outer loader + inner form keyed by id (so a stale `useAsync`
- * result never mounts under the wrong quote). A new quote can be prefilled from `?text=&author=
- * &title=` (copy-paste / an Apple Books Shortcut). The Show/Book linker arrives in M3.
+ * Quotes — Add / Edit (manual). Outer loader fetches the quote (edit) + the owner's profile (for the
+ * configurable Source Type / Category lists + field visibility), then mounts the inner form keyed by id
+ * so a stale `useAsync` result never mounts under the wrong quote. A new quote can be prefilled from
+ * `?text=&author=&title=`. The Show/Book linker is `QuoteSourceLinkSheet`.
  */
 export function QuotesEntry() {
   const { id } = useParams()
@@ -97,20 +102,46 @@ export function QuotesEntry() {
   const author = params.get('author') ?? ''
   const title = params.get('title') ?? ''
 
-  const loadFn = useCallback(async (): Promise<QuoteDraft | null> => {
-    if (!id) return blankDraft({ text, author, title })
-    const row = await getQuote(id)
-    return row ? draftFromRow(row) : null
-  }, [id, text, author, title])
-  const { data: initial, loading, error } = useAsync(loadFn)
+  const { data: profile, loading: profileLoading } = useProfile()
+  const loadFn = useCallback(
+    async (): Promise<QuoteRow | null> => (id ? getQuote(id) : null),
+    [id],
+  )
+  const { data: row, loading: rowLoading, error } = useAsync(loadFn)
+
+  const sourceTypes = useMemo(
+    () => effectiveSourceTypes(profile?.quote_source_types ?? null),
+    [profile],
+  )
+  const categories = useMemo(
+    () => effectiveCategories(profile?.quote_categories ?? null),
+    [profile],
+  )
+
+  const initial = useMemo<QuoteDraft | null>(() => {
+    if (id) return row ? draftFromRow(row) : null
+    return blankDraft({ text, author, title }, sourceTypes, categories)
+  }, [id, row, text, author, title, sourceTypes, categories])
+
+  const loading = profileLoading || rowLoading
+  const notFound = !!id && !rowLoading && !row
 
   return (
     <div className="flex h-full min-h-0 flex-col">
       {loading && <p className="p-4 text-sm text-text-secondary">Loading…</p>}
-      {(error || (!loading && !initial)) && (
+      {(error || (!loading && notFound)) && (
         <p className="p-4 text-sm text-danger">Couldn’t load this quote.</p>
       )}
-      {!loading && initial && <QuoteForm key={id ?? 'new'} id={id} initial={initial} />}
+      {!loading && initial && (
+        <QuoteForm
+          key={id ?? 'new'}
+          id={id}
+          initial={initial}
+          profile={profile ?? null}
+          sourceTypes={sourceTypes}
+          categories={categories}
+        />
+      )}
     </div>
   )
 }
@@ -120,11 +151,22 @@ const inputClass =
 
 const canPaste = typeof navigator !== 'undefined' && !!navigator.clipboard
 
-function QuoteForm({ id, initial }: { id: string | undefined; initial: QuoteDraft }) {
+function QuoteForm({
+  id,
+  initial,
+  profile,
+  sourceTypes,
+  categories,
+}: {
+  id: string | undefined
+  initial: QuoteDraft
+  profile: Tables<'profile'> | null
+  sourceTypes: QuoteSourceTypeConfig[]
+  categories: QuoteCategoryConfig[]
+}) {
   const navigate = useNavigate()
   const { session } = useAuth()
   const userId = session?.user.id
-  const { data: profile } = useProfile()
   // Entry field visibility (Quotes Settings). Quote Text / Category / heart / buttons are always shown.
   const show = (key: string) => isFieldVisible(profile?.quote_visible_fields ?? null, key)
 
@@ -145,12 +187,13 @@ function QuoteForm({ id, initial }: { id: string | undefined; initial: QuoteDraf
 
   const update = (patch: Partial<QuoteDraft>) => setDraft((d) => ({ ...d, ...patch }))
   const dirty = JSON.stringify(draft) !== JSON.stringify(initial)
-  const canSave = !!draft.text.trim() && draft.category !== ''
+  // Category now defaults to the first value, so it's always set — only the text is required.
+  const canSave = !!draft.text.trim()
   const linked = !!draft.show_id || !!draft.book_id
 
   // Linking a local Show/Book binds its FK and denormalises Title + Source Type onto the quote (a
   // book also fills Author; a show leaves Author for the speaker/character — owner decision). The
-  // fields stay editable, and Unlink keeps the filled values (only clears the FK).
+  // candidate's sourceType is always one of the protected keys (tv/movie/book), so it stays valid.
   function selectLink(c: LinkCandidate) {
     if (c.kind === 'show') {
       update({
@@ -207,7 +250,7 @@ function QuoteForm({ id, initial }: { id: string | undefined; initial: QuoteDraf
         author: draft.author.trim() || null,
         source_type: draft.source_type,
         title: draft.title.trim() || null,
-        category: draft.category as QuoteCategory,
+        category: draft.category,
         tags: draft.tags,
         language: draft.language,
         is_favorite: draft.is_favorite,
@@ -315,7 +358,7 @@ function QuoteForm({ id, initial }: { id: string | undefined; initial: QuoteDraf
                   {draft.title || 'Linked source'}
                   <span className="text-text-secondary">
                     {' · '}
-                    {QUOTE_SOURCE_TYPE_LABELS[draft.source_type]}
+                    {sourceTypeLabel(sourceTypes, draft.source_type)}
                   </span>
                 </span>
                 <button
@@ -342,11 +385,8 @@ function QuoteForm({ id, initial }: { id: string | undefined; initial: QuoteDraf
             <p className="mb-1 text-xs text-text-secondary">Source Type</p>
             <SelectMenu
               value={draft.source_type}
-              options={QUOTE_SOURCE_TYPES.map((s) => ({
-                value: s,
-                label: QUOTE_SOURCE_TYPE_LABELS[s],
-              }))}
-              onChange={(s) => update({ source_type: s as QuoteSourceType })}
+              options={sourceTypes.map((s) => ({ value: s.key, label: s.label }))}
+              onChange={(s) => update({ source_type: s })}
               ariaLabel="Source type"
             />
           </div>
@@ -368,14 +408,8 @@ function QuoteForm({ id, initial }: { id: string | undefined; initial: QuoteDraf
           <p className="mb-1 text-xs text-text-secondary">Category</p>
           <SelectMenu
             value={draft.category}
-            options={[
-              { value: '', label: 'Select category…' },
-              ...QUOTE_CATEGORIES.map((c) => ({
-                value: c,
-                label: QUOTE_CATEGORY_LABELS[c],
-              })),
-            ]}
-            onChange={(c) => update({ category: c as QuoteCategory | '' })}
+            options={categories.map((c) => ({ value: c.key, label: c.label }))}
+            onChange={(c) => update({ category: c })}
             ariaLabel="Category"
           />
         </div>
