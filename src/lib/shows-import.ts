@@ -26,7 +26,11 @@ export interface ParsedShowRow {
   rating: number | null
   lgbtq_rep: LgbtqRep
   watched_seasons: number | null
-  watched_episodes: number | null
+  /**
+   * Episodes watched, or the literal `'all'` (watching/dropped episodic rows only) meaning "all
+   * episodes of the last-watched season" — resolved against TMDB's per-season counts in `buildImportRow`.
+   */
+  watched_episodes: number | 'all' | null
   is_favorite: boolean
 }
 
@@ -122,14 +126,43 @@ export function parseShowsCsv(rows: string[][]): ShowsImportResult {
       rating = n
     }
 
+    const watched_seasons = intOrNull(col(cells, 'watched_seasons'))
+    const epRaw = col(cells, 'watched_episodes')
+    let watched_episodes: number | 'all' | null
+    if (epRaw.toLowerCase() === 'all') {
+      // `all` ⇒ "all episodes of the last-watched season"; only meaningful for an episodic row
+      // that's still in progress, and we need the season number to look the count up later.
+      if (!usesEpisodes(type as ShowType)) {
+        errors.push(
+          `Row ${line} ("${title}"): watched_episodes "all" only applies to tv/documentary rows — skipped.`,
+        )
+        continue
+      }
+      if (status !== 'watching' && status !== 'dropped') {
+        errors.push(
+          `Row ${line} ("${title}"): watched_episodes "all" only applies to watching/dropped rows — skipped.`,
+        )
+        continue
+      }
+      if (watched_seasons == null || watched_seasons < 1) {
+        errors.push(
+          `Row ${line} ("${title}"): watched_episodes "all" needs a watched_seasons value — skipped.`,
+        )
+        continue
+      }
+      watched_episodes = 'all'
+    } else {
+      watched_episodes = intOrNull(epRaw)
+    }
+
     out.push({
       title,
       type: type as ShowType,
       status: status as ShowStatus,
       rating,
       lgbtq_rep: lgbtq_rep as LgbtqRep,
-      watched_seasons: intOrNull(col(cells, 'watched_seasons')),
-      watched_episodes: intOrNull(col(cells, 'watched_episodes')),
+      watched_seasons,
+      watched_episodes,
       is_favorite: parseBool(col(cells, 'is_favorite')),
     })
   }
@@ -148,7 +181,9 @@ export function dedupKey(title: string): string {
 /**
  * Combine a parsed CSV row with its TMDB match (or null) into a `show` insert. Dates are left NULL
  * (imported history is genuinely undated). Watched counts: `watched` ⇒ the TMDB totals;
- * `watching`/`dropped` (TV) ⇒ the CSV values; `want` / movies ⇒ null.
+ * `watching`/`dropped` (TV) ⇒ the CSV values, where a `watched_episodes` of `'all'` resolves to
+ * the episode count of the last-watched season (from TMDB), or null if TMDB has no count for it;
+ * `want` / movies ⇒ null.
  */
 export function buildImportRow(
   input: ParsedShowRow,
@@ -163,7 +198,10 @@ export function buildImportRow(
       watched_episodes = match?.total_episodes ?? null
     } else if (input.status === 'watching' || input.status === 'dropped') {
       watched_seasons = input.watched_seasons
-      watched_episodes = input.watched_episodes
+      watched_episodes =
+        input.watched_episodes === 'all'
+          ? (match?.season_episode_counts?.[input.watched_seasons ?? -1] ?? null)
+          : input.watched_episodes
     }
   }
 

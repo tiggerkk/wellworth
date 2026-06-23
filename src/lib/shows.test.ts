@@ -331,6 +331,7 @@ describe('buildRefreshPatch', () => {
     original_language: 'zh',
     total_seasons: 2,
     total_episodes: 20,
+    season_episode_counts: { 1: 10, 2: 10 },
     tmdb_id: 99,
     imdb_id: 'tt999',
   }

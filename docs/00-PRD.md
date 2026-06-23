@@ -14,10 +14,10 @@
 
 - Wellness: Fast daily logging of food, supplements, and activity; accurate micronutrient reporting; energy balance: calories consumed vs. BMR vs. activity, with a clear net number.
 - Net Worth: Monthly (first-of-month) entry of asset values across cash, time deposits, stocks, mutual funds, retirement funds, insurance, and properties, in HKD (base), CNY, or USD; net-worth calculation in base currency; total and by-asset-type trend graphs with a selectable time window.
-- Shows: track **TV shows, movies, and documentaries** (incl. Chinese-language titles and Chinese documentaries / cultural programs — a documentary sub-series is just folded into its title, e.g. `国宝档案 — 从东晋到北魏`) across a single **status** (Want to Watch / Watching / Watched / Dropped); a **favourite** ♥ flag; a three-level **LGBT+ representation** rating (None / Some / Significant); pull metadata (poster, genres, director/creator, cast, seasons & episode counts) from **TMDB** on demand (Chinese-aware), with **manual entry + a pasted Poster URL** as the fallback and a **per-show Refresh from TMDB**; a Dashboard of favourites / what's in progress / recently finished, and a searchable, filterable, sortable Library. A back-catalogue of hundreds of titles is seeded via an in-app importer.
-- Books: track books across a single **status** (Want to Read / Reading / Read / Dropped); a three-level **LGBT+ representation** rating (None / Some / Significant); pull metadata (cover, authors, year, description, genres, page count) from **Google Books** (Open Library fallback) on demand; a Dashboard of what's in progress and recently read, and a searchable, filterable, sortable Library. A back-catalogue is seeded via an in-app importer.
-- Quotes: collect favourite quotes (English or Chinese) from TV shows, films, books, podcasts, articles, videos, and songs; each filed under **exactly one** of six categories with optional free-form tags, and optionally **linked to a Show or Book** record; a "Moment of Zen" dashboard, a searchable/filterable Library, and a recurring **CSV import**.
-- Medical: keep a private, multi-year record of test results (blood panels, vitals, bone density, body composition, etc.) and narrative reports (MRI, imaging, eye); a **dashboard of trends** for chosen tests, values flagged high/low/abnormal against **each report's own printed reference range** (the app never computes or interprets a range — not a medical device); intake via **manual entry** or a **structured JSON/CSV import** the owner generates from a report with any vision-capable AI tool (**no in-app OCR**); cross-provider values **normalized to a canonical unit** (flagged, original preserved); originals kept as **Google Drive links**, not files. Protected by a **biometric lock**.
+- Shows: Track **TV shows, movies, and documentaries** (incl. Chinese-language titles and Chinese documentaries / cultural programs — a documentary sub-series is just folded into its title, e.g. `国宝档案 — 从东晋到北魏`) across a single **status** (Want to Watch / Watching / Watched / Dropped); a **favourite** ♥ flag; a three-level **LGBT+ representation** rating (None / Some / Significant); pull metadata (poster, genres, director/creator, cast, seasons & episode counts) from **TMDB** on demand (Chinese-aware), with **manual entry + a pasted Poster URL** as the fallback and a **per-show Refresh from TMDB**; a Dashboard of favourites / what's in progress / recently finished, and a searchable, filterable, sortable Library. A back-catalogue of hundreds of titles is seeded via an in-app importer.
+- Books: Track books across a single **status** (Want to Read / Reading / Read / Dropped); a three-level **LGBT+ representation** rating (None / Some / Significant); pull metadata (cover, authors, year, description, genres, page count) from **Google Books** (Open Library fallback) on demand; a Dashboard of what's in progress and recently read, and a searchable, filterable, sortable Library. A back-catalogue is seeded via an in-app importer.
+- Quotes: Track favourite quotes (English or Chinese) from TV shows, films, books, podcasts, articles, videos, and songs; each filed under **exactly one** of six categories with optional free-form tags, and optionally **linked to a Show or Book** record; a "Moment of Zen" dashboard, a searchable/filterable Library, and a recurring **CSV import**.
+- Medical: Keep a private, multi-year record of test results (blood panels, vitals, bone density, body composition, etc.) and narrative reports (MRI, imaging, eye); a **dashboard of trends** for chosen tests, values flagged high/low/abnormal against **each report's own printed reference range** (the app never computes or interprets a range — not a medical device); intake via **manual entry** or a **structured JSON/CSV import** the owner generates from a report with any vision-capable AI tool (**no in-app OCR**); cross-provider values **normalized to a canonical unit** (flagged, original preserved); originals kept as **Google Drive links**, not files. Protected by a **biometric lock**.
 - Works identically on iPhone and iPad, with data synced across both devices.
 - Modular by design: each feature is a self-contained module under the Home hub, so new modules drop in as a card + route without restructuring existing ones.
 - Entirely free to run; easy to maintain by one non-expert owner.
@@ -31,16 +31,20 @@
 - On launch, the app reopens the last-used module so daily Wellness use isn't slowed by the hub.
 - The hub makes adding future modules a drop-in (a `ModuleDef` + its routes).
 
+## Global
+
+- **Settings (global, at Home level):** profile; units; account — shared across modules.
+- Cross-device sync via Supabase.
+
 ## Wellness
 
 - Google sign-in (Supabase Auth); first login creates the user's profile.
+- **Dashboard / Daily Report:** date-range averages and single-day reports with nutrient bars (red past upper limits) and an energy-balance panel.
 - **Diary:** day navigation + calendar; highlighted-nutrient grid; meal/supplement/activity groups; add/expand/collapse/swipe-delete; copy-day actions; per-day report.
 - **Add Food:** search (USDA), Favorites, Custom; barcode scan (Open Food Facts); food detail entry.
 - **Add Activity:** personal activity library; duration-based and strength-based logging.
-- **Dashboard / Daily Report:** date-range averages and single-day reports with nutrient bars (red past upper limits) and an energy-balance panel.
 - **Library:** create/edit/delete custom foods, supplements, and activities (full nutrient entry).
-- **Settings (global, at Home level):** profile; units; account — shared across modules. Wellness-specific settings (protein target override; nutrient highlight + visibility) live as the Wellness module's own sub-settings.
-- Cross-device sync via Supabase.
+- **Settings:** protein target override; highlighted nutrients + visible nutrients.
 
 ## Net Worth
 
@@ -51,7 +55,7 @@
 
 ## Shows
 
-- **Dashboard** (`/shows`): shelves of **Favourites** (every ♥ title), **Up Next** (in-progress episodic title with episode progress), **Watching** (with a Watching chip + episode progress), **Want to Watch** (with a blue **Want** chip), and **Recently Watched** (last 5 by finish date), each shown only when non-empty; a **type filter** (All / TV / Movies / Docs); quick actions **Mark Watched** and **Start Watching**; a "N watched this year" stat line; a `+` to a blank Entry.
+- **Dashboard** (`/shows`): shelves of **Favourites** (every ♥ title), **Up Next** (in-progress episodic title with episode progress), **Watching** (with a Watching chip + episode progress), **Want to Watch** (with a blue **Want** chip), and **Recently Watched** (last 5 by finish date), each shown only when non-empty; a **type filter** (All / TV / Movies / Docs); quick actions **Mark Watched** and **Start Watching**; a "N watched this year" stat line.
 - **Entry / Edit** (`/shows/entry`, `/shows/:id`): a Chinese-aware **Search TMDB** title lookup populates metadata (poster, genres, director/creator, top cast, overview, runtime, season/episode totals) on select; a three-way **Type** (TV / Movie / Documentary), a header **favourite heart**, a **Poster URL** field (paste a direct image URL; auto-shown when TMDB has no poster, and a Settings → Visible Fields toggle — off by default — forces it always visible), a **⟳ Refresh from TMDB** button (enabled once a `tmdb_id` exists; re-pulls TMDB-sourced fields only), Status (Want leaves Start Date blank), manual **star rating** (0–5, half-stars), a three-way **LGBT+ representation** control, start/finish/last-update dates (Calendar), episodic watched/total counts, and comments; **RESET / CREATE / SAVE**. Nothing is saved until CREATE/SAVE. A new show can be prefilled via `?title=&poster=&overview=&type=`.
 - **Library** (`/shows/library`): a poster-thumbnail list with search (title, director, cast) + filters (Type incl. Documentary, Genre, Rating, LGBT+, Status, **Favourites only**, start/finish date ranges) + a Sort menu; a ♥ marks favourite rows; tap a row to edit, swipe-left to delete (hard, with confirm).
 - **Settings** (`/shows/settings`): choose which Entry fields are visible; enable a **CSV importer** (`/shows/import`) — one CSV spans English + Chinese across all three types — that matches each row against TMDB (with inline fix for ambiguous/no-match rows; niche docs import metadata-less, topped up later) and commits idempotently. Columns + rules: `templates/shows-import-guide.md`.
@@ -59,7 +63,7 @@
 
 ## Books
 
-- **Dashboard** (`/books`): **Favourites** (every ♥ book), **Currently Reading**, **Recently Read** (last 5 by finish date), and a **Want to Read** shelf, each shown only when non-empty; every row shows its **status chip** (same as the Library); quick actions **Mark Read** (status → read, finish date → today) and **Start Reading** (status → reading, start date → today); a `+` to a blank Entry. Cover thumbnails throughout.
+- **Dashboard** (`/books`): **Favourites** (every ♥ book), **Currently Reading**, **Recently Read** (last 5 by finish date), and a **Want to Read** shelf, each shown only when non-empty; every row shows its **status chip** (same as the Library); quick actions **Mark Read** (status → read, finish date → today) and **Start Reading** (status → reading, start date → today). Cover thumbnails throughout.
 - **Entry / Edit** (`/books/entry`, `/books/:id`): a title/author **Search Google Books** lookup populates metadata (cover, authors, year, description, genres, page count) on select; a header **favourite heart**, Status, manual **star rating** (0–5, half-stars), a three-way **LGBT+ representation** control, start/finish/last-update dates (Calendar), and comments; **RESET / CREATE / SAVE**. Nothing is saved until CREATE/SAVE; CREATE requires at least a Title.
 - **Library** (`/books/library`): a cover-thumbnail list with search (title, author) + filters (Genre, Rating, LGBT+, Status, Author, **Favourites only**, start/finish date ranges) + a Sort menu; a ♥ marks favourite rows; tap a row to edit, swipe-left to delete (hard, with confirm).
 - **Settings** (`/books/settings`): choose which Entry fields are visible; enable a **CSV importer** (`/books/import`) that matches each row against Google Books (with inline fix for ambiguous/no-match rows) and commits idempotently. Columns + rules: `templates/books-import-guide.md`.
@@ -74,8 +78,6 @@
 - **Cross-module links are optional enrichment.** `author`, `title`, and `source_type` are denormalised onto the quote, so a quote stays complete (and still renders) after a linked Show or Book is hard-deleted — the FK just goes null.
 
 ## Medical
-
-_Feature-complete (built M1–M7: schema/seed/scaffold, manual CRUD + detail, structured import, the trend Dashboard, drag-to-reorder display order, the biometric/PIN lock, and the eye-refraction form). See BUILD-LOG → "Medical Build Sequence" for the history._
 
 - **Dashboard** (`/medical`): trend charts (recharts) for each **tracked** test across reports; latest values grouped by category, coloured by flag (high/low/abnormal) using **the report's own range**; a reports-timeline entry point.
 - **Reports** (`/medical/reports`): chronological list (date · type · provider · body part); tap → Report detail (results in the user's section + test order, filtered to the tests that report contains, each with name · value/text · unit · the report's reference range · flag; plus the narrative block and **Open original** Google Drive link[s]); swipe-left to delete (hard, cascades its results).

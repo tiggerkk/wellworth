@@ -41,6 +41,17 @@ describe('parseShowsCsv', () => {
       is_favorite: true,
     })
   })
+  it('accepts watched_episodes "all" on a watching/dropped episodic row', () => {
+    const { rows, errors } = parse('Breaking Bad,tv,watching,,,2,all,')
+    expect(errors).toEqual([])
+    expect(rows[0]).toMatchObject({ watched_seasons: 2, watched_episodes: 'all' })
+  })
+  it('rejects "all" without a watched_seasons, on a movie, or on a non-progress status', () => {
+    expect(parse('Breaking Bad,tv,watching,,,,all,').errors).toHaveLength(1) // no season
+    expect(parse('Dune,movie,watching,,,1,all,').errors).toHaveLength(1) // not episodic
+    expect(parse('Breaking Bad,tv,watched,,,2,all,').errors).toHaveLength(1) // not in progress
+    expect(parse('Breaking Bad,tv,watching,,,,all,').rows).toHaveLength(0)
+  })
   it('parses is_favorite leniently (yes/1/y ⇒ true, else false)', () => {
     expect(parse('A,movie,want,,,,,yes').rows[0]?.is_favorite).toBe(true)
     expect(parse('B,movie,want,,,,,1').rows[0]?.is_favorite).toBe(true)
@@ -92,6 +103,7 @@ const tvMeta: ShowMetadata = {
   original_language: 'en',
   total_seasons: 5,
   total_episodes: 62,
+  season_episode_counts: { 1: 7, 2: 13, 3: 13, 4: 13, 5: 16 },
   tmdb_id: 1396,
   imdb_id: 'tt0903747',
 }
@@ -133,6 +145,28 @@ describe('buildImportRow', () => {
     )
     expect(out.watched_seasons).toBe(2)
     expect(out.watched_episodes).toBe(16)
+  })
+  it('watching "all" ⇒ the last-watched season’s TMDB episode count', () => {
+    const out = buildImportRow(
+      row({ status: 'watching', watched_seasons: 2, watched_episodes: 'all' }),
+      tvMeta,
+    )
+    expect(out.watched_seasons).toBe(2)
+    expect(out.watched_episodes).toBe(13) // season 2 has 13 episodes
+  })
+  it('"all" ⇒ null episodes when TMDB has no count for that season (or no match)', () => {
+    expect(
+      buildImportRow(
+        row({ status: 'dropped', watched_seasons: 9, watched_episodes: 'all' }),
+        tvMeta,
+      ).watched_episodes,
+    ).toBeNull()
+    expect(
+      buildImportRow(
+        row({ status: 'watching', watched_seasons: 2, watched_episodes: 'all' }),
+        null,
+      ).watched_episodes,
+    ).toBeNull()
   })
   it('movies ⇒ no season/episode counts', () => {
     const out = buildImportRow(row({ type: 'movie', status: 'watched' }), {

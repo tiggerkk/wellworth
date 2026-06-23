@@ -52,6 +52,8 @@ export interface ShowMetadata {
   original_language: string | null
   total_seasons: number | null
   total_episodes: number | null
+  /** Episode count per season number (e.g. `{ 1: 8, 2: 8 }`); null for movies / when TMDB omits it. */
+  season_episode_counts: Record<number, number> | null
   tmdb_id: number
   imdb_id: string | null
 }
@@ -76,6 +78,10 @@ interface TmdbExternalIds {
 }
 interface TmdbCreatedBy {
   name?: string
+}
+interface TmdbSeasonSummary {
+  season_number?: number
+  episode_count?: number
 }
 interface TmdbMovieSearchItem {
   id: number
@@ -114,6 +120,7 @@ export interface TmdbTvDetails {
   episode_run_time?: number[]
   number_of_seasons?: number | null
   number_of_episodes?: number | null
+  seasons?: TmdbSeasonSummary[]
   original_language?: string
   created_by?: TmdbCreatedBy[]
   credits?: TmdbCredits
@@ -143,6 +150,23 @@ export function pickDirectorFromCrew(crew: TmdbCrewMember[] | undefined): string
 function pickCreators(created: TmdbCreatedBy[] | undefined): string | null {
   const names = (created ?? []).map((c) => c.name).filter(isStr)
   return names.length ? names.join(', ') : null
+}
+
+/**
+ * Map TMDB's `seasons` array to `{ [season_number]: episode_count }` (used to resolve a CSV
+ * `watched_episodes=all` against the last-watched season). Specials (season 0) are kept; seasons
+ * with no episode count are dropped. Returns null when there's nothing usable.
+ */
+export function pickSeasonEpisodeCounts(
+  seasons: TmdbSeasonSummary[] | undefined,
+): Record<number, number> | null {
+  const out: Record<number, number> = {}
+  for (const s of seasons ?? []) {
+    if (typeof s.season_number === 'number' && typeof s.episode_count === 'number') {
+      out[s.season_number] = s.episode_count
+    }
+  }
+  return Object.keys(out).length ? out : null
 }
 
 /** Top ~10 cast names. */
@@ -192,6 +216,7 @@ export function mapMovieDetails(d: TmdbMovieDetails): ShowMetadata {
     original_language: d.original_language || null,
     total_seasons: null,
     total_episodes: null,
+    season_episode_counts: null,
     tmdb_id: d.id,
     imdb_id: d.imdb_id ?? d.external_ids?.imdb_id ?? null,
   }
@@ -211,6 +236,7 @@ export function mapTvDetails(d: TmdbTvDetails): ShowMetadata {
     original_language: d.original_language || null,
     total_seasons: d.number_of_seasons ?? null,
     total_episodes: d.number_of_episodes ?? null,
+    season_episode_counts: pickSeasonEpisodeCounts(d.seasons),
     tmdb_id: d.id,
     imdb_id: d.external_ids?.imdb_id ?? null,
   }

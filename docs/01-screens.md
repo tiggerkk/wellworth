@@ -7,8 +7,7 @@ Quotes, Medical; more later). Selecting a module enters it and the **bottom tab 
 module's tabs**, with a **Home** item to return to the hub. On launch the app reopens the **last-used
 module**, so daily Wellness use skips the hub.
 
-- **Wellness** tabs: **Home**, **Dashboard**, **Diary**, **Library**. A **gear** in each Wellness
-  header opens Wellness Settings.
+- **Wellness** tabs: **Home**, **Dashboard**, **Diary**, **Library**, **Settings**.
 - **Net Worth** tabs: **Home**, **Dashboard**, **Monthly Entry**.
 - **Shows** tabs: **Home**, **Dashboard**, **Library**, **New Show**, **Settings**. The Entry/Edit
   screen is reached from the **New Show** tab (new) or by tapping a Library/Dashboard row (edit);
@@ -25,7 +24,7 @@ module**, so daily Wellness use skips the hub.
   **Settings** opens Medical Settings. The **biometric/PIN lock** gates entry to the whole module (see
   02-tech-spec → Medical).
 - **Settings is global**, reached from a gear on the Home hub (profile, units, account — app-wide).
-  Wellness-specific settings (protein target, nutrient display) live in **Wellness Settings**.
+  Module-specific settings live in **Settings** bottom tab.
 
 Routing is URL-namespaced per module (`/wellness/*`, `/networth/*`, `/shows/*`, `/books/*`,
 `/quotes/*`, `/medical/*`); a future module drops in as a card + routes with no structural change. Modals (sheets)
@@ -36,7 +35,7 @@ Diary groups, in order: **Breakfast, Lunch, Dinner, Snacks, Supplements, Activit
 
 ## Button convention
 
-- Action buttons in a persisted pane at the top right: **ADD**, **RESET**, **SAVE**, **CREATE**
+- Action buttons in a persisted pane at the top right: **ADD**, **RESET**, **SAVE**, **CREATE**, **EDIT**
 - Settings sub-screens: auto-save on change
 
 ## Global - Settings (from the Home hub gear)
@@ -52,6 +51,21 @@ App-wide; shared across all modules. Auto-save on change. A back chevron returns
   deleted user can always be cleared.
 
 ---
+
+## Wellness - Dashboard (tab)
+
+- Title `Daily average · {range} ▾`; the picker offers Last 7 Days (default), Last 2/3/4/8 Weeks,
+  Last 3/6 Months, Last Year. The "daily average" divides totals by the number of **days that have at
+  least one entry** in the range (not by calendar days) — a typical logged day. An empty range shows
+  "Nothing logged."
+- **Energy Balance** card: Consumed, BMR, Activity, and a bold **Net = Consumed − BMR − Activity**.
+- Nutrient sections in fixed order — General, Vitamins, Minerals, Carbohydrates, Lipids,
+  Protein & Amino Acids — each visible nutrient a "name · value / target · %" bar.
+  **Bars turn red when a value exceeds that nutrient's upper limit — but only for limits that apply
+  to total dietary intake** (and sodium's CDRR). Limits that apply only to supplemental/synthetic
+  forms (e.g. magnesium, niacin, folic acid, vitamin E, preformed vitamin A) never turn a food bar
+  red. See `02-tech-spec.md` → "Upper limits / red bars".
+- Only nutrients toggled **Visible** (Settings → Visible Nutrients) appear.
 
 ## Wellness - Diary (Wellness home tab)
 
@@ -125,21 +139,6 @@ App-wide; shared across all modules. Auto-save on change. A back chevron returns
 - Group defaults to **Activities**. **RESET** + **ADD** (logging) or **RESET** + **SAVE**
   (editing a logged entry); editing prefills duration, effort, and the exercise/set list from the entry.
 
-## Wellness - Dashboard (tab)
-
-- Title `Daily average · {range} ▾`; the picker offers Last 7 Days (default), Last 2/3/4/8 Weeks,
-  Last 3/6 Months, Last Year. The "daily average" divides totals by the number of **days that have at
-  least one entry** in the range (not by calendar days) — a typical logged day. An empty range shows
-  "Nothing logged."
-- **Energy Balance** card: Consumed, BMR, Activity, and a bold **Net = Consumed − BMR − Activity**.
-- Nutrient sections in fixed order — General, Vitamins, Minerals, Carbohydrates, Lipids,
-  Protein & Amino Acids — each visible nutrient a "name · value / target · %" bar.
-  **Bars turn red when a value exceeds that nutrient's upper limit — but only for limits that apply
-  to total dietary intake** (and sodium's CDRR). Limits that apply only to supplemental/synthetic
-  forms (e.g. magnesium, niacin, folic acid, vitamin E, preformed vitamin A) never turn a food bar
-  red. See `02-tech-spec.md` → "Upper limits / red bars".
-- Only nutrients toggled **Visible** (Settings → Visible Nutrients) appear.
-
 ## Wellness - Daily Report (from the Diary `⋯`)
 
 - Identical layout to the Dashboard, scoped to a single day instead of an averaged range.
@@ -176,7 +175,7 @@ Two sub-tabs:
 - **Icon**: an icon picker (the keys of `ACTIVITY_ICONS`); optional, defaults to `IconRun`.
 - Top-right: **RESET** + **CREATE** (new) / **SAVE** (editing). RESET (and, when editing **SAVE**) are enabled only when something changed; CREATE requires a name and a MET for the default effort.
 
-## Wellness - Settings (from the gear in the Wellness header)
+## Wellness - Settings
 
 Wellness-module sub-settings. Auto-save on change. A back chevron returns to the previous Wellness screen.
 
@@ -214,7 +213,7 @@ Wellness-module sub-settings. Auto-save on change. A back chevron returns to the
 ## Shows - Dashboard
 
 - Shelves, each a card shown only when it has items, scoped by a **type filter** (All / TV / Movies /
-  Docs). (New Show and Settings live in the bottom nav, not a page header.)
+  Docs).
   Every row carries a baseline of **type badge + status chip** (so status reads the same here as in
   the Library); on top of that each shelf adds the one detail that matters there:
   - **Favourites** — every `is_favorite` title (any status), each row showing its status chip + the
@@ -244,7 +243,7 @@ Wellness-module sub-settings. Auto-save on change. A back chevron returns to the
 ## Shows - Library
 
 - **Search bar** over a list of every tracked title — matches **Title, Director, and Cast** (when
-  TMDB returned them). (New Show opens the blank Entry from the bottom nav.)
+  TMDB returned them).
 - A **Filters** toggle opens a panel: **Type** (All/TV/Movies/Docs), **Status**, **Genre** (the genres
   present in your own rows), **Rating** (minimum: Any / 1★+ … / 5★), **LGBT+** (Any/None/Some/Significant),
   a **Favourites only** toggle, and **Started-between** + **Finished-between** date ranges (each bound via
@@ -257,7 +256,6 @@ Wellness-module sub-settings. Auto-save on change. A back chevron returns to the
   rating** (when set) and a second line of **first genre · date** — labelled **"Finished {date}"**
   when there's an end date, else **"Updated {date}"**. Tap a row → **Entry/Edit**; **swipe-left →
   Delete** (hard, with a confirm).
-- A **Settings** tab in the Shows bottom nav opens **Shows Settings**.
 - _Filter/sort state is per-visit (not persisted); a wide-screen sortable table is parked — see
   `PARKED.md`._
 
@@ -313,7 +311,7 @@ Wellness-module sub-settings. Auto-save on change. A back chevron returns to the
   selects it (triggers the TMDB details fetch + field population) and closes the modal; **X**/Esc/scrim
   cancels. Shows a configuration hint if `VITE_TMDB_API_KEY` is unset.
 
-## Shows - Settings (from the Settings tab in the Shows bottom nav)
+## Shows - Settings
 
 Shows-specific sub-settings (mirrors the Wellness Settings split; app-wide profile/units/account stay
 in the global Settings at the Home level).
@@ -335,6 +333,9 @@ An in-app bulk importer (the owner's choice over a script — same as Net Worth)
 Chinese across all three types. Columns:
 `title,type,status,rating,lgbtq_rep,watched_seasons,watched_episodes,is_favorite` (`type` ∈
 `tv|movie|documentary`; `is_favorite` optional trailing boolean — see `templates/shows-import-guide.md`).
+`watched_episodes` accepts the literal **`all`** on a `watching`/`dropped` episodic row (with a
+`watched_seasons`), meaning "all episodes of the last-watched season" — resolved to that season's
+TMDB episode count at import (left blank if TMDB has no count); used anywhere else, the row is skipped.
 
 - **Choose CSV** → rows are parsed/validated (bad rows listed as skipped) and each is **matched
   against TMDB** (Chinese-aware top hit + details) with a progress count.
@@ -349,8 +350,7 @@ Chinese across all three types. Columns:
 
 ## Books - Dashboard
 
-- Shelves, each a card shown only when it has items. There is no page header (New Book and Settings
-  live in the bottom nav) and no type filter (books are one kind). Every row shows its **status chip** (Want / Reading /
+- Shelves, each a card shown only when it has items. There is no type filter (books are one kind). Every row shows its **status chip** (Want / Reading /
   Read / Dropped) — the same chip as the Library, so the status reads consistently rather than
   being only implied by the shelf title:
   - **Favourites** — every `is_favorite` book (any status), each row showing its status chip. (A
@@ -381,7 +381,6 @@ Chinese across all three types. Columns:
   a small filled **♥** when favourited, the author(s), a **status chip** (Want / Reading / Read /
   Dropped — Want is blue), the **star rating** when rated, the first genre, and the finish/updated date. Tap a row →
   **Entry/Edit**; **swipe-left → Delete** (hard, with a confirm).
-- A **Settings** tab in the Books bottom nav opens **Books Settings**.
 - _Filter/sort state is per-visit (not persisted); a wide-screen sortable table is parked — see
   `PARKED.md`._
 
@@ -418,7 +417,7 @@ Chinese across all three types. Columns:
   The `VITE_GOOGLE_BOOKS_API_KEY` is **optional** (search works keyless at a lower quota), so a failure
   is a network/quota issue, not a missing key.
 
-## Books - Settings (from the Settings tab in the Books bottom nav)
+## Books - Settings
 
 Books-specific sub-settings (mirrors the Wellness/Shows Settings split; app-wide profile/units/account
 stay in the global Settings at the Home level). Reached from the **Settings** tab in the Books bottom
@@ -448,7 +447,7 @@ An in-app bulk importer (the owner's choice over a script — same as Net Worth 
   `last_update_date` are **NULL** and `end_date` comes from the file, so imported books appear in the
   Library and (when dated) the Dashboard's "Recently Read".
 
-## Quotes - Moment of Zen (`/quotes`, dashboard)
+## Quotes - Moment of Zen (`/quotes`)
 
 - **First load**: one random quote where `is_favorite = true`; falls back to the whole pool if no
   favourites.

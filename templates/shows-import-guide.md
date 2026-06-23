@@ -23,7 +23,12 @@ title,type,status,rating,lgbtq_rep,watched_seasons,watched_episodes,is_favorite
 - **lgbtq_rep** — LGBT+ representation: `none`, `some`, or `significant`. Optional (blank = `none`).
 - **watched_seasons / watched_episodes** — episodic progress (TV + documentary). **Leave blank for
   `watched` rows** (the importer sets them to the TMDB totals) and for movies / `want` rows. For
-  `watching` and `dropped` rows, enter how far you got.
+  `watching` and `dropped` rows, enter how far you got. You can put **`all`** in `watched_episodes`
+  to mean "I finished every episode of the last season I was on" — fill in `watched_seasons` (the
+  last-watched season number) and the importer looks that season's episode count up on TMDB and
+  stores it. `all` is only valid on a `watching`/`dropped` TV or documentary row that has a
+  `watched_seasons`; anywhere else the row is skipped. (If TMDB has no count for that season, the
+  episode count is left blank.)
 - **is_favorite** — `true`/`1`/`yes` marks the title a favourite (the ♥). Optional (blank = not a
   favourite).
 

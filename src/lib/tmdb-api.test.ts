@@ -5,6 +5,7 @@ import {
   mapTvDetails,
   pickCast,
   pickDirectorFromCrew,
+  pickSeasonEpisodeCounts,
   pickYear,
 } from './tmdb-api'
 
@@ -125,9 +126,27 @@ describe('mapMovieDetails', () => {
       original_language: 'en',
       total_seasons: null,
       total_episodes: null,
+      season_episode_counts: null,
       tmdb_id: 603,
       imdb_id: 'tt0133093',
     })
+  })
+})
+
+describe('pickSeasonEpisodeCounts', () => {
+  it('maps season_number ⇒ episode_count (specials included)', () => {
+    expect(
+      pickSeasonEpisodeCounts([
+        { season_number: 0, episode_count: 3 },
+        { season_number: 1, episode_count: 8 },
+        { season_number: 2, episode_count: 10 },
+      ]),
+    ).toEqual({ 0: 3, 1: 8, 2: 10 })
+  })
+  it('drops seasons missing a count and returns null when nothing is usable', () => {
+    expect(pickSeasonEpisodeCounts([{ season_number: 1 }])).toBeNull()
+    expect(pickSeasonEpisodeCounts([])).toBeNull()
+    expect(pickSeasonEpisodeCounts(undefined)).toBeNull()
   })
 })
 
@@ -145,6 +164,10 @@ describe('mapTvDetails', () => {
         episode_run_time: [45],
         number_of_seasons: 5,
         number_of_episodes: 62,
+        seasons: [
+          { season_number: 1, episode_count: 7 },
+          { season_number: 2, episode_count: 13 },
+        ],
         original_language: 'en',
         created_by: [{ name: 'Vince Gilligan' }],
         credits: { cast: [{ name: 'Bryan Cranston' }] },
@@ -163,6 +186,7 @@ describe('mapTvDetails', () => {
       original_language: 'en',
       total_seasons: 5,
       total_episodes: 62,
+      season_episode_counts: { 1: 7, 2: 13 },
       tmdb_id: 1396,
       imdb_id: 'tt0903747',
     })

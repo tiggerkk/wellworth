@@ -46,7 +46,7 @@ the permanent docs and deleted (with the `CONTINUITY.md` handoff).
   `VITE_GOOGLE_BOOKS_API_KEY` (Books), and the optional `VITE_ALLOWED_EMAILS` (email allowlist —
   empty ⇒ no restriction). All build-time `VITE_` vars.
 - **Gates:** husky `.husky/pre-commit` → lint-staged + `typecheck` + `test`; GitHub Actions
-  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 323 Vitest tests (pure helpers).
+  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 329 Vitest tests (pure helpers).
 - **Deploy status:** Deployed. GitHub `main` → Vercel auto-deploy; the production URL is in the
   Supabase redirect URLs + Google JS origins (see `OWNER-RUNBOOK.md`). Installed + tested on iPhone (PWA).
 - Conventions (DB-access-via-`src/data`, metric storage, generated `database.ts` contract, etc.) live
@@ -1415,6 +1415,26 @@ the single most useful detail. No schema/data change — all fields already on `
 - **Library** (`ShowsLibrary.tsx`): the bare date gained a context label — **"Finished {date}"** when
   there's an `end_date`, else **"Updated {date}"** (`last_update_date`).
 - Scope was Shows only; Books/Quotes rows were left as-is.
+
+## Shows CSV import — `watched_episodes=all`
+
+Owner request: in the Shows CSV importer, let `watched_episodes` be the literal **`all`** on a
+`watching`/`dropped` episodic row, meaning "I finished every episode of the last season I was on".
+The row's `watched_seasons` is the **last-watched season number**, and the importer resolves `all` to
+that season's episode count from TMDB. No schema change — it's purely an import-layer convenience that
+still writes a plain INT to `watched_episodes`. 323 → **329**.
+
+- **`tmdb-api.ts`**: `ShowMetadata` gains `season_episode_counts: Record<number, number> | null`
+  (movies → null), built by the new pure `pickSeasonEpisodeCounts` from the TV details `seasons[]`
+  (specials/season 0 kept; seasons with no count dropped). TMDB's TV details already include `seasons`
+  by default, so no extra `append_to_response`.
+- **`shows-import.ts`**: `ParsedShowRow.watched_episodes` is now `number | 'all' | null`. Parsing
+  accepts `all` only on a `watching`/`dropped` **episodic** row that has a `watched_seasons` ≥ 1 —
+  otherwise the row is skipped with a specific error. `buildImportRow` resolves `all` via
+  `match.season_episode_counts[watched_seasons]`, falling back to **null** when TMDB has no count for
+  that season (or there's no match), so a no-match row degrades gracefully rather than guessing.
+- Docs: `templates/shows-import-guide.md` + an `all` example row in the template CSV; `01-screens.md`
+  Import section.
 
 ## Known limitations / deferred (not spec issues — future work)
 
