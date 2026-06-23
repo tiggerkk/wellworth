@@ -26,15 +26,15 @@ Then run `npm run format` so the docs pass Prettier.
 
 ## Scope discipline
 
-- Built modules: **Wellness, Net Worth, Shows, Books, and Quotes** (all feature-complete).
+- Built modules: **Wellness, Net Worth, Shows, Books, Quotes, and Medical** (all feature-complete).
 - Steps are entered **manually**. Do not attempt HealthKit / native step sync (impossible in a PWA).
 
 ## App structure (multi-module — current state)
 
 The app is a multi-module PWA behind a **Home hub** (`/home`): module cards launch into **Wellness**
-(`/wellness/*`), **Net Worth** (`/networth/*`), **Shows** (`/shows/*`), **Books** (`/books/*`), or
-**Quotes** (`/quotes/*`); `/` redirects to the last-used module. Adding a module is a **drop-in** —
-append a `ModuleDef` to `src/constants/modules.ts` + its routes.
+(`/wellness/*`), **Net Worth** (`/networth/*`), **Shows** (`/shows/*`), **Books** (`/books/*`),
+**Quotes** (`/quotes/*`), or **Medical** (`/medical/*`); `/` redirects to the last-used module. Adding a
+module is a **drop-in** — append a `ModuleDef` to `src/constants/modules.ts` + its routes.
 
 - **Routing:** flat children of one `<AppShell/>` in `src/router.tsx`; **all path strings live in
   `src/constants/routes.ts`** (single source of truth). `src/constants/modules.ts` (`MODULES` +
@@ -120,6 +120,31 @@ append a `ModuleDef` to `src/constants/modules.ts` + its routes.
   searches local shows/books. **Moment-of-Zen** dashboard (favourites-first random + shuffle/pull-to-
   refresh). Screens `QuotesZen` / `QuotesLibrary` / `QuotesEntry` / `QuotesSettings` / `QuotesFieldsSheet`
   / `ImportQuotesSheet`.
+- **Medical (built):** multi-year lab results + narrative reports. Three tables `medical_lab_test`
+  (reference/seed, read-only to clients), `medical_report`, `medical_result` (migrations
+  `20260622120000_medical_schema.sql` + `…121000_seed_medical_lab_test.sql`) plus nine `profile.medical_*`
+  columns (`…130000_profile_medical_settings.sql`: tracked tests, section/test order, visible fields,
+  importer toggle, and the four lock columns). **Reference ranges are stored exactly as printed** (the app
+  never computes a range); cross-provider values are **normalized to each test's canonical `default_unit`
+  at import** (flagged `normalized`, original kept in `value_num_original`/`unit_original`). Data
+  `src/data/medical.ts` (`saveReport`/`saveReportResults` idempotent delete-then-insert,
+  `saveImportedReport` idempotent on date+type, `listResultsWithReportMeta`). Pure logic
+  `src/lib/medical.ts` (the `MEDICAL_LAB_TESTS` seed source-of-truth + drift test, enums, `labTestByKey`,
+  `orderResultsForDisplay`, flag colours, `EYE_REFRACTION_*`), `medical-units.ts` (`normalizeResult`),
+  `medical-import.ts` (tolerant JSON repair + `matchTestKey`), `medical-draft.ts` (shared draft + the
+  `MedicalResultCard` editor, reused by the importer), `medical-trends.ts` (Dashboard derivations),
+  `medical-order.ts` (M5 reorder model), `medical-lock.ts` (PBKDF2 PIN + timeout/idle + flags),
+  `medical-webauthn.ts` (optional platform-authenticator unlock), `medical-refresh.ts`. **Intake** is a
+  structured **JSON/CSV import** produced outside the app by any vision AI (no in-app OCR — it mangles
+  decimals); originals are **Google Drive links**, never stored files. **Dashboard** = inline-SVG
+  sparkline grid (tap → lazy-recharts `MedicalTrendChart`) + latest-value-per-test by category + reports
+  timeline (`useMedicalTrends`, `Sparkline`, `constants/medical-ranges.ts`). **Display order** is a
+  drag-to-reorder sheet over the in-house `ReorderList`. A **biometric/PIN lock** (`MedicalLockProvider`
+  gate in `AppShell`, `MedicalLockScreen`, `PinInput`) is a **client-side UX gate over RLS-protected
+  data**, not a server-verified boundary. Eye reports get a structured **refraction grid**
+  (`EyeRefractionFields`). Screens `MedicalDashboard` / `MedicalReports` / `MedicalReportDetail` /
+  `MedicalEntry` / `MedicalSettings` / `MedicalFieldsSheet` / `MedicalTrackedTestsSheet` /
+  `MedicalOrderSheet` / `MedicalLockSheet` / `ImportMedicalSheet`.
 
 ## Stack (do not substitute without asking)
 

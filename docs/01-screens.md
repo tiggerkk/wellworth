@@ -22,9 +22,8 @@ module**, so daily Wellness use skips the hub.
   (edit), and **Settings** opens Quotes Settings.
 - **Medical** tabs: **Home**, **Dashboard**, **Reports**, **New Medical**, **Settings**. The Add/Edit
   Report screen is reached from the **New Medical** tab (new) or by tapping a report (edit), and
-  **Settings** opens Medical Settings. The **biometric lock** gates entry to the whole module (see
-  `docs/medical.md` → tech-spec). _(Module built in milestones — see `docs/medical.md` for the full
-  screen spec + build order; M1 ships the scaffold, screens flesh out across M2–M7.)_
+  **Settings** opens Medical Settings. The **biometric/PIN lock** gates entry to the whole module (see
+  02-tech-spec → Medical).
 - **Settings is global**, reached from a gear on the Home hub (profile, units, account — app-wide).
   Wellness-specific settings (protein target, nutrient display) live in **Wellness Settings**.
 
@@ -508,8 +507,23 @@ unlike Shows/Books, links resolve against the user's own Show/Book rows.
 
 ## Medical - Dashboard (`/medical`)
 
-_Built in M4 (trend charts for tracked tests, latest values by category, reports timeline). Through M3
-this shows a scaffold placeholder._
+The module index. Explicit loading / empty / error states; empty (no reports yet) shows a prompt with a
+**New Medical report** link. When there is data, three sections:
+
+- **Trends** — a two-column grid of **sparkline cards**, one per **tracked** test that has numeric data
+  (ordered by the canonical section + sort order). Each card shows the test name, its **latest value**
+  (+ unit, coloured by the latest flag), and a small **inline-SVG** sparkline (no chart library, so the
+  full set renders cheaply). Tapping a card opens a **bottom-sheet** with the full trend chart (lazy
+  recharts) for that test: flag-coloured points, an optional shaded **reference band** from the latest
+  printed range, and a **time-window selector** (1Y / 2Y / 3Y / 5Y / All). Escape / tap-outside closes.
+- **Latest values by category** — for **every** test recorded, its **most recent** value across all
+  reports (not just the newest report — a heterogeneous history means the latest report may omit most
+  tests), grouped under uppercase category headers in the user's display order. Each row: `test name`
+  with `value (+ unit)` and the printed reference range, the value **coloured by flag**.
+- **Recent reports** — up to five newest reports (date · type · provider · body part) linking to Report
+  detail, with a **View all reports** row when there are more.
+
+Tracked tests are chosen in Medical Settings → Tracked Tests (seeded from `default_tracked`).
 
 ## Medical - Reports (`/medical/reports`)
 
@@ -543,6 +557,12 @@ enabled (Settings), a **Import from JSON / CSV…** button at the top opens the 
   edits the value (number and/or text, by the test's kind), unit, reference range (as printed), a flag
   (none/high/low/abnormal), and an uncertain toggle; rows can be removed. Manual values are stored
   as-entered (no unit normalization — that's the importer's job).
+- **Eye reports** (type = eye) surface a dedicated **Eye Refraction** grid above the results: a row per
+  eye (OD / OS) × **Sphere / Cylinder / Addition** (dioptres). Each cell edits the `value_num` of the
+  matching `eye`-category `medical_result` row (created on first input, removed when cleared), so the six
+  values store + trend like any measurement — they just get a grid instead of the generic picker, and
+  are hidden from the "Other Results" list to avoid double entry. IOP / other eye findings go through the
+  generic results list as usual.
 
 ## Medical - Import (`/medical/import`, sheet)
 
@@ -559,9 +579,27 @@ you **paste the Drive link(s)**. **Save** writes idempotently: a report with the
 
 ## Medical - Settings (`/medical/settings`)
 
+- **Dashboard → Tracked Tests**: choose which tests trend on the Dashboard (the sparkline grid). A
+  sheet grouping the reference tests by category with a toggle each; persisted to
+  `medical_tracked_tests` (seeded from `default_tracked` on first run, so it's pre-populated).
+- **Display → Display Order**: **drag-to-reorder** the category **sections** and the **tests within a
+  section** (drag handles). A **Sections** list reorders the categories; a **Tests in section** list
+  (gated by a category picker) reorders that section's tests. Saved as personal overrides
+  (`medical_section_order` / a flat `medical_test_order`) and applied to the Dashboard + Report detail;
+  an unset/partial override falls back to the seeded order.
 - **Report Form → Visible Fields**: choose which optional Add/Edit-Report fields appear (date, type,
   results always shown). NULL = all visible.
 - **Enable structured import**: surfaces the **Import JSON / CSV…** launcher (and the Import button on
   the New-Report form).
+- **Security → Lock**: set up / change / turn off the module **PIN**, register an optional **Face ID /
+  Touch ID** unlock (hidden where the device has no platform authenticator), and choose the **auto-lock**
+  timeout (Immediately / 1 / 5 / 15 min / Only on app restart). See the Lock screen below.
 
-_Tracked tests, drag-to-reorder display order, and the biometric lock land in M4–M6._
+## Medical - Lock screen
+
+Shown over the whole Medical module whenever it's locked — on app **cold start** and after the chosen
+auto-lock idle timeout (always re-locks on restart). A **mandatory PIN** entry is always available; if a
+biometric unlock was registered it is **auto-attempted** on appearance (and re-tryable via a button),
+silently falling back to the PIN on any failure. A small **"Forgot PIN? Sign out"** escape avoids a hard
+lockout. The lock is a convenience gate on this device — the data is already private to the account
+(RLS); it is not a server-verified boundary.

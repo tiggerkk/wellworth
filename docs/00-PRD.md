@@ -75,7 +75,7 @@
 
 ## Medical
 
-_Module built in milestones (see `docs/medical.md` for the staging spec + build order). M1 ships the schema, the seeded `medical_lab_test` reference, and the module scaffold; the screens below flesh out across M2–M7._
+_Feature-complete (built M1–M7: schema/seed/scaffold, manual CRUD + detail, structured import, the trend Dashboard, drag-to-reorder display order, the biometric/PIN lock, and the eye-refraction form). See BUILD-LOG → "Medical Build Sequence" for the history._
 
 - **Dashboard** (`/medical`): trend charts (recharts) for each **tracked** test across reports; latest values grouped by category, coloured by flag (high/low/abnormal) using **the report's own range**; a reports-timeline entry point.
 - **Reports** (`/medical/reports`): chronological list (date · type · provider · body part); tap → Report detail (results in the user's section + test order, filtered to the tests that report contains, each with name · value/text · unit · the report's reference range · flag; plus the narrative block and **Open original** Google Drive link[s]); swipe-left to delete (hard, cascades its results).

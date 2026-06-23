@@ -16,7 +16,9 @@ import {
   type ReportDraft,
 } from '../lib/medical-draft'
 import {
+  EYE_REFRACTION_KEYS,
   isMedicalFieldVisible,
+  labTestByKey,
   REPORT_TYPE_LABELS,
   REPORT_TYPES,
   usesBodyPart,
@@ -30,6 +32,9 @@ import { SecondaryButton } from '../components/SecondaryButton'
 import { SelectMenu } from '../components/SelectMenu'
 import { MedicalResultCard } from '../components/MedicalResultCard'
 import { MedicalTestPickerSheet } from '../components/MedicalTestPickerSheet'
+import { EyeRefractionFields } from '../components/EyeRefractionFields'
+
+const EYE_KEY_SET = new Set(EYE_REFRACTION_KEYS)
 
 const inputClass =
   'w-full rounded-input bg-input px-3 py-2 text-[15px] text-text-primary focus:outline-none'
@@ -79,6 +84,13 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
   const update = (patch: Partial<ReportDraft>) => setDraft((d) => ({ ...d, ...patch }))
   const dirty = JSON.stringify(draft) !== JSON.stringify(initial)
 
+  // Eye reports surface the six refraction values in a dedicated grid; hide those rows from the
+  // generic results list so they aren't edited twice.
+  const isEye = draft.report_type === 'eye'
+  const listResults = isEye
+    ? draft.results.filter((r) => !(r.test_key && EYE_KEY_SET.has(r.test_key)))
+    : draft.results
+
   function updateResult(
     clientId: string,
     patch: Partial<ReportDraft['results'][number]>,
@@ -112,6 +124,30 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
       ...d,
       results: [...d.results, blankResultDraft(null, '', 'other', '')],
     }))
+  }
+  // Upsert a single eye-refraction value by its test key; an emptied cell removes the row.
+  function setEyeValue(testKey: string, value: string) {
+    setDraft((d) => {
+      if (value.trim() === '') {
+        return { ...d, results: d.results.filter((r) => r.test_key !== testKey) }
+      }
+      if (d.results.some((r) => r.test_key === testKey)) {
+        return {
+          ...d,
+          results: d.results.map((r) =>
+            r.test_key === testKey ? { ...r, value_num: value } : r,
+          ),
+        }
+      }
+      const seed = labTestByKey.get(testKey)
+      const row = blankResultDraft(
+        testKey,
+        seed?.display_name ?? testKey,
+        'eye',
+        seed?.default_unit ?? 'D',
+      )
+      return { ...d, results: [...d.results, { ...row, value_num: value }] }
+    })
   }
 
   function setUrl(i: number, value: string) {
@@ -267,10 +303,12 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
           </div>
         )}
 
+        {isEye && <EyeRefractionFields results={draft.results} onSet={setEyeValue} />}
+
         <div>
           <div className="mb-2 flex items-center justify-between">
             <p className="text-xs uppercase tracking-[0.08em] text-text-secondary">
-              Results
+              {isEye ? 'Other Results' : 'Results'}
             </p>
             <button
               onClick={() => setPickerOpen(true)}
@@ -279,13 +317,15 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
               <IconPlus size={16} /> Add result
             </button>
           </div>
-          {draft.results.length === 0 ? (
+          {listResults.length === 0 ? (
             <p className="rounded-card border border-dashed border-border px-4 py-6 text-center text-sm text-text-tertiary">
-              No results yet. Tap “Add result”.
+              {isEye
+                ? 'No other results. Tap “Add result”.'
+                : 'No results yet. Tap “Add result”.'}
             </p>
           ) : (
             <div className="flex flex-col gap-3">
-              {draft.results.map((r) => (
+              {listResults.map((r) => (
                 <MedicalResultCard
                   key={r.clientId}
                   row={r}

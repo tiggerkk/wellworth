@@ -7,7 +7,6 @@ Hand-off package for building **WellWorth** (a wellness + net-worth tracker PWA)
 - **CLAUDE.md** — always-on rules & conventions. Keep this at your repo root; Claude Code auto-loads it.
 - **docs/**
   - `00-PRD.md` — what we're building and why; the multi-module Home hub; scope (Wellness, Net Worth, Shows, Books, Quotes, Medical).
-  - `medical.md` — staging spec + build order for the **Medical** module (kept until it is feature-complete, then merged into the permanent specs and deleted, like the former `06-books.md`/`07-quotes.md`).
   - `01-screens.md` — every screen and its behavior (functional spec).
   - `02-tech-spec.md` — stack, architecture, folder layout, calculations, env vars, workflows.
   - `03-data-model.md` — Postgres tables, RLS, relationships, multi-user readiness.

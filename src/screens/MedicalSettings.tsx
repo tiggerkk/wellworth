@@ -11,9 +11,9 @@ import type { Tables, TablesUpdate } from '../types/database'
 type SaveFn = (patch: TablesUpdate<'profile'>) => Promise<void>
 
 /**
- * Medical sub-settings (reached from the Settings tab in the Medical bottom nav): Entry field
- * visibility + the structured importer toggle. Tracked-tests + drag-to-reorder + the biometric lock
- * land in M4–M6. Mirrors `ShowsSettings`.
+ * Medical sub-settings (reached from the Settings tab in the Medical bottom nav): Dashboard tracked
+ * tests (M4), drag-to-reorder Display Order (M5), the biometric/PIN Lock (M6), Entry field
+ * visibility, and the structured importer toggle. Mirrors `ShowsSettings`.
  */
 export function MedicalSettings() {
   const { profile, loading, save } = useProfileEditor()
@@ -45,6 +45,39 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
 
   return (
     <>
+      <SectionCard title="Dashboard">
+        <button
+          onClick={() => openSheet(routes.medical.settingsTracked)}
+          className="w-full"
+        >
+          <FieldRow label="Tracked Tests">
+            <IconChevronRight size={18} className="text-text-tertiary" />
+          </FieldRow>
+        </button>
+      </SectionCard>
+
+      <SectionCard title="Display">
+        <button
+          onClick={() => openSheet(routes.medical.settingsOrder)}
+          className="w-full"
+        >
+          <FieldRow label="Display Order">
+            <IconChevronRight size={18} className="text-text-tertiary" />
+          </FieldRow>
+        </button>
+      </SectionCard>
+
+      <SectionCard title="Security">
+        <button onClick={() => openSheet(routes.medical.settingsLock)} className="w-full">
+          <FieldRow label="Lock">
+            <span className="flex items-center gap-1">
+              {profile.medical_lock_enabled ? 'On' : 'Off'}
+              <IconChevronRight size={18} className="text-text-tertiary" />
+            </span>
+          </FieldRow>
+        </button>
+      </SectionCard>
+
       <SectionCard title="Report Form">
         <button
           onClick={() => openSheet(routes.medical.settingsVisible)}

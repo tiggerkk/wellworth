@@ -114,6 +114,16 @@ export const MEDICAL_FLAG_CLASS: Record<MedicalFlag, string> = {
   abnormal: 'text-danger',
 }
 
+/**
+ * Flag → a raw CSS colour var (same semantics as `MEDICAL_FLAG_CLASS`), for SVG strokes/dots on the
+ * Dashboard where a Tailwind text class can't apply (sparkline end dot, recharts point).
+ */
+export const MEDICAL_FLAG_COLOR: Record<MedicalFlag, string> = {
+  high: 'var(--color-danger)',
+  low: 'var(--color-info)',
+  abnormal: 'var(--color-danger)',
+}
+
 /** Whether a test records numbers, free text, or either depending on the lab/method. */
 export const VALUE_KINDS = ['numeric', 'qualitative', 'either'] as const
 export type ValueKind = (typeof VALUE_KINDS)[number]
@@ -465,6 +475,23 @@ export const MEDICAL_LAB_TESTS: MedicalLabTestSeed[] = [
 export function defaultTrackedTestKeys(): string[] {
   return MEDICAL_LAB_TESTS.filter((x) => x.default_tracked).map((x) => x.key)
 }
+
+/**
+ * The six structured eye-refraction result keys (M7), laid out as the Add/Edit form grid renders them:
+ * a row per eye (OD/OS) × Sphere / Cylinder / Addition. They are ordinary `eye`-category numeric
+ * `medical_result` rows (so they trend like any measurement); the form just gives them a dedicated grid
+ * instead of the generic test picker.
+ */
+export const EYE_REFRACTION_ROWS: { eye: string; label: string; keys: string[] }[] = [
+  { eye: 'OD', label: 'Right (OD)', keys: ['sphere_od', 'cylinder_od', 'addition_od'] },
+  { eye: 'OS', label: 'Left (OS)', keys: ['sphere_os', 'cylinder_os', 'addition_os'] },
+]
+
+/** Column headers for the refraction grid (one numeric value per eye). */
+export const EYE_REFRACTION_COLUMNS = ['Sphere', 'Cylinder', 'Addition'] as const
+
+/** Flat set of the six refraction keys, for hiding them from the generic results list on eye reports. */
+export const EYE_REFRACTION_KEYS: string[] = EYE_REFRACTION_ROWS.flatMap((r) => r.keys)
 
 /** Reference test by key (the static seed mirror is the runtime reference — no DB round-trip). */
 export const labTestByKey: Map<string, MedicalLabTestSeed> = new Map(

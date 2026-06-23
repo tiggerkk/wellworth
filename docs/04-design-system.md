@@ -120,6 +120,22 @@ _not_ the primary-button color; it's for emphasis, active states, and energy.
 - **NutrientReport** — shared body of Dashboard + Daily Report (energy card + visible-nutrient sections).
 - **CollapsibleSection** — collapsible card for the New Food nutrient-entry groups.
 - **BarcodeScanner** — ZXing camera scanner (lazy-loaded).
+- **MedicalLockScreen / PinInput** — the Medical lock gate (`src/components/MedicalLockScreen.tsx`): a
+  full-shell overlay (lock glyph, masked numeric `PinInput`, Unlock, an auto-tried Face ID / Touch ID
+  button when a credential is registered, and a "Sign out" escape). `PinInput` is a shared masked
+  numeric field (digits only, Enter submits) reused by the lock settings. Lock colours reuse `danger`
+  for errors; the screen sits at `z-50`, above sheets.
+- **ReorderList** — a pointer-drag reorderable list (`src/components/ReorderList.tsx`): a grip handle
+  per row (`IconGripVertical`); drag it to move the row (Pointer Events, no dnd dependency — consistent
+  with `SwipeRow`), rows shift to open a gap, commit on release. Uniform row height (rows truncate to one
+  line) so the target slot is `round(dragΔ / rowHeight)`. `touch-action:none` is on the handle only, so
+  a row body still scrolls. Used by the Medical Display-Order sheet for sections + tests-in-section.
+- **Sparkline** — a tiny dependency-free **inline-SVG** trend line (`src/components/Sparkline.tsx`):
+  min–max normalized values, an end dot tintable by a flag colour. Used by the Medical Dashboard's
+  tracked-test grid so many render cheaply without a chart library. The **full** trend chart
+  (`MedicalTrendChart`, recharts) is **lazy-loaded** only when a sparkline is expanded — the same
+  own-chunk pattern as `NetWorthTrendChart`; flag colours map to the semantic tokens (high/abnormal =
+  `danger`, low = `info`, in-range = `accent`).
 
 ## Icons
 

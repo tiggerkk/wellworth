@@ -2,6 +2,7 @@ import { supabase } from '../lib/supabase'
 import type { Tables, TablesUpdate } from '../types/database'
 import { OWNER_PROFILE_SEED } from '../constants/profile-defaults'
 import { getDefaultVisibleNutrientKeys } from './nutrient'
+import { defaultTrackedTestKeys } from '../lib/medical'
 
 export async function getProfile(userId: string): Promise<Tables<'profile'> | null> {
   const { data, error } = await supabase
@@ -29,12 +30,17 @@ export async function ensureOwnerProfile(userId: string): Promise<void> {
 
   const visibleNutrients = await getDefaultVisibleNutrientKeys()
 
-  const { error } = await supabase
-    .from('profile')
-    .upsert(
-      { user_id: userId, ...OWNER_PROFILE_SEED, visible_nutrients: visibleNutrients },
-      { onConflict: 'user_id', ignoreDuplicates: true },
-    )
+  const { error } = await supabase.from('profile').upsert(
+    {
+      user_id: userId,
+      ...OWNER_PROFILE_SEED,
+      visible_nutrients: visibleNutrients,
+      // Seed the Medical Dashboard's tracked tests from the reference `default_tracked` set, the
+      // same way visible_nutrients is seeded (the picker can trim it afterwards).
+      medical_tracked_tests: defaultTrackedTestKeys(),
+    },
+    { onConflict: 'user_id', ignoreDuplicates: true },
+  )
   if (error) throw error
 }
 

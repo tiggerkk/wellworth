@@ -31,6 +31,37 @@ export interface ReportWithResults {
   results: MedicalResultRow[]
 }
 
+/** A result row carrying its parent report's date + type — the Dashboard trend/latest-value unit. */
+export interface ResultWithReportMeta extends MedicalResultRow {
+  report_date: string
+  report_type: string
+}
+
+/**
+ * Every result the user has, each flattened with its report's `report_date` + `report_type`, via one
+ * embedded select (oldest report first). A single fetch powers both the Dashboard sparkline trends and
+ * the latest-value-per-test card — avoiding an N+1 query per tracked test. Mirrors how
+ * `asset-entry.listSnapshotsWithEntries` loads all rows and lets the dashboard derive client-side;
+ * medical data is small (a handful of reports/year), so this is cheap. RLS scopes both tables.
+ */
+export async function listResultsWithReportMeta(
+  userId: string,
+): Promise<ResultWithReportMeta[]> {
+  const { data, error } = await supabase
+    .from('medical_report')
+    .select('report_date, report_type, medical_result(*)')
+    .eq('user_id', userId)
+    .order('report_date', { ascending: true })
+  if (error) throw error
+  return (data ?? []).flatMap((rep) =>
+    (rep.medical_result ?? []).map((r) => ({
+      ...r,
+      report_date: rep.report_date,
+      report_type: rep.report_type,
+    })),
+  )
+}
+
 /** A report together with its result rows, or null if the id doesn't resolve (RLS-scoped). */
 export async function getReportWithResults(
   reportId: string,

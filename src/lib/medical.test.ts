@@ -4,6 +4,8 @@ import { describe, expect, it } from 'vitest'
 import SEED_SQL from '../../supabase/migrations/20260622121000_seed_medical_lab_test.sql?raw'
 import {
   defaultTrackedTestKeys,
+  EYE_REFRACTION_KEYS,
+  EYE_REFRACTION_ROWS,
   formatRefRange,
   formatResultValue,
   isMedicalFieldVisible,
@@ -64,6 +66,23 @@ describe('MEDICAL_LAB_TESTS reference list', () => {
     const keys = new Set(MEDICAL_LAB_TESTS.map((t) => t.key))
     expect(tracked.length).toBeGreaterThan(0)
     for (const k of tracked) expect(keys.has(k)).toBe(true)
+  })
+})
+
+describe('EYE_REFRACTION constants (M7 form grid)', () => {
+  it('lists six keys that are all real numeric eye-category tests', () => {
+    expect(EYE_REFRACTION_KEYS).toHaveLength(6)
+    for (const key of EYE_REFRACTION_KEYS) {
+      const seed = labTestByKey.get(key)
+      expect(seed).toBeDefined()
+      expect(seed!.category).toBe('eye')
+      expect(seed!.value_kind).toBe('numeric')
+    }
+  })
+
+  it('the grid rows flatten to exactly the key set (3 columns per eye)', () => {
+    expect(EYE_REFRACTION_ROWS.flatMap((r) => r.keys)).toEqual(EYE_REFRACTION_KEYS)
+    for (const row of EYE_REFRACTION_ROWS) expect(row.keys).toHaveLength(3)
   })
 })
 

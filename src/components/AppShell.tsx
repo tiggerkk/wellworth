@@ -1,6 +1,8 @@
 import { useEffect } from 'react'
 import { useLocation, useOutlet, type Location } from 'react-router'
 import { BottomNav } from './BottomNav'
+import { MedicalLockProvider, useMedicalLock } from './MedicalLockProvider'
+import { MedicalLockScreen } from './MedicalLockScreen'
 import { useAuth } from '../auth/AuthProvider'
 import { useEnsureProfile } from '../hooks/useEnsureProfile'
 import { moduleForPath } from '../constants/modules'
@@ -69,12 +71,22 @@ export function AppShell() {
   const backgroundTab = background ? (TAB_FOR_PATH[background.pathname] ?? null) : null
 
   return (
-    <div className="mx-auto flex h-dvh max-w-md flex-col bg-bg pt-[env(safe-area-inset-top)]">
-      <main className="flex-1 overflow-y-auto">
-        {background ? backgroundTab : outlet}
-      </main>
-      {module && <BottomNav module={module} />}
-      {background && outlet}
-    </div>
+    <MedicalLockProvider>
+      <div className="mx-auto flex h-dvh max-w-md flex-col bg-bg pt-[env(safe-area-inset-top)]">
+        <main className="flex-1 overflow-y-auto">
+          {background ? backgroundTab : outlet}
+        </main>
+        {module && <BottomNav module={module} />}
+        {background && outlet}
+        <MedicalLockGate />
+      </div>
+    </MedicalLockProvider>
   )
+}
+
+/** Covers the whole shell with the lock screen while the Medical module is locked. */
+function MedicalLockGate() {
+  const { locked, inMedical } = useMedicalLock()
+  if (!locked || !inMedical) return null
+  return <MedicalLockScreen />
 }

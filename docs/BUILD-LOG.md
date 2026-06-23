@@ -22,6 +22,12 @@ filters/sort, Settings, CSV importer, plus the later **favourites** pass. It re-
 cross-module Show/Book linker, the Moment-of-Zen dashboard, the Library filters/facets, Settings + Entry
 field-visibility, and the in-app CSV importer. It re-skinned Books/Shows (adding the shared `TagInput`);
 its `docs/07-quotes.md` staging spec has been merged into the permanent docs and deleted.
+**Medical** (multi-year lab results + narrative reports) is **feature-complete (M1–M7)** — see "Medical
+Build Sequence" below: schema + seeded reference + scaffold, manual report CRUD + detail, structured
+JSON/CSV import (tolerant repair + unit normalization + review-confirm), the trend Dashboard (inline-SVG
+sparklines + lazy-recharts expanded chart) + tracked-test picker, drag-to-reorder display order, the
+biometric/PIN lock, and the eye-refraction form. Its `docs/medical.md` staging spec has been merged into
+the permanent docs and deleted (with the `CONTINUITY.md` handoff).
 
 ---
 
@@ -31,7 +37,8 @@ its `docs/07-quotes.md` staging spec has been merged into the permanent docs and
   Vite 8.0, TypeScript 6.0 (strict), Tailwind 4.3 (CSS-first via `@tailwindcss/vite`),
   vite-plugin-pwa 1.3, `@supabase/supabase-js` 2.108, `@zxing/library` 0.22 + `@zxing/browser` 0.2,
   `@tabler/icons-react` 3.44, Vitest 4.1, ESLint 10 (flat config), Prettier 3.8, husky 9. `recharts`
-  3.8 powers the Net Worth dashboard trend chart (lazy-loaded into its own chunk).
+  3.8 powers the Net Worth **and Medical** dashboard trend charts (lazy-loaded into their own chunk;
+  the Medical dashboard grid uses cheap inline-SVG sparklines and only loads recharts on expand).
 - **Scripts:** `dev`, `build` (`tsc -b && vite build`), `preview`, `lint`, `format`, `typecheck`,
   `test`, `check` (all gates), `gen:types` (Supabase → `src/types/database.ts`), `prepare` (husky).
 - **Env (`.env`, gitignored; `.env.example` documents):** `VITE_SUPABASE_URL`,
@@ -39,7 +46,7 @@ its `docs/07-quotes.md` staging spec has been merged into the permanent docs and
   `VITE_GOOGLE_BOOKS_API_KEY` (Books), and the optional `VITE_ALLOWED_EMAILS` (email allowlist —
   empty ⇒ no restriction). All build-time `VITE_` vars.
 - **Gates:** husky `.husky/pre-commit` → lint-staged + `typecheck` + `test`; GitHub Actions
-  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 295 Vitest tests (pure helpers).
+  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 323 Vitest tests (pure helpers).
 - **Deploy status:** Deployed. GitHub `main` → Vercel auto-deploy; the production URL is in the
   Supabase redirect URLs + Google JS origins (see `OWNER-RUNBOOK.md`). Installed + tested on iPhone (PWA).
 - Conventions (DB-access-via-`src/data`, metric storage, generated `database.ts` contract, etc.) live
@@ -1012,11 +1019,11 @@ migration, no env.
 
 ## Medical Build Sequence (per milestone)
 
-Staging spec + build order: `docs/medical.md` (kept until the module is feature-complete, then merged
-
-- deleted like `06-books.md`/`07-quotes.md`). Milestones: 1 schema+seed+scaffold · 2 manual report
-  CRUD + detail · 3 structured import + tolerant repair + review-confirm · 4 dashboard trends +
-  tracked-test selection · 5 drag-to-reorder settings · 6 biometric lock · 7 narrative + eye refraction.
+**Feature-complete (M1–M7).** The staging spec (`docs/medical.md`) was merged into the permanent
+`/docs` (00-PRD … 05-seed-data) and **deleted** (like the former `06-books.md`/`07-quotes.md`), and the
+session handoff `CONTINUITY.md` was removed. Milestones: 1 schema+seed+scaffold · 2 manual report CRUD +
+detail · 3 structured import + tolerant repair + review-confirm · 4 dashboard trends + tracked-test
+selection · 5 drag-to-reorder settings · 6 biometric lock · 7 narrative + eye refraction.
 
 ### M1 — Schema + RLS + seed + module scaffold
 
@@ -1111,6 +1118,116 @@ fuzzy test matching, unit normalization, and a mandatory review.
   `/medical/settings/visible`.
 - Verified by `npm run check` (all gates, **295** tests).
 
+### M4 — Dashboard trends + tracked-test selection
+
+Goal: turn the stub Dashboard into trend sparklines for the tracked tests, latest values per test by
+category, and a recent-reports timeline; plus a Tracked Tests picker in Settings.
+
+- **Data/presentation split (the design constraint):** the data side is a single hook
+  `src/hooks/useMedicalTrends.ts` over pure helpers in **`src/lib/medical-trends.ts`**
+  (`buildTrendSeries` — date-sorted numeric points per test; `latestResultPerTest` — most-recent row per
+  test across all reports, ad-hoc keyed by name; `latestByCategory` — grouped under category headers via
+  `orderResultsForDisplay`; `trackedSeries` — tracked tests that have data, in canonical section order;
+  `asFlag`/`latestPoint`). Presentation consumes **only** the hook, so an alternate layout (e.g.
+  one-chart-with-selector behind a Settings toggle, **deferred** — see `PARKED.md`) is a new component
+  over the same data, no refetch.
+- **One fetch:** `src/data/medical.ts` `listResultsWithReportMeta` — every `medical_result` flattened
+  with its report's `report_date`/`report_type` via one embedded select (parent→children, mirrors
+  `asset-entry.listSnapshotsWithEntries`). The hook also loads `listReports` (for the timeline, incl.
+  narrative reports with no results). Derive client-side — **no** per-test query (avoids N+1 on a hot path).
+- **Sparklines, not 20 charts:** the grid draws cheap **inline-SVG** `src/components/Sparkline.tsx`
+  (generic, no dependency) so the full tracked set renders smoothly; **recharts mounts only** in the
+  expanded single-test view — `src/components/MedicalTrendChart.tsx`, lazy-loaded into its own chunk
+  (same pattern as `NetWorthTrendChart`), with flag-coloured dots + an optional reference band from the
+  latest printed range. Tapping a sparkline opens a bottom-sheet **local overlay** (dismiss via
+  `useEscapeKey`) with a time-window selector (`src/constants/medical-ranges.ts`, 1Y–5Y/All).
+  `recharts` now powers both the Net Worth and Medical dashboards.
+- **Latest values = latest per test** (not the single newest report) so a heterogeneous history (an eye
+  exam or MRI won't carry blood-panel rows) still surfaces the freshest reading for everything.
+- **Settings + seed:** new `MedicalTrackedTestsSheet` (route `/medical/settings/tracked`, mirrors
+  `VisibleNutrientsSheet`) writes `profile.medical_tracked_tests`; `MedicalSettings` gained a Dashboard →
+  Tracked Tests row. The M2/M3-deferred **first-run seed** now lands: `ensureOwnerProfile`
+  (`src/data/profile.ts`) seeds `medical_tracked_tests` from `defaultTrackedTestKeys()` (like
+  `visible_nutrients`). **No migration / owner step** — every column already existed.
+- Verified by `npm run check` (all gates, **307** tests).
+
+### M5 — Drag-to-reorder display order (sections + tests)
+
+Goal: let the owner reorder the category **sections** and the **tests within a section**, saved as
+personal overrides and honoured everywhere results render. **No migration** — `medical_section_order` /
+`medical_test_order` already existed.
+
+- **In-house pointer-drag, no dnd dep:** new reusable `src/components/ReorderList.tsx` — drag the
+  **handle** (Pointer Events; `touch-action:none` on the handle only, so a row body still scrolls the
+  page) to move a row; the rows it passes shift to open a gap, commit on release. Assumes **uniform row
+  height** (rows truncate to one line), so the target slot is `round(dragΔ / rowHeight)` — simple and
+  robust. Consistent with `SwipeRow`'s in-house pointer approach.
+- **Pure model helpers** `src/lib/medical-order.ts` (`effectiveSectionOrder` /
+  `effectiveTestOrderForCategory` / `buildOrderModel` / `flattenTestOrder`) — **partial-tolerant**:
+  every current category/test appears exactly once (override entries first, then anything missing in
+  canonical order), so a stale or incomplete override never drops or duplicates a row. Unit-tested.
+- **Screen** `MedicalOrderSheet` (route `/medical/settings/order`, **Settings → Display → Display
+  Order**): a **Sections** reorder list + a **Tests in section** reorder list gated by a category
+  `SelectMenu` (so it renders one section's tests at a time, not all ~150 rows). Auto-saves on each drop
+  (`medical_section_order` always re-flattens `medical_test_order` so the stored flat array stays grouped
+  by the new section order).
+- **Consumers honour the overrides:** `MedicalReportDetail` now passes `profile.medical_section_order` /
+  `medical_test_order` into `orderResultsForDisplay`; the Dashboard's `latestByCategory` already did, and
+  `trackedSeries` (the sparkline grid) gained the same optional override params so all three surfaces
+  order identically. `orderResultsForDisplay` stays the read-path tolerance (unknown cats/tests last).
+- Verified by `npm run check` (all gates, **313** tests).
+
+### M6 — Biometric / PIN lock
+
+Goal: gate the Medical module behind a **mandatory PIN** + an **optional** platform-authenticator
+unlock, re-locking on cold start + an adjustable idle timeout. **No migration** — the `medical_lock_*`
+columns already existed. Honest constraint (in the spec): a PWA has no background-lock lifecycle and
+there's no relying-party backend, so this is a **client-side UX gate over already-RLS-protected data**,
+not a cryptographic boundary.
+
+- **PIN (dependable primary)** `src/lib/medical-lock.ts` (pure, unit-tested): `hashPin`/`verifyPin` —
+  salted **PBKDF2-SHA-256** (100k iters), stored as `pbkdf2$<iters>$<salt>$<hash>`, never the PIN;
+  `isValidPin` (4–8 digits); the timeout options + `isIdleExpired`; and the session/persistent lock
+  flags. `crypto.subtle` works in Node's webcrypto, so the hashing is genuinely tested.
+- **Biometric (optional, layered)** `src/lib/medical-webauthn.ts`: feature-detect
+  (`isUserVerifyingPlatformAuthenticatorAvailable`), `registerPlatformCredential` (platform,
+  `userVerification:'required'`, id stored in `medical_lock_webauthn_id`), `assertPlatformCredential`
+  (a **local** UV check — the assertion is never server-verified). Every failure is swallowed → silent
+  PIN fallback, so biometric can never cause a lockout.
+- **Lifecycle** `src/components/MedicalLockProvider.tsx` (`useMedicalLock`): re-locks on **cold start**
+  (sessionStorage cleared), and per `medical_lock_timeout_minutes` on **idle** (finite minutes, time
+  since last Medical interaction), on **background/leave** (Immediately = 0), or never (Indefinite =
+  null). A persistent `enabledHint` (localStorage) lets the gate engage synchronously before the
+  profile loads, so locked content never flashes.
+- **Gate + UI:** `MedicalLockScreen` (PIN + auto-tried biometric + a "Sign out" escape) is rendered by
+  `AppShell` whenever `useMedicalLock()` reports `locked && inMedical` (covers tabs **and** sheets,
+  since `moduleForPath` of a `/medical/*` sheet is still Medical); shared `PinInput`. Config in
+  `MedicalLockSheet` (`/medical/settings/lock`, **Settings → Security → Lock**): set / change / turn
+  off the PIN (each gated by the current PIN), the biometric toggle (hidden where unsupported), and the
+  auto-lock timeout.
+- Verified by `npm run check` (all gates, **321** tests). Manual: enable → cold-reload `/medical` →
+  PIN gate → unlock; toggle biometric (prompts the platform authenticator). Note WebAuthn needs HTTPS
+  (localhost exempt) and is unreliable in an installed iOS PWA — the PIN is the guaranteed path.
+
+### M7 — Eye refraction form (module feature-complete)
+
+Goal: the final milestone — a structured **eye-refraction** input on the Add/Edit form. (Narrative
+already rendered on the form + detail since M2.) **No migration** — the six keys were seeded in M1.
+
+- The six refraction keys (`sphere_od`/`cylinder_od`/`addition_od` + `…_os`) are ordinary `eye`-category
+  **numeric** `medical_result` rows (so they already store + trend like any measurement); M7 just gives
+  them a dedicated grid instead of the generic test picker. Pure layout constants
+  (`EYE_REFRACTION_ROWS`/`EYE_REFRACTION_COLUMNS`/`EYE_REFRACTION_KEYS`) live in `src/lib/medical.ts`
+  with a drift-guard test (the six exist, are `eye` + numeric).
+- New `src/components/EyeRefractionFields.tsx` — a row-per-eye (OD/OS) × Sphere/Cylinder/Addition grid
+  of numeric inputs (dioptres). `MedicalEntry` shows it **only when type = eye**, upserts each cell into
+  the matching result draft by `test_key` (created on first input, removed when cleared), and **hides**
+  those six rows from the (renamed) "Other Results" list so they aren't edited twice. IOP / other eye
+  findings still go through the generic results list.
+- **Module wrap-up:** the staging `docs/medical.md` + `CONTINUITY.md` were merged into `/docs` and
+  removed; the `medical-module-in-progress` memory was retired.
+- Verified by `npm run check` (all gates, **323** tests).
+
 ## Failures & gotchas to not repeat
 
 - **F1 — RLS without table GRANTs → `42501 permission denied` (M3).** Tables created by raw-SQL
@@ -1186,6 +1303,12 @@ fuzzy test matching, unit normalization, and a mandatory review.
   the scroll pane (Import button, Exchange-rates card, empty note, each asset-group card). Exact same
   root cause as F6(c): a `flex-col` scroll pane needs `min-h-0` on itself **and** `shrink-0` on its
   children. Don't reach for a fixed pixel height.
+- **F10 — TS 6 generic typed arrays vs `BufferSource` (Medical M6).** Under TS 5.7+/6.0 a bare
+  `Uint8Array` is `Uint8Array<ArrayBufferLike>`, which is **not** assignable to the Web Crypto / WebAuthn
+  `BufferSource` params (those want an `ArrayBuffer`-backed view) — `crypto.subtle.deriveBits({salt})`
+  and a `PublicKeyCredentialDescriptor.id` both errored. Fix: annotate the byte helpers that feed those
+  APIs as **`Uint8Array<ArrayBuffer>`** (a `new Uint8Array(n)` / `getRandomValues` result already is
+  one — only the explicit `: Uint8Array` annotations widened it). Don't reach for `as unknown as` casts.
 
 ## Shows / Books / global enhancement (favourites, Esc, master-series removal)
 

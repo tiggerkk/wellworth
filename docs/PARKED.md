@@ -31,21 +31,25 @@ Status legend: **Net Worth** (built) · **Deferred** (Phase-1-adjacent, do later
 
 ---
 
-## Medical · Building (M1 shipped; M2–M7 in progress)
+## Medical · Feature-complete (M1–M7) — recorded non-goals
 
 **What:** A private multi-year record of lab results + narrative reports, with trend charts; intake via
-manual entry or a structured JSON/CSV import (no in-app OCR); Google-Drive-URL storage; a biometric
-lock. Staging spec + build order in `docs/medical.md`; M1 (schema + seeded `medical_lab_test` reference
+manual entry or a structured JSON/CSV import (no in-app OCR); Google-Drive-URL storage; a biometric/PIN
+lock. **Shipped** end-to-end (see BUILD-LOG → "Medical Build Sequence"; behaviour lives in the permanent
+`/docs`). The items below are decided **Medical** non-goals / deferrals so they aren't re-litigated:
 
-- module scaffold) is shipped (see BUILD-LOG → "Medical Build Sequence"). The items below are decided
-  **Medical** non-goals so they aren't re-litigated:
+- **Alternate Dashboard trend layouts (one-chart-with-selector, sparkline-vs-chart Settings toggle)** —
+  **Deferred, not built.** M4 ships the sparkline-grid-with-expand layout only. The data layer
+  (`useMedicalTrends` over `lib/medical-trends.ts`) is deliberately layout-agnostic, so an alternate
+  presentation could be added later as a new component over the same hook (optionally behind a profile
+  toggle) without touching the data layer. Build only if the single layout proves insufficient.
 
-* **Display-only unit-normalization toggle** — **Out of scope.** Cross-provider values are normalized to
+- **Display-only unit-normalization toggle** — **Out of scope.** Cross-provider values are normalized to
   each test's canonical `default_unit` **at import** (flagged via `medical_result.normalized`, original
   kept in `value_num_original`/`unit_original`). The app does **not** offer an on/off "show another unit"
   view — that would be computing a clinical value on the fly, which the module forbids (it never invents
   or derives values, e.g. no eGFR, no computed reference ranges).
-* **Server-verified WebAuthn / true background lock** — **Out of scope (hard PWA limit).** A PWA has no
+- **Server-verified WebAuthn / true background lock** — **Out of scope (hard PWA limit).** A PWA has no
   background-lock lifecycle and there is no relying-party backend, so the biometric lock is a
   **client-side UX gate** over already-RLS-protected data: it challenges on cold start / after the
   configurable idle timeout, with a **mandatory PIN fallback** (biometric is an optional faster unlock

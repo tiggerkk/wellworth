@@ -2,6 +2,7 @@ import { useCallback } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { IconChevronLeft, IconExternalLink } from '@tabler/icons-react'
 import { useAsync } from '../hooks/useAsync'
+import { useProfile } from '../hooks/useProfile'
 import { getReportWithResults, type ReportWithResults } from '../data/medical'
 import { useMedicalVersion } from '../lib/medical-refresh'
 import {
@@ -72,9 +73,14 @@ export function MedicalReportDetail() {
 
 function Body({ data }: { data: ReportWithResults }) {
   const { report, results } = data
+  const { data: profile } = useProfile()
   const typeLabel =
     REPORT_TYPE_LABELS[report.report_type as ReportType] ?? report.report_type
-  const ordered = orderResultsForDisplay(results)
+  const ordered = orderResultsForDisplay(
+    results,
+    profile?.medical_section_order,
+    profile?.medical_test_order,
+  )
   const groups = groupByCategory(ordered)
 
   return (

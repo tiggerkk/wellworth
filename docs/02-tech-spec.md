@@ -296,9 +296,8 @@ ignoreDuplicates: true })` = the spec's `ON CONFLICT DO NOTHING`. Sanitized temp
 
 ## Medical
 
-_Module built in milestones — full spec + build order in `docs/medical.md` (the staging doc, kept until
-the module is feature-complete, then merged here and deleted). Key tech decisions, recorded now because
-they shape the M1 schema:_
+_Feature-complete (M1–M7). Key tech decisions (the build history is in BUILD-LOG → "Medical Build
+Sequence"):_
 
 - **Intake is a structured import, not in-app OCR.** Extraction is done **outside** the app by any
   vision-capable AI tool (model-agnostic prompt + JSON schema in `templates/`); the app imports the
@@ -326,14 +325,28 @@ they shape the M1 schema:_
 - **Display ordering.** Render results/dashboard by the user's `medical_section_order` +
   `medical_test_order` when set, else by each test's seeded `category` + `sort_order`. Report detail
   shows the canonical order filtered to the tests present, so every report reads consistently regardless
-  of provider layout.
-- **Biometric lock.** A **client-side UX gate** over RLS-protected data (no relying-party backend): a
-  WebAuthn **platform authenticator** (`userVerification:'required'`, feature-detected via
-  `isUserVerifyingPlatformAuthenticatorAvailable()`) as an optional faster unlock, always falling back
-  to a **mandatory PIN** (salted PBKDF2-SHA-256 via `crypto.subtle`; only the hash is stored). Honest
-  limitation: a PWA has no background-lock lifecycle, so it locks on **module entry / cold start** and
-  after the configurable idle timeout (`medical_lock_timeout_minutes`; NULL = Indefinite = cold-start
-  only; UI default 5). No new dependency.
+  of provider layout. The single read-path helper `orderResultsForDisplay(results, sectionOrder?,
+testOrder?)` is **tolerant** (unknown categories/tests sort last); `trackedSeries` (Dashboard grid) +
+  `latestByCategory` take the same overrides, so all three surfaces order identically. The overrides are
+  edited by **drag-to-reorder** (M5): `MedicalOrderSheet` (`/medical/settings/order`) over the reusable
+  in-house **`ReorderList`** (Pointer Events, no dnd dependency — `touch-action:none` on the drag handle
+  only); pure model helpers in `src/lib/medical-order.ts` keep the saved override complete + de-duped
+  (`flattenTestOrder` re-groups the flat `medical_test_order` by the current section order on every save).
+- **Biometric lock (M6, built).** A **client-side UX gate** over RLS-protected data (no relying-party
+  backend). The **mandatory PIN** is the dependable path: `src/lib/medical-lock.ts` hashes it with
+  salted **PBKDF2-SHA-256** via `crypto.subtle` (`pbkdf2$<iters>$<salt>$<hash>`; only the hash is
+  stored in `medical_lock_pin_hash`). The optional faster unlock is a WebAuthn **platform authenticator**
+  (`src/lib/medical-webauthn.ts`; `userVerification:'required'`, feature-detected via
+  `isUserVerifyingPlatformAuthenticatorAvailable()`, id in `medical_lock_webauthn_id`) used as a **local**
+  user-verification check (the assertion is never server-verified) that **always degrades to the PIN** on
+  any failure — so biometric can't cause a lockout. The lifecycle lives in `MedicalLockProvider`
+  (`useMedicalLock`): it re-locks on **cold start** (sessionStorage cleared) and per
+  `medical_lock_timeout_minutes` on **idle** (finite minutes, since the last Medical interaction), on
+  **background/leave** (Immediately = 0), or never (Indefinite = NULL; UI default 5). A persistent
+  `enabledHint` (localStorage) engages the gate synchronously before the profile loads (no content
+  flash). `AppShell` renders `MedicalLockScreen` whenever `locked && inMedical` (covering tabs **and**
+  sheets). Honest limitation: a PWA has no true background-lock lifecycle and WebAuthn is unreliable in
+  an installed iOS PWA — hence PIN-first. No new dependency (Web Crypto + WebAuthn are built in).
 - **Data layer (`src/data/medical.ts`).** A report is a **parent + children** write: `saveReport`
   create-or-updates the `medical_report` row, then `saveReportResults` does an **idempotent
   delete-then-insert** of its `medical_result` rows (mirrors `asset-entry.saveSnapshotEntries`;
@@ -342,6 +355,19 @@ they shape the M1 schema:_
   `src/lib/medical.ts` (identical to the seed, guarded by the `medical.test.ts` drift check) is the
   read-only source for the test picker + the `orderResultsForDisplay` section/sort ordering. Module
   refresh uses a `medical-refresh.ts` tick (`bumpMedical`/`useMedicalVersion`), like the other modules.
+- **Dashboard trends (data/presentation split).** The Dashboard's data side is one hook
+  `useMedicalTrends` over pure helpers in `src/lib/medical-trends.ts` (`buildTrendSeries`,
+  `latestResultPerTest`, `latestByCategory`, `trackedSeries`). It loads everything in **one pass** —
+  `data/medical.ts` `listResultsWithReportMeta` flattens each `medical_result` with its report's date
+  via an embedded select (parent→children, like `asset-entry.listSnapshotsWithEntries`), plus
+  `listReports` for the timeline — then derives client-side (no per-test query → no N+1). Presentation
+  consumes **only** the hook, so an alternate trend layout is a drop-in component over the same data.
+  The grid draws cheap **inline-SVG** sparklines (`components/Sparkline.tsx`, no dependency); **recharts
+  loads only on expand** — `components/MedicalTrendChart.tsx` is lazy-imported into its own chunk (same
+  pattern as `NetWorthTrendChart`), with a time window from `constants/medical-ranges.ts`. **Latest
+  values** show the most-recent value **per test** across all reports (a heterogeneous history means the
+  newest report alone would omit most tests). **Tracked tests** come from `profile.medical_tracked_tests`
+  (else `defaultTrackedTestKeys()`), seeded on first run in `ensureOwnerProfile` like `visible_nutrients`.
 - **Routing.** A report has a **read-only detail** at `/medical/:id` and the **Add/Edit form** at
   `/medical/entry` (new) and `/medical/:id/edit` (edit) — the detail's Edit button opens the latter.
 - **No new external API.** No Tesseract, no Supabase Storage; originals are Google Drive URL(s) on

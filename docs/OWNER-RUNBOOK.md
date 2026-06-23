@@ -678,7 +678,12 @@ Originals are **not** uploaded — you keep Google Drive links. Extraction happe
    group is obvious). Correct/add anything, set type / date / provider, paste the **Drive link(s)**,
    and **Save**. Re-importing the same date+type replaces it (no duplicates).
 6. Manual entry is always available for a single value or a screening the PDF doesn't cover.
-7. Once the biometric lock ships (a later milestone), enable it in **Medical → Settings** with a PIN.
+7. **Lock (optional):** in **Medical → Settings → Security → Lock**, set a **PIN** (4–8 digits) to gate
+   the module; on a supported device you can also turn on **Face ID / Touch ID** as a faster unlock
+   (the PIN always works as the fallback). Pick the **auto-lock** timeout (default: after 5 min; it also
+   always re-locks when the app is restarted). The lock guards this device — your data is already
+   private to your account. If you ever forget the PIN, use **Sign out** on the lock screen, sign back
+   in, and reset it (you stay signed in within a session, so you won't be locked out mid-use).
 
 > **Privacy:** your extracted JSONs (`templates/medical-import-20*.json`) and report PDFs contain your
 > name / HKID / DOB and are **gitignored** — they never go into the repo. Only the prompt, the schema,
