@@ -8,6 +8,9 @@ interface SelectMenuProps<T extends string> {
   onChange: (value: T) => void
   ariaLabel?: string
   className?: string
+  /** When disabled the button can't be opened and is greyed; `placeholder` shows in place of a value. */
+  disabled?: boolean
+  placeholder?: string
 }
 
 /**
@@ -20,6 +23,8 @@ export function SelectMenu<T extends string>({
   onChange,
   ariaLabel,
   className = '',
+  disabled = false,
+  placeholder,
 }: SelectMenuProps<T>) {
   const [open, setOpen] = useState(false)
   const current = options.find((o) => o.value === value)
@@ -28,11 +33,14 @@ export function SelectMenu<T extends string>({
   return (
     <div className={`relative ${className}`}>
       <button
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => !disabled && setOpen((o) => !o)}
         aria-label={ariaLabel}
-        className="flex w-full items-center justify-between gap-1 rounded-input bg-input px-2.5 py-1.5 text-sm text-text-primary"
+        disabled={disabled}
+        className={`flex w-full items-center justify-between gap-1 rounded-input bg-input px-2.5 py-1.5 text-sm ${
+          disabled ? 'text-text-tertiary' : 'text-text-primary'
+        }`}
       >
-        <span className="truncate">{current?.label ?? value}</span>
+        <span className="truncate">{current?.label ?? placeholder ?? value}</span>
         <IconChevronDown size={15} className="shrink-0 text-text-secondary" />
       </button>
       {open && (

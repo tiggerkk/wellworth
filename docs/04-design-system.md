@@ -22,6 +22,7 @@ Dark, calm, Cronometer-like. These tokens are taken directly from the approved w
 | `delete`          | `#e24b4a`                | Swipe-to-delete background                                 |
 | `track`           | `#3a4253`                | Progress-bar track, off-toggle                             |
 | `fill`            | `#eef1f7`                | Progress-bar fill; primary-button background               |
+| `dynasty`         | `#d8a657`                | Gold dynasty badge (Shows/Books Chinese titles)            |
 | `cat-meal`        | `#e2574c`                | Diary category icon — Breakfast/Lunch/Dinner (red apple)   |
 | `cat-snack`       | `#e2933c`                | Diary category icon — Snacks (orange cookie)               |
 | `cat-supplement`  | `#a779e0`                | Diary category icon — Supplements (purple pill)            |

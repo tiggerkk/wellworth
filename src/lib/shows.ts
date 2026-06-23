@@ -6,6 +6,7 @@
 import type { Tables, TablesInsert, TablesUpdate } from '../types/database'
 import type { IsoDate } from './date'
 import type { ShowMetadata } from './tmdb-api'
+import type { Dynasty } from '../constants/dynasty'
 
 export type ShowRow = Tables<'show'>
 export type ShowInsert = TablesInsert<'show'>
@@ -254,6 +255,7 @@ export interface LibraryCriteria {
   genre: 'all' | string
   minRating: number // 0 = any
   lgbtq: 'all' | LgbtqRep
+  dynasty: 'all' | Dynasty
   status: 'all' | ShowStatus
   favoritesOnly: boolean
   startFrom: IsoDate | null
@@ -270,6 +272,7 @@ export const DEFAULT_LIBRARY_CRITERIA: LibraryCriteria = {
   genre: 'all',
   minRating: 0,
   lgbtq: 'all',
+  dynasty: 'all',
   status: 'all',
   favoritesOnly: false,
   startFrom: null,
@@ -287,6 +290,7 @@ function matchesCriteria(show: ShowRow, c: LibraryCriteria): boolean {
   if (c.status !== 'all' && show.status !== c.status) return false
   if (c.favoritesOnly && !show.is_favorite) return false
   if (c.lgbtq !== 'all' && (show.lgbtq_rep ?? 'none') !== c.lgbtq) return false
+  if (c.dynasty !== 'all' && show.dynasty !== c.dynasty) return false
   if (c.genre !== 'all' && !(show.genres ?? []).includes(c.genre)) return false
   if (c.minRating > 0 && (show.rating ?? 0) < c.minRating) return false
   if (c.startFrom && (!show.start_date || show.start_date < c.startFrom)) return false
@@ -350,6 +354,7 @@ export const SHOW_ENTRY_FIELDS: { key: string; label: string }[] = [
   { key: 'year', label: 'Year' },
   { key: 'rating', label: 'Rating' },
   { key: 'lgbtq_rep', label: 'LGBT+ Representation' },
+  { key: 'dynasty', label: 'Dynasty' },
   { key: 'start_date', label: 'Start Date' },
   { key: 'end_date', label: 'Finish / Drop Date' },
   { key: 'last_update_date', label: 'Last Update' },

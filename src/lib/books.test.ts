@@ -46,6 +46,7 @@ function makeBook(p: Partial<BookRow>): BookRow {
     language: null,
     rating: null,
     lgbtq_rep: 'none',
+    dynasty: null,
     is_favorite: false,
     start_date: null,
     end_date: null,

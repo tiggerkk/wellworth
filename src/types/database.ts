@@ -122,6 +122,7 @@ export type Database = {
           cover_url: string | null
           created_at: string
           description: string | null
+          dynasty: string | null
           end_date: string | null
           genres: string[] | null
           google_books_id: string | null
@@ -147,6 +148,7 @@ export type Database = {
           cover_url?: string | null
           created_at?: string
           description?: string | null
+          dynasty?: string | null
           end_date?: string | null
           genres?: string[] | null
           google_books_id?: string | null
@@ -172,6 +174,7 @@ export type Database = {
           cover_url?: string | null
           created_at?: string
           description?: string | null
+          dynasty?: string | null
           end_date?: string | null
           genres?: string[] | null
           google_books_id?: string | null
@@ -735,6 +738,7 @@ export type Database = {
           comments: string | null
           created_at: string
           director: string | null
+          dynasty: string | null
           end_date: string | null
           genres: string[] | null
           id: string
@@ -766,6 +770,7 @@ export type Database = {
           comments?: string | null
           created_at?: string
           director?: string | null
+          dynasty?: string | null
           end_date?: string | null
           genres?: string[] | null
           id?: string
@@ -797,6 +802,7 @@ export type Database = {
           comments?: string | null
           created_at?: string
           director?: string | null
+          dynasty?: string | null
           end_date?: string | null
           genres?: string[] | null
           id?: string

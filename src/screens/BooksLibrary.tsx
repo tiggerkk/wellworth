@@ -25,7 +25,8 @@ import {
   type LibraryCriteria,
   type SortField,
 } from '../lib/books'
-import { formatDayLabel, todayLocal, type IsoDate } from '../lib/date'
+import { DYNASTIES, DYNASTY_CHIP } from '../constants/dynasty'
+import { formatDayLabel, formatMonthDay, todayLocal, type IsoDate } from '../lib/date'
 import { routes } from '../constants/routes'
 import { SearchBar } from '../components/SearchBar'
 import { SwipeRow } from '../components/SwipeRow'
@@ -46,6 +47,10 @@ const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
 const LGBTQ_OPTIONS = [
   { value: 'all' as const, label: 'Any LGBT+' },
   ...LGBTQ_REPS.map((r) => ({ value: r, label: LGBTQ_REP_LABELS[r] })),
+]
+const DYNASTY_OPTIONS = [
+  { value: 'all' as const, label: 'Any Dynasty' },
+  ...DYNASTIES.map((d) => ({ value: d, label: d })),
 ]
 const RATING_OPTIONS = [
   { value: '0', label: 'Any rating' },
@@ -130,6 +135,7 @@ export function BooksLibrary() {
     (criteria.author !== 'all' ? 1 : 0) +
     (criteria.minRating > 0 ? 1 : 0) +
     (criteria.lgbtq !== 'all' ? 1 : 0) +
+    (criteria.dynasty !== 'all' ? 1 : 0) +
     (criteria.status !== 'all' ? 1 : 0) +
     (criteria.favoritesOnly ? 1 : 0) +
     (criteria.startFrom || criteria.startTo ? 1 : 0) +
@@ -222,17 +228,24 @@ export function BooksLibrary() {
                 onChange={(a) => setCrit({ author: a })}
               />
             </Field>
+            <Field label="Dynasty">
+              <SelectMenu
+                value={criteria.dynasty}
+                options={DYNASTY_OPTIONS}
+                onChange={(d) => setCrit({ dynasty: d })}
+              />
+            </Field>
             <label className="flex items-center justify-between self-end py-1.5">
-              <span className="text-text-secondary">Favourites only</span>
+              <span className="text-text-secondary">Favorites Only</span>
               <Toggle
                 checked={criteria.favoritesOnly}
                 onChange={(v) => setCrit({ favoritesOnly: v })}
-                label="Favourites only"
+                label="Favorites Only"
               />
             </label>
           </div>
           <DateRange
-            label="Started between"
+            label="Started Between"
             from={criteria.startFrom}
             to={criteria.startTo}
             onPickFrom={() => setWhichDate('startFrom')}
@@ -241,7 +254,7 @@ export function BooksLibrary() {
             onClearTo={() => setBound('startTo', null)}
           />
           <DateRange
-            label="Finished between"
+            label="Finished Between"
             from={criteria.endFrom}
             to={criteria.endTo}
             onPickFrom={() => setWhichDate('endFrom')}
@@ -289,6 +302,12 @@ export function BooksLibrary() {
                         {b.title}
                         {b.year ? ` (${b.year})` : ''}
                       </span>
+                      {b.dynasty && (
+                        <StatusChip
+                          label={b.dynasty}
+                          className={`shrink-0 ${DYNASTY_CHIP}`}
+                        />
+                      )}
                     </span>
                     {b.authors?.length ? (
                       <span className="block truncate text-xs text-text-secondary">
@@ -307,7 +326,7 @@ export function BooksLibrary() {
                         {b.genres?.[0] && <span>{b.genres[0]}</span>}
                         {(b.end_date ?? b.last_update_date) && (
                           <span>
-                            {formatDayLabel((b.end_date ?? b.last_update_date)!)}
+                            {formatMonthDay((b.end_date ?? b.last_update_date)!)}
                           </span>
                         )}
                       </span>

@@ -5,6 +5,7 @@
  */
 import type { Tables, TablesInsert, TablesUpdate } from '../types/database'
 import type { QuoteLanguage, QuoteSourceType } from '../constants/quotes'
+import { containsCjk } from './cjk'
 
 export type QuoteRow = Tables<'quote'>
 export type QuoteInsert = TablesInsert<'quote'>
@@ -15,7 +16,7 @@ export type QuoteUpdate = TablesUpdate<'quote'>
  * form. Ranges: CJK Ext-A (㐀–䶿), Unified (一–鿿), Compatibility Ideographs (豈–﫿).
  */
 export function detectLanguage(text: string): QuoteLanguage {
-  return /[㐀-鿿豈-﫿]/.test(text) ? 'zh' : 'en'
+  return containsCjk(text) ? 'zh' : 'en'
 }
 
 /** Lowercased text the Library search matches: quote text + author + title + tags. */
@@ -159,7 +160,7 @@ export function applyLibraryView(quotes: QuoteRow[], c: LibraryCriteria): QuoteR
  */
 export const QUOTE_ENTRY_FIELDS: { key: string; label: string }[] = [
   { key: 'author', label: 'Author' },
-  { key: 'source_link', label: 'Source link' },
+  { key: 'source_link', label: 'Source Link' },
   { key: 'source_type', label: 'Source Type' },
   { key: 'title', label: 'Title' },
   { key: 'tags', label: 'Tags' },

@@ -237,13 +237,13 @@ function FoodForm({ id, initial }: { id: string | undefined; initial: FoodInitia
 
         {/* Basis */}
         <div>
-          <p className="mb-1 text-xs text-text-secondary">Nutrition shown per</p>
+          <p className="mb-1 text-xs text-text-secondary">Nutrition Shown Per</p>
           <SegmentedTabs
             value={basis}
             onChange={setBasis}
             options={[
               { value: 'per_100g', label: 'Per 100 g' },
-              { value: 'per_serving', label: 'Per serving' },
+              { value: 'per_serving', label: 'Per Serving' },
             ]}
           />
         </div>
@@ -251,7 +251,7 @@ function FoodForm({ id, initial }: { id: string | undefined; initial: FoodInitia
         {/* Nutrition facts */}
         <div>
           <p className="mb-2 text-xs text-text-secondary">
-            Nutrition Facts (per {basisLabel})
+            Nutrition Facts (Per {basisLabel})
           </p>
           <div className="flex flex-col gap-2">
             {NUTRIENT_SECTIONS.map((section) => {

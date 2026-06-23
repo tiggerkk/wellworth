@@ -22,6 +22,7 @@ describe('parseBooksCsv', () => {
       author: 'Frank Herbert',
       rating: 5,
       lgbtq_rep: 'none',
+      dynasty: null,
       end_date: '2026-03-01',
       is_favorite: true,
     })
@@ -81,6 +82,7 @@ describe('buildImportRow', () => {
     author: 'frank herbert',
     rating: 4.5,
     lgbtq_rep: 'none' as const,
+    dynasty: null,
     end_date: '2026-03-01',
     is_favorite: true,
   }
@@ -114,6 +116,7 @@ describe('buildImportRow', () => {
       open_library_id: null,
       rating: 4.5,
       lgbtq_rep: 'none',
+      dynasty: null,
       is_favorite: true,
       start_date: null,
       end_date: '2026-03-01',

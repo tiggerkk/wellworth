@@ -177,6 +177,7 @@ export function QuotesZen() {
               quote={current}
               favorite={favOverride[current.id] ?? current.is_favorite}
               onToggleFavorite={() => void toggleFavorite(current)}
+              onEdit={() => navigate(routes.quotes.edit(current.id))}
               sourceTypes={sourceTypes}
               categories={categories}
             />
@@ -200,12 +201,14 @@ function QuoteCard({
   quote,
   favorite,
   onToggleFavorite,
+  onEdit,
   sourceTypes,
   categories,
 }: {
   quote: QuoteRow
   favorite: boolean
   onToggleFavorite: () => void
+  onEdit: () => void
   sourceTypes: QuoteSourceTypeConfig[]
   categories: QuoteCategoryConfig[]
 }) {
@@ -232,9 +235,14 @@ function QuoteCard({
 
   return (
     <div className="mx-auto max-w-md px-6 py-10 text-center">
-      <p className="text-2xl leading-relaxed font-medium break-words whitespace-pre-line text-text-primary">
+      <button
+        type="button"
+        onClick={onEdit}
+        aria-label="Edit quote"
+        className="w-full cursor-pointer text-center text-2xl leading-relaxed font-medium break-words whitespace-pre-line text-text-primary"
+      >
         {quote.text}
-      </p>
+      </button>
 
       <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-sm text-text-secondary">
         {meta.map((node, i) => (

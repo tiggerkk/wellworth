@@ -232,8 +232,8 @@ Wellness-module sub-settings. Auto-save on change. A back chevron returns to the
     genre + a compact **length hint** (`~2h 10m` for a movie, `3 seasons` / `12 eps` for episodic) and
     a **Start Watching** action (status → watching, start → today).
   - **Recently Watched** — the last 5 by finish date (rows show the **"Watched"** chip + stars +
-    **"Finished {date}"**). Imported rows with no `end_date` don't appear here (they live in the
-    Library).
+    the finish date as **month + day**, e.g. "Jun 22" — no weekday or "Finished" prefix). Imported
+    rows with no `end_date` don't appear here (they live in the Library).
 - Every Dashboard row shows its **status chip** (like the Library), and a favourite row anywhere shows a
   small filled **♥** before the title. The status chips use a shared palette — **Want** = blue,
   **Watching** = coral, **Watched** = teal, **Dropped** = grey — with the short label "Want" (the shelf
@@ -246,16 +246,16 @@ Wellness-module sub-settings. Auto-save on change. A back chevron returns to the
   TMDB returned them).
 - A **Filters** toggle opens a panel: **Type** (All/TV/Movies/Docs), **Status**, **Genre** (the genres
   present in your own rows), **Rating** (minimum: Any / 1★+ … / 5★), **LGBT+** (Any/None/Some/Significant),
-  a **Favourites only** toggle, and **Started-between** + **Finished-between** date ranges (each bound via
-  the Calendar modal, clearable). A count on the Filters button shows how many are active; **Clear
-  filters** resets them.
+  **Dynasty** (Any + the 12 dynasties), a **Favorites Only** toggle, and **Started Between** +
+  **Finished Between** date ranges (each bound via the Calendar modal, clearable). A count on the
+  Filters button shows how many are active; **Clear filters** resets them.
 - A **Sort** menu over { Date, Title, Type, Year, Status, Rating, Genre } with an **asc/desc** toggle
   (nulls sort last); default is **Date** descending.
 - Each row is a **uniform catalog row** (same fields for every status): a **poster thumbnail**, the
-  title (+ year) with a small filled **♥** when favourited, then **type badge · status chip · star
-  rating** (when set) and a second line of **first genre · date** — labelled **"Finished {date}"**
-  when there's an end date, else **"Updated {date}"**. Tap a row → **Entry/Edit**; **swipe-left →
-  Delete** (hard, with a confirm).
+  title (+ year) with a small filled **♥** when favourited and a **gold Dynasty badge** to the right
+  of the title for Chinese titles, then **type badge · status chip · star rating** (when set) and a
+  second line of **first genre · date** (the date as **month + day**, e.g. "Jun 22"; no prefix or
+  weekday). Tap a row → **Entry/Edit**; **swipe-left → Delete** (hard, with a confirm).
 - _Filter/sort state is per-visit (not persisted); a wide-screen sortable table is parked — see
   `PARKED.md`._
 
@@ -317,22 +317,23 @@ Shows-specific sub-settings (mirrors the Wellness Settings split; app-wide profi
 in the global Settings at the Home level).
 
 - **Entry Form → Visible Fields** opens a sub-screen of toggles over the optional Entry/Edit fields
-  (Original Title, Year, Rating, LGBT+, the three dates, Season & Episode counts, Comments, TMDB
-  metadata display, and **Poster URL**). Most are stored on `profile.show_visible_fields` (**NULL = all
+  (Original Title, Year, Rating, LGBT+, Dynasty, the three dates, Season & Episode counts, Comments,
+  TMDB metadata display, and **Poster URL**). Most are stored on `profile.show_visible_fields` (**NULL = all
   visible**, default-on) and auto-save per toggle; **Poster URL** is the exception — it's backed by
   `profile.show_poster_url_visible` (**default off**, kept separate because the visible-fields list is
   default-on) and means "**force always visible**": the field still auto-shows whenever TMDB supplied no
   poster regardless of the toggle. Type, Title, Status, and the favourite heart are always shown and not
   listed.
-- **Import → Enable CSV import** toggle (`profile.show_importer_enabled`); when on, an **Import CSV…**
+- **Import → Enable CSV Import** toggle (`profile.show_importer_enabled`); when on, an **Import CSV…**
   launcher appears that opens the importer sheet.
 
 ## Shows - Import CSV (sheet, from Shows Settings)
 
 An in-app bulk importer (the owner's choice over a script — same as Net Worth). One CSV covers English +
 Chinese across all three types. Columns:
-`title,type,status,rating,lgbtq_rep,watched_seasons,watched_episodes,is_favorite` (`type` ∈
-`tv|movie|documentary`; `is_favorite` optional trailing boolean — see `templates/shows-import-guide.md`).
+`title,type,status,rating,lgbtq_rep,dynasty,watched_seasons,watched_episodes,is_favorite` (`type` ∈
+`tv|movie|documentary`; `dynasty` kept only for Chinese titles; `is_favorite` optional trailing
+boolean — see `templates/shows-import-guide.md`).
 `watched_episodes` accepts the literal **`all`** on a `watching`/`dropped` episodic row (with a
 `watched_seasons`), meaning "all episodes of the last-watched season" — resolved to that season's
 TMDB episode count at import (left blank if TMDB has no count); used anywhere else, the row is skipped.
@@ -357,8 +358,9 @@ TMDB episode count at import (left blank if TMDB has no count); used anywhere el
     favourite also still appears in its status shelf below.)
   - **Currently Reading** — all `status=reading`; each row shows the cover, title (+ year), the status
     chip, and author(s), plus a **Mark Read** action (status → read, finish → today).
-  - **Recently Read** — the last 5 by finish date (rows show the status chip + star rating + finish
-    date). Imported rows with no `end_date` don't appear here (they live in the Library).
+  - **Recently Read** — the last 5 by finish date (rows show the status chip + star rating + the
+    finish date as **month + day**, e.g. "Jun 22" — no weekday). Imported rows with no `end_date`
+    don't appear here (they live in the Library).
   - **Want to Read** — a short shelf of `status=want`, each with the blue **"Want"** chip + author(s)
     and a **Start Reading** action (status → reading, start → today).
 - A favourite row anywhere shows a small filled **♥** before the title. The status chips share the
@@ -372,15 +374,17 @@ TMDB episode count at import (left blank if TMDB has no count); used anywhere el
   the blank Entry from the bottom nav.)
 - A **Filters** toggle opens a panel: **Status**, **Genre** (the genres present in your own rows),
   **Rating** (minimum: Any / 1★+ … / 5★), **LGBT+** (Any/None/Some/Significant), **Author** (the
-  authors present in your own rows), a **Favourites only** toggle, and **Started-between** +
-  **Finished-between** date ranges (each bound via the Calendar modal, clearable). A count on the
-  Filters button shows how many are active; **Clear filters** resets them.
+  authors present in your own rows), **Dynasty** (Any + the 12 dynasties), a **Favorites Only**
+  toggle, and **Started Between** + **Finished Between** date ranges (each bound via the Calendar
+  modal, clearable). A count on the Filters button shows how many are active; **Clear filters**
+  resets them.
 - A **Sort** menu over { Date, Title, Author, Year, Status, Rating, Genre } with an **asc/desc** toggle
   (nulls sort last); default is **Date** descending.
 - Each row: a **cover thumbnail** (2:3, neutral placeholder when there's no cover), title (+ year) with
-  a small filled **♥** when favourited, the author(s), a **status chip** (Want / Reading / Read /
-  Dropped — Want is blue), the **star rating** when rated, the first genre, and the finish/updated date. Tap a row →
-  **Entry/Edit**; **swipe-left → Delete** (hard, with a confirm).
+  a small filled **♥** when favourited and a **gold Dynasty badge** to the right of the title for
+  Chinese titles, the author(s), a **status chip** (Want / Reading / Read / Dropped — Want is blue),
+  the **star rating** when rated, the first genre, and the date as **month + day** (e.g. "Jun 22"; no
+  weekday). Tap a row → **Entry/Edit**; **swipe-left → Delete** (hard, with a confirm).
 - _Filter/sort state is per-visit (not persisted); a wide-screen sortable table is parked — see
   `PARKED.md`._
 
@@ -396,8 +400,10 @@ TMDB episode count at import (left blank if TMDB has no count); used anywhere el
 - **Title** (required for CREATE), **Author(s)** (comma-separated), **Year**.
 - **Status** (Want / Reading / Read / Dropped): choosing **Reading** defaults the **Start
   Date** to today; choosing **Read** or **Dropped** defaults the **Finish / Drop date** to today.
-- **Rating**: a 0–5 **half-star** picker. **LGBT+ representation**: a None / Some / Significant
-  segmented control.
+- **Rating**: a 0–5 **half-star** picker. **LGBT+ Representation** (a None / Some / Significant
+  segmented control) and **Dynasty** share one compact row. **Dynasty** is a dropdown of the 12
+  dynasties (近代 … 先秦), defaulting to 近代, and is **editable only when the Title contains CJK**;
+  for a non-Chinese title it's disabled and stored as NULL.
 - **Start Date**, **Finish / Drop Date**, **Last Update** — each opens the **Calendar** modal;
   clearable. Start + Last Update default to today on a new entry.
 - **Comments** (textarea).
@@ -424,17 +430,17 @@ stay in the global Settings at the Home level). Reached from the **Settings** ta
 nav.
 
 - **Entry Form → Visible Fields** opens a sub-screen of toggles over the optional Entry/Edit fields
-  (Author(s), Year, Rating, LGBT+, the three dates, Comments, Book metadata display). Stored on
-  `profile.book_visible_fields` (**NULL = all visible**); auto-saves per toggle. Title, Status and the
-  Search button are always shown and not listed.
-- **Import → Enable CSV import** toggle (`profile.book_importer_enabled`); when on, an **Import CSV…**
+  (Author(s), Year, Rating, LGBT+, Dynasty, the three dates, Comments, Book metadata display). Stored
+  on `profile.book_visible_fields` (**NULL = all visible**); auto-saves per toggle. Title, Status and
+  the Search button are always shown and not listed.
+- **Import → Enable CSV Import** toggle (`profile.book_importer_enabled`); when on, an **Import CSV…**
   launcher appears that opens the importer sheet.
 
 ## Books - Import CSV (sheet, from Books Settings)
 
 An in-app bulk importer (the owner's choice over a script — same as Net Worth / Shows). Columns:
-`title,author,rating,lgbtq_rep,end_date,is_favorite` (`is_favorite` optional trailing boolean — see
-`templates/books-import-guide.md`).
+`title,author,rating,lgbtq_rep,dynasty,end_date,is_favorite` (`dynasty` kept only for Chinese titles;
+`is_favorite` optional trailing boolean — see `templates/books-import-guide.md`).
 
 - **Choose CSV** → rows are parsed/validated (bad rows listed as skipped) and each is **matched against
   Google Books** (searching `title author` for the top hit, Open Library fallback) with a progress count.
@@ -454,16 +460,16 @@ An in-app bulk importer (the owner's choice over a script — same as Net Worth 
 - **Refresh**: a floating **Shuffle** button at the **bottom-right** of the quote area (works
   everywhere) and **pull-to-refresh** (touch) rotate to a new random quote from the **entire pool**
   (no immediate repeat). (New Quote and Settings live in the bottom nav, not a page header.)
-- **Card**: the quote text (large, centred; renders Chinese + multi-line correctly); a metadata cluster
-  — **Author · Source type · Title**, where **tapping the Title navigates to the linked Show/Book
-  detail** (only when a link exists); the single **Category** badge and any **Tags**; a **heart** to
-  toggle favourite instantly.
+- **Card**: the quote text (large, centred; renders Chinese + multi-line correctly) — **tapping the
+  quote text opens the Edit Quote page**; a metadata cluster — **Author · Source type · Title**, where
+  **tapping the Title navigates to the linked Show/Book detail** (only when a link exists); the single
+  **Category** badge and any **Tags**; a **heart** to toggle favourite instantly.
 
 ## Quotes - Library (`/quotes/library`)
 
 - **Search**: real-time match across quote text, author, title, and tags.
 - **Filters** (collapsible panel): the six **Categories**, multi-select **Tags** (OR — any selected
-  tag), **Favourites** toggle, **Source type**, **Language**. When opened from a Show/Book detail
+  tag), **Favorites Only** toggle, **Source Type**, **Language**. When opened from a Show/Book detail
   ("Quotes from this title", via a `?show=`/`?book=` param), the list is constrained to that record's
   quotes with a clearable banner.
 - **List**: rows — a quote snippet, the category badge, and author. Tap → Add/Edit; **swipe-left** →
@@ -473,7 +479,7 @@ An in-app bulk importer (the owner's choice over a script — same as Net Worth 
 
 - **Quote Text** (textarea; required). Prefilled from `?text=` when launched via copy-paste / an Apple
   Books Shortcut; a **Paste from clipboard** button fills it from the clipboard.
-- **Source link** (optional): a **Source Link** modal searching local **Show** and **Book** records;
+- **Source Link** (optional): a **Source Link** modal searching local **Show** and **Book** records;
   selecting one binds `show_id`/`book_id` and auto-fills **Source Type** + **Title** (for a Book, also
   **Author**; a Show leaves Author for the speaker/character). **Unlink** keeps the filled values.
 - **Author**, **Source Type** (TV Show / Movie / Book / Podcast / Article / Video / Song), **Title** —
@@ -497,7 +503,7 @@ An in-app bulk importer (the owner's choice over a script — same as Net Worth 
     replacement and the affected quotes are moved to it before the value is removed. A value can't be
     deleted if it's the last one in its list. **TV / Movie / Book** source types are **protected from
     deletion** (they auto-link a quote to the Shows/Books library) — they can still be renamed/reordered.
-- **Enable CSV import**: surfaces the **Import CSV…** launcher.
+- **Enable CSV Import**: surfaces the **Import CSV…** launcher.
 
 ## Quotes - Import CSV (sheet, from Quotes Settings)
 
@@ -598,8 +604,8 @@ you **paste the Drive link(s)**. **Save** writes idempotently: a report with the
   an unset/partial override falls back to the seeded order.
 - **Report Form → Visible Fields**: choose which optional Add/Edit-Report fields appear (date, type,
   results always shown). NULL = all visible.
-- **Enable structured import**: surfaces the **Import JSON / CSV…** launcher (and the Import button on
-  the New-Report form).
+- **Enable Structured Import** (**on by default**): surfaces the **Import JSON / CSV…** launcher (and
+  the Import button on the New-Report form).
 - **Security → Lock**: set up / change / turn off the module **PIN**, register an optional **Face ID /
   Touch ID** unlock (hidden where the device has no platform authenticator), and choose the **auto-lock**
   timeout (Immediately / 1 / 5 / 15 min / Only on app restart). See the Lock screen below.

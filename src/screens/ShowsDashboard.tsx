@@ -22,7 +22,8 @@ import {
   type ShowType,
   type ShowUpdate,
 } from '../lib/shows'
-import { formatDayLabel, todayLocal } from '../lib/date'
+import { formatDayLabel, formatMonthDay, todayLocal } from '../lib/date'
+import { DYNASTY_CHIP } from '../constants/dynasty'
 import { routes } from '../constants/routes'
 import { SectionCard } from '../components/SectionCard'
 import { SegmentedTabs } from '../components/SegmentedTabs'
@@ -210,7 +211,7 @@ export function ShowsDashboard() {
                     <>
                       <ShowStatusChip status={s.status} />
                       {s.rating ? <StarRating value={s.rating} size={12} /> : null}
-                      {s.end_date && <span>Finished {formatDayLabel(s.end_date)}</span>}
+                      {s.end_date && <span>{formatMonthDay(s.end_date)}</span>}
                     </>
                   }
                 />
@@ -250,6 +251,9 @@ function DashRow({
             {show.title}
             {show.year ? ` (${show.year})` : ''}
           </span>
+          {show.dynasty && (
+            <StatusChip label={show.dynasty} className={`shrink-0 ${DYNASTY_CHIP}`} />
+          )}
         </span>
         <span className="mt-0.5 flex items-center gap-2 text-xs text-text-secondary">
           <ShowTypeBadge type={show.type as ShowType} />

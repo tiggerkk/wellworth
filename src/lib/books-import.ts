@@ -3,12 +3,14 @@
  * `templates/books-import-guide.md`). No I/O and no Google Books calls — the import screen reads the
  * file, resolves each row against Google Books, and writes via `saveImportedBooks`.
  *
- * Column spec: `title,author,rating,lgbtq_rep,end_date,is_favorite`. Every imported row is a **Read** book; the
- * per-row lookup uses title **and** author to disambiguate (book titles collide far more than shows).
+ * Column spec: `title,author,rating,lgbtq_rep,dynasty,end_date,is_favorite`. Every imported row is a **Read** book;
+ * the per-row lookup uses title **and** author to disambiguate (book titles collide far more than shows).
  */
 import { LGBTQ_REPS, type BookInsert, type LgbtqRep } from './books'
 import type { BookMetadata } from './books-api'
 import type { IsoDate } from './date'
+import { containsCjk } from './cjk'
+import { DYNASTIES, type Dynasty } from '../constants/dynasty'
 
 const REQUIRED_COLUMNS = ['title', 'author']
 
@@ -17,6 +19,8 @@ export interface ParsedBookRow {
   author: string
   rating: number | null
   lgbtq_rep: LgbtqRep
+  /** Owner-supplied dynasty (Chinese titles only); validated against `DYNASTIES`, else null. */
+  dynasty: Dynasty | null
   end_date: IsoDate | null
   is_favorite: boolean
 }
@@ -30,6 +34,7 @@ export interface BooksImportResult {
 export type ImportBookRow = Omit<BookInsert, 'user_id'>
 
 const lgbtqSet = new Set<string>(LGBTQ_REPS)
+const dynastySet = new Set<string>(DYNASTIES)
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
 
 /** Lenient truthy parse for a CSV boolean cell: `true/1/yes/y` (case-insensitive) ⇒ true. */
@@ -88,6 +93,18 @@ export function parseBooksCsv(rows: string[][]): BooksImportResult {
       rating = n
     }
 
+    const dynastyRaw = col(cells, 'dynasty')
+    let dynasty: Dynasty | null = null
+    if (dynastyRaw !== '') {
+      if (!dynastySet.has(dynastyRaw)) {
+        errors.push(
+          `Row ${line} ("${title}"): dynasty "${dynastyRaw}" is not a recognised dynasty — skipped.`,
+        )
+        continue
+      }
+      dynasty = dynastyRaw as Dynasty
+    }
+
     const endRaw = col(cells, 'end_date')
     let end_date: IsoDate | null = null
     if (endRaw !== '') {
@@ -105,6 +122,7 @@ export function parseBooksCsv(rows: string[][]): BooksImportResult {
       author,
       rating,
       lgbtq_rep: lgbtq_rep as LgbtqRep,
+      dynasty,
       end_date,
       is_favorite: parseBool(col(cells, 'is_favorite')),
     })
@@ -143,6 +161,8 @@ export function buildImportRow(
     open_library_id: match?.open_library_id ?? null,
     rating: input.rating,
     lgbtq_rep: input.lgbtq_rep,
+    // Dynasty is kept only for a Chinese title (consistent with the Entry form).
+    dynasty: containsCjk(match?.title ?? input.title) ? input.dynasty : null,
     is_favorite: input.is_favorite,
     start_date: null,
     end_date: input.end_date,

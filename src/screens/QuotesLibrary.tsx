@@ -160,7 +160,7 @@ export function QuotesLibrary() {
                 onChange={(v) => setCrit({ category: v })}
               />
             </Field>
-            <Field label="Source type">
+            <Field label="Source Type">
               <SelectMenu
                 value={criteria.sourceType}
                 options={sourceOptions}
@@ -175,11 +175,11 @@ export function QuotesLibrary() {
               />
             </Field>
             <label className="flex items-center justify-between self-end py-1.5">
-              <span className="text-text-secondary">Favourites only</span>
+              <span className="text-text-secondary">Favorites Only</span>
               <Toggle
                 checked={criteria.favoritesOnly}
                 onChange={(v) => setCrit({ favoritesOnly: v })}
-                label="Favourites only"
+                label="Favorites Only"
               />
             </label>
           </div>

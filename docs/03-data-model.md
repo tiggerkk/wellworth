@@ -44,7 +44,7 @@ Nutrient sets are stored as JSONB maps (`nutrient_key → amount`), validated ag
 - `medical_test_order` TEXT[] NULL — personal flat ordered list of test keys (null/empty = seeded order)
 - `medical_visible_fields` TEXT[] NULL — Medical Add/Edit-Report field visibility; **NULL = all visible**
   (default-on)
-- `medical_importer_enabled` BOOLEAN NOT NULL DEFAULT false — surfaces the Medical structured importer
+- `medical_importer_enabled` BOOLEAN NOT NULL DEFAULT true — surfaces the Medical structured importer (on by default)
 - `medical_lock_enabled` BOOLEAN NOT NULL DEFAULT false — biometric-lock master toggle
 - `medical_lock_pin_hash` TEXT NULL — salted PBKDF2-SHA-256 hash of the fallback PIN (never the PIN)
 - `medical_lock_webauthn_id` TEXT NULL — registered platform-authenticator credential id (optional
@@ -186,6 +186,7 @@ The migration is `supabase/migrations/20260615120000_networth_schema.sql`.
 - `watched_seasons` INT NULL, `watched_episodes` INT NULL — episodic types only; set to totals on Watched
 - `rating` NUMERIC NULL — user stars, 0–5 in 0.5 steps (CHECK)
 - `lgbtq_rep` TEXT DEFAULT 'none' — LGBT+ representation: 'none' | 'some' | 'significant' (CHECK)
+- `dynasty` TEXT NULL — Chinese dynasty (CHECK against the 12 `DYNASTIES` values in `src/constants/dynasty.ts`); set **only for Chinese titles**, NULL otherwise. Editable in the Entry form only when the title contains CJK.
 - `is_favorite` BOOLEAN NOT NULL DEFAULT false — starred title (the ♥; favourites filter + Dashboard shelf)
 - `start_date` DATE NULL, `end_date` DATE NULL — finish/drop date
 - `last_update_date` DATE NULL — defaults to today in the UI, editable; NULL for imported rows
@@ -212,6 +213,7 @@ Standard rules apply: own `user_id` for direct RLS, four owner policies using `(
 - `language` TEXT NULL
 - `rating` NUMERIC NULL — user stars, 0–5 in 0.5 steps (CHECK)
 - `lgbtq_rep` TEXT DEFAULT 'none' — LGBT+ representation: 'none' | 'some' | 'significant' (CHECK)
+- `dynasty` TEXT NULL — Chinese dynasty (CHECK against the 12 `DYNASTIES` values in `src/constants/dynasty.ts`); set **only for Chinese titles**, NULL otherwise. Editable in the Entry form only when the title contains CJK.
 - `is_favorite` BOOLEAN NOT NULL DEFAULT false — starred book (the ♥; favourites filter + Dashboard shelf)
 - `start_date` DATE NULL, `end_date` DATE NULL — finish/drop date
 - `last_update_date` DATE NULL — defaults to today in the UI, editable; NULL for imported rows

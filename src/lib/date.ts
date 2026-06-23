@@ -46,6 +46,14 @@ export function formatDayLabel(iso: IsoDate, today: IsoDate = todayLocal()): str
   }).format(fromIsoDate(iso))
 }
 
+/** Month + day only, e.g. 'Jun 13' (no weekday, no Today/Yesterday) — Shows/Books recent + library rows. */
+export function formatMonthDay(iso: IsoDate): string {
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+  }).format(fromIsoDate(iso))
+}
+
 /** Full civil date with year, e.g. 'Jun 13, 2024' — for records that span years (Medical reports). */
 export function formatFullDate(iso: IsoDate): string {
   return new Intl.DateTimeFormat('en-US', {

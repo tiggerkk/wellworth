@@ -23,7 +23,7 @@ alter table public.profile
   add column medical_section_order       text[],
   add column medical_test_order          text[],
   add column medical_visible_fields      text[],
-  add column medical_importer_enabled    boolean not null default false,
+  add column medical_importer_enabled    boolean not null default true,
   add column medical_lock_enabled        boolean not null default false,
   add column medical_lock_pin_hash       text,
   add column medical_lock_webauthn_id    text,

@@ -47,6 +47,11 @@ create table public.show (
                    ),                         -- user stars, 0–5 in 0.5 steps
   lgbtq_rep        text not null default 'none'
                      check (lgbtq_rep in ('none', 'some', 'significant')),
+  dynasty          text                      -- Chinese-titled shows only; NULL otherwise
+                     check (dynasty in (
+                       '近代', '清代', '明代', '元代', '宋代', '五代',
+                       '唐代', '隋代', '南北朝', '魏晉', '兩漢', '先秦'
+                     )),
   is_favorite      boolean not null default false,
   start_date       date,
   end_date         date,                     -- finish / drop date

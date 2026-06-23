@@ -3,7 +3,7 @@
  * `templates/shows-import-guide.md`). No I/O and no TMDB calls — the import screen reads the file,
  * resolves each row against TMDB, and writes via `saveImportedShows`.
  *
- * Column spec: `title,type,status,rating,lgbtq_rep,watched_seasons,watched_episodes,is_favorite`.
+ * Column spec: `title,type,status,rating,lgbtq_rep,dynasty,watched_seasons,watched_episodes,is_favorite`.
  */
 import {
   LGBTQ_REPS,
@@ -16,6 +16,8 @@ import {
   type ShowType,
 } from './shows'
 import type { ShowMetadata } from './tmdb-api'
+import { containsCjk } from './cjk'
+import { DYNASTIES, type Dynasty } from '../constants/dynasty'
 
 const REQUIRED_COLUMNS = ['title', 'type', 'status']
 
@@ -25,6 +27,8 @@ export interface ParsedShowRow {
   status: ShowStatus
   rating: number | null
   lgbtq_rep: LgbtqRep
+  /** Owner-supplied dynasty (Chinese titles only); validated against `DYNASTIES`, else null. */
+  dynasty: Dynasty | null
   watched_seasons: number | null
   /**
    * Episodes watched, or the literal `'all'` (watching/dropped episodic rows only) meaning "all
@@ -45,6 +49,7 @@ export type ImportShowRow = Omit<ShowInsert, 'user_id'>
 const typeSet = new Set<string>(SHOW_TYPES)
 const statusSet = new Set<string>(SHOW_STATUSES)
 const lgbtqSet = new Set<string>(LGBTQ_REPS)
+const dynastySet = new Set<string>(DYNASTIES)
 
 function intOrNull(raw: string): number | null {
   const s = raw.trim()
@@ -126,6 +131,18 @@ export function parseShowsCsv(rows: string[][]): ShowsImportResult {
       rating = n
     }
 
+    const dynastyRaw = col(cells, 'dynasty')
+    let dynasty: Dynasty | null = null
+    if (dynastyRaw !== '') {
+      if (!dynastySet.has(dynastyRaw)) {
+        errors.push(
+          `Row ${line} ("${title}"): dynasty "${dynastyRaw}" is not a recognised dynasty — skipped.`,
+        )
+        continue
+      }
+      dynasty = dynastyRaw as Dynasty
+    }
+
     const watched_seasons = intOrNull(col(cells, 'watched_seasons'))
     const epRaw = col(cells, 'watched_episodes')
     let watched_episodes: number | 'all' | null
@@ -161,6 +178,7 @@ export function parseShowsCsv(rows: string[][]): ShowsImportResult {
       status: status as ShowStatus,
       rating,
       lgbtq_rep: lgbtq_rep as LgbtqRep,
+      dynasty,
       watched_seasons,
       watched_episodes,
       is_favorite: parseBool(col(cells, 'is_favorite')),
@@ -211,6 +229,8 @@ export function buildImportRow(
     title: match?.title ?? input.title,
     rating: input.rating,
     lgbtq_rep: input.lgbtq_rep,
+    // Dynasty is kept only for a Chinese title (consistent with the Entry form).
+    dynasty: containsCjk(match?.title ?? input.title) ? input.dynasty : null,
     is_favorite: input.is_favorite,
     original_title: match?.original_title ?? null,
     year: match?.year ?? null,

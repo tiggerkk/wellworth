@@ -35,7 +35,7 @@ export interface DetailField {
 }
 export const DETAIL_FIELDS: Record<AssetType, DetailField[]> = {
   cash: [],
-  time_deposit: [{ key: 'maturity_date', label: 'Maturity date' }],
+  time_deposit: [{ key: 'maturity_date', label: 'Maturity Date' }],
   stock: [
     { key: 'ticker', label: 'Ticker' },
     { key: 'shares', label: 'Shares' },
@@ -47,7 +47,7 @@ export const DETAIL_FIELDS: Record<AssetType, DetailField[]> = {
   retirement: [],
   insurance: [
     { key: 'premium', label: 'Premium' },
-    { key: 'policy_year', label: 'Policy year' },
+    { key: 'policy_year', label: 'Policy Year' },
   ],
   property: [],
 }

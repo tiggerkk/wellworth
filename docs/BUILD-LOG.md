@@ -46,7 +46,7 @@ the permanent docs and deleted (with the `CONTINUITY.md` handoff).
   `VITE_GOOGLE_BOOKS_API_KEY` (Books), and the optional `VITE_ALLOWED_EMAILS` (email allowlist —
   empty ⇒ no restriction). All build-time `VITE_` vars.
 - **Gates:** husky `.husky/pre-commit` → lint-staged + `typecheck` + `test`; GitHub Actions
-  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 351 Vitest tests (pure helpers).
+  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 355 Vitest tests (pure helpers).
 - **Deploy status:** Deployed. GitHub `main` → Vercel auto-deploy; the production URL is in the
   Supabase redirect URLs + Google JS origins (see `OWNER-RUNBOOK.md`). Installed + tested on iPhone (PWA).
 - Conventions (DB-access-via-`src/data`, metric storage, generated `database.ts` contract, etc.) live
@@ -1509,6 +1509,41 @@ Medical/Shows/Books precedent of additive `profile` columns; zero data migration
   over `/quotes/settings` — no `AppShell.TAB_FOR_PATH` change).
 - **Importer**: `parseQuotesCsv`/`resolveLink`/`buildImportPayload` take the effective lists; Source/
   Category match by **key or label** (case-insensitive); unknown ⇒ skip-with-error (unchanged contract).
+
+## Dynasty field + label/date polish (Shows/Books) & misc
+
+Owner request bundle: (1) a Chinese **Dynasty** field for Shows & Books, (2) Title-Case + American
+spelling across many field labels, (3) Shows/Books recent + library dates as **month + day** only,
+(4) Quotes Source-Type hints pluralised, (5) Moment-of-Zen quote text taps through to Edit, (6)
+Medical structured import **on by default**. 348 → **355** tests.
+
+- **Shared, reusable** (future modules will use them): `src/constants/dynasty.ts` (`DYNASTIES`
+  newest→oldest, `DEFAULT_DYNASTY = 近代`, `DYNASTY_CHIP`) + a new gold `--color-dynasty` (#d8a657)
+  design token. Extracted the duplicated CJK regex into `src/lib/cjk.ts` (`containsCjk`, written with
+  `\u` escapes so the range never renders as garbled boundary glyphs) and re-pointed `tmdb-api.ts` +
+  `quotes.ts` at it (DRY).
+- **Schema (existing migrations edited in place; DB reset workflow)**: added nullable `dynasty text`
+  (CHECK against the 12 values) to `show` + `book` (`…shows_schema.sql` / `…books_schema.sql`);
+  regenerated `database.ts`. **Chinese-only by decision**: a dynasty is stored only when the title
+  contains CJK (defaulting to 近代), NULL otherwise — so the **gold badge** never appears on a
+  non-Chinese title. The Entry dropdown is **disabled unless `containsCjk(title)`**; save forces NULL
+  when not Chinese. `SelectMenu` grew `disabled`/`placeholder` props for this.
+- **Where it shows**: Entry (a compact 2-col row sharing space with LGBT+ Representation), Library
+  filter (`Any Dynasty` + the 12), the gold badge right of the title in Library + Dashboard rows, and
+  the Visible-Fields list. Library `matchesCriteria` gained a `dynasty` clause (Shows + Books).
+- **Dates**: new `formatMonthDay` (`Jun 22`, no weekday/relative/prefix) replaces `formatDayLabel`
+  in Shows/Books Dashboard "Recently Watched/Read" and Library row secondary lines (the Shows
+  "Finished/Updated" prefix is dropped, matching Books).
+- **Importers**: both CSVs gained a `dynasty` column **after `lgbtq_rep`** (validated against
+  `DYNASTIES`, kept only for Chinese titles); guides + template CSVs updated.
+- **Labels** (Title Case + American spelling): Favorites Only / Started Between / Finished Between /
+  Source Type / LGBT+ Representation / Source Link / Enable CSV Import / Enable Structured Import /
+  Google Account, plus Wellness (Nutrition Shown Per, Per Serving, Nutrition Facts (Per …),
+  Description (Optional), Default Duration (Minutes), MET by Effort) and Net Worth (Maturity Date,
+  Policy Year). Quotes Source-Type hints: "links to Shows/Books" (plural).
+- **Quotes Zen**: the quote text is now a button → `routes.quotes.edit(id)`.
+- **Medical**: `profile.medical_importer_enabled` default flipped `false → true` (takes effect on the
+  next `supabase db reset`).
 
 ## Known limitations / deferred (not spec issues — future work)
 

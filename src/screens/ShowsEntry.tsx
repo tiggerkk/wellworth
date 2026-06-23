@@ -34,6 +34,8 @@ import {
   tmdbLanguage,
   type TmdbSearchResult,
 } from '../lib/tmdb-api'
+import { containsCjk } from '../lib/cjk'
+import { DEFAULT_DYNASTY, DYNASTIES, type Dynasty } from '../constants/dynasty'
 import { useProfile } from '../hooks/useProfile'
 import { bumpShows } from '../lib/shows-refresh'
 import { formatDayLabel, todayLocal, type IsoDate } from '../lib/date'
@@ -41,6 +43,7 @@ import { Calendar } from '../components/Calendar'
 import { PrimaryButton } from '../components/PrimaryButton'
 import { SecondaryButton } from '../components/SecondaryButton'
 import { SegmentedTabs } from '../components/SegmentedTabs'
+import { SelectMenu } from '../components/SelectMenu'
 import { StarRating } from '../components/StarRating'
 import { TitleSearchSheet } from '../components/TitleSearchSheet'
 
@@ -52,6 +55,7 @@ interface ShowDraft {
   status: ShowStatus
   rating: number
   lgbtq_rep: LgbtqRep
+  dynasty: Dynasty | null
   is_favorite: boolean
   start_date: IsoDate | null
   end_date: IsoDate | null
@@ -93,6 +97,7 @@ function blankDraft(prefill?: ShowPrefill): ShowDraft {
     status: 'want',
     rating: 0,
     lgbtq_rep: 'none',
+    dynasty: null,
     is_favorite: false,
     // A new show defaults to "Want", which hasn't started — so Start Date stays blank until
     // the status moves to Watching/Watched/Dropped (see `changeStatus`).
@@ -125,6 +130,7 @@ function draftFromRow(row: ShowRow): ShowDraft {
     status: row.status as ShowStatus,
     rating: row.rating ?? 0,
     lgbtq_rep: (row.lgbtq_rep as LgbtqRep) ?? 'none',
+    dynasty: (row.dynasty as Dynasty | null) ?? null,
     is_favorite: row.is_favorite,
     start_date: row.start_date,
     end_date: row.end_date,
@@ -207,6 +213,8 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
   const update = (patch: Partial<ShowDraft>) => setDraft((d) => ({ ...d, ...patch }))
   const dirty = JSON.stringify(draft) !== JSON.stringify(initial)
   const episodic = usesEpisodes(draft.type)
+  // Dynasty is editable only for a Chinese title; the dropdown shows the default until chosen.
+  const isChinese = containsCjk(draft.title)
   const hasMeta =
     !!draft.poster_path ||
     !!draft.overview ||
@@ -360,6 +368,8 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
         status: draft.status,
         rating: draft.rating || null,
         lgbtq_rep: draft.lgbtq_rep,
+        // Dynasty is meaningful only for a Chinese title; clear it otherwise.
+        dynasty: isChinese ? (draft.dynasty ?? DEFAULT_DYNASTY) : null,
         is_favorite: draft.is_favorite,
         start_date: draft.start_date,
         end_date: draft.end_date,
@@ -594,14 +604,34 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
           </div>
         )}
 
-        {show('lgbtq_rep') && (
-          <div>
-            <p className="mb-1 text-xs text-text-secondary">LGBT+ representation</p>
-            <SegmentedTabs
-              value={draft.lgbtq_rep}
-              onChange={(lgbtq_rep) => update({ lgbtq_rep })}
-              options={LGBTQ_REPS.map((r) => ({ value: r, label: LGBTQ_REP_LABELS[r] }))}
-            />
+        {(show('lgbtq_rep') || show('dynasty')) && (
+          <div className="grid grid-cols-2 gap-3">
+            {show('lgbtq_rep') && (
+              <div>
+                <p className="mb-1 text-xs text-text-secondary">LGBT+ Representation</p>
+                <SegmentedTabs
+                  value={draft.lgbtq_rep}
+                  onChange={(lgbtq_rep) => update({ lgbtq_rep })}
+                  options={LGBTQ_REPS.map((r) => ({
+                    value: r,
+                    label: LGBTQ_REP_LABELS[r],
+                  }))}
+                />
+              </div>
+            )}
+            {show('dynasty') && (
+              <div>
+                <p className="mb-1 text-xs text-text-secondary">Dynasty</p>
+                <SelectMenu
+                  ariaLabel="Dynasty"
+                  disabled={!isChinese}
+                  placeholder="—"
+                  value={(isChinese ? (draft.dynasty ?? DEFAULT_DYNASTY) : '') as Dynasty}
+                  options={DYNASTIES.map((d) => ({ value: d, label: d }))}
+                  onChange={(dynasty) => update({ dynasty })}
+                />
+              </div>
+            )}
           </div>
         )}
 

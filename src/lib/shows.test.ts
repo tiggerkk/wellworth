@@ -46,6 +46,7 @@ function makeShow(p: Partial<ShowRow>): ShowRow {
     watched_episodes: null,
     rating: null,
     lgbtq_rep: 'none',
+    dynasty: null,
     is_favorite: false,
     start_date: null,
     end_date: null,
@@ -438,6 +439,13 @@ describe('applyLibraryView', () => {
   it('filters by genre and minimum rating', () => {
     expect(applyLibraryView(all, crit({ genre: 'Drama' }))).toEqual([bb])
     expect(applyLibraryView(all, crit({ minRating: 5 }))).toEqual([matrix])
+  })
+  it('filters by dynasty', () => {
+    const tang = makeShow({ title: '長安十二時辰', dynasty: '唐代' })
+    const qing = makeShow({ title: '雍正王朝', dynasty: '清代' })
+    expect(applyLibraryView([...all, tang, qing], crit({ dynasty: '唐代' }))).toEqual([
+      tang,
+    ])
   })
   it('filters by a finish-date range', () => {
     expect(

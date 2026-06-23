@@ -77,11 +77,11 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
       </SectionCard>
 
       <SectionCard title="Import">
-        <FieldRow label="Enable CSV import">
+        <FieldRow label="Enable CSV Import">
           <Toggle
             checked={profile.quote_importer_enabled}
             onChange={(on) => void save({ quote_importer_enabled: on })}
-            label="Enable CSV import"
+            label="Enable CSV Import"
           />
         </FieldRow>
         {profile.quote_importer_enabled ? (

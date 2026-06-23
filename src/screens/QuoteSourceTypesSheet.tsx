@@ -46,9 +46,9 @@ export function QuoteSourceTypesSheet() {
           isProtected={isProtectedSourceKey}
           hint={(e) =>
             e.linkKind === 'show'
-              ? 'links to Show'
+              ? 'links to Shows'
               : e.linkKind === 'book'
-                ? 'links to Book'
+                ? 'links to Books'
                 : null
           }
         />

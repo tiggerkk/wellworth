@@ -90,11 +90,11 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
       </SectionCard>
 
       <SectionCard title="Import">
-        <FieldRow label="Enable structured import">
+        <FieldRow label="Enable Structured Import">
           <Toggle
             checked={profile.medical_importer_enabled}
             onChange={(on) => void save({ medical_importer_enabled: on })}
-            label="Enable structured import"
+            label="Enable Structured Import"
           />
         </FieldRow>
         {profile.medical_importer_enabled ? (

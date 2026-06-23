@@ -27,7 +27,7 @@ interface QuoteListEditorProps<T extends { key: string; label: string }> {
   reorder: (list: T[], keyOrder: string[]) => T[]
   /** Keys that can't be deleted (rename/reorder stay allowed) — e.g. the Show/Book-linking sources. */
   isProtected?: (key: string) => boolean
-  /** Optional sub-label shown under a row (e.g. "links to Show"). */
+  /** Optional sub-label shown under a row (e.g. "links to Shows"). */
   hint?: (entry: T) => string | null
 }
 

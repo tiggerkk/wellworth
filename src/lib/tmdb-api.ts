@@ -1,4 +1,7 @@
+import { containsCjk } from './cjk'
 import type { ShowRow, ShowType } from './shows'
+
+export { containsCjk }
 
 /**
  * TMDB (The Movie Database) client + pure field mapping. Called directly from the browser with
@@ -13,11 +16,6 @@ import type { ShowRow, ShowType } from './shows'
  */
 
 const TMDB_BASE = 'https://api.themoviedb.org/3'
-
-/** True when the text contains a CJK character (same ranges as quotes' detectLanguage). */
-export function containsCjk(text: string): boolean {
-  return /[㐀-鿿豈-﫿]/.test(text)
-}
 
 /** TMDB `language` for a piece of text: `zh-CN` for CJK, else undefined (TMDB default). */
 export function tmdbLanguage(text: string): string | undefined {

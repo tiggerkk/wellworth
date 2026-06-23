@@ -26,6 +26,7 @@
   --color-delete: #e24b4a;
   --color-track: #3a4253;
   --color-fill: #eef1f7;
+  --color-dynasty: #d8a657; /* gold badge — Chinese-dynasty chip (Shows/Books) */
 
   /* Category accents — Diary group icons (meal red matches danger today but is its own role) */
   --color-cat-meal: #e2574c;

@@ -80,7 +80,7 @@ function AccountCard() {
 
   return (
     <SectionCard title="Account">
-      <FieldRow label="Google account">{session?.user.email ?? '—'}</FieldRow>
+      <FieldRow label="Google Account">{session?.user.email ?? '—'}</FieldRow>
       <div className="px-4 py-3">
         <button
           onClick={signOut}

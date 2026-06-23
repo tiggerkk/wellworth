@@ -4,6 +4,7 @@ import {
   addMonths,
   fromIsoDate,
   formatDayLabel,
+  formatMonthDay,
   startOfMonth,
   toIsoDate,
 } from './date'
@@ -14,6 +15,13 @@ describe('toIsoDate / fromIsoDate', () => {
     expect(fromIsoDate('2026-06-13').getMonth()).toBe(5) // June, 0-based
     expect(fromIsoDate('2026-06-13').getDate()).toBe(13)
     expect(toIsoDate(fromIsoDate('2026-06-13'))).toBe('2026-06-13')
+  })
+})
+
+describe('formatMonthDay', () => {
+  it('shows month + day only, with no weekday or relative label', () => {
+    expect(formatMonthDay('2026-06-13')).toBe('Jun 13')
+    expect(formatMonthDay('2026-12-01')).toBe('Dec 1')
   })
 })
 

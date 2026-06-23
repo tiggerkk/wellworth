@@ -180,7 +180,7 @@ function ActivityForm({
         </label>
 
         <label className="text-xs text-text-secondary">
-          Description (optional)
+          Description (Optional)
           <input
             value={description}
             onChange={(e) => setDescription(e.target.value)}
@@ -201,7 +201,7 @@ function ActivityForm({
         </div>
 
         <label className="text-xs text-text-secondary">
-          Default Duration (minutes)
+          Default Duration (Minutes)
           <input
             type="number"
             min={0}
@@ -219,7 +219,7 @@ function ActivityForm({
         {/* MET by effort + default effort selector */}
         <div>
           <p className="mb-1 text-xs text-text-secondary">
-            MET by effort (fill at least one level; the default effort must have a value)
+            MET by Effort (fill at least one level; the default effort must have a value)
           </p>
           <div className="flex flex-col gap-2">
             {EFFORT_LEVELS.map((level) => {

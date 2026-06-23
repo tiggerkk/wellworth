@@ -19,7 +19,8 @@ import {
   type BookStatus,
   type BookUpdate,
 } from '../lib/books'
-import { formatDayLabel, todayLocal } from '../lib/date'
+import { formatMonthDay, todayLocal } from '../lib/date'
+import { DYNASTY_CHIP } from '../constants/dynasty'
 import { routes } from '../constants/routes'
 import { SectionCard } from '../components/SectionCard'
 import { StarRating } from '../components/StarRating'
@@ -136,7 +137,7 @@ export function BooksDashboard() {
                     <>
                       <BookStatusChip status={b.status} />
                       {b.rating ? <StarRating value={b.rating} size={12} /> : null}
-                      {b.end_date && <span>{formatDayLabel(b.end_date)}</span>}
+                      {b.end_date && <span>{formatMonthDay(b.end_date)}</span>}
                     </>
                   }
                 />
@@ -203,6 +204,9 @@ function DashRow({
             {book.title}
             {book.year ? ` (${book.year})` : ''}
           </span>
+          {book.dynasty && (
+            <StatusChip label={book.dynasty} className={`shrink-0 ${DYNASTY_CHIP}`} />
+          )}
         </span>
         <span className="mt-0.5 flex items-center gap-2 text-xs text-text-secondary">
           {secondary}

@@ -23,6 +23,7 @@ describe('parseShowsCsv', () => {
         status: 'want',
         rating: null,
         lgbtq_rep: 'none', // blank defaults to none
+        dynasty: null, // blank → null (and only kept for Chinese titles)
         watched_seasons: null,
         watched_episodes: null,
         is_favorite: false, // blank → false
@@ -114,6 +115,7 @@ const row = (p: Partial<ParsedShowRow>): ParsedShowRow => ({
   status: 'watched',
   rating: null,
   lgbtq_rep: 'none',
+  dynasty: null,
   watched_seasons: null,
   watched_episodes: null,
   is_favorite: false,

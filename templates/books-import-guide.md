@@ -8,7 +8,7 @@ duplicates), so partial re-runs are safe.
 ## Columns
 
 ```
-title,author,rating,lgbtq_rep,end_date,is_favorite
+title,author,rating,lgbtq_rep,dynasty,end_date,is_favorite
 ```
 
 - **title** — the book title to look up. Required.
@@ -16,13 +16,16 @@ title,author,rating,lgbtq_rep,end_date,is_favorite
   titles collide far more than show titles).
 - **rating** — your stars, `0`–`5` in `0.5` steps. Optional (blank = unrated).
 - **lgbtq_rep** — LGBT+ representation: `none`, `some`, or `significant`. Optional (blank = `none`).
+- **dynasty** — Chinese dynasty, one of `近代 清代 明代 元代 宋代 五代 唐代 隋代 南北朝 魏晉 兩漢 先秦`.
+  Optional, and **only kept for a Chinese title** (ignored otherwise). Blank = none. An unrecognised
+  value skips the row.
 - **end_date** — the date you finished, as `YYYY-MM-DD` text. Optional (blank = unknown).
 - **is_favorite** — `true`/`1`/`yes` marks the book a favourite (the ♥). Optional (blank = not a
   favourite).
 
 Every imported row is recorded as **Read**. Rows with a missing `title`/`author`, a bad `rating`, an
-unknown `lgbtq_rep`, or a malformed `end_date` are listed as skipped in the preview; everything else
-imports.
+unknown `lgbtq_rep`/`dynasty`, or a malformed `end_date` are listed as skipped in the preview;
+everything else imports.
 
 ## How resolution works
 

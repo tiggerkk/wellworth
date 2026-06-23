@@ -66,7 +66,8 @@ module is a **drop-in** — append a `ModuleDef` to `src/constants/modules.ts` +
   `ImportNetWorthSheet`.
 - **Shows (built):** TV, movies & **documentaries**. One table `show` (migration
   `supabase/migrations/20260617120000_shows_schema.sql` — `type` ∈ `tv|movie|documentary`, an
-  `is_favorite` boolean + a `(user_id, is_favorite)` index, **no** `content_rating`;
+  `is_favorite` boolean + a `(user_id, is_favorite)` index, a nullable CHECK-constrained `dynasty`
+  (Chinese titles only — the shared `src/constants/dynasty.ts` `DYNASTIES`), **no** `content_rating`;
   `poster_path` holds **either** a TMDB path **or** a full pasted image URL) plus three `profile` columns
   `show_visible_fields` / `show_importer_enabled` / `show_poster_url_visible`
   (`20260617130000_profile_show_settings.sql`). Data `src/data/show.ts` (CRUD + idempotent
@@ -90,7 +91,8 @@ module is a **drop-in** — append a `ModuleDef` to `src/constants/modules.ts` +
   column). **Calendar** was generalized to a presentational component with an optional
   `loadCues` (Wellness Diary injects food/activity dots; Shows date pickers pass none).
 - **Books (built):** one table `book` (migration `supabase/migrations/20260620120000_books_schema.sql` —
-  incl. an `is_favorite` boolean + `(user_id, is_favorite)` index) plus two `profile` columns
+  incl. an `is_favorite` boolean + `(user_id, is_favorite)` index, and a nullable CHECK-constrained
+  `dynasty` (Chinese titles only — shared `src/constants/dynasty.ts`)) plus two `profile` columns
   `book_visible_fields` / `book_importer_enabled`
   (`20260620130000_profile_book_settings.sql`). Data `src/data/book.ts` (CRUD + idempotent
   `saveImportedBooks`). Pure logic `src/lib/books.ts` (status/LGBT+ enums, status-chip palette,

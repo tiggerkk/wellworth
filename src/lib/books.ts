@@ -5,6 +5,7 @@
  */
 import type { Tables, TablesInsert, TablesUpdate } from '../types/database'
 import type { IsoDate } from './date'
+import type { Dynasty } from '../constants/dynasty'
 
 export type BookRow = Tables<'book'>
 export type BookInsert = TablesInsert<'book'>
@@ -139,6 +140,7 @@ export interface LibraryCriteria {
   genre: 'all' | string
   minRating: number // 0 = any
   lgbtq: 'all' | LgbtqRep
+  dynasty: 'all' | Dynasty
   status: 'all' | BookStatus
   author: 'all' | string
   favoritesOnly: boolean
@@ -155,6 +157,7 @@ export const DEFAULT_LIBRARY_CRITERIA: LibraryCriteria = {
   genre: 'all',
   minRating: 0,
   lgbtq: 'all',
+  dynasty: 'all',
   status: 'all',
   author: 'all',
   favoritesOnly: false,
@@ -171,6 +174,7 @@ function matchesCriteria(book: BookRow, c: LibraryCriteria): boolean {
   if (q && !bookSearchText(book).includes(q)) return false
   if (c.status !== 'all' && book.status !== c.status) return false
   if (c.lgbtq !== 'all' && (book.lgbtq_rep ?? 'none') !== c.lgbtq) return false
+  if (c.dynasty !== 'all' && book.dynasty !== c.dynasty) return false
   if (c.genre !== 'all' && !(book.genres ?? []).includes(c.genre)) return false
   if (c.author !== 'all' && !(book.authors ?? []).includes(c.author)) return false
   if (c.favoritesOnly && !book.is_favorite) return false
@@ -235,6 +239,7 @@ export const BOOK_ENTRY_FIELDS: { key: string; label: string }[] = [
   { key: 'year', label: 'Year' },
   { key: 'rating', label: 'Rating' },
   { key: 'lgbtq_rep', label: 'LGBT+ Representation' },
+  { key: 'dynasty', label: 'Dynasty' },
   { key: 'start_date', label: 'Start Date' },
   { key: 'end_date', label: 'Finish / Drop Date' },
   { key: 'last_update_date', label: 'Last Update' },

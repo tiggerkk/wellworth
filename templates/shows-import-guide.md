@@ -10,7 +10,7 @@ One CSV covers **English and Chinese** titles across **all three types** (TV / m
 ## Columns
 
 ```
-title,type,status,rating,lgbtq_rep,watched_seasons,watched_episodes,is_favorite
+title,type,status,rating,lgbtq_rep,dynasty,watched_seasons,watched_episodes,is_favorite
 ```
 
 - **title** — the title to look up on TMDB. Required. (A CJK title is searched in Chinese.) For a
@@ -21,6 +21,9 @@ title,type,status,rating,lgbtq_rep,watched_seasons,watched_episodes,is_favorite
 - **status** — `want`, `watching`, `watched`, or `dropped`. Required.
 - **rating** — your stars, `0`–`5` in `0.5` steps. Optional (blank = unrated).
 - **lgbtq_rep** — LGBT+ representation: `none`, `some`, or `significant`. Optional (blank = `none`).
+- **dynasty** — Chinese dynasty, one of `近代 清代 明代 元代 宋代 五代 唐代 隋代 南北朝 魏晉 兩漢 先秦`.
+  Optional, and **only kept for a Chinese title** (ignored otherwise). Blank = none. An unrecognised
+  value skips the row.
 - **watched_seasons / watched_episodes** — episodic progress (TV + documentary). **Leave blank for
   `watched` rows** (the importer sets them to the TMDB totals) and for movies / `want` rows. For
   `watching` and `dropped` rows, enter how far you got. You can put **`all`** in `watched_episodes`
@@ -32,8 +35,8 @@ title,type,status,rating,lgbtq_rep,watched_seasons,watched_episodes,is_favorite
 - **is_favorite** — `true`/`1`/`yes` marks the title a favourite (the ♥). Optional (blank = not a
   favourite).
 
-Rows with an unknown `type`/`status`/`lgbtq_rep`, a missing `title`, or a bad `rating` are listed as
-skipped in the preview; everything else imports.
+Rows with an unknown `type`/`status`/`lgbtq_rep`/`dynasty`, a missing `title`, or a bad `rating` are
+listed as skipped in the preview; everything else imports.
 
 ## How resolution works
 

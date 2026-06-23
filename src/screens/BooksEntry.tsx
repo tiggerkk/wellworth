@@ -23,6 +23,8 @@ import {
   type LgbtqRep,
 } from '../lib/books'
 import { getBookDetails, type BookSearchResult } from '../lib/books-api'
+import { containsCjk } from '../lib/cjk'
+import { DEFAULT_DYNASTY, DYNASTIES, type Dynasty } from '../constants/dynasty'
 import { useProfile } from '../hooks/useProfile'
 import { bumpBooks } from '../lib/books-refresh'
 import { formatDayLabel, todayLocal, type IsoDate } from '../lib/date'
@@ -32,6 +34,7 @@ import { CoverThumb } from '../components/CoverThumb'
 import { PrimaryButton } from '../components/PrimaryButton'
 import { SecondaryButton } from '../components/SecondaryButton'
 import { SegmentedTabs } from '../components/SegmentedTabs'
+import { SelectMenu } from '../components/SelectMenu'
 import { StarRating } from '../components/StarRating'
 
 interface BookDraft {
@@ -41,6 +44,7 @@ interface BookDraft {
   status: BookStatus
   rating: number
   lgbtq_rep: LgbtqRep
+  dynasty: Dynasty | null
   is_favorite: boolean
   start_date: IsoDate | null
   end_date: IsoDate | null
@@ -68,6 +72,7 @@ function blankDraft(): BookDraft {
     status: 'want',
     rating: 0,
     lgbtq_rep: 'none',
+    dynasty: null,
     is_favorite: false,
     start_date: today,
     end_date: null,
@@ -92,6 +97,7 @@ function draftFromRow(row: BookRow): BookDraft {
     status: row.status as BookStatus,
     rating: row.rating ?? 0,
     lgbtq_rep: (row.lgbtq_rep as LgbtqRep) ?? 'none',
+    dynasty: (row.dynasty as Dynasty | null) ?? null,
     is_favorite: row.is_favorite,
     start_date: row.start_date,
     end_date: row.end_date,
@@ -155,6 +161,8 @@ function BookForm({ id, initial }: { id: string | undefined; initial: BookDraft 
 
   const update = (patch: Partial<BookDraft>) => setDraft((d) => ({ ...d, ...patch }))
   const dirty = JSON.stringify(draft) !== JSON.stringify(initial)
+  // Dynasty is editable only for a Chinese title; the dropdown shows the default until chosen.
+  const isChinese = containsCjk(draft.title)
   const hasMeta =
     !!draft.cover_url ||
     !!draft.description ||
@@ -227,6 +235,8 @@ function BookForm({ id, initial }: { id: string | undefined; initial: BookDraft 
         status: draft.status,
         rating: draft.rating || null,
         lgbtq_rep: draft.lgbtq_rep,
+        // Dynasty is meaningful only for a Chinese title; clear it otherwise.
+        dynasty: isChinese ? (draft.dynasty ?? DEFAULT_DYNASTY) : null,
         is_favorite: draft.is_favorite,
         start_date: draft.start_date,
         end_date: draft.end_date,
@@ -401,14 +411,34 @@ function BookForm({ id, initial }: { id: string | undefined; initial: BookDraft 
           </div>
         )}
 
-        {show('lgbtq_rep') && (
-          <div>
-            <p className="mb-1 text-xs text-text-secondary">LGBT+ representation</p>
-            <SegmentedTabs
-              value={draft.lgbtq_rep}
-              onChange={(lgbtq_rep) => update({ lgbtq_rep })}
-              options={LGBTQ_REPS.map((r) => ({ value: r, label: LGBTQ_REP_LABELS[r] }))}
-            />
+        {(show('lgbtq_rep') || show('dynasty')) && (
+          <div className="grid grid-cols-2 gap-3">
+            {show('lgbtq_rep') && (
+              <div>
+                <p className="mb-1 text-xs text-text-secondary">LGBT+ Representation</p>
+                <SegmentedTabs
+                  value={draft.lgbtq_rep}
+                  onChange={(lgbtq_rep) => update({ lgbtq_rep })}
+                  options={LGBTQ_REPS.map((r) => ({
+                    value: r,
+                    label: LGBTQ_REP_LABELS[r],
+                  }))}
+                />
+              </div>
+            )}
+            {show('dynasty') && (
+              <div>
+                <p className="mb-1 text-xs text-text-secondary">Dynasty</p>
+                <SelectMenu
+                  ariaLabel="Dynasty"
+                  disabled={!isChinese}
+                  placeholder="—"
+                  value={(isChinese ? (draft.dynasty ?? DEFAULT_DYNASTY) : '') as Dynasty}
+                  options={DYNASTIES.map((d) => ({ value: d, label: d }))}
+                  onChange={(dynasty) => update({ dynasty })}
+                />
+              </div>
+            )}
           </div>
         )}
 
