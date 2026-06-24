@@ -15,6 +15,8 @@ type SearchError = 'rate' | 'failed' | null
 interface BookSearchSheetProps {
   onSelect: (result: BookSearchResult) => void
   onClose: () => void
+  /** Seed the search box (e.g. the Entry form's current Title) so results show on open. */
+  initialQuery?: string
 }
 
 /**
@@ -23,9 +25,13 @@ interface BookSearchSheetProps {
  * draft). Mirrors the Shows `TitleSearchSheet`; selecting a result hands it back via `onSelect` to
  * populate the live form. The Google key is optional, so a failure is network/quota — not a missing key.
  */
-export function BookSearchSheet({ onSelect, onClose }: BookSearchSheetProps) {
-  const [query, setQuery] = useState('')
-  const [debounced, setDebounced] = useState('')
+export function BookSearchSheet({
+  onSelect,
+  onClose,
+  initialQuery = '',
+}: BookSearchSheetProps) {
+  const [query, setQuery] = useState(initialQuery)
+  const [debounced, setDebounced] = useState(initialQuery)
   const [results, setResults] = useState<BookSearchResult[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<SearchError>(null)

@@ -2,12 +2,16 @@ import { useCallback, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { IconX } from '@tabler/icons-react'
 import { Sheet } from '../components/Sheet'
-import { PrimaryButton } from '../components/PrimaryButton'
-import { SecondaryButton } from '../components/SecondaryButton'
+import { EntryHeaderActions } from '../components/EntryHeaderActions'
 import { SegmentedTabs } from '../components/SegmentedTabs'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
-import { createActivity, getActivity, updateActivity } from '../data/activity'
+import {
+  createActivity,
+  getActivity,
+  softDeleteActivity,
+  updateActivity,
+} from '../data/activity'
 import { draftAmount } from '../lib/quantity'
 import { bumpDiary } from '../lib/diary-refresh'
 import { EFFORT_LEVELS, type Effort } from '../constants/effort-levels'
@@ -96,8 +100,6 @@ function ActivityForm({
   // Require a MET for at least one level, and the chosen default must be one of them
   // (the Activity Log resolves energy from the default effort's MET).
   const canSave = name.trim() !== '' && anyMet && defaultHasMet
-  const actionLabel = id ? 'SAVE' : 'CREATE'
-  const busyLabel = id ? 'Saving…' : 'Adding…'
 
   // Dirty vs the loaded/blank initial — drives RESET + SAVE enablement.
   const dirty =
@@ -119,6 +121,18 @@ function ActivityForm({
     setDefaultDuration(initial.defaultDuration)
     setMet({ ...initial.met })
     setIcon(initial.icon)
+  }
+
+  async function remove() {
+    if (!id) return
+    setSaving(true)
+    try {
+      await softDeleteActivity(id)
+      bumpDiary()
+      navigate(-1)
+    } finally {
+      setSaving(false)
+    }
   }
 
   async function save() {
@@ -157,16 +171,15 @@ function ActivityForm({
         <h1 className="flex-1 truncate text-[17px] font-medium text-text-primary">
           {id ? 'Edit Activity' : 'New Activity'}
         </h1>
-        <SecondaryButton size="sm" onClick={reset} disabled={!dirty || saving}>
-          RESET
-        </SecondaryButton>
-        <PrimaryButton
-          size="sm"
-          onClick={() => void save()}
-          disabled={saving || !canSave || (!!id && !dirty)}
-        >
-          {saving ? busyLabel : actionLabel}
-        </PrimaryButton>
+        <EntryHeaderActions
+          editing={!!id}
+          dirty={dirty}
+          saving={saving}
+          canSubmit={canSave}
+          onReset={reset}
+          onSubmit={() => void save()}
+          onDelete={id ? () => void remove() : undefined}
+        />
       </header>
 
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">

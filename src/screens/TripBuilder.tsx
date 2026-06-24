@@ -16,8 +16,8 @@ import { Thumb } from '../components/Thumb'
 import { Calendar } from '../components/Calendar'
 import { ReorderList } from '../components/ReorderList'
 import { StatusChip } from '../components/StatusChip'
-import { PrimaryButton } from '../components/PrimaryButton'
 import { SecondaryButton } from '../components/SecondaryButton'
+import { EntryHeaderActions } from '../components/EntryHeaderActions'
 import { StopEditorSheet } from '../components/StopEditorSheet'
 import { TripExpensesPanel } from '../components/TripExpensesPanel'
 import { useAuth } from '../auth/AuthProvider'
@@ -29,6 +29,7 @@ import {
   createTrip,
   deleteDay,
   deleteStop,
+  deleteTrip,
   getTripBundle,
   recomputeTripDates,
   reorderDays,
@@ -96,39 +97,30 @@ function NewTrip() {
           <IconChevronLeft size={22} />
         </button>
         <h1 className="flex-1 text-[17px] font-medium text-text-primary">New Trip</h1>
-        <PrimaryButton
-          size="sm"
-          onClick={() => void create()}
-          disabled={saving || !name.trim()}
-        >
-          Create
-        </PrimaryButton>
+        <EntryHeaderActions
+          editing={false}
+          dirty={name.trim() !== '' || status !== 'planning' || baseCurrency !== 'CNY'}
+          saving={saving}
+          canSubmit={!!name.trim()}
+          onReset={() => {
+            setName('')
+            setStatus('planning')
+            setBaseCurrency('CNY')
+          }}
+          onSubmit={() => void create()}
+        />
       </header>
       <div className="flex flex-col gap-4 overflow-y-auto p-4">
-        <label className="text-xs text-text-secondary">
-          Trip Name
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            autoFocus
-            className={`mt-1 ${inputClass}`}
-          />
-        </label>
         <div className="flex gap-3">
-          <div className="flex-1 text-xs text-text-secondary">
-            Status
-            <div className="mt-1">
-              <SelectMenu
-                value={status}
-                onChange={(v) => setStatus(v as (typeof TRIP_STATUSES)[number])}
-                ariaLabel="Status"
-                options={TRIP_STATUSES.map((s) => ({
-                  value: s,
-                  label: tripStatusLabel(s),
-                }))}
-              />
-            </div>
-          </div>
+          <label className="flex-1 text-xs text-text-secondary">
+            Trip Name
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              autoFocus
+              className={`mt-1 ${inputClass}`}
+            />
+          </label>
           <div className="w-28 text-xs text-text-secondary">
             Base Currency
             <div className="mt-1">
@@ -139,6 +131,20 @@ function NewTrip() {
                 options={CURRENCIES.map((c) => ({ value: c, label: c }))}
               />
             </div>
+          </div>
+        </div>
+        <div className="w-40 text-xs text-text-secondary">
+          Status
+          <div className="mt-1">
+            <SelectMenu
+              value={status}
+              onChange={(v) => setStatus(v as (typeof TRIP_STATUSES)[number])}
+              ariaLabel="Status"
+              options={TRIP_STATUSES.map((s) => ({
+                value: s,
+                label: tripStatusLabel(s),
+              }))}
+            />
           </div>
         </div>
         <p className="px-1 text-xs text-text-tertiary">
@@ -249,6 +255,17 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
     }
   }
 
+  async function removeTrip() {
+    setSavingHeader(true)
+    try {
+      await deleteTrip(trip.id)
+      bumpTravel()
+      navigate(-1)
+    } finally {
+      setSavingHeader(false)
+    }
+  }
+
   async function addDay() {
     await createDay({ user_id: userId!, trip_id: trip.id, sort_order: days.length })
     bumpTravel()
@@ -322,35 +339,43 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
         <h1 className="flex-1 truncate text-[17px] font-medium text-text-primary">
           {trip.name}
         </h1>
-        <SecondaryButton
-          size="sm"
-          onClick={resetHeader}
-          disabled={!headerDirty || savingHeader}
-        >
-          RESET
-        </SecondaryButton>
-        <PrimaryButton
-          size="sm"
-          onClick={() => void saveHeader()}
-          disabled={savingHeader || !name.trim() || !headerDirty}
-        >
-          {savingHeader ? 'Saving…' : 'SAVE'}
-        </PrimaryButton>
+        <EntryHeaderActions
+          editing
+          dirty={headerDirty}
+          saving={savingHeader}
+          canSubmit={!!name.trim()}
+          onReset={resetHeader}
+          onSubmit={() => void saveHeader()}
+          onDelete={() => void removeTrip()}
+        />
       </header>
 
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
         {/* Trip header fields */}
         <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
-          <label className="text-xs text-text-secondary">
-            Trip Name
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className={`mt-1 ${inputClass}`}
-            />
-          </label>
           <div className="flex gap-3">
-            <div className="flex-1 text-xs text-text-secondary">
+            <label className="flex-1 text-xs text-text-secondary">
+              Trip Name
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className={`mt-1 ${inputClass}`}
+              />
+            </label>
+            <div className="w-28 text-xs text-text-secondary">
+              Base Currency
+              <div className="mt-1">
+                <SelectMenu
+                  value={baseCurrency}
+                  onChange={setBaseCurrency}
+                  ariaLabel="Base currency"
+                  options={CURRENCIES.map((c) => ({ value: c, label: c }))}
+                />
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <div className="w-40 text-xs text-text-secondary">
               Status
               <div className="mt-1">
                 <SelectMenu
@@ -364,15 +389,10 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
                 />
               </div>
             </div>
-            <div className="w-28 text-xs text-text-secondary">
-              Base Currency
-              <div className="mt-1">
-                <SelectMenu
-                  value={baseCurrency}
-                  onChange={setBaseCurrency}
-                  ariaLabel="Base currency"
-                  options={CURRENCIES.map((c) => ({ value: c, label: c }))}
-                />
+            <div className="text-xs text-text-secondary">
+              Rating
+              <div className="mt-1 flex h-8 items-center">
+                <StarRating value={rating} onChange={setRating} />
               </div>
             </div>
           </div>
@@ -388,17 +408,25 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
           {coverUrl.trim() && (
             <Thumb url={coverUrl.trim()} className="h-28 w-full rounded-card" />
           )}
-          <label className="text-xs text-text-secondary">
-            Companions
-            <input
-              value={companions}
-              onChange={(e) => setCompanions(e.target.value)}
-              className={`mt-1 ${inputClass}`}
-            />
-          </label>
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-text-secondary">Rating</span>
-            <StarRating value={rating} onChange={setRating} />
+          <div className="flex gap-3">
+            <label className="flex-1 text-xs text-text-secondary">
+              Companions
+              <input
+                value={companions}
+                onChange={(e) => setCompanions(e.target.value)}
+                className={`mt-1 ${inputClass}`}
+              />
+            </label>
+            <div className="text-xs text-text-secondary">
+              Track Reimburse
+              <div className="mt-1 flex h-[38px] items-center">
+                <Toggle
+                  checked={trackReimb}
+                  onChange={setTrackReimb}
+                  label="Track reimbursement"
+                />
+              </div>
+            </div>
           </div>
           <label className="text-xs text-text-secondary">
             Notes
@@ -409,14 +437,6 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
               className={`mt-1 resize-none ${inputClass}`}
             />
           </label>
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-text-secondary">Track Reimbursement</span>
-            <Toggle
-              checked={trackReimb}
-              onChange={setTrackReimb}
-              label="Track reimbursement"
-            />
-          </div>
         </section>
 
         <SegmentedTabs<'itinerary' | 'expenses'>

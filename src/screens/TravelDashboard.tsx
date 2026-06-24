@@ -100,43 +100,18 @@ export function TravelDashboard() {
     )
   }
 
-  const provincePct = Math.round((stats.chinaProvinces / CHINA_PROVINCE_TOTAL) * 100)
-
   return (
     <div className="flex flex-col gap-4 px-4 py-4 pb-8">
-      {/* Count tiles */}
-      <div className="grid grid-cols-2 gap-2">
+      {/* Count tiles — 3 columns × 2 rows, filled column-first (China · World · Trips). */}
+      <div className="grid grid-flow-col grid-cols-3 grid-rows-2 gap-2">
         <Tile
           value={stats.chinaProvinces}
           suffix={`/ ${CHINA_PROVINCE_TOTAL}`}
-          label="China Provinces"
+          label="中国省份"
         />
-        <Tile value={stats.chinaCities} label="China Cities" />
+        <Tile value={stats.chinaCities} label="中国城市" />
         <Tile value={stats.countries} label="Countries" />
         <Tile value={stats.cities} label="Cities" />
-      </div>
-
-      {/* Province progress */}
-      <div className="rounded-card border border-border bg-surface p-4">
-        <div className="mb-2 flex items-baseline justify-between">
-          <span className="text-sm text-text-primary">Provinces visited</span>
-          <span className="text-sm text-text-secondary">
-            {stats.chinaProvinces} / {CHINA_PROVINCE_TOTAL}
-          </span>
-        </div>
-        <div className="h-2 overflow-hidden rounded-pill bg-track">
-          <div
-            className="h-full rounded-pill bg-positive"
-            style={{ width: `${provincePct}%` }}
-          />
-        </div>
-        <p className="mt-2 text-[11px] text-text-tertiary">
-          The shaded province map arrives with the Map screen.
-        </p>
-      </div>
-
-      {/* Count-based metrics (monetary spend lands with the Expenses layer) */}
-      <div className="grid grid-cols-2 gap-2">
         <Tile value={stats.tripsThisYear} label="Trips This Year" />
         <Tile value={stats.daysTravelled} label="Days Travelled" />
       </div>
@@ -174,12 +149,12 @@ function Tile({
   label: string
 }) {
   return (
-    <div className="rounded-card border border-border bg-surface px-4 py-3">
+    <div className="rounded-card border border-border bg-surface px-3 py-3">
       <div className="flex items-baseline gap-1">
-        <span className="text-2xl font-semibold text-text-primary">{value}</span>
-        {suffix && <span className="text-sm text-text-secondary">{suffix}</span>}
+        <span className="text-xl font-semibold text-text-primary">{value}</span>
+        {suffix && <span className="text-xs text-text-secondary">{suffix}</span>}
       </div>
-      <p className="mt-0.5 text-xs text-text-secondary">{label}</p>
+      <p className="mt-0.5 text-xs leading-tight text-text-secondary">{label}</p>
     </div>
   )
 }

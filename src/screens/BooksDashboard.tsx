@@ -26,6 +26,7 @@ import { SectionCard } from '../components/SectionCard'
 import { StarRating } from '../components/StarRating'
 import { StatusChip } from '../components/StatusChip'
 import { CoverThumb } from '../components/CoverThumb'
+import { EmptyState } from '../components/EmptyState'
 
 const WANT_SHELF_LIMIT = 6
 
@@ -75,9 +76,7 @@ export function BooksDashboard() {
       )}
 
       {!loading && !error && all.length === 0 && (
-        <p className="px-4 py-10 text-center text-sm text-text-secondary">
-          No books yet — add one.
-        </p>
+        <EmptyState title="No books yet" actionLabel="New Book" to={routes.books.entry} />
       )}
 
       {!loading && !error && all.length > 0 && (

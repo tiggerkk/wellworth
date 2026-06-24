@@ -1,11 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
-import {
-  IconArrowsShuffle,
-  IconHeart,
-  IconHeartFilled,
-  IconPlus,
-} from '@tabler/icons-react'
+import { IconArrowsShuffle, IconHeart, IconHeartFilled } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useProfile } from '../hooks/useProfile'
@@ -28,6 +23,7 @@ import {
 import { bumpQuotes, useQuotesVersion } from '../lib/quotes-refresh'
 import { routes } from '../constants/routes'
 import { StatusChip } from '../components/StatusChip'
+import { EmptyState } from '../components/EmptyState'
 
 const PULL_THRESHOLD = 60 // px of (damped) pull past which release triggers a shuffle
 const PULL_MAX = 90
@@ -135,15 +131,11 @@ export function QuotesZen() {
       )}
 
       {!loading && !error && all.length === 0 && (
-        <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center text-text-secondary">
-          <p className="text-sm">No quotes yet.</p>
-          <button
-            onClick={() => navigate(routes.quotes.entry)}
-            className="flex items-center gap-1 rounded-pill bg-input px-3 py-1.5 text-sm text-accent"
-          >
-            <IconPlus size={16} /> Add a quote
-          </button>
-        </div>
+        <EmptyState
+          title="No quotes yet"
+          actionLabel="New Quote"
+          to={routes.quotes.entry}
+        />
       )}
 
       {!loading && !error && current && (

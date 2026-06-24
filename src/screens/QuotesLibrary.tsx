@@ -22,6 +22,7 @@ import { QUOTE_LANGUAGES, QUOTE_LANGUAGE_LABELS } from '../constants/quotes'
 import { routes } from '../constants/routes'
 import { SearchBar } from '../components/SearchBar'
 import { SwipeRow } from '../components/SwipeRow'
+import { EmptyState } from '../components/EmptyState'
 import { SelectMenu } from '../components/SelectMenu'
 import { Toggle } from '../components/Toggle'
 import { StatusChip } from '../components/StatusChip'
@@ -215,10 +216,15 @@ export function QuotesLibrary() {
 
       {loading && <p className="text-sm text-text-secondary">Loading…</p>}
       {error && <p className="text-sm text-danger">Couldn’t load your quotes.</p>}
-      {!loading && !error && view.length === 0 && (
-        <p className="py-16 text-center text-sm text-text-secondary">
-          {all.length > 0 ? 'No quotes match.' : 'No quotes yet. Add one to get started.'}
-        </p>
+      {!loading && !error && view.length === 0 && all.length === 0 && (
+        <EmptyState
+          title="No quotes yet"
+          actionLabel="New Quote"
+          to={routes.quotes.entry}
+        />
+      )}
+      {!loading && !error && view.length === 0 && all.length > 0 && (
+        <p className="py-16 text-center text-sm text-text-secondary">No quotes match.</p>
       )}
 
       {!loading && !error && view.length > 0 && (

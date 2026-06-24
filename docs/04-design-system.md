@@ -67,7 +67,18 @@ _not_ the primary-button color; it's for emphasis, active states, and energy.
 - **Splash** — full-screen loading state while the auth session resolves.
 - **Calendar** — month-grid date picker (a local overlay, not a route). Presentational: per-day cue
   dots + legend are drawn only when a caller passes an optional `loadCues(monthStart, monthEnd)`
-  loader (Wellness Diary draws food/activity dots; Shows date pickers pass none).
+  loader (Wellness Diary draws food/activity dots; Shows date pickers pass none). **Tapping the
+  month-year header** switches to a **year-stepper + month grid** (the `MonthPicker` pattern, inlined);
+  picking a month returns to that month's day grid (the bottom Cancel/OK still commit the day).
+- **EntryHeaderActions** — the shared top-right action cluster for every New/Edit form
+  (`src/components/EntryHeaderActions.tsx`): compact `sm` **icon** buttons in order **Delete · Reset ·
+  Submit**. **Reset** = `IconArrowBackUp` (undo), **Submit** = `IconPlus` (new) / `IconDeviceFloppy`
+  (editing). **Delete** (`IconTrash`, `danger`) shows **only when editing** and flips to a two-step
+  inline confirm before firing. Disable gating is unchanged (Reset needs a change; Submit needs dirty /
+  required fields). Replaces the old text RESET / CREATE / SAVE buttons across all modules.
+- **EmptyState** — vertically-centered "No X yet" line over a **+ New X** action pill
+  (`src/components/EmptyState.tsx`). Used by the media Dashboards/Libraries (Shows/Books/Quotes) and the
+  Medical Dashboard/Reports; the host gives its content region `flex-1` so it centers.
 - **StarRating** — 0–5 **half-star** rating; display (no `onChange`) or input (two half-width
   hit-zones per star; tap the current value to clear). Reused on Shows + Books Entry + Library rows.
 - **ShowTypeBadge** — small chip with a TV (`IconDeviceTv`), movie (`IconMovie`), or documentary
@@ -110,7 +121,10 @@ _not_ the primary-button color; it's for emphasis, active states, and energy.
   button + a hand-rolled pull-to-refresh gesture.
 - **SelectMenu** — a compact dropdown (button + label + chevron → scrim + absolute menu of
   `{value,label}` options); generic over string options. Used by the Shows, Books, and Quotes Library
-  filters/sort. **Esc** collapses an open menu (via `useEscapeKey`).
+  filters/sort **and the Entry forms' Status / LGBT+ / Language / Type controls** (replacing the former
+  segmented controls there). **Esc** collapses an open menu (via `useEscapeKey`). The menu **flips
+  upward** (measuring the trigger's viewport rect on open) when there isn't room below — so a dropdown
+  near a short form's scroll-clip edge (e.g. New Trip) still shows all its options.
 - **useEscapeKey(handler, enabled?)** (`src/hooks/useEscapeKey.ts`) — shared **Escape-to-dismiss**.
   One document listener drives a LIFO stack so the **innermost** overlay handles Esc: route `Sheet`s
   and the local search sheets close themselves, the `Calendar` closes, an open `SelectMenu` collapses,
@@ -150,6 +164,8 @@ _not_ the primary-button color; it's for emphasis, active states, and energy.
 Tabler Icons (or lucide-react), outline style. Mapping used in the wireframes:
 food = apple, supplement = pill, activity = run/karate/barbell, energy = flame/flask,
 nav = chart-bar / notebook / apple / settings, delete = trash, favorite = heart, scan = barcode.
+Form header actions: delete = `IconTrash`, reset = `IconArrowBackUp` (undo), create = `IconPlus`,
+save = `IconDeviceFloppy`, search = `IconSearch`, source link = `IconLink`, TMDB refresh = `IconRefresh`.
 
 **Diary group category icons** (in the group headers) use the `cat-*` color tokens above:
 Breakfast/Lunch/Dinner = red apple (`cat-meal`), Snacks = orange cookie (`cat-snack`),
@@ -163,8 +179,9 @@ icon↔group mapping lives in `constants/groups.ts`.
 - **Completion:** Done = a teal "Done" chip; Skipped = a muted, struck-through stop row.
 - **Trip cover:** a rounded image rendered `referrerpolicy="no-referrer"` (thumbnail in lists, larger in
   the header); a neutral placeholder when null (the shared `Thumb`).
-- **Dashboard:** four count tiles + a province-progress **bar** (`positive`/teal fill on a `track`
-  ground); **status chips** Want = neutral (`track`), Planning = amber (`warning`), Visited = teal
+- **Dashboard:** six count tiles in a **3-column × 2-row** grid filled **column-first** (China →
+  World → Trips; the first two tiles labelled **中国省份 / 中国城市**). No separate province-progress
+  bar. **Status chips** Want = neutral (`track`), Planning = amber (`warning`), Visited = teal
   (`positive`) — the `TRIP_STATUS_CHIP` palette, via the shared presentational `StatusChip`.
 - **Map:** Leaflet over OSM tiles; **coral** dots (`accent` = visited) / **neutral** dots
   (`text-secondary` = planned), clustered; the visited-region fill is the teal `positive` at low opacity.
@@ -175,7 +192,8 @@ icon↔group mapping lives in `constants/groups.ts`.
 ## Button placement
 
 Action buttons live in the **top-right of the screen/sheet header** (consistent with Net Worth), at
-the compact `sm` size: logging screens show **ADD** (or **RESET** + **SAVE** when editing a logged
-entry); form screens show **RESET** + **CREATE** (new) / **RESET** + **SAVE** (editing). No bottom
+the compact `sm` size, rendered as **icons** via the shared **`EntryHeaderActions`**: form screens show
+**Delete** (trash, editing only) · **Reset** (undo) · **Create** (plus, new) / **Save** (floppy,
+editing); logging screens that add to the Diary keep a single **plus** (Add) in create mode. No bottom
 action bar. The header title (food / activity name) sits left of the actions and **clamps to 2 lines
 with an ellipsis** when long. (See `01-screens.md` → Button convention.)

@@ -36,6 +36,7 @@ import { Calendar } from '../components/Calendar'
 import { StatusChip } from '../components/StatusChip'
 import { StarRating } from '../components/StarRating'
 import { CoverThumb } from '../components/CoverThumb'
+import { EmptyState } from '../components/EmptyState'
 
 type StatusFilter = 'all' | BookStatus
 type DateBound = 'startFrom' | 'startTo' | 'endFrom' | 'endTo'
@@ -275,11 +276,15 @@ export function BooksLibrary() {
         <p className="px-1 py-6 text-sm text-danger">Couldn’t load your books.</p>
       )}
 
-      {!loading && !error && (
+      {!loading && !error && allBooks.length === 0 && (
+        <EmptyState title="No books yet" actionLabel="New Book" to={routes.books.entry} />
+      )}
+
+      {!loading && !error && allBooks.length > 0 && (
         <div className="overflow-hidden rounded-card border border-border bg-surface">
           {view.length === 0 ? (
             <p className="px-4 py-6 text-center text-sm text-text-tertiary">
-              {allBooks.length > 0 ? 'No matches.' : 'No books yet — add one.'}
+              No matches.
             </p>
           ) : (
             view.map((b) => (

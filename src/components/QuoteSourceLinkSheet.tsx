@@ -23,6 +23,8 @@ const KIND_LABEL: Partial<Record<QuoteSourceType, string>> = {
 interface QuoteSourceLinkSheetProps {
   onSelect: (candidate: LinkCandidate) => void
   onClose: () => void
+  /** Seed the search box (e.g. the Entry form's current Title) so results filter on open. */
+  initialQuery?: string
 }
 
 /**
@@ -31,10 +33,14 @@ interface QuoteSourceLinkSheetProps {
  * lesson as Shows `TitleSearchSheet` / Books `BookSearchSheet`). Searches the user's own `show` +
  * `book` rows (no external API); selecting one hands a `LinkCandidate` back via `onSelect`.
  */
-export function QuoteSourceLinkSheet({ onSelect, onClose }: QuoteSourceLinkSheetProps) {
+export function QuoteSourceLinkSheet({
+  onSelect,
+  onClose,
+  initialQuery = '',
+}: QuoteSourceLinkSheetProps) {
   const { session } = useAuth()
   const userId = session?.user.id
-  const [query, setQuery] = useState('')
+  const [query, setQuery] = useState(initialQuery)
 
   const loadFn = useCallback(async (): Promise<LinkCandidate[]> => {
     if (!userId) return []

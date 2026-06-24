@@ -169,7 +169,7 @@ export function ImportMedicalSheet() {
             templates/medical-extraction-prompt.md
           </code>
           ). Review the parsed results — especially the per-category counts, to catch a
-          skipped section — then paste your Drive link(s) and save.
+          skipped section — then paste your Google Drive link(s) and save.
         </p>
 
         <input

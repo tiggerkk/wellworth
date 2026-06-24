@@ -2,14 +2,13 @@ import { useCallback, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { IconPlus, IconTrash, IconX } from '@tabler/icons-react'
 import { Sheet } from '../components/Sheet'
-import { PrimaryButton } from '../components/PrimaryButton'
-import { SecondaryButton } from '../components/SecondaryButton'
+import { EntryHeaderActions } from '../components/EntryHeaderActions'
 import { SegmentedTabs } from '../components/SegmentedTabs'
 import { CollapsibleSection } from '../components/CollapsibleSection'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useNutrientReference } from '../hooks/useNutrientReference'
-import { createFood, getFood, updateFood } from '../data/food'
+import { createFood, getFood, softDeleteFood, updateFood } from '../data/food'
 import { listServings, replaceServings } from '../data/serving'
 import { asNutrientMap, type NutrientMap } from '../lib/nutrients'
 import { NUTRIENT_SECTIONS } from '../constants/nutrient-sections'
@@ -86,8 +85,6 @@ function FoodForm({ id, initial }: { id: string | undefined; initial: FoodInitia
   const [saving, setSaving] = useState(false)
 
   const basisLabel = basis === 'per_serving' ? 'serving' : '100 g'
-  const actionLabel = id ? 'SAVE' : 'CREATE'
-  const busyLabel = id ? 'Saving…' : 'Adding…'
 
   // Dirty vs the loaded/blank initial — drives RESET + SAVE enablement.
   const dirty =
@@ -148,6 +145,18 @@ function FoodForm({ id, initial }: { id: string | undefined; initial: FoodInitia
     }
   }
 
+  async function remove() {
+    if (!id) return
+    setSaving(true)
+    try {
+      await softDeleteFood(id)
+      bumpDiary()
+      navigate(-1)
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return (
     <>
       <header className="flex items-center gap-3 border-b border-border px-4 py-3">
@@ -157,16 +166,15 @@ function FoodForm({ id, initial }: { id: string | undefined; initial: FoodInitia
         <h1 className="flex-1 truncate text-[17px] font-medium text-text-primary">
           {id ? 'Edit Food' : 'New Food'}
         </h1>
-        <SecondaryButton size="sm" onClick={reset} disabled={!dirty || saving}>
-          RESET
-        </SecondaryButton>
-        <PrimaryButton
-          size="sm"
-          onClick={() => void save()}
-          disabled={saving || !name.trim() || (!!id && !dirty)}
-        >
-          {saving ? busyLabel : actionLabel}
-        </PrimaryButton>
+        <EntryHeaderActions
+          editing={!!id}
+          dirty={dirty}
+          saving={saving}
+          canSubmit={!!name.trim()}
+          onReset={reset}
+          onSubmit={() => void save()}
+          onDelete={id ? () => void remove() : undefined}
+        />
       </header>
 
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">

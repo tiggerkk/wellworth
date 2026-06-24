@@ -31,6 +31,7 @@ import { ShowTypeBadge } from '../components/ShowTypeBadge'
 import { StatusChip } from '../components/StatusChip'
 import { StarRating } from '../components/StarRating'
 import { PosterThumb } from '../components/PosterThumb'
+import { EmptyState } from '../components/EmptyState'
 
 type TypeFilter = 'all' | ShowType
 
@@ -101,9 +102,7 @@ export function ShowsDashboard() {
       )}
 
       {!loading && !error && all.length === 0 && (
-        <p className="px-4 py-10 text-center text-sm text-text-secondary">
-          No shows yet — add one.
-        </p>
+        <EmptyState title="No shows yet" actionLabel="New Show" to={routes.shows.entry} />
       )}
 
       {!loading && !error && all.length > 0 && (

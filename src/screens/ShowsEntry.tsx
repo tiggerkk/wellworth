@@ -12,7 +12,7 @@ import { routes } from '../constants/routes'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useEscapeKey } from '../hooks/useEscapeKey'
-import { createShow, getShow, updateShow } from '../data/show'
+import { createShow, deleteShow, getShow, updateShow } from '../data/show'
 import {
   buildRefreshPatch,
   isAbsoluteUrl,
@@ -40,8 +40,7 @@ import { useProfile } from '../hooks/useProfile'
 import { bumpShows } from '../lib/shows-refresh'
 import { formatDayLabel, todayLocal, type IsoDate } from '../lib/date'
 import { Calendar } from '../components/Calendar'
-import { PrimaryButton } from '../components/PrimaryButton'
-import { SecondaryButton } from '../components/SecondaryButton'
+import { EntryHeaderActions } from '../components/EntryHeaderActions'
 import { SegmentedTabs } from '../components/SegmentedTabs'
 import { SelectMenu } from '../components/SelectMenu'
 import { StarRating } from '../components/StarRating'
@@ -398,6 +397,18 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
     }
   }
 
+  async function remove() {
+    if (!id) return
+    setSaving(true)
+    try {
+      await deleteShow(id)
+      bumpShows()
+      navigate(-1)
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const pickerDay =
     (datePicker === 'start'
       ? draft.start_date
@@ -416,7 +427,7 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
           <IconX size={22} />
         </button>
         <h1 className="flex-1 truncate text-[17px] font-medium text-text-primary">
-          {id ? 'Edit Show' : 'Add Show'}
+          {id ? 'Edit Show' : 'New Show'}
         </h1>
         <button
           onClick={() => update({ is_favorite: !draft.is_favorite })}
@@ -428,20 +439,15 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
             <IconHeart size={20} className="text-text-tertiary" />
           )}
         </button>
-        <SecondaryButton
-          size="sm"
-          onClick={() => setDraft(initial)}
-          disabled={!dirty || saving}
-        >
-          RESET
-        </SecondaryButton>
-        <PrimaryButton
-          size="sm"
-          onClick={() => void save()}
-          disabled={saving || !draft.title.trim() || (!!id && !dirty)}
-        >
-          {saving ? 'Saving…' : id ? 'SAVE' : 'CREATE'}
-        </PrimaryButton>
+        <EntryHeaderActions
+          editing={!!id}
+          dirty={dirty}
+          saving={saving}
+          canSubmit={!!draft.title.trim()}
+          onReset={() => setDraft(initial)}
+          onSubmit={() => void save()}
+          onDelete={id ? () => void remove() : undefined}
+        />
       </header>
 
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
@@ -452,19 +458,27 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
         />
 
         <div>
-          <div className="flex gap-2">
+          <div className="flex items-end gap-2">
+            <label className="flex-1 text-xs text-text-secondary">
+              Title
+              <input
+                value={draft.title}
+                onChange={(e) => update({ title: e.target.value })}
+                className={`mt-1 ${inputClass}`}
+              />
+            </label>
             <button
               onClick={() => setSearchOpen(true)}
-              className="flex flex-1 items-center justify-center gap-2 rounded-input bg-input py-2 text-sm text-accent"
+              className="flex shrink-0 items-center justify-center gap-1.5 rounded-input bg-input px-3 py-2 text-sm text-accent"
             >
-              <IconSearch size={16} /> Search TMDB
+              <IconSearch size={16} /> TMDB
             </button>
             <button
               onClick={() => void refresh()}
               disabled={draft.tmdb_id == null || refreshing}
               aria-label="Refresh from TMDB"
               title={draft.tmdb_id == null ? 'Search TMDB first' : 'Refresh from TMDB'}
-              className="flex items-center justify-center rounded-input bg-input px-3 text-accent disabled:text-text-tertiary"
+              className="flex shrink-0 items-center justify-center rounded-input bg-input px-3 py-2 text-accent disabled:text-text-tertiary"
             >
               <IconRefresh size={16} className={refreshing ? 'animate-spin' : ''} />
             </button>
@@ -485,15 +499,6 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
             <p className="mt-1 text-xs text-danger">Couldn’t refresh from TMDB.</p>
           )}
         </div>
-
-        <label className="text-xs text-text-secondary">
-          Title
-          <input
-            value={draft.title}
-            onChange={(e) => update({ title: e.target.value })}
-            className={`mt-1 ${inputClass}`}
-          />
-        </label>
 
         {(show('original_title') || show('year')) && (
           <div className="flex gap-3">
@@ -567,51 +572,44 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
           </div>
         )}
 
-        {posterUrlVisible && (
-          <label className="text-xs text-text-secondary">
-            Poster URL
-            <input
-              value={draft.poster_path ?? ''}
-              onChange={(e) => update({ poster_path: e.target.value.trim() || null })}
-              placeholder="Paste a direct image URL (optional)"
-              className={`mt-1 ${inputClass}`}
-            />
-          </label>
-        )}
-
-        <div>
-          <p className="mb-1 text-xs text-text-secondary">Status</p>
-          <SegmentedTabs
-            value={draft.status}
-            onChange={changeStatus}
-            options={[
-              { value: 'want', label: 'Want' },
-              { value: 'watching', label: 'Watching' },
-              { value: 'watched', label: 'Watched' },
-              { value: 'dropped', label: 'Dropped' },
-            ]}
-          />
-        </div>
-
-        {show('rating') && (
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-text-secondary">Rating</span>
-            <StarRating
-              value={draft.rating}
-              onChange={(rating) => update({ rating })}
-              size={24}
+        <div className="flex gap-3">
+          <div className="flex-1">
+            <p className="mb-1 text-xs text-text-secondary">Status</p>
+            <SelectMenu
+              value={draft.status}
+              onChange={changeStatus}
+              ariaLabel="Status"
+              options={[
+                { value: 'want', label: 'Want' },
+                { value: 'watching', label: 'Watching' },
+                { value: 'watched', label: 'Watched' },
+                { value: 'dropped', label: 'Dropped' },
+              ]}
             />
           </div>
-        )}
+          {show('rating') && (
+            <div>
+              <p className="mb-1 text-xs text-text-secondary">Rating</p>
+              <div className="flex h-8 items-center">
+                <StarRating
+                  value={draft.rating}
+                  onChange={(rating) => update({ rating })}
+                  size={24}
+                />
+              </div>
+            </div>
+          )}
+        </div>
 
         {(show('lgbtq_rep') || show('dynasty')) && (
           <div className="grid grid-cols-2 gap-3">
             {show('lgbtq_rep') && (
               <div>
                 <p className="mb-1 text-xs text-text-secondary">LGBT+ Representation</p>
-                <SegmentedTabs
+                <SelectMenu
                   value={draft.lgbtq_rep}
                   onChange={(lgbtq_rep) => update({ lgbtq_rep })}
+                  ariaLabel="LGBT+ representation"
                   options={LGBTQ_REPS.map((r) => ({
                     value: r,
                     label: LGBTQ_REP_LABELS[r],
@@ -635,58 +633,88 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
           </div>
         )}
 
-        {show('start_date') && (
-          <DateField
-            label="Start Date"
-            value={draft.start_date}
-            onPick={() => setDatePicker('start')}
-            onClear={() => setDate('start', null)}
-          />
-        )}
-        {show('end_date') && (
-          <DateField
-            label="Finish / Drop Date"
-            value={draft.end_date}
-            onPick={() => setDatePicker('end')}
-            onClear={() => setDate('end', null)}
-          />
-        )}
-        {show('last_update_date') && (
-          <DateField
-            label="Last Update"
-            value={draft.last_update_date}
-            onPick={() => setDatePicker('last')}
-            onClear={() => setDate('last', null)}
-          />
+        {(show('start_date') || show('end_date')) && (
+          <div className="flex gap-3">
+            {show('start_date') && (
+              <div className="flex-1">
+                <DateField
+                  label="Start Date"
+                  value={draft.start_date}
+                  onPick={() => setDatePicker('start')}
+                  onClear={() => setDate('start', null)}
+                />
+              </div>
+            )}
+            {show('end_date') && (
+              <div className="flex-1">
+                <DateField
+                  label="Finish / Drop Date"
+                  value={draft.end_date}
+                  onPick={() => setDatePicker('end')}
+                  onClear={() => setDate('end', null)}
+                />
+              </div>
+            )}
+          </div>
         )}
 
         {episodic && show('episodes') && (
-          <div className="flex flex-col gap-3">
-            <div className="flex gap-3">
-              <NumField
-                label="Total Seasons"
-                value={draft.total_seasons}
-                onChange={(v) => update({ total_seasons: v })}
-              />
-              <NumField
-                label="Total Episodes"
-                value={draft.total_episodes}
-                onChange={(v) => update({ total_episodes: v })}
-              />
+          <div>
+            <div className="grid grid-cols-2 gap-3">
+              <p className="text-xs text-text-secondary">Total Seasons / Episodes</p>
+              <p className="text-xs text-text-secondary">Watched Seasons / Episodes</p>
             </div>
-            <div className="flex gap-3">
-              <NumField
-                label="Watched Seasons"
-                value={draft.watched_seasons}
-                onChange={(v) => update({ watched_seasons: v })}
-              />
-              <NumField
-                label="Watched Episodes"
-                value={draft.watched_episodes}
-                onChange={(v) => update({ watched_episodes: v })}
-              />
+            <div className="mt-1 grid grid-cols-2 gap-3">
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  min={0}
+                  value={draft.total_seasons}
+                  onChange={(e) => update({ total_seasons: e.target.value })}
+                  placeholder="Seasons"
+                  className={`${inputClass} min-w-0 flex-1 placeholder:text-text-tertiary`}
+                />
+                <input
+                  type="number"
+                  min={0}
+                  value={draft.total_episodes}
+                  onChange={(e) => update({ total_episodes: e.target.value })}
+                  placeholder="Episodes"
+                  className={`${inputClass} min-w-0 flex-1 placeholder:text-text-tertiary`}
+                />
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  min={0}
+                  value={draft.watched_seasons}
+                  onChange={(e) => update({ watched_seasons: e.target.value })}
+                  placeholder="Seasons"
+                  className={`${inputClass} min-w-0 flex-1 placeholder:text-text-tertiary`}
+                />
+                <input
+                  type="number"
+                  min={0}
+                  value={draft.watched_episodes}
+                  onChange={(e) => update({ watched_episodes: e.target.value })}
+                  placeholder="Episodes"
+                  className={`${inputClass} min-w-0 flex-1 placeholder:text-text-tertiary`}
+                />
+              </div>
             </div>
           </div>
+        )}
+
+        {posterUrlVisible && (
+          <label className="text-xs text-text-secondary">
+            Poster URL
+            <input
+              value={draft.poster_path ?? ''}
+              onChange={(e) => update({ poster_path: e.target.value.trim() || null })}
+              placeholder="Paste a direct image URL (optional)"
+              className={`mt-1 ${inputClass}`}
+            />
+          </label>
         )}
 
         {show('comments') && (
@@ -699,6 +727,15 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
               className={`mt-1 ${inputClass} resize-none`}
             />
           </label>
+        )}
+
+        {show('last_update_date') && (
+          <DateField
+            label="Last Update Date"
+            value={draft.last_update_date}
+            onPick={() => setDatePicker('last')}
+            onClear={() => setDate('last', null)}
+          />
         )}
 
         {id && (
@@ -725,6 +762,7 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
       {searchOpen && (
         <TitleSearchSheet
           type={draft.type}
+          initialQuery={draft.title}
           onSelect={(r) => void selectTitle(r)}
           onClose={() => setSearchOpen(false)}
         />
@@ -766,28 +804,5 @@ function DateField({
         )}
       </div>
     </div>
-  )
-}
-
-function NumField({
-  label,
-  value,
-  onChange,
-}: {
-  label: string
-  value: string
-  onChange: (v: string) => void
-}) {
-  return (
-    <label className="flex-1 text-xs text-text-secondary">
-      {label}
-      <input
-        type="number"
-        min={0}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className={`mt-1 ${inputClass}`}
-      />
-    </label>
   )
 }

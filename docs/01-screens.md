@@ -39,7 +39,17 @@ Diary groups, in order: **Breakfast, Lunch, Dinner, Snacks, Supplements, Activit
 
 ## Button convention
 
-- Action buttons in a persisted pane at the top right: **ADD**, **RESET**, **SAVE**, **CREATE**, **EDIT**
+- Action buttons in a persisted pane at the top right. On the New/Edit forms they render as **compact
+  icons** (shared `EntryHeaderActions`): **Reset** = undo-arrow, **Create** = plus (new) / **Save** =
+  floppy-disk (editing), and a **Delete** = trash icon that appears **only when editing** an existing
+  record. Delete asks for an inline confirm, then removes the record and returns. Logging sheets that
+  add to the Diary keep a single **plus** (Add) action in create mode. Enable/disable gating is
+  unchanged (Reset needs a change; Save needs the record to be dirty / required fields filled).
+- A vertically-centered **empty state** (shared `EmptyState`) shows "No X yet" + a **+ New X** action on
+  the media Dashboards/Libraries (Shows/Books/Quotes) and the Medical Dashboard/Reports when there's no
+  data.
+- The **date-picker Calendar** header is tappable: it opens a year-stepper + month grid; picking a month
+  returns to that month's day grid.
 - Settings sub-screens: auto-save on change
 
 ## Global - Settings (from the Home hub gear)
@@ -273,22 +283,24 @@ Wellness-module sub-settings. Auto-save on change. A back chevron returns to the
 - **Type** three-segment control (TV Show / Movie / Documentary) — Movie hides the season/episode
   fields; Documentary shows them (optional, often N/A). (A documentary sub-series is folded into the
   **Title** by the owner, e.g. `国宝档案 — 从东晋到北魏`.)
-- **Title** (required for CREATE), **Original Title**, **Year**.
+- **Title** (required for CREATE; as wide as possible) shares a line with a **TMDB** search button
+  (search icon) and the **⟳ Refresh** action. **Original Title**, **Year** follow.
 - **Poster URL**: paste a direct image URL ("Copy Image Address" from Douban / a streaming page) into
   `poster_path`; rendered everywhere with `referrerpolicy="no-referrer"`. **Shown automatically when TMDB
   supplied no poster** (the field is empty or holds a manually pasted URL); the **Shows Settings →
   Visible Fields → Poster URL** toggle (off by default) forces it always visible, even when TMDB
   provided a poster.
-- **Status** (Want / Watching / Watched / Dropped): choosing Watching / Watched / Dropped defaults the
-  **Start date** to today (the title has been started); choosing Watched or Dropped also defaults the
-  **Finish/Drop date** to today; choosing **Watched** on an episodic title (TV / documentary) snaps the
-  watched counts to the totals. **Want leaves Start Date blank** (not started yet).
-- **Rating**: a 0–5 **half-star** picker. **LGBT+ representation**: a None / Some / Significant
-  segmented control.
-- **Start Date**, **Finish / Drop Date**, **Last Update** — each opens the **Calendar** modal;
-  clearable. Last Update defaults to today on a new entry; Start Date stays blank until the status leaves
-  Want.
-- **Watched/Total Seasons & Episodes** (episodic types — TV + documentary); **Comments** (textarea).
+- **Status** (Want / Watching / Watched / Dropped) is a **dropdown** sharing a line with **Rating** (a
+  0–5 half-star picker): choosing Watching / Watched / Dropped defaults the **Start date** to today (the
+  title has been started); choosing Watched or Dropped also defaults the **Finish/Drop date** to today;
+  choosing **Watched** on an episodic title (TV / documentary) snaps the watched counts to the totals.
+  **Want leaves Start Date blank** (not started yet).
+- **LGBT+ representation**: a None / Some / Significant **dropdown**.
+- **Start Date** and **Finish / Drop Date** share a line; each opens the **Calendar** modal and is
+  clearable. **Last Update Date** sits below Comments. Last Update defaults to today on a new entry;
+  Start Date stays blank until the status leaves Want.
+- **Total Seasons / Episodes** and **Watched Seasons / Episodes** (episodic types — TV + documentary):
+  two labels over four side-by-side number inputs. **Poster URL** sits just above **Comments** (textarea).
 - **Search TMDB** (Chinese-aware: a CJK query is sent with `language=zh-CN`; documentary uses the /tv
   endpoint) opens the **Title Search** modal; selecting a result fetches details and populates the
   **metadata** — a poster thumbnail + Genres, Director/Creator, top Cast, Overview, Runtime (read-only
@@ -299,8 +311,8 @@ Wellness-module sub-settings. Auto-save on change. A back chevron returns to the
   season/episode totals, runtime, original_language, and the TMDB poster). It **never** touches owner
   fields (status, rating, lgbtq_rep, dates, comments, watched counts, is_favorite) or a **manually
   pasted** poster. Reports "Updated" / "Already up to date".
-- Top-right **favourite heart** + **RESET** + **CREATE/SAVE**, enabled only once something changes;
-  CREATE needs a Title.
+- Top-right **favourite heart** + the icon actions (Delete when editing · Reset · Create/Save), enabled
+  only once something changes; Create needs a Title.
 - Which optional fields appear is controlled by **Shows Settings → Visible Fields** (Type, Title, Status,
   the favourite heart and the Refresh action are always shown; **Poster URL** auto-shows when TMDB has no
   poster and its Visible-Fields toggle — **off by default** — forces it always visible); hiding a field
@@ -397,22 +409,23 @@ TMDB episode count at import (left blank if TMDB has no count); used anywhere el
 - Reached from the **New Book** bottom-nav tab (new, `/books/entry`) or by tapping a row (edit, `/books/:id`).
 - A **favourite heart** in the header (filled when on) toggles `is_favorite` — surfaces a "Favourites"
   Dashboard shelf and a "Favourites only" Library filter (mirrors Quotes / Shows).
-- **Search Google Books** (a button) opens the **Title Search** modal; selecting a result fetches
-  details and populates the **metadata** — a cover thumbnail + Genres, Page count, Language,
-  Description (read-only display) — plus Title / Author(s) / Year (editable). Nothing is saved until
-  CREATE/SAVE; Title/Author/Year stay editable so manual entry and match corrections still work.
-- **Title** (required for CREATE), **Author(s)** (comma-separated), **Year**.
-- **Status** (Want / Reading / Read / Dropped): choosing **Reading** defaults the **Start
-  Date** to today; choosing **Read** or **Dropped** defaults the **Finish / Drop date** to today.
-- **Rating**: a 0–5 **half-star** picker. **LGBT+ Representation** (a None / Some / Significant
-  segmented control) and **Dynasty** share one compact row. **Dynasty** is a dropdown of the 12
-  dynasties (近代 … 先秦), defaulting to 近代, and is **editable only when the Title contains CJK**;
-  for a non-Chinese title it's disabled and stored as NULL.
-- **Start Date**, **Finish / Drop Date**, **Last Update** — each opens the **Calendar** modal;
-  clearable. Start + Last Update default to today on a new entry.
-- **Comments** (textarea).
-- Top-right **favourite heart** + **RESET** + **CREATE/SAVE**, enabled only once something changes;
-  CREATE needs a Title.
+- **Title** (required for CREATE; as wide as possible) shares a line with a **Google Books** search
+  button (search icon) opening the **Title Search** modal (pre-filled with the current Title); selecting
+  a result fetches details and populates the **metadata** — a cover thumbnail + Genres, Page count,
+  Language, Description (read-only display) — plus Title / Author(s) / Year (editable). Nothing is saved
+  until Create/Save; Title/Author/Year stay editable so manual entry and match corrections still work.
+- **Author(s)** (comma-separated), **Year**.
+- **Status** (Want / Reading / Read / Dropped) is a **dropdown** sharing a line with **Rating** (a 0–5
+  half-star picker): choosing **Reading** defaults the **Start Date** to today; choosing **Read** or
+  **Dropped** defaults the **Finish / Drop date** to today.
+- **LGBT+ Representation** (a None / Some / Significant **dropdown**) and **Dynasty** share one compact
+  row. **Dynasty** is a dropdown of the 12 dynasties (近代 … 先秦), defaulting to 近代, and is **editable
+  only when the Title contains CJK**; for a non-Chinese title it's disabled and stored as NULL.
+- **Start Date** and **Finish / Drop Date** share a line; each opens the **Calendar** modal and is
+  clearable (Start defaults to today on a new entry). **Comments** (textarea), then **Last Update Date**
+  below it (defaults to today on a new entry).
+- Top-right **favourite heart** + the icon actions (Delete when editing · Reset · Create/Save), enabled
+  only once something changes; Create needs a Title.
 - Which optional fields appear is controlled by **Books Settings → Visible Fields** (Title, Status, the
   Search button and the favourite heart are always shown); hiding a field is display-only and never drops
   saved data.
@@ -481,18 +494,20 @@ An in-app bulk importer (the owner's choice over a script — same as Net Worth 
 
 ## Quotes - Add / Edit (form, `/quotes/entry`, `/quotes/:id`)
 
-- **Quote Text** (textarea; required). Prefilled from `?text=` when launched via copy-paste / an Apple
-  Books Shortcut; a **Paste from clipboard** button fills it from the clipboard.
-- **Source Link** (optional): a **Source Link** modal searching local **Show** and **Book** records;
+- **Quote Text** (6-row textarea; required). Prefilled from `?text=` when launched via copy-paste / an
+  Apple Books Shortcut; a **Paste from clipboard** button fills it from the clipboard.
+- **Author** + **Source Type** (TV Show / Movie / Book / Podcast / Article / Video / Song) share a line
+  (Author as wide as possible, the Source Type dropdown clamped to fit its longest value).
+- **Title** sits below Author with a **link control** to its right — a **Show or Book** button (icon)
+  opening a modal that searches local **Show** and **Book** records (pre-filled with the current Title);
   selecting one binds `show_id`/`book_id` and auto-fills **Source Type** + **Title** (for a Book, also
-  **Author**; a Show leaves Author for the speaker/character). **Unlink** keeps the filled values.
-- **Author**, **Source Type** (TV Show / Movie / Book / Podcast / Article / Video / Song), **Title** —
-  entered manually for podcasts/songs/articles/videos (no module to link).
-- **Category** (required): single-select from the six. **Tags** (optional): inline tag input with
-  autocomplete against existing tags. **Language**: English / Chinese, auto-detected from the text (CJK
-  → Chinese), editable. **Favourite** heart in the header.
-- Top-right: **RESET** + **CREATE** (new) / **SAVE** (editing). **Validation**: requires Quote Text +
-  exactly one Category. A duplicate (same normalised text) is rejected inline.
+  **Author**; a Show leaves Author for the speaker/character). When linked the button shows **Linked**
+  (tap to unlink, keeping the filled values). Title is entered manually for podcasts/songs/articles/videos.
+- **Category** (required) + **Language** share a line, both dropdowns (Category clamped; Language =
+  English / Chinese, auto-detected from the text — CJK → Chinese — and editable). **Tags** (optional):
+  inline tag input with autocomplete against existing tags. **Favourite** heart in the header.
+- Top-right icon actions (Delete when editing · Reset · Create/Save). **Validation**: requires Quote Text
+  - exactly one Category. A duplicate (same normalised text) is rejected inline.
 - Which fields are visible is controlled in **Quotes Settings** (Quote Text + Category always shown).
 
 ## Quotes - Settings (from the Settings tab in the Quotes bottom nav)
@@ -526,8 +541,9 @@ unlike Shows/Books, links resolve against the user's own Show/Book rows.
 
 ## Medical - Dashboard (`/medical`)
 
-The module index. Explicit loading / empty / error states; empty (no reports yet) shows a prompt with a
-**New Medical report** link. When there is data, three sections:
+The module index (no screen-title header). Explicit loading / empty / error states; empty (no reports
+yet) shows the centered **"No medical reports yet" / + New Medical Report** empty state. When there is
+data, three sections:
 
 - **Trends** — a two-column grid of **sparkline cards**, one per **tracked** test that has numeric data
   (ordered by the canonical section + sort order). Each card shows the test name, its **latest value**
@@ -546,10 +562,11 @@ Tracked tests are chosen in Medical Settings → Tracked Tests (seeded from `def
 
 ## Medical - Reports (`/medical/reports`)
 
-Chronological list, newest report-date first. Each row: the **full date** (with year — reports span
-years), the **type** label, and `provider · body part` as a secondary line. Tap → **Report detail**;
-swipe-left → confirm → **delete** (hard; the FK cascades the report's results). New reports come from the
-**New Medical** bottom-nav tab. Explicit loading / empty / error states.
+Chronological list (no screen-title header), newest report-date first. Each row: the **full date** (with
+year — reports span years), the **type** label, and `provider · body part` as a secondary line. Tap →
+**Report detail**; swipe-left → confirm → **delete** (hard; the FK cascades the report's results). New
+reports come from the **New Medical** bottom-nav tab. Explicit loading / empty / error states (empty →
+the centered **"No medical reports yet" / + New Medical Report** state).
 
 ## Medical - Report detail (`/medical/:id`)
 
@@ -564,11 +581,13 @@ from …" note appears when the value was unit-converted on import, and an "unce
 ## Medical - Add / Edit Report (`/medical/entry`, `/medical/:id/edit`)
 
 Reached from the **New Medical** tab (new) or the Report detail **Edit** button. When the importer is
-enabled (Settings), a **Import from JSON / CSV…** button at the top opens the import sheet. Top-right **RESET** + **CREATE** (new) / **SAVE** (editing); close
-(✕) / Escape returns without saving.
+enabled (Settings), an **Import JSON/CSV…** button sits on the same line as **Report Date** (to its
+left). Top-right icon actions (Delete when editing · Reset · Create/Save); close (✕) / Escape returns
+without saving.
 
-- **Parent fields:** **Report Date** (Calendar; defaults today), **Type** (dropdown over the six report
-  types), **Body Part** (shown for mri/ultrasound/mammogram/other), **Provider**, **Narrative**, and
+- **Parent fields:** **Report Date** (Calendar; defaults today; shares a line with the import button) +
+  **Type** (dropdown, shortened) paired on a line with **Provider**; **Body Part** (shown for
+  mri/ultrasound/mammogram/other), **Narrative**, and
   **Document Links** (repeatable Google-Drive URL rows). The optional fields are hidden when trimmed off
   in Medical Settings → Visible Fields (M3); date/type/results are always shown.
 - **Results:** an **Add result** button opens a searchable **test picker** (the seeded reference grouped
@@ -625,12 +644,13 @@ lockout. The lock is a convenience gate on this device — the data is already p
 
 ## Travel - Dashboard (`/travel`)
 
-- **Four count tiles** over `status = visited` trips: **China Provinces** (with an `N / 34` suffix),
-  **China Cities**, **Countries**, **Cities** — distinct counts (China-scoped ones use a China-country
-  match; the province count is intersected with `CHINA_PROVINCES`, so it never exceeds 34).
-- A **province-progress bar** (`N / 34`); a note points to the Map for the shaded map.
-- **Metric tiles**: **Trips This Year**, **Days Travelled** (inclusive span of dated visited trips).
-  Monetary spend is per-trip (Expenses tab), not rolled up here.
+- **Six count tiles** over `status = visited` trips, laid out **3 columns × 2 rows, filled
+  column-first**: **中国省份** (China provinces, with an `N / 34` suffix) · **中国城市** (China cities) |
+  **Countries** · **Cities** | **Trips This Year** · **Days Travelled** — distinct counts (China-scoped
+  ones use a China-country match; the province count is intersected with `CHINA_PROVINCES`, so it never
+  exceeds 34; Days Travelled is the inclusive span of dated visited trips). Monetary spend is per-trip
+  (Expenses tab), not rolled up here. (The standalone province-progress bar was removed — it duplicated
+  the 中国省份 tile.)
 - **Shelves**: **Recently Visited** (reverse-chron, with a "See all trips" link), **Planning**,
   **Want to Visit** — each a card row (cover thumbnail · name · date range · primary region · status
   chip), tapping into the Trip Builder. Empty overall → a **New Trip** CTA.
@@ -653,13 +673,16 @@ lockout. The lock is a convenience gate on this device — the data is already p
 
 ## Travel - Trip Builder (`/travel/entry` new, `/travel/trip/:id` edit)
 
-- **New** (`/travel/entry`): header-only — Trip Name, Status, Base Currency — **Create** persists the
-  trip and opens it for editing (days/stops need a saved trip).
-- **Edit** header card: Trip Name, **Status** (Want to Visit / Planning / Visited), Base Currency, **Cover
-  Image URL** (rendered `no-referrer`, previewed), Companions, **Rating** (0–5 half-stars), Notes, and a
-  **Track Reimbursement** toggle. **RESET** reverts the header fields to the saved values (disabled when
-  unchanged); **SAVE** persists the header and returns to where you came from (days/stops/expenses
-  auto-save on each change, so they're already persisted).
+- **New** (`/travel/entry`): header-only — **Trip Name** + **Base Currency** on one line, **Status**
+  below — with **Reset** + **Create** icon actions. **Create** persists the trip and opens it for editing
+  (days/stops need a saved trip).
+- **Edit** header card: **Trip Name** + **Base Currency** on one line; **Status** (Want to Visit /
+  Planning / Visited, dropdown) + **Rating** (0–5 half-stars) on the next; **Cover Image URL** (rendered
+  `no-referrer`, previewed); **Companions** paired with a **Track Reimburse** toggle (label over the
+  toggle); **Notes**. Top-right icon actions: **Delete** (removes the trip, cascading days/stops/expenses)
+  · **Reset** (reverts the header fields to the saved values, disabled when unchanged) · **Save** (persists
+  the header and returns to where you came from; days/stops/expenses auto-save on each change, so they're
+  already persisted).
 - Two sub-tabs (segmented): **Itinerary** and **Expenses**.
 - **Itinerary**: **Add Day** + (when >1) **Reorder Days** (a drag-reorder sheet). Each **Day** card shows
   `Day N`, a tappable **Calendar date chip** (the date or "Add date" — writes `trip_day.day_date` and

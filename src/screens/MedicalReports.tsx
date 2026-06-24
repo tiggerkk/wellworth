@@ -8,6 +8,7 @@ import { REPORT_TYPE_LABELS, type ReportType } from '../lib/medical'
 import { formatFullDate } from '../lib/date'
 import { routes } from '../constants/routes'
 import { SwipeRow } from '../components/SwipeRow'
+import { EmptyState } from '../components/EmptyState'
 
 /**
  * Medical Reports — chronological list (newest first); tap a row → Report detail, swipe-left to
@@ -38,13 +39,14 @@ export function MedicalReports() {
 
   return (
     <div className="flex flex-col gap-3 px-4 py-4">
-      <h1 className="text-lg font-medium text-text-primary">Reports</h1>
       {loading && <p className="text-sm text-text-secondary">Loading…</p>}
       {error && <p className="text-sm text-danger">Couldn’t load your reports.</p>}
       {!loading && !error && reports.length === 0 && (
-        <p className="text-sm text-text-secondary">
-          No reports yet. Tap “New Medical” to add one.
-        </p>
+        <EmptyState
+          title="No medical reports yet"
+          actionLabel="New Medical Report"
+          to={routes.medical.entry}
+        />
       )}
       {reports.length > 0 && (
         <div className="divide-y divide-border overflow-hidden rounded-card border border-border bg-surface">

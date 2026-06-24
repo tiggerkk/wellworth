@@ -16,7 +16,7 @@ import {
   saveSnapshotEntries,
   type AssetEntryInput,
 } from '../data/asset-entry'
-import { getLatestSnapshotBefore } from '../data/networth-snapshot'
+import { deleteSnapshot, getLatestSnapshotBefore } from '../data/networth-snapshot'
 import {
   ASSET_TYPE_LABELS,
   CURRENCIES,
@@ -34,8 +34,7 @@ import { addMonths, formatMonthLabel, startOfMonth, todayLocal } from '../lib/da
 import { draftAmount } from '../lib/quantity'
 import { routes } from '../constants/routes'
 import { SectionCard } from '../components/SectionCard'
-import { PrimaryButton } from '../components/PrimaryButton'
-import { SecondaryButton } from '../components/SecondaryButton'
+import { EntryHeaderActions } from '../components/EntryHeaderActions'
 import { MonthPicker } from '../components/MonthPicker'
 import type { Json, Tables } from '../types/database'
 
@@ -116,11 +115,15 @@ export function NetWorthEntry() {
   const version = useNetWorthVersion()
   const [month, setMonth] = useState(() => startOfMonth(todayLocal()))
 
-  const loadFn = useCallback(async (): Promise<MonthDraft> => {
+  const loadFn = useCallback(async (): Promise<
+    MonthDraft & { snapshotId: string | null }
+  > => {
     void version // refetch after an import (or SAVE) bumps the Net Worth tick
-    if (!userId) return { rows: [], fxRates: blankRates() }
+    if (!userId) return { rows: [], fxRates: blankRates(), snapshotId: null }
     const existing = await getSnapshotWithEntries(userId, month)
-    if (existing) return draftFromEntries(existing.entries) // stored rates stay frozen
+    // stored rates stay frozen; a saved month can be deleted from the header
+    if (existing)
+      return { ...draftFromEntries(existing.entries), snapshotId: existing.snapshot.id }
     // New month → copy entries forward (if any) and auto-fetch this month's FX.
     const prior = await getLatestSnapshotBefore(userId, month)
     const base = prior
@@ -134,6 +137,7 @@ export function NetWorthEntry() {
         CNY: fetched.CNY != null ? String(fetched.CNY) : base.fxRates.CNY,
         USD: fetched.USD != null ? String(fetched.USD) : base.fxRates.USD,
       },
+      snapshotId: null,
     }
   }, [userId, month, version])
   const { data: initial, loading, error } = useAsync(loadFn)
@@ -152,6 +156,7 @@ export function NetWorthEntry() {
           month={month}
           setMonth={setMonth}
           initial={initial}
+          initialSnapshotId={initial.snapshotId}
         />
       )}
     </div>
@@ -165,11 +170,13 @@ function EntryForm({
   month,
   setMonth,
   initial,
+  initialSnapshotId,
 }: {
   userId: string
   month: string
   setMonth: (m: string) => void
   initial: MonthDraft
+  initialSnapshotId: string | null
 }) {
   const [rows, setRows] = useState<EntryDraft[]>(() => cloneRows(initial.rows))
   const [fxRates, setFxRates] = useState<RateDraft>(() => ({ ...initial.fxRates }))
@@ -284,6 +291,21 @@ function EntryForm({
     }
   }
 
+  // Delete this month's saved snapshot (and its entries, via cascade). Clears the form to an empty
+  // month; the screen stays open so the user can re-enter or navigate away.
+  async function removeMonth() {
+    if (!initialSnapshotId) return
+    setSaving(true)
+    try {
+      await deleteSnapshot(initialSnapshotId)
+      bumpNetWorth()
+      setRows([])
+      setBaseline({ rows: [], fxRates: { ...fxRates } })
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const inputCls =
     'rounded-input bg-input px-2 py-1.5 text-[15px] text-text-primary focus:outline-none'
   const groups = groupByType(rows)
@@ -324,18 +346,14 @@ function EntryForm({
               {formatHkd(total)}
             </span>
           </div>
-          <div className="flex gap-2">
-            <SecondaryButton size="sm" onClick={reset} disabled={!dirty || saving}>
-              RESET
-            </SecondaryButton>
-            <PrimaryButton
-              size="sm"
-              onClick={() => void save()}
-              disabled={!dirty || saving}
-            >
-              {saving ? 'Saving…' : 'SAVE'}
-            </PrimaryButton>
-          </div>
+          <EntryHeaderActions
+            editing
+            dirty={dirty}
+            saving={saving}
+            onReset={reset}
+            onSubmit={() => void save()}
+            onDelete={initialSnapshotId ? () => void removeMonth() : undefined}
+          />
         </div>
       </header>
 

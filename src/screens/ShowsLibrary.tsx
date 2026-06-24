@@ -38,6 +38,7 @@ import { ShowTypeBadge } from '../components/ShowTypeBadge'
 import { StatusChip } from '../components/StatusChip'
 import { StarRating } from '../components/StarRating'
 import { PosterThumb } from '../components/PosterThumb'
+import { EmptyState } from '../components/EmptyState'
 
 type TypeFilter = 'all' | ShowType
 type StatusFilter = 'all' | ShowStatus
@@ -281,11 +282,15 @@ export function ShowsLibrary() {
         <p className="px-1 py-6 text-sm text-danger">Couldn’t load your shows.</p>
       )}
 
-      {!loading && !error && (
+      {!loading && !error && allShows.length === 0 && (
+        <EmptyState title="No shows yet" actionLabel="New Show" to={routes.shows.entry} />
+      )}
+
+      {!loading && !error && allShows.length > 0 && (
         <div className="overflow-hidden rounded-card border border-border bg-surface">
           {view.length === 0 ? (
             <p className="px-4 py-6 text-center text-sm text-text-tertiary">
-              {allShows.length > 0 ? 'No matches.' : 'No shows yet — add one.'}
+              No matches.
             </p>
           ) : (
             view.map((s) => (

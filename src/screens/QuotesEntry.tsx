@@ -11,7 +11,13 @@ import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useProfile } from '../hooks/useProfile'
 import { useEscapeKey } from '../hooks/useEscapeKey'
-import { createQuote, getQuote, listDistinctTags, updateQuote } from '../data/quote'
+import {
+  createQuote,
+  deleteQuote,
+  getQuote,
+  listDistinctTags,
+  updateQuote,
+} from '../data/quote'
 import {
   detectLanguage,
   isFieldVisible,
@@ -32,9 +38,7 @@ import {
   type QuoteLanguage,
 } from '../constants/quotes'
 import type { Tables } from '../types/database'
-import { PrimaryButton } from '../components/PrimaryButton'
-import { SecondaryButton } from '../components/SecondaryButton'
-import { SegmentedTabs } from '../components/SegmentedTabs'
+import { EntryHeaderActions } from '../components/EntryHeaderActions'
 import { SelectMenu } from '../components/SelectMenu'
 import { TagInput } from '../components/TagInput'
 import { QuoteSourceLinkSheet } from '../components/QuoteSourceLinkSheet'
@@ -275,6 +279,18 @@ function QuoteForm({
     }
   }
 
+  async function remove() {
+    if (!id) return
+    setSaving(true)
+    try {
+      await deleteQuote(id)
+      bumpQuotes()
+      navigate(-1)
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return (
     <>
       <header className="flex items-center gap-3 border-b border-border px-4 py-3">
@@ -286,7 +302,7 @@ function QuoteForm({
           <IconX size={22} />
         </button>
         <h1 className="flex-1 truncate text-[17px] font-medium text-text-primary">
-          {id ? 'Edit Quote' : 'Add Quote'}
+          {id ? 'Edit Quote' : 'New Quote'}
         </h1>
         <button
           onClick={() => update({ is_favorite: !draft.is_favorite })}
@@ -298,20 +314,15 @@ function QuoteForm({
             <IconHeart size={20} className="text-text-tertiary" />
           )}
         </button>
-        <SecondaryButton
-          size="sm"
-          onClick={() => setDraft(initial)}
-          disabled={!dirty || saving}
-        >
-          RESET
-        </SecondaryButton>
-        <PrimaryButton
-          size="sm"
-          onClick={() => void save()}
-          disabled={saving || !canSave || (!!id && !dirty)}
-        >
-          {saving ? 'Saving…' : id ? 'SAVE' : 'CREATE'}
-        </PrimaryButton>
+        <EntryHeaderActions
+          editing={!!id}
+          dirty={dirty}
+          saving={saving}
+          canSubmit={canSave}
+          onReset={() => setDraft(initial)}
+          onSubmit={() => void save()}
+          onDelete={id ? () => void remove() : undefined}
+        />
       </header>
 
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
@@ -330,88 +341,97 @@ function QuoteForm({
           <textarea
             value={draft.text}
             onChange={(e) => changeText(e.target.value)}
-            rows={4}
+            rows={6}
             placeholder="The quote itself…"
             className={`mt-1 ${inputClass} resize-none placeholder:text-text-tertiary`}
           />
         </div>
 
-        {show('author') && (
-          <label className="text-xs text-text-secondary">
-            Author
-            <input
-              value={draft.author}
-              onChange={(e) => update({ author: e.target.value })}
-              placeholder="Who said or wrote it"
-              className={`mt-1 ${inputClass} placeholder:text-text-tertiary`}
-            />
-          </label>
-        )}
-
-        {show('source_link') && (
-          <div>
-            <p className="mb-1 text-xs text-text-secondary">Source Link</p>
-            {linked ? (
-              <div className="flex items-center gap-2 rounded-input bg-input px-3 py-2">
-                <IconLink size={16} className="shrink-0 text-accent" />
-                <span className="min-w-0 flex-1 truncate text-[15px] text-text-primary">
-                  {draft.title || 'Linked source'}
-                  <span className="text-text-secondary">
-                    {' · '}
-                    {sourceTypeLabel(sourceTypes, draft.source_type)}
-                  </span>
-                </span>
-                <button
-                  onClick={unlink}
-                  aria-label="Unlink source"
-                  className="shrink-0 p-1 text-text-tertiary"
-                >
-                  <IconX size={18} />
-                </button>
+        {(show('author') || show('source_type')) && (
+          <div className="flex gap-3">
+            {show('author') && (
+              <label className="flex-1 text-xs text-text-secondary">
+                Author
+                <input
+                  value={draft.author}
+                  onChange={(e) => update({ author: e.target.value })}
+                  placeholder="Who said or wrote it"
+                  className={`mt-1 ${inputClass} placeholder:text-text-tertiary`}
+                />
+              </label>
+            )}
+            {show('source_type') && (
+              <div className="w-32">
+                <p className="mb-1 text-xs text-text-secondary">Source Type</p>
+                <SelectMenu
+                  value={draft.source_type}
+                  options={sourceTypes.map((s) => ({ value: s.key, label: s.label }))}
+                  onChange={(s) => update({ source_type: s })}
+                  ariaLabel="Source type"
+                />
               </div>
-            ) : (
-              <button
-                onClick={() => setLinkOpen(true)}
-                className="flex w-full items-center justify-center gap-2 rounded-input bg-input py-2 text-sm text-accent"
-              >
-                <IconLink size={16} /> Link a Show or Book
-              </button>
             )}
           </div>
         )}
 
-        {show('source_type') && (
-          <div>
-            <p className="mb-1 text-xs text-text-secondary">Source Type</p>
-            <SelectMenu
-              value={draft.source_type}
-              options={sourceTypes.map((s) => ({ value: s.key, label: s.label }))}
-              onChange={(s) => update({ source_type: s })}
-              ariaLabel="Source type"
-            />
+        {(show('title') || show('source_link')) && (
+          <div className="flex items-end gap-2">
+            {show('title') && (
+              <label className="flex-1 text-xs text-text-secondary">
+                Title
+                <input
+                  value={draft.title}
+                  onChange={(e) => update({ title: e.target.value })}
+                  placeholder="Show, film, book, podcast…"
+                  className={`mt-1 ${inputClass} placeholder:text-text-tertiary`}
+                />
+              </label>
+            )}
+            {show('source_link') &&
+              (linked ? (
+                <button
+                  onClick={unlink}
+                  aria-label="Unlink source"
+                  title={`Linked · ${sourceTypeLabel(sourceTypes, draft.source_type)}`}
+                  className="flex shrink-0 items-center gap-1.5 rounded-input bg-input px-3 py-2 text-sm text-accent"
+                >
+                  <IconLink size={16} /> Linked <IconX size={14} />
+                </button>
+              ) : (
+                <button
+                  onClick={() => setLinkOpen(true)}
+                  className="flex shrink-0 items-center justify-center gap-1.5 rounded-input bg-input px-3 py-2 text-sm text-accent"
+                >
+                  <IconLink size={16} /> Show or Book
+                </button>
+              ))}
           </div>
         )}
 
-        {show('title') && (
-          <label className="text-xs text-text-secondary">
-            Title
-            <input
-              value={draft.title}
-              onChange={(e) => update({ title: e.target.value })}
-              placeholder="Show, film, book, podcast…"
-              className={`mt-1 ${inputClass} placeholder:text-text-tertiary`}
+        <div className="flex gap-3">
+          <div className="w-40">
+            <p className="mb-1 text-xs text-text-secondary">Category</p>
+            <SelectMenu
+              value={draft.category}
+              options={categories.map((c) => ({ value: c.key, label: c.label }))}
+              onChange={(c) => update({ category: c })}
+              ariaLabel="Category"
             />
-          </label>
-        )}
-
-        <div>
-          <p className="mb-1 text-xs text-text-secondary">Category</p>
-          <SelectMenu
-            value={draft.category}
-            options={categories.map((c) => ({ value: c.key, label: c.label }))}
-            onChange={(c) => update({ category: c })}
-            ariaLabel="Category"
-          />
+          </div>
+          {show('language') && (
+            <div className="w-32">
+              <p className="mb-1 text-xs text-text-secondary">Language</p>
+              <SelectMenu
+                value={draft.language}
+                onChange={changeLanguage}
+                ariaLabel="Language"
+                options={QUOTE_LANGUAGES.map((l) => ({
+                  value: l,
+                  label: QUOTE_LANGUAGE_LABELS[l],
+                }))}
+              />
+            </div>
+          )}
         </div>
 
         {show('tags') && (
@@ -425,25 +445,15 @@ function QuoteForm({
           </div>
         )}
 
-        {show('language') && (
-          <div>
-            <p className="mb-1 text-xs text-text-secondary">Language</p>
-            <SegmentedTabs
-              value={draft.language}
-              onChange={changeLanguage}
-              options={QUOTE_LANGUAGES.map((l) => ({
-                value: l,
-                label: QUOTE_LANGUAGE_LABELS[l],
-              }))}
-            />
-          </div>
-        )}
-
         {saveError && <p className="text-sm text-danger">{saveError}</p>}
       </div>
 
       {linkOpen && (
-        <QuoteSourceLinkSheet onSelect={selectLink} onClose={() => setLinkOpen(false)} />
+        <QuoteSourceLinkSheet
+          initialQuery={draft.title}
+          onSelect={selectLink}
+          onClose={() => setLinkOpen(false)}
+        />
       )}
     </>
   )

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { IconChevronDown } from '@tabler/icons-react'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 
@@ -27,13 +27,27 @@ export function SelectMenu<T extends string>({
   placeholder,
 }: SelectMenuProps<T>) {
   const [open, setOpen] = useState(false)
+  // Open upward when there isn't room below the trigger (e.g. a short form clipped by overflow).
+  const [flipUp, setFlipUp] = useState(false)
+  const btnRef = useRef<HTMLButtonElement>(null)
   const current = options.find((o) => o.value === value)
   useEscapeKey(() => setOpen(false), open)
+
+  const toggle = () => {
+    if (disabled) return
+    if (!open && btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect()
+      const menuH = Math.min(options.length * 40 + 8, 264)
+      setFlipUp(window.innerHeight - rect.bottom < menuH && rect.top > menuH)
+    }
+    setOpen((o) => !o)
+  }
 
   return (
     <div className={`relative ${className}`}>
       <button
-        onClick={() => !disabled && setOpen((o) => !o)}
+        ref={btnRef}
+        onClick={toggle}
         aria-label={ariaLabel}
         disabled={disabled}
         className={`flex w-full items-center justify-between gap-1 rounded-input bg-input px-2.5 py-1.5 text-sm ${
@@ -50,7 +64,11 @@ export function SelectMenu<T extends string>({
             onClick={() => setOpen(false)}
             aria-hidden
           />
-          <div className="absolute left-0 z-20 mt-1 max-h-64 w-full min-w-36 overflow-y-auto rounded-card border border-border bg-surface text-sm shadow-lg">
+          <div
+            className={`absolute left-0 z-20 max-h-64 w-full min-w-36 overflow-y-auto rounded-card border border-border bg-surface text-sm shadow-lg ${
+              flipUp ? 'bottom-full mb-1' : 'mt-1'
+            }`}
+          >
             {options.map((o) => (
               <button
                 key={o.value}

@@ -11,6 +11,8 @@ interface TitleSearchSheetProps {
   type: ShowType
   onSelect: (result: TmdbSearchResult) => void
   onClose: () => void
+  /** Seed the search box (e.g. the Entry form's current Title) so results show on open. */
+  initialQuery?: string
 }
 
 /**
@@ -18,9 +20,14 @@ interface TitleSearchSheetProps {
  * Entry form behind a background-location and remount it, losing the in-progress draft). Mirrors
  * the Add Food search UI; selecting a result hands it back via `onSelect` to populate the live form.
  */
-export function TitleSearchSheet({ type, onSelect, onClose }: TitleSearchSheetProps) {
-  const [query, setQuery] = useState('')
-  const [debounced, setDebounced] = useState('')
+export function TitleSearchSheet({
+  type,
+  onSelect,
+  onClose,
+  initialQuery = '',
+}: TitleSearchSheetProps) {
+  const [query, setQuery] = useState(initialQuery)
+  const [debounced, setDebounced] = useState(initialQuery)
   const [results, setResults] = useState<TmdbSearchResult[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(false)

@@ -11,7 +11,7 @@ import { routes } from '../constants/routes'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useEscapeKey } from '../hooks/useEscapeKey'
-import { createBook, getBook, updateBook } from '../data/book'
+import { createBook, deleteBook, getBook, updateBook } from '../data/book'
 import {
   BOOK_STATUS_LABELS,
   BOOK_STATUSES,
@@ -31,9 +31,7 @@ import { formatDayLabel, todayLocal, type IsoDate } from '../lib/date'
 import { Calendar } from '../components/Calendar'
 import { BookSearchSheet } from '../components/BookSearchSheet'
 import { CoverThumb } from '../components/CoverThumb'
-import { PrimaryButton } from '../components/PrimaryButton'
-import { SecondaryButton } from '../components/SecondaryButton'
-import { SegmentedTabs } from '../components/SegmentedTabs'
+import { EntryHeaderActions } from '../components/EntryHeaderActions'
 import { SelectMenu } from '../components/SelectMenu'
 import { StarRating } from '../components/StarRating'
 
@@ -260,6 +258,18 @@ function BookForm({ id, initial }: { id: string | undefined; initial: BookDraft 
     }
   }
 
+  async function remove() {
+    if (!id) return
+    setSaving(true)
+    try {
+      await deleteBook(id)
+      bumpBooks()
+      navigate(-1)
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const pickerDay =
     (datePicker === 'start'
       ? draft.start_date
@@ -278,7 +288,7 @@ function BookForm({ id, initial }: { id: string | undefined; initial: BookDraft 
           <IconX size={22} />
         </button>
         <h1 className="flex-1 truncate text-[17px] font-medium text-text-primary">
-          {id ? 'Edit Book' : 'Add Book'}
+          {id ? 'Edit Book' : 'New Book'}
         </h1>
         <button
           onClick={() => update({ is_favorite: !draft.is_favorite })}
@@ -290,30 +300,35 @@ function BookForm({ id, initial }: { id: string | undefined; initial: BookDraft 
             <IconHeart size={20} className="text-text-tertiary" />
           )}
         </button>
-        <SecondaryButton
-          size="sm"
-          onClick={() => setDraft(initial)}
-          disabled={!dirty || saving}
-        >
-          RESET
-        </SecondaryButton>
-        <PrimaryButton
-          size="sm"
-          onClick={() => void save()}
-          disabled={saving || !draft.title.trim() || (!!id && !dirty)}
-        >
-          {saving ? 'Saving…' : id ? 'SAVE' : 'CREATE'}
-        </PrimaryButton>
+        <EntryHeaderActions
+          editing={!!id}
+          dirty={dirty}
+          saving={saving}
+          canSubmit={!!draft.title.trim()}
+          onReset={() => setDraft(initial)}
+          onSubmit={() => void save()}
+          onDelete={id ? () => void remove() : undefined}
+        />
       </header>
 
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
         <div>
-          <button
-            onClick={() => setSearchOpen(true)}
-            className="flex w-full items-center justify-center gap-2 rounded-input bg-input py-2 text-sm text-accent"
-          >
-            <IconSearch size={16} /> Search Google Books
-          </button>
+          <div className="flex items-end gap-2">
+            <label className="flex-1 text-xs text-text-secondary">
+              Title
+              <input
+                value={draft.title}
+                onChange={(e) => update({ title: e.target.value })}
+                className={`mt-1 ${inputClass}`}
+              />
+            </label>
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="flex shrink-0 items-center justify-center gap-1.5 rounded-input bg-input px-3 py-2 text-sm text-accent"
+            >
+              <IconSearch size={16} /> Google Books
+            </button>
+          </div>
           {metaLoading && (
             <p className="mt-1 text-xs text-text-secondary">Fetching details…</p>
           )}
@@ -321,15 +336,6 @@ function BookForm({ id, initial }: { id: string | undefined; initial: BookDraft 
             <p className="mt-1 text-xs text-danger">Couldn’t fetch details.</p>
           )}
         </div>
-
-        <label className="text-xs text-text-secondary">
-          Title
-          <input
-            value={draft.title}
-            onChange={(e) => update({ title: e.target.value })}
-            className={`mt-1 ${inputClass}`}
-          />
-        </label>
 
         {(show('authors') || show('year')) && (
           <div className="flex gap-3">
@@ -388,37 +394,42 @@ function BookForm({ id, initial }: { id: string | undefined; initial: BookDraft 
           </div>
         )}
 
-        <div>
-          <p className="mb-1 text-xs text-text-secondary">Status</p>
-          <SegmentedTabs
-            value={draft.status}
-            onChange={changeStatus}
-            options={BOOK_STATUSES.map((s) => ({
-              value: s,
-              label: BOOK_STATUS_LABELS[s],
-            }))}
-          />
-        </div>
-
-        {show('rating') && (
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-text-secondary">Rating</span>
-            <StarRating
-              value={draft.rating}
-              onChange={(rating) => update({ rating })}
-              size={24}
+        <div className="flex gap-3">
+          <div className="flex-1">
+            <p className="mb-1 text-xs text-text-secondary">Status</p>
+            <SelectMenu
+              value={draft.status}
+              onChange={changeStatus}
+              ariaLabel="Status"
+              options={BOOK_STATUSES.map((s) => ({
+                value: s,
+                label: BOOK_STATUS_LABELS[s],
+              }))}
             />
           </div>
-        )}
+          {show('rating') && (
+            <div>
+              <p className="mb-1 text-xs text-text-secondary">Rating</p>
+              <div className="flex h-8 items-center">
+                <StarRating
+                  value={draft.rating}
+                  onChange={(rating) => update({ rating })}
+                  size={24}
+                />
+              </div>
+            </div>
+          )}
+        </div>
 
         {(show('lgbtq_rep') || show('dynasty')) && (
           <div className="grid grid-cols-2 gap-3">
             {show('lgbtq_rep') && (
               <div>
                 <p className="mb-1 text-xs text-text-secondary">LGBT+ Representation</p>
-                <SegmentedTabs
+                <SelectMenu
                   value={draft.lgbtq_rep}
                   onChange={(lgbtq_rep) => update({ lgbtq_rep })}
+                  ariaLabel="LGBT+ representation"
                   options={LGBTQ_REPS.map((r) => ({
                     value: r,
                     label: LGBTQ_REP_LABELS[r],
@@ -442,29 +453,29 @@ function BookForm({ id, initial }: { id: string | undefined; initial: BookDraft 
           </div>
         )}
 
-        {show('start_date') && (
-          <DateField
-            label="Start Date"
-            value={draft.start_date}
-            onPick={() => setDatePicker('start')}
-            onClear={() => setDate('start', null)}
-          />
-        )}
-        {show('end_date') && (
-          <DateField
-            label="Finish / Drop Date"
-            value={draft.end_date}
-            onPick={() => setDatePicker('end')}
-            onClear={() => setDate('end', null)}
-          />
-        )}
-        {show('last_update_date') && (
-          <DateField
-            label="Last Update"
-            value={draft.last_update_date}
-            onPick={() => setDatePicker('last')}
-            onClear={() => setDate('last', null)}
-          />
+        {(show('start_date') || show('end_date')) && (
+          <div className="flex gap-3">
+            {show('start_date') && (
+              <div className="flex-1">
+                <DateField
+                  label="Start Date"
+                  value={draft.start_date}
+                  onPick={() => setDatePicker('start')}
+                  onClear={() => setDate('start', null)}
+                />
+              </div>
+            )}
+            {show('end_date') && (
+              <div className="flex-1">
+                <DateField
+                  label="Finish / Drop Date"
+                  value={draft.end_date}
+                  onPick={() => setDatePicker('end')}
+                  onClear={() => setDate('end', null)}
+                />
+              </div>
+            )}
+          </div>
         )}
 
         {show('comments') && (
@@ -477,6 +488,15 @@ function BookForm({ id, initial }: { id: string | undefined; initial: BookDraft 
               className={`mt-1 ${inputClass} resize-none`}
             />
           </label>
+        )}
+
+        {show('last_update_date') && (
+          <DateField
+            label="Last Update Date"
+            value={draft.last_update_date}
+            onPick={() => setDatePicker('last')}
+            onClear={() => setDate('last', null)}
+          />
         )}
 
         {id && (
@@ -502,6 +522,7 @@ function BookForm({ id, initial }: { id: string | undefined; initial: BookDraft 
 
       {searchOpen && (
         <BookSearchSheet
+          initialQuery={draft.title}
           onSelect={(r) => void selectBook(r)}
           onClose={() => setSearchOpen(false)}
         />

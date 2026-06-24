@@ -2,15 +2,14 @@ import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
 import { IconX, IconPlus } from '@tabler/icons-react'
 import { Sheet } from '../components/Sheet'
-import { PrimaryButton } from '../components/PrimaryButton'
-import { SecondaryButton } from '../components/SecondaryButton'
+import { EntryHeaderActions } from '../components/EntryHeaderActions'
 import { EffortPicker } from '../components/EffortPicker'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useProfile } from '../hooks/useProfile'
 import { useReturnAfterLog } from '../hooks/useReturnAfterLog'
 import { getActivity } from '../data/activity'
-import { createEntry, getEntry, updateEntry } from '../data/diary-entry'
+import { createEntry, deleteEntry, getEntry, updateEntry } from '../data/diary-entry'
 import { createSets, listSetsByEntry, replaceSets } from '../data/strength-set'
 import { activityEnergyKcal, resolveMet } from '../lib/met'
 import { draftAmount } from '../lib/quantity'
@@ -127,8 +126,6 @@ export function ActivityLogSheet() {
   const dirty =
     initial != null &&
     JSON.stringify({ minutes, effort, exercises }) !== JSON.stringify(initial)
-  const primaryBusy = editing ? 'Saving…' : 'Adding…'
-  const primaryIdle = editing ? 'SAVE' : 'ADD'
 
   // Effort defaults to the activity's, but is fully editable per session (e.g. an easier day).
   const defaultEffort = (activity?.default_effort as Effort) ?? 'moderate'
@@ -195,6 +192,18 @@ export function ActivityLogSheet() {
     )
   }
 
+  async function removeEntry() {
+    if (!entryId) return
+    setSaving(true)
+    try {
+      await deleteEntry(entryId)
+      bumpDiary()
+      navigate(-1)
+    } finally {
+      setSaving(false)
+    }
+  }
+
   async function submit() {
     if (!activity || !userId || strengthError) return
     setSaving(true)
@@ -257,18 +266,15 @@ export function ActivityLogSheet() {
           {activity?.name ?? 'Activity'}
         </h1>
         {activity && (
-          <>
-            <SecondaryButton size="sm" onClick={reset} disabled={!dirty || saving}>
-              RESET
-            </SecondaryButton>
-            <PrimaryButton
-              size="sm"
-              onClick={() => void submit()}
-              disabled={saving || !!strengthError || (editing && !dirty)}
-            >
-              {saving ? primaryBusy : primaryIdle}
-            </PrimaryButton>
-          </>
+          <EntryHeaderActions
+            editing={editing}
+            dirty={dirty}
+            saving={saving}
+            canSubmit={!strengthError}
+            onReset={reset}
+            onSubmit={() => void submit()}
+            onDelete={editing && entryId ? () => void removeEntry() : undefined}
+          />
         )}
       </header>
       {activity && strengthError && (

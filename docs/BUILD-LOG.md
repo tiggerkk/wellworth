@@ -1818,3 +1818,36 @@ Settings → Import link. Input shape: `templates/travel-itinerary.schema.json` 
 - Initial JS bundle ~567 kB (supabase-js + react-router + tabler); acceptable, not further optimized.
 - DRI data covers only adult female 51–70; adding other bands is pure data in `src/lib/dri.ts` (the
   multi-user onboarding path for non-owner users is documented in code but not built).
+
+## Cross-module cosmetic pass (session, June 2026)
+
+A UI-only refinement sweep across every module — **no schema / migration / `database.ts` / seed
+changes**, so RLS and the data layer are untouched and the test count stays **432**. Behavior is in the
+specs (`01-screens.md`, `04-design-system.md`); the notable engineering decisions:
+
+- **Two new shared components.** **`EntryHeaderActions`** replaces the hand-rolled RESET / CREATE / SAVE
+  text buttons in **every** Entry/Edit header (Wellness Food/Activity logging + custom Library items, Net
+  Worth, Shows, Books, Quotes, Medical, Travel) with compact **icons** — Reset = `IconArrowBackUp`,
+  Submit = `IconPlus` (new) / `IconDeviceFloppy` (editing) — plus a **Delete** (`IconTrash`) shown only
+  when editing, behind a two-step inline confirm (no `window.confirm`). Each screen wires its existing
+  delete fn (`deleteEntry` / `softDeleteFood` / `softDeleteActivity` / `deleteSnapshot` / `deleteShow` /
+  `deleteBook` / `deleteQuote` / `deleteReport` / `deleteTrip`). **`EmptyState`** is the centered
+  "No X yet / + New X" block for the media + Medical Dashboards/Libraries. Owner decision: Delete is
+  **hidden on new** records (nothing to remove yet).
+- **Calendar month/year jump.** The shared `Calendar` header is now a button that toggles an internal
+  `mode` to a year-stepper + month grid (the `MonthPicker` pattern, inlined); picking a month returns to
+  its day grid. One change covers Wellness Diary + all Shows/Books date pickers.
+- **Segmented → dropdown on Entry forms.** Shows/Books **Status** + **LGBT+** and Quotes **Language**
+  switched from `SegmentedTabs` to `SelectMenu` so they pair compactly onto shared lines (Status|Rating,
+  Category|Language, etc.). **`SelectMenu` now flips its menu upward** when there's no room below
+  (measures the trigger rect on open) — fixes the New Trip header where a short, `overflow-y-auto` form
+  clipped the Status/Base-Currency menus.
+- **Net Worth delete threading.** `NetWorthEntry` is month-based (create-or-replace, no `id`), so the
+  loader now also returns the month's `snapshotId`; the header Delete shows only when a saved snapshot
+  exists and removes that month (clearing the form, screen stays open).
+- **Travel dashboard** collapsed its two 2-col tile blocks + the redundant province-progress bar into one
+  **3×2 column-first** grid (`grid-flow-col grid-rows-2`); the first two tiles relabelled **中国省份 /
+  中国城市** (owner decision).
+- **Search pre-fill.** `TitleSearchSheet` / `BookSearchSheet` / `QuoteSourceLinkSheet` gained an
+  `initialQuery` prop (seeded from the Entry's current Title) so opening the search/link sheet shows
+  matching results immediately.

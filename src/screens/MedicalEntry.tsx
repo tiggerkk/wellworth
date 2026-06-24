@@ -6,7 +6,7 @@ import { useAsync } from '../hooks/useAsync'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 import { useProfile } from '../hooks/useProfile'
 import { useSheetNavigate } from '../hooks/useSheetNavigate'
-import { getReportWithResults, saveReport } from '../data/medical'
+import { deleteReport, getReportWithResults, saveReport } from '../data/medical'
 import { bumpMedical } from '../lib/medical-refresh'
 import {
   blankReportDraft,
@@ -27,8 +27,7 @@ import {
 import { formatDayLabel } from '../lib/date'
 import { routes } from '../constants/routes'
 import { Calendar } from '../components/Calendar'
-import { PrimaryButton } from '../components/PrimaryButton'
-import { SecondaryButton } from '../components/SecondaryButton'
+import { EntryHeaderActions } from '../components/EntryHeaderActions'
 import { SelectMenu } from '../components/SelectMenu'
 import { MedicalResultCard } from '../components/MedicalResultCard'
 import { MedicalTestPickerSheet } from '../components/MedicalTestPickerSheet'
@@ -172,6 +171,18 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
     }
   }
 
+  async function remove() {
+    if (!id) return
+    setSaving(true)
+    try {
+      await deleteReport(id)
+      bumpMedical()
+      navigate(-1)
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return (
     <>
       <header className="flex items-center gap-3 border-b border-border px-4 py-3">
@@ -185,53 +196,60 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
         <h1 className="flex-1 truncate text-[17px] font-medium text-text-primary">
           {id ? 'Edit Report' : 'New Report'}
         </h1>
-        <SecondaryButton
-          size="sm"
-          onClick={() => setDraft(initial)}
-          disabled={!dirty || saving}
-        >
-          RESET
-        </SecondaryButton>
-        <PrimaryButton
-          size="sm"
-          onClick={() => void save()}
-          disabled={saving || (!!id && !dirty)}
-        >
-          {saving ? 'Saving…' : id ? 'SAVE' : 'CREATE'}
-        </PrimaryButton>
+        <EntryHeaderActions
+          editing={!!id}
+          dirty={dirty}
+          saving={saving}
+          onReset={() => setDraft(initial)}
+          onSubmit={() => void save()}
+          onDelete={id ? () => void remove() : undefined}
+        />
       </header>
 
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
-        {!id && profile?.medical_importer_enabled && (
-          <button
-            onClick={() => openSheet(routes.medical.import)}
-            className="flex items-center justify-center gap-2 rounded-input bg-input py-2 text-sm text-accent"
-          >
-            <IconUpload size={16} /> Import from JSON / CSV…
-          </button>
-        )}
-
-        <div>
-          <p className="mb-1 text-xs text-text-secondary">Report Date</p>
-          <button
-            onClick={() => setDatePicker(true)}
-            className={`text-left ${inputClass}`}
-          >
-            {formatDayLabel(draft.report_date)}
-          </button>
+        <div className="flex items-end gap-2">
+          {!id && profile?.medical_importer_enabled && (
+            <button
+              onClick={() => openSheet(routes.medical.import)}
+              className="flex shrink-0 items-center justify-center gap-2 rounded-input bg-input px-3 py-2 text-sm text-accent"
+            >
+              <IconUpload size={16} /> Import JSON/CSV…
+            </button>
+          )}
+          <div className="flex-1">
+            <p className="mb-1 text-xs text-text-secondary">Report Date</p>
+            <button
+              onClick={() => setDatePicker(true)}
+              className={`text-left ${inputClass}`}
+            >
+              {formatDayLabel(draft.report_date)}
+            </button>
+          </div>
         </div>
 
-        <div>
-          <p className="mb-1 text-xs text-text-secondary">Type</p>
-          <SelectMenu
-            value={draft.report_type}
-            onChange={(report_type) => update({ report_type })}
-            ariaLabel="Report type"
-            options={REPORT_TYPES.map((t) => ({
-              value: t,
-              label: REPORT_TYPE_LABELS[t],
-            }))}
-          />
+        <div className="flex gap-3">
+          <div className="w-44">
+            <p className="mb-1 text-xs text-text-secondary">Type</p>
+            <SelectMenu
+              value={draft.report_type}
+              onChange={(report_type) => update({ report_type })}
+              ariaLabel="Report type"
+              options={REPORT_TYPES.map((t) => ({
+                value: t,
+                label: REPORT_TYPE_LABELS[t],
+              }))}
+            />
+          </div>
+          {vis('provider') && (
+            <label className="flex-1 text-xs text-text-secondary">
+              Provider
+              <input
+                value={draft.provider}
+                onChange={(e) => update({ provider: e.target.value })}
+                className={`mt-1 ${inputClass}`}
+              />
+            </label>
+          )}
         </div>
 
         {usesBodyPart(draft.report_type) && vis('body_part') && (
@@ -241,17 +259,6 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
               value={draft.body_part}
               onChange={(e) => update({ body_part: e.target.value })}
               placeholder="e.g. neck, breast, pelvis"
-              className={`mt-1 ${inputClass}`}
-            />
-          </label>
-        )}
-
-        {vis('provider') && (
-          <label className="text-xs text-text-secondary">
-            Provider
-            <input
-              value={draft.provider}
-              onChange={(e) => update({ provider: e.target.value })}
               className={`mt-1 ${inputClass}`}
             />
           </label>

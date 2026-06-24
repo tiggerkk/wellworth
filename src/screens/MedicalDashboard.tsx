@@ -4,6 +4,7 @@ import { IconChevronDown, IconChevronRight, IconX } from '@tabler/icons-react'
 import { lazyWithReload } from '../lib/lazy-with-reload'
 import { useMedicalTrends } from '../hooks/useMedicalTrends'
 import { Sparkline } from '../components/Sparkline'
+import { EmptyState } from '../components/EmptyState'
 import { SectionCard } from '../components/SectionCard'
 import { MEDICAL_RANGES, medicalRangeCutoff } from '../constants/medical-ranges'
 import { asFlag, latestPoint, type TrackedTrend } from '../lib/medical-trends'
@@ -47,28 +48,18 @@ export function MedicalDashboard() {
     : undefined
 
   return (
-    <div className="pb-4">
-      <header className="sticky top-0 z-10 bg-bg/90 px-4 py-3 backdrop-blur">
-        <h1 className="text-lg font-medium text-text-primary">Medical</h1>
-      </header>
-
+    <div className="pb-4 pt-2">
       {loading && <p className="px-4 py-6 text-sm text-text-secondary">Loading…</p>}
       {error && (
         <p className="px-4 py-6 text-sm text-danger">Couldn’t load your medical data.</p>
       )}
 
       {isEmpty && (
-        <div className="px-4 py-10 text-center">
-          <p className="text-sm text-text-secondary">
-            No data yet — add a report to see trends and latest results.
-          </p>
-          <Link
-            to={routes.medical.entry}
-            className="mt-3 inline-block text-sm font-medium text-accent"
-          >
-            New Medical report
-          </Link>
-        </div>
+        <EmptyState
+          title="No medical reports yet"
+          actionLabel="New Medical Report"
+          to={routes.medical.entry}
+        />
       )}
 
       {!loading && !error && !isEmpty && (

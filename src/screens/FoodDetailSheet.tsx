@@ -1,16 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
-import { IconHeart, IconHeartFilled, IconX } from '@tabler/icons-react'
+import { IconHeart, IconHeartFilled, IconPlus, IconX } from '@tabler/icons-react'
 import { Sheet } from '../components/Sheet'
 import { NutrientBar } from '../components/NutrientBar'
 import { PrimaryButton } from '../components/PrimaryButton'
-import { SecondaryButton } from '../components/SecondaryButton'
+import { EntryHeaderActions } from '../components/EntryHeaderActions'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useProfile } from '../hooks/useProfile'
 import { useReturnAfterLog } from '../hooks/useReturnAfterLog'
 import { useNutrientReference } from '../hooks/useNutrientReference'
-import { createEntry, getEntry, updateEntry } from '../data/diary-entry'
+import { createEntry, deleteEntry, getEntry, updateEntry } from '../data/diary-entry'
 import { createFood, getFood, getFoodByExternal, setFavorite } from '../data/food'
 import { listServings } from '../data/serving'
 import { getUsdaFood } from '../lib/food-api'
@@ -187,6 +187,18 @@ export function FoodDetailSheet() {
     setServingIndex(initial.servingIndex)
   }
 
+  async function removeEntry() {
+    if (!entryId) return
+    setSaving(true)
+    try {
+      await deleteEntry(entryId)
+      bumpDiary()
+      navigate(-1)
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const targets = profile ? computeTargets(profile) : null
   const favShown = favOverride ?? food?.isFavorite ?? false
 
@@ -273,21 +285,22 @@ export function FoodDetailSheet() {
         )}
         {food &&
           (editing ? (
-            <>
-              <SecondaryButton size="sm" onClick={reset} disabled={!dirty || saving}>
-                RESET
-              </SecondaryButton>
-              <PrimaryButton
-                size="sm"
-                onClick={() => void submit()}
-                disabled={!dirty || saving}
-              >
-                {saving ? 'Saving…' : 'SAVE'}
-              </PrimaryButton>
-            </>
+            <EntryHeaderActions
+              editing
+              dirty={dirty}
+              saving={saving}
+              onReset={reset}
+              onSubmit={() => void submit()}
+              onDelete={entryId ? () => void removeEntry() : undefined}
+            />
           ) : (
-            <PrimaryButton size="sm" onClick={() => void submit()} disabled={saving}>
-              {saving ? 'Adding…' : 'ADD'}
+            <PrimaryButton
+              size="sm"
+              onClick={() => void submit()}
+              disabled={saving}
+              aria-label="Add to diary"
+            >
+              <IconPlus size={18} />
             </PrimaryButton>
           ))}
       </header>
