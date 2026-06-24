@@ -50,6 +50,12 @@ its routes.
   **Escape-to-dismiss** is centralised in `src/hooks/useEscapeKey.ts` (one document listener over a LIFO
   stack so the innermost overlay wins): sheets/Calendar/SelectMenu close themselves, and the Add/Edit
   screens `navigate(-1)` only when nothing is layered above them.
+- **Shared New/Edit header actions:** every Entry/Edit form's top-right actions are the shared
+  `src/components/EntryHeaderActions.tsx` (compact **icon** buttons — Delete [trash, editing-only, with a
+  two-step inline confirm] · Reset [undo] · Create [plus] / Save [floppy]) — reuse it, don't re-roll a
+  header. Empty Dashboards/Libraries use the shared `src/components/EmptyState.tsx` ("No X yet / + New X").
+  The shared `Calendar` header opens a year/month picker; `SelectMenu` flips its menu upward near a
+  viewport edge. (Full catalogue: `docs/04-design-system.md`.)
 - **Settings is split:** global `/settings` (profile, units, account) from the hub gear; per-module
   sub-settings — Wellness from a **Settings tab in the module bottom nav** at `/wellness/settings`
   (protein target, nutrient display); Shows/Books/Quotes from a **Settings tab in the module bottom nav** at

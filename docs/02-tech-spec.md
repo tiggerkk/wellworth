@@ -142,7 +142,7 @@ the cloud is authoritative (this also sidesteps iOS PWA storage eviction).
 - **Refresh:** `src/lib/networth-refresh.ts` (`bumpNetWorth`/`useNetWorthVersion`), separate from the Wellness `diary-refresh` tick.
 - **CSV import:** `src/lib/networth-import.ts` (`parseNetWorthCsv` + `stripNumber` — strips
   thousands commas/quotes from values and detail values) + `src/screens/ImportNetWorthSheet.tsx`.
-- **UI:** `NetWorthDashboard` (recharts trend via the **lazy** `src/components/NetWorthTrendChart`, own chunk; windows in `src/constants/networth-ranges.ts`), `NetWorthEntry` (copy-forward, grouped inline edit, manual+auto FX, RESET/SAVE).
+- **UI:** `NetWorthDashboard` (recharts trend via the **lazy** `src/components/NetWorthTrendChart`, own chunk; windows in `src/constants/networth-ranges.ts`), `NetWorthEntry` (copy-forward, grouped inline edit, manual+auto FX, the shared `EntryHeaderActions` header — Reset/Save + a Delete that removes the displayed month's snapshot).
 
 ## Shows
 
@@ -174,9 +174,10 @@ the cloud is authoritative (this also sidesteps iOS PWA storage eviction).
   when TMDB has no poster; its Visible-Fields toggle — **off by default** — forces it always visible), a
   **⟳ Refresh from TMDB** button enabled once
   `tmdb_id` is set, status-driven Start-Date defaulting (Want ⇒ blank), and
-  `?title=&poster=&overview=&type=` **prefill**; outer-loader + inner-form with dirty RESET/SAVE). The
-  Type/Status/LGBT+ controls reuse `SegmentedTabs` (Type is three-way); dates reuse the generalized
-  `Calendar`; posters use the shared `PosterThumb`. **TMDB** client + `TitleSearchSheet` live in
+  `?title=&poster=&overview=&type=` **prefill**; outer-loader + inner-form whose header is the shared
+  `EntryHeaderActions` — icon Reset/Create/Save + a Delete when editing). **Type** reuses `SegmentedTabs`
+  (three-way); **Status** and **LGBT+** are now `SelectMenu` dropdowns; dates reuse the generalized
+  `Calendar` (its header opens a year-stepper + month grid); posters use the shared `PosterThumb`. **TMDB** client + `TitleSearchSheet` live in
   `src/lib/tmdb-api.ts` and `src/components/TitleSearchSheet.tsx`.
 - **Settings (split, like Wellness):** `ShowsSettings` (gear in the Shows headers) hosts **Entry field
   visibility** (`ShowsFieldsSheet`, a route sheet of toggles — including the **Poster URL** toggle) and
@@ -215,8 +216,9 @@ _Books re-skins Shows (see the Shows section); only the differences are noted._
   tiebreak) with `bookGenres`/`bookAuthors` driving the facet dropdowns. The **Author** filter + sort
   field are the only divergence from the Shows view (which has Type instead).
 - **UI:** `BooksEntry` (create/edit form with a header **favourite heart**; outer-loader + inner-form
-  with the `JSON.stringify` dirty RESET/SAVE; Status/LGBT+ reuse `SegmentedTabs`, dates reuse `Calendar`,
-  rating reuses `StarRating`). `BooksLibrary` (search + a collapsible filter panel of `SelectMenu`s + a
+  with the `JSON.stringify` dirty check + the shared `EntryHeaderActions` header (icons + Delete when
+  editing); Status/LGBT+ are now `SelectMenu` dropdowns, dates reuse `Calendar`, rating reuses
+  `StarRating`). `BooksLibrary` (search + a collapsible filter panel of `SelectMenu`s + a
   **Favourites only** toggle + a Sort menu + cover rows with ♥; swipe-delete). `BooksDashboard`
   (Favourites / Currently Reading / Recently Read / Want to Read shelves + Mark Read / Start Reading
   quick actions + an "N read this year" stat; no type filter; a shared `BookStatusChip` puts the
@@ -290,16 +292,17 @@ _Quotes re-skins Books/Shows; only the differences are noted. There is **no exte
   repeat), and `randomItem(items, random = Math.random)` (random injected for deterministic tests). Field
   visibility is `QUOTE_ENTRY_FIELDS` + the pure `isFieldVisible` (NULL prefs ⇒ all visible).
 - **UI:** `QuotesEntry` (create/edit form; the outer loader fetches the quote **and** the profile once,
-  passing the effective Source Type/Category lists down; inner-form with the `JSON.stringify` dirty
-  RESET/SAVE; Source Type/Category reuse `SelectMenu` with options from the configured lists — **Category
-  defaults to the first value** like Source Type, no blank sentinel; Language reuses `SegmentedTabs`, a
-  header favourite heart; a **`23505` unique-violation** on save → inline "You already have this quote.").
-  `QuotesLibrary` (search + a collapsible facet panel of `SelectMenu`s + a Favourites `Toggle` +
-  Tag toggle-chips; swipe-delete; a "Quotes from this title" banner when constrained). `QuotesZen`
-  (favourites-first random card; a **Shuffle** button + a hand-rolled **pull-to-refresh** Pointer-Events
-  gesture on an inner scroller; metadata cluster with a title-as-`Link` to `/shows/:id` / `/books/:id`
-  when linked; an optimistic favourite heart). A new **`TagInput`** component (chips + autocomplete,
-  commit on Enter/comma) is shared by the Entry form (and the Library facet).
+  passing the effective Source Type/Category lists down; inner-form with the `JSON.stringify` dirty check
+  - the shared `EntryHeaderActions` header (icons + Delete when editing); Source Type/Category reuse
+    `SelectMenu` with options from the configured lists — **Category defaults to the first value** like
+    Source Type, no blank sentinel; Language reuses `SegmentedTabs` (an English/Chinese toggle), a header
+    favourite heart; a **`23505` unique-violation** on save → inline "You already have this quote.").
+    `QuotesLibrary` (search + a collapsible facet panel of `SelectMenu`s + a Favourites `Toggle` +
+    Tag toggle-chips; swipe-delete; a "Quotes from this title" banner when constrained). `QuotesZen`
+    (favourites-first random card; a **Shuffle** button + a hand-rolled **pull-to-refresh** Pointer-Events
+    gesture on an inner scroller; metadata cluster with a title-as-`Link` to `/shows/:id` / `/books/:id`
+    when linked; an optimistic favourite heart). A new **`TagInput`** component (chips + autocomplete,
+    commit on Enter/comma) is shared by the Entry form (and the Library facet).
 - **Cross-module linker:** `src/components/QuoteSourceLinkSheet.tsx` — a **local** `fixed inset-0`
   overlay (not a route sheet, which would remount Entry and lose the draft) that loads the user's `show`
   - `book` rows, maps them to `LinkCandidate`s (show thumb via `posterUrl`, book via `cover_url`), and

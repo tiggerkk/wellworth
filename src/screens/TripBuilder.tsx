@@ -1,13 +1,6 @@
 import { useCallback, useState } from 'react'
-import { useNavigate, useParams } from 'react-router'
-import {
-  IconCalendar,
-  IconChevronLeft,
-  IconCopy,
-  IconPlus,
-  IconTrash,
-  IconX,
-} from '@tabler/icons-react'
+import { useLocation, useNavigate, useParams } from 'react-router'
+import { IconCalendar, IconCopy, IconPlus, IconTrash, IconX } from '@tabler/icons-react'
 import { SegmentedTabs } from '../components/SegmentedTabs'
 import { SelectMenu } from '../components/SelectMenu'
 import { StarRating } from '../components/StarRating'
@@ -62,12 +55,19 @@ export function TripBuilder() {
 
 function NewTrip() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { session } = useAuth()
   const userId = session?.user.id
   const [name, setName] = useState('')
   const [status, setStatus] = useState<(typeof TRIP_STATUSES)[number]>('planning')
   const [baseCurrency, setBaseCurrency] = useState('CNY')
   const [saving, setSaving] = useState(false)
+
+  // Close → go back if we arrived from within the app, else land on the Trips list (so a direct
+  // load / refresh of this route still has somewhere sensible to go).
+  const close = () =>
+    location.key === 'default' ? navigate(routes.travel.trips) : navigate(-1)
+  useEscapeKey(close)
 
   async function create() {
     if (!userId || !name.trim()) return
@@ -89,12 +89,8 @@ function NewTrip() {
   return (
     <div className="flex h-full flex-col">
       <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <button
-          onClick={() => navigate(-1)}
-          aria-label="Back"
-          className="text-text-secondary"
-        >
-          <IconChevronLeft size={22} />
+        <button onClick={close} aria-label="Close" className="text-text-secondary">
+          <IconX size={22} />
         </button>
         <h1 className="flex-1 text-[17px] font-medium text-text-primary">New Trip</h1>
         <EntryHeaderActions
@@ -181,10 +177,16 @@ function EditTrip({ id }: { id: string }) {
 
 function EditTripBody({ bundle }: { bundle: TripBundle }) {
   const navigate = useNavigate()
+  const location = useLocation()
   const { session } = useAuth()
   const userId = session?.user.id
   const { trip, days, stops } = bundle
   const [tab, setTab] = useState<'itinerary' | 'expenses'>('itinerary')
+
+  // Close → back if we came from within the app, else fall back to the Trips list.
+  const close = () =>
+    location.key === 'default' ? navigate(routes.travel.trips) : navigate(-1)
+  useEscapeKey(close)
 
   // Header local draft (the trip already exists, so this is Save, not Create).
   const [name, setName] = useState(trip.name)
@@ -329,12 +331,8 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
   return (
     <>
       <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <button
-          onClick={() => navigate(-1)}
-          aria-label="Back"
-          className="text-text-secondary"
-        >
-          <IconChevronLeft size={22} />
+        <button onClick={close} aria-label="Close" className="text-text-secondary">
+          <IconX size={22} />
         </button>
         <h1 className="flex-1 truncate text-[17px] font-medium text-text-primary">
           {trip.name}
@@ -375,7 +373,7 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
             </div>
           </div>
           <div className="flex gap-3">
-            <div className="w-40 text-xs text-text-secondary">
+            <div className="flex-1 text-xs text-text-secondary">
               Status
               <div className="mt-1">
                 <SelectMenu

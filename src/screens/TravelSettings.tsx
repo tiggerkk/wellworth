@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router'
-import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react'
+import { IconChevronLeft, IconChevronRight, IconUpload } from '@tabler/icons-react'
 import { SectionCard } from '../components/SectionCard'
 import { useSheetNavigate } from '../hooks/useSheetNavigate'
 import { routes } from '../constants/routes'
@@ -38,20 +38,16 @@ export function TravelSettings() {
 
       <SectionCard title="Import">
         <button
-          onClick={() => openSheet(routes.travel.importExpenses)}
-          className="flex w-full items-center justify-between border-b border-border px-4 py-3 text-left active:bg-input/40"
+          onClick={() => openSheet(routes.travel.importTrips)}
+          className="flex w-full items-center gap-2 border-b border-border px-4 py-3 text-[15px] text-accent last:border-b-0 active:bg-input/40"
         >
-          <span className="text-[15px] text-text-primary">Import CSV Expenses</span>
-          <IconChevronRight size={18} className="text-text-secondary" />
+          <IconUpload size={18} /> Import JSON Trips
         </button>
         <button
-          onClick={() => openSheet(routes.travel.importTrips)}
-          className="flex w-full items-center justify-between px-4 py-3 text-left active:bg-input/40"
+          onClick={() => openSheet(routes.travel.importExpenses)}
+          className="flex w-full items-center gap-2 border-b border-border px-4 py-3 text-[15px] text-accent last:border-b-0 active:bg-input/40"
         >
-          <span className="text-[15px] text-text-primary">
-            Import CSV Trips (itinerary JSON)
-          </span>
-          <IconChevronRight size={18} className="text-text-secondary" />
+          <IconUpload size={18} /> Import CSV Expenses
         </button>
       </SectionCard>
     </div>

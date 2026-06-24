@@ -394,11 +394,11 @@ Part K.)
    > `*-import-template.csv` files are tracked.
 
 > **Optional — add quotes straight from Apple Books (iPhone/iPad).** Quotes has no API, so you add
-> quotes by typing, pasting (the **Paste from clipboard** button on the Add Quote form), the **CSV
+> quotes by typing, pasting (the **Paste from clipboard** button on the New Quote form), the **CSV
 > importer**, or an optional **Apple Shortcut**: in the Shortcuts app, make a share-sheet shortcut that
 > takes selected text and **Opens URL**
 > `https://<your-app>/quotes/entry?text=[Shortcut Input]&author=&title=` (URL-encode the text). Sharing
-> a highlight from Apple Books to that shortcut opens the Add Quote form pre-filled. (`?text=`,
+> a highlight from Apple Books to that shortcut opens the New Quote form pre-filled. (`?text=`,
 > `?author=`, `?title=` all prefill.)
 
 - ✅ Check: refresh your GitHub repo page — you see the project files (and a `docs/` folder), but
@@ -653,7 +653,7 @@ update public.profile set travel_expense_categories = null;
 The Shows module covers TV, movies, and **documentaries** (incl. Chinese titles and Chinese
 documentaries / CCTV series). To add one (**Shows → New Show**):
 
-1. **Search TMDB** in the Add Show form — works for any title; a **Chinese (CJK) query returns Chinese
+1. **Search TMDB** in the New Show form — works for any title; a **Chinese (CJK) query returns Chinese
    titles**. For a documentary, set Type → **Documentary** first (it searches TMDB's TV catalogue). If a
    documentary belongs to a parent series, just fold the series into the **Title** yourself (e.g.
    `国宝档案 — 从东晋到北魏`).
@@ -732,7 +732,7 @@ spend. No API key is needed (the map + geocode + FX are all keyless).
    automatically, type its rate in the trip's **Conversion to HKD** card.
 4. **Bulk-load old trips (one-time):** prefix each trip's text with
    `=== TRIP: <name> | <YYYY-MM> | <status> ===`, paste them all into any AI tool with
-   `templates/travel-itinerary-prompt.md`, save the JSON array, then **Settings → Import CSV Trips** →
+   `templates/travel-itinerary-prompt.md`, save the JSON array, then **Settings → Import JSON Trips** →
    review (confirm any new cities once) → **Import**. The result is drafts you finish in the Trip Builder;
    expenses import separately.
 5. The **Dashboard** counts (provinces / cities / countries) and the **Map** update automatically from

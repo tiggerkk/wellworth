@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 import { useNavigate, useParams } from 'react-router'
-import { IconChevronLeft, IconExternalLink } from '@tabler/icons-react'
+import { IconChevronLeft, IconExternalLink, IconPencil } from '@tabler/icons-react'
 import { useAsync } from '../hooks/useAsync'
 import { useProfile } from '../hooks/useProfile'
 import { getReportWithResults, type ReportWithResults } from '../data/medical'
@@ -50,12 +50,34 @@ export function MedicalReportDetail() {
         >
           <IconChevronLeft size={22} />
         </button>
-        <h1 className="flex-1 truncate text-[17px] font-medium text-text-primary">
-          Report
-        </h1>
+        <div className="min-w-0 flex-1">
+          {data ? (
+            <>
+              <p className="truncate text-[17px] font-medium text-text-primary">
+                {formatFullDate(data.report.report_date)} -{' '}
+                {REPORT_TYPE_LABELS[data.report.report_type as ReportType] ??
+                  data.report.report_type}
+                {usesBodyPart(data.report.report_type) && data.report.body_part
+                  ? ` · ${data.report.body_part}`
+                  : ''}
+              </p>
+              {data.report.provider && (
+                <p className="truncate text-xs text-text-secondary">
+                  {data.report.provider}
+                </p>
+              )}
+            </>
+          ) : (
+            <p className="truncate text-[17px] font-medium text-text-primary">Report</p>
+          )}
+        </div>
         {id && data && (
-          <PrimaryButton size="sm" onClick={() => navigate(routes.medical.edit(id))}>
-            Edit
+          <PrimaryButton
+            size="sm"
+            onClick={() => navigate(routes.medical.edit(id))}
+            aria-label="Edit"
+          >
+            <IconPencil size={18} />
           </PrimaryButton>
         )}
       </header>
@@ -74,8 +96,6 @@ export function MedicalReportDetail() {
 function Body({ data }: { data: ReportWithResults }) {
   const { report, results } = data
   const { data: profile } = useProfile()
-  const typeLabel =
-    REPORT_TYPE_LABELS[report.report_type as ReportType] ?? report.report_type
   const ordered = orderResultsForDisplay(
     results,
     profile?.medical_section_order,
@@ -85,19 +105,6 @@ function Body({ data }: { data: ReportWithResults }) {
 
   return (
     <div className="flex flex-col gap-5">
-      <div>
-        <p className="text-lg font-semibold text-text-primary">
-          {formatFullDate(report.report_date)}
-        </p>
-        <p className="text-sm text-text-secondary">
-          {typeLabel}
-          {usesBodyPart(report.report_type) && report.body_part
-            ? ` · ${report.body_part}`
-            : ''}
-          {report.provider ? ` · ${report.provider}` : ''}
-        </p>
-      </div>
-
       {report.document_urls.length > 0 && (
         <div className="flex flex-col gap-2">
           {report.document_urls.map((url, i) => (

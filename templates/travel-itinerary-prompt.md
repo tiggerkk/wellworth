@@ -2,7 +2,7 @@
 
 Use with **any** capable AI tool (Claude, Gemini, GPT, etc.) to convert your whole back-catalogue of trips
 in **one pass**. Prefix each trip's text with a delimiter line, paste them all, then the prompt below. Save
-the output as `trips.json` and import via WellWorth → Settings → **Import CSV Trips**. The import is a
+the output as `trips.json` and import via WellWorth → Settings → **Import JSON Trips**. The import is a
 **draft** you finish in the Trip Builder — don't aim for perfection.
 
 ## Step 1 — add a delimiter line before each trip
@@ -95,6 +95,6 @@ Return the JSON array now, and nothing else.
 1. Skim a couple of trips — **dates** (month rolled over?), **types** (a restaurant tagged `visit`?),
    **cities** (carried forward?). Don't over-polish; the Trip Builder makes fixes easy.
 2. Save as `trips.json`.
-3. WellWorth → Settings → **Import CSV Trips** → pick the file → one **combined review** (trip count, stop
+3. WellWorth → Settings → **Import JSON Trips** → pick the file → one **combined review** (trip count, stop
    counts, and **new cities** to confirm once each) → **Import** → finish trips in the Trip Builder.
    Expenses import separately (Import CSV Expenses).

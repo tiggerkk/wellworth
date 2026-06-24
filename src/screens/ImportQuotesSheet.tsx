@@ -120,7 +120,7 @@ export function ImportQuotesSheet() {
         <button onClick={() => navigate(-1)} aria-label="Close">
           <IconX size={22} className="text-text-secondary" />
         </button>
-        <h1 className="text-[17px] font-medium text-text-primary">Import Quotes CSV</h1>
+        <h1 className="text-[17px] font-medium text-text-primary">Import Quotes</h1>
       </header>
 
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
@@ -162,7 +162,7 @@ export function ImportQuotesSheet() {
                 ? 'Loading…'
                 : fileName
                   ? 'Choose a different file'
-                  : 'Choose CSV file'}
+                  : 'Choose CSV File'}
             </button>
             {fileName && (
               <p className="text-xs text-text-secondary">

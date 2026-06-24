@@ -196,6 +196,14 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
         <h1 className="flex-1 truncate text-[17px] font-medium text-text-primary">
           {id ? 'Edit Report' : 'New Report'}
         </h1>
+        {!id && profile?.medical_importer_enabled && (
+          <button
+            onClick={() => openSheet(routes.medical.import)}
+            className="flex shrink-0 items-center gap-1.5 pl-2 text-sm text-accent"
+          >
+            <IconUpload size={16} /> Import JSON…
+          </button>
+        )}
         <EntryHeaderActions
           editing={!!id}
           dirty={dirty}
@@ -207,15 +215,7 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
       </header>
 
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
-        <div className="flex items-end gap-2">
-          {!id && profile?.medical_importer_enabled && (
-            <button
-              onClick={() => openSheet(routes.medical.import)}
-              className="flex shrink-0 items-center justify-center gap-2 rounded-input bg-input px-3 py-2 text-sm text-accent"
-            >
-              <IconUpload size={16} /> Import JSON/CSV…
-            </button>
-          )}
+        <div className="flex gap-3">
           <div className="flex-1">
             <p className="mb-1 text-xs text-text-secondary">Report Date</p>
             <button
@@ -225,10 +225,7 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
               {formatDayLabel(draft.report_date)}
             </button>
           </div>
-        </div>
-
-        <div className="flex gap-3">
-          <div className="w-44">
+          <div className="flex-1">
             <p className="mb-1 text-xs text-text-secondary">Type</p>
             <SelectMenu
               value={draft.report_type}
@@ -240,17 +237,18 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
               }))}
             />
           </div>
-          {vis('provider') && (
-            <label className="flex-1 text-xs text-text-secondary">
-              Provider
-              <input
-                value={draft.provider}
-                onChange={(e) => update({ provider: e.target.value })}
-                className={`mt-1 ${inputClass}`}
-              />
-            </label>
-          )}
         </div>
+
+        {vis('provider') && (
+          <label className="text-xs text-text-secondary">
+            Provider
+            <input
+              value={draft.provider}
+              onChange={(e) => update({ provider: e.target.value })}
+              className={`mt-1 ${inputClass}`}
+            />
+          </label>
+        )}
 
         {usesBodyPart(draft.report_type) && vis('body_part') && (
           <label className="text-xs text-text-secondary">

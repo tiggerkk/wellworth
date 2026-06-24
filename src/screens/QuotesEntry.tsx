@@ -39,6 +39,7 @@ import {
 } from '../constants/quotes'
 import type { Tables } from '../types/database'
 import { EntryHeaderActions } from '../components/EntryHeaderActions'
+import { SegmentedTabs } from '../components/SegmentedTabs'
 import { SelectMenu } from '../components/SelectMenu'
 import { TagInput } from '../components/TagInput'
 import { QuoteSourceLinkSheet } from '../components/QuoteSourceLinkSheet'
@@ -419,12 +420,11 @@ function QuoteForm({
             />
           </div>
           {show('language') && (
-            <div className="w-32">
+            <div className="flex-1">
               <p className="mb-1 text-xs text-text-secondary">Language</p>
-              <SelectMenu
+              <SegmentedTabs
                 value={draft.language}
                 onChange={changeLanguage}
-                ariaLabel="Language"
                 options={QUOTE_LANGUAGES.map((l) => ({
                   value: l,
                   label: QUOTE_LANGUAGE_LABELS[l],

@@ -123,7 +123,7 @@ export function ImportFoodsSheet() {
               className="flex items-center justify-center gap-2 rounded-input border border-border bg-input px-4 py-3 text-[15px] text-text-primary"
             >
               <IconUpload size={18} />
-              {fileName ? 'Choose a different file' : 'Choose CSV file'}
+              {fileName ? 'Choose a different file' : 'Choose CSV File'}
             </button>
             {fileName && (
               <p className="text-xs text-text-secondary">

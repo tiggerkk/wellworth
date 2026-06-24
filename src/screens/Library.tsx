@@ -94,9 +94,9 @@ export function Library() {
           {tab === 'foods' && (
             <button
               onClick={() => openSheet(routes.wellness.importFoods)}
-              className="flex items-center gap-1 text-sm text-positive"
+              className="flex items-center gap-1 text-sm text-accent"
             >
-              <IconUpload size={16} /> Import CSV
+              <IconUpload size={16} /> Import CSV…
             </button>
           )}
         </div>

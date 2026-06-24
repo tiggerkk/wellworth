@@ -162,7 +162,8 @@ App-wide; shared across all modules. Auto-save on change. A back chevron returns
 Two sub-tabs:
 
 - **Foods**: searchable list of your custom foods and supplements; tap a row to edit, swipe to delete;
-  `+ New Food` opens the form. Supplements show a "supplement" tag. `Import CSV` opens the bulk
+  `+ New Food` opens the form. Supplements show a "supplement" tag. An accent-coloured `Import CSV…`
+  link (matching the other modules) opens the bulk
   importer (parses a CSV in-browser and inserts custom foods/supplements + servings via the data
   layer; format in `templates/custom-foods-template.csv`, documented in
   `templates/custom-foods-import-guide.md`).
@@ -503,9 +504,10 @@ An in-app bulk importer (the owner's choice over a script — same as Net Worth 
   selecting one binds `show_id`/`book_id` and auto-fills **Source Type** + **Title** (for a Book, also
   **Author**; a Show leaves Author for the speaker/character). When linked the button shows **Linked**
   (tap to unlink, keeping the filled values). Title is entered manually for podcasts/songs/articles/videos.
-- **Category** (required) + **Language** share a line, both dropdowns (Category clamped; Language =
-  English / Chinese, auto-detected from the text — CJK → Chinese — and editable). **Tags** (optional):
-  inline tag input with autocomplete against existing tags. **Favourite** heart in the header.
+- **Category** (required, a clamped dropdown) + **Language** share a line; **Language** is an English /
+  Chinese **toggle** that fills the rest of the line (auto-detected from the text — CJK → Chinese — and
+  editable). **Tags** (optional): inline tag input with autocomplete against existing tags. **Favourite**
+  heart in the header.
 - Top-right icon actions (Delete when editing · Reset · Create/Save). **Validation**: requires Quote Text
   - exactly one Category. A duplicate (same normalised text) is rejected inline.
 - Which fields are visible is controlled in **Quotes Settings** (Quote Text + Category always shown).
@@ -570,7 +572,9 @@ the centered **"No medical reports yet" / + New Medical Report** state).
 
 ## Medical - Report detail (`/medical/:id`)
 
-Read-only view. Header shows date · type · body part · provider with an **Edit** button (→ the form).
+Read-only view. The header shows **Date - Type** (e.g. `May 4, 2026 - Health Screening`, with `· body
+part` appended when relevant) on line 1 and the **Provider** as secondary text on line 2, with an
+**Edit** (pencil icon) action → the form.
 Below: **Open original** link(s) for each Google Drive URL (`target="_blank" rel="noreferrer"`); a
 **Narrative** block when present; then **results grouped under uppercase category headers** in the
 seeded section + sort order (filtered to the tests this report contains). Each result row shows
@@ -580,13 +584,13 @@ from …" note appears when the value was unit-converted on import, and an "unce
 
 ## Medical - Add / Edit Report (`/medical/entry`, `/medical/:id/edit`)
 
-Reached from the **New Medical** tab (new) or the Report detail **Edit** button. When the importer is
-enabled (Settings), an **Import JSON/CSV…** button sits on the same line as **Report Date** (to its
-left). Top-right icon actions (Delete when editing · Reset · Create/Save); close (✕) / Escape returns
-without saving.
+Reached from the **New Medical** tab (new) or the Report detail **Edit** button. On the New form an
+**Import JSON…** accent link (not a button) sits in the **header**, between the "New Report" title and
+the action icons (when the importer is enabled in Settings). Top-right icon actions (Delete when editing
+· Reset · Create/Save); close (✕) / Escape returns without saving.
 
-- **Parent fields:** **Report Date** (Calendar; defaults today; shares a line with the import button) +
-  **Type** (dropdown, shortened) paired on a line with **Provider**; **Body Part** (shown for
+- **Parent fields:** **Report Date** (Calendar; defaults today) + **Type** (dropdown) share one line;
+  **Provider** sits below on its own line; then **Body Part** (shown for
   mri/ultrasound/mammogram/other), **Narrative**, and
   **Document Links** (repeatable Google-Drive URL rows). The optional fields are hidden when trimmed off
   in Medical Settings → Visible Fields (M3); date/type/results are always shown.
@@ -673,11 +677,15 @@ lockout. The lock is a convenience gate on this device — the data is already p
 
 ## Travel - Trip Builder (`/travel/entry` new, `/travel/trip/:id` edit)
 
+The header's top-left is a **✕ Close** (returns to where you came from — falling back to the Trips list
+on a direct load/refresh — matching the other modules; Escape does the same).
+
 - **New** (`/travel/entry`): header-only — **Trip Name** + **Base Currency** on one line, **Status**
   below — with **Reset** + **Create** icon actions. **Create** persists the trip and opens it for editing
   (days/stops need a saved trip).
 - **Edit** header card: **Trip Name** + **Base Currency** on one line; **Status** (Want to Visit /
-  Planning / Visited, dropdown) + **Rating** (0–5 half-stars) on the next; **Cover Image URL** (rendered
+  Planning / Visited, dropdown, filling the line) + **Rating** (0–5 half-stars, its label aligned over
+  the stars — the same Status/Rating layout as the Shows form) on the next; **Cover Image URL** (rendered
   `no-referrer`, previewed); **Companions** paired with a **Track Reimburse** toggle (label over the
   toggle); **Notes**. Top-right icon actions: **Delete** (removes the trip, cascading days/stops/expenses)
   · **Reset** (reverts the header fields to the saved values, disabled when unchanged) · **Save** (persists
@@ -714,10 +722,11 @@ lockout. The lock is a convenience gate on this device — the data is already p
 - **Expenses → Expense Categories**: add / rename / delete / **drag-reorder** the category list (stored
   on `profile.travel_expense_categories`). Deleting a category still used by expenses prompts a
   **reassignment** first; the last category can't be deleted.
-- **Import → Import CSV Expenses**: a wide sheet (Trip, Date, category columns…, Cost, Re-imbursed) →
-  detected-columns + **unknown-header mapping** + per-trip preview + **replace-per-trip** → import.
-  Columns + rules: `templates/travel-expenses-import-guide.md`.
-- **Import → Import CSV Trips (itinerary JSON)**: a JSON array of trips → one combined review (per-trip
+  The two importers are accent-coloured upload links (no chevron), mirroring the other modules.
+- **Import → Import JSON Trips** (listed first): a JSON array of trips → one combined review (per-trip
   day/stop counts + a pooled **new-cities** list with optional per-city geocode) → import as drafts.
+- **Import → Import CSV Expenses** (listed second): a wide sheet (Trip, Date, category columns…, Cost,
+  Re-imbursed) → detected-columns + **unknown-header mapping** + per-trip preview + **replace-per-trip** →
+  import. Columns + rules: `templates/travel-expenses-import-guide.md`.
   Shape: `templates/travel-itinerary.schema.json`; prompt: `templates/travel-itinerary-prompt.md`.
 - **FX overrides** are per-trip and live in the trip's Expenses tab (not here).

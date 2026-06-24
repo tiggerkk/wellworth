@@ -1851,3 +1851,19 @@ specs (`01-screens.md`, `04-design-system.md`); the notable engineering decision
 - **Search pre-fill.** `TitleSearchSheet` / `BookSearchSheet` / `QuoteSourceLinkSheet` gained an
   `initialQuery` prop (seeded from the Entry's current Title) so opening the search/link sheet shows
   matching results immediately.
+
+A second round of small follow-ups (same session, UI-only):
+
+- **Quotes Language** reverted from a `SelectMenu` back to a `SegmentedTabs` toggle (filling the rest of
+  the Category|Language line, which the two clamped dropdowns left half-empty).
+- **Medical Report detail** header now shows **Date - Type** (+ body part) over **Provider** and the Edit
+  action is a pencil **icon**; the duplicated date block was dropped from the body. **Add/Edit Report**
+  pairs **Report Date + Type** on one line (Provider on its own), and the New form's import button moved
+  **into the header** beside the title.
+- **Travel Trip Builder** header's top-left is now an **✕ Close** (was a back chevron) for cross-module
+  consistency; the Edit **Status + Rating** line splits full-width. **Travel Settings** import rows are
+  accent upload links (no chevron, Trips first) mirroring Shows; the **Wellness Library** `Import CSV…`
+  link recoloured to `accent` to match.
+- **Import modals** headers dropped the redundant "CSV" (Import Shows / Books / Quotes; Import Trips /
+  Expenses; **Import Medical Report**) and the file-picker label was Title-cased (**Choose CSV/JSON/JSON
+  CSV File**).
