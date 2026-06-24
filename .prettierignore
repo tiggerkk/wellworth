@@ -6,5 +6,7 @@ src/types/database.ts
 supabase/migrations
 package-lock.json
 docs/wireframes
+public/geo
 *.png
 *.ico
+*.geojson

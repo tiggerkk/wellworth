@@ -1,9 +1,11 @@
 import { useNavigate } from 'react-router'
 import { IconX } from '@tabler/icons-react'
 import { Sheet } from '../components/Sheet'
-import { QuoteListEditor } from '../components/QuoteListEditor'
+import { ConfigListEditor } from '../components/ConfigListEditor'
 import { useAuth } from '../auth/AuthProvider'
 import { useProfileEditor } from '../hooks/useProfileEditor'
+import { countQuotesByField, reassignQuoteField } from '../data/quote'
+import { bumpQuotes } from '../lib/quotes-refresh'
 import {
   addCategory,
   effectiveCategories,
@@ -32,16 +34,21 @@ export function QuoteCategoriesSheet() {
       </header>
       {loading && <p className="p-4 text-sm text-text-secondary">Loading…</p>}
       {profile && (
-        <QuoteListEditor
+        <ConfigListEditor
           list={effectiveCategories(profile.quote_categories)}
-          field="category"
           noun="category"
+          itemNoun="quote"
           userId={session?.user.id}
           persist={(next) => void save({ quote_categories: next })}
           add={addCategory}
           rename={renameCategory}
           remove={removeCategory}
           reorder={reorderCategories}
+          count={(key) => countQuotesByField(session!.user.id, 'category', key)}
+          reassign={(from, to) =>
+            reassignQuoteField(session!.user.id, 'category', from, to)
+          }
+          onChanged={bumpQuotes}
         />
       )}
     </Sheet>

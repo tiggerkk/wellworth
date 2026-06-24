@@ -28,6 +28,13 @@ JSON/CSV import (tolerant repair + unit normalization + review-confirm), the tre
 sparklines + lazy-recharts expanded chart) + tracked-test picker, drag-to-reorder display order, the
 biometric/PIN lock, and the eye-refraction form. Its `docs/medical.md` staging spec has been merged into
 the permanent docs and deleted (with the `CONTINUITY.md` handoff).
+**Travel** (trips as day-by-day itineraries, a visited-places map, per-trip expenses) is
+**feature-complete (M1–M7)** — see "Travel Build Sequence" below: schema + RLS + constants, the Trips
+list + Trip Builder (Days → Stops + city picker), the Dashboard (tiles + "N / 34" province progress +
+shelves), the Leaflet Map (OSM dots + layered DataV/Natural-Earth region fill), the Expenses layer
+(configurable categories, reimbursement mini-parser, per-currency + HKD totals via Frankfurter), and the
+two Settings importers (wide CSV Expenses, itinerary JSON Trips). Its `docs/travel.md` staging spec has
+been merged into the permanent docs (`00-PRD … 05-seed-data` + OWNER-RUNBOOK) and deleted.
 
 ---
 
@@ -39,6 +46,8 @@ the permanent docs and deleted (with the `CONTINUITY.md` handoff).
   `@tabler/icons-react` 3.44, Vitest 4.1, ESLint 10 (flat config), Prettier 3.8, husky 9. `recharts`
   3.8 powers the Net Worth **and Medical** dashboard trend charts (lazy-loaded into their own chunk;
   the Medical dashboard grid uses cheap inline-SVG sparklines and only loads recharts on expand).
+  `leaflet` + `leaflet.markercluster` power the **Travel** map, lazy-loaded into their own chunk
+  (`TravelMapCanvas`) so they're off the main bundle.
 - **Scripts:** `dev`, `build` (`tsc -b && vite build`), `preview`, `lint`, `format`, `typecheck`,
   `test`, `check` (all gates), `gen:types` (Supabase → `src/types/database.ts`), `prepare` (husky).
 - **Env (`.env`, gitignored; `.env.example` documents):** `VITE_SUPABASE_URL`,
@@ -46,7 +55,7 @@ the permanent docs and deleted (with the `CONTINUITY.md` handoff).
   `VITE_GOOGLE_BOOKS_API_KEY` (Books), and the optional `VITE_ALLOWED_EMAILS` (email allowlist —
   empty ⇒ no restriction). All build-time `VITE_` vars.
 - **Gates:** husky `.husky/pre-commit` → lint-staged + `typecheck` + `test`; GitHub Actions
-  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 355 Vitest tests (pure helpers).
+  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 432 Vitest tests (pure helpers).
 - **Deploy status:** Deployed. GitHub `main` → Vercel auto-deploy; the production URL is in the
   Supabase redirect URLs + Google JS origins (see `OWNER-RUNBOOK.md`). Installed + tested on iPhone (PWA).
 - Conventions (DB-access-via-`src/data`, metric storage, generated `database.ts` contract, etc.) live
@@ -1330,6 +1339,24 @@ already rendered on the form + detail since M2.) **No migration** — the six ke
   the first render** (before the router strips the query) and shown on Login — so a failed sign-in
   explains itself instead of looping silently. Don't debug an auth loop without first checking the
   redirect URL's `?error=` and the Supabase sign-up toggle.
+- **F13 — gating a stateful child on `!loading` unmounts it on every background refetch (Travel M2).**
+  The Trip Builder edit body holds the header fields (Name, Rating, …) in **local state**, while
+  day/stop/expense edits do live CRUD + `bumpTravel()`. Each itinerary edit bumps the version →
+  `useAsync` flips `loading=true` (it **keeps** the prior `data`, per F8). The render guard
+  `{!loading && bundle && <EditTripBody/>}` therefore hid the body **during the refetch**, unmounting it
+  and discarding the user's unsaved header edits; it remounted fresh from the DB. Fix: once a `bundle`
+  exists, render the body unconditionally (`{bundle && …}`) and show "Loading…" only on the first load
+  (`loading && !bundle`) — the body stays mounted across refetches and just receives new props. The
+  inverse of F8: F8 wants `!loading` gating when the **subject changes**; here the subject is the same
+  trip, so gating on `!loading` is wrong. Rule of thumb: gate on `!loading` only when the loaded subject
+  identity changes (and key by it); never when a child carries unsaved local state across a refetch.
+- **F14 — a custom overlay over a Leaflet map needs `z-index` above Leaflet's controls (Travel M4).**
+  The Travel Map's multi-trip **chooser overlay** (shown when a city's dot maps to >1 trip) rendered with
+  no `z-index`, so Leaflet's own control container (`.leaflet-top/.leaflet-bottom`, **`z-index: 1000`**,
+  e.g. the bottom-right attribution) painted over it and **swallowed the taps** on the overlay's trip
+  rows — clicking the dot "did nothing" for multi-trip cities (single-trip dots navigate from the marker
+  click, so they were unaffected). Fix: give any DOM overlay layered over a Leaflet map an explicit
+  z-index above **1000** (used `z-[1100]`). Don't assume DOM order is enough over a Leaflet map.
 
 ## Shows / Books / global enhancement (favourites, Esc, master-series removal)
 
@@ -1544,6 +1571,242 @@ Medical structured import **on by default**. 348 → **355** tests.
 - **Quotes Zen**: the quote text is now a button → `routes.quotes.edit(id)`.
 - **Medical**: `profile.medical_importer_enabled` default flipped `false → true` (takes effect on the
   next `supabase db reset`).
+
+## Travel Build Sequence (per milestone)
+
+WellWorth's 7th module: trips as Days → Stops itineraries, a visited-places map, and a per-trip
+expenses layer with an HKD total. The `docs/travel.md` staging spec (+ `templates/travel-itinerary-prompt.md`
+and `templates/travel-itinerary.schema.json`) drove a seven-milestone build; it has since been merged into
+the permanent spec docs and deleted.
+
+### M1 — Schema + RLS + constants + category config
+
+Goal: stand up the Travel data layer + shared vocabulary (no UI yet).
+Migrations: `20260624120000_travel_schema.sql` (5 user-owned tables — `trip`, `trip_day`, `stop`,
+`trip_expense`, `remembered_city` — each with `user_id`, four `(select auth.uid()) = user_id` RLS
+policies, CHECK enums, `moddatetime`, indexes, and API-role GRANTs; hard delete cascades
+trip → day → stop and trip → expense) + `20260624121000_profile_travel_settings.sql`
+(`profile.travel_expense_categories` JSONB). Code: `src/constants/travel.ts` (enums + labels, the
+`TRAVEL_EXPENSE_CATEGORIES` seed, and the 34-entry `CHINA_PROVINCES`) and `src/lib/travel-config.ts`
+(the category list helpers). Tests: `travel-config.test.ts` + `travel.test.ts`.
+
+**Decision — expense categories are a profile JSONB list, not a table.** `travel.md`'s first draft had a
+`travel_expense_category` table + `trip_expense.category_id` FK (RESTRICT). We instead used the **Quotes
+configurable-category pattern verbatim**: a `{key,label}` array on `profile.travel_expense_categories`,
+with `trip_expense.category` storing the stable TEXT key (no FK). Rationale: maximum reuse
+(`src/lib/quotes-config.ts` helpers + `QuoteListEditor`/`ReorderList`), a UX the owner already knows, and
+orphan tolerance (a deleted key still renders via the raw-key fallback). Reassign-before-delete and
+can't-delete-last are enforced in-app, exactly as in Quotes. Net effect: **the module is 5 tables**, and
+`travel.md`'s data-model section was updated to match.
+
+**Decision — FX is generalized, not duplicated (planned for M5).** `src/lib/fx.ts` is hardcoded to
+`CNY|USD` at the 1st-of-month; Travel needs an arbitrary currency at the trip's first day. The plan is to
+_add_ `fetchRateToHkdOn(currency, date)` to `fx.ts` (Net Worth's existing API untouched) and build
+`src/lib/trip-fx.ts` on top — no duplicate Frankfurter client.
+
+**Decision — layered map fill (planned for M4).** Bundle DataV.GeoAtlas (China province fill, Chinese
+names) + Natural Earth public-domain world-countries (non-China country fill) behind a `regionName → shape`
+lookup. `CHINA_PROVINCES` is the single source of truth; a build/test check will assert every province
+resolves in the DataV GeoJSON (DataV's suffixed names normalized via an explicit alias map, since the 5
+autonomous regions carry ethnic qualifiers that a naive suffix-strip misses). Province/state fill outside
+China is parked.
+
+### M2 — Trips list + Trip Builder (Days → Stops) + City picker
+
+Goal: the full trip-logging loop — create a trip, build its day-by-day itinerary, resolve cities.
+Module wiring: `routes.travel.*`, the `IconWorld` `ModuleDef`, three router routes, the screens barrel.
+Data: `src/data/travel.ts` (trip/day/stop/remembered_city CRUD, `getTripBundle`, `reorderDays`/
+`reorderStops`/`nextStopSortOrder`, `recomputeTripDates`, `listTripFacetRows`, `rememberCity`). Logic:
+`src/lib/travel.ts` (row aliases, `TRIP_STATUS_CHIP`, the trip-list filter/sort `applyTripList`, facet
+helpers) + `src/lib/places.ts` (`snapProvince` + the on-demand Nominatim `geocodeCity`) +
+`src/lib/travel-refresh.ts`. Screens: `TravelTrips` (search + status/country/province/year filters +
+swipe-delete), `TripBuilder` (new = header-only + Create; edit = header Save + Itinerary/Expenses tabs,
+Days with date picker / duplicate / delete, per-day stop list with drag-reorder, a Reorder-Days sheet),
+`TravelSettings` (placeholder until M5–M7). Components: `CitySearchSheet` + `StopEditorSheet` (local
+overlays, **not** route sheets, so the Builder draft survives). Tests: `places.test.ts`, `travel.test.ts`.
+
+**Decisions / notes:**
+
+- **Create-then-edit, not a giant client draft.** "New Trip" persists a minimal trip first
+  (`/travel/entry` → header + Create), then the Builder (`/travel/trip/:id`) does **live CRUD** on days
+  and stops (each add/edit/reorder/delete hits the DB + `bumpTravel()` → refetch). Nested ordered
+  sub-entities make a persisted parent far simpler than serializing a deep in-memory draft.
+- **Transitional route scheme.** For M2 the module index `/travel` renders the **Trips list** (so the
+  module is runnable now); M3 introduces the Dashboard at `/travel` and moves the list to `/travel/trips`
+  (the `routes.travel.trips` alias already points at the index to ease that move). Bottom-nav tabs are
+  Trips / New Trip / Settings; Dashboard (M3) and Map (M4) join later.
+- **Day reorder reuses `ReorderList` via a sheet.** Day _cards_ are tall/non-uniform, which
+  `ReorderList` (uniform-row assumption) can't drag inline, so day reordering is a compact Reorder-Days
+  sheet over one-line labels (same approach as Medical's display-order sheet); stop rows **are** one-line,
+  so they drag inline within a day.
+- **`sort_order` is `int4`.** New stops append via `nextStopSortOrder` (max+1), not `Date.now()` (which
+  overflows a 32-bit int). Reorders renumber to 0..n.
+- **City resolution.** Manual + the `remembered_city` cache (instant, no network); Nominatim is an
+  on-demand "Look up online" assist (never per-keystroke, so within usage policy) that suggests
+  country/admin-1/coords to confirm. Province is `snapProvince`-snapped to a canonical `CHINA_PROVINCES`
+  value before saving, so the M3/M4 shaded map + "N / 34" count stay consistent. Confirming a city upserts
+  it into the cache (`onConflict: user_id,city_norm`).
+- **Stop cost stays informational** (a note on the editor reiterates it's never summed); the Expenses
+  layer (M5) is the authoritative spend total.
+
+### M3 — Dashboard (tiles, province progress, shelves)
+
+Goal: an at-a-glance view of places visited. Logic: `src/lib/travel-stats.ts` (`computeTravelStats` —
+distinct China-provinces / China-cities / countries / cities **over `status='visited'` trips only**,
+plus trips-this-year + inclusive days-travelled; `isChinaCountry`; `CHINA_PROVINCE_TOTAL = 34`), tested
+in `travel-stats.test.ts`. Screen: `TravelDashboard` (four count tiles, an "N / 34" province-progress
+bar, count-based metric tiles, and Recently-Visited / Planning / Want-to-Visit shelves reusing
+`SectionCard` + `StatusChip` + `Thumb`). Reuses the `listTrips` + `listTripFacetRows` reads already built
+for the Trips list.
+
+**Decisions / notes:**
+
+- **Routing restructure (the M2-planned move).** `/travel` now renders the **Dashboard**; the Trips list
+  moved to `/travel/trips` (the `routes.travel.trips` alias was pre-pointed there in M2, so nothing else
+  changed). Bottom-nav tabs are now Dashboard / Trips / New Trip / Settings; the Map tab joins in M4.
+- **Province count can't exceed 34.** `computeTravelStats` intersects stop provinces with
+  `CHINA_PROVINCES` before counting, so a stray non-canonical value never inflates "N / 34" — belt-and-
+  braces on top of the city picker's `snapProvince`.
+- **Monetary metrics deferred to M5.** Spend totals + the HKD equivalent (and per-card trip totals) need
+  the Expenses layer, so M3 ships only the count-based metrics (trips this year, days travelled); the card
+  rows show dates + primary region, not a total yet.
+- **Province map is M4.** M3 shows the progress _bar_; a note points to the upcoming shaded map.
+
+### M4 — Map (Leaflet + OSM dots + layered region fill)
+
+Goal: a map of visited cities with a shaded region overlay. Deps added: `leaflet` +
+`leaflet.markercluster` (+ `@types/*`). Assets: two **vendored** GeoJSON files in `public/geo/` —
+`china-provinces.geojson` (DataV.GeoAtlas, 34 provinces + a South-China-Sea feature) and
+`world-countries.geojson` (Natural Earth 110m admin-0, public domain). Logic: `src/lib/travel-geo.ts`
+(`resolveCountryName` + `COUNTRY_ALIASES`; the asset URLs). Component: `src/components/TravelMapCanvas.tsx`
+(imperative Leaflet — no react-leaflet — **lazy-loaded** so Leaflet lands in its own chunk; OSM tiles,
+markercluster dots coloured by status, two `L.geoJSON` fill layers). Screen: `src/screens/TravelMap.tsx`
+(loads trips + facet rows + remembered-city coords, builds the city→trips/coords model, the fill toggle,
+and the city→trip(s) overlay). Route `/travel/map` + a Map bottom-nav tab. Test: `travel-geo.test.ts`.
+
+**Decisions / notes:**
+
+- **Vendored, not fetched-from-CDN, and not precached.** Both GeoJSON live in `public/geo/` (served from
+  our origin); the workbox `globPatterns` doesn't list `.geojson`, so they stay out of the PWA precache
+  and load on demand with the lazy map chunk. They're also added to `.prettierignore` (don't reflow the
+  minified JSON).
+- **Build-time name-match guard.** `travel-geo.test.ts` `?raw`-imports both files (so it typechecks under
+  `tsconfig.app`'s `vite/client` types — no `node:fs`) and asserts **every `CHINA_PROVINCES` resolves**
+  via `snapProvince` against the DataV feature names, and **every `COUNTRY_ALIASES` target exists** in the
+  NE `NAME` set. A name drift fails the build, not silently leaves a region unshaded.
+- **Layered fill via one `regionName → shape` model.** China is filled by province (DataV, matched with
+  `snapProvince`); non-China countries are filled whole (NE, matched with `resolveCountryName`). Both fill
+  only **visited** regions, in the teal `--color-positive`. Province/state fill _outside_ China is parked.
+- **Dots need coords from the cache.** Stops store only city/country/province; the map joins a stop's city
+  to its `remembered_city` row (by normalized name) for lat/lng. Cities without a cached pin show no dot
+  (a hint points to the picker's "Look up online"). Dots are coral (visited) / neutral (planned).
+- **GCJ-02 not corrected (v1).** Stored coords + the GeoJSON + OSM tiles are treated as WGS-84; the
+  GCJ-02 visual offset over Chinese areas isn't corrected — invisible at province/country zoom, accepted
+  per `travel.md`.
+- **Imperative Leaflet, map created once.** The map/tiles/cluster are built in a mount-only effect that
+  reads the latest props via a ref; a second effect restyles the fill + rebuilds markers on data/toggle
+  change, so toggling fill never resets the viewport.
+
+### M5 — Expenses layer (CRUD, categories, reimbursement, HKD total)
+
+Goal: the authoritative per-trip spend total (stop costs stay informational). Logic:
+`src/lib/fx.ts` gained `fetchRateToHkdOn(currency, date)` (arbitrary currency at a specific date —
+Net Worth's API untouched); `src/lib/trip-fx.ts` (`tripFirstDay` + `fetchTripRates`);
+`src/lib/expenses.ts` (`perCurrencyTotals` / `hkdTotals` / `categoryTotalsHkd` / `rateFor` /
+`formatMoney`); `src/lib/reimburse.ts` (the safe mini-parser). Data: expense CRUD +
+`countExpensesByCategory` / `reassignExpenseCategory` in `data/travel.ts`. UI: `ExpenseEditorSheet`,
+`TripExpensesPanel` (the Expenses tab — per-currency + HKD totals, FX rates, category breakdown, rows),
+`TravelExpenseChart` (lazy recharts donut), and `TravelCategoriesSheet`. Tests: `reimburse.test.ts`,
+`expenses.test.ts`, `trip-fx.test.ts`.
+
+**Decisions / notes:**
+
+- **`QuoteListEditor` → `ConfigListEditor` (shared, decoupled).** The Quotes list editor was coupled to
+  `data/quote` (`countQuotesByField` / `reassignQuoteField` / `bumpQuotes`). It's now a module-agnostic
+  `src/components/ConfigListEditor.tsx` that takes `count` / `reassign` / `onChanged` (+ `itemNoun`) as
+  props; both Quote sheets and the new `TravelCategoriesSheet` inject their own. No UI duplicated.
+- **Expense categories = the Quotes pattern.** `{key,label}` JSONB on `profile.travel_expense_categories`;
+  `trip_expense.category` stores the stable key. Deleting an in-use category reassigns its expenses to a
+  chosen replacement first; the last category can't be deleted; orphan keys still render (raw-key fallback).
+- **Reimbursement is a safe mini-parser, never `eval`.** `evalReimbursement(formula, amount)` is a
+  recursive-descent evaluator over `+ - * / ( )`, numbers, and `amount` (presets ½ / ⅖ / Full). Returns
+  null on a parse error or non-finite result (e.g. `amount/0`); rounds to cents. Stored as
+  `reimbursed_formula` + the computed `reimbursed_amount`. The reimbursement UI shows only when the trip's
+  **Track Reimbursement** toggle is on.
+- **HKD total: one rate per currency, frozen at the trip's first day.** Per-currency totals stay native;
+  the HKD total converts each via `trip.fx_rates` (HKD = 1). A used currency without a rate is surfaced
+  (excluded from the total, listed) with a **Fetch missing rates** button (`fetchTripRates` → Frankfurter
+  at `tripFirstDay`) and an inline **manual override** input per currency — the fallback for non-ECB
+  currencies (e.g. TWD/VND) Frankfurter can't price.
+- **Per-trip FX lives in the Expenses tab, not Settings.** `travel.md` listed FX overrides under Settings,
+  but they're per-trip and only actionable alongside the expenses, so the rate list + override + fetch sit
+  in the trip's Expenses tab. Settings holds the (global) category editor.
+- **Category breakdown is in HKD** so cross-currency categories combine; unpriced expenses are excluded
+  from the donut (consistent with the HKD total).
+
+### M6 — Import CSV Expenses (wide → long)
+
+Goal: bulk-load a trip's spend from a wide spreadsheet. Logic: `src/lib/travel-expense-import.ts`
+(`parseExpenseCsv` classifies the header row into Trip/Date/Cost/Re-imbursed + category + unknown columns;
+`buildExpenses` turns each row into one or more `trip_expense` drafts; `parseAmount`/`parseDate`), tested
+in `travel-expense-import.test.ts`. Data: `deleteExpensesForTrip`. Screen:
+`src/screens/ImportTravelExpensesSheet.tsx` (file pick → detected-columns + unknown-header mapping +
+per-trip summary + replace-per-trip → import). Route `/travel/import-expenses` + a Settings → Import link.
+Assets: `templates/travel-expenses-template.csv` + `…-import-guide.md`; `.gitignore` ignores real
+`travel-expenses*.csv` (template excepted).
+
+**Decisions / notes:**
+
+- **Wide → long with splitting.** A row's filled category columns each become an expense; a row with >1
+  filled splits. `Cost` is the row total, **cross-checked** against the category-cell sum (mismatch =
+  warning, not error). A row with only `Cost` falls back to the first category (warned).
+- **Reimbursed is allocated pro-rata** across a split row's expenses by cost; the last part takes the
+  rounding remainder. Stored as `reimbursed_amount` (+ the number as `reimbursed_formula`).
+- **No currency column** — every imported amount is in the **trip's base currency** (a domestic-spend
+  sheet); the owner sets HKD rates afterwards in the trip's Expenses tab. New trips are created
+  `status='visited'`, `base_currency='CNY'`.
+- **Unknown headers are surfaced, never dropped** — a `Skip | <category>` picker per unknown column maps
+  them before import (matched against the owner's configured category **labels**, so renamed categories
+  still match their own labels and anything else becomes "unknown").
+- **Trip attribution by name** (case-insensitive); created if missing. **Additive** by default, with an
+  opt-in **"replace existing expenses for matched trips"** (one `deleteExpensesForTrip` per matched trip).
+
+### M7 — Import CSV Trips (itinerary JSON)
+
+Goal: a one-time back-catalogue load of whole itineraries. Logic: `src/lib/itinerary-import.ts`
+(`parseItineraryJson` — the Medical tolerant-repair stack, then validates the array into `TripDraft[]`
+with safe enum fallbacks, null-date preservation, and province snapping; `distinctCities`; `tripSummary`),
+tested in `itinerary-import.test.ts`. Screen: `src/screens/ImportTravelTripsSheet.tsx` (one combined
+review — trip/day/stop counts per trip + a pooled new-cities list with optional per-city geocode — then
+writes trips → days → stops in order and caches the new cities). Route `/travel/import-trips` + a
+Settings → Import link. Input shape: `templates/travel-itinerary.schema.json` (prompt:
+`travel-itinerary-prompt.md`), both already in the repo.
+
+**Decisions / notes:**
+
+- **Tolerant repair shared with Medical.** Same two passes (stray quote after a number; missing comma
+  before a new key) tried in sequence before a clear line/column error. Bad enums fall back (`type → other`,
+  `status → visited`); `base_currency → CNY`; a trip with no `trip_name` is skipped with a warning — the
+  import never hard-fails on one bad trip.
+- **Drafts, not finished trips.** Everything writes as-is for the owner to finish in the Trip Builder;
+  `recomputeTripDates` caches each trip's start/end from its day dates after insert.
+- **Pooled new-city resolution.** Distinct cities not already in the `remembered_city` cache are listed
+  once; each can optionally be geocoded (Nominatim, on-demand) to pin coords. On import they're cached
+  (country/province from the JSON, province snapped for China) so the Map can dot them; existing cached
+  cities are left untouched. Skipping resolution still imports — the dot just waits for coords.
+- **Province snapping at import.** Chinese stops' `province` is snapped to a canonical `CHINA_PROVINCES`
+  value; foreign provinces are kept verbatim — so the shaded map + "N / 34" stay consistent without manual
+  cleanup.
+
+> **Travel is feature-complete (M1–M7).** Its `docs/travel.md` staging spec has been merged into the
+> permanent spec docs (`00-PRD … 05-seed-data` + OWNER-RUNBOOK "Logging a trip") and deleted, as was done
+> for the other modules.
+>
+> **Post-completion fixes** (all reflected in `01-screens.md`): (1) a per-Day **Calendar date chip** in
+> the Trip Builder Itinerary; (2) the Edit screen gained a **RESET** button and **SAVE now returns** to
+> where you came from (mirroring the other Entry/Edit forms); (3) the Map's multi-trip **chooser overlay**
+> is raised above Leaflet's controls so its rows are tappable (F14); (4) the Edit body stays mounted across
+> itinerary refetches so unsaved header edits survive opening a Day/Stop (F13).
 
 ## Known limitations / deferred (not spec issues — future work)
 

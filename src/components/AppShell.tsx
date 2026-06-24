@@ -22,6 +22,7 @@ import {
   QuotesSettings,
   QuotesZen,
   Settings,
+  TravelSettings,
   ShowsDashboard,
   ShowsEntry,
   ShowsLibrary,
@@ -52,6 +53,7 @@ const TAB_FOR_PATH: Record<string, React.ReactNode> = {
   '/quotes/library': <QuotesLibrary />,
   '/quotes/entry': <QuotesEntry />,
   '/quotes/settings': <QuotesSettings />,
+  '/travel/settings': <TravelSettings />,
 }
 
 export function AppShell() {

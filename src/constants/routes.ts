@@ -82,4 +82,16 @@ export const routes = {
     settingsLock: '/medical/settings/lock', // biometric/PIN lock config
     import: '/medical/import', // structured JSON/CSV importer (sheet)
   },
+  travel: {
+    base: '/travel',
+    dashboard: '/travel', // tiles, province progress, trip shelves
+    map: '/travel/map', // Leaflet map of visited cities + region fill
+    trips: '/travel/trips', // searchable/filterable trip list
+    entry: '/travel/entry', // new Trip Builder
+    edit: (id: string) => `/travel/trip/${id}`, // Trip Builder (itinerary + expenses)
+    settings: '/travel/settings', // expense categories, imports
+    settingsCategories: '/travel/settings/categories', // manage expense-category list (sheet)
+    importExpenses: '/travel/import-expenses', // wide CSV expenses importer (sheet)
+    importTrips: '/travel/import-trips', // itinerary JSON-array importer (sheet)
+  },
 } as const

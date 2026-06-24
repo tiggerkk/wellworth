@@ -311,3 +311,28 @@ The importer (M3) accepts JSON (primary) + CSV (RFC-4180), auto-repairs the know
 quote after a number, e.g. `8.6"`), normalizes provider names to `test_key` via an alias map and values
 to the canonical unit, and requires a **review-before-save** step (counts per category; catches omitted
 sections).
+
+## Travel - seed & assets
+
+- **Expense categories** (owner-editable thereafter): **Restaurant, Take-out, Groceries, Shopping,
+  Activity, Local Transit, Flight/Train, Hotel** — the `TRAVEL_EXPENSE_CATEGORIES` defaults in
+  `src/constants/travel.ts` (display order = array order). Applied when `profile.travel_expense_categories`
+  is NULL; **not a seeded table** (the Quotes pattern). The labels double as the wide-CSV importer's
+  recognized category headers.
+- **`CHINA_PROVINCES`** constant — the 34 province-level divisions (bare canonical names, incl. Hong Kong
+  & Macau), the shared vocabulary for the city resolver, the shaded map, and the "N / 34" denominator.
+- **Bundled GeoJSON** (static assets in `public/geo/`, served from our origin, **excluded from the PWA
+  precache**, loaded on demand by the lazy map chunk): `china-provinces.geojson` (DataV.GeoAtlas, Chinese
+  province names) + `world-countries.geojson` (Natural Earth 110m admin-0, public domain). A build-time
+  test asserts the names line up with `CHINA_PROVINCES` / `COUNTRY_ALIASES`.
+- **`remembered_city`** is populated on first use (manual confirm or geocode) — no up-front seed.
+
+## Travel - import templates
+
+Real trip/expense data stays **out of the repo**; only sanitized templates are tracked.
+
+- `templates/travel-expenses-template.csv` + `travel-expenses-import-guide.md` — the wide expenses CSV
+  (tracked). Real `travel-expenses*.csv` are **gitignored**.
+- `templates/travel-itinerary.schema.json` + `travel-itinerary-prompt.md` — the itinerary JSON array
+  shape + the model-agnostic extraction prompt (tracked). Produced outside the app from freeform
+  itinerary text by any AI tool; imported as drafts.

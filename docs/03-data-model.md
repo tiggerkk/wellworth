@@ -53,6 +53,11 @@ Nutrient sets are stored as JSONB maps (`nutrient_key → amount`), validated ag
   on cold start); UI default 5. Choices: Immediately(0)/1/5/15/Indefinite(NULL)
   (the nine `medical_*` columns are added by
   `supabase/migrations/20260622130000_profile_medical_settings.sql`)
+- `travel_expense_categories` JSONB NULL — the owner's configurable Travel expense-category list, a JSONB
+  array of `{key, label}` in display order; **NULL = canonical seed defaults** (`TRAVEL_EXPENSE_CATEGORIES`
+  in `src/constants/travel.ts`), resolved tolerantly by `src/lib/travel-config.ts`. `trip_expense.category`
+  stores the stable `key`. There is **no `travel_expense_category` table** — categories live on the profile,
+  the Quotes pattern. (added by `supabase/migrations/20260624121000_profile_travel_settings.sql`)
 - `created_at`, `updated_at` TIMESTAMPTZ
 
 ### food (custom items + cached USDA/Off items the user favorited or logged)
@@ -299,6 +304,59 @@ policies using `(select auth.uid()) = user_id`, `CHECK` on the enum columns, `mo
 `updated_at`, explicit `GRANT` to `anon`/`authenticated`. **Hard delete** (deleting a report cascades
 its results). The migration is `supabase/migrations/20260622120000_medical_schema.sql`.
 
+### trip (one row per trip)
+
+- `id` UUID PK · `user_id` UUID → auth.users
+- `name` TEXT · `status` TEXT — `want` | `planning` | `visited` (CHECK)
+- `base_currency` TEXT DEFAULT 'CNY' · `cover_url` TEXT NULL (pasted image URL, rendered `no-referrer`)
+- `companions` TEXT NULL · `rating` NUMERIC NULL (0–5 in 0.5 steps, CHECK) · `notes` TEXT NULL
+- `track_reimbursement` BOOLEAN NOT NULL DEFAULT false
+- `fx_rates` JSONB NOT NULL DEFAULT '{}' — `{ currency: rate_to_HKD }` frozen at the trip's first day
+  (+ any manual overrides); HKD is implicitly 1
+- `start_date` DATE NULL · `end_date` DATE NULL — **cached** from the day dates (`recomputeTripDates`)
+- timestamps · Index (`user_id`, `status`), (`user_id`, `start_date`)
+
+### trip_day (an ordered day within a trip)
+
+- `id` · `user_id` · `trip_id` UUID → trip (**ON DELETE CASCADE**)
+- `day_date` DATE NULL (nullable while planning) · `sort_order` INT NOT NULL · `label` TEXT NULL
+- timestamps · Index (`trip_id`, `sort_order`)
+
+### stop (an ordered entry within a day)
+
+- `id` · `user_id` · `trip_day_id` UUID → trip_day (**ON DELETE CASCADE**)
+- `type` TEXT — `travel` | `visit` | `eat` | `shop` | `stay` | `other` (CHECK)
+- `city`/`country`/`province`/`description`/`details` TEXT NULL · `time` TIME NULL
+- `cost` NUMERIC NULL · `cost_currency` TEXT NULL (defaults to the country CCY at the UI; per-stop
+  override; **informational only, never summed**)
+- `local_transit` TEXT NULL (Visit only) · `travel_mode` TEXT NULL — `air`|`train`|`car`|`ferry`
+  (CHECK; Travel only) · `from_loc`/`to_loc` TEXT NULL
+- `completion` TEXT NULL — `done` | `skipped` (CHECK; NULL = unmarked) · `sort_order` INT NOT NULL
+- timestamps · Index (`trip_day_id`, `sort_order`)
+
+### trip_expense (the trip's authoritative spend log; decoupled from the itinerary)
+
+- `id` · `user_id` · `trip_id` UUID → trip (**ON DELETE CASCADE**)
+- `expense_date` DATE NULL · `description` TEXT NOT NULL
+- `category` TEXT NOT NULL — the stable **key** from `profile.travel_expense_categories` (**no FK**;
+  orphan-tolerant via the raw-key fallback in `src/lib/travel-config.ts`)
+- `cost` NUMERIC NOT NULL · `currency` TEXT NOT NULL (set from the trip's base currency)
+- `reimbursed_formula` TEXT NULL (a number or an arithmetic expr in `amount`) · `reimbursed_amount`
+  NUMERIC NULL (the evaluated value)
+- timestamps · Index (`trip_id`, `expense_date`), (`trip_id`, `category`)
+
+### remembered_city (the city → country/province/coords cache)
+
+- `id` · `user_id` · `city` TEXT · `country` TEXT · `province` TEXT NULL · `lat`/`lng` NUMERIC NULL
+- `city_norm` TEXT GENERATED ALWAYS AS `lower(btrim(city))` STORED · UNIQUE (`user_id`, `city_norm`)
+  (a generated column backs the per-owner unique, mirroring `quote.text_norm` — an inline UNIQUE can't
+  hold an expression) · timestamps
+
+Standard rules apply to all five Travel tables: own `user_id` for direct RLS, four owner policies using
+`(select auth.uid()) = user_id`, `CHECK` on the enum columns, `moddatetime` trigger on `updated_at`,
+explicit `GRANT` to `anon`/`authenticated`. **Hard delete** (deleting a trip cascades its days → stops
+and its expenses). The migration is `supabase/migrations/20260624120000_travel_schema.sql`.
+
 ## Relationships
 
 profile 1—_ food, activity, diary_entry · food 1—_ serving · food 1—_ diary_entry ·
@@ -306,7 +364,9 @@ activity 1—_ diary_entry · diary_entry 1—\* strength_set · profile 1—\* 
 profile 1—\* book · profile 1—\* quote · show 1—\* quote and book 1—\* quote
 (both optional, ON DELETE SET NULL) · profile 1—\* medical_report ·
 medical_report 1—\* medical_result · medical_lab_test 1—\* medical_result
-(optional, `test_key` NULL for ad-hoc tests).
+(optional, `test_key` NULL for ad-hoc tests) · profile 1—\* trip ·
+trip 1—\* trip_day 1—\* stop · trip 1—\* trip_expense · profile 1—\* remembered_city.
+(Travel expense categories are a JSONB list on `profile`, not a table.)
 
 ## Soft deletes
 

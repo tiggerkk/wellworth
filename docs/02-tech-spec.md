@@ -5,12 +5,16 @@
 - **Frontend:** React + Vite + TypeScript (strict mode). Tailwind CSS (v4, CSS-first via
   `@tailwindcss/vite`). `vite-plugin-pwa` (`registerType: 'autoUpdate'`) for install/offline. **React
   Router** (the unified `react-router` package) for routing + modal sheets. **Recharts** powers the Net
-  Worth dashboard trend chart; it's **lazy-loaded** (its own chunk) so it stays out of the initial bundle.
+  Worth dashboard trend chart (and the Medical + **Travel** expense-breakdown charts); it's
+  **lazy-loaded** (its own chunk) so it stays out of the initial bundle.
+- **Map:** **Leaflet** + `leaflet.markercluster` power the **Travel** map (imperative, no react-leaflet);
+  **lazy-loaded** into its own chunk so Leaflet stays off the initial bundle.
 - **Lazy chunks load via `src/lib/lazy-with-reload.ts` (`lazyWithReload`), not bare `React.lazy`.** After
   a deploy the installed PWA can reference the previous build's hashed chunk names; the missing
   `/assets/*.js` then returns the SPA fallback HTML ("'text/html' is not a valid JavaScript MIME type").
   `lazyWithReload` forces a **one-time** `location.reload()` (sessionStorage-guarded against loops) to pull
-  fresh chunk names. Used by the Net Worth / Medical trend charts and the barcode scanner.
+  fresh chunk names. Used by the Net Worth / Medical trend charts, the barcode scanner, and the Travel
+  map + expense-breakdown chart.
 - **Barcode:** `@zxing/browser` (`BrowserMultiFormatReader`) + `@zxing/library` decoding the device
   camera via `getUserMedia`. Requires HTTPS (localhost is exempt for dev). The scanner is lazy-loaded
   so ZXing is a separate chunk, fetched only when scanning.
@@ -18,6 +22,10 @@
 - **Hosting:** Vercel / Netlify / Cloudflare Pages (any free tier; HTTPS automatic).
 - **Food data:** USDA FoodData Central (search + nutrients, free data.gov key, ~1000 req/hr,
   public domain); Open Food Facts (barcode lookup, free).
+- **Map & place data (Travel):** OpenStreetMap tiles + **Leaflet** (keyless); **Nominatim** (keyless,
+  on-demand) for geocode assist; bundled GeoJSON in `public/geo/` — **DataV.GeoAtlas** China provinces +
+  **Natural Earth** world countries (vendored, served from our origin, excluded from the PWA precache).
+  **Frankfurter** (keyless, ECB) for per-trip native→HKD FX.
 
 ## Folder structure
 
@@ -30,7 +38,9 @@ src/
                      # date, food-api, off-api, food-search, diary-refresh, diary-clipboard, csv,
                      # networth, fx, networth-refresh, shows, shows-refresh, tmdb-api, shows-import,
                      # books, books-refresh, books-api, books-import, quotes, quotes-refresh,
-                     # quotes-import, last-module helpers
+                     # quotes-import, travel, travel-config, travel-refresh, travel-stats,
+                     # travel-geo, places, trip-fx, expenses, reimburse, travel-expense-import,
+                     # itinerary-import, last-module helpers
   constants/         # global constants (groups, effort-levels, nutrient-sections, ranges,
                      # profile-defaults, seed-activities, routes, modules)
                      # routes.ts = all route paths (one source of truth); modules.ts = the
@@ -46,7 +56,7 @@ docs/                # the spec bundle
 ## Navigation & routing
 
 - The app is **multi-module behind a Home hub**. Routes are **URL-namespaced per module**
-  (`/wellness/*`, `/networth/*`, `/shows/*`, `/books/*`, `/quotes/*`) and declared as flat children of a
+  (`/wellness/*`, `/networth/*`, `/shows/*`, `/books/*`, `/quotes/*`, `/medical/*`, `/travel/*`) and declared as flat children of a
   single `<AppShell/>` layout in `src/router.tsx`. Path strings live in `src/constants/routes.ts`
   (one source of truth) and the hub/bottom-nav are derived from `src/constants/modules.ts`
   (`MODULES` + `moduleForPath`). Adding a module = a `ModuleDef` + its routes — no structural change.
@@ -404,6 +414,59 @@ testOrder?)` is **tolerant** (unknown categories/tests sort last); `trackedSerie
 - **No new external API.** No Tesseract, no Supabase Storage; originals are Google Drive URL(s) on
   `medical_report.document_urls`.
 
+## Travel
+
+- **Constants** (`src/constants/travel.ts`): the stop-type / status / travel-mode / completion enums +
+  labels; `TRAVEL_EXPENSE_CATEGORIES` (seed defaults for the configurable list); `CURRENCIES` (the
+  picker shortlist); and **`CHINA_PROVINCES`** — the 34 province-level divisions as bare canonical names
+  (no 省/市/自治区/特别行政区 suffix). `CHINA_PROVINCES` is the single source of truth for the city
+  resolver, the shaded map, and the "N / 34" denominator.
+- **City resolution** (`src/lib/places.ts`): manual + the **`remembered_city`** cache. `snapProvince`
+  maps any province/admin-1 string (typed, cached, or geocoded) to a canonical `CHINA_PROVINCES` value
+  (Chinese suffix-strip + an explicit alias table for the ethnic-qualified autonomous regions + English
+  admin-1 names), or null for a foreign region (kept verbatim). `geocodeCity` calls **Nominatim**
+  on-demand (assist-only; never per-keystroke) and snaps the suggested province. The city picker always
+  allows manual entry — geocoding is never a hard dependency.
+- **Map fill** (`src/lib/travel-geo.ts` + `src/components/TravelMapCanvas.tsx`): two **vendored** GeoJSON
+  in `public/geo/` back a layered `regionName → shape` fill — China by province (DataV, matched via
+  `snapProvince`) and non-China countries whole (Natural Earth, matched via `resolveCountryName` +
+  `COUNTRY_ALIASES`). A **build-time test** (`travel-geo.test.ts`) asserts every `CHINA_PROVINCES` and
+  every alias target resolves in the bundled files, so a name drift fails the build rather than silently
+  leaving a region unshaded. WGS-84 throughout; the GCJ-02 offset isn't corrected (v1).
+- **HKD trip total** (`src/lib/trip-fx.ts` + `src/lib/expenses.ts`): per-currency totals stay native; the
+  HKD total converts each via `trip.fx_rates` (HKD = 1). `fetchRateToHkdOn(currency, date)` (added to the
+  shared `src/lib/fx.ts`) fetches one rate per currency at the **trip's first day** (`tripFirstDay` =
+  start date, else earliest dated expense, else today); rates are frozen on `trip.fx_rates`. A currency
+  Frankfurter can't price (non-ECB, e.g. TWD/VND) is surfaced for a **manual override**. The category
+  breakdown is in HKD (so cross-currency categories combine).
+- **Reimbursement** (`src/lib/reimburse.ts`): `evalReimbursement(formula, amount)` is a **safe
+  recursive-descent parser** over `+ - * / ( )`, numbers, and `amount` (presets ½ / ⅖ / Full) — **never
+  `eval`**. Returns null on a parse error or non-finite result (e.g. `amount/0`); rounds to cents. Shown
+  only when the trip's Track Reimbursement toggle is on.
+- **Expense categories** (`src/lib/travel-config.ts`): the Quotes pattern — a `{key,label}` JSONB list on
+  `profile.travel_expense_categories`; `trip_expense.category` stores the stable key. Add/rename/delete/
+  reorder via the shared `ConfigListEditor` (the generalized former `QuoteListEditor`, decoupled via
+  `count`/`reassign`/`onChanged` props); deleting an in-use category reassigns its expenses first; the
+  last can't be deleted; orphan keys still render via the raw-key fallback.
+- **Expense CSV import** (`src/lib/travel-expense-import.ts`; RFC-4180 via `parseCsv`, UTF-8, dates
+  `YYYY-MM-DD`, thousands-commas/currency-symbols stripped). A **wide** sheet
+  (`Trip, Date, Restaurant…Flight/Train, Cost, Re-imbursed`): each filled category column → an expense (a
+  multi-category row **splits**); `Cost` is cross-checked against the category sum (warning, not error);
+  `Re-imbursed` is allocated **pro-rata**; rows attribute to a trip by name (created if missing);
+  **unknown headers are surfaced** for mapping (or skip), never dropped; additive with an opt-in
+  **replace-per-trip**. Amounts use the trip's base currency (no currency column).
+- **Itinerary AI-import** (`src/lib/itinerary-import.ts`): a **JSON array of trips**
+  (`templates/travel-itinerary.schema.json`, prompt `templates/travel-itinerary-prompt.md`) with the same
+  tolerant repair as Medical (stray quote after a number, missing comma; clear line/column error
+  otherwise). Validates each trip into a draft (safe enum fallbacks, null dates preserved, province
+  snapped for China). **One combined review** (per-trip day/stop counts + a pooled new-cities list with
+  optional per-city geocode) writes trips → ordered days → ordered stops as **drafts** (finished in the
+  Trip Builder) and caches the new cities. Intended as a one-time back-catalogue load.
+- **Counts** (`src/lib/travel-stats.ts`): China Provinces / China Cities / Countries / Cities are
+  distinct over `status = 'visited'` trips (`isChinaCountry`; province count intersected with
+  `CHINA_PROVINCES`); plus trips-this-year and inclusive days-travelled. (An all-trips money roll-up is a
+  non-goal.) Refresh tick: `src/lib/travel-refresh.ts` (`bumpTravel` / `useTravelVersion`).
+
 ## External APIs
 
 - **Called directly from the browser** (no server proxy): the USDA key is a `VITE_` var and Open Food Facts allows browser requests. Results are cached into `food` on favorite/log to limit calls.
@@ -413,7 +476,9 @@ testOrder?)` is **tolerant** (unknown categories/tests sort last); `trackedSerie
   Detail is `GET /food/{fdcId}`. Map nutrients on the stable INFOODS **`nutrient.number`** (e.g. 208 energy kcal — not 268 kJ; 320 vitamin A µg RAE — not 318 IU; 435 folate µg DFE; 328 vitamin D µg; 312 copper mg). USDA amounts are per 100 g. When a USDA (or OFF) food is favorited or logged, cache a copy into `food` (`source`, `external_id`); plain search hits aren't persisted.
 - **Open Food Facts** (`world.openfoodfacts.org/api/v2/product/{barcode}.json`): free, global. **Every `*_100g` value is in grams** (including vitamins/minerals) → scale to our mg (×1000) / µg (×1e6). Sodium = `salt_100g / 2.5 × 1000` when `sodium_100g` is absent. All fields optional/sparse. Scanned products save into Custom.
 - The **complete** nutrient mappings are the source of truth in code: USDA `nutrient.number` → our key in `src/lib/food-api.ts`, and Open Food Facts key → our key (with the per-field scale factor) in `src/lib/off-api.ts`. The owner-band DRI target/UL values are tabulated in `05-seed-data.md` and live in `src/lib/dri.ts`.
-- **Frankfurter** (`api.frankfurter.dev/v1/{date}?from={CNY|USD}&to=HKD`): **keyless**, ECB-sourced, CORS-enabled — used by **Net Worth** for native→HKD FX as of the **1st of the month** (it returns the most recent rate on/before a non-trading day). CNY is the stored code; HKD = 1 is never fetched. The fetched rate is **frozen** onto each `asset_entry` (`fx_rate_to_base`/`value_base`) so saved months are immune to later revisions; the user can override per currency. Helpers + a small cache live in `src/lib/fx.ts`.
+- **Frankfurter** (`api.frankfurter.dev/v1/{date}?from={CNY|USD}&to=HKD`): **keyless**, ECB-sourced, CORS-enabled — used by **Net Worth** for native→HKD FX as of the **1st of the month** (it returns the most recent rate on/before a non-trading day). CNY is the stored code; HKD = 1 is never fetched. The fetched rate is **frozen** onto each `asset_entry` (`fx_rate_to_base`/`value_base`) so saved months are immune to later revisions; the user can override per currency. Helpers + a small cache live in `src/lib/fx.ts`. **Travel** reuses the same client via `fetchRateToHkdOn(currency, date)` — an arbitrary currency at the **trip's first day** (one rate per currency, frozen on `trip.fx_rates`), with a manual override for currencies the ECB set doesn't price.
+- **Nominatim** (`nominatim.openstreetmap.org/search`, **keyless**, CORS-enabled): used by **Travel** as an **on-demand** geocode assist only (a button, never per-keystroke, so within the usage policy), suggesting country / admin-1 / coords for a new city to confirm. Browser-direct; identified by the app's Referer. Manual entry always works if it's unavailable.
+- **OpenStreetMap tiles** (`tile.openstreetmap.org`, keyless, attributed) render the **Travel** Leaflet map. The two province/country **GeoJSON are vendored** in `public/geo/` (not a runtime API) and fetched from our own origin by the lazy map chunk.
 - **TMDB** (`api.themoviedb.org/3`): free v3 `api_key` (one signup), a `VITE_` var, **called directly from the browser** (CORS-enabled) — same pattern as USDA. Used by **Shows**, two-step on-demand only: **search** per the Type toggle (`GET /search/{movie|tv}?query=…` → title, year, `poster_path`) and **details on select** (`GET /{movie|tv}/{id}?append_to_response=credits,external_ids` → genres, overview, runtime, movie director from `credits.crew`/TV `created_by`, top ~10 cast, TV `number_of_seasons`/`number_of_episodes`, `imdb_id`). **Chinese-aware:** a CJK query/title adds `language=zh-CN`; the **documentary** type uses the `/tv` endpoint. A per-show **`refreshFromTmdb`** re-pulls the same details for a stored `tmdb_id`. Images store only a URL/path — `poster_path` is **either** a TMDB path (URL built from the fixed CDN base `https://image.tmdb.org/t/p/{size}{path}`) **or** a full pasted image URL; `posterUrl`/`isAbsoluteUrl` (in `src/lib/shows.ts`) disambiguate, and every poster `<img>` uses `referrerpolicy="no-referrer"`. The client + pure mappers live in `src/lib/tmdb-api.ts`; nothing persists until CREATE/SAVE.
 - **Google Books** (`www.googleapis.com/books/v1`) + **Open Library** (`openlibrary.org`,
   `covers.openlibrary.org`): both **keyless-capable, CORS-enabled, browser-direct**, used by **Books**,

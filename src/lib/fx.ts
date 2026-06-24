@@ -56,6 +56,39 @@ export async function fetchRateToHkd(
   }
 }
 
+/**
+ * native→HKD rate for any currency as of a **specific civil date** (Frankfurter returns the rate on or
+ * before that date — i.e. the nearest prior business day for weekends/holidays). HKD→HKD is always 1 and
+ * never fetched. Cached by `${date}|${currency}` (distinct from the month-1st keys above). Used by Travel
+ * (`src/lib/trip-fx.ts`) to freeze one rate per currency at a trip's first day. Throws if the currency
+ * isn't priced (e.g. a non-ECB currency) — callers fall back to a manual override.
+ */
+export async function fetchRateToHkdOn(
+  currency: string,
+  date: IsoDate,
+  opts: { force?: boolean } = {},
+): Promise<number> {
+  if (currency === 'HKD') return 1
+  const key = `${date}|${currency}`
+  if (!opts.force) {
+    const cached = cache.get(key)
+    if (cached != null) return cached
+  }
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS)
+  try {
+    const res = await fetch(`${FRANKFURTER_BASE}/${date}?from=${currency}&to=HKD`, {
+      signal: controller.signal,
+    })
+    if (!res.ok) throw new Error(`Frankfurter request failed (${res.status})`)
+    const rate = parseFrankfurterRate(await res.json())
+    cache.set(key, rate)
+    return rate
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
 /** Fetch CNY+USD native→HKD for a month; a failed leg resolves to null (non-fatal). */
 export async function fetchRatesToHkd(
   month: IsoDate,

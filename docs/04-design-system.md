@@ -156,6 +156,22 @@ Breakfast/Lunch/Dinner = red apple (`cat-meal`), Snacks = orange cookie (`cat-sn
 Supplements = purple pill (`cat-supplement`), Activities = blue runner (`cat-activity`). The
 icon↔group mapping lives in `constants/groups.ts`.
 
+## Travel
+
+- **Stop-type icons** (Tabler): Travel = plane/train, Visit = map-pin, Eat = tools-kitchen, Shop =
+  shopping-bag, Stay = bed, Other = dots.
+- **Completion:** Done = a teal "Done" chip; Skipped = a muted, struck-through stop row.
+- **Trip cover:** a rounded image rendered `referrerpolicy="no-referrer"` (thumbnail in lists, larger in
+  the header); a neutral placeholder when null (the shared `Thumb`).
+- **Dashboard:** four count tiles + a province-progress **bar** (`positive`/teal fill on a `track`
+  ground); **status chips** Want = neutral (`track`), Planning = amber (`warning`), Visited = teal
+  (`positive`) — the `TRIP_STATUS_CHIP` palette, via the shared presentational `StatusChip`.
+- **Map:** Leaflet over OSM tiles; **coral** dots (`accent` = visited) / **neutral** dots
+  (`text-secondary` = planned), clustered; the visited-region fill is the teal `positive` at low opacity.
+- **Expense breakdown:** a small **Recharts donut** over the categories (HKD-equivalent), lazy-loaded.
+- **Reorder / category editors:** drag handles via the shared `ReorderList`; the category editor is the
+  shared `ConfigListEditor` (same as Quotes).
+
 ## Button placement
 
 Action buttons live in the **top-right of the screen/sheet header** (consistent with Net Worth), at

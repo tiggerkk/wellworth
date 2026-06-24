@@ -270,6 +270,19 @@ existing chip. Purely additive.
   copy-paste, the **Paste from clipboard** button, the CSV importer, and the optional Apple **Shortcut**
   that opens `/quotes/entry?text=…` (see OWNER-RUNBOOK). The `Article` source type exists but the import
   file has no article rows yet.
+- **Travel — province/state-level map fill outside China** — **parked.** Non-China countries are filled
+  whole (Natural Earth admin-0). Admin-1 shading elsewhere would need Natural Earth admin-1 + per-country
+  province-name matching; the `regionName → shape` model leaves room to add it without rework.
+- **Travel — GCJ-02 offset correction** — **parked (v1).** Stored coords, the bundled GeoJSON, and OSM
+  tiles are all treated as WGS-84; the GCJ-02 visual offset over Chinese areas isn't corrected. It's
+  invisible at province/country zoom (the only place fill is drawn) and a few-hundred-metre dot offset at
+  city zoom is acceptable for a personal log.
+- **Travel — offline map** — the map needs network: OSM tiles aren't cached, and the two `public/geo/*`
+  GeoJSON are intentionally excluded from the PWA precache (loaded on demand with the lazy map chunk).
+- **Travel — all-trips spend roll-up on the Dashboard** — **parked** (the `00-PRD` non-goal: no
+  cross-currency dashboard conversion beyond the per-trip HKD total). Each trip computes its own HKD total
+  in its Expenses tab (M5); the Dashboard shows only count-based metrics (trips this year, days travelled),
+  not a money figure, since a cross-trip total would need every trip's rates loaded at once.
 
 ---
 

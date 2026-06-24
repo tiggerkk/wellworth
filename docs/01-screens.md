@@ -3,7 +3,7 @@
 ## Navigation
 
 The app opens to a **Home hub** — a launcher of module cards (Wellness, Net Worth, Shows, Books,
-Quotes, Medical; more later). Selecting a module enters it and the **bottom tab bar becomes that
+Quotes, Medical, Travel; more later). Selecting a module enters it and the **bottom tab bar becomes that
 module's tabs**, with a **Home** item to return to the hub. On launch the app reopens the **last-used
 module**, so daily Wellness use skips the hub.
 
@@ -23,13 +23,17 @@ module**, so daily Wellness use skips the hub.
   Report screen is reached from the **New Medical** tab (new) or by tapping a report (edit), and
   **Settings** opens Medical Settings. The **biometric/PIN lock** gates entry to the whole module (see
   02-tech-spec → Medical).
+- **Travel** tabs: **Home**, **Dashboard**, **Map**, **Trips**, **New Trip**, **Settings**. The Trip
+  Builder is reached from the **New Trip** tab (new = header-only + Create) or by tapping a Trips/Map row
+  (edit), and **Settings** opens Travel Settings.
 - **Settings is global**, reached from a gear on the Home hub (profile, units, account — app-wide).
   Module-specific settings live in **Settings** bottom tab.
 
 Routing is URL-namespaced per module (`/wellness/*`, `/networth/*`, `/shows/*`, `/books/*`,
-`/quotes/*`, `/medical/*`); a future module drops in as a card + routes with no structural change. Modals (sheets)
+`/quotes/*`, `/medical/*`, `/travel/*`); a future module drops in as a card + routes with no structural change. Modals (sheets)
 slide up over a module's tabs: Calendar, Add Food, Food Detail, Add Activity, Activity Log, New Food,
-New Activity, Month Picker (Net Worth), Title Search (Shows), Book Search (Books), Source Link (Quotes).
+New Activity, Month Picker (Net Worth), Title Search (Shows), Book Search (Books), Source Link (Quotes),
+City Picker / Stop Editor / Reorder Days / Expense Editor (Travel — local overlays so the Builder draft survives).
 
 Diary groups, in order: **Breakfast, Lunch, Dinner, Snacks, Supplements, Activities**.
 
@@ -618,3 +622,79 @@ biometric unlock was registered it is **auto-attempted** on appearance (and re-t
 silently falling back to the PIN on any failure. A small **"Forgot PIN? Sign out"** escape avoids a hard
 lockout. The lock is a convenience gate on this device — the data is already private to the account
 (RLS); it is not a server-verified boundary.
+
+## Travel - Dashboard (`/travel`)
+
+- **Four count tiles** over `status = visited` trips: **China Provinces** (with an `N / 34` suffix),
+  **China Cities**, **Countries**, **Cities** — distinct counts (China-scoped ones use a China-country
+  match; the province count is intersected with `CHINA_PROVINCES`, so it never exceeds 34).
+- A **province-progress bar** (`N / 34`); a note points to the Map for the shaded map.
+- **Metric tiles**: **Trips This Year**, **Days Travelled** (inclusive span of dated visited trips).
+  Monetary spend is per-trip (Expenses tab), not rolled up here.
+- **Shelves**: **Recently Visited** (reverse-chron, with a "See all trips" link), **Planning**,
+  **Want to Visit** — each a card row (cover thumbnail · name · date range · primary region · status
+  chip), tapping into the Trip Builder. Empty overall → a **New Trip** CTA.
+
+## Travel - Map (`/travel/map`)
+
+- A **Leaflet** map (OSM tiles), lazy-loaded into its own chunk. A **markercluster dot per visited
+  city** (coral = visited, neutral = planned), placed from the city's `remembered_city` coords; a city
+  without a cached pin shows no dot (a hint points to the picker's "Look up online").
+- A **Region fill** toggle (default on): China filled by province (DataV GeoJSON, matched via
+  `snapProvince`) + non-China countries filled whole (Natural Earth, matched via `resolveCountryName`),
+  over visited trips, in the teal "Visited" colour.
+- Tapping a dot opens the trip(s) touching that city (single → Trip Builder; multiple → a short list).
+
+## Travel - Trips (`/travel/trips`)
+
+- Search (trip name, itinerary city) + filters (**status, country, province, year**); a
+  **reverse-chronological** list (undated trips last). Row: cover thumbnail · name · status chip · date
+  range · primary region. Tap → Trip Builder; **swipe-left → Delete** (hard, cascades days/stops/expenses).
+
+## Travel - Trip Builder (`/travel/entry` new, `/travel/trip/:id` edit)
+
+- **New** (`/travel/entry`): header-only — Trip Name, Status, Base Currency — **Create** persists the
+  trip and opens it for editing (days/stops need a saved trip).
+- **Edit** header card: Trip Name, **Status** (Want to Visit / Planning / Visited), Base Currency, **Cover
+  Image URL** (rendered `no-referrer`, previewed), Companions, **Rating** (0–5 half-stars), Notes, and a
+  **Track Reimbursement** toggle. **RESET** reverts the header fields to the saved values (disabled when
+  unchanged); **SAVE** persists the header and returns to where you came from (days/stops/expenses
+  auto-save on each change, so they're already persisted).
+- Two sub-tabs (segmented): **Itinerary** and **Expenses**.
+- **Itinerary**: **Add Day** + (when >1) **Reorder Days** (a drag-reorder sheet). Each **Day** card shows
+  `Day N`, a tappable **Calendar date chip** (the date or "Add date" — writes `trip_day.day_date` and
+  re-caches the trip's start/end), **duplicate**, and **delete**. Within a day, **Stops** are a
+  drag-reorder list (tap a stop to edit; a "Done" chip on done stops; skipped stops are struck through),
+  plus **Add Stop**.
+- **Stop editor** (local overlay): **Type** (Travel / Visit / Eat / Shop / Stay / Other), **City** (opens
+  the City picker), Description, type-specific fields (Travel → Mode/From/To; Visit → Local Transit),
+  Time, **Cost + currency** (defaults to the trip's base currency, overridable; **informational only,
+  never summed**), Details, **Completion** (Unmarked / Done / Skipped), and a **Move to day** picker.
+- **Expenses**: **Add Expense**; a **Totals** card (per-currency cost/net, then the **HKD total**); a
+  **Conversion to HKD** card (per non-HKD currency: an editable rate + a **Fetch missing rates** button —
+  Frankfurter at the trip's first day; missing currencies are flagged and excluded until priced); a
+  **By Category (HKD)** donut; and the expense rows (date · description · category · cost; net when
+  tracked; swipe-delete, tap-to-edit).
+- **Expense editor** (local overlay): Date (Calendar), Description, **Category** (configured list), Cost
+  - currency, and — when Track Reimbursement is on — a **Reimbursed** field accepting a number or a
+    formula on `amount` (presets ½ / ⅖ / Full), with the computed reimbursed + net shown live.
+
+## Travel - City Picker (modal, from a Stop's City)
+
+- Type a city → **remembered cities** matching fill instantly (tap to pick). An optional **Look up
+  online** runs Nominatim (assist-only) and lists suggestions that fill Country / Province / coords.
+  Manual entry always available: Country, and Province (a **CHINA_PROVINCES** select when the country is
+  China, else free text). Confirming caches the city (`remembered_city`) and returns it to the stop.
+
+## Travel - Settings (`/travel/settings`)
+
+- **Expenses → Expense Categories**: add / rename / delete / **drag-reorder** the category list (stored
+  on `profile.travel_expense_categories`). Deleting a category still used by expenses prompts a
+  **reassignment** first; the last category can't be deleted.
+- **Import → Import CSV Expenses**: a wide sheet (Trip, Date, category columns…, Cost, Re-imbursed) →
+  detected-columns + **unknown-header mapping** + per-trip preview + **replace-per-trip** → import.
+  Columns + rules: `templates/travel-expenses-import-guide.md`.
+- **Import → Import CSV Trips (itinerary JSON)**: a JSON array of trips → one combined review (per-trip
+  day/stop counts + a pooled **new-cities** list with optional per-city geocode) → import as drafts.
+  Shape: `templates/travel-itinerary.schema.json`; prompt: `templates/travel-itinerary-prompt.md`.
+- **FX overrides** are per-trip and live in the trip's Expenses tab (not here).

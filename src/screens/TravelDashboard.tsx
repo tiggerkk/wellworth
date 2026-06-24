@@ -1,0 +1,239 @@
+import { useCallback, useMemo } from 'react'
+import { useNavigate } from 'react-router'
+import { IconChevronRight, IconWorld } from '@tabler/icons-react'
+import { SectionCard } from '../components/SectionCard'
+import { StatusChip } from '../components/StatusChip'
+import { Thumb } from '../components/Thumb'
+import { PrimaryButton } from '../components/PrimaryButton'
+import { useAuth } from '../auth/AuthProvider'
+import { useAsync } from '../hooks/useAsync'
+import { listTripFacetRows, listTrips } from '../data/travel'
+import { useTravelVersion } from '../lib/travel-refresh'
+import {
+  TRIP_STATUS_CHIP,
+  compareTripsByDateDesc,
+  facetsForStops,
+  primaryLabel,
+  tripStatusLabel,
+  type TripFacets,
+  type TripRow,
+} from '../lib/travel'
+import {
+  CHINA_PROVINCE_TOTAL,
+  computeTravelStats,
+  type StatFacetRow,
+} from '../lib/travel-stats'
+import { routes } from '../constants/routes'
+import { formatFullDate, formatMonthDay, todayLocal } from '../lib/date'
+
+const RECENT_LIMIT = 5
+const SHELF_LIMIT = 4
+
+function dateRange(start: string | null, end: string | null): string {
+  if (start && end) return `${formatMonthDay(start)} – ${formatFullDate(end)}`
+  if (start) return formatFullDate(start)
+  return 'No dates yet'
+}
+
+export function TravelDashboard() {
+  const navigate = useNavigate()
+  const { session } = useAuth()
+  const userId = session?.user.id
+  const version = useTravelVersion()
+
+  const fn = useCallback(() => {
+    void version
+    if (!userId) return Promise.resolve<[TripRow[], StatFacetRow[]]>([[], []])
+    return Promise.all([listTrips(userId), listTripFacetRows(userId)])
+  }, [userId, version])
+  const { data, loading, error } = useAsync(fn)
+
+  const [trips, facetRows] = data ?? [[], []]
+
+  const facetsByTrip = useMemo(() => {
+    const grouped = new Map<string, StatFacetRow[]>()
+    for (const r of facetRows) {
+      const arr = grouped.get(r.trip_id) ?? []
+      arr.push(r)
+      grouped.set(r.trip_id, arr)
+    }
+    const byTrip = new Map<string, TripFacets>()
+    for (const [tripId, rows] of grouped) byTrip.set(tripId, facetsForStops(rows))
+    return byTrip
+  }, [facetRows])
+
+  const stats = useMemo(
+    () => computeTravelStats(trips, facetRows, todayLocal().slice(0, 4)),
+    [trips, facetRows],
+  )
+
+  const recentlyVisited = useMemo(
+    () =>
+      trips
+        .filter((t) => t.status === 'visited')
+        .sort(compareTripsByDateDesc)
+        .slice(0, RECENT_LIMIT),
+    [trips],
+  )
+  const planning = useMemo(
+    () => trips.filter((t) => t.status === 'planning').slice(0, SHELF_LIMIT),
+    [trips],
+  )
+  const want = useMemo(
+    () => trips.filter((t) => t.status === 'want').slice(0, SHELF_LIMIT),
+    [trips],
+  )
+
+  if (loading) return <p className="p-4 text-sm text-text-secondary">Loading…</p>
+  if (error)
+    return <p className="p-4 text-sm text-danger">Couldn’t load your travel dashboard.</p>
+
+  if (trips.length === 0) {
+    return (
+      <div className="flex flex-col items-center gap-3 px-4 py-16 text-center">
+        <IconWorld size={40} className="text-text-tertiary" />
+        <p className="text-sm text-text-secondary">No trips yet.</p>
+        <PrimaryButton onClick={() => navigate(routes.travel.entry)}>
+          New Trip
+        </PrimaryButton>
+      </div>
+    )
+  }
+
+  const provincePct = Math.round((stats.chinaProvinces / CHINA_PROVINCE_TOTAL) * 100)
+
+  return (
+    <div className="flex flex-col gap-4 px-4 py-4 pb-8">
+      {/* Count tiles */}
+      <div className="grid grid-cols-2 gap-2">
+        <Tile
+          value={stats.chinaProvinces}
+          suffix={`/ ${CHINA_PROVINCE_TOTAL}`}
+          label="China Provinces"
+        />
+        <Tile value={stats.chinaCities} label="China Cities" />
+        <Tile value={stats.countries} label="Countries" />
+        <Tile value={stats.cities} label="Cities" />
+      </div>
+
+      {/* Province progress */}
+      <div className="rounded-card border border-border bg-surface p-4">
+        <div className="mb-2 flex items-baseline justify-between">
+          <span className="text-sm text-text-primary">Provinces visited</span>
+          <span className="text-sm text-text-secondary">
+            {stats.chinaProvinces} / {CHINA_PROVINCE_TOTAL}
+          </span>
+        </div>
+        <div className="h-2 overflow-hidden rounded-pill bg-track">
+          <div
+            className="h-full rounded-pill bg-positive"
+            style={{ width: `${provincePct}%` }}
+          />
+        </div>
+        <p className="mt-2 text-[11px] text-text-tertiary">
+          The shaded province map arrives with the Map screen.
+        </p>
+      </div>
+
+      {/* Count-based metrics (monetary spend lands with the Expenses layer) */}
+      <div className="grid grid-cols-2 gap-2">
+        <Tile value={stats.tripsThisYear} label="Trips This Year" />
+        <Tile value={stats.daysTravelled} label="Days Travelled" />
+      </div>
+
+      <Shelf
+        title="Recently Visited"
+        trips={recentlyVisited}
+        facetsByTrip={facetsByTrip}
+        onOpen={(id) => navigate(routes.travel.edit(id))}
+        onSeeAll={() => navigate(routes.travel.trips)}
+      />
+      <Shelf
+        title="Planning"
+        trips={planning}
+        facetsByTrip={facetsByTrip}
+        onOpen={(id) => navigate(routes.travel.edit(id))}
+      />
+      <Shelf
+        title="Want to Visit"
+        trips={want}
+        facetsByTrip={facetsByTrip}
+        onOpen={(id) => navigate(routes.travel.edit(id))}
+      />
+    </div>
+  )
+}
+
+function Tile({
+  value,
+  suffix,
+  label,
+}: {
+  value: number
+  suffix?: string
+  label: string
+}) {
+  return (
+    <div className="rounded-card border border-border bg-surface px-4 py-3">
+      <div className="flex items-baseline gap-1">
+        <span className="text-2xl font-semibold text-text-primary">{value}</span>
+        {suffix && <span className="text-sm text-text-secondary">{suffix}</span>}
+      </div>
+      <p className="mt-0.5 text-xs text-text-secondary">{label}</p>
+    </div>
+  )
+}
+
+function Shelf({
+  title,
+  trips,
+  facetsByTrip,
+  onOpen,
+  onSeeAll,
+}: {
+  title: string
+  trips: TripRow[]
+  facetsByTrip: Map<string, TripFacets>
+  onOpen: (id: string) => void
+  onSeeAll?: () => void
+}) {
+  if (trips.length === 0) return null
+  return (
+    <SectionCard title={title}>
+      {trips.map((t) => {
+        const label = primaryLabel(facetsByTrip.get(t.id))
+        return (
+          <button
+            key={t.id}
+            onClick={() => onOpen(t.id)}
+            className="flex w-full items-center gap-3 border-b border-border px-3 py-2.5 text-left last:border-b-0 active:bg-input/40"
+          >
+            <Thumb url={t.cover_url} className="h-12 w-16 rounded-card" />
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <span className="truncate text-[15px] text-text-primary">{t.name}</span>
+                <StatusChip
+                  label={tripStatusLabel(t.status)}
+                  className={TRIP_STATUS_CHIP[t.status as keyof typeof TRIP_STATUS_CHIP]}
+                />
+              </div>
+              <p className="truncate text-xs text-text-secondary">
+                {dateRange(t.start_date, t.end_date)}
+                {label ? ` · ${label}` : ''}
+              </p>
+            </div>
+            <IconChevronRight size={18} className="shrink-0 text-text-tertiary" />
+          </button>
+        )
+      })}
+      {onSeeAll && (
+        <button
+          onClick={onSeeAll}
+          className="w-full px-3 py-2.5 text-left text-sm text-accent active:bg-input/40"
+        >
+          See all trips
+        </button>
+      )}
+    </SectionCard>
+  )
+}

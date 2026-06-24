@@ -26,15 +26,16 @@ Then run `npm run format` so the docs pass Prettier.
 
 ## Scope discipline
 
-- Built modules: **Wellness, Net Worth, Shows, Books, Quotes, and Medical** (all feature-complete).
+- Built modules: **Wellness, Net Worth, Shows, Books, Quotes, Medical, and Travel** (all feature-complete).
 - Steps are entered **manually**. Do not attempt HealthKit / native step sync (impossible in a PWA).
 
 ## App structure (multi-module — current state)
 
 The app is a multi-module PWA behind a **Home hub** (`/home`): module cards launch into **Wellness**
 (`/wellness/*`), **Net Worth** (`/networth/*`), **Shows** (`/shows/*`), **Books** (`/books/*`),
-**Quotes** (`/quotes/*`), or **Medical** (`/medical/*`); `/` redirects to the last-used module. Adding a
-module is a **drop-in** — append a `ModuleDef` to `src/constants/modules.ts` + its routes.
+**Quotes** (`/quotes/*`), **Medical** (`/medical/*`), or **Travel** (`/travel/*`); `/` redirects to the
+last-used module. Adding a module is a **drop-in** — append a `ModuleDef` to `src/constants/modules.ts` +
+its routes.
 
 - **Routing:** flat children of one `<AppShell/>` in `src/router.tsx`; **all path strings live in
   `src/constants/routes.ts`** (single source of truth). `src/constants/modules.ts` (`MODULES` +
@@ -162,6 +163,33 @@ module is a **drop-in** — append a `ModuleDef` to `src/constants/modules.ts` +
   (`EyeRefractionFields`). Screens `MedicalDashboard` / `MedicalReports` / `MedicalReportDetail` /
   `MedicalEntry` / `MedicalSettings` / `MedicalFieldsSheet` / `MedicalTrackedTestsSheet` /
   `MedicalOrderSheet` / `MedicalLockSheet` / `ImportMedicalSheet`.
+- **Travel (built):** trips as **Days → Stops** itineraries + a visited-places map + a per-trip expenses
+  layer. **Five tables** `trip` / `trip_day` / `stop` / `trip_expense` / `remembered_city` (migration
+  `supabase/migrations/20260624120000_travel_schema.sql`; hard delete cascades trip → day → stop and
+  trip → expense) + one `profile.travel_expense_categories` JSONB column
+  (`…121000_profile_travel_settings.sql`). **Expense categories are the Quotes pattern** — a `{key,label}`
+  JSONB list on profile (no table); `trip_expense.category` stores the stable key; edited via the shared
+  **`ConfigListEditor`** (the generalized former `QuoteListEditor`, decoupled via `count`/`reassign`/
+  `onChanged` props — also used by Quotes). Data `src/data/travel.ts` (trip/day/stop/expense CRUD +
+  reorder + `getTripBundle` + `recomputeTripDates` + `listTripFacetRows` + `rememberCity` +
+  category count/reassign). Pure logic: `src/lib/travel.ts` (row aliases, status palette, trip-list
+  filter/sort, facets), `travel-stats.ts` (visited-only distinct counts; `CHINA_PROVINCE_TOTAL = 34`),
+  `places.ts` (`snapProvince` to a canonical `CHINA_PROVINCES` name + on-demand Nominatim `geocodeCity`),
+  `travel-geo.ts` (`resolveCountryName` + bundled-GeoJSON URLs), `trip-fx.ts` (per-trip first-day rates on
+  `fetchRateToHkdOn`), `expenses.ts` (per-currency + HKD totals, breakdown, `formatMoney`), `reimburse.ts`
+  (safe mini-parser, **never `eval`**), `travel-config.ts` (category list helpers), `travel-expense-import.ts`
+  (wide CSV → split expenses), `itinerary-import.ts` (tolerant JSON → trip drafts), `travel-refresh.ts`.
+  Constants in `src/constants/travel.ts` (enums + labels, `CURRENCIES`, `TRAVEL_EXPENSE_CATEGORIES`,
+  `CHINA_PROVINCES`). **Map** = **Leaflet** (lazy `TravelMapCanvas`) over OSM tiles + markercluster dots +
+  a layered `regionName → shape` fill (DataV China provinces + Natural Earth world countries, vendored in
+  `public/geo/`, **not** precached; a build-time `travel-geo.test.ts` asserts the names line up).
+  **Stop cost is informational only — never summed**; the Expenses layer is the authoritative spend total.
+  Local overlays (not route sheets, so the Builder draft survives): `CitySearchSheet` / `StopEditorSheet` /
+  `ExpenseEditorSheet` + the in-file Reorder-Days sheet. Screens `TravelDashboard` / `TravelMap` /
+  `TravelTrips` / `TripBuilder` / `TravelSettings` / `TravelCategoriesSheet` / `ImportTravelExpensesSheet` /
+  `ImportTravelTripsSheet`. Per-trip **FX overrides** live in the Expenses tab, not Settings. CSV/JSON
+  importers in Settings (`travel-expenses-template.csv`, `travel-itinerary.schema.json` + prompt in
+  `templates/`; real `travel-expenses*.csv` gitignored).
 
 ## Stack (do not substitute without asking)
 
@@ -169,9 +197,13 @@ module is a **drop-in** — append a `ModuleDef` to `src/constants/modules.ts` +
   `react-router` package — import from `react-router`).
 - Supabase (Postgres + Auth + Google OAuth) for data, auth, and cross-device sync.
 - `@zxing/library` + `@zxing/browser` for barcode scanning. **Recharts** powers the Net Worth dashboard
-  trend chart (lazy-loaded into its own chunk via `src/components/NetWorthTrendChart`).
+  trend chart (and the Medical + Travel breakdown charts), lazy-loaded into its own chunk.
+- **Leaflet** + `leaflet.markercluster` power the **Travel** map (imperative, no react-leaflet;
+  lazy-loaded into its own chunk via `src/components/TravelMapCanvas`). OSM tiles + keyless **Nominatim**
+  (on-demand geocode assist); the China-province + world-country GeoJSON are **vendored** in `public/geo/`.
 - Food data: USDA FoodData Central (search) + Open Food Facts (barcode). FX: keyless **Frankfurter**
-  (ECB) for Net Worth native→HKD rates (`src/lib/fx.ts`).
+  (ECB) for Net Worth native→HKD rates and Travel per-trip first-day rates (`src/lib/fx.ts` +
+  `src/lib/trip-fx.ts`).
 
 ## Architecture rules (always apply)
 

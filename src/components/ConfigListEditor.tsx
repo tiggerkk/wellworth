@@ -4,20 +4,14 @@ import { ReorderList } from './ReorderList'
 import { SelectMenu } from './SelectMenu'
 import { PrimaryButton } from './PrimaryButton'
 import { SecondaryButton } from './SecondaryButton'
-import {
-  countQuotesByField,
-  reassignQuoteField,
-  type ConfigurableQuoteField,
-} from '../data/quote'
-import { bumpQuotes } from '../lib/quotes-refresh'
 
-interface QuoteListEditorProps<T extends { key: string; label: string }> {
+interface ConfigListEditorProps<T extends { key: string; label: string }> {
   /** The current list (from the owner's profile config, NULL-tolerant). */
   list: T[]
-  /** Which quote column this list configures — drives the in-use count + reassignment. */
-  field: ConfigurableQuoteField
-  /** Singular noun for messages, e.g. "source type" / "category". */
+  /** Singular noun for the value itself, e.g. "source type" / "category". */
   noun: string
+  /** Singular noun for what references a value (gates deletion), e.g. "quote" / "expense". */
+  itemNoun: string
   userId: string | undefined
   /** Persist the new list to the right profile column (auto-save). */
   persist: (next: T[]) => void
@@ -25,6 +19,12 @@ interface QuoteListEditorProps<T extends { key: string; label: string }> {
   rename: (list: T[], key: string, label: string) => T[]
   remove: (list: T[], key: string) => T[]
   reorder: (list: T[], keyOrder: string[]) => T[]
+  /** How many rows currently reference `key` — gates its deletion. */
+  count: (key: string) => Promise<number>
+  /** Bulk-move referencing rows from one value to another before deleting. */
+  reassign: (fromKey: string, toKey: string) => Promise<void>
+  /** Called after a reassignment so dependent screens refresh. */
+  onChanged?: () => void
   /** Keys that can't be deleted (rename/reorder stay allowed) — e.g. the Show/Book-linking sources. */
   isProtected?: (key: string) => boolean
   /** Optional sub-label shown under a row (e.g. "links to Shows"). */
@@ -32,30 +32,35 @@ interface QuoteListEditorProps<T extends { key: string; label: string }> {
 }
 
 /**
- * Reusable add / rename / delete / reorder editor for a configurable Quotes list (Source Types or
- * Categories). Reorder uses the shared `ReorderList`; each row's trailing slot has rename + delete.
- * Deleting a value that's still used by quotes opens a reassignment picker (the affected quotes are
- * bulk-moved to the chosen value before the value is removed); a protected or last-remaining value
- * can't be deleted. Every mutation auto-saves via `persist`.
+ * Reusable add / rename / delete / reorder editor for a configurable `{key,label}` list stored on the
+ * profile (Quotes Source Types / Categories, Travel Expense Categories…). Reorder uses the shared
+ * `ReorderList`; each row's trailing slot has rename + delete. Deleting a value still referenced by rows
+ * opens a reassignment picker (rows are bulk-moved to the chosen value first); a protected or
+ * last-remaining value can't be deleted. Every mutation auto-saves via `persist`. The data-layer
+ * specifics (which table, how to count/reassign, what to refresh) are injected as `count` / `reassign` /
+ * `onChanged`, so the editor is module-agnostic.
  */
-export function QuoteListEditor<T extends { key: string; label: string }>({
+export function ConfigListEditor<T extends { key: string; label: string }>({
   list,
-  field,
   noun,
+  itemNoun,
   userId,
   persist,
   add,
   rename,
   remove,
   reorder,
+  count,
+  reassign,
+  onChanged,
   isProtected,
   hint,
-}: QuoteListEditorProps<T>) {
+}: ConfigListEditorProps<T>) {
   const [items, setItems] = useState<T[]>(list)
   const [newLabel, setNewLabel] = useState('')
   const [editingKey, setEditingKey] = useState<string | null>(null)
   const [editLabel, setEditLabel] = useState('')
-  const [reassign, setReassign] = useState<{
+  const [reassignState, setReassignState] = useState<{
     key: string
     count: number
     to: string
@@ -95,12 +100,12 @@ export function QuoteListEditor<T extends { key: string; label: string }>({
     if (!userId) return
     setBusy(true)
     try {
-      const count = await countQuotesByField(userId, field, key)
-      if (count === 0) {
+      const used = await count(key)
+      if (used === 0) {
         apply(remove(items, key))
       } else {
         const firstOther = items.find((e) => e.key !== key)!.key
-        setReassign({ key, count, to: firstOther })
+        setReassignState({ key, count: used, to: firstOther })
       }
     } catch {
       setError('Couldn’t check usage — please try again.')
@@ -110,14 +115,14 @@ export function QuoteListEditor<T extends { key: string; label: string }>({
   }
 
   async function confirmReassign() {
-    if (!reassign || !userId) return
+    if (!reassignState || !userId) return
     setBusy(true)
     setError(null)
     try {
-      await reassignQuoteField(userId, field, reassign.key, reassign.to)
-      apply(remove(items, reassign.key))
-      bumpQuotes() // the reassigned quotes changed — refresh Library/Zen
-      setReassign(null)
+      await reassign(reassignState.key, reassignState.to)
+      apply(remove(items, reassignState.key))
+      onChanged?.()
+      setReassignState(null)
     } catch {
       setError('Couldn’t reassign — please try again.')
     } finally {
@@ -216,7 +221,7 @@ export function QuoteListEditor<T extends { key: string; label: string }>({
 
       {error && <p className="text-sm text-danger">{error}</p>}
 
-      {reassign && (
+      {reassignState && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4">
           <div className="w-full max-w-md rounded-card border border-border bg-surface p-4">
             <div className="mb-2 flex items-center justify-between">
@@ -224,7 +229,7 @@ export function QuoteListEditor<T extends { key: string; label: string }>({
                 Reassign before deleting
               </h2>
               <button
-                onClick={() => setReassign(null)}
+                onClick={() => setReassignState(null)}
                 aria-label="Cancel"
                 className="p-1 text-text-secondary"
               >
@@ -232,22 +237,23 @@ export function QuoteListEditor<T extends { key: string; label: string }>({
               </button>
             </div>
             <p className="mb-3 text-sm text-text-secondary">
-              {reassign.count} quote{reassign.count === 1 ? '' : 's'} use{' '}
-              <span className="text-text-primary">“{labelFor(reassign.key)}”</span>. Move{' '}
-              {reassign.count === 1 ? 'it' : 'them'} to:
+              {reassignState.count} {itemNoun}
+              {reassignState.count === 1 ? '' : 's'} use{' '}
+              <span className="text-text-primary">“{labelFor(reassignState.key)}”</span>.
+              Move {reassignState.count === 1 ? 'it' : 'them'} to:
             </p>
             <SelectMenu
-              value={reassign.to}
-              onChange={(to) => setReassign((r) => (r ? { ...r, to } : r))}
+              value={reassignState.to}
+              onChange={(to) => setReassignState((r) => (r ? { ...r, to } : r))}
               options={items
-                .filter((e) => e.key !== reassign.key)
+                .filter((e) => e.key !== reassignState.key)
                 .map((e) => ({ value: e.key, label: e.label }))}
               ariaLabel="Reassign to"
             />
             <div className="mt-4 flex justify-end gap-2">
               <SecondaryButton
                 size="sm"
-                onClick={() => setReassign(null)}
+                onClick={() => setReassignState(null)}
                 disabled={busy}
               >
                 CANCEL

@@ -2,7 +2,7 @@
 
 ## Overview
 
-**WellWorth** is a personal mobile app — a private "super-app" of self-contained modules for one household. It launches to a Home hub of module cards; the modules are (1) Wellness — food, supplements, and activity with full nutrient reporting — (2) Net Worth, (3) Shows — tracking TV shows and movies watched or to watch — (4) Books — tracking books read or to read — (5) Quotes — favourite quotes from screen, page, and sound — and (6) Medical — multi-year lab results and narrative reports with trend charts. Further modules may be added later as new cards with no structural change. The Wellness module is modeled on the Cronometer app's look and feel, simplified to one person's needs. It is delivered as an installable PWA (web app added to the iPhone/iPad home screen) so it needs no Apple Developer account and is free to run.
+**WellWorth** is a personal mobile app — a private "super-app" of self-contained modules for one household. It launches to a Home hub of module cards; the modules are (1) Wellness — food, supplements, and activity with full nutrient reporting — (2) Net Worth, (3) Shows — tracking TV shows and movies watched or to watch — (4) Books — tracking books read or to read — (5) Quotes — favourite quotes from screen, page, and sound — (6) Medical — multi-year lab results and narrative reports with trend charts — and (7) Travel — trips logged as day-by-day itineraries, a map of the places visited, and per-trip expenses. Further modules may be added later as new cards with no structural change. The Wellness module is modeled on the Cronometer app's look and feel, simplified to one person's needs. It is delivered as an installable PWA (web app added to the iPhone/iPad home screen) so it needs no Apple Developer account and is free to run.
 
 ## Users
 
@@ -18,16 +18,17 @@
 - Books: Track books across a single **status** (Want to Read / Reading / Read / Dropped); a three-level **LGBT+ representation** rating (None / Some / Significant); pull metadata (cover, authors, year, description, genres, page count) from **Google Books** (Open Library fallback) on demand; a Dashboard of what's in progress and recently read, and a searchable, filterable, sortable Library. A back-catalogue is seeded via an in-app importer.
 - Quotes: Track favourite quotes (English or Chinese) from a configurable set of **source types** (seeded with TV shows, podcasts, films, books, interviews, articles, songs, videos); each filed under **exactly one** category from a configurable set (seeded with Wit, Observation, Philosophy, Heart, Connection, Growth) with optional free-form tags, and optionally **linked to a Show or Book** record; a "Moment of Zen" dashboard, a searchable/filterable Library, and a recurring **CSV import**. The **source-type and category lists are owner-configurable** (add / rename / delete / reorder in Settings; deleting an in-use value reassigns its quotes first).
 - Medical: Keep a private, multi-year record of test results (blood panels, vitals, bone density, body composition, etc.) and narrative reports (MRI, imaging, eye); a **dashboard of trends** for chosen tests, values flagged high/low/abnormal against **each report's own printed reference range** (the app never computes or interprets a range — not a medical device); intake via **manual entry** or a **structured JSON/CSV import** the owner generates from a report with any vision-capable AI tool (**no in-app OCR**); cross-provider values **normalized to a canonical unit** (flagged, original preserved); originals kept as **Google Drive links**, not files. Protected by a **biometric lock**.
+- Travel: Record trips as **Days → Stops** itineraries (stop types Travel / Visit / Eat / Shop / Stay / Other, with Done/Skipped marking), resolving each stop's **city → country/province** manually with a remembered-cities cache (optional keyless geocode assist); a **Dashboard** of places visited (China provinces / cities, world countries / cities) with an "N / 34" province-progress line and trip shelves; a **Map** of visited cities with a layered shaded-region overlay (China by province, other countries whole); and a per-trip **Expenses** layer (owner-configurable categories, optional reimbursement, per-currency totals and an **HKD total** via Frankfurter). A back-catalogue loads via two Settings importers (a wide CSV of expenses, and an itinerary JSON of trips).
 - Works identically on iPhone and iPad, with data synced across both devices.
 - Modular by design: each feature is a self-contained module under the Home hub, so new modules drop in as a card + route without restructuring existing ones.
 - Entirely free to run; easy to maintain by one non-expert owner.
 
 ## Navigation model
 
-- The app launches to a Home hub — a launcher of module cards (Wellness, Net Worth, Shows, Books, Quotes, Medical, and future modules), styled with the existing dark surface cards and Tabler icons.
+- The app launches to a Home hub — a launcher of module cards (Wellness, Net Worth, Shows, Books, Quotes, Medical, Travel, and future modules), styled with the existing dark surface cards and Tabler icons.
 - Selecting a module enters it; the bottom nav then shows that module's own tabs (Wellness shows Dashboard / Diary / Library / Settings; Net Worth, Shows, Books, and Quotes show their own), with a persistent way back to Home.
 - Settings is global, lifted to the Home level (profile, units, account apply across all modules); a module may add its own sub-settings, reached from a **Settings tab in the module's bottom nav** (e.g. Wellness targets/display; Shows/Books/Quotes field-visibility + importer; Quotes also its configurable **Source Type & Category** lists).
-- Routing is URL-driven per module (/wellness/_, /networth/_, /shows/_, /books/_, /quotes/\_, /medical/\_).
+- Routing is URL-driven per module (/wellness/_, /networth/_, /shows/_, /books/_, /quotes/\_, /medical/\_, /travel/\_).
 - On launch, the app reopens the last-used module so daily Wellness use isn't slowed by the hub.
 - The hub makes adding future modules a drop-in (a `ModuleDef` + its routes).
 
@@ -85,6 +86,15 @@
 - **Settings** (`/medical/settings`): pick **tracked tests** (seeded from `default_tracked`, like Visible Nutrients); **drag-to-reorder** the category sections and tests within each; the importer toggle; the **biometric lock** (toggle, set/reset PIN, adjustable auto-lock timeout).
 - **Intake is a structured import, not in-app OCR** (OCR mangles medical decimals); extraction is done outside the app by any vision-capable AI tool using `templates/medical-extraction-prompt.md` + `medical-import.schema.json`. **Reference ranges are stored exactly as printed**; cross-provider values are **normalized to a canonical unit** at import (flagged, original preserved). Originals are **Google Drive links**, never stored files.
 
+## Travel
+
+- **Dashboard** (`/travel`): four count tiles — **China Provinces** (with an "N / 34" line), **China Cities**, **Countries**, **Cities** — counted over **visited** trips; a province-progress bar; **Recently Visited / Planning / Want to Visit** shelves; and count metrics (trips this year, days travelled). The shaded province map lives on the Map screen; an **all-trips money roll-up is a non-goal** (each trip computes its own HKD total).
+- **Map** (`/travel/map`): a **Leaflet** map (OSM tiles) with a markercluster **dot per visited city** (coloured by status), and a toggleable **layered region fill** — China filled by province (DataV GeoJSON) + non-China countries filled whole (Natural Earth) over visited trips. Tapping a city's dot opens the trip(s) touching it.
+- **Trips** (`/travel/trips`): a searchable (trip name, city), filterable (status, country, province, year), reverse-chronological list; tap a row to open the Trip Builder, swipe-left to delete (hard, cascades days/stops/expenses).
+- **Trip Builder** (`/travel/entry` new, `/travel/trip/:id` edit): the new screen is **header-only + Create** (a trip must exist before days/stops attach); edit shows the header (Name, Status, Base Currency, Cover image URL rendered `no-referrer`, Companions, 0–5 half-star Rating, Notes, **Track Reimbursement**) and two sub-tabs — **Itinerary** (Days, each with a **Calendar date chip**, drag-reorder via a Reorder-Days sheet, duplicate/delete; per-day Stops with inline add, drag-reorder, a **City picker** (remembered-cities cache + optional Nominatim assist; province snapped to a canonical name), type-specific fields, per-stop **Cost + currency** — informational only, never summed — and **Done/Skipped**) and **Expenses** (per-currency + HKD totals via the trip's first-day FX rates with per-currency manual override, a category breakdown donut, and the expense rows). **RESET/CREATE/SAVE**.
+- **Settings** (`/travel/settings`): **manage the Expense Category list** (add / rename / delete / reorder — deleting an in-use category reassigns its expenses first; the last can't be deleted); and two **importers** — **Import CSV Expenses** (a wide sheet, split per category, Trip-column attribution, unknown-header mapping, replace-per-trip) and **Import CSV Trips** (an itinerary JSON array → drafts, one combined review with pooled new-city resolution).
+- **Stop cost is informational only** (never summed); the **Expenses layer is the authoritative spend total**. Per-trip FX overrides live in the trip's Expenses tab, not Settings.
+
 ## Out of scope / non-goals
 
 ### General
@@ -139,6 +149,15 @@
 - **Auto stock of normal ranges / eGFR computation** — values come only from the report (or manual entry).
 - **Display-only unit normalization toggle** — out of scope: cross-provider values are normalized to a canonical unit **at import** (flagged, original preserved); the app does not offer an on/off "compute another unit" view.
 - **Server-verified WebAuthn / true background lock** — a PWA has no background-lock lifecycle and no relying-party backend; the biometric lock is a client-side UX gate over RLS-protected data (re-locks on cold start / idle timeout), with a mandatory PIN fallback.
+
+### Travel
+
+- **All-trips cross-currency spend roll-up on the Dashboard** — parked. Each trip computes its own HKD total in its Expenses tab; a cross-trip money figure would need every trip's rates loaded at once. The Dashboard shows count-based metrics only.
+- **Province/state-level map fill outside China** — parked; non-China countries are filled whole (Natural Earth admin-0). The `regionName → shape` model leaves room to add admin-1 later.
+- **GCJ-02 offset correction** — parked (v1). Stored coords, the GeoJSON, and OSM tiles are treated as WGS-84; the GCJ-02 visual offset over Chinese areas isn't corrected (invisible at province/country zoom).
+- **Offline map** — the map needs network: OSM tiles aren't cached and the bundled `public/geo/*` GeoJSON are excluded from the PWA precache (loaded on demand with the lazy map chunk).
+- **Companions/cover as structured data, photo uploads, flight/train numbers** — companions + cover are free text / a pasted URL (no file storage; no Supabase Storage).
+- **Stop cost as the spend total** — decoupled; a stop's cost is informational, never summed. The Expenses layer is authoritative.
 
 ## Key constraints
 

@@ -562,6 +562,7 @@ export type Database = {
           show_importer_enabled: boolean
           show_poster_url_visible: boolean
           show_visible_fields: string[] | null
+          travel_expense_categories: Json | null
           units: string
           updated_at: string
           user_id: string
@@ -594,6 +595,7 @@ export type Database = {
           show_importer_enabled?: boolean
           show_poster_url_visible?: boolean
           show_visible_fields?: string[] | null
+          travel_expense_categories?: Json | null
           units?: string
           updated_at?: string
           user_id: string
@@ -626,6 +628,7 @@ export type Database = {
           show_importer_enabled?: boolean
           show_poster_url_visible?: boolean
           show_visible_fields?: string[] | null
+          travel_expense_categories?: Json | null
           units?: string
           updated_at?: string
           user_id?: string
@@ -702,6 +705,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      remembered_city: {
+        Row: {
+          city: string
+          city_norm: string | null
+          country: string
+          created_at: string
+          id: string
+          lat: number | null
+          lng: number | null
+          province: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          city: string
+          city_norm?: string | null
+          country: string
+          created_at?: string
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          province?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          city?: string
+          city_norm?: string | null
+          country?: string
+          created_at?: string
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          province?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       serving: {
         Row: {
@@ -831,6 +873,83 @@ export type Database = {
         }
         Relationships: []
       }
+      stop: {
+        Row: {
+          city: string | null
+          completion: string | null
+          cost: number | null
+          cost_currency: string | null
+          country: string | null
+          created_at: string
+          description: string | null
+          details: string | null
+          from_loc: string | null
+          id: string
+          local_transit: string | null
+          province: string | null
+          sort_order: number
+          time: string | null
+          to_loc: string | null
+          travel_mode: string | null
+          trip_day_id: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          city?: string | null
+          completion?: string | null
+          cost?: number | null
+          cost_currency?: string | null
+          country?: string | null
+          created_at?: string
+          description?: string | null
+          details?: string | null
+          from_loc?: string | null
+          id?: string
+          local_transit?: string | null
+          province?: string | null
+          sort_order: number
+          time?: string | null
+          to_loc?: string | null
+          travel_mode?: string | null
+          trip_day_id: string
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          city?: string | null
+          completion?: string | null
+          cost?: number | null
+          cost_currency?: string | null
+          country?: string | null
+          created_at?: string
+          description?: string | null
+          details?: string | null
+          from_loc?: string | null
+          id?: string
+          local_transit?: string | null
+          province?: string | null
+          sort_order?: number
+          time?: string | null
+          to_loc?: string | null
+          travel_mode?: string | null
+          trip_day_id?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stop_trip_day_id_fkey"
+            columns: ["trip_day_id"]
+            isOneToOne: false
+            referencedRelation: "trip_day"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       strength_set: {
         Row: {
           entry_id: string
@@ -865,6 +984,154 @@ export type Database = {
             columns: ["entry_id"]
             isOneToOne: false
             referencedRelation: "diary_entry"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trip: {
+        Row: {
+          base_currency: string
+          companions: string | null
+          cover_url: string | null
+          created_at: string
+          end_date: string | null
+          fx_rates: Json
+          id: string
+          name: string
+          notes: string | null
+          rating: number | null
+          start_date: string | null
+          status: string
+          track_reimbursement: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          base_currency?: string
+          companions?: string | null
+          cover_url?: string | null
+          created_at?: string
+          end_date?: string | null
+          fx_rates?: Json
+          id?: string
+          name: string
+          notes?: string | null
+          rating?: number | null
+          start_date?: string | null
+          status: string
+          track_reimbursement?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          base_currency?: string
+          companions?: string | null
+          cover_url?: string | null
+          created_at?: string
+          end_date?: string | null
+          fx_rates?: Json
+          id?: string
+          name?: string
+          notes?: string | null
+          rating?: number | null
+          start_date?: string | null
+          status?: string
+          track_reimbursement?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      trip_day: {
+        Row: {
+          created_at: string
+          day_date: string | null
+          id: string
+          label: string | null
+          sort_order: number
+          trip_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          day_date?: string | null
+          id?: string
+          label?: string | null
+          sort_order: number
+          trip_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          day_date?: string | null
+          id?: string
+          label?: string | null
+          sort_order?: number
+          trip_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_day_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trip"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trip_expense: {
+        Row: {
+          category: string
+          cost: number
+          created_at: string
+          currency: string
+          description: string
+          expense_date: string | null
+          id: string
+          reimbursed_amount: number | null
+          reimbursed_formula: string | null
+          trip_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          cost: number
+          created_at?: string
+          currency: string
+          description: string
+          expense_date?: string | null
+          id?: string
+          reimbursed_amount?: number | null
+          reimbursed_formula?: string | null
+          trip_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          cost?: number
+          created_at?: string
+          currency?: string
+          description?: string
+          expense_date?: string | null
+          id?: string
+          reimbursed_amount?: number | null
+          reimbursed_formula?: string | null
+          trip_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_expense_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trip"
             referencedColumns: ["id"]
           },
         ]

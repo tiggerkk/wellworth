@@ -200,14 +200,17 @@ This creates the tables, security rules, and the nutrient reference data in your
    ```
    The CLI applies **every** file in `supabase/migrations/` — Wellness (`…_init_schema.sql` +
    `…_seed_nutrient.sql`), Net Worth (`…_networth_schema.sql`), Shows, Books, Quotes (each a schema +
-   a `profile` settings migration), and **Medical** (`…_medical_schema.sql` — the three Medical tables;
+   a `profile` settings migration), **Medical** (`…_medical_schema.sql` — the three Medical tables;
    `…_profile_medical_settings.sql` — the Medical `profile` columns; `…_seed_medical_lab_test.sql` —
-   the seeded lab-test reference). You never list them yourself; whatever is in the folder is applied.
+   the seeded lab-test reference), and **Travel** (`…_travel_schema.sql` — the five Travel tables;
+   `…_profile_travel_settings.sql` — the Travel `profile` column). You never list them yourself; whatever
+   is in the folder is applied.
 
 - ✅ Check (in the Supabase dashboard):
   - **Table Editor** shows the module tables: `nutrient`, `profile`, `food`, `serving`, `activity`,
     `diary_entry`, `strength_set`; the Net Worth pair `networth_snapshot`, `asset_entry`; `show`;
-    `book`; `quote`; and the Medical trio `medical_lab_test`, `medical_report`, `medical_result`.
+    `book`; `quote`; the Medical trio `medical_lab_test`, `medical_report`, `medical_result`; and the
+    five Travel tables `trip`, `trip_day`, `stop`, `trip_expense`, `remembered_city`.
   - **SQL Editor** → `select count(*) from nutrient;` → **80**; `select count(*) from
 medical_lab_test;` → the seeded reference count (the Medical Dashboard reads it).
   - **Advisors → Security** shows no "RLS disabled in public" warnings.
@@ -478,9 +481,10 @@ and **M3** resets one module's data while leaving the others intact.
 
 Only **Wellness** has seed data: the owner's **profile** + **activity library** are re-seeded on the
 next sign-in (idempotent — only when that data is missing), and the **nutrient** reference table is
-seeded by a migration (not on login). **Net Worth, Shows, Books, and Quotes have no seed data** — their
-tables (`networth_snapshot`/`asset_entry`, `show`, `book`, `quote`) come back **empty** after a reset and
-are filled entirely by you in the app.
+seeded by a migration (not on login). **Net Worth, Shows, Books, Quotes, and Travel have no seed data**
+(the **Medical** `medical_lab_test` reference is migration-seeded) — their tables
+(`networth_snapshot`/`asset_entry`, `show`, `book`, `quote`, and the Travel five `trip`/`trip_day`/`stop`/
+`trip_expense`/`remembered_city`) come back **empty** after a reset and are filled entirely by you in the app.
 
 > ⚠️ These act on your **live** Supabase project. There is no undo. Make sure you mean it.
 
@@ -623,14 +627,23 @@ update public.profile set quote_visible_fields = null, quote_importer_enabled = 
 > those columns on surviving quotes (the denormalised author/title/source type stay). Wiping `quote`
 > never touches `show`/`book`.
 
+**Travel** — wipes every trip (days, stops, and expenses cascade) + the remembered-cities cache:
+
+```sql
+truncate public.trip cascade;          -- cascades trip_day → stop, and trip_expense
+truncate public.remembered_city cascade;
+-- optional: also reset the Travel categories on your profile to the seed defaults
+update public.profile set travel_expense_categories = null;
+```
+
 - ✅ Check: open that module in the app — its lists are empty (Wellness shows the re-seeded starter
   activities after a reload), and the **other** modules' data is untouched.
 
 > **Multi-user note (future household project):** `truncate` clears every user's rows. To scope a wipe
 > to **yourself**, instead run `delete from <table> where user_id = '<your-user-id>';` on each module's
 > **own** tables — `activity`, `food`, `diary_entry` (Wellness) / `networth_snapshot` (Net Worth) /
-> `show` / `book` / `quote` — and the child rows (`serving`, `strength_set`, `asset_entry`) cascade
-> automatically.
+> `show` / `book` / `quote` / `trip` + `remembered_city` (Travel) — and the child rows (`serving`,
+> `strength_set`, `asset_entry`, and Travel's `trip_day`/`stop`/`trip_expense`) cascade automatically.
 > Your user id is in **Supabase → Authentication → Users**.
 
 ---
@@ -696,6 +709,37 @@ Originals are **not** uploaded — you keep Google Drive links. Extraction happe
 > **Privacy:** your extracted JSONs (`templates/medical-import-20*.json`) and report PDFs contain your
 > name / HKID / DOB and are **gitignored** — they never go into the repo. Only the prompt, the schema,
 > and the sanitized template are tracked.
+
+---
+
+## Part P — Logging a trip (the Travel workflow)
+
+The Travel module logs trips as day-by-day itineraries, maps the places you've been, and tracks per-trip
+spend. No API key is needed (the map + geocode + FX are all keyless).
+
+1. **New Trip** → name, status (Want / Planning / Visited), base currency; **Create**. Then add the rest
+   in the builder: optional cover image URL, companions, rating, notes, and (if you'll track it) the
+   **Track Reimbursement** toggle.
+2. **Itinerary**: **Add Day**, give each day a **date** (tap the calendar chip), and **Add Stop** inline —
+   pick a type (Travel / Visit / Eat / Shop / Stay / Other), choose the **city** (known cities fill
+   country/province instantly; a new city offers an optional **Look up online** or manual entry + pin,
+   then is remembered), and fill the type's fields. Drag to reorder; mark **Done/Skipped** (your
+   "didn't go" items become Skipped, not deleted). A stop's Cost is just a note — it's never summed.
+3. **Expenses** (the real spend): add expenses as you go, or one-time **Settings → Import CSV Expenses**
+   (a wide sheet with a **Trip** column + the category columns + **Cost** / **Re-imbursed**). Turn on
+   **Track Reimbursement** where needed; Reimbursed accepts a number or a formula (`amount/2`,
+   `amount/5*2`). Each trip shows its **HKD total** (first-day FX); if a currency can't be priced
+   automatically, type its rate in the trip's **Conversion to HKD** card.
+4. **Bulk-load old trips (one-time):** prefix each trip's text with
+   `=== TRIP: <name> | <YYYY-MM> | <status> ===`, paste them all into any AI tool with
+   `templates/travel-itinerary-prompt.md`, save the JSON array, then **Settings → Import CSV Trips** →
+   review (confirm any new cities once) → **Import**. The result is drafts you finish in the Trip Builder;
+   expenses import separately.
+5. The **Dashboard** counts (provinces / cities / countries) and the **Map** update automatically from
+   your **Visited** trips.
+
+> **Privacy:** your real trip/expense files (`travel-expenses*.csv`) are **gitignored**; only the
+> sanitized templates + the itinerary prompt/schema are tracked.
 
 ---
 

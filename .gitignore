@@ -48,6 +48,11 @@ quotes-seed-local.csv
 medical-import-20*.json
 templates/*.pdf
 
+# Travel — real expense sheets must never be committed. Only the sanitized
+# templates/travel-expenses-template.csv is tracked.
+travel-expenses*.csv
+!templates/travel-expenses-template.csv
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

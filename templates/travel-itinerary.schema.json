@@ -1,0 +1,162 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "WellWorth Travel Itinerary Import (multi-trip)",
+  "description": "An ARRAY of trips produced by an AI tool from delimited freeform itinerary text, imported into the WellWorth Travel module in one pass. Each element = one trip. The import is a DRAFT to review/edit in the Trip Builder.",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": ["trip_name", "days"],
+    "additionalProperties": false,
+    "properties": {
+      "trip_name": { "type": "string" },
+      "status": {
+        "type": "string",
+        "enum": ["want", "planning", "visited"],
+        "default": "visited"
+      },
+      "base_currency": { "type": ["string", "null"], "default": "CNY" },
+      "days": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["stops"],
+          "additionalProperties": false,
+          "properties": {
+            "date": { "type": ["string", "null"], "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+            "stops": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["type"],
+                "additionalProperties": false,
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": ["travel", "visit", "eat", "shop", "stay", "other"]
+                  },
+                  "description": { "type": ["string", "null"] },
+                  "city": { "type": ["string", "null"] },
+                  "country": { "type": ["string", "null"] },
+                  "province": {
+                    "type": ["string", "null"],
+                    "description": "Optional; usually resolved in-app from city."
+                  },
+                  "time": { "type": ["string", "null"], "pattern": "^\\d{2}:\\d{2}$" },
+                  "cost": {
+                    "type": ["number", "null"],
+                    "description": "Stop-level cost, informational only; NOT summed into trip spend (expenses import separately)."
+                  },
+                  "currency": { "type": ["string", "null"] },
+                  "travel_mode": {
+                    "type": ["string", "null"],
+                    "enum": ["air", "train", "car", "ferry", null]
+                  },
+                  "from_loc": { "type": ["string", "null"] },
+                  "to_loc": { "type": ["string", "null"] },
+                  "local_transit": { "type": ["string", "null"] },
+                  "details": { "type": ["string", "null"] },
+                  "completion": {
+                    "type": ["string", "null"],
+                    "enum": ["done", "skipped", null]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+
+  "x-example": [
+    {
+      "trip_name": "湖北",
+      "status": "visited",
+      "base_currency": "CNY",
+      "days": [
+        {
+          "date": "2026-03-28",
+          "stops": [
+            {
+              "type": "travel",
+              "description": null,
+              "city": "荆州",
+              "country": "China",
+              "time": "19:49",
+              "cost": 2067,
+              "currency": "CNY",
+              "travel_mode": "train",
+              "from_loc": "香港",
+              "to_loc": "荆州",
+              "local_transit": null,
+              "details": "香港-深圳北 11:41-11:59 转 荆州 12:47-19:49",
+              "completion": "done"
+            }
+          ]
+        },
+        {
+          "date": "2026-04-01",
+          "stops": [
+            {
+              "type": "visit",
+              "description": "楚王车马阵",
+              "city": "荆州",
+              "country": "China",
+              "time": null,
+              "cost": 58,
+              "currency": "CNY",
+              "travel_mode": null,
+              "from_loc": null,
+              "to_loc": null,
+              "local_transit": null,
+              "details": null,
+              "completion": "done"
+            },
+            {
+              "type": "visit",
+              "description": "关羽祠",
+              "city": "荆州",
+              "country": "China",
+              "time": null,
+              "cost": 25,
+              "currency": "CNY",
+              "travel_mode": null,
+              "from_loc": null,
+              "to_loc": null,
+              "local_transit": null,
+              "details": null,
+              "completion": "done"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "trip_name": "肇庆",
+      "status": "visited",
+      "base_currency": "CNY",
+      "days": [
+        {
+          "date": "2026-01-30",
+          "stops": [
+            {
+              "type": "travel",
+              "description": null,
+              "city": "肇庆",
+              "country": "China",
+              "time": "11:48",
+              "cost": null,
+              "currency": null,
+              "travel_mode": "train",
+              "from_loc": "香港",
+              "to_loc": "肇庆东",
+              "local_transit": null,
+              "details": "10:02-11:48",
+              "completion": "done"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

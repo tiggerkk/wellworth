@@ -6,12 +6,14 @@ import {
   IconDeviceTv,
   IconHeartbeat,
   IconList,
+  IconMap,
   IconNotebook,
   IconQuote,
   IconReportMedical,
   IconSettings,
   IconSparkles,
   IconWallet,
+  IconWorld,
   type Icon,
 } from '@tabler/icons-react'
 import { routes } from './routes'
@@ -121,6 +123,20 @@ export const MODULES: ModuleDef[] = [
       { to: routes.medical.reports, label: 'Reports', Icon: IconReportMedical },
       { to: routes.medical.entry, label: 'New Medical', Icon: IconHeartbeat },
       { to: routes.medical.settings, label: 'Settings', Icon: IconSettings },
+    ],
+  },
+  {
+    key: 'travel',
+    label: 'Travel',
+    Icon: IconWorld,
+    base: routes.travel.base,
+    description: 'Trips as day-by-day itineraries, places visited & per-trip spend.',
+    tabs: [
+      { to: routes.travel.dashboard, label: 'Dashboard', Icon: IconChartBar, end: true },
+      { to: routes.travel.map, label: 'Map', Icon: IconMap },
+      { to: routes.travel.trips, label: 'Trips', Icon: IconList },
+      { to: routes.travel.entry, label: 'New Trip', Icon: IconWorld },
+      { to: routes.travel.settings, label: 'Settings', Icon: IconSettings },
     ],
   },
 ]
