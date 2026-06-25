@@ -258,14 +258,18 @@ Wellness-module sub-settings. Auto-save on change. A back chevron returns to the
 ## Shows - Library
 
 - **Search bar** over a list of every tracked title — matches **Title, Director, and Cast** (when
-  TMDB returned them).
-- A **Filters** toggle opens a panel: **Type** (All/TV/Movies/Docs), **Status**, **Genre** (the genres
-  present in your own rows), **Rating** (minimum: Any / 1★+ … / 5★), **LGBT+** (Any/None/Some/Significant),
-  **Dynasty** (Any + the 12 dynasties), a **Favorites Only** toggle, and **Started Between** +
-  **Finished Between** date ranges (each bound via the Calendar modal, clearable). A count on the
-  Filters button shows how many are active; **Clear filters** resets them.
-- A **Sort** menu over { Date, Title, Type, Year, Status, Rating, Genre } with an **asc/desc** toggle
-  (nulls sort last); default is **Date** descending.
+  TMDB returned them). An **icon-only Filter button** sits to the right of the search bar and tints
+  **accent** while its panel is open (the shared `FilterToggleButton`; mirrors Travel).
+- The Filter panel (shared `FilterPanel` pane) is **label-free** — the first option of each dropdown
+  names the field: **Type** segmented control (All/TV/Movies/Docs), **Any Status**, **Any Genre** (the
+  genres present in your own rows), **Any Rating** (minimum: Any / 1★+ … / 5★), **Any LGBT+**
+  (None/Some/Significant), **Any Dynasty** (+ the 12 dynasties), a **Favorites Only** toggle, and
+  single-line **Started** + **Finished** date ranges (label · From · To; each bound via the Calendar
+  modal, clearable).
+- The panel footer carries the **Sort** control (shared `SortControl`) next to **Clear Filters**. Sort
+  over { Date, Dynasty, Rating, Status, Genre, Title, Year, Type } with an **asc/desc** toggle (nulls
+  sort last; Dynasty orders chronologically newest→oldest, non-Chinese titles last); default is
+  **Date** descending.
 - Each row is a **uniform catalog row** (same fields for every status): a **poster thumbnail**, the
   title (+ year) with a small filled **♥** when favourited and a **gold Dynasty badge** to the right
   of the title for Chinese titles, then **type badge · status chip · star rating** (when set) and a
@@ -387,16 +391,16 @@ TMDB episode count at import (left blank if TMDB has no count); used anywhere el
 
 ## Books - Library
 
-- **Search bar** over a list of every tracked book — matches **Title and Author(s)**. (New Book opens
-  the blank Entry from the bottom nav.)
-- A **Filters** toggle opens a panel: **Status**, **Genre** (the genres present in your own rows),
-  **Rating** (minimum: Any / 1★+ … / 5★), **LGBT+** (Any/None/Some/Significant), **Author** (the
-  authors present in your own rows), **Dynasty** (Any + the 12 dynasties), a **Favorites Only**
-  toggle, and **Started Between** + **Finished Between** date ranges (each bound via the Calendar
-  modal, clearable). A count on the Filters button shows how many are active; **Clear filters**
-  resets them.
-- A **Sort** menu over { Date, Title, Author, Year, Status, Rating, Genre } with an **asc/desc** toggle
-  (nulls sort last); default is **Date** descending.
+- **Search bar** over a list of every tracked book — matches **Title and Author(s)** (Author is
+  searched here, not filtered — too many values). An **icon-only Filter button** to the right tints
+  **accent** while its panel is open. (New Book opens the blank Entry from the bottom nav.)
+- The Filter panel is **label-free**: **Any Status**, **Any Genre** (the genres present in your own
+  rows), **Any Rating** (minimum: Any / 1★+ … / 5★), **Any LGBT+** (None/Some/Significant), and **Any
+  Dynasty** (+ the 12 dynasties) sharing a row with the **Favorites Only** toggle, plus single-line
+  **Started** + **Finished** date ranges (each bound via the Calendar modal, clearable).
+- The panel footer carries the **Sort** control next to **Clear Filters**. Sort over { Date, Dynasty,
+  Rating, Status, Genre, Author, Title, Year } with an **asc/desc** toggle (nulls sort last; Dynasty
+  chronological newest→oldest, non-Chinese last); default is **Date** descending.
 - Each row: a **cover thumbnail** (2:3, neutral placeholder when there's no cover), title (+ year) with
   a small filled **♥** when favourited and a **gold Dynasty badge** to the right of the title for
   Chinese titles, the author(s), a **status chip** (Want / Reading / Read / Dropped — Want is blue),
@@ -485,13 +489,18 @@ An in-app bulk importer (the owner's choice over a script — same as Net Worth 
 
 ## Quotes - Library (`/quotes/library`)
 
-- **Search**: real-time match across quote text, author, title, and tags.
-- **Filters** (collapsible panel): the six **Categories**, multi-select **Tags** (OR — any selected
-  tag), **Favorites Only** toggle, **Source Type**, **Language**. When opened from a Show/Book detail
-  ("Quotes from this title", via a `?show=`/`?book=` param), the list is constrained to that record's
-  quotes with a clearable banner.
+- **Search** (placeholder "Search quote, author, title, tag"): real-time match across quote text,
+  author, title, and tags. An **icon-only Filter button** to the right tints **accent** while its
+  panel is open.
+- **Filters** (shared `FilterPanel`, label-free): **Any Category**, **Any Source**, **Any Language**,
+  a **Favorites Only** toggle, and multi-select **Tags** (OR — any selected tag). When opened from a
+  Show/Book detail ("Quotes from this title", via a `?show=`/`?book=` param), the list is constrained
+  to that record's quotes with a clearable banner.
+- The panel footer carries the **Sort** control next to **Clear Filters**. Sort over { Date, Category,
+  Source Type } with an **asc/desc** toggle (Date = date added; Category/Source Type sort on the stored
+  key); default is **Date** descending.
 - **List**: rows — a quote snippet, the category badge, and author. Tap → Add/Edit; **swipe-left** →
-  Delete (hard, with confirm). No sort menu (newest-touched order).
+  Delete (hard, with confirm).
 
 ## Quotes - Add / Edit (form, `/quotes/entry`, `/quotes/:id`)
 
@@ -564,11 +573,17 @@ Tracked tests are chosen in Medical Settings → Tracked Tests (seeded from `def
 
 ## Medical - Reports (`/medical/reports`)
 
-Chronological list (no screen-title header), newest report-date first. Each row: the **full date** (with
-year — reports span years), the **type** label, and `provider · body part` as a secondary line. Tap →
-**Report detail**; swipe-left → confirm → **delete** (hard; the FK cascades the report's results). New
-reports come from the **New Medical** bottom-nav tab. Explicit loading / empty / error states (empty →
-the centered **"No medical reports yet" / + New Medical Report** state).
+Searchable/filterable/sortable list (no screen-title header), newest report-date first by default. A
+**Search bar** (placeholder "Search body part, narrative") with an **icon-only Filter button** to its
+right (tints **accent** while open) sits above the list once at least one report exists. The shared
+**`FilterPanel`** is label-free — **Any Type**, **Any Provider** (the providers present in your own
+reports), **Any Body Part** — and its footer carries the **Sort** control next to **Clear Filters**.
+Sort over { Date, Type, Provider, Body Part } with an **asc/desc** toggle (newest-first within ties);
+default is **Date** descending. Each row: the **full date** (with year — reports span years), the
+**type** label, and `provider · body part` as a secondary line. Tap → **Report detail**; swipe-left →
+confirm → **delete** (hard; the FK cascades the report's results). New reports come from the **New
+Medical** bottom-nav tab. Explicit loading / empty / error states (empty → the centered **"No medical
+reports yet" / + New Medical Report** state; an active search/filter with no matches → "No matches.").
 
 ## Medical - Report detail (`/medical/:id`)
 
@@ -671,9 +686,15 @@ lockout. The lock is a convenience gate on this device — the data is already p
 
 ## Travel - Trips (`/travel/trips`)
 
-- Search (trip name, itinerary city) + filters (**status, country, province, year**); a
-  **reverse-chronological** list (undated trips last). Row: cover thumbnail · name · status chip · date
-  range · primary region. Tap → Trip Builder; **swipe-left → Delete** (hard, cascades days/stops/expenses).
+- A **full-width Search bar** (placeholder "Search trip name, city, companion" — matches trip name,
+  itinerary city, and companions) with an **icon-only Filter button** on its own row below (tints
+  **accent** while open). The Filter panel (shared `FilterPanel` pane, label-free) holds **Any
+  Country**, **Any Province**, **Any Status**, **Any Rating** (minimum: Any / 1★+ … / 5★, mirroring
+  Shows), **Any Year**, and a footer with the **Sort** control next to **Clear Filters**. Sort over
+  { Date, Country, Province, City, Status, Trip Name } with an **asc/desc** toggle (country/province/
+  city use the trip's alphabetically-first itinerary value; undated trips last); default is **Date**
+  descending (a reverse-chronological list). Row: cover thumbnail · name · status chip · date range ·
+  primary region. Tap → Trip Builder; **swipe-left → Delete** (hard, cascades days/stops/expenses).
 
 ## Travel - Trip Builder (`/travel/entry` new, `/travel/trip/:id` edit)
 

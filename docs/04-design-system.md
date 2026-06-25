@@ -56,6 +56,19 @@ _not_ the primary-button color; it's for emphasis, active states, and energy.
   `+` on the right.
 - **SwipeRow** — swipe-left reveals a `delete` Delete action.
 - **SearchBar** — magnifier + input (+ barcode icon on Add Food).
+- **FilterToggleButton** — the shared **icon-only** Filter toggle (`src/components/FilterToggleButton.tsx`):
+  a bare `IconFilter` that tints **accent** while its panel is open, else `text-secondary`. Sits to the
+  right of the `SearchBar` (Shows/Books/Quotes/Medical) or on its own row (Travel). Replaces the old
+  per-module labelled "Filters (N)" buttons.
+- **FilterPanel** — the collapsible filter-panel "pane" (`src/components/FilterPanel.tsx`): a
+  `rounded-card border bg-surface p-3 text-xs` surface that wraps a module's dropdowns/date rows + the
+  Sort/Clear-Filters footer. Used by every Library/Reports/Trips filter.
+- **SortControl** — the shared "Sort" cluster (`src/components/SortControl.tsx`): a label + sort-field
+  `SelectMenu` + an asc/desc icon toggle. Lives in the `FilterPanel` footer next to **Clear Filters**.
+  Each module passes its own `options` array, so editing a module's Sort menu is a one-line code change.
+- **DateRangeRow** — a single-line filter date range — `label · From · To` — opening the shared
+  `Calendar`, with a small ✕ to clear a bound (`src/components/DateRangeRow.tsx`). Used by the
+  Shows/Books Library "Started" / "Finished" filters.
 - **PrimaryButton** / **SecondaryButton** — light `fill` pill / outline pill. A `size` prop toggles
   `default` (full, e.g. sign-in) vs `sm` (compact, used by the top-right ADD / SAVE / CREATE / RESET
   header actions).

@@ -264,6 +264,32 @@ describe('applyLibraryView', () => {
     const r = applyLibraryView(quotes, crit({ category: 'philosophy', tags: ['zen'] }))
     expect(r.map((q) => q.id)).toEqual(['b', 'c'])
   })
+
+  it('sorts by date (created_at) — newest first by default, oldest first on toggle', () => {
+    const dated = [
+      makeQuote({ id: 'old', created_at: '2026-01-01T00:00:00Z' }),
+      makeQuote({ id: 'new', created_at: '2026-03-01T00:00:00Z' }),
+      makeQuote({ id: 'mid', created_at: '2026-02-01T00:00:00Z' }),
+    ]
+    expect(applyLibraryView(dated, crit({})).map((q) => q.id)).toEqual([
+      'new',
+      'mid',
+      'old',
+    ])
+    expect(applyLibraryView(dated, crit({ sortDir: 'asc' })).map((q) => q.id)).toEqual([
+      'old',
+      'mid',
+      'new',
+    ])
+  })
+
+  it('sorts by source type (on the stored key) ascending', () => {
+    expect(
+      applyLibraryView(quotes, crit({ sortField: 'sourceType', sortDir: 'asc' })).map(
+        (q) => q.id,
+      ),
+    ).toEqual(['b', 'c', 'a'])
+  })
 })
 
 describe('isFieldVisible', () => {

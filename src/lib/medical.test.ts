@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest'
 // so the seed migration is cross-checked against the TS list without needing node fs types.
 import SEED_SQL from '../../supabase/migrations/20260622121000_seed_medical_lab_test.sql?raw'
 import {
+  applyReportView,
+  DEFAULT_REPORT_LIST_CRITERIA,
   defaultTrackedTestKeys,
   EYE_REFRACTION_KEYS,
   EYE_REFRACTION_ROWS,
@@ -14,7 +16,11 @@ import {
   MEDICAL_LAB_TESTS,
   medicalTestsByCategory,
   orderResultsForDisplay,
+  reportBodyParts,
+  reportProviders,
   VALUE_KINDS,
+  type MedicalReportRow,
+  type ReportListCriteria,
 } from './medical'
 
 /** First quoted token on each `('key', ...` VALUES row = the test key (skips comments/header). */
@@ -168,6 +174,94 @@ describe('isMedicalFieldVisible', () => {
   it('honours an explicit list', () => {
     expect(isMedicalFieldVisible(['provider'], 'provider')).toBe(true)
     expect(isMedicalFieldVisible(['provider'], 'narrative')).toBe(false)
+  })
+})
+
+describe('applyReportView (Reports search / filter / sort)', () => {
+  function makeReport(
+    over: Partial<MedicalReportRow> & { id: string },
+  ): MedicalReportRow {
+    return {
+      user_id: 'u',
+      report_date: '2026-01-01',
+      report_type: 'health_screening',
+      provider: null,
+      body_part: null,
+      narrative: null,
+      document_urls: [],
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-01-01T00:00:00Z',
+      ...over,
+    }
+  }
+
+  const reports: MedicalReportRow[] = [
+    makeReport({
+      id: 'a',
+      report_date: '2026-03-01',
+      report_type: 'mri',
+      provider: 'Acme Imaging',
+      body_part: 'Brain',
+      narrative: 'No acute findings.',
+    }),
+    makeReport({
+      id: 'b',
+      report_date: '2026-01-15',
+      report_type: 'ultrasound',
+      provider: 'Bay Clinic',
+      body_part: 'Liver',
+      narrative: 'Mild steatosis noted.',
+    }),
+    makeReport({
+      id: 'c',
+      report_date: '2026-02-10',
+      report_type: 'health_screening',
+      provider: 'Acme Imaging',
+      body_part: null,
+    }),
+  ]
+
+  const crit = (over: Partial<ReportListCriteria> = {}): ReportListCriteria => ({
+    ...DEFAULT_REPORT_LIST_CRITERIA,
+    ...over,
+  })
+
+  it('sorts newest report first by default', () => {
+    expect(applyReportView(reports, crit()).map((r) => r.id)).toEqual(['a', 'c', 'b'])
+  })
+
+  it('searches body part + narrative', () => {
+    expect(applyReportView(reports, crit({ query: 'liver' })).map((r) => r.id)).toEqual([
+      'b',
+    ])
+    expect(
+      applyReportView(reports, crit({ query: 'steatosis' })).map((r) => r.id),
+    ).toEqual(['b'])
+  })
+
+  it('filters by type, provider, and body part', () => {
+    expect(
+      applyReportView(reports, crit({ reportType: 'mri' })).map((r) => r.id),
+    ).toEqual(['a'])
+    expect(
+      applyReportView(reports, crit({ provider: 'Acme Imaging' })).map((r) => r.id),
+    ).toEqual(['a', 'c'])
+    expect(
+      applyReportView(reports, crit({ bodyPart: 'Liver' })).map((r) => r.id),
+    ).toEqual(['b'])
+  })
+
+  it('sorts by provider ascending, newest-first within ties', () => {
+    expect(
+      applyReportView(reports, crit({ sortField: 'provider', sortDir: 'asc' })).map(
+        (r) => r.id,
+      ),
+    ).toEqual(['a', 'c', 'b'])
+  })
+
+  it('derives distinct sorted providers and body parts', () => {
+    expect(reportProviders(reports)).toEqual(['Acme Imaging', 'Bay Clinic'])
+    expect(reportBodyParts(reports)).toEqual(['Brain', 'Liver'])
   })
 })
 

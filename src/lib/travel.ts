@@ -6,6 +6,7 @@
 import type { Tables, TablesInsert, TablesUpdate } from '../types/database'
 import {
   STOP_TYPE_LABELS,
+  TRIP_STATUSES,
   TRIP_STATUS_LABELS,
   type StopType,
   type TripStatus,
@@ -69,12 +70,18 @@ export function usesLocalTransit(type: string): boolean {
 
 // --- Trip-list view (search + filters + sort) ---
 
+export type TripSortField = 'date' | 'country' | 'province' | 'city' | 'status' | 'name'
+export type TripSortDir = 'asc' | 'desc'
+
 export interface TripListCriteria {
   query: string
   status: 'all' | TripStatus
   country: 'all' | string
   province: 'all' | string
   year: 'all' | string
+  minRating: number // 0 = any
+  sortField: TripSortField
+  sortDir: TripSortDir
 }
 
 export const DEFAULT_TRIP_LIST_CRITERIA: TripListCriteria = {
@@ -83,6 +90,9 @@ export const DEFAULT_TRIP_LIST_CRITERIA: TripListCriteria = {
   country: 'all',
   province: 'all',
   year: 'all',
+  minRating: 0,
+  sortField: 'date',
+  sortDir: 'desc',
 }
 
 /** The year of a trip from its cached start_date (or null while undated). */
@@ -114,16 +124,70 @@ export function applyTripList(
       if (c.country !== 'all' && !f?.countries.has(c.country)) return false
       if (c.province !== 'all' && !f?.provinces.has(c.province)) return false
       if (c.year !== 'all' && tripYear(t) !== c.year) return false
+      if (c.minRating > 0 && (t.rating ?? 0) < c.minRating) return false
       if (q) {
         const inName = t.name.toLowerCase().includes(q)
         const inCity = [...(f?.cities ?? [])].some((city) =>
           city.toLowerCase().includes(q),
         )
-        if (!inName && !inCity) return false
+        const inCompanion = (t.companions ?? '').toLowerCase().includes(q)
+        if (!inName && !inCity && !inCompanion) return false
       }
       return true
     })
-    .sort(compareTripsByDateDesc)
+    .sort((a, b) => compareTrips(a, b, facetsByTrip, c.sortField, c.sortDir))
+}
+
+/** Alphabetically smallest non-empty value of a facet set (drives country/province/city sort). */
+function minFacet(set: Set<string> | undefined): string | null {
+  let min: string | null = null
+  for (const v of set ?? []) if (v && (min == null || v.localeCompare(min) < 0)) min = v
+  return min
+}
+
+function tripSortKey(
+  t: TripRow,
+  facetsByTrip: Map<string, TripFacets>,
+  field: TripSortField,
+): string | number | null {
+  switch (field) {
+    case 'date':
+      return t.start_date
+    case 'country':
+      return minFacet(facetsByTrip.get(t.id)?.countries)
+    case 'province':
+      return minFacet(facetsByTrip.get(t.id)?.provinces)
+    case 'city':
+      return minFacet(facetsByTrip.get(t.id)?.cities)
+    case 'status': {
+      const i = TRIP_STATUSES.indexOf(t.status as TripStatus)
+      return i >= 0 ? i : 99
+    }
+    case 'name':
+      return t.name.toLowerCase()
+  }
+}
+
+function compareTrips(
+  a: TripRow,
+  b: TripRow,
+  facetsByTrip: Map<string, TripFacets>,
+  field: TripSortField,
+  dir: TripSortDir,
+): number {
+  const ka = tripSortKey(a, facetsByTrip, field)
+  const kb = tripSortKey(b, facetsByTrip, field)
+  // Reverse-chronological as the secondary order (and when a key is missing).
+  const byDate = compareTripsByDateDesc(a, b)
+  if (ka == null && kb == null) return byDate
+  if (ka == null) return 1
+  if (kb == null) return -1
+  const primary =
+    typeof ka === 'number' && typeof kb === 'number'
+      ? ka - kb
+      : String(ka).localeCompare(String(kb))
+  if (primary !== 0) return dir === 'asc' ? primary : -primary
+  return byDate
 }
 
 /** Reverse-chronological by start_date; undated trips sink to the bottom, then newest-touched first. */

@@ -113,6 +113,33 @@ describe('applyTripList', () => {
       applyTripList([a, b], facets, crit({ query: '肇庆' })).map((t) => t.id),
     ).toEqual(['b'])
   })
+  it('searches by companion', () => {
+    const c = trip({ id: 'c', name: 'Solo', companions: 'Alice & Bob' })
+    expect(
+      applyTripList([a, b, c], facets, crit({ query: 'alice' })).map((t) => t.id),
+    ).toEqual(['c'])
+  })
+  it('filters rating as a minimum', () => {
+    const hi = trip({ id: 'a', name: 'Hubei', start_date: '2026-03-28', rating: 5 })
+    const lo = trip({ id: 'b', name: 'Zhaoqing', start_date: '2026-01-30', rating: 3 })
+    expect(
+      applyTripList([hi, lo], facets, crit({ minRating: 4 })).map((t) => t.id),
+    ).toEqual(['a'])
+  })
+  it('sorts by trip name ascending', () => {
+    expect(
+      applyTripList([a, b], facets, crit({ sortField: 'name', sortDir: 'asc' })).map(
+        (t) => t.id,
+      ),
+    ).toEqual(['a', 'b'])
+  })
+  it('sorts by province (smallest facet) ascending', () => {
+    expect(
+      applyTripList([a, b], facets, crit({ sortField: 'province', sortDir: 'asc' })).map(
+        (t) => t.id,
+      ),
+    ).toEqual(['b', 'a'])
+  })
 })
 
 describe('timeHHMM', () => {

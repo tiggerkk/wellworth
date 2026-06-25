@@ -5,7 +5,7 @@
  */
 import type { Tables, TablesInsert, TablesUpdate } from '../types/database'
 import type { IsoDate } from './date'
-import type { Dynasty } from '../constants/dynasty'
+import { DYNASTIES, type Dynasty } from '../constants/dynasty'
 
 export type BookRow = Tables<'book'>
 export type BookInsert = TablesInsert<'book'>
@@ -132,6 +132,7 @@ export type SortField =
   | 'status'
   | 'rating'
   | 'genre'
+  | 'dynasty'
   | 'date'
 export type SortDir = 'asc' | 'desc'
 
@@ -142,7 +143,6 @@ export interface LibraryCriteria {
   lgbtq: 'all' | LgbtqRep
   dynasty: 'all' | Dynasty
   status: 'all' | BookStatus
-  author: 'all' | string
   favoritesOnly: boolean
   startFrom: IsoDate | null
   startTo: IsoDate | null
@@ -159,7 +159,6 @@ export const DEFAULT_LIBRARY_CRITERIA: LibraryCriteria = {
   lgbtq: 'all',
   dynasty: 'all',
   status: 'all',
-  author: 'all',
   favoritesOnly: false,
   startFrom: null,
   startTo: null,
@@ -176,7 +175,6 @@ function matchesCriteria(book: BookRow, c: LibraryCriteria): boolean {
   if (c.lgbtq !== 'all' && (book.lgbtq_rep ?? 'none') !== c.lgbtq) return false
   if (c.dynasty !== 'all' && book.dynasty !== c.dynasty) return false
   if (c.genre !== 'all' && !(book.genres ?? []).includes(c.genre)) return false
-  if (c.author !== 'all' && !(book.authors ?? []).includes(c.author)) return false
   if (c.favoritesOnly && !book.is_favorite) return false
   if (c.minRating > 0 && (book.rating ?? 0) < c.minRating) return false
   if (c.startFrom && (!book.start_date || book.start_date < c.startFrom)) return false
@@ -200,6 +198,11 @@ function sortKey(book: BookRow, field: SortField): string | number | null {
       return book.rating
     case 'genre':
       return book.genres?.[0]?.toLowerCase() ?? null
+    case 'dynasty': {
+      // Chronological (DYNASTIES is newest→oldest); non-Chinese titles (null) sort last.
+      const i = DYNASTIES.indexOf(book.dynasty as Dynasty)
+      return i >= 0 ? i : null
+    }
     case 'date':
       return book.end_date ?? book.last_update_date ?? book.updated_at
   }

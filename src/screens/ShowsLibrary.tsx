@@ -1,12 +1,6 @@
 import { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router'
-import {
-  IconArrowDown,
-  IconArrowUp,
-  IconFilter,
-  IconHeartFilled,
-  IconX,
-} from '@tabler/icons-react'
+import { IconHeartFilled } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useShowsVersion, bumpShows } from '../lib/shows-refresh'
@@ -26,7 +20,7 @@ import {
   type SortField,
 } from '../lib/shows'
 import { DYNASTIES, DYNASTY_CHIP } from '../constants/dynasty'
-import { formatDayLabel, formatMonthDay, todayLocal, type IsoDate } from '../lib/date'
+import { formatMonthDay, todayLocal, type IsoDate } from '../lib/date'
 import { routes } from '../constants/routes'
 import { SearchBar } from '../components/SearchBar'
 import { SwipeRow } from '../components/SwipeRow'
@@ -34,6 +28,10 @@ import { SegmentedTabs } from '../components/SegmentedTabs'
 import { SelectMenu } from '../components/SelectMenu'
 import { Toggle } from '../components/Toggle'
 import { Calendar } from '../components/Calendar'
+import { FilterToggleButton } from '../components/FilterToggleButton'
+import { FilterPanel } from '../components/FilterPanel'
+import { SortControl } from '../components/SortControl'
+import { DateRangeRow } from '../components/DateRangeRow'
 import { ShowTypeBadge } from '../components/ShowTypeBadge'
 import { StatusChip } from '../components/StatusChip'
 import { StarRating } from '../components/StarRating'
@@ -51,7 +49,7 @@ const TYPE_OPTIONS: { value: TypeFilter; label: string }[] = [
   { value: 'documentary', label: 'Docs' },
 ]
 const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
-  { value: 'all', label: 'All statuses' },
+  { value: 'all', label: 'Any Status' },
   ...SHOW_STATUSES.map((s) => ({ value: s, label: SHOW_STATUS_LABELS[s] })),
 ]
 const LGBTQ_OPTIONS = [
@@ -63,7 +61,7 @@ const DYNASTY_OPTIONS = [
   ...DYNASTIES.map((d) => ({ value: d, label: d })),
 ]
 const RATING_OPTIONS = [
-  { value: '0', label: 'Any rating' },
+  { value: '0', label: 'Any Rating' },
   { value: '1', label: '1★+' },
   { value: '2', label: '2★+' },
   { value: '3', label: '3★+' },
@@ -72,12 +70,13 @@ const RATING_OPTIONS = [
 ]
 const SORT_OPTIONS: { value: SortField; label: string }[] = [
   { value: 'date', label: 'Date' },
-  { value: 'title', label: 'Title' },
-  { value: 'type', label: 'Type' },
-  { value: 'year', label: 'Year' },
-  { value: 'status', label: 'Status' },
+  { value: 'dynasty', label: 'Dynasty' },
   { value: 'rating', label: 'Rating' },
+  { value: 'status', label: 'Status' },
   { value: 'genre', label: 'Genre' },
+  { value: 'title', label: 'Title' },
+  { value: 'year', label: 'Year' },
+  { value: 'type', label: 'Type' },
 ]
 
 /**
@@ -131,21 +130,10 @@ export function ShowsLibrary() {
 
   const allShows = shows ?? []
   const genreOptions = [
-    { value: 'all', label: 'All genres' },
+    { value: 'all', label: 'Any Genre' },
     ...showGenres(allShows).map((g) => ({ value: g, label: g })),
   ]
   const view = applyLibraryView(allShows, criteria)
-
-  const activeCount =
-    (criteria.type !== 'all' ? 1 : 0) +
-    (criteria.genre !== 'all' ? 1 : 0) +
-    (criteria.minRating > 0 ? 1 : 0) +
-    (criteria.lgbtq !== 'all' ? 1 : 0) +
-    (criteria.dynasty !== 'all' ? 1 : 0) +
-    (criteria.status !== 'all' ? 1 : 0) +
-    (criteria.favoritesOnly ? 1 : 0) +
-    (criteria.startFrom || criteria.startTo ? 1 : 0) +
-    (criteria.endFrom || criteria.endTo ? 1 : 0)
 
   const boundValue: Record<DateBound, IsoDate | null> = {
     startFrom: criteria.startFrom,
@@ -157,91 +145,52 @@ export function ShowsLibrary() {
   return (
     <div className="flex flex-col gap-3 px-4 py-4">
       <div className="sticky top-0 z-10 -mx-4 flex flex-col gap-3 bg-bg/90 px-4 py-3 backdrop-blur">
-        <SearchBar
-          value={criteria.query}
-          onChange={(q) => setCrit({ query: q })}
-          placeholder="Search title, director, cast"
-        />
         <div className="flex items-center gap-2">
-          <button
+          <SearchBar
+            value={criteria.query}
+            onChange={(q) => setCrit({ query: q })}
+            placeholder="Search title, director, cast"
+          />
+          <FilterToggleButton
+            active={filtersOpen}
             onClick={() => setFiltersOpen((o) => !o)}
-            className="flex items-center gap-1 rounded-input bg-input px-2.5 py-1.5 text-sm text-text-primary"
-          >
-            <IconFilter size={15} /> Filters
-            {activeCount > 0 ? ` (${activeCount})` : ''}
-          </button>
-          <div className="ml-auto flex items-center gap-1">
-            <span className="text-xs text-text-secondary">Sort</span>
-            <SelectMenu
-              value={criteria.sortField}
-              options={SORT_OPTIONS}
-              onChange={(f) => setCrit({ sortField: f })}
-              ariaLabel="Sort field"
-              className="w-24"
-            />
-            <button
-              onClick={() =>
-                setCrit({ sortDir: criteria.sortDir === 'asc' ? 'desc' : 'asc' })
-              }
-              aria-label="Sort direction"
-              className="rounded-input bg-input p-1.5 text-text-primary"
-            >
-              {criteria.sortDir === 'asc' ? (
-                <IconArrowUp size={15} />
-              ) : (
-                <IconArrowDown size={15} />
-              )}
-            </button>
-          </div>
+          />
         </div>
       </div>
 
       {filtersOpen && (
-        <div className="flex flex-col gap-3 rounded-card border border-border bg-surface p-3 text-xs">
-          <div>
-            <p className="mb-1 text-text-secondary">Type</p>
-            <SegmentedTabs
-              value={criteria.type}
-              onChange={(t) => setCrit({ type: t })}
-              options={TYPE_OPTIONS}
-            />
-          </div>
+        <FilterPanel>
+          <SegmentedTabs
+            value={criteria.type}
+            onChange={(t) => setCrit({ type: t })}
+            options={TYPE_OPTIONS}
+          />
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Status">
-              <SelectMenu
-                value={criteria.status}
-                options={STATUS_OPTIONS}
-                onChange={(s) => setCrit({ status: s })}
-              />
-            </Field>
-            <Field label="Genre">
-              <SelectMenu
-                value={criteria.genre}
-                options={genreOptions}
-                onChange={(g) => setCrit({ genre: g })}
-              />
-            </Field>
-            <Field label="Rating">
-              <SelectMenu
-                value={String(criteria.minRating)}
-                options={RATING_OPTIONS}
-                onChange={(v) => setCrit({ minRating: Number(v) })}
-              />
-            </Field>
-            <Field label="LGBT+">
-              <SelectMenu
-                value={criteria.lgbtq}
-                options={LGBTQ_OPTIONS}
-                onChange={(l) => setCrit({ lgbtq: l })}
-              />
-            </Field>
-            <Field label="Dynasty">
-              <SelectMenu
-                value={criteria.dynasty}
-                options={DYNASTY_OPTIONS}
-                onChange={(d) => setCrit({ dynasty: d })}
-              />
-            </Field>
+            <SelectMenu
+              value={criteria.status}
+              options={STATUS_OPTIONS}
+              onChange={(s) => setCrit({ status: s })}
+            />
+            <SelectMenu
+              value={criteria.genre}
+              options={genreOptions}
+              onChange={(g) => setCrit({ genre: g })}
+            />
+            <SelectMenu
+              value={String(criteria.minRating)}
+              options={RATING_OPTIONS}
+              onChange={(v) => setCrit({ minRating: Number(v) })}
+            />
+            <SelectMenu
+              value={criteria.lgbtq}
+              options={LGBTQ_OPTIONS}
+              onChange={(l) => setCrit({ lgbtq: l })}
+            />
+            <SelectMenu
+              value={criteria.dynasty}
+              options={DYNASTY_OPTIONS}
+              onChange={(d) => setCrit({ dynasty: d })}
+            />
             <label className="flex items-center justify-between self-end py-1.5">
               <span className="text-text-secondary">Favorites Only</span>
               <Toggle
@@ -251,8 +200,8 @@ export function ShowsLibrary() {
               />
             </label>
           </div>
-          <DateRange
-            label="Started Between"
+          <DateRangeRow
+            label="Started"
             from={criteria.startFrom}
             to={criteria.startTo}
             onPickFrom={() => setWhichDate('startFrom')}
@@ -260,8 +209,8 @@ export function ShowsLibrary() {
             onClearFrom={() => setBound('startFrom', null)}
             onClearTo={() => setBound('startTo', null)}
           />
-          <DateRange
-            label="Finished Between"
+          <DateRangeRow
+            label="Finished"
             from={criteria.endFrom}
             to={criteria.endTo}
             onPickFrom={() => setWhichDate('endFrom')}
@@ -269,12 +218,21 @@ export function ShowsLibrary() {
             onClearFrom={() => setBound('endFrom', null)}
             onClearTo={() => setBound('endTo', null)}
           />
-          {activeCount > 0 && (
-            <button onClick={clearFilters} className="self-start text-accent">
-              Clear filters
+          <div className="flex items-center justify-between">
+            <SortControl
+              field={criteria.sortField}
+              options={SORT_OPTIONS}
+              onFieldChange={(f) => setCrit({ sortField: f })}
+              dir={criteria.sortDir}
+              onToggleDir={() =>
+                setCrit({ sortDir: criteria.sortDir === 'asc' ? 'desc' : 'asc' })
+              }
+            />
+            <button onClick={clearFilters} className="text-accent">
+              Clear Filters
             </button>
-          )}
-        </div>
+          </div>
+        </FilterPanel>
       )}
 
       {loading && <p className="px-1 py-6 text-sm text-text-secondary">Loading…</p>}
@@ -355,80 +313,6 @@ export function ShowsLibrary() {
           }}
           onClose={() => setWhichDate(null)}
         />
-      )}
-    </div>
-  )
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <p className="mb-1 text-text-secondary">{label}</p>
-      {children}
-    </div>
-  )
-}
-
-function DateRange({
-  label,
-  from,
-  to,
-  onPickFrom,
-  onPickTo,
-  onClearFrom,
-  onClearTo,
-}: {
-  label: string
-  from: IsoDate | null
-  to: IsoDate | null
-  onPickFrom: () => void
-  onPickTo: () => void
-  onClearFrom: () => void
-  onClearTo: () => void
-}) {
-  return (
-    <div>
-      <p className="mb-1 text-text-secondary">{label}</p>
-      <div className="grid grid-cols-2 gap-2">
-        <DateButton
-          value={from}
-          placeholder="From"
-          onPick={onPickFrom}
-          onClear={onClearFrom}
-        />
-        <DateButton value={to} placeholder="To" onPick={onPickTo} onClear={onClearTo} />
-      </div>
-    </div>
-  )
-}
-
-function DateButton({
-  value,
-  placeholder,
-  onPick,
-  onClear,
-}: {
-  value: IsoDate | null
-  placeholder: string
-  onPick: () => void
-  onClear: () => void
-}) {
-  return (
-    <div className="flex items-center gap-1">
-      <button
-        onClick={onPick}
-        className="min-w-0 flex-1 truncate rounded-input bg-input px-2 py-1.5 text-left text-text-primary"
-      >
-        {value ? (
-          formatDayLabel(value)
-        ) : (
-          <span className="text-text-tertiary">{placeholder}</span>
-        )}
-      </button>
-      {value && (
-        <button onClick={onClear} aria-label="Clear date" className="text-text-tertiary">
-          <IconX size={14} />
-        </button>
       )}
     </div>
   )

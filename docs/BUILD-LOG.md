@@ -55,7 +55,7 @@ been merged into the permanent docs (`00-PRD … 05-seed-data` + OWNER-RUNBOOK) 
   `VITE_GOOGLE_BOOKS_API_KEY` (Books), and the optional `VITE_ALLOWED_EMAILS` (email allowlist —
   empty ⇒ no restriction). All build-time `VITE_` vars.
 - **Gates:** husky `.husky/pre-commit` → lint-staged + `typecheck` + `test`; GitHub Actions
-  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 432 Vitest tests (pure helpers).
+  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 445 Vitest tests (pure helpers).
 - **Deploy status:** Deployed. GitHub `main` → Vercel auto-deploy; the production URL is in the
   Supabase redirect URLs + Google JS origins (see `OWNER-RUNBOOK.md`). Installed + tested on iPhone (PWA).
 - Conventions (DB-access-via-`src/data`, metric storage, generated `database.ts` contract, etc.) live
@@ -1867,3 +1867,36 @@ A second round of small follow-ups (same session, UI-only):
 - **Import modals** headers dropped the redundant "CSV" (Import Shows / Books / Quotes; Import Trips /
   Expenses; **Import Medical Report**) and the file-picker label was Title-cased (**Choose CSV/JSON/JSON
   CSV File**).
+
+## Shared Filter / Sort / Search pass (session, June 2026)
+
+Another UI-only sweep unifying the **Search + Filter + Sort** controls across **Shows, Books, Quotes,
+Medical, Travel** — **no schema / migration / `database.ts` / seed changes**; every field used already
+existed (`trip.rating`, `trip.companions`, `medical_report.body_part/provider/narrative`). Test count
+**432 → 445** (new pure-helper coverage only). Specs updated in `01-screens.md` + `04-design-system.md`.
+
+- **Four new shared components** (the parts that had been re-rolled per screen): **`FilterToggleButton`**
+  (icon-only `IconFilter`, tints accent while open — promotes the old Travel design to every module and
+  retires the labelled "Filters (N)" buttons + their `activeCount` math), **`FilterPanel`** (the
+  `rounded-card border bg-surface p-3` pane), **`SortControl`** (label + sort-field `SelectMenu` +
+  asc/desc toggle, driven by a per-module `SORT_OPTIONS` array — so editing a module's Sort list is a
+  one-line code change, which was the owner's explicit ask), and **`DateRangeRow`** (single-line
+  `label · From · To`, absorbing the duplicated `DateButton`/`DateRange` helpers from Shows + Books).
+- **Label-free panels.** Shows/Books/Quotes/Medical/Travel dropdowns dropped their `<Field>` labels; the
+  first option now names the field (**Any Status / Any Genre / Any Rating / Any LGBT+ / Any Dynasty / Any
+  Category / Any Source / Any Language / Any Type / Any Provider / Any Body Part / Any Country / Any
+  Province / Any Year**). Shows keeps **Type** as a `SegmentedTabs` (owner decision). **Clear Filters**
+  is always shown in the panel footer next to Sort (preserves `query` + sort across a clear).
+- **New sort everywhere.** Shows/Books gained a **Dynasty** sort (chronological via `DYNASTIES` index,
+  non-Chinese titles last). **Quotes** + **Medical** had no sort at all — added `applyLibraryView` sort
+  (Date=created_at / Category / Source Type) and a new pure **`applyReportView`** (Date=report_date /
+  Type / Provider / Body Part) with `reportProviders`/`reportBodyParts`/`reportSearchText` helpers.
+  **Travel** `applyTripList` gained `sortField`/`sortDir` (Date / Country / Province / City / Status /
+  Trip Name; country/province/city use the alphabetically-first itinerary facet) **plus** a `minRating`
+  filter (mirrors Shows) and **companion** search.
+- **Books drops the Author filter.** Author has too many values to filter usefully — it's now
+  search-only (`bookSearchText` already covered it). `author` was removed from `LibraryCriteria` /
+  `matchesCriteria`, but **kept** as a Sort option.
+- **Travel search** is now **full-width** with the Filter icon on its own row below (owner decision —
+  the only module where the icon doesn't share the search row); the other four keep the icon to the
+  right of the search bar.

@@ -94,6 +94,100 @@ export function usesBodyPart(type: string): boolean {
   )
 }
 
+// --- Reports-list view (search + filters + sort; pure — the screen holds the criteria state) ---
+
+export type ReportSortField = 'date' | 'type' | 'provider' | 'bodyPart'
+export type ReportSortDir = 'asc' | 'desc'
+
+export interface ReportListCriteria {
+  query: string
+  reportType: 'all' | string
+  provider: 'all' | string
+  bodyPart: 'all' | string
+  sortField: ReportSortField
+  sortDir: ReportSortDir
+}
+
+export const DEFAULT_REPORT_LIST_CRITERIA: ReportListCriteria = {
+  query: '',
+  reportType: 'all',
+  provider: 'all',
+  bodyPart: 'all',
+  sortField: 'date',
+  sortDir: 'desc',
+}
+
+/** Sorted distinct providers across the reports (drives the Provider filter). */
+export function reportProviders(reports: Pick<MedicalReportRow, 'provider'>[]): string[] {
+  const set = new Set<string>()
+  for (const r of reports) if (r.provider) set.add(r.provider)
+  return [...set].sort((a, b) => a.localeCompare(b))
+}
+
+/** Sorted distinct body parts across the reports (drives the Body Part filter). */
+export function reportBodyParts(
+  reports: Pick<MedicalReportRow, 'body_part'>[],
+): string[] {
+  const set = new Set<string>()
+  for (const r of reports) if (r.body_part) set.add(r.body_part)
+  return [...set].sort((a, b) => a.localeCompare(b))
+}
+
+/** Lowercased text the Reports search matches: body part + narrative. */
+export function reportSearchText(
+  report: Pick<MedicalReportRow, 'body_part' | 'narrative'>,
+): string {
+  return [report.body_part, report.narrative].filter(Boolean).join(' ').toLowerCase()
+}
+
+function reportSortKey(report: MedicalReportRow, field: ReportSortField): string | null {
+  switch (field) {
+    case 'date':
+      return report.report_date
+    case 'type':
+      return report.report_type
+    case 'provider':
+      return report.provider
+    case 'bodyPart':
+      return report.body_part
+  }
+}
+
+function compareReports(
+  a: MedicalReportRow,
+  b: MedicalReportRow,
+  field: ReportSortField,
+  dir: ReportSortDir,
+): number {
+  const ka = reportSortKey(a, field)
+  const kb = reportSortKey(b, field)
+  // Newest report first as the secondary order (and when a key is missing).
+  const byDate = b.report_date.localeCompare(a.report_date)
+  if (ka == null && kb == null) return byDate
+  if (ka == null) return 1
+  if (kb == null) return -1
+  const primary = ka.localeCompare(kb)
+  if (primary !== 0) return dir === 'asc' ? primary : -primary
+  return byDate
+}
+
+/** Filter then sort the Reports list. Pure — does not mutate `reports`. */
+export function applyReportView(
+  reports: MedicalReportRow[],
+  c: ReportListCriteria,
+): MedicalReportRow[] {
+  const q = c.query.trim().toLowerCase()
+  return reports
+    .filter((r) => {
+      if (q && !reportSearchText(r).includes(q)) return false
+      if (c.reportType !== 'all' && r.report_type !== c.reportType) return false
+      if (c.provider !== 'all' && r.provider !== c.provider) return false
+      if (c.bodyPart !== 'all' && r.body_part !== c.bodyPart) return false
+      return true
+    })
+    .sort((a, b) => compareReports(a, b, c.sortField, c.sortDir))
+}
+
 export const MEDICAL_FLAGS = ['high', 'low', 'abnormal'] as const
 export type MedicalFlag = (typeof MEDICAL_FLAGS)[number]
 

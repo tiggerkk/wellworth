@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState, type ReactNode } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
-import { IconFilter, IconX } from '@tabler/icons-react'
+import { IconX } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useProfile } from '../hooks/useProfile'
@@ -12,6 +12,7 @@ import {
   quoteTags,
   QUOTE_CATEGORY_CHIP,
   type LibraryCriteria,
+  type SortField,
 } from '../lib/quotes'
 import {
   categoryLabel,
@@ -26,10 +27,18 @@ import { EmptyState } from '../components/EmptyState'
 import { SelectMenu } from '../components/SelectMenu'
 import { Toggle } from '../components/Toggle'
 import { StatusChip } from '../components/StatusChip'
+import { FilterToggleButton } from '../components/FilterToggleButton'
+import { FilterPanel } from '../components/FilterPanel'
+import { SortControl } from '../components/SortControl'
 
 const LANGUAGE_OPTIONS: { value: string; label: string }[] = [
-  { value: 'all', label: 'All languages' },
+  { value: 'all', label: 'Any Language' },
   ...QUOTE_LANGUAGES.map((l) => ({ value: l, label: QUOTE_LANGUAGE_LABELS[l] })),
+]
+const SORT_OPTIONS: { value: SortField; label: string }[] = [
+  { value: 'date', label: 'Date' },
+  { value: 'category', label: 'Category' },
+  { value: 'sourceType', label: 'Source Type' },
 ]
 
 /**
@@ -71,14 +80,14 @@ export function QuotesLibrary() {
   )
   const categoryOptions = useMemo(
     () => [
-      { value: 'all', label: 'All categories' },
+      { value: 'all', label: 'Any Category' },
       ...categories.map((c) => ({ value: c.key, label: c.label })),
     ],
     [categories],
   )
   const sourceOptions = useMemo(
     () => [
-      { value: 'all', label: 'All sources' },
+      { value: 'all', label: 'Any Source' },
       ...sourceTypes.map((s) => ({ value: s.key, label: s.label })),
     ],
     [sourceTypes],
@@ -91,7 +100,12 @@ export function QuotesLibrary() {
   }
 
   function clearFilters() {
-    setCriteria((c) => ({ ...DEFAULT_LIBRARY_CRITERIA, query: c.query }))
+    setCriteria((c) => ({
+      ...DEFAULT_LIBRARY_CRITERIA,
+      query: c.query,
+      sortField: c.sortField,
+      sortDir: c.sortDir,
+    }))
   }
   function toggleTag(tag: string) {
     setCriteria((c) => ({
@@ -105,13 +119,6 @@ export function QuotesLibrary() {
   // The URL constraint is layered on at view time so the panel state stays purely local.
   const view = applyLibraryView(all, { ...criteria, showId, bookId })
 
-  const activeCount =
-    (criteria.category !== 'all' ? 1 : 0) +
-    (criteria.tags.length > 0 ? 1 : 0) +
-    (criteria.favoritesOnly ? 1 : 0) +
-    (criteria.sourceType !== 'all' ? 1 : 0) +
-    (criteria.language !== 'all' ? 1 : 0)
-
   const constrained = !!(showId || bookId)
   const constraintTitle = constrained
     ? (all.find(
@@ -122,18 +129,17 @@ export function QuotesLibrary() {
   return (
     <div className="flex flex-col gap-3 px-4 py-4">
       <div className="sticky top-0 z-10 -mx-4 flex flex-col gap-3 bg-bg/90 px-4 py-3 backdrop-blur">
-        <SearchBar
-          value={criteria.query}
-          onChange={(q) => setCrit({ query: q })}
-          placeholder="Search quotes, author, tags"
-        />
-        <button
-          onClick={() => setFiltersOpen((o) => !o)}
-          className="flex items-center gap-1 self-start rounded-input bg-input px-2.5 py-1.5 text-sm text-text-primary"
-        >
-          <IconFilter size={15} /> Filters
-          {activeCount > 0 ? ` (${activeCount})` : ''}
-        </button>
+        <div className="flex items-center gap-2">
+          <SearchBar
+            value={criteria.query}
+            onChange={(q) => setCrit({ query: q })}
+            placeholder="Search quote, author, title, tag"
+          />
+          <FilterToggleButton
+            active={filtersOpen}
+            onClick={() => setFiltersOpen((o) => !o)}
+          />
+        </div>
       </div>
 
       {constrained && (
@@ -152,29 +158,23 @@ export function QuotesLibrary() {
       )}
 
       {filtersOpen && (
-        <div className="flex flex-col gap-3 rounded-card border border-border bg-surface p-3 text-xs">
+        <FilterPanel>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Category">
-              <SelectMenu
-                value={criteria.category}
-                options={categoryOptions}
-                onChange={(v) => setCrit({ category: v })}
-              />
-            </Field>
-            <Field label="Source Type">
-              <SelectMenu
-                value={criteria.sourceType}
-                options={sourceOptions}
-                onChange={(v) => setCrit({ sourceType: v })}
-              />
-            </Field>
-            <Field label="Language">
-              <SelectMenu
-                value={criteria.language}
-                options={LANGUAGE_OPTIONS}
-                onChange={(v) => setCrit({ language: v as LibraryCriteria['language'] })}
-              />
-            </Field>
+            <SelectMenu
+              value={criteria.category}
+              options={categoryOptions}
+              onChange={(v) => setCrit({ category: v })}
+            />
+            <SelectMenu
+              value={criteria.sourceType}
+              options={sourceOptions}
+              onChange={(v) => setCrit({ sourceType: v })}
+            />
+            <SelectMenu
+              value={criteria.language}
+              options={LANGUAGE_OPTIONS}
+              onChange={(v) => setCrit({ language: v as LibraryCriteria['language'] })}
+            />
             <label className="flex items-center justify-between self-end py-1.5">
               <span className="text-text-secondary">Favorites Only</span>
               <Toggle
@@ -206,12 +206,21 @@ export function QuotesLibrary() {
             </Field>
           )}
 
-          {activeCount > 0 && (
-            <button onClick={clearFilters} className="self-start text-accent">
-              Clear filters
+          <div className="flex items-center justify-between">
+            <SortControl
+              field={criteria.sortField}
+              options={SORT_OPTIONS}
+              onFieldChange={(f) => setCrit({ sortField: f })}
+              dir={criteria.sortDir}
+              onToggleDir={() =>
+                setCrit({ sortDir: criteria.sortDir === 'asc' ? 'desc' : 'asc' })
+              }
+            />
+            <button onClick={clearFilters} className="text-accent">
+              Clear Filters
             </button>
-          )}
-        </div>
+          </div>
+        </FilterPanel>
       )}
 
       {loading && <p className="text-sm text-text-secondary">Loading…</p>}

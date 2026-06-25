@@ -466,6 +466,16 @@ describe('applyLibraryView', () => {
       ),
     ).toEqual(['The Matrix', 'Heat', 'Breaking Bad'])
   })
+  it('sorts by dynasty chronologically (newest→oldest) with non-Chinese last', () => {
+    const tang = makeShow({ title: '長安十二時辰', dynasty: '唐代' })
+    const qing = makeShow({ title: '雍正王朝', dynasty: '清代' })
+    expect(
+      applyLibraryView(
+        [matrix, tang, qing],
+        crit({ sortField: 'dynasty', sortDir: 'asc' }),
+      ).map((s) => s.title),
+    ).toEqual(['雍正王朝', '長安十二時辰', 'The Matrix'])
+  })
 })
 
 describe('isFieldVisible', () => {

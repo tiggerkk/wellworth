@@ -200,7 +200,7 @@ describe('applyLibraryView', () => {
     )
   })
 
-  it('filters by status, genre, author, and lgbtq', () => {
+  it('filters by status, genre, and lgbtq', () => {
     expect(applyLibraryView(lib, crit({ status: 'read' })).map((b) => b.title)).toEqual([
       'Dune',
     ])
@@ -209,9 +209,6 @@ describe('applyLibraryView', () => {
         .map((b) => b.title)
         .sort(),
     ).toEqual(['A Wizard of Earthsea', 'Babel'])
-    expect(
-      applyLibraryView(lib, crit({ author: 'R.F. Kuang' })).map((b) => b.title),
-    ).toEqual(['Babel'])
     expect(
       applyLibraryView(lib, crit({ lgbtq: 'significant' })).map((b) => b.title),
     ).toEqual(['Babel'])
@@ -252,6 +249,18 @@ describe('applyLibraryView', () => {
         (b) => b.title,
       ),
     ).toEqual(['Dune', 'A Wizard of Earthsea', 'Babel'])
+  })
+
+  it('sorts by dynasty chronologically (newest→oldest) with non-Chinese last', () => {
+    const tang = makeBook({ title: '長安', dynasty: '唐代' })
+    const qing = makeBook({ title: '紅樓夢', dynasty: '清代' })
+    const dune = makeBook({ title: 'Dune' })
+    expect(
+      applyLibraryView(
+        [dune, tang, qing],
+        crit({ sortField: 'dynasty', sortDir: 'asc' }),
+      ).map((b) => b.title),
+    ).toEqual(['紅樓夢', '長安', 'Dune'])
   })
 })
 

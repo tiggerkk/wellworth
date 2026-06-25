@@ -99,6 +99,9 @@ export function randomItem<T>(items: T[], random: () => number = Math.random): T
 
 // --- Library filtering (M5; pure — the screen holds the criteria state) ---
 
+export type SortField = 'date' | 'category' | 'sourceType'
+export type SortDir = 'asc' | 'desc'
+
 export interface LibraryCriteria {
   query: string
   /** A configured category key, or 'all' (the values are owner-configurable — see quotes-config.ts). */
@@ -112,6 +115,8 @@ export interface LibraryCriteria {
   /** "Quotes from this title" constraint (URL-driven, not a panel control). */
   showId: string | null
   bookId: string | null
+  sortField: SortField
+  sortDir: SortDir
 }
 
 export const DEFAULT_LIBRARY_CRITERIA: LibraryCriteria = {
@@ -123,6 +128,8 @@ export const DEFAULT_LIBRARY_CRITERIA: LibraryCriteria = {
   language: 'all',
   showId: null,
   bookId: null,
+  sortField: 'date',
+  sortDir: 'desc',
 }
 
 /** Sorted distinct tags across the given quotes — the Tags-facet options (derived, no DB call). */
@@ -132,23 +139,49 @@ export function quoteTags(quotes: Pick<QuoteRow, 'tags'>[]): string[] {
   return [...set].sort((a, b) => a.localeCompare(b))
 }
 
+function quoteSortKey(quote: QuoteRow, field: SortField): string | null {
+  switch (field) {
+    case 'date':
+      return quote.created_at
+    case 'category':
+      return quote.category
+    case 'sourceType':
+      return quote.source_type
+  }
+}
+
+function compareQuotes(a: QuoteRow, b: QuoteRow, field: SortField, dir: SortDir): number {
+  const ka = quoteSortKey(a, field)
+  const kb = quoteSortKey(b, field)
+  // Newest-first as the secondary order (and when a key is missing).
+  const byDate = (b.created_at ?? '').localeCompare(a.created_at ?? '')
+  if (ka == null && kb == null) return byDate
+  if (ka == null) return 1
+  if (kb == null) return -1
+  const primary = String(ka).localeCompare(String(kb))
+  if (primary !== 0) return dir === 'asc' ? primary : -primary
+  return byDate
+}
+
 /**
- * Filter a Library list. **Filter only** — input order (`updated_at desc` from `listQuotes`) is
- * preserved (the spec has no sort menu). Pure; does not mutate `quotes`.
+ * Filter then sort a Library list. Sorts by date (created_at) / category / source-type; category and
+ * source-type sort on the stored key. Pure; does not mutate `quotes`.
  */
 export function applyLibraryView(quotes: QuoteRow[], c: LibraryCriteria): QuoteRow[] {
   const q = c.query.trim().toLowerCase()
-  return quotes.filter((quote) => {
-    if (q && !quoteSearchText(quote).includes(q)) return false
-    if (c.category !== 'all' && quote.category !== c.category) return false
-    if (c.tags.length > 0 && !c.tags.some((t) => quote.tags.includes(t))) return false
-    if (c.favoritesOnly && !quote.is_favorite) return false
-    if (c.sourceType !== 'all' && quote.source_type !== c.sourceType) return false
-    if (c.language !== 'all' && quote.language !== c.language) return false
-    if (c.showId && quote.show_id !== c.showId) return false
-    if (c.bookId && quote.book_id !== c.bookId) return false
-    return true
-  })
+  return quotes
+    .filter((quote) => {
+      if (q && !quoteSearchText(quote).includes(q)) return false
+      if (c.category !== 'all' && quote.category !== c.category) return false
+      if (c.tags.length > 0 && !c.tags.some((t) => quote.tags.includes(t))) return false
+      if (c.favoritesOnly && !quote.is_favorite) return false
+      if (c.sourceType !== 'all' && quote.source_type !== c.sourceType) return false
+      if (c.language !== 'all' && quote.language !== c.language) return false
+      if (c.showId && quote.show_id !== c.showId) return false
+      if (c.bookId && quote.book_id !== c.bookId) return false
+      return true
+    })
+    .sort((a, b) => compareQuotes(a, b, c.sortField, c.sortDir))
 }
 
 // --- Entry/Edit field visibility (Quotes Settings, M6) ---

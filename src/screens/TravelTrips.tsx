@@ -1,12 +1,15 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { IconFilter, IconWorld } from '@tabler/icons-react'
+import { IconWorld } from '@tabler/icons-react'
 import { SearchBar } from '../components/SearchBar'
 import { SelectMenu } from '../components/SelectMenu'
 import { SwipeRow } from '../components/SwipeRow'
 import { StatusChip } from '../components/StatusChip'
 import { Thumb } from '../components/Thumb'
 import { PrimaryButton } from '../components/PrimaryButton'
+import { FilterToggleButton } from '../components/FilterToggleButton'
+import { FilterPanel } from '../components/FilterPanel'
+import { SortControl } from '../components/SortControl'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { deleteTrip, listTripFacetRows, listTrips } from '../data/travel'
@@ -21,10 +24,28 @@ import {
   tripYear,
   type TripFacets,
   type TripListCriteria,
+  type TripSortField,
 } from '../lib/travel'
 import { TRIP_STATUSES } from '../constants/travel'
 import { routes } from '../constants/routes'
 import { formatFullDate, formatMonthDay } from '../lib/date'
+
+const RATING_OPTIONS = [
+  { value: '0', label: 'Any Rating' },
+  { value: '1', label: '1★+' },
+  { value: '2', label: '2★+' },
+  { value: '3', label: '3★+' },
+  { value: '4', label: '4★+' },
+  { value: '5', label: '5★' },
+]
+const SORT_OPTIONS: { value: TripSortField; label: string }[] = [
+  { value: 'date', label: 'Date' },
+  { value: 'country', label: 'Country' },
+  { value: 'province', label: 'Province' },
+  { value: 'city', label: 'City' },
+  { value: 'status', label: 'Status' },
+  { value: 'name', label: 'Trip Name' },
+]
 
 function dateRange(start: string | null, end: string | null): string {
   if (start && end) return `${formatMonthDay(start)} – ${formatFullDate(end)}`
@@ -97,62 +118,88 @@ export function TravelTrips() {
   const set = (patch: Partial<TripListCriteria>) =>
     setCriteria((c) => ({ ...c, ...patch }))
 
+  function clearFilters() {
+    setCriteria((c) => ({
+      ...DEFAULT_TRIP_LIST_CRITERIA,
+      query: c.query,
+      sortField: c.sortField,
+      sortDir: c.sortDir,
+    }))
+  }
+
   return (
     <div className="flex flex-col gap-3 px-4 py-4">
-      <div className="flex items-center gap-2">
-        <SearchBar
-          value={criteria.query}
-          onChange={(q) => set({ query: q })}
-          placeholder="Search trips & cities"
-        />
-        <button
-          onClick={() => setFiltersOpen((o) => !o)}
-          aria-label="Filters"
-          className={`shrink-0 rounded-input p-2 ${filtersOpen ? 'text-accent' : 'text-text-secondary'}`}
-        >
-          <IconFilter size={20} />
-        </button>
-      </div>
+      <SearchBar
+        value={criteria.query}
+        onChange={(q) => set({ query: q })}
+        placeholder="Search trip name, city, companion"
+      />
+      <FilterToggleButton
+        active={filtersOpen}
+        onClick={() => setFiltersOpen((o) => !o)}
+      />
 
       {filtersOpen && (
-        <div className="grid grid-cols-2 gap-2">
-          <SelectMenu
-            value={criteria.status}
-            onChange={(v) => set({ status: v as TripListCriteria['status'] })}
-            ariaLabel="Status"
-            options={[
-              { value: 'all', label: 'All statuses' },
-              ...TRIP_STATUSES.map((s) => ({ value: s, label: tripStatusLabel(s) })),
-            ]}
-          />
-          <SelectMenu
-            value={criteria.year}
-            onChange={(v) => set({ year: v })}
-            ariaLabel="Year"
-            options={[
-              { value: 'all', label: 'All years' },
-              ...years.map((y) => ({ value: y, label: y })),
-            ]}
-          />
-          <SelectMenu
-            value={criteria.country}
-            onChange={(v) => set({ country: v })}
-            ariaLabel="Country"
-            options={[
-              { value: 'all', label: 'All countries' },
-              ...countries.map((c) => ({ value: c, label: c })),
-            ]}
-          />
-          <SelectMenu
-            value={criteria.province}
-            onChange={(v) => set({ province: v })}
-            ariaLabel="Province"
-            options={[
-              { value: 'all', label: 'All provinces' },
-              ...provinces.map((p) => ({ value: p, label: p })),
-            ]}
-          />
-        </div>
+        <FilterPanel>
+          <div className="grid grid-cols-2 gap-2">
+            <SelectMenu
+              value={criteria.country}
+              onChange={(v) => set({ country: v })}
+              ariaLabel="Country"
+              options={[
+                { value: 'all', label: 'Any Country' },
+                ...countries.map((c) => ({ value: c, label: c })),
+              ]}
+            />
+            <SelectMenu
+              value={criteria.province}
+              onChange={(v) => set({ province: v })}
+              ariaLabel="Province"
+              options={[
+                { value: 'all', label: 'Any Province' },
+                ...provinces.map((p) => ({ value: p, label: p })),
+              ]}
+            />
+            <SelectMenu
+              value={criteria.status}
+              onChange={(v) => set({ status: v as TripListCriteria['status'] })}
+              ariaLabel="Status"
+              options={[
+                { value: 'all', label: 'Any Status' },
+                ...TRIP_STATUSES.map((s) => ({ value: s, label: tripStatusLabel(s) })),
+              ]}
+            />
+            <SelectMenu
+              value={String(criteria.minRating)}
+              onChange={(v) => set({ minRating: Number(v) })}
+              ariaLabel="Rating"
+              options={RATING_OPTIONS}
+            />
+            <SelectMenu
+              value={criteria.year}
+              onChange={(v) => set({ year: v })}
+              ariaLabel="Year"
+              options={[
+                { value: 'all', label: 'Any Year' },
+                ...years.map((y) => ({ value: y, label: y })),
+              ]}
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <SortControl
+              field={criteria.sortField}
+              options={SORT_OPTIONS}
+              onFieldChange={(f) => set({ sortField: f })}
+              dir={criteria.sortDir}
+              onToggleDir={() =>
+                set({ sortDir: criteria.sortDir === 'asc' ? 'desc' : 'asc' })
+              }
+            />
+            <button onClick={clearFilters} className="text-accent">
+              Clear Filters
+            </button>
+          </div>
+        </FilterPanel>
       )}
 
       {loading && <p className="p-4 text-sm text-text-secondary">Loading…</p>}
