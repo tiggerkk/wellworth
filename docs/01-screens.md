@@ -284,12 +284,13 @@ Wellness-module sub-settings. Auto-save on change. A back chevron returns to the
 - The Filter panel (shared `FilterPanel` pane) is **label-free** — the first option of each dropdown
   names the field: **Type** segmented control (All/TV/Movies/Docs), **Any Status**, **Any Genre** (the
   genres present in your own rows), **Any Rating** (minimum: Any / 1★+ … / 5★), **Any LGBT+**
-  (None/Some/Significant), **Any Dynasty** (+ the 12 dynasties), a **Favorites Only** toggle, and
+  (None/Some/Significant), **Any Dynasty** (+ `全部` and the 12 dynasties), a **Favorites Only** toggle, and
   single-line **Started** + **Finished** date ranges (label · From · To; each bound via the Calendar
   modal, clearable).
 - The panel footer carries the **Sort** control (shared `SortControl`) next to **Clear Filters**. Sort
   over { Date, Dynasty, Rating, Status, Genre, Title, Year, Type } with an **asc/desc** toggle (nulls
-  sort last; Dynasty orders chronologically newest→oldest, non-Chinese titles last); default is
+  sort last; Dynasty orders chronologically oldest→newest ascending — 先秦 first, then … 近代, with
+  `全部` last and non-Chinese titles last of all — and descending flips it; default is
   **Date** descending.
 - Each row is a **uniform catalog row** (same fields for every status): a **poster thumbnail**, the
   title (+ year) with a small filled **♥** when favourited and a **gold Dynasty badge** to the right
@@ -419,11 +420,12 @@ TMDB episode count at import (left blank if TMDB has no count); used anywhere el
   **accent** while its panel is open. (New Book opens the blank Entry from the bottom nav.)
 - The Filter panel is **label-free**: **Any Status**, **Any Genre** (the genres present in your own
   rows), **Any Rating** (minimum: Any / 1★+ … / 5★), **Any LGBT+** (None/Some/Significant), and **Any
-  Dynasty** (+ the 12 dynasties) sharing a row with the **Favorites Only** toggle, plus single-line
+  Dynasty** (+ `全部` and the 12 dynasties) sharing a row with the **Favorites Only** toggle, plus single-line
   **Started** + **Finished** date ranges (each bound via the Calendar modal, clearable).
 - The panel footer carries the **Sort** control next to **Clear Filters**. Sort over { Date, Dynasty,
   Rating, Status, Genre, Author, Title, Year } with an **asc/desc** toggle (nulls sort last; Dynasty
-  chronological newest→oldest, non-Chinese last); default is **Date** descending.
+  chronological oldest→newest ascending — 先秦 first … 近代, `全部` last, non-Chinese last; descending
+  flips it); default is **Date** descending.
 - Each row: a **cover thumbnail** (2:3, neutral placeholder when there's no cover), title (+ year) with
   a small filled **♥** when favourited and a **gold Dynasty badge** to the right of the title for
   Chinese titles, the author(s), a **status chip** (Want / Reading / Read / Dropped — Want is blue),
@@ -447,7 +449,7 @@ TMDB episode count at import (left blank if TMDB has no count); used anywhere el
   half-star picker): choosing **Reading** defaults the **Start Date** to today; choosing **Read** or
   **Dropped** defaults the **Finish / Drop date** to today.
 - **LGBT+ Representation** (a None / Some / Significant **dropdown**) and **Dynasty** share one compact
-  row. **Dynasty** is a dropdown of the 12 dynasties (近代 … 先秦), defaulting to 近代, and is **editable
+  row. **Dynasty** is a dropdown of the 13 values (全部 近代 … 先秦), defaulting to 全部, and is **editable
   only when the Title contains CJK**; for a non-Chinese title it's disabled and stored as NULL.
 - **Start Date** and **Finish / Drop Date** share a line; each opens the **Calendar** modal and is
   clearable (Start defaults to today on a new entry). **Comments** (textarea), then **Last Update Date**

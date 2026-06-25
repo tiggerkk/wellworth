@@ -2037,3 +2037,29 @@ ULs are not sex-specific (vary only by age: calcium UL 2500→2000 at 51, phosph
 DRI values transcribed from NASEM/IOM (NIH ODS, NCBI **NBK545442**), documented per band in
 `05-seed-data.md`. +10 tests (`dri.test.ts`, incl. fixing the old "male 40 throws" case which is now a
 supported band), all gates green.
+
+### Follow-up — `全部` catch-all dynasty (Shows/Books)
+
+Owner request: a leading **`全部`** ("all") option for the Chinese **Dynasty** field, for titles that
+span every era (e.g. a survey/通史 series). One-edit change — everything (both Entry dropdowns, the
+Library `Any Dynasty` filter, the chronological Dynasty sort, and both CSV importers' validation)
+derives from the single `DYNASTIES` constant.
+
+- **`src/constants/dynasty.ts`**: prepended `全部` (now `DYNASTIES[0]`), so the list is `全部 近代 清代
+明代 元代 宋代 五代 唐代 隋代 南北朝 魏晉 兩漢 先秦` (13). **`DEFAULT_DYNASTY` is now `全部`** (still
+  `DYNASTIES[0]`) — owner's choice: new Chinese titles default to `全部`. Sort places it first (its
+  index-0 position), ahead of 近代.
+- **Schema (existing migrations edited in place; DB reset workflow)**: added `'全部'` to the `dynasty`
+  CHECK in `04_shows_schema.sql` + `06_books_schema.sql`. `database.ts` **not** regenerated — the CHECK
+  column already surfaces as plain `string`.
+- The Library filter keeps **`Any Dynasty`** (the `'all'` no-filter sentinel) as a distinct option;
+  `全部` appears below it as a real stored value (English "Any Dynasty" vs. the Chinese tag — no clash).
+- Guides + template CSVs (`shows`/`books-import-*`) and `dynasty.test.ts` updated; docs (`01-screens`,
+  `03-data-model`) bumped 12 → 13. All gates green.
+- **Sort follow-up:** the **display order** (dropdowns/default = `DYNASTIES`) and the **sort order** are
+  now intentionally **opposite**. Owner wants the Library Dynasty sort chronological **oldest→newest
+  ascending** (先秦 first … 近代, `全部` last), descending the reverse — whereas the dropdowns lead with
+  `全部` then run newest→oldest. Added `dynastySortRank` to `dynasty.ts` (`[...DYNASTIES].reverse()`
+  indexed; non-Chinese → null, sorted last by the existing comparator) and pointed both `shows.ts` /
+  `books.ts` `sortKey('dynasty')` at it (replacing the old `DYNASTIES.indexOf`). One `DYNASTIES` list
+  still drives both orderings. Sort tests updated to assert asc + desc + `全部`-last + non-Chinese-last.

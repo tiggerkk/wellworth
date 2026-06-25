@@ -43,7 +43,7 @@ create table public.book (
                      check (lgbtq_rep in ('none', 'some', 'significant')),
   dynasty          text                      -- Chinese-titled books only; NULL otherwise
                      check (dynasty in (
-                       '近代', '清代', '明代', '元代', '宋代', '五代',
+                       '全部', '近代', '清代', '明代', '元代', '宋代', '五代',
                        '唐代', '隋代', '南北朝', '魏晉', '兩漢', '先秦'
                      )),
   is_favorite      boolean not null default false,

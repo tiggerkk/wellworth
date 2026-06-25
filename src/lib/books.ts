@@ -5,7 +5,7 @@
  */
 import type { Tables, TablesInsert, TablesUpdate } from '../types/database'
 import type { IsoDate } from './date'
-import { DYNASTIES, type Dynasty } from '../constants/dynasty'
+import { type Dynasty, dynastySortRank } from '../constants/dynasty'
 
 export type BookRow = Tables<'book'>
 export type BookInsert = TablesInsert<'book'>
@@ -198,11 +198,9 @@ function sortKey(book: BookRow, field: SortField): string | number | null {
       return book.rating
     case 'genre':
       return book.genres?.[0]?.toLowerCase() ?? null
-    case 'dynasty': {
-      // Chronological (DYNASTIES is newest→oldest); non-Chinese titles (null) sort last.
-      const i = DYNASTIES.indexOf(book.dynasty as Dynasty)
-      return i >= 0 ? i : null
-    }
+    case 'dynasty':
+      // Chronological oldest→newest ascending (先秦 first … 近代 … 全部 last); non-Chinese sorts last.
+      return dynastySortRank(book.dynasty)
     case 'date':
       return book.end_date ?? book.last_update_date ?? book.updated_at
   }

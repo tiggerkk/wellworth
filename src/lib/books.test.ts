@@ -251,16 +251,25 @@ describe('applyLibraryView', () => {
     ).toEqual(['Dune', 'A Wizard of Earthsea', 'Babel'])
   })
 
-  it('sorts by dynasty chronologically (newest→oldest) with non-Chinese last', () => {
+  it('sorts by dynasty oldest→newest ascending (先秦…全部), 全部 last, non-Chinese last', () => {
     const tang = makeBook({ title: '長安', dynasty: '唐代' })
     const qing = makeBook({ title: '紅樓夢', dynasty: '清代' })
+    const all = makeBook({ title: '中國通史', dynasty: '全部' })
     const dune = makeBook({ title: 'Dune' })
+    // Ascending: older dynasty first (唐 before 清), 全部 last, non-Chinese (null) last of all.
     expect(
       applyLibraryView(
-        [dune, tang, qing],
+        [dune, all, qing, tang],
         crit({ sortField: 'dynasty', sortDir: 'asc' }),
       ).map((b) => b.title),
-    ).toEqual(['紅樓夢', '長安', 'Dune'])
+    ).toEqual(['長安', '紅樓夢', '中國通史', 'Dune'])
+    // Descending flips the dynasties (全部 first) but non-Chinese still sorts last.
+    expect(
+      applyLibraryView(
+        [dune, tang, qing, all],
+        crit({ sortField: 'dynasty', sortDir: 'desc' }),
+      ).map((b) => b.title),
+    ).toEqual(['中國通史', '紅樓夢', '長安', 'Dune'])
   })
 })
 

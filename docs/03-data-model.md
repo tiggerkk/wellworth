@@ -198,7 +198,7 @@ The migration is `supabase/migrations/03_networth_schema.sql`.
 - `watched_seasons` INT NULL, `watched_episodes` INT NULL — episodic types only; set to totals on Watched
 - `rating` NUMERIC NULL — user stars, 0–5 in 0.5 steps (CHECK)
 - `lgbtq_rep` TEXT DEFAULT 'none' — LGBT+ representation: 'none' | 'some' | 'significant' (CHECK)
-- `dynasty` TEXT NULL — Chinese dynasty (CHECK against the 12 `DYNASTIES` values in `src/constants/dynasty.ts`); set **only for Chinese titles**, NULL otherwise. Editable in the Entry form only when the title contains CJK.
+- `dynasty` TEXT NULL — Chinese dynasty (CHECK against the 13 `DYNASTIES` values — `全部` (all/catch-all) + 12 dynasties — in `src/constants/dynasty.ts`); set **only for Chinese titles**, NULL otherwise. Editable in the Entry form only when the title contains CJK.
 - `is_favorite` BOOLEAN NOT NULL DEFAULT false — starred title (the ♥; favourites filter + Dashboard shelf)
 - `start_date` DATE NULL, `end_date` DATE NULL — finish/drop date
 - `last_update_date` DATE NULL — defaults to today in the UI, editable; NULL for imported rows
@@ -225,7 +225,7 @@ Standard rules apply: own `user_id` for direct RLS, four owner policies using `(
 - `language` TEXT NULL
 - `rating` NUMERIC NULL — user stars, 0–5 in 0.5 steps (CHECK)
 - `lgbtq_rep` TEXT DEFAULT 'none' — LGBT+ representation: 'none' | 'some' | 'significant' (CHECK)
-- `dynasty` TEXT NULL — Chinese dynasty (CHECK against the 12 `DYNASTIES` values in `src/constants/dynasty.ts`); set **only for Chinese titles**, NULL otherwise. Editable in the Entry form only when the title contains CJK.
+- `dynasty` TEXT NULL — Chinese dynasty (CHECK against the 13 `DYNASTIES` values — `全部` (all/catch-all) + 12 dynasties — in `src/constants/dynasty.ts`); set **only for Chinese titles**, NULL otherwise. Editable in the Entry form only when the title contains CJK.
 - `is_favorite` BOOLEAN NOT NULL DEFAULT false — starred book (the ♥; favourites filter + Dashboard shelf)
 - `start_date` DATE NULL, `end_date` DATE NULL — finish/drop date
 - `last_update_date` DATE NULL — defaults to today in the UI, editable; NULL for imported rows

@@ -21,7 +21,7 @@ title,type,status,rating,lgbtq_rep,dynasty,watched_seasons,watched_episodes,is_f
 - **status** — `want`, `watching`, `watched`, or `dropped`. Required.
 - **rating** — your stars, `0`–`5` in `0.5` steps. Optional (blank = unrated).
 - **lgbtq_rep** — LGBT+ representation: `none`, `some`, or `significant`. Optional (blank = `none`).
-- **dynasty** — Chinese dynasty, one of `近代 清代 明代 元代 宋代 五代 唐代 隋代 南北朝 魏晉 兩漢 先秦`.
+- **dynasty** — Chinese dynasty, one of `全部 近代 清代 明代 元代 宋代 五代 唐代 隋代 南北朝 魏晉 兩漢 先秦`.
   Optional, and **only kept for a Chinese title** (ignored otherwise). Blank = none. An unrecognised
   value skips the row.
 - **watched_seasons / watched_episodes** — episodic progress (TV + documentary). **Leave blank for

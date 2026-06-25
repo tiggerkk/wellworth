@@ -467,15 +467,24 @@ describe('applyLibraryView', () => {
       ),
     ).toEqual(['The Matrix', 'Heat', 'Breaking Bad'])
   })
-  it('sorts by dynasty chronologically (newest→oldest) with non-Chinese last', () => {
+  it('sorts by dynasty oldest→newest ascending (先秦…全部), 全部 last, non-Chinese last', () => {
     const tang = makeShow({ title: '長安十二時辰', dynasty: '唐代' })
     const qing = makeShow({ title: '雍正王朝', dynasty: '清代' })
+    const all = makeShow({ title: '中國通史', dynasty: '全部' })
+    // Ascending: older dynasty first (唐 before 清), 全部 last, non-Chinese (null) last of all.
     expect(
       applyLibraryView(
-        [matrix, tang, qing],
+        [matrix, all, qing, tang],
         crit({ sortField: 'dynasty', sortDir: 'asc' }),
       ).map((s) => s.title),
-    ).toEqual(['雍正王朝', '長安十二時辰', 'The Matrix'])
+    ).toEqual(['長安十二時辰', '雍正王朝', '中國通史', 'The Matrix'])
+    // Descending flips the dynasties (全部 first) but non-Chinese still sorts last.
+    expect(
+      applyLibraryView(
+        [matrix, tang, qing, all],
+        crit({ sortField: 'dynasty', sortDir: 'desc' }),
+      ).map((s) => s.title),
+    ).toEqual(['中國通史', '雍正王朝', '長安十二時辰', 'The Matrix'])
   })
 })
 

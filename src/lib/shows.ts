@@ -6,7 +6,7 @@
 import type { Tables, TablesInsert, TablesUpdate } from '../types/database'
 import type { IsoDate } from './date'
 import type { ShowMetadata } from './tmdb-api'
-import { DYNASTIES, type Dynasty } from '../constants/dynasty'
+import { type Dynasty, dynastySortRank } from '../constants/dynasty'
 
 export type ShowRow = Tables<'show'>
 export type ShowInsert = TablesInsert<'show'>
@@ -322,11 +322,9 @@ function sortKey(show: ShowRow, field: SortField): string | number | null {
       return show.rating
     case 'genre':
       return show.genres?.[0]?.toLowerCase() ?? null
-    case 'dynasty': {
-      // Chronological (DYNASTIES is newest→oldest); non-Chinese titles (null) sort last.
-      const i = DYNASTIES.indexOf(show.dynasty as Dynasty)
-      return i >= 0 ? i : null
-    }
+    case 'dynasty':
+      // Chronological oldest→newest ascending (先秦 first … 近代 … 全部 last); non-Chinese sorts last.
+      return dynastySortRank(show.dynasty)
     case 'date':
       return show.end_date ?? show.last_update_date ?? show.updated_at
   }
