@@ -64,8 +64,10 @@ enabled = true
 schema_paths = []
 
 [db.seed]
-# If enabled, seeds the database after migrations during a db reset.
-enabled = true
+# Disabled: WellWorth seeds reference data through versioned migrations
+# (02_wellness_seed_nutrient.sql, 11_medical_seed_lab_test.sql), not a separate seed.sql.
+# Leaving this on made `supabase db reset --linked` warn "no files matched pattern: supabase/seed.sql".
+enabled = false
 # Specifies an ordered list of seed files to load during db reset.
 # Supports glob patterns relative to supabase directory: "./seeds/*.sql"
 sql_paths = ["./seed.sql"]

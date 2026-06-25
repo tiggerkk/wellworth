@@ -100,8 +100,9 @@ Supabase (Postgres + RLS). Components hold no SQL and never import the Supabase 
   created (it keys off the resolved `data`, not `loading`, so background refetches don't flash it) and
   passes the owner / already-onboarded members straight through. Completing the wizard stamps
   `onboarded_at`, which dismisses the gate. The wizard and Settings share `ProfileMetricsFields` (one
-  home for the metric↔imperial conversion). Owner detection: `VITE_OWNER_EMAIL`, falling back to a
-  single-entry `VITE_ALLOWED_EMAILS` so a lone-user build needs no extra config.
+  home for the metric↔imperial conversion + the shared `Calendar` birthday picker). Owner detection:
+  `VITE_OWNER_EMAIL`, falling back to a single-entry `VITE_ALLOWED_EMAILS` so a lone-user build needs no
+  extra config.
 - **Access control + error surfacing (`src/lib/access.ts`, enforced in `AuthProvider`).** An optional
   build-time email allowlist (`VITE_ALLOWED_EMAILS`, parsed by `parseAllowlist`/`isEmailAllowed`) signs
   out any account whose email isn't listed (empty ⇒ no restriction) — a convenience layer over RLS +
@@ -124,9 +125,10 @@ the cloud is authoritative (this also sidesteps iOS PWA storage eviction).
 - **Activity energy (strength):** same formula `kcal = MET × kg × hours`, where MET is resolved from `activity.met_by_effort[session_effort]`. No hardcoded MET for strength activities.
 - **Net energy:** `Net = Consumed − BMR − Activity`.
 - **Nutrient scaling:** for a logged entry, `value = nutrientPerBasis × (amount × servingGrams) / basisGrams`, where basis is 100 g (`basisGrams = 100`) or one serving (`basisGrams = the selected serving's grams`). Supplements typically use the per-serving basis; for a per-serving food the first/selected serving's grams define the basis.
-- **Targets / DRI:** computed from profile via a lookup in `src/lib/dri.ts`. **Phase 1 populates only
-  the owner's band — adult female 51–70** (the lookup is keyed by sex/age band; unsupported bands
-  throw with a "add a band" message). **Protein target** is overridden by `profile.protein_target_g`
+- **Targets / DRI:** computed from profile via a lookup in `src/lib/dri.ts`. **Populated bands: adult
+  female & male, 31–50 · 51–70 · 71+** (the lookup is keyed by sex/age band; ages under 31 / other sex
+  values throw with an "add a band" message — `computeTargets` catches that and returns null, so the UI
+  just shows no targets). **Protein target** is overridden by `profile.protein_target_g`
   when set, else the RDA. Nutrients with only an energy-percentage guideline get **energy-derived
   soft targets** computed from the day's energy target: `fat` (35% of kcal), `saturated` (10%),
   `added_sugars` (10%). `cholesterol`/`monounsaturated`/`polyunsaturated` have no target.

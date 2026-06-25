@@ -1,5 +1,4 @@
 import { useRef, useState } from 'react'
-import { IconSparkles } from '@tabler/icons-react'
 import { useProfileEditor } from '../hooks/useProfileEditor'
 import { PrimaryButton } from '../components/PrimaryButton'
 import {
@@ -67,9 +66,9 @@ export function Onboarding() {
     <div className="fixed inset-0 z-50 mx-auto flex max-w-md flex-col overflow-y-auto bg-bg pt-[env(safe-area-inset-top)]">
       <div className="flex flex-col gap-5 px-4 py-8">
         <header className="flex flex-col items-center gap-3 text-center">
-          <div className="flex size-14 items-center justify-center rounded-full bg-surface">
-            <IconSparkles size={26} className="text-text-secondary" />
-          </div>
+          {/* The PWA app icon (public/pwa-192x192.png — the same orange/red mark shown on the
+              home screen), reused here so onboarding feels like the installed app. */}
+          <img src="/pwa-192x192.png" alt="WellWorth" className="size-16 rounded-2xl" />
           <div>
             <h1 className="text-lg font-medium text-text-primary">
               Welcome to WellWorth

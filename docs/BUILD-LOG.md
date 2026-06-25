@@ -57,7 +57,7 @@ been merged into the permanent docs (`00-PRD … 05-seed-data` + OWNER-RUNBOOK) 
   seeded owner profile + skips onboarding; blank ⇒ a single-entry allowlist is the owner). All
   build-time `VITE_` vars.
 - **Gates:** husky `.husky/pre-commit` → lint-staged + `typecheck` + `test`; GitHub Actions
-  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 457 Vitest tests (pure helpers).
+  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 467 Vitest tests (pure helpers).
 - **Deploy status:** Deployed. GitHub `main` → Vercel auto-deploy; the production URL is in the
   Supabase redirect URLs + Google JS origins (see `OWNER-RUNBOOK.md`). Installed + tested on iPhone (PWA).
 - Conventions (DB-access-via-`src/data`, metric storage, generated `database.ts` contract, etc.) live
@@ -2011,8 +2011,29 @@ schema-wide refactor, no data migration, no sharing model.
   the profile loads/creates and renders the full-screen `src/screens/Onboarding.tsx` for a new member;
   finishing stamps `onboarded_at` (via the shared `bumpDiary` refetch) and dismisses it. The wizard and
   Settings now share `src/components/ProfileMetricsFields.tsx` — one home for the metric↔imperial math.
-- **Known limits (documented, not built):** members outside the one populated DRI band (adult female
-  51–70) get no Wellness nutrient targets (`computeTargets` returns null — graceful); base currency is
-  global HKD; no shared/household data. See `PARKED.md`.
+- **Known limits (documented, not built):** members outside the populated DRI bands get no Wellness
+  nutrient targets (`computeTargets` returns null — graceful); base currency is global HKD; no
+  shared/household data. See `PARKED.md`.
 - Verified by `npm run check` (all gates, **457** tests — +6 in `access.test.ts` for `isOwnerEmail` /
   `needsOnboarding`).
+
+### Follow-up — DRI bands extended to full adult coverage (female & male, 31–71+)
+
+Added the rest of the adult DRI matrix to `src/lib/dri.ts` so any family member 31+ gets Wellness
+nutrient targets. Bands now: **female & male, each 31–50 · 51–70 · 71+** (6 total).
+
+- `FEMALE_31_50` spreads `FEMALE_51_70` (iron 18 premenopausal, calcium 1000/UL 2500, fiber 25, omega6
+  12, B6 1.3, chromium 25).
+- `MALE_51_70` is a **full band** (men differ broadly: water 3700, protein 56, fiber 30, vitamin_a 900,
+  vitamin_c 90, vitamin_k 120, b1 1.2, b2 1.3, b3 16, b6 1.7, choline 550, calcium 1000, magnesium 420,
+  manganese 2.3, potassium 3400, zinc 11, chromium 30, fluoride 4; iron/phosphorus/etc. match female).
+- `MALE_31_50` spreads `MALE_51_70` (fiber 38, omega6 17, B6 1.3, calcium UL 2500, chromium 35).
+- `FEMALE_71_PLUS` / `MALE_71_PLUS` spread their 51–70 bands: vitamin D 15→20 µg (800 IU) and the
+  phosphorus UL 4000→3000 at 71; male calcium RDA also rises 1000→1200.
+- `bandFor` is now `if (age < 31 || sex∉{female,male}) null; tier = ≤50 ? 31-50 : ≤70 ? 51-70 : 71+`.
+  Under-31 / other-sex still return null (graceful — `computeTargets` shows no targets).
+
+ULs are not sex-specific (vary only by age: calcium UL 2500→2000 at 51, phosphorus UL 4000→3000 at 71).
+DRI values transcribed from NASEM/IOM (NIH ODS, NCBI **NBK545442**), documented per band in
+`05-seed-data.md`. +10 tests (`dri.test.ts`, incl. fixing the old "male 40 throws" case which is now a
+supported band), all gates green.

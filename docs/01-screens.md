@@ -57,24 +57,27 @@ Diary groups, in order: **Breakfast, Lunch, Dinner, Snacks, Supplements, Activit
 A full-screen wizard shown **once** to a brand-new family member (any signed-in account that isn't the
 owner) immediately after their first login — it covers the whole shell, so there's no nav chrome and no
 way past it except finishing or signing out. It exists because a member must enter **their own** body
-metrics rather than inherit the owner's.
+metrics rather than inherit the owner's. Its header shows the **PWA app icon**
+(`public/pwa-192x192.png` — the same mark as the installed home-screen icon).
 
 - **Fields:** Units (Metric/Imperial), Birthday, Sex, Height, Weight — the same inputs as Global
-  Settings (shared `ProfileMetricsFields`; height/weight follow the chosen units). Protein target is
-  **not** asked (it defaults to the DRI; editable later in Wellness Settings).
+  Settings (shared `ProfileMetricsFields`; **Birthday opens the shared `Calendar`**; height/weight
+  follow the chosen units). Protein target is **not** asked (it defaults to the DRI; editable later in
+  Wellness Settings).
 - **"Get started"** validates that birthday/height/weight are filled, saves them in one write, and
   stamps `onboarded_at` — which dismisses the gate and drops the member into the app (their last-module
   default is the Home hub). A small **Sign out** link is the only escape.
 - While the member's profile row is still being created the gate shows a brief **splash**, never the
   wizard with empty fields. The **owner** and any already-onboarded member never see this screen.
-- Members outside the populated DRI band (currently adult female 51–70) simply see no nutrient targets
-  until their band is added (see `05-seed-data.md` / `PARKED.md`).
+- Members under 31 (or a non-binary `sex`) simply see no nutrient targets — the DRI bands cover adult
+  female & male 31–71+ (see `05-seed-data.md` / `PARKED.md`).
 
 ## Global - Settings (from the Home hub gear)
 
 App-wide; shared across all modules. Auto-save on change. A back chevron returns to the hub.
 
-- **PROFILE**: Birthday, Sex, Height, Weight (all editable).
+- **PROFILE**: Birthday, Sex, Height, Weight (all editable; shared `ProfileMetricsFields`, so **Birthday
+  opens the shared `Calendar`** picker — same as Onboarding).
 - **PREFERENCES**: **Units** (Metric / Imperial — editable; display-only, DB stays metric).
 - **ACCOUNT**: Google account + **Sign out**. This card is driven by the **session, not the profile**,
   so it renders even when the profile fails to load (e.g. after a DB reset deletes the user) — the

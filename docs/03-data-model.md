@@ -148,8 +148,8 @@ Nutrient sets are stored as JSONB maps (`nutrient_key → amount`), validated ag
 - RLS is **enabled** with a single SELECT policy for `authenticated` (no write policies → read-only to
   clients; rows are written only by migrations).
   (See `05-seed-data.md` for the full seed list — exactly 80 rows. DRI target/UL values are a lookup
-  in `src/lib/dri.ts`, keyed by sex/age band, not stored per row; **Phase 1 populates only adult
-  female 51–70** and throws for other bands.)
+  in `src/lib/dri.ts`, keyed by sex/age band, not stored per row; **populates adult female & male,
+  31–50 · 51–70 · 71+** and throws for ages under 31 / other sex values.)
 
 ### networth_snapshot
 

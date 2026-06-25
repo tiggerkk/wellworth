@@ -88,8 +88,10 @@ _not_ the primary-button color; it's for emphasis, active states, and energy.
 - **Calendar** — month-grid date picker (a local overlay, not a route). Presentational: per-day cue
   dots + legend are drawn only when a caller passes an optional `loadCues(monthStart, monthEnd)`
   loader (Wellness Diary draws food/activity dots; Shows date pickers pass none). **Tapping the
-  month-year header** switches to a **year-stepper + month grid** (the `MonthPicker` pattern, inlined);
-  picking a month returns to that month's day grid (the bottom Cancel/OK still commit the day).
+  month-year header** switches to a **month grid**; **tapping the year there** opens a **paged year
+  grid** (12 years; the ◀/▶ arrows jump a whole page) so distant years like a birthday are a few taps,
+  not dozens. Picking a year returns to the month grid, and a month returns to that month's day grid
+  (the bottom Cancel/OK still commit the day).
 - **EntryHeaderActions** — the shared top-right action cluster for every New/Edit form
   (`src/components/EntryHeaderActions.tsx`): compact `sm` **icon** buttons in order **Delete · Reset ·
   Submit**. **Reset** = `IconArrowBackUp` (undo), **Submit** = `IconPlus` (new) / `IconDeviceFloppy`

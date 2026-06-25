@@ -2,7 +2,9 @@ import { useState } from 'react'
 import { SectionCard } from './SectionCard'
 import { FieldRow } from './FieldRow'
 import { SegmentedTabs } from './SegmentedTabs'
+import { Calendar } from './Calendar'
 import { cmToInches, inchesToCm, kgToPounds, poundsToKg } from '../lib/units'
+import { formatDayLabel, todayLocal, type IsoDate } from '../lib/date'
 
 const round1 = (n: number) => Math.round(n * 10) / 10
 
@@ -79,17 +81,23 @@ export function ProfileMetricsFields({
   showUnits?: boolean
 }) {
   const imperial = value.units === 'imperial'
+  const [calOpen, setCalOpen] = useState(false)
 
   return (
     <>
       <SectionCard title="Profile">
         <FieldRow label="Birthday">
-          <input
-            type="date"
-            value={value.birthday ?? ''}
-            onChange={(e) => onChange({ birthday: e.target.value || null })}
-            className="rounded-input bg-input px-2 py-1 text-[15px] text-text-primary focus:outline-none"
-          />
+          <button
+            type="button"
+            onClick={() => setCalOpen(true)}
+            className="rounded-input bg-input px-3 py-1 text-[15px] text-text-primary focus:outline-none"
+          >
+            {value.birthday ? (
+              formatDayLabel(value.birthday as IsoDate)
+            ) : (
+              <span className="text-text-tertiary">Set date</span>
+            )}
+          </button>
         </FieldRow>
         <FieldRow label="Sex">
           <div className="w-40">
@@ -142,6 +150,17 @@ export function ProfileMetricsFields({
             </div>
           </FieldRow>
         </SectionCard>
+      )}
+
+      {calOpen && (
+        <Calendar
+          day={(value.birthday as IsoDate | null) ?? todayLocal()}
+          onSelect={(d) => {
+            onChange({ birthday: d })
+            setCalOpen(false)
+          }}
+          onClose={() => setCalOpen(false)}
+        />
       )}
     </>
   )

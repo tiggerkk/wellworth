@@ -249,9 +249,10 @@ forced through the **Onboarding** wizard (`src/screens/Onboarding.tsx`, gated in
 
 **Still deferred:** shared/household data and a couple of known limitations:
 
-- **DRI bands:** `src/lib/dri.ts` only populates **adult female 51–70**. Members outside it get **no
-  nutrient targets** — `computeTargets` returns null (graceful, no crash). Add their sex/age band
-  (pure data) before Wellness targets compute for them.
+- **DRI bands:** `src/lib/dri.ts` populates **adult female & male, 31–50 · 51–70 · 71+** (i.e. 31
+  through 71+, both sexes). Only members **under 31** (or a non-binary `sex`) get **no nutrient
+  targets** — `computeTargets` returns null (graceful, no crash). Add a younger band the same way
+  (pure data — spread a nearby band and override the differences) if ever needed.
 - **Base currency is global HKD** (`BASE_CURRENCY` in `src/lib/networth.ts`; Travel converts to HKD).
   Not per-member — revisit as its own task (FX rework) if a member needs a different base.
 - **Shared household custom foods / shared net worth / shared trips** would be an **additive** change:

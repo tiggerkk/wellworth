@@ -25,9 +25,9 @@ appended to **both** (neutral, reference-derived).
 - `onboarded_at`: **NULL** ⇒ the member is forced through the first-run **Onboarding** wizard (see
   `01-screens.md`) to enter their own birthday / sex / height / weight / units before reaching the app.
 
-> Members outside the one populated DRI band (adult female 51–70) get **no nutrient targets** until
-> their band is added to `src/lib/dri.ts` (pure data) — `computeTargets` returns null rather than
-> erroring (see `PARKED.md`).
+> The DRI bands cover **adult female & male, 31–50 · 51–70 · 71+**. Only members **under 31** (or a
+> non-binary `sex`) get no nutrient targets — `computeTargets` returns null rather than erroring (see
+> `PARKED.md`).
 
 ---
 
@@ -174,17 +174,15 @@ Notes: many non-visible micronutrients (amino acids, individual fatty acids, bio
 
 ---
 
-## DRI target/UL values — adult female 51–70
+## DRI target/UL values (by sex/age band)
 
-These are the actual numbers in `src/lib/dri.ts` (`FEMALE_51_70`), transcribed from the
-**NASEM/IOM Dietary Reference Intakes** as published by the NIH Office of Dietary Supplements
-(consolidated summary tables, NCBI Bookshelf **NBK545442**, incl. the 2011 Ca/Vitamin D and 2019
-Na/K updates). **Target** = RDA where one exists, else AI. **Phase 1 populates only this one band**;
-`getDriForProfile` throws for any other sex/age band.
-
-> **The owner (born 1974-09-06) is in this band through age 70.** At 71 she enters the 71+ band and
-> the lookup will throw until a `female:71+` entry is added to `DRI_TABLES`. See "How to add a band"
-> below.
+These are the actual numbers in `src/lib/dri.ts`, transcribed from the **NASEM/IOM Dietary Reference
+Intakes** as published by the NIH Office of Dietary Supplements (consolidated summary tables, NCBI
+Bookshelf **NBK545442**, incl. the 2011 Ca/Vitamin D and 2019 Na/K updates). **Target** = RDA where one
+exists, else AI. Six bands are populated — **adult female & male, each 31–50 · 51–70 · 71+**;
+`getDriForProfile` throws for ages under 31 or any other `sex` value (the UI then shows no targets).
+The **female 51–70** table below is the reference; the other five bands are expressed as deltas from
+their neighbour. ULs are **not** sex-specific (they vary only by age, where noted).
 
 ### Upper-limit scope (`ulScope`) — which bars turn red
 
@@ -196,7 +194,7 @@ A red bar means a value exceeds an **intake-based** limit. `ulScope` distinguish
 - `supplemental` — UL applies only to the supplemental/synthetic form, which a normal diet routinely
   exceeds; **never fires red** on food intake (stored only for reference).
 
-### Targets + ULs
+### Targets + ULs — adult female 51–70 (`FEMALE_51_70`, the reference band)
 
 | key        | target | type | UL   | ulScope      | notes                                                                                                                                                              |
 | ---------- | ------ | ---- | ---- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -240,6 +238,83 @@ Energy is shown against the **computed** target (BMR × activity factor), not a 
 not in this table (amino acids, individual fatty acids, starch/sugars, alcohol, caffeine, cholesterol,
 monounsaturated/polyunsaturated) have **no target** — they display as a value with no % bar.
 
+### Adult female 31–50 deltas (`FEMALE_31_50`)
+
+Spreads `FEMALE_51_70`, overriding only the six values the tables change between the bands (a 48–50-year-
+old resolves this band; 51 is the menopause-proxy cutoff). Everything else equals the reference table.
+
+| key      | 31–50          | 51–70          | why                                       |
+| -------- | -------------- | -------------- | ----------------------------------------- |
+| iron     | 18             | 8              | premenopausal iron need                   |
+| calcium  | 1000 / UL 2500 | 1200 / UL 2000 | RDA lower; the UL drops to 2000 mg at 51  |
+| fiber    | 25             | 21             | AI (14 g/1000 kcal, higher median energy) |
+| omega6   | 12             | 11             | linoleic-acid AI                          |
+| b6       | 1.3            | 1.5            | RDA rises to 1.5 at 51                    |
+| chromium | 25             | 20             | AI                                        |
+
+### Adult female 71+ deltas (`FEMALE_71_PLUS`)
+
+Spreads `FEMALE_51_70`; only two values change at 71. (The owner, born 1974-09-06, enters this band at 71.)
+
+| key        | 71+           | 51–70         | why                       |
+| ---------- | ------------- | ------------- | ------------------------- |
+| vitamin_d  | 20            | 15            | RDA rises to 800 IU at 71 |
+| phosphorus | 700 / UL 3000 | 700 / UL 4000 | UL drops to 3000 mg at 71 |
+
+### Adult male 51–70 (`MALE_51_70`)
+
+Men's RDAs/AIs differ across many nutrients, so this is a full band (ULs are not sex-specific). Values
+**not listed here are identical to the female 51–70 reference** (carbs 130, vitamin_c… no — see below):
+the table lists every value that **differs from the female 51–70 band**.
+
+| key       | male 51–70 | female 51–70 | type | notes                                    |
+| --------- | ---------- | ------------ | ---- | ---------------------------------------- |
+| water     | 3700       | 2700         | AI   | g, total water                           |
+| protein   | 56         | 46           | RDA  | overridden by `profile.protein_target_g` |
+| fiber     | 30         | 21           | AI   |                                          |
+| omega3    | 1.6        | 1.1          | AI   | ALA                                      |
+| omega6    | 14         | 11           | AI   | linoleic acid                            |
+| vitamin_a | 900        | 700          | RDA  | µg RAE (UL 3000 supplemental, same)      |
+| vitamin_c | 90         | 75           | RDA  | UL 2000 total (same)                     |
+| vitamin_k | 120        | 90           | AI   |                                          |
+| b1        | 1.2        | 1.1          | RDA  | thiamin                                  |
+| b2        | 1.3        | 1.1          | RDA  | riboflavin                               |
+| b3        | 16         | 14           | RDA  | mg NE (UL 35 supplemental, same)         |
+| b6        | 1.7        | 1.5          | RDA  | UL 100 total (same)                      |
+| choline   | 550        | 425          | AI   | UL 3500 total (same)                     |
+| calcium   | 1000       | 1200         | RDA  | UL 2000 total (same)                     |
+| magnesium | 420        | 320          | RDA  | UL 350 supplemental (same)               |
+| manganese | 2.3        | 1.8          | AI   | UL 11 total (same)                       |
+| potassium | 3400       | 2600         | AI   | 2019 value                               |
+| zinc      | 11         | 8            | RDA  | UL 40 total (same)                       |
+| chromium  | 30         | 20           | AI   | µg                                       |
+| fluoride  | 4          | 3            | AI   | UL 10 total (same)                       |
+
+All other keys (carbs, vitamin_d, vitamin_e, b5, b12, folate, b7, copper, iodine, **iron 8**,
+phosphorus, selenium, sodium, molybdenum, chloride) match the female 51–70 reference exactly.
+
+### Adult male 31–50 deltas (`MALE_31_50`)
+
+Spreads `MALE_51_70`; overrides the values the tables change between the two male bands.
+
+| key      | 31–50          | 51–70          | why                                             |
+| -------- | -------------- | -------------- | ----------------------------------------------- |
+| fiber    | 38             | 30             | AI                                              |
+| omega6   | 17             | 14             | linoleic-acid AI                                |
+| b6       | 1.3            | 1.7            | RDA rises to 1.7 at 51                          |
+| calcium  | 1000 / UL 2500 | 1000 / UL 2000 | RDA stays 1000 till 71; only the UL drops at 51 |
+| chromium | 35             | 30             | AI                                              |
+
+### Adult male 71+ deltas (`MALE_71_PLUS`)
+
+Spreads `MALE_51_70`; three values change at 71.
+
+| key        | 71+           | 51–70         | why                          |
+| ---------- | ------------- | ------------- | ---------------------------- |
+| vitamin_d  | 20            | 15            | RDA rises to 800 IU at 71    |
+| calcium    | 1200          | 1000          | male calcium RDA rises at 71 |
+| phosphorus | 700 / UL 3000 | 700 / UL 4000 | UL drops to 3000 mg at 71    |
+
 ### Energy-derived soft targets
 
 Three nutrients get targets computed from the day's energy target (kcal), not from a DRI
@@ -251,11 +326,12 @@ Three nutrients get targets computed from the day's energy target (kcal), not fr
 | saturated    | 10%                  | 9      | no               | DGA "< 10% of energy"                      |
 | added_sugars | 10%                  | 4      | yes (`guidance`) | DGA "< 10% of energy"                      |
 
-### How to add a DRI band (future multi-user)
+### How to add a DRI band
 
-Add another `Record<string, StaticDri>` (e.g. `MALE_31_50`) with that band's RDA/AI + UL + ulScope
-values from the same NASEM/IOM tables, register it in `DRI_TABLES` keyed `'male:31-50'`, and extend
-`bandFor(sex, age)` in `dri.ts` to map ages to the new key. No schema or UI change is required.
+Populated bands cover adult female & male **31–50 · 51–70 · 71+**. To add another (e.g. a younger
+`female:19-30`), add a `Record<string, StaticDri>` — spread the nearest band and override only the
+values that differ (as the 31–50 / 71+ bands do), or transcribe a full band (as `MALE_51_70` does) —
+register it in `DRI_TABLES`, and extend `bandFor(sex, age)` in `dri.ts`. No schema or UI change needed.
 
 ---
 

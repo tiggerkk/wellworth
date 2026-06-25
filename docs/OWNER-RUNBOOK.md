@@ -318,9 +318,9 @@ sees _your_ rows — but they could create their own account and burn your free-
    **onboarding wizard** to enter their own birthday/sex/height/weight. From then on their data is
    entirely separate from yours.
 
-> Note: members whose sex/age isn't the populated DRI band (adult female 51–70) won't see nutrient
-> targets in Wellness yet — everything else works. Adding their band is a small data edit in
-> `src/lib/dri.ts` (see `PARKED.md`).
+> Note: the DRI bands cover adult female & male aged 31 through 71+, so most family members get nutrient
+> targets. Anyone **under 31** (or with a non-binary sex) won't see targets yet — everything else works.
+> Adding a younger band is a small data edit in `src/lib/dri.ts` (see `PARKED.md`).
 
 ---
 

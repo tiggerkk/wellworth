@@ -43,15 +43,19 @@ const MONTHS = [
   'Nov',
   'Dec',
 ]
+/** Years shown per page in the year-grid mode (3×4); the ◀/▶ arrows step a whole page at a time. */
+const YEAR_PAGE = 12
 
 /** Month-grid date picker. Presentational + optional injected cue dots. Local overlay (not a route). */
 export function Calendar({ day, onSelect, onClose, loadCues }: CalendarProps) {
   const [viewMonth, setViewMonth] = useState<IsoDate>(startOfMonth(day))
   const [selected, setSelected] = useState<IsoDate>(day)
-  // Tapping the month-year header switches to a year-stepper + month grid; picking a month returns
-  // to the day grid for that month.
-  const [mode, setMode] = useState<'days' | 'months'>('days')
+  // Tapping the month-year header opens the month grid; tapping its year opens a paged year grid —
+  // so jumping to a distant year (e.g. a birthday) is a few page taps, not dozens of single steps.
+  const [mode, setMode] = useState<'days' | 'months' | 'years'>('days')
   const [pickYear, setPickYear] = useState(() => fromIsoDate(viewMonth).getFullYear())
+  // Top-left year of the current year-grid page (only meaningful in 'years' mode).
+  const [yearBase, setYearBase] = useState(() => pickYear - Math.floor(YEAR_PAGE / 2))
   const today = todayLocal()
   useEscapeKey(onClose)
 
@@ -87,14 +91,22 @@ export function Calendar({ day, onSelect, onClose, loadCues }: CalendarProps) {
             onClick={() =>
               mode === 'days'
                 ? setViewMonth(addMonths(viewMonth, -1))
-                : setPickYear((y) => y - 1)
+                : mode === 'months'
+                  ? setPickYear((y) => y - 1)
+                  : setYearBase((b) => b - YEAR_PAGE)
             }
-            aria-label={mode === 'days' ? 'Previous month' : 'Previous year'}
+            aria-label={
+              mode === 'days'
+                ? 'Previous month'
+                : mode === 'months'
+                  ? 'Previous year'
+                  : 'Previous years'
+            }
             className="p-1 text-text-secondary"
           >
             <IconChevronLeft size={20} />
           </button>
-          {mode === 'days' ? (
+          {mode === 'days' && (
             <button
               onClick={() => {
                 setPickYear(year)
@@ -104,23 +116,63 @@ export function Calendar({ day, onSelect, onClose, loadCues }: CalendarProps) {
             >
               {monthLabel}
             </button>
-          ) : (
-            <span className="text-[15px] font-medium text-text-primary">{pickYear}</span>
+          )}
+          {mode === 'months' && (
+            <button
+              onClick={() => {
+                setYearBase(pickYear - Math.floor(YEAR_PAGE / 2))
+                setMode('years')
+              }}
+              aria-label="Choose year"
+              className="rounded-input px-2 py-0.5 text-[15px] font-medium text-text-primary active:bg-input/40"
+            >
+              {pickYear}
+            </button>
+          )}
+          {mode === 'years' && (
+            <span className="text-[15px] font-medium text-text-primary">
+              {yearBase}–{yearBase + YEAR_PAGE - 1}
+            </span>
           )}
           <button
             onClick={() =>
               mode === 'days'
                 ? setViewMonth(addMonths(viewMonth, 1))
-                : setPickYear((y) => y + 1)
+                : mode === 'months'
+                  ? setPickYear((y) => y + 1)
+                  : setYearBase((b) => b + YEAR_PAGE)
             }
-            aria-label={mode === 'days' ? 'Next month' : 'Next year'}
+            aria-label={
+              mode === 'days'
+                ? 'Next month'
+                : mode === 'months'
+                  ? 'Next year'
+                  : 'Next years'
+            }
             className="p-1 text-text-secondary"
           >
             <IconChevronRight size={20} />
           </button>
         </div>
 
-        {mode === 'months' ? (
+        {mode === 'years' ? (
+          <div className="grid grid-cols-3 gap-2">
+            {Array.from({ length: YEAR_PAGE }, (_, i) => yearBase + i).map((yr) => (
+              <button
+                key={yr}
+                onClick={() => {
+                  setPickYear(yr)
+                  setMode('months')
+                }}
+                className={`rounded-card py-2.5 text-[15px] ${
+                  yr === pickYear ? 'bg-fill text-bg' : 'bg-input text-text-primary'
+                }`}
+              >
+                {yr}
+              </button>
+            ))}
+          </div>
+        ) : mode === 'months' ? (
           <div className="grid grid-cols-3 gap-2">
             {MONTHS.map((label, i) => {
               const isCurrent = pickYear === year && i === monthIndex
