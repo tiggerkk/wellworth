@@ -1,0 +1,93 @@
+# Encrypted off-site backup of the Supabase database + free-tier keep-alive.
+# See docs/OWNER-RUNBOOK.md Part Q for one-time setup, the secrets, and the restore runbook.
+#
+# Runs every ~3 days (well under Supabase's 7-day inactivity pause): the pg_dump connection counts as
+# project activity, so this doubles as the keep-alive. Dumps are encrypted to an age public key on the
+# runner (which can encrypt but never decrypt) and pushed to a separate PRIVATE backups repo.
+#
+# Required repo secrets (Settings → Secrets and variables → Actions):
+#   SUPABASE_DB_URL     Session-pooler connection URI incl. password (IPv4-reachable; not :6543).
+#   AGE_PUBLIC_KEY      age recipient public key (age1…). Public, but kept here for one-stop config.
+#   BACKUPS_REPO        owner/name of the private backups repo, e.g. "tiggerkk/wellworth-backups".
+#   BACKUPS_REPO_TOKEN  Fine-grained PAT scoped to BACKUPS_REPO with Contents: read/write.
+# Optional repo secrets (enable the extra REST keep-alive ping):
+#   SUPABASE_URL        https://<ref>.supabase.co
+#   SUPABASE_ANON_KEY   the public anon key.
+
+name: DB backup & keep-alive
+
+on:
+  schedule:
+    - cron: '0 3 */3 * *' # 03:00 UTC every 3rd day-of-month (all gaps stay < 7 days)
+  workflow_dispatch: {}
+
+permissions:
+  contents: read # this job pushes to the SEPARATE backups repo via a PAT, not to this repo
+
+concurrency:
+  group: db-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout (for scripts/db-backup.sh)
+        uses: actions/checkout@v4
+
+      - name: Install age + PostgreSQL 17 client
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y age
+          # pg_dump must be >= the server major version (17). Pull it from the PGDG apt repo.
+          curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+            | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/pgdg.gpg
+          echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
+            | sudo tee /etc/apt/sources.list.d/pgdg.list >/dev/null
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client-17
+          echo "/usr/lib/postgresql/17/bin" >> "$GITHUB_PATH"
+
+      - name: Dump + encrypt
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          AGE_PUBLIC_KEY: ${{ secrets.AGE_PUBLIC_KEY }}
+          OUT_DIR: backup-out
+        run: bash scripts/db-backup.sh
+
+      - name: REST keep-alive ping (optional, non-fatal)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          set -uo pipefail
+          if [ -n "${SUPABASE_URL:-}" ] && [ -n "${SUPABASE_ANON_KEY:-}" ]; then
+            curl -fsS "${SUPABASE_URL}/rest/v1/medical_lab_test?select=key&limit=1" \
+              -H "apikey: ${SUPABASE_ANON_KEY}" \
+              -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" >/dev/null \
+              && echo "REST keep-alive ping OK" \
+              || echo "REST ping failed (non-fatal — the pg_dump already counted as activity)"
+          else
+            echo "REST ping skipped (SUPABASE_URL / SUPABASE_ANON_KEY not configured)"
+          fi
+
+      - name: Push encrypted backup to the private backups repo
+        env:
+          BACKUPS_REPO: ${{ secrets.BACKUPS_REPO }}
+          BACKUPS_REPO_TOKEN: ${{ secrets.BACKUPS_REPO_TOKEN }}
+        run: |
+          set -euo pipefail
+          git clone --depth 1 \
+            "https://x-access-token:${BACKUPS_REPO_TOKEN}@github.com/${BACKUPS_REPO}.git" repo
+          mkdir -p repo/backups
+          cp backup-out/*.sql.age repo/backups/
+          cd repo
+          # Keep the newest 60 encrypted dumps in the working tree (git history retains the rest).
+          ls -1 backups/*.sql.age | sort | head -n -60 | xargs -r rm --
+          git config user.name "wellworth-backup-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git commit -m "backup $(date -u +%Y-%m-%dT%H:%M:%SZ)" || { echo "nothing to commit"; exit 0; }
+          git push

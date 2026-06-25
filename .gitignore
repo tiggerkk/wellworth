@@ -53,6 +53,14 @@ templates/*.pdf
 travel-expenses*.csv
 !templates/travel-expenses-template.csv
 
+# Backups — local DB dumps + age keys must never be committed (encrypted dumps live in the separate
+# private backups repo; the age private key stays offline). NB: not a blanket *.sql ignore — that
+# would catch supabase/migrations/. See docs/OWNER-RUNBOOK.md Part Q.
+backups/
+*.age
+*.key
+*.dump.sql
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

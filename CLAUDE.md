@@ -260,6 +260,10 @@ its routes.
   via a full **`supabase db reset --linked`** (a `db push` can't), which matches the owner's reset workflow.
 - **Never** mutate the production schema directly, and **never drop a table**, without explicit confirmation in the conversation.
 - After applying a migration, regenerate `/src/types/database.ts`.
+- **Backups (free tier has none):** `scripts/db-backup.sh` (encrypted, age) + `.github/workflows/backup.yml`
+  (scheduled, off-site to a private repo) + `scripts/db-restore.sh`; full setup + the two-tier restore
+  (incl. the `auth.users` UUID caveat) live in **`OWNER-RUNBOOK.md` Part Q**. Schema lives in migrations,
+  so backups capture **user data + `auth.users`/`auth.identities`** only.
 
 ## Naming
 

@@ -205,7 +205,7 @@ The migration is `supabase/migrations/03_networth_schema.sql`.
 - `created_at`, `updated_at`
 - Index on (`user_id`, `status`) and on (`user_id`, `is_favorite`) — the latter backs the favourites filter.
 
-Standard rules apply: own `user_id` for direct RLS, four owner policies using `(select auth.uid()) = user_id`, `CHECK` on the enum columns, `moddatetime` trigger on `updated_at`, explicit `GRANT` to `anon`/`authenticated`. Imported back-catalogue rows leave the three dates NULL (genuinely unknown). The migration is `supabase/migrations/04_shows_schema.sql`.
+Standard rules apply: own `user_id` for direct RLS, four owner policies using `(select auth.uid()) = user_id`, `CHECK` on the enum columns, `moddatetime` trigger on `updated_at`, explicit `GRANT` to `anon`/`authenticated`. The CSV importer sets `start_date` (every row except an optional Want) and `end_date` (watched/dropped), freezing `created_at` to `start_date`. The migration is `supabase/migrations/04_shows_schema.sql`.
 
 ### book (one row per tracked book)
 
@@ -231,7 +231,7 @@ Standard rules apply: own `user_id` for direct RLS, four owner policies using `(
 - `created_at`, `updated_at`
 - Index on (`user_id`, `status`) and on (`user_id`, `is_favorite`).
 
-Standard rules apply: own `user_id` for direct RLS, four owner policies using `(select auth.uid()) = user_id`, `CHECK` on the enum columns, `moddatetime` trigger on `updated_at`, explicit `GRANT` to `anon`/`authenticated`. **Hard delete** (leaf table — nothing references `book`; no `deleted_at`). The Quotes module's optional `quote.book_id` link is declared `ON DELETE SET NULL` on `quote`, so it imposes no FK here. Imported back-catalogue rows get `status = 'read'`, the file's `end_date`, and NULL `start_date`/`last_update_date`. The migration is `supabase/migrations/06_books_schema.sql`.
+Standard rules apply: own `user_id` for direct RLS, four owner policies using `(select auth.uid()) = user_id`, `CHECK` on the enum columns, `moddatetime` trigger on `updated_at`, explicit `GRANT` to `anon`/`authenticated`. **Hard delete** (leaf table — nothing references `book`; no `deleted_at`). The Quotes module's optional `quote.book_id` link is declared `ON DELETE SET NULL` on `quote`, so it imposes no FK here. Imported back-catalogue rows carry their `status` (want/reading/read/dropped), `start_date` (required except a not-yet-started Want), and `end_date` (read/dropped) from the CSV, with `created_at` frozen to `start_date`. The migration is `supabase/migrations/06_books_schema.sql`.
 
 ### quote (one row per quote)
 

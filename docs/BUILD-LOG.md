@@ -2096,3 +2096,19 @@ start_date`** (and the Library row's secondary date likewise); `updated_at` is i
 - **Known limit:** `updated_at` can't be set to a historical value via the importer (the trigger), and a
   re-import over an existing row rewrites `created_at` to the CSV `start_date` (idempotent) — both fine
   for the owner's reset-and-reseed workflow.
+
+### Free-tier backups + keep-alive (ops)
+
+The Supabase **free tier** has no automated backups and pauses a project after ~7 days idle, so added a
+self-managed, **encrypted off-site backup** + keep-alive. New `scripts/db-backup.sh` (pg_dump of
+**public user data only** — schema + `nutrient`/`medical_lab_test` are reproducible from migrations —
+**plus `auth.users`/`auth.identities`** so UUIDs/OAuth survive a project recreation; encrypted to an age
+**public** key so the runner can encrypt but never decrypt) + `scripts/db-restore.sh` (age-decrypt →
+`psql`). `.github/workflows/backup.yml` runs them every ~3 days (the pg_dump connection doubles as the
+keep-alive; optional REST ping) and pushes the `.age` to a **private** backups repo via a fine-grained
+PAT. Key decisions: **Session-mode pooler** URL (direct host is IPv6-only, runners are IPv4; transaction
+pooler can't `pg_dump`); install **PG17** client (pg_dump ≥ server). Documented end-to-end in
+**OWNER-RUNBOOK Part Q** (setup, secrets, manual backup, **two-tier restore** — same project vs. recreate
+
+- auth reload, the `auth.users` UUID trap). `.gitignore` guards `backups/`/`*.age`/`*.key` (not a blanket
+  `*.sql` — that would catch migrations). **GitHub disables crons after 60 days idle** — noted as a risk.

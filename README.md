@@ -24,8 +24,12 @@ After the Phase-1 build, three living docs sit alongside the spec in `docs/`:
   understand how the existing app was built before changing it.
 - [`docs/PARKED.md`](docs/PARKED.md) — everything deliberately deferred or out of scope (multi-user, re-log/restore, etc.), with decisions already made so they aren't re-litigated.
 - [`docs/OWNER-RUNBOOK.md`](docs/OWNER-RUNBOOK.md) — non-developer, step-by-step setup: Supabase,
-  Google OAuth, the USDA key, env vars, migrations, running locally, GitHub, and the Vercel + iOS
-  deploy. Enough to stand up the whole app from a fresh clone.
+  Google OAuth, the USDA key, env vars, migrations, running locally, GitHub, the Vercel + iOS deploy,
+  and (Part Q) **encrypted DB backups + free-tier keep-alive**. Enough to stand up the whole app from a
+  fresh clone.
+
+Ops lives in `scripts/` (`db-backup.sh` / `db-restore.sh`) + `.github/workflows/backup.yml` (scheduled
+encrypted backup to a private repo); see OWNER-RUNBOOK Part Q.
 
 ## How to use it
 

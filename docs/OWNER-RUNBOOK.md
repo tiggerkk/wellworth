@@ -517,6 +517,9 @@ Use this to get a pristine database matching the migration files (e.g. after con
 migrations, or to clear all test data). It **drops everything and replays the migrations**, so all
 foods, activities, and diary entries are erased.
 
+> 💾 **Take a backup first** if the project holds real data — `npm run db:backup` (Part Q). A reset is
+> irreversible, and unlike Vercel there's no free-tier snapshot to fall back on.
+
 From the project folder (the database password must be available — see Part F):
 
 ```
@@ -766,22 +769,128 @@ spend. No API key is needed (the map + geocode + FX are all keyless).
 
 ---
 
+## Part Q — Backups & disaster recovery
+
+The Supabase **free tier has no automatic backups**, and it **pauses a project after ~7 days of
+inactivity** (and can delete it after a long pause). Your data — **medical lab results** and **net-worth
+financials** especially — is irreplaceable, so you run your own **encrypted, off-site backups**, and a
+lightweight **keep-alive** so the project never pauses.
+
+What's protected, and what isn't:
+
+- **Schema is already safe** — every table is defined in `supabase/migrations/`, in git. The reference
+  tables `nutrient` and `medical_lab_test` are seeded by migrations too. So the backup only needs your
+  **entered data** (it skips those two reseeded tables) — it's tiny.
+- **The backup also captures `auth.users` + `auth.identities`.** This is the part most guides miss:
+  every row is owned by your auth **UUID**. If you ever recreate the project from scratch, signing in
+  again would mint a _new_ UUID and your restored rows would be invisible (RLS). Backing up the auth
+  identity lets a fresh project re-link your Google login to the **same** UUID. See Q4.
+
+### Q1 — One-time setup
+
+1. **Create a private backups repo** on GitHub, e.g. `wellworth-backups` (Private). Nothing else goes
+   in it — just the encrypted dumps.
+2. **Make an age key** (encryption). Install age (`winget install FiloSottile.age`, or scoop/brew),
+   then:
+   ```
+   > age-keygen -o wellworth-backup.key
+   ```
+   It prints a **public key** (`age1…`) — copy it. **Keep the file `wellworth-backup.key` (the private
+   key) offline** — in your password manager / a USB key, **never in any repo or `.env`**. If you lose
+   it, every backup is unreadable. (The CI runner only ever gets the _public_ key, so it can encrypt but
+   never decrypt.)
+3. **Get the Session-pooler connection string.** Supabase → Settings → Database → **Connection string**
+   → **Session pooler** → URI, and paste your DB password in. It looks like
+   `postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres`. Use the
+   **Session** pooler (not the `:6543` transaction pooler — `pg_dump` needs a session; and not the
+   direct `db.<ref>…` host, which is IPv6-only and unreachable from GitHub's runners).
+4. **Make a fine-grained PAT** for the backups repo: GitHub → Settings → Developer settings →
+   Fine-grained tokens → only `wellworth-backups`, **Repository permissions → Contents: Read and write**.
+5. **Add the secrets** to **this** repo: Settings → Secrets and variables → **Actions** → New secret:
+   - `SUPABASE_DB_URL` = the Session-pooler URI from step 3
+   - `AGE_PUBLIC_KEY` = the `age1…` public key from step 2
+   - `BACKUPS_REPO` = `your-github-username/wellworth-backups`
+   - `BACKUPS_REPO_TOKEN` = the PAT from step 4
+   - _(optional)_ `SUPABASE_URL` + `SUPABASE_ANON_KEY` to enable the extra REST keep-alive ping.
+
+### Q2 — The automated backup (and keep-alive)
+
+`.github/workflows/backup.yml` runs **every ~3 days** (and on demand). It dumps the DB through the
+session pooler, encrypts the dump to your age public key, and pushes `backups/wellworth-<timestamp>.sql.age`
+to your private backups repo (keeping the newest 60 in the tree; git history holds the rest). Because the
+dump is a real database connection, **it doubles as the keep-alive** — the project stays active, so it
+won't pause. Run it now to verify: **Actions → DB backup & keep-alive → Run workflow**, then check a new
+`.age` file appears in `wellworth-backups`.
+
+> ⚠️ **GitHub disables scheduled workflows after 60 days of no repo activity.** While you're actively
+> committing, that never triggers. If you ever go quiet for two months, re-enable it from the **Actions**
+> tab. Also: "what counts as activity" for the pause is Supabase's call — if they change it, verify a
+> manual run still un-pauses the project.
+
+### Q3 — Manual backup (before anything risky)
+
+The simplest manual backup is just **Actions → Run workflow** (no local tools needed). **Always take one
+before a `supabase db reset --linked`** (Part M) or any destructive migration.
+
+To back up **locally/offline** instead (needs `age` + the v17 `pg_dump` on PATH), from the project folder
+in Git Bash:
+
+```
+$ export SUPABASE_DB_URL='postgresql://postgres.<ref>:<pw>@aws-0-<region>.pooler.supabase.com:5432/postgres'
+$ export AGE_PUBLIC_KEY='age1…'
+$ npm run db:backup        # writes backups/wellworth-<timestamp>.sql.age (gitignored)
+```
+
+### Q4 — Restoring (two tiers)
+
+You need `age` + `psql` locally and your **private** age key file. **Always dry-run into a throwaway DB
+first** (`supabase start` for a local one) and compare row counts before trusting a backup.
+
+- **Tier 1 — same project (routine):** the project still exists, you just lost/corrupted data. Point at
+  the live DB and load the latest backup — your UUIDs are unchanged, so everything reappears:
+  ```
+  $ export TARGET_DB_URL='…session-pooler URI of the live project…'
+  $ export AGE_KEY_FILE='/path/to/wellworth-backup.key'
+  $ npm run db:restore -- backups/wellworth-<timestamp>.sql.age
+  ```
+- **Tier 2 — project deleted (disaster):** create a **new** Supabase project (Part B), then:
+  1. `supabase link --project-ref <new-ref>` and `supabase db push` (rebuilds the schema from
+     migrations + reseeds `nutrient`/`medical_lab_test`).
+  2. **Before signing in for the first time**, run the restore (above) against the new project — this
+     loads `auth.users` + `auth.identities` with their original UUIDs.
+  3. Update `.env` + Vercel + Google OAuth redirect/origin URLs for the new ref + anon key; `npm run
+gen:types`.
+  4. Sign in with the **same** Google account — it re-links to the restored identity, so your UUID (and
+     all your data) matches.
+
+### Q5 — Why this order of priorities
+
+A **paused** project you can un-pause from the dashboard in seconds; a **deleted** one is gone. So the
+**encrypted backup is the real insurance** and the keep-alive is just convenience. Even total loss is
+recoverable: new project → migrations → restore. The one thing you must never lose is the **age private
+key** — guard it like the DB password.
+
+---
+
 ## Quick reference
 
-| Value                     | Where it comes from            | Where it goes                                   |
-| ------------------------- | ------------------------------ | ----------------------------------------------- |
-| Project URL               | Supabase → Settings → API      | `.env` `VITE_SUPABASE_URL` + Vercel env         |
-| anon key                  | Supabase → Settings → API      | `.env` `VITE_SUPABASE_ANON_KEY` + Vercel env    |
-| Project ref               | Supabase (the URL subdomain)   | `supabase link --project-ref`                   |
-| DB password               | you set it at project creation | `SUPABASE_DB_PASSWORD` (for `db push`)          |
-| USDA key                  | api.data.gov/signup            | `.env` `VITE_USDA_API_KEY` + Vercel env         |
-| TMDB key                  | themoviedb.org → Settings→API  | `.env` `VITE_TMDB_API_KEY` + Vercel env         |
-| Google Books key (opt.)   | Google Cloud → Books API       | `.env` `VITE_GOOGLE_BOOKS_API_KEY` + Vercel env |
-| Email allowlist (opt.)    | you choose (Part H3)           | `.env` `VITE_ALLOWED_EMAILS` + Vercel env       |
-| Owner email (opt.)        | your own email (Part H3)       | `.env` `VITE_OWNER_EMAIL` + Vercel env          |
-| Google Client ID + secret | Google Cloud → Clients         | Supabase → Auth → Providers → Google            |
-| Supabase callback URL     | Supabase Google provider page  | Google Cloud → Authorized redirect URIs         |
-| Vercel app URL            | after first deploy             | Google JS origins + Supabase Site/Redirect URLs |
+| Value                     | Where it comes from            | Where it goes                                      |
+| ------------------------- | ------------------------------ | -------------------------------------------------- |
+| Project URL               | Supabase → Settings → API      | `.env` `VITE_SUPABASE_URL` + Vercel env            |
+| anon key                  | Supabase → Settings → API      | `.env` `VITE_SUPABASE_ANON_KEY` + Vercel env       |
+| Project ref               | Supabase (the URL subdomain)   | `supabase link --project-ref`                      |
+| DB password               | you set it at project creation | `SUPABASE_DB_PASSWORD` (for `db push`)             |
+| USDA key                  | api.data.gov/signup            | `.env` `VITE_USDA_API_KEY` + Vercel env            |
+| TMDB key                  | themoviedb.org → Settings→API  | `.env` `VITE_TMDB_API_KEY` + Vercel env            |
+| Google Books key (opt.)   | Google Cloud → Books API       | `.env` `VITE_GOOGLE_BOOKS_API_KEY` + Vercel env    |
+| Email allowlist (opt.)    | you choose (Part H3)           | `.env` `VITE_ALLOWED_EMAILS` + Vercel env          |
+| Owner email (opt.)        | your own email (Part H3)       | `.env` `VITE_OWNER_EMAIL` + Vercel env             |
+| Google Client ID + secret | Google Cloud → Clients         | Supabase → Auth → Providers → Google               |
+| Supabase callback URL     | Supabase Google provider page  | Google Cloud → Authorized redirect URIs            |
+| Vercel app URL            | after first deploy             | Google JS origins + Supabase Site/Redirect URLs    |
+| Session-pooler URL        | Supabase → Settings → Database | backup secret `SUPABASE_DB_URL` (Part Q)           |
+| age public / private key  | `age-keygen` (Part Q)          | secret `AGE_PUBLIC_KEY` / private key kept offline |
+| Backups repo + PAT        | a private GitHub repo (Part Q) | secrets `BACKUPS_REPO` / `BACKUPS_REPO_TOKEN`      |
 
 **Everyday commands** (from the project folder):
 
@@ -791,6 +900,7 @@ spend. No API key is needed (the map + geocode + FX are all keyless).
 > npm run build        # production build
 > supabase db push     # apply new database migrations
 > supabase db reset --linked   # ⚠️ wipe + rebuild the DB from migrations (Part M1)
+> npm run db:backup    # encrypted DB backup before anything risky (Part Q; or Actions → Run workflow)
 > npm run gen:types    # regenerate src/types/database.ts after a schema change
 > git add -A && git commit -m "what changed" && git push   # save + push changes (auto-deploys on Vercel)
 ```

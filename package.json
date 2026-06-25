@@ -16,6 +16,8 @@
     "test:watch": "vitest",
     "check": "npm run format:check && npm run lint && npm run typecheck && npm run test",
     "gen:types": "supabase gen types typescript --linked --schema public > src/types/database.ts",
+    "db:backup": "bash scripts/db-backup.sh",
+    "db:restore": "bash scripts/db-restore.sh",
     "prepare": "husky"
   },
   "dependencies": {
