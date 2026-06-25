@@ -6,9 +6,14 @@
 
 ## Users
 
-- **Now:** a single owner (the primary user).
-- **Later:** a few family members, each signing in with their own Google account and seeing only their own data. The schema and auth are built multi-user-ready from day one (see data model), but
-  no family-only features are built in Phase 1.
+- **Owner + a few family members.** Each person signs in with **their own Google account** and sees
+  **only their own data** (RLS-isolated per `user_id`). Access is gated to an email allowlist
+  (`VITE_ALLOWED_EMAILS`); the owner is identified by `VITE_OWNER_EMAIL`.
+- **First login:** the owner keeps the seeded owner profile; every other member is seeded with neutral
+  defaults (never the owner's body metrics) and is **forced through a one-time onboarding wizard** to
+  enter their own birthday/sex/height/weight/units before reaching the app (see `01-screens.md`).
+- **Strictly private, no sharing.** There is no household/shared data and no shared base currency
+  (everyone is HKD); those remain deferred (see `PARKED.md`).
 
 ## Goals
 

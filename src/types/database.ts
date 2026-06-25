@@ -553,6 +553,7 @@ export type Database = {
           medical_test_order: string[] | null
           medical_tracked_tests: string[] | null
           medical_visible_fields: string[] | null
+          onboarded_at: string | null
           protein_target_g: number | null
           quote_categories: Json | null
           quote_importer_enabled: boolean
@@ -587,6 +588,7 @@ export type Database = {
           medical_test_order?: string[] | null
           medical_tracked_tests?: string[] | null
           medical_visible_fields?: string[] | null
+          onboarded_at?: string | null
           protein_target_g?: number | null
           quote_categories?: Json | null
           quote_importer_enabled?: boolean
@@ -621,6 +623,7 @@ export type Database = {
           medical_test_order?: string[] | null
           medical_tracked_tests?: string[] | null
           medical_visible_fields?: string[] | null
+          onboarded_at?: string | null
           protein_target_g?: number | null
           quote_categories?: Json | null
           quote_importer_enabled?: boolean

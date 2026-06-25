@@ -1,4 +1,5 @@
 export { Login } from './Login'
+export { Onboarding } from './Onboarding'
 export { Home } from './Home'
 export { Diary } from './Diary'
 export { Dashboard } from './Dashboard'

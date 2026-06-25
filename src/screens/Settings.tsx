@@ -6,11 +6,11 @@ import { supabase } from '../lib/supabase'
 import { useProfileEditor } from '../hooks/useProfileEditor'
 import { SectionCard } from '../components/SectionCard'
 import { FieldRow } from '../components/FieldRow'
-import { SegmentedTabs } from '../components/SegmentedTabs'
-import { cmToInches, inchesToCm, kgToPounds, poundsToKg } from '../lib/units'
+import {
+  ProfileMetricsFields,
+  type ProfileMetrics,
+} from '../components/ProfileMetricsFields'
 import type { Tables, TablesUpdate } from '../types/database'
-
-const round1 = (n: number) => Math.round(n * 10) / 10
 
 type SaveFn = (patch: TablesUpdate<'profile'>) => Promise<void>
 
@@ -95,128 +95,19 @@ function AccountCard() {
 }
 
 function SettingsBody({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
-  const [units, setUnits] = useState(profile.units)
-  const [birthday, setBirthday] = useState(profile.birthday ?? '')
-  const [sex, setSex] = useState(profile.sex ?? 'female')
+  // Local mirror of the canonical metrics; each field change persists immediately (auto-save).
+  const [value, setValue] = useState<ProfileMetrics>({
+    birthday: profile.birthday,
+    sex: profile.sex === 'male' ? 'male' : 'female',
+    units: profile.units,
+    height_cm: profile.height_cm,
+    weight_kg: profile.weight_kg,
+  })
 
-  const imperial = units === 'imperial'
-  const fmtHeight = (cm: number | null) =>
-    cm == null ? '' : String(round1(imperial ? cmToInches(cm) : cm))
-  const fmtWeight = (kg: number | null) =>
-    kg == null ? '' : String(round1(imperial ? kgToPounds(kg) : kg))
-
-  const [heightDraft, setHeightDraft] = useState(fmtHeight(profile.height_cm))
-  const [weightDraft, setWeightDraft] = useState(fmtWeight(profile.weight_kg))
-
-  function commitUnits(next: string) {
-    setUnits(next)
-    const nextImperial = next === 'imperial'
-    setHeightDraft(
-      profile.height_cm == null
-        ? ''
-        : String(
-            round1(nextImperial ? cmToInches(profile.height_cm) : profile.height_cm),
-          ),
-    )
-    setWeightDraft(
-      profile.weight_kg == null
-        ? ''
-        : String(
-            round1(nextImperial ? kgToPounds(profile.weight_kg) : profile.weight_kg),
-          ),
-    )
-    void save({ units: next })
+  function update(patch: Partial<ProfileMetrics>) {
+    setValue((v) => ({ ...v, ...patch }))
+    void save(patch)
   }
 
-  function commitHeight() {
-    const n = Number(heightDraft)
-    const cm =
-      heightDraft.trim() === '' || !Number.isFinite(n)
-        ? null
-        : imperial
-          ? inchesToCm(n)
-          : n
-    void save({ height_cm: cm })
-  }
-  function commitWeight() {
-    const n = Number(weightDraft)
-    const kg =
-      weightDraft.trim() === '' || !Number.isFinite(n)
-        ? null
-        : imperial
-          ? poundsToKg(n)
-          : n
-    void save({ weight_kg: kg })
-  }
-
-  const inputCls =
-    'w-24 rounded-input bg-input px-2 py-1 text-right text-[15px] text-text-primary focus:outline-none'
-
-  return (
-    <>
-      <SectionCard title="Profile">
-        <FieldRow label="Birthday">
-          <input
-            type="date"
-            value={birthday}
-            onChange={(e) => {
-              setBirthday(e.target.value)
-              void save({ birthday: e.target.value || null })
-            }}
-            className="rounded-input bg-input px-2 py-1 text-[15px] text-text-primary focus:outline-none"
-          />
-        </FieldRow>
-        <FieldRow label="Sex">
-          <div className="w-40">
-            <SegmentedTabs
-              value={sex}
-              onChange={(v) => {
-                setSex(v)
-                void save({ sex: v })
-              }}
-              options={[
-                { value: 'female', label: 'Female' },
-                { value: 'male', label: 'Male' },
-              ]}
-            />
-          </div>
-        </FieldRow>
-        <FieldRow label={`Height (${imperial ? 'in' : 'cm'})`}>
-          <input
-            type="number"
-            step="any"
-            value={heightDraft}
-            onChange={(e) => setHeightDraft(e.target.value)}
-            onBlur={commitHeight}
-            className={inputCls}
-          />
-        </FieldRow>
-        <FieldRow label={`Weight (${imperial ? 'lb' : 'kg'})`}>
-          <input
-            type="number"
-            step="any"
-            value={weightDraft}
-            onChange={(e) => setWeightDraft(e.target.value)}
-            onBlur={commitWeight}
-            className={inputCls}
-          />
-        </FieldRow>
-      </SectionCard>
-
-      <SectionCard title="Preferences">
-        <FieldRow label="Units">
-          <div className="w-40">
-            <SegmentedTabs
-              value={units}
-              onChange={commitUnits}
-              options={[
-                { value: 'metric', label: 'Metric' },
-                { value: 'imperial', label: 'Imperial' },
-              ]}
-            />
-          </div>
-        </FieldRow>
-      </SectionCard>
-    </>
-  )
+  return <ProfileMetricsFields value={value} onChange={update} />
 }

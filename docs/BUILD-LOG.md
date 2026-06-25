@@ -52,10 +52,12 @@ been merged into the permanent docs (`00-PRD … 05-seed-data` + OWNER-RUNBOOK) 
   `test`, `check` (all gates), `gen:types` (Supabase → `src/types/database.ts`), `prepare` (husky).
 - **Env (`.env`, gitignored; `.env.example` documents):** `VITE_SUPABASE_URL`,
   `VITE_SUPABASE_ANON_KEY`, `VITE_USDA_API_KEY`, `VITE_TMDB_API_KEY`, the optional
-  `VITE_GOOGLE_BOOKS_API_KEY` (Books), and the optional `VITE_ALLOWED_EMAILS` (email allowlist —
-  empty ⇒ no restriction). All build-time `VITE_` vars.
+  `VITE_GOOGLE_BOOKS_API_KEY` (Books), the optional `VITE_ALLOWED_EMAILS` (email allowlist —
+  empty ⇒ no restriction), and the optional `VITE_OWNER_EMAIL` (the owner account that keeps the
+  seeded owner profile + skips onboarding; blank ⇒ a single-entry allowlist is the owner). All
+  build-time `VITE_` vars.
 - **Gates:** husky `.husky/pre-commit` → lint-staged + `typecheck` + `test`; GitHub Actions
-  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 451 Vitest tests (pure helpers).
+  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 457 Vitest tests (pure helpers).
 - **Deploy status:** Deployed. GitHub `main` → Vercel auto-deploy; the production URL is in the
   Supabase redirect URLs + Google JS origins (see `OWNER-RUNBOOK.md`). Installed + tested on iPhone (PWA).
 - Conventions (DB-access-via-`src/data`, metric storage, generated `database.ts` contract, etc.) live
@@ -1357,6 +1359,17 @@ already rendered on the form + detail since M2.) **No migration** — the six ke
   rows — clicking the dot "did nothing" for multi-trip cities (single-trip dots navigate from the marker
   click, so they were unaffected). Fix: give any DOM overlay layered over a Leaflet map an explicit
   z-index above **1000** (used `z-[1100]`). Don't assume DOM order is enough over a Leaflet map.
+- **F15 — first-run seeding inherited the owner's body, and a profile gate must not gate on `loading`
+  (multi-member).** Two traps when opening the app to family members: (a) `ensureOwnerProfile` seeded
+  **every** new login with the owner's hardcoded birthday/sex/height/weight — a new member silently got
+  the owner's body (wrong BMR/DRI). Fix: branch on `isOwnerEmail` and seed non-owners with a neutral
+  `MEMBER_PROFILE_SEED` (no body metrics) + null `onboarded_at`, forcing onboarding. Never seed personal
+  metrics to a non-owner. (b) The `OnboardingGate` first gated on `loading || profile == null`, which —
+  per F8/F13 — flashed a full-screen splash over the **whole app** on every `bumpDiary` refetch (`useAsync`
+  flips `loading=true` but keeps `data`). Fix: gate on the resolved `data` only (`profile == null` covers
+  both initial-undefined and the row-being-created window); a new member's created row is surfaced by
+  `bumpDiary()` after `ensureOwnerProfile` reports it created. Rule: a gate keyed on a fetched value reads
+  `data`, never `loading`.
 
 ## Shows / Books / global enhancement (favourites, Esc, master-series removal)
 
@@ -1972,3 +1985,34 @@ Two unrelated cosmetic/housekeeping changes; no schema or behaviour change.
   true centre, consistently across modules. `min-h-full` resolves because `<main>` has a definite
   flex-sized height (the same reason QuotesZen's `h-full` already worked). `EmptyState` itself is
   unchanged.
+
+## Multi-member family — per-member login + forced onboarding
+
+Goal: let a few family members each use the app with their own Google account and strictly-private
+data, without inheriting the owner's body metrics. The data layer was **already** multi-user (every
+table RLS-isolated on `user_id`; `profile` PK = `user_id`), so this was a small, targeted change — no
+schema-wide refactor, no data migration, no sharing model.
+
+- **Decisions (from the owner):** own Google login each · strictly private (no household sharing) ·
+  a forced first-run wizard · base currency stays global HKD.
+- **Owner detection** (`src/lib/access.ts`): `isOwnerEmail(email, OWNER_EMAIL, ALLOWED_EMAILS)` —
+  the owner is `VITE_OWNER_EMAIL`, falling back to a single-entry `VITE_ALLOWED_EMAILS` so a lone-user
+  build needs zero extra config. Plus `needsOnboarding(profile)` (true only for a loaded row with a
+  null `onboarded_at`).
+- **Seed split** (`src/constants/profile-defaults.ts`): new `MEMBER_PROFILE_SEED` (activity factor,
+  units, the highlighted-nutrient preset — **no** birthday/sex/height/weight/protein); `OWNER_PROFILE_SEED`
+  spreads it and adds the owner's body metrics. `ensureOwnerProfile(userId, email)` branches: owner gets
+  the owner seed + an `onboarded_at` stamp; everyone else gets the member seed with `onboarded_at` null.
+  It now returns whether it created a row; `useEnsureProfile` `bumpDiary()`s on a create so the gate
+  re-reads the new profile.
+- **Schema:** added `profile.onboarded_at timestamptz` to `01_wellness_schema.sql` (edited in place per
+  the `db reset --linked` workflow) + regenerated `src/types/database.ts`.
+- **Gate + wizard:** `OnboardingGate` in `AppShell` (modeled on `MedicalLockGate`) shows a splash while
+  the profile loads/creates and renders the full-screen `src/screens/Onboarding.tsx` for a new member;
+  finishing stamps `onboarded_at` (via the shared `bumpDiary` refetch) and dismisses it. The wizard and
+  Settings now share `src/components/ProfileMetricsFields.tsx` — one home for the metric↔imperial math.
+- **Known limits (documented, not built):** members outside the one populated DRI band (adult female
+  51–70) get no Wellness nutrient targets (`computeTargets` returns null — graceful); base currency is
+  global HKD; no shared/household data. See `PARKED.md`.
+- Verified by `npm run check` (all gates, **457** tests — +6 in `access.test.ts` for `isOwnerEmail` /
+  `needsOnboarding`).

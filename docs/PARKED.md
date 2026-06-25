@@ -239,18 +239,26 @@ existing chip. Purely additive.
 
 ---
 
-## Multi-user / family · Deferred (schema is ready)
+## Multi-user / family · **Per-member login + onboarding SHIPPED** (sharing still deferred)
 
-**What:** Multiple family members, each their own Google account + data; later, shared household custom foods.
+**What shipped:** Multiple family members, each their own Google account + strictly-private data. Each
+member is allow-listed (`VITE_ALLOWED_EMAILS`), the owner is identified by `VITE_OWNER_EMAIL`
+(`isOwnerEmail`), non-owners get the neutral `MEMBER_PROFILE_SEED` (no owner body metrics) and are
+forced through the **Onboarding** wizard (`src/screens/Onboarding.tsx`, gated in `AppShell`) via the
+`profile.onboarded_at` flag. No schema-wide change — RLS already isolated every table per `user_id`.
 
-**Why deferred:** PRD builds Phase 1 multi-user-_ready_ but with no family-only features.
+**Still deferred:** shared/household data and a couple of known limitations:
 
-**Decided / constraints (so a future session doesn't redo this):**
-
-- The schema is already isolated per user (`user_id` + RLS on every table), so additional members work with **no schema change** — they sign in and get their own `profile`/data.
-- **First-run seeding is currently owner-specific and must change for real multi-user.** Today `useEnsureProfile` seeds the _owner's_ body metrics (`src/constants/profile-defaults.ts`) and the owner's starter activities (`src/constants/seed-activities.ts`) to _any_ new user. For non-owner users, seed only **neutral** defaults (units, activity factor, the default visible/highlighted sets) and route them through an **onboarding/Settings step** to enter their own birthday/sex/height/weight — never inherit the owner's metrics. (This is noted in those files' header comments.)
-- **DRI bands:** `src/lib/dri.ts` only populates **adult female 51–70** and throws otherwise. Other users need their sex/age bands added (pure data) before targets compute.
-- **Shared household custom foods** would be an **additive** change: a nullable `household_id` + a shared-visibility RLS policy (per `03-data-model.md`), not a rebuild.
+- **DRI bands:** `src/lib/dri.ts` only populates **adult female 51–70**. Members outside it get **no
+  nutrient targets** — `computeTargets` returns null (graceful, no crash). Add their sex/age band
+  (pure data) before Wellness targets compute for them.
+- **Base currency is global HKD** (`BASE_CURRENCY` in `src/lib/networth.ts`; Travel converts to HKD).
+  Not per-member — revisit as its own task (FX rework) if a member needs a different base.
+- **Shared household custom foods / shared net worth / shared trips** would be an **additive** change:
+  a nullable `household_id` + a shared-visibility RLS policy (per `03-data-model.md`), not a rebuild.
+  Strictly-private is the current, intended model.
+- **Allowlist + owner are build-time `VITE_*`** — adding a member or changing the owner needs a
+  **redeploy**, not a runtime change.
 
 ---
 

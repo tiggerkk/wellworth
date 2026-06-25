@@ -36,6 +36,42 @@ export function isEmailAllowed(
 /** The allowlist configured for this build (empty ⇒ no restriction). */
 export const ALLOWED_EMAILS = parseAllowlist(import.meta.env.VITE_ALLOWED_EMAILS)
 
+/** The owner's email for this build (`VITE_OWNER_EMAIL`), or undefined when unset. */
+export const OWNER_EMAIL = import.meta.env.VITE_OWNER_EMAIL as string | undefined
+
+/**
+ * Is `email` the app **owner**? The owner keeps the seeded owner profile and skips onboarding;
+ * everyone else gets neutral defaults and is forced through the first-run wizard.
+ *
+ * - If `ownerEmail` (`VITE_OWNER_EMAIL`) is set, the owner is exactly that address.
+ * - If it's **unset** but the allowlist has a single entry, that lone account is the owner — this
+ *   preserves the original single-user behavior without any extra config.
+ * - Otherwise nobody is auto-owner (multi-member build with no explicit owner ⇒ everyone onboards).
+ */
+export function isOwnerEmail(
+  email: string | null | undefined,
+  ownerEmail: string | undefined,
+  allowlist: string[],
+): boolean {
+  const normalized = email?.trim().toLowerCase()
+  if (!normalized) return false
+  const owner = ownerEmail?.trim().toLowerCase()
+  if (owner) return normalized === owner
+  if (allowlist.length === 1) return normalized === allowlist[0]
+  return false
+}
+
+/**
+ * Does this profile still need first-run onboarding? True only for a real, loaded profile row whose
+ * `onboarded_at` is null (a new member). A null/undefined profile means it's still loading or being
+ * created, so we return false — the gate shows a splash rather than flashing the wizard.
+ */
+export function needsOnboarding(
+  profile: { onboarded_at: string | null } | null | undefined,
+): boolean {
+  return !!profile && profile.onboarded_at == null
+}
+
 /**
  * Read an OAuth error the provider handed back on the redirect (e.g.
  * `?error=access_denied&error_code=signup_disabled&error_description=...`, in the query or the hash)

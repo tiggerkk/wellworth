@@ -1,12 +1,33 @@
 # 05 — Seed Data
 
-## Profile (owner — seed on first login, then editable in Settings)
+## Profile (seed on first login, then editable in Settings)
+
+First-login seeding **branches on whether the signed-in email is the owner** (`isOwnerEmail` in
+`src/lib/access.ts`, driven by `VITE_OWNER_EMAIL`, falling back to a single-entry allowlist).
+`ensureOwnerProfile(userId, email)` picks one of two seeds; `visible_nutrients` (from the nutrient
+table's `default_visible`) and `medical_tracked_tests` (from `medical_lab_test.default_tracked`) are
+appended to **both** (neutral, reference-derived).
+
+### Owner seed (`OWNER_PROFILE_SEED`)
 
 - birthday: `1974-09-06`, sex: `female`, height_cm: `171`, weight_kg: `56`
 - protein_target_g: `90` (manual override; she intentionally eats above the standard target)
 - activity_factor: `1.4`, units: `metric`
 - highlighted_nutrients (8): `protein, fiber, vitamin_d, calcium, iron, magnesium, folate, potassium`
 - visible_nutrients: all keys below marked **Visible = yes**
+- `onboarded_at`: stamped now ⇒ the owner **skips** the onboarding wizard.
+
+### Member seed (`MEMBER_PROFILE_SEED`, non-owner family members)
+
+- **No body metrics** — birthday / sex / height / weight / protein_target_g are left **NULL** and must
+  never be inherited from the owner.
+- activity_factor: `1.4`, units: `metric`, highlighted_nutrients: the same 8 keys (a display preset).
+- `onboarded_at`: **NULL** ⇒ the member is forced through the first-run **Onboarding** wizard (see
+  `01-screens.md`) to enter their own birthday / sex / height / weight / units before reaching the app.
+
+> Members outside the one populated DRI band (adult female 51–70) get **no nutrient targets** until
+> their band is added to `src/lib/dri.ts` (pure data) — `computeTargets` returns null rather than
+> erroring (see `PARKED.md`).
 
 ---
 

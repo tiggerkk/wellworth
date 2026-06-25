@@ -85,11 +85,23 @@ Supabase (Postgres + RLS). Components hold no SQL and never import the Supabase 
   once in `src/lib/supabase.ts` with **`flowType: 'pkce'`** set explicitly — the bare supabase-js
   client otherwise defaults to the implicit flow. A SPA needs no `/auth/callback` route;
   `detectSessionInUrl` exchanges the `?code=` on load.
-- On first successful login, a client-side hook (`useEnsureProfile`) seeds the owner's data: it
-  creates the `profile` row (defaults from `05-seed-data.md`) **and** seeds the owner's activity
-  library (the activities in `05-seed-data.md`) if the user has none. Both are idempotent
-  (insert-if-missing), guarded against React StrictMode double-invoke; not DB triggers. The user then
-  edits in Settings.
+- On first successful login, a client-side hook (`useEnsureProfile`) seeds the user's data: it creates
+  the `profile` row **and** seeds the starter activity library (the activities in `05-seed-data.md`) if
+  the user has none. Both are idempotent (insert-if-missing), guarded against React StrictMode
+  double-invoke; not DB triggers. `ensureOwnerProfile(userId, email)` **branches on the owner**
+  (`isOwnerEmail`, see below): the owner gets the full `OWNER_PROFILE_SEED` and an `onboarded_at`
+  stamp; every other member gets the neutral `MEMBER_PROFILE_SEED` (no body metrics) with
+  `onboarded_at` left null. When it creates a new row it bumps the shared refresh tick so the
+  onboarding gate re-reads it.
+- **Multi-member onboarding gate (`OnboardingGate` in `AppShell`).** A new member's null `onboarded_at`
+  (`needsOnboarding` in `access.ts`) forces a full-screen `Onboarding` wizard
+  (`src/screens/Onboarding.tsx`) to collect their own birthday/sex/height/weight/units before the app —
+  never inheriting the owner's metrics. The gate shows a splash while the profile is loading/being
+  created (it keys off the resolved `data`, not `loading`, so background refetches don't flash it) and
+  passes the owner / already-onboarded members straight through. Completing the wizard stamps
+  `onboarded_at`, which dismisses the gate. The wizard and Settings share `ProfileMetricsFields` (one
+  home for the metric↔imperial conversion). Owner detection: `VITE_OWNER_EMAIL`, falling back to a
+  single-entry `VITE_ALLOWED_EMAILS` so a lone-user build needs no extra config.
 - **Access control + error surfacing (`src/lib/access.ts`, enforced in `AuthProvider`).** An optional
   build-time email allowlist (`VITE_ALLOWED_EMAILS`, parsed by `parseAllowlist`/`isEmailAllowed`) signs
   out any account whose email isn't listed (empty ⇒ no restriction) — a convenience layer over RLS +

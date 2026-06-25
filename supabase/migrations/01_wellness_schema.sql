@@ -52,6 +52,7 @@ create table public.profile (
   units                 text not null default 'metric' check (units in ('metric', 'imperial')),
   highlighted_nutrients text[] not null default '{}', -- 8 keys for the Diary grid
   visible_nutrients     text[] not null default '{}', -- keys shown on Dashboard/Daily Report
+  onboarded_at          timestamptz, -- null = member hasn't finished first-run onboarding (forces the wizard)
   created_at            timestamptz not null default now(),
   updated_at            timestamptz not null default now()
 );

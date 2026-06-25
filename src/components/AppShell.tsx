@@ -3,8 +3,11 @@ import { useLocation, useOutlet, type Location } from 'react-router'
 import { BottomNav } from './BottomNav'
 import { MedicalLockProvider, useMedicalLock } from './MedicalLockProvider'
 import { MedicalLockScreen } from './MedicalLockScreen'
+import { Splash } from './Splash'
 import { useAuth } from '../auth/AuthProvider'
 import { useEnsureProfile } from '../hooks/useEnsureProfile'
+import { useProfile } from '../hooks/useProfile'
+import { needsOnboarding } from '../lib/access'
 import { moduleForPath } from '../constants/modules'
 import { setLastModule } from '../lib/last-module'
 import {
@@ -17,6 +20,7 @@ import {
   Library,
   NetWorthDashboard,
   NetWorthEntry,
+  Onboarding,
   QuotesEntry,
   QuotesLibrary,
   QuotesSettings,
@@ -80,10 +84,39 @@ export function AppShell() {
         </main>
         {module && <BottomNav module={module} />}
         {background && outlet}
+        {/* Onboarding sits above the medical lock so a brand-new member fills in their profile
+            before anything else (they can't have set a Medical PIN yet). */}
+        <OnboardingGate />
         <MedicalLockGate />
       </div>
     </MedicalLockProvider>
   )
+}
+
+/**
+ * Forces a new member through the first-run wizard. While the profile is still loading or being
+ * created (`useEnsureProfile` is fire-and-forget, so getProfile returns null first) we show a splash
+ * rather than flashing the wizard with empty fields; the owner / an already-onboarded member passes
+ * straight through. Completing the wizard stamps `onboarded_at`, which flips `needsOnboarding`.
+ */
+function OnboardingGate() {
+  const { data: profile, error } = useProfile()
+  // On a profile fetch error we can't tell if onboarding is needed — don't hard-block behind a
+  // splash; let the app render (its screens surface their own profile-load errors).
+  if (error) return null
+  // `profile == null` covers both the initial load (undefined) and the brief window where a new
+  // member's row is still being created (getProfile resolves null). We gate on the resolved data,
+  // NOT `loading`, because `loading` flips true on every background refetch (each bumpDiary) and
+  // would otherwise flash this splash across the whole app. `data` is preserved across refetches.
+  if (profile == null) {
+    return (
+      <div className="fixed inset-0 z-50 bg-bg">
+        <Splash />
+      </div>
+    )
+  }
+  if (!needsOnboarding(profile)) return null
+  return <Onboarding />
 }
 
 /** Covers the whole shell with the lock screen while the Medical module is locked. */

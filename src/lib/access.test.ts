@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { isEmailAllowed, parseAllowlist, parseOAuthError } from './access'
+import {
+  isEmailAllowed,
+  isOwnerEmail,
+  needsOnboarding,
+  parseAllowlist,
+  parseOAuthError,
+} from './access'
 
 describe('parseAllowlist', () => {
   it('returns an empty list for unset / blank input', () => {
@@ -33,6 +39,45 @@ describe('isEmailAllowed', () => {
   it('denies a missing email when the list is non-empty', () => {
     expect(isEmailAllowed(null, ['owner@gmail.com'])).toBe(false)
     expect(isEmailAllowed(undefined, ['owner@gmail.com'])).toBe(false)
+  })
+})
+
+describe('isOwnerEmail', () => {
+  const list = ['owner@gmail.com', 'family@gmail.com']
+
+  it('matches the explicit owner email case- and whitespace-insensitively', () => {
+    expect(isOwnerEmail('owner@gmail.com', 'Owner@Gmail.com', list)).toBe(true)
+    expect(isOwnerEmail('  owner@gmail.com ', 'owner@gmail.com', list)).toBe(true)
+    expect(isOwnerEmail('family@gmail.com', 'owner@gmail.com', list)).toBe(false)
+  })
+
+  it('treats a single-email allowlist as the owner when no explicit owner is set', () => {
+    expect(isOwnerEmail('solo@gmail.com', undefined, ['solo@gmail.com'])).toBe(true)
+    expect(isOwnerEmail('other@gmail.com', undefined, ['solo@gmail.com'])).toBe(false)
+  })
+
+  it('makes nobody the auto-owner on a multi-email allowlist with no explicit owner', () => {
+    expect(isOwnerEmail('owner@gmail.com', undefined, list)).toBe(false)
+    expect(isOwnerEmail('family@gmail.com', undefined, list)).toBe(false)
+    expect(isOwnerEmail('owner@gmail.com', '', list)).toBe(false)
+  })
+
+  it('denies a missing/blank email', () => {
+    expect(isOwnerEmail(null, 'owner@gmail.com', list)).toBe(false)
+    expect(isOwnerEmail(undefined, 'owner@gmail.com', list)).toBe(false)
+    expect(isOwnerEmail('   ', 'owner@gmail.com', list)).toBe(false)
+  })
+})
+
+describe('needsOnboarding', () => {
+  it('is false while the profile is loading or being created', () => {
+    expect(needsOnboarding(null)).toBe(false)
+    expect(needsOnboarding(undefined)).toBe(false)
+  })
+
+  it('is true for a real profile with no onboarded_at, false once set', () => {
+    expect(needsOnboarding({ onboarded_at: null })).toBe(true)
+    expect(needsOnboarding({ onboarded_at: '2026-06-25T00:00:00Z' })).toBe(false)
   })
 })
 

@@ -239,6 +239,14 @@ its routes.
   also exposes `parseOAuthError`, which `AuthProvider` captures from the redirect URL on first render
   so Login surfaces a failed sign-in (e.g. `signup_disabled` after a `db reset` wipes `auth.users`)
   instead of looping silently.
+- **Multi-member family is supported** (each member = own Google login, strictly-private data via RLS).
+  `isOwnerEmail` (`VITE_OWNER_EMAIL`, falling back to a single-entry allowlist) splits first-run
+  seeding: the owner gets `OWNER_PROFILE_SEED` + an `onboarded_at` stamp; non-owners get the neutral
+  `MEMBER_PROFILE_SEED` (**never** the owner's body metrics) and a null `onboarded_at`, which the
+  `OnboardingGate` in `AppShell` turns into a forced `Onboarding` wizard (`needsOnboarding`). The wizard
+  and Settings share `ProfileMetricsFields`. `VITE_OWNER_EMAIL`/`VITE_ALLOWED_EMAILS` are build-time —
+  adding a member needs a redeploy. Known limits stay in `PARKED.md` (DRI bands, global HKD base,
+  no shared/household data).
 
 ## Database workflow
 

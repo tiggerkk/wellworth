@@ -14,6 +14,9 @@ Nutrient sets are stored as JSONB maps (`nutrient_key → amount`), validated ag
 - `units` TEXT DEFAULT 'metric' — 'metric' | 'imperial' (display only)
 - `highlighted_nutrients` TEXT[] — up to 8 nutrient keys for the Diary grid
 - `visible_nutrients` TEXT[] — nutrient keys shown on Dashboard/Daily Report (seeded from defaults)
+- `onboarded_at` TIMESTAMPTZ NULL — set when first-run onboarding completes; **NULL = a new member
+  who must be forced through the Onboarding wizard**. The owner seed stamps it (skips the wizard); the
+  neutral member seed leaves it NULL (see `05-seed-data.md`).
 - `show_visible_fields` TEXT[] NULL — Shows Entry-form field visibility; **NULL = all visible**
   (default-on, no seeding); an explicit array once trimmed in Shows Settings
 - `show_importer_enabled` BOOLEAN NOT NULL DEFAULT false — surfaces the Shows in-app CSV importer

@@ -52,6 +52,24 @@ Diary groups, in order: **Breakfast, Lunch, Dinner, Snacks, Supplements, Activit
   returns to that month's day grid.
 - Settings sub-screens: auto-save on change
 
+## First-run Onboarding (forced, new members only)
+
+A full-screen wizard shown **once** to a brand-new family member (any signed-in account that isn't the
+owner) immediately after their first login — it covers the whole shell, so there's no nav chrome and no
+way past it except finishing or signing out. It exists because a member must enter **their own** body
+metrics rather than inherit the owner's.
+
+- **Fields:** Units (Metric/Imperial), Birthday, Sex, Height, Weight — the same inputs as Global
+  Settings (shared `ProfileMetricsFields`; height/weight follow the chosen units). Protein target is
+  **not** asked (it defaults to the DRI; editable later in Wellness Settings).
+- **"Get started"** validates that birthday/height/weight are filled, saves them in one write, and
+  stamps `onboarded_at` — which dismisses the gate and drops the member into the app (their last-module
+  default is the Home hub). A small **Sign out** link is the only escape.
+- While the member's profile row is still being created the gate shows a brief **splash**, never the
+  wizard with empty fields. The **owner** and any already-onboarded member never see this screen.
+- Members outside the populated DRI band (currently adult female 51–70) simply see no nutrient targets
+  until their band is added (see `05-seed-data.md` / `PARKED.md`).
+
 ## Global - Settings (from the Home hub gear)
 
 App-wide; shared across all modules. Auto-save on change. A back chevron returns to the hub.

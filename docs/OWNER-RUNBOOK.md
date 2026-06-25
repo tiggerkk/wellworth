@@ -131,6 +131,7 @@ The app reads its configuration from a file named `.env` in the project root. It
    VITE_TMDB_API_KEY=your-tmdb-v3-key
    VITE_GOOGLE_BOOKS_API_KEY=your-google-books-key
    VITE_ALLOWED_EMAILS=you@gmail.com
+   VITE_OWNER_EMAIL=you@gmail.com
    ```
    - `VITE_SUPABASE_URL` — the Project URL from Part B.
    - `VITE_SUPABASE_ANON_KEY` — the anon public key from Part B.
@@ -140,7 +141,11 @@ The app reads its configuration from a file named `.env` in the project root. It
      rate-limits quickly).
    - `VITE_ALLOWED_EMAILS` — optional email allowlist that keeps the app **yours** (see Part H3).
      Comma-separate multiple addresses (`you@gmail.com, partner@gmail.com`); leave blank for no
-     restriction. Save and close.
+     restriction.
+   - `VITE_OWNER_EMAIL` — **your** email: this account keeps the seeded owner profile and skips the
+     onboarding wizard. Everyone else on the allowlist is treated as a family member (a neutral profile
+     plus forced onboarding). If you leave it blank and the allowlist has exactly one address, that lone
+     address is treated as the owner. Save and close.
 
 - ✅ Check: `.env` exists with the four required lines filled (the Google Books line is optional but
   recommended). (These get baked into the app when it builds, so if you change them later you must
@@ -298,8 +303,24 @@ sees _your_ rows — but they could create their own account and burn your free-
    `src/lib/access.ts`, enforced in `src/auth/AuthProvider.tsx`), it documents intent and keeps
    working even if a dashboard toggle later drifts.
 
-> Remember `VITE_ALLOWED_EMAILS` is **baked in at build time** — change it and you must redeploy
-> (Part K) for production to pick it up, and restart `npm run dev` locally.
+> Remember `VITE_ALLOWED_EMAILS` (and `VITE_OWNER_EMAIL`) are **baked in at build time** — change them
+> and you must redeploy (Part K) for production to pick it up, and restart `npm run dev` locally.
+
+### Adding a family member
+
+1. Add their Gmail to **`VITE_ALLOWED_EMAILS`** (Part D locally and Part K in Vercel), keeping
+   **`VITE_OWNER_EMAIL`** set to your own address.
+2. If you turned Supabase sign-ups **off** (step 2 above), turn them **on** for a minute so their
+   brand-new account can be created, then turn them off again. Also make sure they're a Google OAuth
+   **Test user** (step 1) if your consent screen is in Testing.
+3. **Redeploy** (Part K) — these are build-time vars, so the change isn't live until the new build is.
+4. They open the app, sign in with their own Google account, and are taken straight through the
+   **onboarding wizard** to enter their own birthday/sex/height/weight. From then on their data is
+   entirely separate from yours.
+
+> Note: members whose sex/age isn't the populated DRI band (adult female 51–70) won't see nutrient
+> targets in Wellness yet — everything else works. Adding their band is a small data edit in
+> `src/lib/dri.ts` (see `PARKED.md`).
 
 ---
 
@@ -445,6 +466,7 @@ and run the two commands again. Once the commit succeeds:
    - `VITE_GOOGLE_BOOKS_API_KEY` = your Google Books key
    - `VITE_ALLOWED_EMAILS` = your email allowlist (optional; see Part H3 — set it to keep prod
      restricted to you/family)
+   - `VITE_OWNER_EMAIL` = your email (the owner account that skips onboarding; see Part H3)
 4. Click **Deploy**. When it finishes, copy your app's address, e.g.
    `https://wellworth-xxxx.vercel.app`.
 5. **Point Google + Supabase at the live address** (sign-in will fail until you do):
@@ -756,6 +778,7 @@ spend. No API key is needed (the map + geocode + FX are all keyless).
 | TMDB key                  | themoviedb.org → Settings→API  | `.env` `VITE_TMDB_API_KEY` + Vercel env         |
 | Google Books key (opt.)   | Google Cloud → Books API       | `.env` `VITE_GOOGLE_BOOKS_API_KEY` + Vercel env |
 | Email allowlist (opt.)    | you choose (Part H3)           | `.env` `VITE_ALLOWED_EMAILS` + Vercel env       |
+| Owner email (opt.)        | your own email (Part H3)       | `.env` `VITE_OWNER_EMAIL` + Vercel env          |
 | Google Client ID + secret | Google Cloud → Clients         | Supabase → Auth → Providers → Google            |
 | Supabase callback URL     | Supabase Google provider page  | Google Cloud → Authorized redirect URIs         |
 | Vercel app URL            | after first deploy             | Google JS origins + Supabase Site/Redirect URLs |
