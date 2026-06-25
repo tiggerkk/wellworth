@@ -172,14 +172,16 @@ its routes.
 - **Travel (built):** trips as **Days → Stops** itineraries + a visited-places map + a per-trip expenses
   layer. **Five tables** `trip` / `trip_day` / `stop` / `trip_expense` / `remembered_city` (migration
   `supabase/migrations/20260624120000_travel_schema.sql`; hard delete cascades trip → day → stop and
-  trip → expense) + one `profile.travel_expense_categories` JSONB column
+  trip → expense) + two `profile` columns `travel_expense_categories` (JSONB) + `travel_visible_fields`
+  (`text[]`, **NULL = all visible**, Trip-form field visibility)
   (`…121000_profile_travel_settings.sql`). **Expense categories are the Quotes pattern** — a `{key,label}`
   JSONB list on profile (no table); `trip_expense.category` stores the stable key; edited via the shared
   **`ConfigListEditor`** (the generalized former `QuoteListEditor`, decoupled via `count`/`reassign`/
   `onChanged` props — also used by Quotes). Data `src/data/travel.ts` (trip/day/stop/expense CRUD +
   reorder + `getTripBundle` + `recomputeTripDates` + `listTripFacetRows` + `rememberCity` +
   category count/reassign). Pure logic: `src/lib/travel.ts` (row aliases, status palette, trip-list
-  filter/sort, facets), `travel-stats.ts` (visited-only distinct counts; `CHINA_PROVINCE_TOTAL = 34`),
+  filter/sort — incl. rating filter + companion search + `sortField`×`sortDir` — facets, and
+  `TRIP_ENTRY_FIELDS` + `isFieldVisible`), `travel-stats.ts` (visited-only distinct counts; `CHINA_PROVINCE_TOTAL = 34`),
   `places.ts` (`snapProvince` to a canonical `CHINA_PROVINCES` name + on-demand Nominatim `geocodeCity`),
   `travel-geo.ts` (`resolveCountryName` + bundled-GeoJSON URLs), `trip-fx.ts` (per-trip first-day rates on
   `fetchRateToHkdOn`), `expenses.ts` (per-currency + HKD totals, breakdown, `formatMoney`), `reimburse.ts`
@@ -192,7 +194,8 @@ its routes.
   **Stop cost is informational only — never summed**; the Expenses layer is the authoritative spend total.
   Local overlays (not route sheets, so the Builder draft survives): `CitySearchSheet` / `StopEditorSheet` /
   `ExpenseEditorSheet` + the in-file Reorder-Days sheet. Screens `TravelDashboard` / `TravelMap` /
-  `TravelTrips` / `TripBuilder` / `TravelSettings` / `TravelCategoriesSheet` / `ImportTravelExpensesSheet` /
+  `TravelTrips` / `TripBuilder` / `TravelSettings` / `TravelFieldsSheet` / `TravelCategoriesSheet` /
+  `ImportTravelExpensesSheet` /
   `ImportTravelTripsSheet`. Per-trip **FX overrides** live in the Expenses tab, not Settings. CSV/JSON
   importers in Settings (`travel-expenses-template.csv`, `travel-itinerary.schema.json` + prompt in
   `templates/`; real `travel-expenses*.csv` gitignored).

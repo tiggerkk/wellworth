@@ -193,11 +193,11 @@ export function applyLibraryView(quotes: QuoteRow[], c: LibraryCriteria): QuoteR
  */
 export const QUOTE_ENTRY_FIELDS: { key: string; label: string }[] = [
   { key: 'author', label: 'Author' },
-  { key: 'source_link', label: 'Source Link' },
   { key: 'source_type', label: 'Source Type' },
   { key: 'title', label: 'Title' },
-  { key: 'tags', label: 'Tags' },
+  { key: 'source_link', label: 'Source Link' },
   { key: 'language', label: 'Language' },
+  { key: 'tags', label: 'Tags' },
 ]
 
 /** Whether an Entry field is visible. NULL stored prefs (or an unknown key) ⇒ visible (default-on). */

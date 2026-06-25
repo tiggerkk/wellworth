@@ -89,7 +89,8 @@ export const routes = {
     trips: '/travel/trips', // searchable/filterable trip list
     entry: '/travel/entry', // new Trip Builder
     edit: (id: string) => `/travel/trip/${id}`, // Trip Builder (itinerary + expenses)
-    settings: '/travel/settings', // expense categories, imports
+    settings: '/travel/settings', // entry-form fields, expense categories, imports
+    settingsVisible: '/travel/settings/visible', // Trip-form field visibility (sheet)
     settingsCategories: '/travel/settings/categories', // manage expense-category list (sheet)
     importExpenses: '/travel/import-expenses', // wide CSV expenses importer (sheet)
     importTrips: '/travel/import-trips', // itinerary JSON-array importer (sheet)

@@ -10,6 +10,10 @@
 --     tolerantly by src/lib/travel-config.ts — so a newly-shipped default appears for owners who never
 --     customized. A non-null array is authoritative (a deleted default does not resurrect).
 --     trip_expense.category stores the stable `key` from this list.
+--   * travel_visible_fields — which optional Trip-form fields are shown (mirrors the other modules'
+--     *_visible_fields). A text[] of TRIP_ENTRY_FIELDS keys; NULL = all visible (default-on). The core
+--     Trip Name / Base Currency / Status are always shown and aren't listed.
 
 alter table public.profile
-  add column travel_expense_categories jsonb;
+  add column travel_expense_categories jsonb,
+  add column travel_visible_fields     text[];

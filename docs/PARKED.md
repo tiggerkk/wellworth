@@ -210,14 +210,14 @@ user and simpler; same trade-off as the Shows Library.
 **Decided:** Mirror the Wellness "URL-as-state" pattern — serialize `LibraryCriteria` into query params
 written with `{replace:true}`; the screen already centralizes the criteria in one state object.
 
-### Quotes Library — filter URL-persistence · Deferred
+### Quotes Library — filter/sort URL-persistence · Deferred
 
-**What:** Persist the Quotes Library's filter state (Category / Tags / Favourites / Source / Language)
-across navigation, so leaving the tab and returning restores it.
-**Why deferred:** Filter state is local component state (resets on remount) — fine for a single user;
-same trade-off as the Shows/Books libraries. The `?show=`/`?book=` "Quotes from this title" constraint
-**is** already URL-driven. (Quotes has no Sort menu — newest-touched order — so there's no sort to
-persist.)
+**What:** Persist the Quotes Library's filter + sort state (Category / Tags / Favourites / Source /
+Language + the Sort field/direction) across navigation, so leaving the tab and returning restores it.
+**Why deferred:** Filter/sort state is local component state (resets on remount) — fine for a single
+user; same trade-off as the Shows/Books libraries. The `?show=`/`?book=` "Quotes from this title"
+constraint **is** already URL-driven. (Quotes now has a Sort menu — Date / Category / Source Type,
+default Date desc — which is likewise local state.)
 **Decided:** Mirror the Wellness "URL-as-state" pattern over the local `LibraryCriteria` object.
 
 ### Quotes — per-category badge colours · Deferred

@@ -203,7 +203,8 @@ This creates the tables, security rules, and the nutrient reference data in your
    a `profile` settings migration), **Medical** (`…_medical_schema.sql` — the three Medical tables;
    `…_profile_medical_settings.sql` — the Medical `profile` columns; `…_seed_medical_lab_test.sql` —
    the seeded lab-test reference), and **Travel** (`…_travel_schema.sql` — the five Travel tables;
-   `…_profile_travel_settings.sql` — the Travel `profile` column). You never list them yourself; whatever
+   `…_profile_travel_settings.sql` — the Travel `profile` columns: `travel_expense_categories` +
+   `travel_visible_fields`). You never list them yourself; whatever
    is in the folder is applied.
 
 - ✅ Check (in the Supabase dashboard):

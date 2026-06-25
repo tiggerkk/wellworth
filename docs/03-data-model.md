@@ -42,7 +42,7 @@ Nutrient sets are stored as JSONB maps (`nutrient_key → amount`), validated ag
 - `medical_section_order` TEXT[] NULL — personal category-section order override (null/empty = seeded
   order)
 - `medical_test_order` TEXT[] NULL — personal flat ordered list of test keys (null/empty = seeded order)
-- `medical_visible_fields` TEXT[] NULL — Medical Add/Edit-Report field visibility; **NULL = all visible**
+- `medical_visible_fields` TEXT[] NULL — Medical New/Edit-Report field visibility; **NULL = all visible**
   (default-on)
 - `medical_importer_enabled` BOOLEAN NOT NULL DEFAULT true — surfaces the Medical structured importer (on by default)
 - `medical_lock_enabled` BOOLEAN NOT NULL DEFAULT false — biometric-lock master toggle
@@ -58,6 +58,10 @@ Nutrient sets are stored as JSONB maps (`nutrient_key → amount`), validated ag
   in `src/constants/travel.ts`), resolved tolerantly by `src/lib/travel-config.ts`. `trip_expense.category`
   stores the stable `key`. There is **no `travel_expense_category` table** — categories live on the profile,
   the Quotes pattern. (added by `supabase/migrations/20260624121000_profile_travel_settings.sql`)
+- `travel_visible_fields` TEXT[] NULL — Trip Entry-form field visibility (`TRIP_ENTRY_FIELDS`: rating,
+  cover_url, companions, track_reimbursement, notes); **NULL = all visible** (default-on). Mirrors the
+  other modules' `*_visible_fields`. (added by the same
+  `20260624121000_profile_travel_settings.sql` migration)
 - `created_at`, `updated_at` TIMESTAMPTZ
 
 ### food (custom items + cached USDA/Off items the user favorited or logged)

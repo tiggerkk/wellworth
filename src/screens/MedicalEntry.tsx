@@ -19,6 +19,7 @@ import {
   EYE_REFRACTION_KEYS,
   isMedicalFieldVisible,
   labTestByKey,
+  orderResultsForDisplay,
   REPORT_TYPE_LABELS,
   REPORT_TYPES,
   usesBodyPart,
@@ -86,9 +87,16 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
   // Eye reports surface the six refraction values in a dedicated grid; hide those rows from the
   // generic results list so they aren't edited twice.
   const isEye = draft.report_type === 'eye'
-  const listResults = isEye
+  const filteredResults = isEye
     ? draft.results.filter((r) => !(r.test_key && EYE_KEY_SET.has(r.test_key)))
     : draft.results
+  // Show the result cards in the owner's Display Order (sections + tests) — the same ordering as the
+  // Dashboard and Report detail. Purely presentational (keyed by clientId); editing/removal is unaffected.
+  const listResults = orderResultsForDisplay(
+    filteredResults,
+    profile?.medical_section_order,
+    profile?.medical_test_order,
+  )
 
   function updateResult(
     clientId: string,

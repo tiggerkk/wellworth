@@ -274,3 +274,23 @@ describe('isFieldVisible', () => {
     expect(isFieldVisible(['rating', 'comments'], 'year')).toBe(false)
   })
 })
+
+describe('BOOK_ENTRY_FIELDS', () => {
+  it('lists fields in New/Edit form order with the renamed labels', () => {
+    expect(BOOK_ENTRY_FIELDS.map((f) => f.key)).toEqual([
+      'authors',
+      'year',
+      'metadata',
+      'rating',
+      'lgbtq_rep',
+      'dynasty',
+      'start_date',
+      'end_date',
+      'comments',
+      'last_update_date',
+    ])
+    const byKey = Object.fromEntries(BOOK_ENTRY_FIELDS.map((f) => [f.key, f.label]))
+    expect(byKey.metadata).toBe('Google Books Metadata')
+    expect(byKey.last_update_date).toBe('Last Update Date')
+  })
+})

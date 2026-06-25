@@ -33,6 +33,7 @@ import {
 import { bumpTravel, useTravelVersion } from '../lib/travel-refresh'
 import { CURRENCIES, TRIP_STATUSES } from '../constants/travel'
 import {
+  isFieldVisible,
   stopTypeLabel,
   timeHHMM,
   tripStatusLabel,
@@ -40,6 +41,7 @@ import {
   type TripBundle,
   type TripDayRow,
 } from '../lib/travel'
+import { useProfile } from '../hooks/useProfile'
 import { routes } from '../constants/routes'
 import { formatFullDate, todayLocal } from '../lib/date'
 
@@ -180,6 +182,9 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
   const location = useLocation()
   const { session } = useAuth()
   const userId = session?.user.id
+  const { data: profile } = useProfile()
+  const show = (key: string) =>
+    isFieldVisible(profile?.travel_visible_fields ?? null, key)
   const { trip, days, stops } = bundle
   const [tab, setTab] = useState<'itinerary' | 'expenses'>('itinerary')
 
@@ -387,54 +392,68 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
                 />
               </div>
             </div>
-            <div className="text-xs text-text-secondary">
-              Rating
-              <div className="mt-1 flex h-8 items-center">
-                <StarRating value={rating} onChange={setRating} />
+            {show('rating') && (
+              <div className="text-xs text-text-secondary">
+                Rating
+                <div className="mt-1 flex h-8 items-center">
+                  <StarRating value={rating} onChange={setRating} />
+                </div>
               </div>
-            </div>
+            )}
           </div>
-          <label className="text-xs text-text-secondary">
-            Cover Image URL
-            <input
-              value={coverUrl}
-              onChange={(e) => setCoverUrl(e.target.value)}
-              placeholder="https://…"
-              className={`mt-1 ${inputClass}`}
-            />
-          </label>
-          {coverUrl.trim() && (
-            <Thumb url={coverUrl.trim()} className="h-28 w-full rounded-card" />
+          {show('cover_url') && (
+            <>
+              <label className="text-xs text-text-secondary">
+                Cover Image URL
+                <input
+                  value={coverUrl}
+                  onChange={(e) => setCoverUrl(e.target.value)}
+                  placeholder="https://…"
+                  className={`mt-1 ${inputClass}`}
+                />
+              </label>
+              {coverUrl.trim() && (
+                <Thumb url={coverUrl.trim()} className="h-28 w-full rounded-card" />
+              )}
+            </>
           )}
-          <div className="flex gap-3">
-            <label className="flex-1 text-xs text-text-secondary">
-              Companions
-              <input
-                value={companions}
-                onChange={(e) => setCompanions(e.target.value)}
-                className={`mt-1 ${inputClass}`}
+          {(show('companions') || show('track_reimbursement')) && (
+            <div className="flex gap-3">
+              {show('companions') && (
+                <label className="flex-1 text-xs text-text-secondary">
+                  Companions
+                  <input
+                    value={companions}
+                    onChange={(e) => setCompanions(e.target.value)}
+                    className={`mt-1 ${inputClass}`}
+                  />
+                </label>
+              )}
+              {show('track_reimbursement') && (
+                <div className="text-xs text-text-secondary">
+                  Track Reimburse
+                  <div className="mt-1 flex h-[38px] items-center">
+                    <Toggle
+                      checked={trackReimb}
+                      onChange={setTrackReimb}
+                      label="Track reimbursement"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          {show('notes') && (
+            <label className="text-xs text-text-secondary">
+              Notes
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={2}
+                className={`mt-1 resize-none ${inputClass}`}
               />
             </label>
-            <div className="text-xs text-text-secondary">
-              Track Reimburse
-              <div className="mt-1 flex h-[38px] items-center">
-                <Toggle
-                  checked={trackReimb}
-                  onChange={setTrackReimb}
-                  label="Track reimbursement"
-                />
-              </div>
-            </div>
-          </div>
-          <label className="text-xs text-text-secondary">
-            Notes
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={2}
-              className={`mt-1 resize-none ${inputClass}`}
-            />
-          </label>
+          )}
         </section>
 
         <SegmentedTabs<'itinerary' | 'expenses'>

@@ -563,6 +563,7 @@ export type Database = {
           show_poster_url_visible: boolean
           show_visible_fields: string[] | null
           travel_expense_categories: Json | null
+          travel_visible_fields: string[] | null
           units: string
           updated_at: string
           user_id: string
@@ -596,6 +597,7 @@ export type Database = {
           show_poster_url_visible?: boolean
           show_visible_fields?: string[] | null
           travel_expense_categories?: Json | null
+          travel_visible_fields?: string[] | null
           units?: string
           updated_at?: string
           user_id: string
@@ -629,6 +631,7 @@ export type Database = {
           show_poster_url_visible?: boolean
           show_visible_fields?: string[] | null
           travel_expense_categories?: Json | null
+          travel_visible_fields?: string[] | null
           units?: string
           updated_at?: string
           user_id?: string

@@ -235,3 +235,23 @@ export function facetsForStops(
 export function timeHHMM(time: string | null): string {
   return time ? time.slice(0, 5) : ''
 }
+
+// --- Entry/Edit field visibility (Travel Settings; mirrors Shows/Books/Quotes/Medical) ---
+
+/**
+ * The Trip-form fields the owner can hide from Travel Settings, in form order. Trip Name, Base
+ * Currency and Status are required and always shown (not listed here). Stored on
+ * `profile.travel_visible_fields` (NULL = all visible).
+ */
+export const TRIP_ENTRY_FIELDS: { key: string; label: string }[] = [
+  { key: 'rating', label: 'Rating' },
+  { key: 'cover_url', label: 'Cover Image URL' },
+  { key: 'companions', label: 'Companions' },
+  { key: 'track_reimbursement', label: 'Track Reimbursement' },
+  { key: 'notes', label: 'Notes' },
+]
+
+/** Whether a Trip-form field is visible. NULL stored prefs (or an unknown key) ⇒ visible (default-on). */
+export function isFieldVisible(visibleFields: string[] | null, key: string): boolean {
+  return visibleFields == null || visibleFields.includes(key)
+}

@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import {
   DEFAULT_TRIP_LIST_CRITERIA,
+  TRIP_ENTRY_FIELDS,
   applyTripList,
   compareTripsByDateDesc,
   facetsForStops,
+  isFieldVisible,
   primaryLabel,
   timeHHMM,
   tripYear,
@@ -146,5 +148,24 @@ describe('timeHHMM', () => {
   it('takes HH:MM, empty when null', () => {
     expect(timeHHMM('14:30:00')).toBe('14:30')
     expect(timeHHMM(null)).toBe('')
+  })
+})
+
+describe('TRIP_ENTRY_FIELDS / isFieldVisible', () => {
+  it('lists the toggleable trip fields in form order', () => {
+    expect(TRIP_ENTRY_FIELDS.map((f) => f.key)).toEqual([
+      'rating',
+      'cover_url',
+      'companions',
+      'track_reimbursement',
+      'notes',
+    ])
+  })
+  it('treats NULL prefs as all-visible (default-on)', () => {
+    for (const f of TRIP_ENTRY_FIELDS) expect(isFieldVisible(null, f.key)).toBe(true)
+  })
+  it('respects an explicit visible list', () => {
+    expect(isFieldVisible(['rating', 'notes'], 'rating')).toBe(true)
+    expect(isFieldVisible(['rating', 'notes'], 'companions')).toBe(false)
   })
 })

@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router'
 import { IconChevronLeft, IconChevronRight, IconUpload } from '@tabler/icons-react'
 import { SectionCard } from '../components/SectionCard'
+import { FieldRow } from '../components/FieldRow'
 import { useSheetNavigate } from '../hooks/useSheetNavigate'
 import { routes } from '../constants/routes'
 
@@ -25,6 +26,17 @@ export function TravelSettings() {
         </button>
         <h1 className="text-lg font-medium text-text-primary">Travel Settings</h1>
       </header>
+
+      <SectionCard title="Entry Form">
+        <button
+          onClick={() => openSheet(routes.travel.settingsVisible)}
+          className="w-full"
+        >
+          <FieldRow label="Visible Fields">
+            <IconChevronRight size={18} className="text-text-tertiary" />
+          </FieldRow>
+        </button>
+      </SectionCard>
 
       <SectionCard title="Expenses">
         <button

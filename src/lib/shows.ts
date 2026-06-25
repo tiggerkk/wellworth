@@ -365,15 +365,15 @@ export function applyLibraryView(shows: ShowRow[], c: LibraryCriteria): ShowRow[
 export const SHOW_ENTRY_FIELDS: { key: string; label: string }[] = [
   { key: 'original_title', label: 'Original Title' },
   { key: 'year', label: 'Year' },
+  { key: 'metadata', label: 'TMDB Metadata' },
   { key: 'rating', label: 'Rating' },
   { key: 'lgbtq_rep', label: 'LGBT+ Representation' },
   { key: 'dynasty', label: 'Dynasty' },
   { key: 'start_date', label: 'Start Date' },
   { key: 'end_date', label: 'Finish / Drop Date' },
-  { key: 'last_update_date', label: 'Last Update' },
   { key: 'episodes', label: 'Season & Episode Counts' },
   { key: 'comments', label: 'Comments' },
-  { key: 'metadata', label: 'TMDB Metadata Display' },
+  { key: 'last_update_date', label: 'Last Update Date' },
 ]
 
 /** Whether an Entry field is visible. NULL stored prefs (or an unknown key) ⇒ visible (default-on). */

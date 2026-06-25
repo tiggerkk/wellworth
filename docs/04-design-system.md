@@ -55,7 +55,8 @@ _not_ the primary-button color; it's for emphasis, active states, and energy.
 - **GroupHeader** — collapsible: expand chevron · category icon · title · kcal subtotal, with a green
   `+` on the right.
 - **SwipeRow** — swipe-left reveals a `delete` Delete action.
-- **SearchBar** — magnifier + input (+ barcode icon on Add Food).
+- **SearchBar** — magnifier + input (+ barcode icon on Add Food). Takes an optional `className` so it can
+  fill a flex row beside a Filter icon (the list screens pass `min-w-0 flex-1`).
 - **FilterToggleButton** — the shared **icon-only** Filter toggle (`src/components/FilterToggleButton.tsx`):
   a bare `IconFilter` that tints **accent** while its panel is open, else `text-secondary`. Sits flush at
   the right edge of the row, after a `min-w-0 flex-1` `SearchBar` (every list module). Replaces the old
@@ -73,6 +74,12 @@ _not_ the primary-button color; it's for emphasis, active states, and energy.
   `default` (full, e.g. sign-in) vs `sm` (compact, used by the top-right ADD / SAVE / CREATE / RESET
   header actions).
 - **FieldRow** — label + value/input + chevron, for forms and Settings.
+- **VisibleFieldsSheet** — the shared "Visible Fields" sheet used by every module's Settings
+  (`src/components/VisibleFieldsSheet.tsx`): a `full` `Sheet` + header + intro + auto-saving toggle list.
+  Each module passes its `*_ENTRY_FIELDS` list (in New/Edit form order), the `profile` `text[]` column
+  (NULL = all visible), the intro string, and optional **`extras`** — boolean-column toggles interleaved
+  in form-order position (Shows' Poster URL, `afterKey: 'episodes'`). The `*FieldsSheet.tsx` screens are
+  now thin wrappers over it. Field lists/labels live in `src/lib/{shows,books,quotes,medical,travel}.ts`.
 - **EffortPicker** — Light / Moderate / Vigorous radio list with MET ranges.
 - **Sheet** — slide-up overlay for route-based modal screens (scrim, `bottom`/`full` variants,
   Esc/scrim/back close); the app shell renders sheets over the active tab via React Router's

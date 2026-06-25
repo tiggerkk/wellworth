@@ -337,14 +337,16 @@ Wellness-module sub-settings. Auto-save on change. A back chevron returns to the
 Shows-specific sub-settings (mirrors the Wellness Settings split; app-wide profile/units/account stay
 in the global Settings at the Home level).
 
-- **Entry Form → Visible Fields** opens a sub-screen of toggles over the optional Entry/Edit fields
-  (Original Title, Year, Rating, LGBT+, Dynasty, the three dates, Season & Episode counts, Comments,
-  TMDB metadata display, and **Poster URL**). Most are stored on `profile.show_visible_fields` (**NULL = all
-  visible**, default-on) and auto-save per toggle; **Poster URL** is the exception — it's backed by
+- **Entry Form → Visible Fields** opens the shared **`VisibleFieldsSheet`** — toggles over the optional
+  Entry/Edit fields, listed in **New/Edit form order**: Original Title, Year, **TMDB Metadata**, Rating,
+  LGBT+, Dynasty, the two dates, Season & Episode counts, **Poster URL**, Comments, **Last Update Date**.
+  Most are stored on `profile.show_visible_fields` (**NULL = all visible**, default-on) and auto-save per
+  toggle; **Poster URL** is the exception (an `extra` interleaved in form-order position) — it's backed by
   `profile.show_poster_url_visible` (**default off**, kept separate because the visible-fields list is
   default-on) and means "**force always visible**": the field still auto-shows whenever TMDB supplied no
-  poster regardless of the toggle. Type, Title, Status, and the favourite heart are always shown and not
-  listed.
+  poster regardless of the toggle. The intro reads "Choose which fields appear on the New/Edit Show form.
+  Type, Title and Status (and Search) are always shown." Type, Title, Status, and the favourite heart are
+  always shown and not listed.
 - **Import → Enable CSV Import** toggle (`profile.show_importer_enabled`); when on, an **Import CSV…**
   launcher appears that opens the importer sheet.
 
@@ -451,10 +453,12 @@ Books-specific sub-settings (mirrors the Wellness/Shows Settings split; app-wide
 stay in the global Settings at the Home level). Reached from the **Settings** tab in the Books bottom
 nav.
 
-- **Entry Form → Visible Fields** opens a sub-screen of toggles over the optional Entry/Edit fields
-  (Author(s), Year, Rating, LGBT+, Dynasty, the three dates, Comments, Book metadata display). Stored
-  on `profile.book_visible_fields` (**NULL = all visible**); auto-saves per toggle. Title, Status and
-  the Search button are always shown and not listed.
+- **Entry Form → Visible Fields** opens the shared **`VisibleFieldsSheet`** — toggles over the optional
+  Entry/Edit fields in **New/Edit form order**: Author(s), Year, **Google Books Metadata**, Rating, LGBT+,
+  Dynasty, the two dates, Comments, **Last Update Date**. Stored on `profile.book_visible_fields`
+  (**NULL = all visible**); auto-saves per toggle. Intro: "Choose which fields appear on the New/Edit Book
+  form. Title and Status (and Search) are always shown." Title, Status and the Search button are always
+  shown and not listed.
 - **Import → Enable CSV Import** toggle (`profile.book_importer_enabled`); when on, an **Import CSV…**
   launcher appears that opens the importer sheet.
 
@@ -523,7 +527,9 @@ An in-app bulk importer (the owner's choice over a script — same as Net Worth 
 
 ## Quotes - Settings (from the Settings tab in the Quotes bottom nav)
 
-- **Visible Fields**: choose which Add/Edit fields appear (Quote Text + Category always shown).
+- **Entry Form → Visible Fields**: the shared **`VisibleFieldsSheet`** — toggles in **New/Edit form
+  order**: Author, Source Type, Title, Source Link, Language, Tags. Intro: "Choose which fields appear on
+  the New/Edit Quote form. Quote and Category are always shown."
 - **Values** — manage the dropdown lists used on the Add/Edit form (each opens a sheet):
   - **Source Types** and **Categories**: **add / rename / delete / reorder** (drag handle) the values;
     order = display order in the dropdowns + Library filters. Changes auto-save. Seed defaults — Source
@@ -610,10 +616,12 @@ the action icons (when the importer is enabled in Settings). Top-right icon acti
   **Document Links** (repeatable Google-Drive URL rows). The optional fields are hidden when trimmed off
   in Medical Settings → Visible Fields (M3); date/type/results are always shown.
 - **Results:** an **Add result** button opens a searchable **test picker** (the seeded reference grouped
-  by category) or **Add custom test** (an ad-hoc row with an editable name + category). Each result row
-  edits the value (number and/or text, by the test's kind), unit, reference range (as printed), a flag
-  (none/high/low/abnormal), and an uncertain toggle; rows can be removed. Manual values are stored
-  as-entered (no unit normalization — that's the importer's job).
+  by category) or **Add custom test** (an ad-hoc row with an editable name + category). The result cards
+  render in the owner's **Tests Display Order** (the same `orderResultsForDisplay` ordering as the
+  Dashboard + Report detail), so an added test slots into its section/test position rather than the end.
+  Each result row edits the value (number and/or text, by the test's kind), unit, reference range (as
+  printed), a flag (none/high/low/abnormal), and an uncertain toggle; rows can be removed. Manual values
+  are stored as-entered (no unit normalization — that's the importer's job).
 - **Eye reports** (type = eye) surface a dedicated **Eye Refraction** grid above the results: a row per
   eye (OD / OS) × **Sphere / Cylinder / Addition** (dioptres). Each cell edits the `value_num` of the
   matching `eye`-category `medical_result` row (created on first input, removed when cleared), so the six
@@ -636,19 +644,23 @@ you **paste the Drive link(s)**. **Save** writes idempotently: a report with the
 
 ## Medical - Settings (`/medical/settings`)
 
-- **Dashboard → Tracked Tests**: choose which tests trend on the Dashboard (the sparkline grid). A
-  sheet grouping the reference tests by category with a toggle each; persisted to
+Sections (in order): **Display**, **Report / Entry Form**, **Import**, **Security** (last).
+
+- **Display → Tracked Tests** (secondary text "(Dashboard)"): choose which tests trend on the Dashboard
+  (the sparkline grid). A sheet grouping the reference tests by category with a toggle each; persisted to
   `medical_tracked_tests` (seeded from `default_tracked` on first run, so it's pre-populated).
-- **Display → Display Order**: **drag-to-reorder** the category **sections** and the **tests within a
-  section** (drag handles). A **Sections** list reorders the categories; a **Tests in section** list
-  (gated by a category picker) reorders that section's tests. Saved as personal overrides
-  (`medical_section_order` / a flat `medical_test_order`) and applied to the Dashboard + Report detail;
-  an unset/partial override falls back to the seeded order.
-- **Report Form → Visible Fields**: choose which optional Add/Edit-Report fields appear (date, type,
-  results always shown). NULL = all visible.
-- **Enable Structured Import** (**on by default**): surfaces the **Import JSON / CSV…** launcher (and
-  the Import button on the New-Report form).
-- **Security → Lock**: set up / change / turn off the module **PIN**, register an optional **Face ID /
+- **Display → Tests Display Order** (secondary text "(Dashboard, Report & Entry)"): **drag-to-reorder**
+  the category **sections** and the **tests within a section** (drag handles). A **Sections** list
+  reorders the categories; a **Tests in section** list (gated by a category picker) reorders that
+  section's tests. Saved as personal overrides (`medical_section_order` / a flat `medical_test_order`)
+  and applied to the **Dashboard, the Report detail, and the New/Edit (Entry) form's result cards** (all
+  three call `orderResultsForDisplay`); an unset/partial override falls back to the seeded order.
+- **Report / Entry Form → Visible Fields**: the shared **`VisibleFieldsSheet`** over the optional Report
+  fields (Provider, Body Part, Narrative, Document Links). Intro: "Choose which fields appear on the
+  New/Edit Medical form. Date and Type are always shown." NULL = all visible.
+- **Import → Enable JSON / CSV Import** (**on by default**): surfaces the **Import JSON / CSV…** launcher
+  (and the Import button on the New-Report form).
+- **Security → Lock** (the **last** section): set up / change / turn off the module **PIN**, register an optional **Face ID /
   Touch ID** unlock (hidden where the device has no platform authenticator), and choose the **auto-lock**
   timeout (Immediately / 1 / 5 / 15 min / Only on app restart). See the Lock screen below.
 
@@ -741,6 +753,11 @@ on a direct load/refresh — matching the other modules; Escape does the same).
 
 ## Travel - Settings (`/travel/settings`)
 
+- **Entry Form → Visible Fields**: the shared **`VisibleFieldsSheet`** over the optional Trip-form
+  fields, in form order: **Rating, Cover Image URL, Companions, Track Reimbursement, Notes**. Stored on
+  `profile.travel_visible_fields` (**NULL = all visible**, default-on); auto-saves per toggle. Intro:
+  "Choose which fields appear on the New/Edit Trip form. Trip Name, Base Currency and Status are always
+  shown." The Trip Builder header gates these five fields via `isFieldVisible`.
 - **Expenses → Expense Categories**: add / rename / delete / **drag-reorder** the category list (stored
   on `profile.travel_expense_categories`). Deleting a category still used by expenses prompts a
   **reassignment** first; the last category can't be deleted.

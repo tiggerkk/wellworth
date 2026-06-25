@@ -45,40 +45,32 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
 
   return (
     <>
-      <SectionCard title="Dashboard">
+      <SectionCard title="Display">
         <button
           onClick={() => openSheet(routes.medical.settingsTracked)}
           className="w-full"
         >
           <FieldRow label="Tracked Tests">
-            <IconChevronRight size={18} className="text-text-tertiary" />
+            <span className="flex items-center gap-1">
+              {'(Dashboard)'}
+              <IconChevronRight size={18} className="text-text-tertiary" />
+            </span>
           </FieldRow>
         </button>
-      </SectionCard>
-
-      <SectionCard title="Display">
         <button
           onClick={() => openSheet(routes.medical.settingsOrder)}
           className="w-full"
         >
-          <FieldRow label="Display Order">
-            <IconChevronRight size={18} className="text-text-tertiary" />
-          </FieldRow>
-        </button>
-      </SectionCard>
-
-      <SectionCard title="Security">
-        <button onClick={() => openSheet(routes.medical.settingsLock)} className="w-full">
-          <FieldRow label="Lock">
+          <FieldRow label="Tests Display Order">
             <span className="flex items-center gap-1">
-              {profile.medical_lock_enabled ? 'On' : 'Off'}
+              {'(Dashboard, Report & Entry)'}
               <IconChevronRight size={18} className="text-text-tertiary" />
             </span>
           </FieldRow>
         </button>
       </SectionCard>
 
-      <SectionCard title="Report Form">
+      <SectionCard title="Report / Entry Form">
         <button
           onClick={() => openSheet(routes.medical.settingsVisible)}
           className="w-full"
@@ -90,11 +82,11 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
       </SectionCard>
 
       <SectionCard title="Import">
-        <FieldRow label="Enable Structured Import">
+        <FieldRow label="Enable JSON / CSV Import">
           <Toggle
             checked={profile.medical_importer_enabled}
             onChange={(on) => void save({ medical_importer_enabled: on })}
-            label="Enable Structured Import"
+            label="Enable JSON / CSV Import"
           />
         </FieldRow>
         {profile.medical_importer_enabled ? (
@@ -110,6 +102,17 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
             app from a report PDF by any AI tool).
           </div>
         )}
+      </SectionCard>
+
+      <SectionCard title="Security">
+        <button onClick={() => openSheet(routes.medical.settingsLock)} className="w-full">
+          <FieldRow label="Lock">
+            <span className="flex items-center gap-1">
+              {profile.medical_lock_enabled ? 'On' : 'Off'}
+              <IconChevronRight size={18} className="text-text-tertiary" />
+            </span>
+          </FieldRow>
+        </button>
       </SectionCard>
     </>
   )

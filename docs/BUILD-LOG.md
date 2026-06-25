@@ -55,7 +55,7 @@ been merged into the permanent docs (`00-PRD … 05-seed-data` + OWNER-RUNBOOK) 
   `VITE_GOOGLE_BOOKS_API_KEY` (Books), and the optional `VITE_ALLOWED_EMAILS` (email allowlist —
   empty ⇒ no restriction). All build-time `VITE_` vars.
 - **Gates:** husky `.husky/pre-commit` → lint-staged + `typecheck` + `test`; GitHub Actions
-  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 445 Vitest tests (pure helpers).
+  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 451 Vitest tests (pure helpers).
 - **Deploy status:** Deployed. GitHub `main` → Vercel auto-deploy; the production URL is in the
   Supabase redirect URLs + Google JS origins (see `OWNER-RUNBOOK.md`). Installed + tested on iPhone (PWA).
 - Conventions (DB-access-via-`src/data`, metric storage, generated `database.ts` contract, etc.) live
@@ -1900,3 +1900,40 @@ existed (`trip.rating`, `trip.companions`, `medical_report.body_part/provider/na
 - **Search bar fills the row.** `SearchBar` gained an optional `className`; the five list screens pass
   `min-w-0 flex-1` so the input grows to the screen edge and the **Filter icon sits flush at the right**
   in every module (Travel included — its filter icon shares the search row, not a separate row).
+
+## Shared "Visible Fields" sheet + Travel parity (session, June 2026)
+
+Unified the five modules' near-identical Visible-Fields modals into one shared component, fixed each
+field list to match New/Edit form order, applied label renames, restructured Medical Settings, and added
+the feature to Travel (the one module that lacked it). Test count **445 → 451**.
+
+- **`src/components/VisibleFieldsSheet.tsx` (new)** — owns the `full` `Sheet` + header + intro + the
+  auto-saving toggle list (previously copy-pasted in four `*FieldsSheet.tsx`). Props: `intro`, `fields`
+  (`{key,label}[]` in form order), `column` (the `profile` `text[]`), and `extras` — boolean-column
+  toggles interleaved via `afterKey`. The four existing sheets + the new `TravelFieldsSheet` are now
+  ~10-line wrappers; no router changes for the four.
+- **Form-order + renames** (keys unchanged → no stored-data impact, membership is a set check):
+  Shows/Books **Metadata** moved up to its form slot (after Year) and renamed **"TMDB Metadata"** /
+  **"Google Books Metadata"**; **"Last Update" → "Last Update Date"**; Quotes reordered to author →
+  source type → title → source link → language → tags. Shows' **Poster URL** (its own
+  `show_poster_url_visible` boolean, default-off) is now an `extra` placed in form position
+  (`afterKey: 'episodes'`) instead of appended last. All intros switched to **"New/Edit"** wording;
+  Medical gained an intro it never had.
+- **Medical Settings** — section **"Report Form" → "Entry Form"**, toggle **"Enable Structured Import"
+  → "Enable JSON / CSV Import"**, and the **Security** section moved to **last**.
+- **Travel visible-fields (new).** Schema change: `profile.travel_visible_fields text[]` added to the
+  **existing** `20260624121000_profile_travel_settings.sql` (edited in place per the DB-reset workflow)
+  and to `src/types/database.ts` (owner applies via `supabase db reset --linked`). `src/lib/travel.ts`
+  gained `TRIP_ENTRY_FIELDS` (rating, cover_url, companions, **track_reimbursement** — owner chose to
+  make it hideable — notes) + `isFieldVisible`; new route `travel/settings/visible`, `TravelFieldsSheet`,
+  a Travel Settings **Entry Form** section, and `isFieldVisible` gating of the five fields in
+  `TripBuilder`.
+
+A small follow-up restructured **Medical Settings** sections (owner request): a **Display** section now
+holds **Tracked Tests** (secondary "(Dashboard)") + **Tests Display Order** (secondary "(Dashboard,
+Report & Entry)"); a **Report / Entry Form** section holds **Visible Fields**; Import + Security follow
+(Security last). The clarifying finding was that **Display Order** drives the Dashboard **and** Report
+detail (not just one), and it was **extended to also order the Entry form's result cards** — `MedicalEntry`
+now wraps its result list in `orderResultsForDisplay(filteredResults, medical_section_order,
+medical_test_order)` (purely presentational, keyed by `clientId`, so editing/removal is unaffected), so
+all three surfaces share one ordering.

@@ -7,6 +7,7 @@ import {
   initialZenPool,
   isFieldVisible,
   nextZenPool,
+  QUOTE_ENTRY_FIELDS,
   quoteSearchText,
   quoteTags,
   randomItem,
@@ -300,5 +301,18 @@ describe('isFieldVisible', () => {
   it('respects an explicit visible list', () => {
     expect(isFieldVisible(['author', 'tags'], 'author')).toBe(true)
     expect(isFieldVisible(['author', 'tags'], 'language')).toBe(false)
+  })
+})
+
+describe('QUOTE_ENTRY_FIELDS', () => {
+  it('lists fields in New/Edit form order', () => {
+    expect(QUOTE_ENTRY_FIELDS.map((f) => f.key)).toEqual([
+      'author',
+      'source_type',
+      'title',
+      'source_link',
+      'language',
+      'tags',
+    ])
   })
 })

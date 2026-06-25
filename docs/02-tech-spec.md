@@ -169,7 +169,9 @@ the cloud is authoritative (this also sidesteps iOS PWA storage eviction).
   filter incl. Docs + Mark Watched / Start Watching quick actions; a shared `ShowStatusChip` puts the
   status pill on every row, watching rows additionally show season·episode progress, ♥ marks
   favourites), `ShowsLibrary` (search + swipe-delete list +
-  documentary type filter + a **Favourites only** filter + ♥ on rows), `ShowsEntry` (create/edit form
+  documentary type filter + a **Favourites only** filter + ♥ on rows; the filter UI is the shared icon
+  `FilterToggleButton` + `FilterPanel` + a `SortControl` whose fields include a **Dynasty** sort),
+  `ShowsEntry` (create/edit form
   with a header **favourite heart**, Chinese-aware TMDB title search, a **Poster URL** field (auto-shown
   when TMDB has no poster; its Visible-Fields toggle — **off by default** — forces it always visible), a
   **⟳ Refresh from TMDB** button enabled once
@@ -211,10 +213,12 @@ _Books re-skins Shows (see the Shows section); only the differences are noted._
   books are status-only. The 3-value `LGBTQ_REP*` enum is defined locally (not imported from `shows.ts`)
   to keep the modules decoupled. Dashboard selectors `currentlyReading`/`recentlyRead`/`wantToRead`/
   `countReadThisYear` (plus `favoriteBooks`) mirror the Shows ones; the Library view is
-  `applyLibraryView(books, criteria)` (query over title+authors; Status/Genre/Rating-min/LGBT+/**Author**
-  filters + a `favoritesOnly` toggle; start & finish date ranges; sort field×dir, nulls-last, stable title
-  tiebreak) with `bookGenres`/`bookAuthors` driving the facet dropdowns. The **Author** filter + sort
-  field are the only divergence from the Shows view (which has Type instead).
+  `applyLibraryView(books, criteria)` (query over title+authors; Status/Genre/Rating-min/LGBT+/Dynasty
+  filters + a `favoritesOnly` toggle; start & finish date ranges; sort field×dir incl. a **Dynasty** sort,
+  nulls-last, stable title tiebreak) with `bookGenres` driving the genre facet. **Author is searched, not
+  filtered** (the filter was dropped — too many values — and `bookAuthors` is no longer used by the view),
+  but remains a **sort** field; that Author sort and the absence of Type are the only divergences from the
+  Shows view.
 - **UI:** `BooksEntry` (create/edit form with a header **favourite heart**; outer-loader + inner-form
   with the `JSON.stringify` dirty check + the shared `EntryHeaderActions` header (icons + Delete when
   editing); Status/LGBT+ are now `SelectMenu` dropdowns, dates reuse `Calendar`, rating reuses
@@ -285,7 +289,8 @@ _Quotes re-skins Books/Shows; only the differences are noted. There is **no exte
   colours are an optional, deferred nicety); the Library view `applyLibraryView(quotes, criteria)`
   (query over text+author+title+tags; Category / **multi-select Tags = OR** / Favourites / Source type /
   Language — Category/Source compare configured keys; plus the `showId`/`bookId` URL constraint) with
-  `quoteTags` driving the tag facet; **filter-only** (no sort menu — newest-touched order preserved). The
+  `quoteTags` driving the tag facet, **plus a Sort menu** (Date = `created_at` / Category / Source Type,
+  default Date descending; Category/Source sort on the stored key). The
   cross-module linker model is `LinkCandidate` + `filterLinkCandidates` (the screen maps `ShowRow`/`BookRow`
   → candidates, so `quotes.ts` stays decoupled from `shows.ts`/`books.ts`). The Zen randomiser is
   `initialZenPool` (favourites first, else all), `nextZenPool` (whole pool minus current — no immediate
@@ -371,7 +376,10 @@ Sequence"):_
   shows the canonical order filtered to the tests present, so every report reads consistently regardless
   of provider layout. The single read-path helper `orderResultsForDisplay(results, sectionOrder?,
 testOrder?)` is **tolerant** (unknown categories/tests sort last); `trackedSeries` (Dashboard grid) +
-  `latestByCategory` take the same overrides, so all three surfaces order identically. The overrides are
+  `latestByCategory` take the same overrides, and the **New/Edit form's result cards** order the same way
+  (`MedicalEntry` wraps its list in `orderResultsForDisplay` — purely presentational, keyed by
+  `clientId`), so all four surfaces order identically. The drag-reorder sheet is now reached from a
+  **Display** Settings section labelled "Tests Display Order" (secondary "(Dashboard, Report & Entry)"). The overrides are
   edited by **drag-to-reorder** (M5): `MedicalOrderSheet` (`/medical/settings/order`) over the reusable
   in-house **`ReorderList`** (Pointer Events, no dnd dependency — `touch-action:none` on the drag handle
   only); pure model helpers in `src/lib/medical-order.ts` keep the saved override complete + de-duped
@@ -412,6 +420,10 @@ testOrder?)` is **tolerant** (unknown categories/tests sort last); `trackedSerie
   values** show the most-recent value **per test** across all reports (a heterogeneous history means the
   newest report alone would omit most tests). **Tracked tests** come from `profile.medical_tracked_tests`
   (else `defaultTrackedTestKeys()`), seeded on first run in `ensureOwnerProfile` like `visible_nutrients`.
+- **Reports list** (`MedicalReports`): a searchable / filterable / sortable list via the pure
+  `applyReportView` — search **body part + narrative**, filter **type / provider / body part**, sort
+  **Date / Type / Provider / Body Part** (default Date desc) — using the shared `FilterToggleButton` /
+  `FilterPanel` / `SortControl`. `reportProviders` / `reportBodyParts` derive the filter options.
 - **Routing.** A report has a **read-only detail** at `/medical/:id` and the **Add/Edit form** at
   `/medical/entry` (new) and `/medical/:id/edit` (edit) — the detail's Edit button opens the latter.
 - **No new external API.** No Tesseract, no Supabase Storage; originals are Google Drive URL(s) on
@@ -465,6 +477,16 @@ testOrder?)` is **tolerant** (unknown categories/tests sort last); `trackedSerie
   snapped for China). **One combined review** (per-trip day/stop counts + a pooled new-cities list with
   optional per-city geocode) writes trips → ordered days → ordered stops as **drafts** (finished in the
   Trip Builder) and caches the new cities. Intended as a one-time back-catalogue load.
+- **Trip list + field visibility** (`src/lib/travel.ts`): `applyTripList(trips, facetsByTrip, criteria)`
+  filters (status / country / province / year / **rating-min**) + searches (trip name / itinerary city /
+  **companions**) + sorts (`sortField`×`sortDir`: Date / Country / Province / City / Status / Trip Name;
+  country/province/city use the alphabetically-first itinerary facet, undated trips last). `TravelTrips`
+  drives it through the shared `FilterToggleButton` / `FilterPanel` / `SortControl` (an icon Filter button
+  - a pane + a Sort control, like the other modules). Optional Trip-form fields (Rating, Cover URL,
+    Companions, Track Reimbursement, Notes) are gated by `TRIP_ENTRY_FIELDS` + the pure `isFieldVisible` over
+    `profile.travel_visible_fields` (**NULL = all visible**, default-on), edited in the shared
+    **`VisibleFieldsSheet`** (`TravelFieldsSheet`, a Travel Settings → **Entry Form** route sheet); the Trip
+    Builder header reads them through `useProfile`.
 - **Counts** (`src/lib/travel-stats.ts`): China Provinces / China Cities / Countries / Cities are
   distinct over `status = 'visited'` trips (`isChinaCountry`; province count intersected with
   `CHINA_PROVINCES`); plus trips-this-year and inclusive days-travelled. (An all-trips money roll-up is a

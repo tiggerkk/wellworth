@@ -14,6 +14,7 @@ import {
   posterUrl,
   progressLabel,
   recentlyWatched,
+  SHOW_ENTRY_FIELDS,
   showGenres,
   startWatching,
   usesEpisodes,
@@ -486,5 +487,26 @@ describe('isFieldVisible', () => {
   it('honours an explicit visible list', () => {
     expect(isFieldVisible(['year', 'comments'], 'comments')).toBe(true)
     expect(isFieldVisible(['year', 'comments'], 'rating')).toBe(false)
+  })
+})
+
+describe('SHOW_ENTRY_FIELDS', () => {
+  it('lists fields in New/Edit form order with the renamed labels', () => {
+    expect(SHOW_ENTRY_FIELDS.map((f) => f.key)).toEqual([
+      'original_title',
+      'year',
+      'metadata',
+      'rating',
+      'lgbtq_rep',
+      'dynasty',
+      'start_date',
+      'end_date',
+      'episodes',
+      'comments',
+      'last_update_date',
+    ])
+    const byKey = Object.fromEntries(SHOW_ENTRY_FIELDS.map((f) => [f.key, f.label]))
+    expect(byKey.metadata).toBe('TMDB Metadata')
+    expect(byKey.last_update_date).toBe('Last Update Date')
   })
 })
