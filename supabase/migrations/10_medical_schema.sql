@@ -1,6 +1,6 @@
 -- WellWorth Medical module schema (docs/medical.md → 03-data-model.md).
 --
--- Conventions (identical to 20260617120000_shows_schema.sql):
+-- Conventions (identical to 04_shows_schema.sql):
 --   * Table names singular, snake_case. RLS ON from creation.
 --   * User-owned tables (medical_report, medical_result) carry their own user_id and isolate
 --     rows with (select auth.uid()) = user_id; four policies each (select/insert/update/delete).
@@ -10,7 +10,7 @@
 --     raw-SQL-migration tables don't inherit Supabase's default grants (see init F1).
 --
 -- Design notes:
---   * medical_lab_test is REFERENCE data (seeded by 20260622121000_seed_medical_lab_test.sql),
+--   * medical_lab_test is REFERENCE data (seeded by 11_medical_seed_lab_test.sql),
 --     read-only to clients: a single permissive SELECT policy, GRANT select only. Writes happen
 --     exclusively via migrations (like the nutrient table).
 --   * The app never stores original documents — medical_report.document_urls holds Google Drive

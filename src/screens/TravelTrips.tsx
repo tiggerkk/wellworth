@@ -6,7 +6,7 @@ import { SelectMenu } from '../components/SelectMenu'
 import { SwipeRow } from '../components/SwipeRow'
 import { StatusChip } from '../components/StatusChip'
 import { Thumb } from '../components/Thumb'
-import { PrimaryButton } from '../components/PrimaryButton'
+import { EmptyState } from '../components/EmptyState'
 import { FilterToggleButton } from '../components/FilterToggleButton'
 import { FilterPanel } from '../components/FilterPanel'
 import { SortControl } from '../components/SortControl'
@@ -128,7 +128,7 @@ export function TravelTrips() {
   }
 
   return (
-    <div className="flex flex-col gap-3 px-4 py-4">
+    <div className="flex min-h-full flex-col gap-3 px-4 py-4">
       <div className="flex items-center gap-2">
         <SearchBar
           value={criteria.query}
@@ -209,13 +209,12 @@ export function TravelTrips() {
       {error && <p className="p-4 text-sm text-danger">Couldn’t load your trips.</p>}
 
       {!loading && !error && trips.length === 0 && (
-        <div className="flex flex-col items-center gap-3 px-4 py-12 text-center">
-          <IconWorld size={40} className="text-text-tertiary" />
-          <p className="text-sm text-text-secondary">No trips yet.</p>
-          <PrimaryButton onClick={() => navigate(routes.travel.entry)}>
-            New Trip
-          </PrimaryButton>
-        </div>
+        <EmptyState
+          title="No trips yet"
+          actionLabel="New Trip"
+          to={routes.travel.entry}
+          Icon={IconWorld}
+        />
       )}
 
       {!loading && !error && trips.length > 0 && (

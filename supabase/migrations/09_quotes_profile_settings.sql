@@ -1,8 +1,8 @@
 -- WellWorth — Quotes module preferences on the profile.
 --
 -- Additive preference columns for the Quotes module (mirroring the Shows module's
--- 20260617130000_profile_show_settings.sql and the Books module's
--- 20260620130000_profile_book_settings.sql). They are plain columns on the existing profile
+-- 05_shows_profile_settings.sql and the Books module's
+-- 07_books_profile_settings.sql). They are plain columns on the existing profile
 -- table — RLS, the API-role grants, and the moddatetime trigger already cover profile, so
 -- nothing else is needed here.
 --   * quote_visible_fields   — which Entry/Edit fields are shown. NULL = all fields visible

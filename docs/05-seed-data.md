@@ -275,7 +275,7 @@ Your real balances stay **out of the repo**. An **in-app importer** (in the Net 
 The reference list is the SQL mirror of `src/lib/medical.ts` `MEDICAL_LAB_TESTS` (the front-end source
 of truth); `src/lib/medical.test.ts` cross-checks the two so they can't drift. It was built from the
 owner's **2021–2026** reports across three providers (MediFast HK, Mobile Medical HK, Global HealthCare
-Shanghai). The seed migration is `supabase/migrations/20260622121000_seed_medical_lab_test.sql`
+Shanghai). The seed migration is `supabase/migrations/11_medical_seed_lab_test.sql`
 (idempotent `ON CONFLICT (key) DO UPDATE`).
 
 - **Section order** (categories): `general, vitals, lipids, glucose, liver, renal, electrolytes, cbc,

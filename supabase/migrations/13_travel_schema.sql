@@ -1,6 +1,6 @@
 -- WellWorth Travel module schema (docs/travel.md → 03-data-model.md).
 --
--- Conventions (identical to 20260622120000_medical_schema.sql):
+-- Conventions (identical to 10_medical_schema.sql):
 --   * Table names singular, snake_case. RLS ON from creation.
 --   * User-owned tables carry their own user_id and isolate rows with
 --     (select auth.uid()) = user_id; four policies each (select/insert/update/delete).
@@ -13,7 +13,7 @@
 --   * HARD DELETE: deleting a trip cascades its trip_day / stop / trip_expense rows. Stops
 --     cascade from their trip_day.
 --   * Expense categories are NOT a table — they are an owner-configurable {key,label} JSONB list on
---     profile.travel_expense_categories (see 20260624121000_profile_travel_settings.sql), the same
+--     profile.travel_expense_categories (see 14_travel_profile_settings.sql), the same
 --     pattern as Quotes. trip_expense.category stores the stable TEXT key (no FK); reassign-before-
 --     delete and can't-delete-last are enforced in the app, and an orphaned key still renders via the
 --     raw-key fallback in src/lib/travel-config.ts.
@@ -198,7 +198,7 @@ create table public.remembered_city (
   lng        numeric,
   -- city_norm (generated, lower+trimmed) backs the per-owner UNIQUE so a city is cached once.
   -- (An inline UNIQUE can't hold an expression; a generated column is the codebase pattern — cf.
-  -- quote.text_norm in 20260621120000_quotes_schema.sql.)
+  -- quote.text_norm in 08_quotes_schema.sql.)
   city_norm  text generated always as (lower(btrim(city))) stored,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),

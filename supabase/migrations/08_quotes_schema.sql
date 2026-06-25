@@ -1,6 +1,6 @@
 -- WellWorth Quotes (favourite quotes) schema.
 --
--- Conventions (identical to 20260620120000_books_schema.sql):
+-- Conventions (identical to 06_books_schema.sql):
 --   * Table name singular, snake_case. One row per quote.
 --   * RLS is ON from creation; `quote` carries its own user_id, so it isolates rows
 --     directly with (select auth.uid()) = user_id (like book / show / asset_entry).

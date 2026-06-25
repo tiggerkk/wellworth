@@ -1,6 +1,6 @@
 import { useCallback, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router'
-import { IconHeartFilled } from '@tabler/icons-react'
+import { IconDeviceTv, IconHeartFilled } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useShowsVersion, bumpShows } from '../lib/shows-refresh'
@@ -82,7 +82,7 @@ export function ShowsDashboard() {
   const editShow = (id: string) => navigate(routes.shows.edit(id))
 
   return (
-    <div className="pb-4">
+    <div className="flex min-h-full flex-col pb-4">
       <header className="sticky top-0 z-10 flex flex-col gap-3 bg-bg/90 px-4 py-3 backdrop-blur">
         <SegmentedTabs
           value={filter}
@@ -102,7 +102,12 @@ export function ShowsDashboard() {
       )}
 
       {!loading && !error && all.length === 0 && (
-        <EmptyState title="No shows yet" actionLabel="New Show" to={routes.shows.entry} />
+        <EmptyState
+          title="No shows yet"
+          actionLabel="New Show"
+          to={routes.shows.entry}
+          Icon={IconDeviceTv}
+        />
       )}
 
       {!loading && !error && all.length > 0 && (

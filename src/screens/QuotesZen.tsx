@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { IconArrowsShuffle, IconHeart, IconHeartFilled } from '@tabler/icons-react'
+import {
+  IconArrowsShuffle,
+  IconHeart,
+  IconHeartFilled,
+  IconQuote,
+} from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useProfile } from '../hooks/useProfile'
@@ -135,6 +140,7 @@ export function QuotesZen() {
           title="No quotes yet"
           actionLabel="New Quote"
           to={routes.quotes.entry}
+          Icon={IconQuote}
         />
       )}
 

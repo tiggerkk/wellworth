@@ -198,12 +198,12 @@ This creates the tables, security rules, and the nutrient reference data in your
    > supabase db push --dry-run
    > supabase db push
    ```
-   The CLI applies **every** file in `supabase/migrations/` — Wellness (`…_init_schema.sql` +
-   `…_seed_nutrient.sql`), Net Worth (`…_networth_schema.sql`), Shows, Books, Quotes (each a schema +
-   a `profile` settings migration), **Medical** (`…_medical_schema.sql` — the three Medical tables;
-   `…_profile_medical_settings.sql` — the Medical `profile` columns; `…_seed_medical_lab_test.sql` —
-   the seeded lab-test reference), and **Travel** (`…_travel_schema.sql` — the five Travel tables;
-   `…_profile_travel_settings.sql` — the Travel `profile` columns: `travel_expense_categories` +
+   The CLI applies **every** file in `supabase/migrations/` — Wellness (`01_wellness_schema.sql` +
+   `02_wellness_seed_nutrient.sql`), Net Worth (`03_networth_schema.sql`), Shows, Books, Quotes (each a schema +
+   a `profile` settings migration), **Medical** (`10_medical_schema.sql` — the three Medical tables;
+   `12_medical_profile_settings.sql` — the Medical `profile` columns; `11_medical_seed_lab_test.sql` —
+   the seeded lab-test reference), and **Travel** (`13_travel_schema.sql` — the five Travel tables;
+   `14_travel_profile_settings.sql` — the Travel `profile` columns: `travel_expense_categories` +
    `travel_visible_fields`). You never list them yourself; whatever
    is in the folder is applied.
 
@@ -502,9 +502,9 @@ From the project folder (the database password must be available — see Part F)
 ```
 
 Confirm at the prompt. The CLI re-runs **every** file in `supabase/migrations/` — currently
-`…_init_schema.sql`, `…_seed_nutrient.sql`, `…_networth_schema.sql`, `…_shows_schema.sql`,
-`…_profile_show_settings.sql`, `…_books_schema.sql`, `…_profile_book_settings.sql`,
-`…_quotes_schema.sql`, and `…_profile_quote_settings.sql` — against the remote, leaving a clean schema +
+`01_wellness_schema.sql`, `02_wellness_seed_nutrient.sql`, `03_networth_schema.sql`, `04_shows_schema.sql`,
+`05_shows_profile_settings.sql`, `06_books_schema.sql`, `07_books_profile_settings.sql`,
+`08_quotes_schema.sql`, and `09_quotes_profile_settings.sql` — against the remote, leaving a clean schema +
 the 80 nutrient rows and a migration-ledger that matches the files.
 (You never list them yourself; the CLI applies whatever is in the folder, so new migrations are picked
 up automatically.)

@@ -2,7 +2,7 @@ import { Suspense, useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { IconWorld, IconX } from '@tabler/icons-react'
 import { Toggle } from '../components/Toggle'
-import { PrimaryButton } from '../components/PrimaryButton'
+import { EmptyState } from '../components/EmptyState'
 import { StatusChip } from '../components/StatusChip'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
@@ -102,12 +102,13 @@ export function TravelMap() {
 
   if (trips.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-3 px-4 py-16 text-center">
-        <IconWorld size={40} className="text-text-tertiary" />
-        <p className="text-sm text-text-secondary">No trips yet.</p>
-        <PrimaryButton onClick={() => navigate(routes.travel.entry)}>
-          New Trip
-        </PrimaryButton>
+      <div className="flex min-h-full flex-col">
+        <EmptyState
+          title="No trips yet"
+          actionLabel="New Trip"
+          to={routes.travel.entry}
+          Icon={IconWorld}
+        />
       </div>
     )
   }

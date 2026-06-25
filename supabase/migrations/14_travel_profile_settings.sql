@@ -1,7 +1,7 @@
 -- WellWorth — Travel module preferences on the profile.
 --
 -- Additive preference column for the Travel module (mirroring the Quotes module's
--- 20260621130000_profile_quote_settings.sql). It is a plain column on the existing profile table —
+-- 09_quotes_profile_settings.sql). It is a plain column on the existing profile table —
 -- RLS, the API-role grants, and the moddatetime trigger already cover profile, so nothing else is
 -- needed here.
 --   * travel_expense_categories — the owner's configurable expense-category list

@@ -1,6 +1,6 @@
 -- WellWorth Net Worth schema.
 --
--- Conventions (identical to 20260613120000_init_schema.sql):
+-- Conventions (identical to 01_wellness_schema.sql):
 --   * Table names singular, snake_case.
 --   * RLS is ON for every table from creation. Both tables carry their own user_id, so
 --     they isolate rows directly with (select auth.uid()) = user_id (like diary_entry) —

@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { IconHeartFilled } from '@tabler/icons-react'
+import { IconDeviceTv, IconHeartFilled } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useShowsVersion, bumpShows } from '../lib/shows-refresh'
@@ -143,7 +143,7 @@ export function ShowsLibrary() {
   }
 
   return (
-    <div className="flex flex-col gap-3 px-4 py-4">
+    <div className="flex min-h-full flex-col gap-3 px-4 py-4">
       <div className="sticky top-0 z-10 -mx-4 flex flex-col gap-3 bg-bg/90 px-4 py-3 backdrop-blur">
         <div className="flex items-center gap-2">
           <SearchBar
@@ -242,7 +242,12 @@ export function ShowsLibrary() {
       )}
 
       {!loading && !error && allShows.length === 0 && (
-        <EmptyState title="No shows yet" actionLabel="New Show" to={routes.shows.entry} />
+        <EmptyState
+          title="No shows yet"
+          actionLabel="New Show"
+          to={routes.shows.entry}
+          Icon={IconDeviceTv}
+        />
       )}
 
       {!loading && !error && allShows.length > 0 && (

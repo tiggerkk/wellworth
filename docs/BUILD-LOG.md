@@ -79,9 +79,9 @@ hook is still caught.
 
 Goal: full Postgres schema on the cloud project (remote-only, no Docker), nutrient reference seeded,
 `database.ts` generated.
-Migrations: `20260613120000_init_schema.sql` (7 tables, CHECK constraints, FKs, indexes, RLS +
+Migrations: `01_wellness_schema.sql` (7 tables, CHECK constraints, FKs, indexes, RLS +
 policies, `moddatetime` triggers — all as `03-data-model.md` now specifies);
-`20260613120100_seed_nutrient.sql` (80 nutrient rows, idempotent `ON CONFLICT (key) DO UPDATE`).
+`02_wellness_seed_nutrient.sql` (80 nutrient rows, idempotent `ON CONFLICT (key) DO UPDATE`).
 Rationale: reference data ships _in a migration_ (not `seed.sql`, which only runs on local resets) so
 it reaches prod and is re-runnable; the `nutrient.parent_key` self-FK is DEFERRABLE so one multi-row
 insert validates at commit.
@@ -93,7 +93,7 @@ Built: `src/lib/supabase.ts` (PKCE client), `AuthProvider`/`RequireAuth` (splash
 React Router v7 `createBrowserRouter`, `BottomNav`/`AppShell`/`Splash`/`PrimaryButton`, `Login` +
 stub tab screens, `useEnsureProfile` (idempotent first-login seed), `vercel.json` SPA rewrite.
 Migration `20260613120200_grant_api_roles.sql` was added here — see **Failure F1**. (Later merged
-into `20260613120000_init_schema.sql` during the migration consolidation; the standalone file is gone.)
+into `01_wellness_schema.sql` during the migration consolidation; the standalone file is gone.)
 Rationale: client-side seeding (not a DB trigger) keeps the owner-seed logic in readable TS and needs
 no `auth`-schema grants; PKCE is the right SPA flow.
 
@@ -174,7 +174,7 @@ engineering decisions:
 
 - **Schema:** added `activity.default_duration_min` (prefills the Activity Log duration). Then
   **consolidated migrations** — folded the API-role grants (old F1 migration) _and_ the new column
-  into `20260613120000_init_schema.sql`, so the tree is just `init_schema` + `seed_nutrient`. The live
+  into `01_wellness_schema.sql`, so the tree is just `wellness_schema` + `wellness_seed_nutrient`. The live
   DB was reconciled with `supabase db reset --linked` (documented in `OWNER-RUNBOOK.md` Part M). Editing
   already-applied migrations is only OK because this is a solo pre-/early-prod DB that can be reset.
 - **URL-as-state pattern:** the viewed Diary **day**, the Add Food **tab/search**, and the Library
@@ -249,11 +249,11 @@ the running Wellness app.
   `templates/networth-seed.local.csv`; `.gitignore` ignores `*-filled.csv` / `*.local.csv` /
   `networth-*.csv` with a `!templates/networth-seed-template.csv` negation so the sanitized template
   stays tracked. See **Failure F7**.
-- **Schema:** `20260615120000_networth_schema.sql` — `networth_snapshot` (one row per user+month,
+- **Schema:** `03_networth_schema.sql` — `networth_snapshot` (one row per user+month,
   `month` CHECK-normalized to the 1st, `UNIQUE(user_id, month)`) and `asset_entry` (own `user_id` for
   direct RLS like `diary_entry`; `snapshot_id` ON DELETE CASCADE; `value_native`/`fx_rate_to_base`/
   `value_base` stored so a month's HKD figures freeze against later FX revisions). RLS + 4 owner
-  policies + explicit per-table grants, matching `init_schema`.
+  policies + explicit per-table grants, matching `wellness_schema`.
 - **Currency = `CNY`, not `RMB`.** The renminbi is stored as ISO `CNY` end-to-end, which is exactly
   what Frankfurter (ECB) quotes — so FX needs no code translation. Docs (`00-PRD`, `PARKED`) updated accordingly.
 - **Import is in-app, not a script.** Per the owner's choice, the one-time CSV seed becomes a reusable
@@ -408,7 +408,7 @@ an **importer enable/disable** toggle, with both prefs synced on `profile`.
 
 Goal: a runnable, navigable Shows module behind a hub card, before any data layer or external API.
 
-- **Schema:** `20260617120000_shows_schema.sql` — one `show` table (own `user_id` for direct RLS like
+- **Schema:** `04_shows_schema.sql` — one `show` table (own `user_id` for direct RLS like
   `asset_entry`; CHECKs on `type`/`status`/`lgbtq_rep` and `rating` 0–5 in 0.5 steps via
   `(rating*2)=floor(rating*2)`; `index (user_id, status)`; 4 owner policies; `moddatetime`; explicit
   grants). `cast` is a SQL reserved word → declared as `"cast"`; the M2 data layer will map it to a
@@ -517,7 +517,7 @@ Goal: the full Library — poster rows + a filter panel + a Sort menu, search ov
 Goal: a Shows Settings screen (the Wellness Settings split, mirrored) for Entry field-visibility + an
 importer-enable toggle, both synced on `profile`.
 
-- **Migration** `20260617130000_profile_show_settings.sql`: adds `profile.show_visible_fields text[]`
+- **Migration** `05_shows_profile_settings.sql`: adds `profile.show_visible_fields text[]`
   (**nullable — NULL = all visible**, default-on, no seeding) + `show_importer_enabled boolean default
 false`. Additive columns on an existing table → RLS/grants/`moddatetime` already cover them. Owner
   `db push` + `gen:types`.
@@ -561,7 +561,7 @@ type)` once → `dedupKey → id` map → update-or-insert (collapsing in-file d
 
 Goal: track Chinese-language content — esp. Chinese documentaries / CCTV series TMDB often lacks or only
 carries under Chinese titles. Four owner decisions taken before building (see `06-shows-enhancement.md`'s
-ambiguities): **(1)** edit the original `20260617120000_shows_schema.sql` + recreate the table (the DB
+ambiguities): **(1)** edit the original `04_shows_schema.sql` + recreate the table (the DB
 held no live data) rather than ship an additive migration; **(2)** **remove** the dormant `content_rating`
 column outright (it was fetched/displayed nowhere); **(3)** Library handles `master_series` with a
 **filter only** (no grouped headers); **(4)** documentary uses the **`/tv`** endpoint by default.
@@ -611,7 +611,7 @@ the Books CSV (`title,author,rating,lgbtq_rep,end_date`) has no multi-line cells
 
 Goal: a runnable, navigable Books module behind a hub card, before any data layer or external API.
 
-- **Schema:** `20260620120000_books_schema.sql` — one `book` table (own `user_id` for direct RLS like
+- **Schema:** `06_books_schema.sql` — one `book` table (own `user_id` for direct RLS like
   `show`; CHECKs on `status`/`lgbtq_rep` and `rating` 0–5 in 0.5 steps via
   `(rating*2)=floor(rating*2)`; `index (user_id, status)`; 4 owner policies; `moddatetime`; explicit
   grants). Unlike Shows' `poster_path`, `cover_url` stores a **full image URL** (Google Books / Open
@@ -733,7 +733,7 @@ Goal: the full Library — cover rows + a filter panel + a Sort menu, search ove
 Goal: a Books Settings screen (the Wellness/Shows Settings split, mirrored) for Entry field-visibility +
 an importer-enable toggle, both synced on `profile`.
 
-- **Migration** `20260620130000_profile_book_settings.sql`: adds `profile.book_visible_fields text[]`
+- **Migration** `07_books_profile_settings.sql`: adds `profile.book_visible_fields text[]`
   (**nullable — NULL = all visible**, default-on, no seeding) + `book_importer_enabled boolean default
 false`. Additive columns on an existing table → RLS/grants/`moddatetime` already cover them. Owner
   `db push` + `gen:types`.
@@ -823,7 +823,7 @@ Goal: a runnable, navigable Quotes module behind a hub card, before any data lay
   and not yet ignored** (a `git add .` would have committed private data). Added the Quotes block
   (`quotes-import*.csv` + `quotes-seed-local.csv` + `!templates/quotes-import-template.csv`) **before**
   any staging; verified `git check-ignore` now reports the seed file ignored.
-- **Schema:** `20260621120000_quotes_schema.sql` — one `quote` table (own `user_id` for direct RLS like
+- **Schema:** `08_quotes_schema.sql` — one `quote` table (own `user_id` for direct RLS like
   `book`; CHECKs on `source_type`/`category`/`language`; generated `text_norm = lower(btrim(text))` STORED
   backing `UNIQUE(user_id, text_norm)` for "no exact duplicates" + import idempotency; indexes
   `(user_id, category)` + `(user_id, is_favorite)`; FKs `show_id`/`book_id` → show/book **ON DELETE SET
@@ -969,7 +969,7 @@ facets. No schema/data-layer change.
 Goal: a Quotes Settings screen (the Wellness/Shows/Books Settings split, mirrored) for Entry
 field-visibility + an importer-enable toggle, both synced on `profile`.
 
-- **Migration** `20260621130000_profile_quote_settings.sql`: adds `profile.quote_visible_fields text[]`
+- **Migration** `09_quotes_profile_settings.sql`: adds `profile.quote_visible_fields text[]`
   (**nullable — NULL = all visible**, default-on, no seeding) + `quote_importer_enabled boolean default
 false`. Additive columns on an existing table → RLS/grants/`moddatetime` already cover them. Owner
   `db push` + `gen:types`.
@@ -1038,13 +1038,13 @@ selection · 5 drag-to-reorder settings · 6 biometric lock · 7 narrative + eye
 
 Goal: the three tables, the seeded reference list, and a navigable module behind the Home hub.
 
-- **Migrations:** `20260622120000_medical_schema.sql` (three tables — `medical_lab_test` reference
+- **Migrations:** `10_medical_schema.sql` (three tables — `medical_lab_test` reference
   [read-only to clients: single permissive SELECT policy + `grant select` only],
   `medical_report`, `medical_result` — RLS + 4 owner policies each on the user-owned tables, 18-value
   `category` CHECK, `moddatetime`, grants; `medical_result` cascades on report delete and carries the
   unit-normalization columns `normalized`/`value_num_original`/`unit_original`);
-  `20260622130000_profile_medical_settings.sql` (nine `medical_*` profile columns incl. the lock +
-  `medical_lock_timeout_minutes`); `20260622121000_seed_medical_lab_test.sql` (~150 tests, idempotent
+  `12_medical_profile_settings.sql` (nine `medical_*` profile columns incl. the lock +
+  `medical_lock_timeout_minutes`); `11_medical_seed_lab_test.sql` (~150 tests, idempotent
   `ON CONFLICT (key) DO UPDATE`).
 - **Source of truth + drift guard:** the seed mirrors `src/lib/medical.ts` `MEDICAL_LAB_TESTS`;
   `src/lib/medical.test.ts` reads the seed `.sql` via a `?raw` import (declared by `vite/client`, so no
@@ -1243,7 +1243,7 @@ already rendered on the form + detail since M2.) **No migration** — the six ke
   migrations do **not** inherit Supabase's default grants to the `anon`/`authenticated` API roles, so
   enabling RLS alone left the authenticated role with no table access; first login failed on the
   `profile` select. Fix: the API-role grants (originally `20260613120200_grant_api_roles.sql`, since
-  merged into `20260613120000_init_schema.sql`) grant privileges + set default privileges. **Every
+  merged into `01_wellness_schema.sql`) grant privileges + set default privileges. **Every
   migration must grant to the API roles** — now specified in `03-data-model.md` and `CLAUDE.md`. Don't
   "fix" a future permission error by loosening RLS.
 - **F2 — USDA `GET /foods/search` 400s on `dataType` (M5).** A GET search whose `dataType` includes
@@ -1366,7 +1366,7 @@ additive ones — see `memory/db-migration-workflow.md`). 242 → **249** Vitest
 
 - **Removed `master_series` from Shows.** The documentary sub-series text now lives in the **title**
   itself (owner folds it in, e.g. `国宝档案 — 从东晋到北魏`). Dropped the column + its `(user_id,
-master_series)` index from `20260617120000_shows_schema.sql`; removed `masterSeriesOptions`, the
+master_series)` index from `04_shows_schema.sql`; removed `masterSeriesOptions`, the
   `masterSeries` `LibraryCriteria` filter, the Entry field, the Library filter, the Dashboard/Library/
   importer eyebrow, and the `?master_series=` prefill param. `dedupKey` is now **title-only**
   (`saveImportedShows` selects just `id, title`). Existing master_series values were **not** migrated
@@ -1507,9 +1507,9 @@ Medical/Shows/Books precedent of additive `profile` columns; zero data migration
 `category` already hold the keys). 329 → **348**.
 
 - **Schema (existing migrations edited in place; DB reset workflow)**: dropped the `source_type` /
-  `category` CHECK constraints on `quote` (`20260621120000_quotes_schema.sql`); added
+  `category` CHECK constraints on `quote` (`08_quotes_schema.sql`); added
   `quote_source_types jsonb` + `quote_categories jsonb` to `profile`
-  (`20260621130000_profile_quote_settings.sql`). NULL ⇒ canonical seed defaults (no per-user seeding /
+  (`09_quotes_profile_settings.sql`). NULL ⇒ canonical seed defaults (no per-user seeding /
   backfill). Regenerated `src/types/database.ts` (both surface as `Json | null`).
 - **New seed order + value**: Source Types now Book, Podcast, TV Show, Movie, **Interview** (new),
   Article, Song, Video; Categories Wit, Observation, Philosophy, Heart, Connection, Growth (in
@@ -1582,10 +1582,10 @@ the permanent spec docs and deleted.
 ### M1 — Schema + RLS + constants + category config
 
 Goal: stand up the Travel data layer + shared vocabulary (no UI yet).
-Migrations: `20260624120000_travel_schema.sql` (5 user-owned tables — `trip`, `trip_day`, `stop`,
+Migrations: `13_travel_schema.sql` (5 user-owned tables — `trip`, `trip_day`, `stop`,
 `trip_expense`, `remembered_city` — each with `user_id`, four `(select auth.uid()) = user_id` RLS
 policies, CHECK enums, `moddatetime`, indexes, and API-role GRANTs; hard delete cascades
-trip → day → stop and trip → expense) + `20260624121000_profile_travel_settings.sql`
+trip → day → stop and trip → expense) + `14_travel_profile_settings.sql`
 (`profile.travel_expense_categories` JSONB). Code: `src/constants/travel.ts` (enums + labels, the
 `TRAVEL_EXPENSE_CATEGORIES` seed, and the 34-entry `CHINA_PROVINCES`) and `src/lib/travel-config.ts`
 (the category list helpers). Tests: `travel-config.test.ts` + `travel.test.ts`.
@@ -1922,7 +1922,7 @@ the feature to Travel (the one module that lacked it). Test count **445 → 451*
 - **Medical Settings** — section **"Report Form" → "Entry Form"**, toggle **"Enable Structured Import"
   → "Enable JSON / CSV Import"**, and the **Security** section moved to **last**.
 - **Travel visible-fields (new).** Schema change: `profile.travel_visible_fields text[]` added to the
-  **existing** `20260624121000_profile_travel_settings.sql` (edited in place per the DB-reset workflow)
+  **existing** `14_travel_profile_settings.sql` (edited in place per the DB-reset workflow)
   and to `src/types/database.ts` (owner applies via `supabase db reset --linked`). `src/lib/travel.ts`
   gained `TRIP_ENTRY_FIELDS` (rating, cover_url, companions, **track_reimbursement** — owner chose to
   make it hideable — notes) + `isFieldVisible`; new route `travel/settings/visible`, `TravelFieldsSheet`,
@@ -1937,3 +1937,38 @@ detail (not just one), and it was **extended to also order the Entry form's resu
 now wraps its result list in `orderResultsForDisplay(filteredResults, medical_section_order,
 medical_test_order)` (purely presentational, keyed by `clientId`, so editing/removal is unaffected), so
 all three surfaces share one ordering.
+
+## Migration filename rename + empty-state icons (session, June 2026)
+
+Two unrelated cosmetic/housekeeping changes; no schema or behaviour change.
+
+- **Migrations renamed `NN_<module>_<name>.sql`** (owner request) — the 14-digit timestamp prefix was
+  replaced with a two-digit global ordinal that preserves the original apply order, and the descriptive
+  part now leads with the module (`20260613120000_init_schema.sql` → `01_wellness_schema.sql`,
+  `20260617130000_profile_show_settings.sql` → `05_shows_profile_settings.sql`,
+  `20260622121000_seed_medical_lab_test.sql` → `11_medical_seed_lab_test.sql`, …). Done with `git mv`
+  (history preserved). The ordinal is required: pure module-first names sort alphabetically and would run
+  e.g. `books_profile_settings` before `wellness_schema` (which creates `profile`), breaking the reset.
+  All references updated — the `src/lib/medical.test.ts` `?raw` seed import, the `src/lib/medical.ts`
+  comment, the cross-referencing comments inside the SQL files, and every doc (`CLAUDE.md`,
+  `03-data-model.md`, `05-seed-data.md`, `OWNER-RUNBOOK.md`, this log). Renumbering changes each
+  migration's **version**, so it reconciles only via `supabase db reset --linked` (a `db push` can't) —
+  already the owner's workflow. The historical `…_grant_api_roles.sql` mention (a long-merged, deleted
+  file) is left as-is.
+- **`EmptyState` gained a module icon.** The shared `src/components/EmptyState.tsx` now takes an optional
+  `Icon` (a Tabler `Icon`) rendered muted above the "No X yet" line; every usage passes its module icon
+  (Shows `IconDeviceTv`, Books `IconBook`, Quotes `IconQuote`, Medical `IconHeartbeat`, Travel
+  `IconWorld`). **Travel** now uses the shared `EmptyState` too — `TravelDashboard`, `TravelTrips`, and
+  **`TravelMap`** dropped their bespoke centred blocks (and the now-unused `PrimaryButton` import), so the
+  "No trips yet" state is the same icon + "+ New Trip" pill as the other modules.
+- **True vertical centering (follow-up).** The empty group read as "slightly high" on several screens:
+  `EmptyState` used `min-h-[60vh]`, which centres within a 60vh box pinned to the **top** of the taller
+  `<main>`. Root cause: the empty-hosting roots weren't full-height, so the EmptyState's `flex-1` had no
+  space to fill (only QuotesZen's `flex h-full flex-col` root already centred — which is why Quotes never
+  looked off). Fix: every empty-hosting root is now a **full-height flex column** — the dashboards
+  (`pb-4` / `pb-4 pt-2` → `flex min-h-full flex-col …`), the Library/Reports/Trips roots (`+ min-h-full`),
+  and the two Travel screens that return straight into `<main>` (wrapped in `flex min-h-full flex-col`) —
+  so `EmptyState`'s `flex-1` fills the real content area (below any sticky header) and the group sits at
+  true centre, consistently across modules. `min-h-full` resolves because `<main>` has a definite
+  flex-sized height (the same reason QuotesZen's `h-full` already worked). `EmptyState` itself is
+  unchanged.

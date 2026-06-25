@@ -4,7 +4,7 @@ import { IconChevronRight, IconWorld } from '@tabler/icons-react'
 import { SectionCard } from '../components/SectionCard'
 import { StatusChip } from '../components/StatusChip'
 import { Thumb } from '../components/Thumb'
-import { PrimaryButton } from '../components/PrimaryButton'
+import { EmptyState } from '../components/EmptyState'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { listTripFacetRows, listTrips } from '../data/travel'
@@ -90,12 +90,13 @@ export function TravelDashboard() {
 
   if (trips.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-3 px-4 py-16 text-center">
-        <IconWorld size={40} className="text-text-tertiary" />
-        <p className="text-sm text-text-secondary">No trips yet.</p>
-        <PrimaryButton onClick={() => navigate(routes.travel.entry)}>
-          New Trip
-        </PrimaryButton>
+      <div className="flex min-h-full flex-col">
+        <EmptyState
+          title="No trips yet"
+          actionLabel="New Trip"
+          to={routes.travel.entry}
+          Icon={IconWorld}
+        />
       </div>
     )
   }

@@ -96,9 +96,14 @@ _not_ the primary-button color; it's for emphasis, active states, and energy.
   (editing). **Delete** (`IconTrash`, `danger`) shows **only when editing** and flips to a two-step
   inline confirm before firing. Disable gating is unchanged (Reset needs a change; Submit needs dirty /
   required fields). Replaces the old text RESET / CREATE / SAVE buttons across all modules.
-- **EmptyState** — vertically-centered "No X yet" line over a **+ New X** action pill
-  (`src/components/EmptyState.tsx`). Used by the media Dashboards/Libraries (Shows/Books/Quotes) and the
-  Medical Dashboard/Reports; the host gives its content region `flex-1` so it centers.
+- **EmptyState** — vertically-centered **module icon** over a "No X yet" line over a **+ New X** action
+  pill (`src/components/EmptyState.tsx`). Internally `flex-1 justify-center`. Takes an optional `Icon` (a
+  Tabler `Icon`, shown muted at size 40); every usage passes its module icon (Shows `IconDeviceTv`, Books
+  `IconBook`, Quotes `IconQuote`, Medical `IconHeartbeat`, Travel `IconWorld`). Used by every module's
+  Dashboards/Libraries (Shows/Books/Quotes/Medical + **Travel's Dashboard, Trips, and Map**). **The host
+  root must be a full-height flex column** (`min-h-full flex flex-col`, or `h-full` for Zen) so the
+  `flex-1` fills the real content area and the group lands at true center — a plain block root (the old
+  `min-h-[60vh]`) pins it to the top and the group reads as slightly high.
 - **StarRating** — 0–5 **half-star** rating; display (no `onChange`) or input (two half-width
   hit-zones per star; tap the current value to clear). Reused on Shows + Books Entry + Library rows.
 - **ShowTypeBadge** — small chip with a TV (`IconDeviceTv`), movie (`IconMovie`), or documentary

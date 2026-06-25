@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState, type ReactNode } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
-import { IconX } from '@tabler/icons-react'
+import { IconQuote, IconX } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useProfile } from '../hooks/useProfile'
@@ -127,7 +127,7 @@ export function QuotesLibrary() {
     : null
 
   return (
-    <div className="flex flex-col gap-3 px-4 py-4">
+    <div className="flex min-h-full flex-col gap-3 px-4 py-4">
       <div className="sticky top-0 z-10 -mx-4 flex flex-col gap-3 bg-bg/90 px-4 py-3 backdrop-blur">
         <div className="flex items-center gap-2">
           <SearchBar
@@ -231,6 +231,7 @@ export function QuotesLibrary() {
           title="No quotes yet"
           actionLabel="New Quote"
           to={routes.quotes.entry}
+          Icon={IconQuote}
         />
       )}
       {!loading && !error && view.length === 0 && all.length > 0 && (

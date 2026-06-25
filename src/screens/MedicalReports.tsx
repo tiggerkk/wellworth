@@ -17,6 +17,7 @@ import {
 } from '../lib/medical'
 import { formatFullDate } from '../lib/date'
 import { routes } from '../constants/routes'
+import { IconHeartbeat } from '@tabler/icons-react'
 import { SwipeRow } from '../components/SwipeRow'
 import { EmptyState } from '../components/EmptyState'
 import { SearchBar } from '../components/SearchBar'
@@ -89,7 +90,7 @@ export function MedicalReports() {
   const view = applyReportView(reports, criteria)
 
   return (
-    <div className="flex flex-col gap-3 px-4 py-4">
+    <div className="flex min-h-full flex-col gap-3 px-4 py-4">
       {!loading && !error && reports.length > 0 && (
         <div className="flex items-center gap-2">
           <SearchBar
@@ -148,6 +149,7 @@ export function MedicalReports() {
           title="No medical reports yet"
           actionLabel="New Medical Report"
           to={routes.medical.entry}
+          Icon={IconHeartbeat}
         />
       )}
       {!loading && !error && reports.length > 0 && (

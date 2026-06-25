@@ -1,6 +1,11 @@
 import { Suspense, useState } from 'react'
 import { Link } from 'react-router'
-import { IconChevronDown, IconChevronRight, IconX } from '@tabler/icons-react'
+import {
+  IconChevronDown,
+  IconChevronRight,
+  IconHeartbeat,
+  IconX,
+} from '@tabler/icons-react'
 import { lazyWithReload } from '../lib/lazy-with-reload'
 import { useMedicalTrends } from '../hooks/useMedicalTrends'
 import { Sparkline } from '../components/Sparkline'
@@ -48,7 +53,7 @@ export function MedicalDashboard() {
     : undefined
 
   return (
-    <div className="pb-4 pt-2">
+    <div className="flex min-h-full flex-col pb-4 pt-2">
       {loading && <p className="px-4 py-6 text-sm text-text-secondary">Loading…</p>}
       {error && (
         <p className="px-4 py-6 text-sm text-danger">Couldn’t load your medical data.</p>
@@ -59,6 +64,7 @@ export function MedicalDashboard() {
           title="No medical reports yet"
           actionLabel="New Medical Report"
           to={routes.medical.entry}
+          Icon={IconHeartbeat}
         />
       )}
 

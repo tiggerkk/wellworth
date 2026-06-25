@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { IconHeartFilled } from '@tabler/icons-react'
+import { IconBook, IconHeartFilled } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useBooksVersion, bumpBooks } from '../lib/books-refresh'
@@ -133,7 +133,7 @@ export function BooksLibrary() {
   }
 
   return (
-    <div className="flex flex-col gap-3 px-4 py-4">
+    <div className="flex min-h-full flex-col gap-3 px-4 py-4">
       <div className="sticky top-0 z-10 -mx-4 flex flex-col gap-3 bg-bg/90 px-4 py-3 backdrop-blur">
         <div className="flex items-center gap-2">
           <SearchBar
@@ -227,7 +227,12 @@ export function BooksLibrary() {
       )}
 
       {!loading && !error && allBooks.length === 0 && (
-        <EmptyState title="No books yet" actionLabel="New Book" to={routes.books.entry} />
+        <EmptyState
+          title="No books yet"
+          actionLabel="New Book"
+          to={routes.books.entry}
+          Icon={IconBook}
+        />
       )}
 
       {!loading && !error && allBooks.length > 0 && (

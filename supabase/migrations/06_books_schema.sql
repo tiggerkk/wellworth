@@ -1,6 +1,6 @@
 -- WellWorth Books (books read / to read) schema.
 --
--- Conventions (identical to 20260617120000_shows_schema.sql):
+-- Conventions (identical to 04_shows_schema.sql):
 --   * Table name singular, snake_case. One row per tracked book.
 --   * RLS is ON from creation; `book` carries its own user_id, so it isolates rows
 --     directly with (select auth.uid()) = user_id (like show / asset_entry / diary_entry).

@@ -1,6 +1,6 @@
 import { useCallback, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router'
-import { IconHeartFilled } from '@tabler/icons-react'
+import { IconBook, IconHeartFilled } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useBooksVersion, bumpBooks } from '../lib/books-refresh'
@@ -69,14 +69,19 @@ export function BooksDashboard() {
   const editBook = (id: string) => navigate(routes.books.edit(id))
 
   return (
-    <div className="pb-4">
+    <div className="flex min-h-full flex-col pb-4">
       {loading && <p className="px-4 py-6 text-sm text-text-secondary">Loading…</p>}
       {error && (
         <p className="px-4 py-6 text-sm text-danger">Couldn’t load your books.</p>
       )}
 
       {!loading && !error && all.length === 0 && (
-        <EmptyState title="No books yet" actionLabel="New Book" to={routes.books.entry} />
+        <EmptyState
+          title="No books yet"
+          actionLabel="New Book"
+          to={routes.books.entry}
+          Icon={IconBook}
+        />
       )}
 
       {!loading && !error && all.length > 0 && (

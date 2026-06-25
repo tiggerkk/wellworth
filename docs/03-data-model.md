@@ -21,11 +21,11 @@ Nutrient sets are stored as JSONB maps (`nutrient_key → amount`), validated ag
   URL: **force the Entry "Poster URL" field always visible** (default off; the field still auto-shows
   whenever TMDB supplied no poster). Stored separately from `show_visible_fields` (which is default-on)
   so the toggle can default to off.
-  (the three `show_*` columns are added by `supabase/migrations/20260617130000_profile_show_settings.sql`)
+  (the three `show_*` columns are added by `supabase/migrations/05_shows_profile_settings.sql`)
 - `book_visible_fields` TEXT[] NULL — Books Entry-form field visibility; **NULL = all visible**
   (default-on, no seeding); an explicit array once trimmed in Books Settings
 - `book_importer_enabled` BOOLEAN NOT NULL DEFAULT false — surfaces the Books in-app CSV importer
-  (the two `book_*` columns are added by `supabase/migrations/20260620130000_profile_book_settings.sql`)
+  (the two `book_*` columns are added by `supabase/migrations/07_books_profile_settings.sql`)
 - `quote_visible_fields` TEXT[] NULL — Quotes Entry-form field visibility; **NULL = all visible**
   (default-on, no seeding); an explicit array once trimmed in Quotes Settings
 - `quote_importer_enabled` BOOLEAN NOT NULL DEFAULT false — surfaces the Quotes in-app CSV importer
@@ -35,7 +35,7 @@ Nutrient sets are stored as JSONB maps (`nutrient_key → amount`), validated ag
   partial-tolerantly by `src/lib/quotes-config.ts`
 - `quote_categories` JSONB NULL — the owner's configurable Category list, a JSONB array of
   `{key, label}` in display order; **NULL = canonical seed defaults**
-  (the four `quote_*` columns are added by `supabase/migrations/20260621130000_profile_quote_settings.sql`)
+  (the four `quote_*` columns are added by `supabase/migrations/09_quotes_profile_settings.sql`)
 - `medical_tracked_tests` TEXT[] NULL — `medical_lab_test.key`s whose trends show on the Medical
   Dashboard. NULL until first-run, then seeded from `medical_lab_test.default_tracked` (like
   `visible_nutrients`)
@@ -52,16 +52,16 @@ Nutrient sets are stored as JSONB maps (`nutrient_key → amount`), validated ag
 - `medical_lock_timeout_minutes` INT NULL — auto-lock idle timeout; **NULL = Indefinite** (re-lock only
   on cold start); UI default 5. Choices: Immediately(0)/1/5/15/Indefinite(NULL)
   (the nine `medical_*` columns are added by
-  `supabase/migrations/20260622130000_profile_medical_settings.sql`)
+  `supabase/migrations/12_medical_profile_settings.sql`)
 - `travel_expense_categories` JSONB NULL — the owner's configurable Travel expense-category list, a JSONB
   array of `{key, label}` in display order; **NULL = canonical seed defaults** (`TRAVEL_EXPENSE_CATEGORIES`
   in `src/constants/travel.ts`), resolved tolerantly by `src/lib/travel-config.ts`. `trip_expense.category`
   stores the stable `key`. There is **no `travel_expense_category` table** — categories live on the profile,
-  the Quotes pattern. (added by `supabase/migrations/20260624121000_profile_travel_settings.sql`)
+  the Quotes pattern. (added by `supabase/migrations/14_travel_profile_settings.sql`)
 - `travel_visible_fields` TEXT[] NULL — Trip Entry-form field visibility (`TRIP_ENTRY_FIELDS`: rating,
   cover_url, companions, track_reimbursement, notes); **NULL = all visible** (default-on). Mirrors the
   other modules' `*_visible_fields`. (added by the same
-  `20260624121000_profile_travel_settings.sql` migration)
+  `14_travel_profile_settings.sql` migration)
 - `created_at`, `updated_at` TIMESTAMPTZ
 
 ### food (custom items + cached USDA/Off items the user favorited or logged)
@@ -173,7 +173,7 @@ Nutrient sets are stored as JSONB maps (`nutrient_key → amount`), validated ag
 
 `asset_entry` cascades on snapshot delete. No `asset` table and no soft-delete: each month is a complete, self-contained set of `asset_entry` rows, so deleting an entry simply means it is absent from that month forward; prior months are intact.
 
-The migration is `supabase/migrations/20260615120000_networth_schema.sql`.
+The migration is `supabase/migrations/03_networth_schema.sql`.
 
 ### show (one row per tracked title)
 
@@ -203,7 +203,7 @@ The migration is `supabase/migrations/20260615120000_networth_schema.sql`.
 - `created_at`, `updated_at`
 - Index on (`user_id`, `status`) and on (`user_id`, `is_favorite`) — the latter backs the favourites filter.
 
-Standard rules apply: own `user_id` for direct RLS, four owner policies using `(select auth.uid()) = user_id`, `CHECK` on the enum columns, `moddatetime` trigger on `updated_at`, explicit `GRANT` to `anon`/`authenticated`. Imported back-catalogue rows leave the three dates NULL (genuinely unknown). The migration is `supabase/migrations/20260617120000_shows_schema.sql`.
+Standard rules apply: own `user_id` for direct RLS, four owner policies using `(select auth.uid()) = user_id`, `CHECK` on the enum columns, `moddatetime` trigger on `updated_at`, explicit `GRANT` to `anon`/`authenticated`. Imported back-catalogue rows leave the three dates NULL (genuinely unknown). The migration is `supabase/migrations/04_shows_schema.sql`.
 
 ### book (one row per tracked book)
 
@@ -230,7 +230,7 @@ Standard rules apply: own `user_id` for direct RLS, four owner policies using `(
 - `created_at`, `updated_at`
 - Index on (`user_id`, `status`) and on (`user_id`, `is_favorite`).
 
-Standard rules apply: own `user_id` for direct RLS, four owner policies using `(select auth.uid()) = user_id`, `CHECK` on the enum columns, `moddatetime` trigger on `updated_at`, explicit `GRANT` to `anon`/`authenticated`. **Hard delete** (leaf table — nothing references `book`; no `deleted_at`). The Quotes module's optional `quote.book_id` link is declared `ON DELETE SET NULL` on `quote`, so it imposes no FK here. Imported back-catalogue rows get `status = 'read'`, the file's `end_date`, and NULL `start_date`/`last_update_date`. The migration is `supabase/migrations/20260620120000_books_schema.sql`.
+Standard rules apply: own `user_id` for direct RLS, four owner policies using `(select auth.uid()) = user_id`, `CHECK` on the enum columns, `moddatetime` trigger on `updated_at`, explicit `GRANT` to `anon`/`authenticated`. **Hard delete** (leaf table — nothing references `book`; no `deleted_at`). The Quotes module's optional `quote.book_id` link is declared `ON DELETE SET NULL` on `quote`, so it imposes no FK here. Imported back-catalogue rows get `status = 'read'`, the file's `end_date`, and NULL `start_date`/`last_update_date`. The migration is `supabase/migrations/06_books_schema.sql`.
 
 ### quote (one row per quote)
 
@@ -254,7 +254,7 @@ Standard rules apply: own `user_id` for direct RLS, four owner policies using `(
 - **UNIQUE (`user_id`, `text_norm`)** — enforces "no exact duplicates" and import idempotency.
 - Indexes on (`user_id`, `category`) and (`user_id`, `is_favorite`).
 
-Standard rules apply: own `user_id` for direct RLS, four owner policies using `(select auth.uid()) = user_id`, `moddatetime` trigger on `updated_at`, explicit `GRANT` to `anon`/`authenticated`. Only `language` keeps a `CHECK` ('en' | 'zh'); `source_type` and `category` are **plain TEXT with no CHECK** since their values are owner-configurable (see `profile.quote_source_types`/`quote_categories`) — validation moves to the app (`src/lib/quotes-config.ts`). **Hard delete** (leaf table; no `deleted_at`). `show_id`/`book_id` are optional enrichment — because `author`, `title`, and `source_type` live on the quote, it stays complete after a linked Show/Book is hard-deleted (the FK just nulls). The migration is `supabase/migrations/20260621120000_quotes_schema.sql`.
+Standard rules apply: own `user_id` for direct RLS, four owner policies using `(select auth.uid()) = user_id`, `moddatetime` trigger on `updated_at`, explicit `GRANT` to `anon`/`authenticated`. Only `language` keeps a `CHECK` ('en' | 'zh'); `source_type` and `category` are **plain TEXT with no CHECK** since their values are owner-configurable (see `profile.quote_source_types`/`quote_categories`) — validation moves to the app (`src/lib/quotes-config.ts`). **Hard delete** (leaf table; no `deleted_at`). `show_id`/`book_id` are optional enrichment — because `author`, `title`, and `source_type` live on the quote, it stays complete after a linked Show/Book is hard-deleted (the FK just nulls). The migration is `supabase/migrations/08_quotes_schema.sql`.
 
 ### medical_lab_test (reference / seed — not user data; RLS on, read-only to clients)
 
@@ -306,7 +306,7 @@ addition_od, sphere_os, cylinder_os, addition_os`, category `eye`, so they trend
 Standard rules apply to `medical_report`/`medical_result`: own `user_id` for direct RLS, four owner
 policies using `(select auth.uid()) = user_id`, `CHECK` on the enum columns, `moddatetime` trigger on
 `updated_at`, explicit `GRANT` to `anon`/`authenticated`. **Hard delete** (deleting a report cascades
-its results). The migration is `supabase/migrations/20260622120000_medical_schema.sql`.
+its results). The migration is `supabase/migrations/10_medical_schema.sql`.
 
 ### trip (one row per trip)
 
@@ -359,7 +359,7 @@ its results). The migration is `supabase/migrations/20260622120000_medical_schem
 Standard rules apply to all five Travel tables: own `user_id` for direct RLS, four owner policies using
 `(select auth.uid()) = user_id`, `CHECK` on the enum columns, `moddatetime` trigger on `updated_at`,
 explicit `GRANT` to `anon`/`authenticated`. **Hard delete** (deleting a trip cascades its days → stops
-and its expenses). The migration is `supabase/migrations/20260624120000_travel_schema.sql`.
+and its expenses). The migration is `supabase/migrations/13_travel_schema.sql`.
 
 ## Relationships
 

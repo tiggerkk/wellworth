@@ -63,7 +63,7 @@ its routes.
   field-visibility + CSV-importer toggle); **Medical** from its Settings tab at `/medical/settings`
   (Tracked Tests, Display Order drag-reorder, the biometric/PIN Lock, Visible Fields, importer toggle —
   reached via the `settings*` sheet routes).
-- **Net Worth (built):** two tables `networth_snapshot` + `asset_entry` (migration `supabase/migrations/20260615120000_networth_schema.sql`). Data:
+- **Net Worth (built):** two tables `networth_snapshot` + `asset_entry` (migration `supabase/migrations/03_networth_schema.sql`). Data:
   `src/data/networth-snapshot.ts` + `asset-entry.ts` — write path `saveSnapshotEntries` is an
   **idempotent create-or-replace per month** (reused by the importer). Calc `src/lib/networth.ts`; FX
   `src/lib/fx.ts` (Frankfurter; **currency stored as `CNY`**, no RMB→CNY map; each entry freezes
@@ -72,12 +72,12 @@ its routes.
   `src/components/NetWorthTrendChart.tsx`; screens `NetWorthDashboard` / `NetWorthEntry` /
   `ImportNetWorthSheet`.
 - **Shows (built):** TV, movies & **documentaries**. One table `show` (migration
-  `supabase/migrations/20260617120000_shows_schema.sql` — `type` ∈ `tv|movie|documentary`, an
+  `supabase/migrations/04_shows_schema.sql` — `type` ∈ `tv|movie|documentary`, an
   `is_favorite` boolean + a `(user_id, is_favorite)` index, a nullable CHECK-constrained `dynasty`
   (Chinese titles only — the shared `src/constants/dynasty.ts` `DYNASTIES`), **no** `content_rating`;
   `poster_path` holds **either** a TMDB path **or** a full pasted image URL) plus three `profile` columns
   `show_visible_fields` / `show_importer_enabled` / `show_poster_url_visible`
-  (`20260617130000_profile_show_settings.sql`). Data `src/data/show.ts` (CRUD + idempotent
+  (`05_shows_profile_settings.sql`). Data `src/data/show.ts` (CRUD + idempotent
   `saveImportedShows`, dedup on lower(title)). Pure logic `src/lib/shows.ts`
   (status/type/LGBT+ enums, `usesEpisodes` (TV + documentary), status-chip palette, `posterUrl` +
   `isAbsoluteUrl` (pasted URL passthrough), `buildRefreshPatch` (per-show Refresh merge — TMDB fields
@@ -97,11 +97,11 @@ its routes.
   `ShowsFieldsSheet` (incl. the Poster URL toggle) / `ImportShowsSheet` (CSV ends with an `is_favorite`
   column). **Calendar** was generalized to a presentational component with an optional
   `loadCues` (Wellness Diary injects food/activity dots; Shows date pickers pass none).
-- **Books (built):** one table `book` (migration `supabase/migrations/20260620120000_books_schema.sql` —
+- **Books (built):** one table `book` (migration `supabase/migrations/06_books_schema.sql` —
   incl. an `is_favorite` boolean + `(user_id, is_favorite)` index, and a nullable CHECK-constrained
   `dynasty` (Chinese titles only — shared `src/constants/dynasty.ts`)) plus two `profile` columns
   `book_visible_fields` / `book_importer_enabled`
-  (`20260620130000_profile_book_settings.sql`). Data `src/data/book.ts` (CRUD + idempotent
+  (`07_books_profile_settings.sql`). Data `src/data/book.ts` (CRUD + idempotent
   `saveImportedBooks`). Pure logic `src/lib/books.ts` (status/LGBT+ enums, status-chip palette,
   transitions `markRead`/`startReading`, selectors `applyLibraryView` (incl. `favoritesOnly` filter)/
   `recentlyRead`/`currentlyReading`/`wantToRead`/`favoriteBooks`,
@@ -116,9 +116,9 @@ its routes.
   Favourites filter + Dashboard shelf, trailing `is_favorite` importer column). Screens
   `BooksDashboard` / `BooksLibrary` / `BooksEntry` / `BooksSettings` / `BooksFieldsSheet` /
   `ImportBooksSheet`.
-- **Quotes (built):** one table `quote` (migration `supabase/migrations/20260621120000_quotes_schema.sql`)
+- **Quotes (built):** one table `quote` (migration `supabase/migrations/08_quotes_schema.sql`)
   plus four `profile` columns `quote_visible_fields` / `quote_importer_enabled` /
-  `quote_source_types` / `quote_categories` (`20260621130000_profile_quote_settings.sql`). The `quote`
+  `quote_source_types` / `quote_categories` (`09_quotes_profile_settings.sql`). The `quote`
   table denormalises `author`/`title`/`source_type` and has optional `show_id`/`book_id` FKs (**ON
   DELETE SET NULL**) + a generated `text_norm` with `UNIQUE(user_id, text_norm)` (no exact duplicates /
   import idempotency). **`source_type` + `category` are owner-configurable** (no CHECK constraint):
@@ -146,8 +146,8 @@ its routes.
     `QuoteCategoriesSheet` / `ImportQuotesSheet`.
 - **Medical (built):** multi-year lab results + narrative reports. Three tables `medical_lab_test`
   (reference/seed, read-only to clients), `medical_report`, `medical_result` (migrations
-  `20260622120000_medical_schema.sql` + `…121000_seed_medical_lab_test.sql`) plus nine `profile.medical_*`
-  columns (`…130000_profile_medical_settings.sql`: tracked tests, section/test order, visible fields,
+  `10_medical_schema.sql` + `11_medical_seed_lab_test.sql`) plus nine `profile.medical_*`
+  columns (`12_medical_profile_settings.sql`: tracked tests, section/test order, visible fields,
   importer toggle, and the four lock columns). **Reference ranges are stored exactly as printed** (the app
   never computes a range); cross-provider values are **normalized to each test's canonical `default_unit`
   at import** (flagged `normalized`, original kept in `value_num_original`/`unit_original`). Data
@@ -171,10 +171,10 @@ its routes.
   `MedicalOrderSheet` / `MedicalLockSheet` / `ImportMedicalSheet`.
 - **Travel (built):** trips as **Days → Stops** itineraries + a visited-places map + a per-trip expenses
   layer. **Five tables** `trip` / `trip_day` / `stop` / `trip_expense` / `remembered_city` (migration
-  `supabase/migrations/20260624120000_travel_schema.sql`; hard delete cascades trip → day → stop and
+  `supabase/migrations/13_travel_schema.sql`; hard delete cascades trip → day → stop and
   trip → expense) + two `profile` columns `travel_expense_categories` (JSONB) + `travel_visible_fields`
   (`text[]`, **NULL = all visible**, Trip-form field visibility)
-  (`…121000_profile_travel_settings.sql`). **Expense categories are the Quotes pattern** — a `{key,label}`
+  (`14_travel_profile_settings.sql`). **Expense categories are the Quotes pattern** — a `{key,label}`
   JSONB list on profile (no table); `trip_expense.category` stores the stable key; edited via the shared
   **`ConfigListEditor`** (the generalized former `QuoteListEditor`, decoupled via `count`/`reassign`/
   `onChanged` props — also used by Quotes). Data `src/data/travel.ts` (trip/day/stop/expense CRUD +
@@ -244,6 +244,12 @@ its routes.
 
 - Schema changes are written as **migration files** in `/supabase/migrations/` (Supabase CLI format).
   You draft the migration; the human reviews and applies it with `supabase db push`.
+- **Migration filenames are `NN_<module>_<name>.sql`** — a two-digit global ordinal (apply order) +
+  the module + a short name (e.g. `01_wellness_schema.sql`, `05_shows_profile_settings.sql`,
+  `11_medical_seed_lab_test.sql`). The ordinal is the Supabase migration version and fixes apply order
+  (dependencies: `01_wellness_schema.sql` creates `profile`, so every `*_profile_settings.sql` is later).
+  A new module appends the next ordinal. Renaming/renumbering changes the version, so it only reconciles
+  via a full **`supabase db reset --linked`** (a `db push` can't), which matches the owner's reset workflow.
 - **Never** mutate the production schema directly, and **never drop a table**, without explicit confirmation in the conversation.
 - After applying a migration, regenerate `/src/types/database.ts`.
 
