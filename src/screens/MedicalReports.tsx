@@ -96,6 +96,7 @@ export function MedicalReports() {
             value={criteria.query}
             onChange={(q) => setCrit({ query: q })}
             placeholder="Search body part, narrative"
+            className="min-w-0 flex-1"
           />
           <FilterToggleButton
             active={filtersOpen}

@@ -686,9 +686,10 @@ lockout. The lock is a convenience gate on this device — the data is already p
 
 ## Travel - Trips (`/travel/trips`)
 
-- A **full-width Search bar** (placeholder "Search trip name, city, companion" — matches trip name,
-  itinerary city, and companions) with an **icon-only Filter button** on its own row below (tints
-  **accent** while open). The Filter panel (shared `FilterPanel` pane, label-free) holds **Any
+- A **Search bar** (as wide as the row allows, placeholder "Search trip name, city, companion" —
+  matches trip name, itinerary city, and companions) with an **icon-only Filter button** flush at the
+  right edge (tints **accent** while open, matching the other modules). The Filter panel (shared
+  `FilterPanel` pane, label-free) holds **Any
   Country**, **Any Province**, **Any Status**, **Any Rating** (minimum: Any / 1★+ … / 5★, mirroring
   Shows), **Any Year**, and a footer with the **Sort** control next to **Clear Filters**. Sort over
   { Date, Country, Province, City, Status, Trip Name } with an **asc/desc** toggle (country/province/

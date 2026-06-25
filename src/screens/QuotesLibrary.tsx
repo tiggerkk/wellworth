@@ -134,6 +134,7 @@ export function QuotesLibrary() {
             value={criteria.query}
             onChange={(q) => setCrit({ query: q })}
             placeholder="Search quote, author, title, tag"
+            className="min-w-0 flex-1"
           />
           <FilterToggleButton
             active={filtersOpen}

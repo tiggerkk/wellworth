@@ -129,15 +129,18 @@ export function TravelTrips() {
 
   return (
     <div className="flex flex-col gap-3 px-4 py-4">
-      <SearchBar
-        value={criteria.query}
-        onChange={(q) => set({ query: q })}
-        placeholder="Search trip name, city, companion"
-      />
-      <FilterToggleButton
-        active={filtersOpen}
-        onClick={() => setFiltersOpen((o) => !o)}
-      />
+      <div className="flex items-center gap-2">
+        <SearchBar
+          value={criteria.query}
+          onChange={(q) => set({ query: q })}
+          placeholder="Search trip name, city, companion"
+          className="min-w-0 flex-1"
+        />
+        <FilterToggleButton
+          active={filtersOpen}
+          onClick={() => setFiltersOpen((o) => !o)}
+        />
+      </div>
 
       {filtersOpen && (
         <FilterPanel>

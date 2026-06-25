@@ -1897,6 +1897,6 @@ existed (`trip.rating`, `trip.companions`, `medical_report.body_part/provider/na
 - **Books drops the Author filter.** Author has too many values to filter usefully — it's now
   search-only (`bookSearchText` already covered it). `author` was removed from `LibraryCriteria` /
   `matchesCriteria`, but **kept** as a Sort option.
-- **Travel search** is now **full-width** with the Filter icon on its own row below (owner decision —
-  the only module where the icon doesn't share the search row); the other four keep the icon to the
-  right of the search bar.
+- **Search bar fills the row.** `SearchBar` gained an optional `className`; the five list screens pass
+  `min-w-0 flex-1` so the input grows to the screen edge and the **Filter icon sits flush at the right**
+  in every module (Travel included — its filter icon shares the search row, not a separate row).

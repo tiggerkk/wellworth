@@ -140,6 +140,7 @@ export function BooksLibrary() {
             value={criteria.query}
             onChange={(q) => setCrit({ query: q })}
             placeholder="Search title, author"
+            className="min-w-0 flex-1"
           />
           <FilterToggleButton
             active={filtersOpen}

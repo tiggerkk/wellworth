@@ -5,6 +5,8 @@ interface SearchBarProps {
   onChange: (value: string) => void
   placeholder?: string
   onScan?: () => void
+  /** Applied to the root — pass `min-w-0 flex-1` to fill a flex row next to a Filter icon. */
+  className?: string
 }
 
 /** Magnifier + input, with an optional barcode-scan button (Add Food). */
@@ -13,9 +15,10 @@ export function SearchBar({
   onChange,
   placeholder = 'Search',
   onScan,
+  className = '',
 }: SearchBarProps) {
   return (
-    <div className="flex items-center gap-2">
+    <div className={`flex items-center gap-2 ${className}`}>
       <div className="flex flex-1 items-center gap-2 rounded-input bg-input px-3 py-2">
         <IconSearch size={18} className="shrink-0 text-text-secondary" />
         <input

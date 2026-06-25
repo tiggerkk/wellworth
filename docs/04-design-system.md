@@ -57,8 +57,8 @@ _not_ the primary-button color; it's for emphasis, active states, and energy.
 - **SwipeRow** — swipe-left reveals a `delete` Delete action.
 - **SearchBar** — magnifier + input (+ barcode icon on Add Food).
 - **FilterToggleButton** — the shared **icon-only** Filter toggle (`src/components/FilterToggleButton.tsx`):
-  a bare `IconFilter` that tints **accent** while its panel is open, else `text-secondary`. Sits to the
-  right of the `SearchBar` (Shows/Books/Quotes/Medical) or on its own row (Travel). Replaces the old
+  a bare `IconFilter` that tints **accent** while its panel is open, else `text-secondary`. Sits flush at
+  the right edge of the row, after a `min-w-0 flex-1` `SearchBar` (every list module). Replaces the old
   per-module labelled "Filters (N)" buttons.
 - **FilterPanel** — the collapsible filter-panel "pane" (`src/components/FilterPanel.tsx`): a
   `rounded-card border bg-surface p-3 text-xs` surface that wraps a module's dropdowns/date rows + the
