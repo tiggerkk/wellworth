@@ -8,13 +8,13 @@ import {
 import type { ShowMetadata } from './tmdb-api'
 
 const HEADER =
-  'title,type,status,rating,lgbtq_rep,watched_seasons,watched_episodes,is_favorite'
+  'title,type,status,rating,lgbtq_rep,watched_seasons,watched_episodes,is_favorite,start_date,end_date'
 const parse = (body: string) =>
   parseShowsCsv(`${HEADER}\n${body}`.split('\n').map((l) => l.split(',')))
 
 describe('parseShowsCsv', () => {
   it('parses a valid row with defaults', () => {
-    const { rows, errors } = parse('Dune,movie,want,,,,,')
+    const { rows, errors } = parse('Dune,movie,want,,,,,,2023-01-01,')
     expect(errors).toEqual([])
     expect(rows).toEqual([
       {
@@ -27,11 +27,32 @@ describe('parseShowsCsv', () => {
         watched_seasons: null,
         watched_episodes: null,
         is_favorite: false, // blank → false
+        start_date: '2023-01-01',
+        end_date: null, // ignored for an unfinished (want) row
       },
     ])
   })
+  it('allows a blank start_date only for a want row', () => {
+    const want = parse('Dune,movie,want,,,,,,,')
+    expect(want.errors).toEqual([])
+    expect(want.rows[0]).toMatchObject({
+      status: 'want',
+      start_date: null,
+      end_date: null,
+    })
+    expect(parse('Dune,movie,watching,,,,,,,').errors).toHaveLength(1) // non-want needs start_date
+    expect(parse('Dune,movie,want,,,,,,bad,').errors).toHaveLength(1) // malformed still rejected
+  })
+  it('requires end_date for finished (watched/dropped) rows', () => {
+    expect(parse('Dune,movie,watched,,,,,,2023-01-01,').errors).toHaveLength(1) // watched needs end_date
+    const ok = parse('Dune,movie,watched,,,,,,2023-01-01,2023-02-01')
+    expect(ok.errors).toEqual([])
+    expect(ok.rows[0]).toMatchObject({ start_date: '2023-01-01', end_date: '2023-02-01' })
+  })
   it('keeps TV watched counts, a half-star rating, and a favourite flag', () => {
-    const { rows } = parse('Heartstopper,tv,watching,4.5,significant,1,8,true')
+    const { rows } = parse(
+      'Heartstopper,tv,watching,4.5,significant,1,8,true,2023-01-01,',
+    )
     expect(rows[0]).toMatchObject({
       type: 'tv',
       status: 'watching',
@@ -43,7 +64,7 @@ describe('parseShowsCsv', () => {
     })
   })
   it('accepts watched_episodes "all" on a watching/dropped episodic row', () => {
-    const { rows, errors } = parse('Breaking Bad,tv,watching,,,2,all,')
+    const { rows, errors } = parse('Breaking Bad,tv,watching,,,2,all,,2023-01-01,')
     expect(errors).toEqual([])
     expect(rows[0]).toMatchObject({ watched_seasons: 2, watched_episodes: 'all' })
   })
@@ -54,12 +75,14 @@ describe('parseShowsCsv', () => {
     expect(parse('Breaking Bad,tv,watching,,,,all,').rows).toHaveLength(0)
   })
   it('parses is_favorite leniently (yes/1/y ⇒ true, else false)', () => {
-    expect(parse('A,movie,want,,,,,yes').rows[0]?.is_favorite).toBe(true)
-    expect(parse('B,movie,want,,,,,1').rows[0]?.is_favorite).toBe(true)
-    expect(parse('C,movie,want,,,,,no').rows[0]?.is_favorite).toBe(false)
+    expect(parse('A,movie,want,,,,,yes,2023-01-01,').rows[0]?.is_favorite).toBe(true)
+    expect(parse('B,movie,want,,,,,1,2023-01-01,').rows[0]?.is_favorite).toBe(true)
+    expect(parse('C,movie,want,,,,,no,2023-01-01,').rows[0]?.is_favorite).toBe(false)
   })
   it('accepts a documentary (Chinese title)', () => {
-    const { rows, errors } = parse('从东晋到北魏,documentary,watched,,,,,')
+    const { rows, errors } = parse(
+      '从东晋到北魏,documentary,watched,,,,,,2023-01-01,2023-02-01',
+    )
     expect(errors).toEqual([])
     expect(rows[0]).toMatchObject({
       title: '从东晋到北魏',
@@ -119,21 +142,31 @@ const row = (p: Partial<ParsedShowRow>): ParsedShowRow => ({
   watched_seasons: null,
   watched_episodes: null,
   is_favorite: false,
+  start_date: '2023-01-01',
+  end_date: '2023-02-01',
   ...p,
 })
 
 describe('buildImportRow', () => {
-  it('uses the matched title + metadata and leaves dates null', () => {
+  it('uses the matched title + metadata and carries the CSV dates (created_at = start_date)', () => {
     const out = buildImportRow(row({}), tvMeta)
     expect(out.title).toBe('Breaking Bad')
     expect(out.year).toBe(2008)
     expect(out.tmdb_id).toBe(1396)
-    expect(out.start_date).toBeNull()
-    expect(out.end_date).toBeNull()
-    expect(out.last_update_date).toBeNull()
+    expect(out.start_date).toBe('2023-01-01')
+    expect(out.end_date).toBe('2023-02-01')
+    expect(out.created_at).toBe('2023-01-01T00:00:00Z')
   })
   it('carries is_favorite through', () => {
     expect(buildImportRow(row({ is_favorite: true }), tvMeta).is_favorite).toBe(true)
+  })
+  it('a want row with no start_date omits created_at (defaults to now() = updated_at)', () => {
+    const out = buildImportRow(
+      row({ status: 'want', start_date: null, end_date: null }),
+      null,
+    )
+    expect(out.start_date).toBeNull()
+    expect(out.created_at).toBeUndefined()
   })
   it('watched TV ⇒ watched counts set to the TMDB totals', () => {
     const out = buildImportRow(row({ status: 'watched' }), tvMeta)

@@ -3,7 +3,10 @@
  * `templates/shows-import-guide.md`). No I/O and no TMDB calls — the import screen reads the file,
  * resolves each row against TMDB, and writes via `saveImportedShows`.
  *
- * Column spec: `title,type,status,rating,lgbtq_rep,dynasty,watched_seasons,watched_episodes,is_favorite`.
+ * Column spec:
+ * `title,type,status,rating,lgbtq_rep,dynasty,watched_seasons,watched_episodes,is_favorite,start_date,end_date`.
+ * `start_date` is required on every row; `end_date` is required for finished rows (watched/dropped)
+ * and ignored otherwise. `created_at` is frozen to `start_date`; `updated_at` is left to the DB.
  */
 import {
   LGBTQ_REPS,
@@ -16,6 +19,7 @@ import {
   type ShowType,
 } from './shows'
 import type { ShowMetadata } from './tmdb-api'
+import type { IsoDate } from './date'
 import { containsCjk } from './cjk'
 import { DYNASTIES, type Dynasty } from '../constants/dynasty'
 
@@ -36,6 +40,10 @@ export interface ParsedShowRow {
    */
   watched_episodes: number | 'all' | null
   is_favorite: boolean
+  /** Date the title was started. Required except for a `want` row, where it may be null. */
+  start_date: IsoDate | null
+  /** Finish / drop date — set only for finished rows (watched/dropped), else null. */
+  end_date: IsoDate | null
 }
 
 export interface ShowsImportResult {
@@ -50,6 +58,12 @@ const typeSet = new Set<string>(SHOW_TYPES)
 const statusSet = new Set<string>(SHOW_STATUSES)
 const lgbtqSet = new Set<string>(LGBTQ_REPS)
 const dynastySet = new Set<string>(DYNASTIES)
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
+
+/** Watched/dropped rows are "finished" — they carry a finish date (`end_date`). */
+function isFinishedShowStatus(status: ShowStatus): boolean {
+  return status === 'watched' || status === 'dropped'
+}
 
 function intOrNull(raw: string): number | null {
   const s = raw.trim()
@@ -172,6 +186,37 @@ export function parseShowsCsv(rows: string[][]): ShowsImportResult {
       watched_episodes = intOrNull(epRaw)
     }
 
+    // `start_date` is required except for a `want` row (not started yet), where it may be blank.
+    const startRaw = col(cells, 'start_date')
+    let start_date: IsoDate | null = null
+    if (startRaw !== '') {
+      if (!ISO_DATE.test(startRaw)) {
+        errors.push(
+          `Row ${line} ("${title}"): start_date "${startRaw}" must be a date (YYYY-MM-DD) — skipped.`,
+        )
+        continue
+      }
+      start_date = startRaw
+    } else if (status !== 'want') {
+      errors.push(
+        `Row ${line} ("${title}"): start_date is required (YYYY-MM-DD) unless status is want — skipped.`,
+      )
+      continue
+    }
+
+    // `end_date` is required for finished rows; for in-progress/want rows any value is ignored.
+    let end_date: IsoDate | null = null
+    if (isFinishedShowStatus(status as ShowStatus)) {
+      const endRaw = col(cells, 'end_date')
+      if (!ISO_DATE.test(endRaw)) {
+        errors.push(
+          `Row ${line} ("${title}"): end_date "${endRaw}" is required (YYYY-MM-DD) for watched/dropped — skipped.`,
+        )
+        continue
+      }
+      end_date = endRaw
+    }
+
     out.push({
       title,
       type: type as ShowType,
@@ -182,6 +227,8 @@ export function parseShowsCsv(rows: string[][]): ShowsImportResult {
       watched_seasons,
       watched_episodes,
       is_favorite: parseBool(col(cells, 'is_favorite')),
+      start_date,
+      end_date,
     })
   }
 
@@ -197,8 +244,10 @@ export function dedupKey(title: string): string {
 }
 
 /**
- * Combine a parsed CSV row with its TMDB match (or null) into a `show` insert. Dates are left NULL
- * (imported history is genuinely undated). Watched counts: `watched` ⇒ the TMDB totals;
+ * Combine a parsed CSV row with its TMDB match (or null) into a `show` insert. `start_date` comes
+ * from the CSV (may be null for a `want` row); `end_date` only for finished rows. When `start_date` is
+ * set, `created_at` is frozen to it; when it's null (a not-yet-started `want`), `created_at` is left to
+ * the DB default so it equals `updated_at` (= import time). Watched counts: `watched` ⇒ the TMDB totals;
  * `watching`/`dropped` (TV) ⇒ the CSV values, where a `watched_episodes` of `'all'` resolves to
  * the episode count of the last-watched season (from TMDB), or null if TMDB has no count for it;
  * `want` / movies ⇒ null.
@@ -247,9 +296,10 @@ export function buildImportRow(
     watched_episodes,
     tmdb_id: match?.tmdb_id ?? null,
     imdb_id: match?.imdb_id ?? null,
-    start_date: null,
-    end_date: null,
-    last_update_date: null,
+    start_date: input.start_date,
+    end_date: input.end_date,
+    // Freeze created_at to start_date; when absent (a `want` row), let it default to now() = updated_at.
+    ...(input.start_date ? { created_at: `${input.start_date}T00:00:00Z` } : {}),
     comments: null,
   }
 }

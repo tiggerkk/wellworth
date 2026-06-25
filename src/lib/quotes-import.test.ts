@@ -10,7 +10,7 @@ import {
   type ParsedQuoteRow,
 } from './quotes-import'
 
-const HEADER = 'Quote,Author,Source,Title,Category,Tags,is_favorite'
+const HEADER = 'Quote,Author,Source,Title,Category,Tags,is_favorite,created_at'
 const SRC = defaultSourceTypes()
 const CATS = defaultCategories()
 const parse = (csv: string) => parseQuotesCsv(parseCsv(csv), SRC, CATS)
@@ -18,7 +18,7 @@ const parse = (csv: string) => parseQuotesCsv(parseCsv(csv), SRC, CATS)
 describe('parseQuotesCsv', () => {
   it('parses a simple valid row (tags split, language en)', () => {
     const { rows, errors } = parse(
-      `${HEADER}\nWork harder on yourself.,Jim Rohn,video,Best Life,Growth,"discipline, success"`,
+      `${HEADER}\nWork harder on yourself.,Jim Rohn,video,Best Life,Growth,"discipline, success",,2026-01-01`,
     )
     expect(errors).toEqual([])
     expect(rows).toHaveLength(1)
@@ -30,16 +30,22 @@ describe('parseQuotesCsv', () => {
       category: 'growth',
       tags: ['discipline', 'success'],
       language: 'en',
+      created_at: '2026-01-01',
       text_norm: 'work harder on yourself.',
     })
   })
 
+  it('requires a valid created_at date', () => {
+    expect(parse(`${HEADER}\nA quote,,tv,T,Wit,,,`).errors).toHaveLength(1) // blank
+    expect(parse(`${HEADER}\nA quote,,tv,T,Wit,,,03/01/2026`).errors).toHaveLength(1) // malformed
+  })
+
   it('handles embedded commas, escaped quotes, and multi-line quoted cells', () => {
     const csv = `${HEADER}
-"Almost everything will work again, including you.",Anne Lamott,video,12 Things,Philosophy,"zen, perspective"
-"""You said autonomy."" ""I said empower.""",Francis Underwood,tv,House of Cards,Growth,leadership
+"Almost everything will work again, including you.",Anne Lamott,video,12 Things,Philosophy,"zen, perspective",,2026-01-01
+"""You said autonomy."" ""I said empower.""",Francis Underwood,tv,House of Cards,Growth,leadership,,2026-01-01
 "Moira: Who put a ghost on my desk?
-Roland: That's the sonogram!",Moira Rose,tv,Schitt's Creek,Wit,"clever, irony"`
+Roland: That's the sonogram!",Moira Rose,tv,Schitt's Creek,Wit,"clever, irony",,2026-01-01`
     const { rows, errors } = parse(csv)
     expect(errors).toEqual([])
     expect(rows).toHaveLength(3)
@@ -52,20 +58,24 @@ Roland: That's the sonogram!",Moira Rose,tv,Schitt's Creek,Wit,"clever, irony"`
   })
 
   it('parses a trailing is_favorite flag (else false)', () => {
-    const { rows } = parse(`${HEADER}\nFav line,A,tv,T,Wit,,yes\nPlain line,A,tv,T,Wit,,`)
+    const { rows } = parse(
+      `${HEADER}\nFav line,A,tv,T,Wit,,yes,2026-01-01\nPlain line,A,tv,T,Wit,,,2026-01-01`,
+    )
     expect(rows[0]!.is_favorite).toBe(true)
     expect(rows[1]!.is_favorite).toBe(false)
   })
 
   it('auto-detects Chinese from CJK text', () => {
     const { rows } = parse(
-      `${HEADER}\n知者不惑,Confucius,book,Analects,Philosophy,wisdom`,
+      `${HEADER}\n知者不惑,Confucius,book,Analects,Philosophy,wisdom,,2026-01-01`,
     )
     expect(rows[0]!.language).toBe('zh')
   })
 
   it('matches Source/Category by label too (not just key)', () => {
-    const { rows, errors } = parse(`${HEADER}\nA quote,,TV Show,,Observation,`)
+    const { rows, errors } = parse(
+      `${HEADER}\nA quote,,TV Show,,Observation,,,2026-01-01`,
+    )
     expect(errors).toEqual([])
     expect(rows[0]).toMatchObject({ source_type: 'tv', category: 'observation' })
   })
@@ -92,7 +102,7 @@ Another,A,clipboard,T,Wit,
   })
 
   it('normalises category/source case and treats blank author/title as null', () => {
-    const { rows } = parse(`${HEADER}\nA quote,,TV,,WIT,`)
+    const { rows } = parse(`${HEADER}\nA quote,,TV,,WIT,,,2026-01-01`)
     expect(rows[0]).toMatchObject({
       author: null,
       title: null,
@@ -112,6 +122,7 @@ const row = (text: string): ParsedQuoteRow => ({
   tags: [],
   language: 'en',
   is_favorite: false,
+  created_at: '2026-01-01',
   text_norm: text.trim().toLowerCase(),
 })
 
@@ -175,6 +186,7 @@ describe('resolveLink / buildTitleIndex', () => {
       show_id: 'show-1',
       book_id: null,
       is_favorite: true,
+      created_at: '2026-01-01T00:00:00Z',
     })
   })
 })

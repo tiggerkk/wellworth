@@ -10,7 +10,7 @@ One CSV covers **English and Chinese** titles across **all three types** (TV / m
 ## Columns
 
 ```
-title,type,status,rating,lgbtq_rep,dynasty,watched_seasons,watched_episodes,is_favorite
+title,type,status,rating,lgbtq_rep,dynasty,watched_seasons,watched_episodes,is_favorite,start_date,end_date
 ```
 
 - **title** — the title to look up on TMDB. Required. (A CJK title is searched in Chinese.) For a
@@ -34,9 +34,18 @@ title,type,status,rating,lgbtq_rep,dynasty,watched_seasons,watched_episodes,is_f
   episode count is left blank.)
 - **is_favorite** — `true`/`1`/`yes` marks the title a favourite (the ♥). Optional (blank = not a
   favourite).
+- **start_date** — `YYYY-MM-DD`. The date you started watching. **Required for every status except
+  `want`** (which hasn't started — you may leave it blank). When set it also becomes the row's
+  `created_at`; left blank on a `want` row, the record is just dated by its import time.
+- **end_date** — `YYYY-MM-DD`. The finish / drop date. **Required for `watched` and `dropped` rows**;
+  left blank (and ignored) for `watching` / `want` rows.
 
-Rows with an unknown `type`/`status`/`lgbtq_rep`/`dynasty`, a missing `title`, or a bad `rating` are
-listed as skipped in the preview; everything else imports.
+The Library's **Date** sort uses `end_date` if present, else `start_date` — so finished titles sort by
+when you finished and in-progress/want titles by when you started.
+
+Rows with an unknown `type`/`status`/`lgbtq_rep`/`dynasty`, a missing `title`, a bad `rating`, a missing
+`start_date` on a non-`want` row, or a missing `end_date` on a watched/dropped row are listed as skipped
+in the preview; everything else imports.
 
 ## How resolution works
 
@@ -46,8 +55,8 @@ and takes the **top hit**, filling in poster, genres, director/creator, top cast
 review**, and rows TMDB can't find are flagged **No match** — open either and pick the right title (or
 skip to keep it). A niche documentary with **no match** imports with **null TMDB metadata and no poster**;
 top it up later by hand (paste a **Poster URL** on the Entry form) or via **Refresh from TMDB** once it's
-been contributed to TMDB. **Dates are left empty** for every imported row (start/finish/last-update are
-genuinely unknown), so imported history shows in the Library but not the Dashboard's "Recently Watched".
+been contributed to TMDB. **Dates come from your file** — `watched` rows carry their finish date, so
+imported history shows in both the Library **and** the Dashboard's "Recently Watched".
 
 Re-importing is **idempotent**: a row updates the existing show with the same case-insensitive
 **title** (type-agnostic), never a duplicate.

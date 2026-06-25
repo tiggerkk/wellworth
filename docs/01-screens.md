@@ -324,8 +324,7 @@ Wellness-module sub-settings. Auto-save on change. A back chevron returns to the
   **Want leaves Start Date blank** (not started yet).
 - **LGBT+ representation**: a None / Some / Significant **dropdown**.
 - **Start Date** and **Finish / Drop Date** share a line; each opens the **Calendar** modal and is
-  clearable. **Last Update Date** sits below Comments. Last Update defaults to today on a new entry;
-  Start Date stays blank until the status leaves Want.
+  clearable. Start Date stays blank until the status leaves Want.
 - **Total Seasons / Episodes** and **Watched Seasons / Episodes** (episodic types — TV + documentary):
   two labels over four side-by-side number inputs. **Poster URL** sits just above **Comments** (textarea).
 - **Search TMDB** (Chinese-aware: a CJK query is sent with `language=zh-CN`; documentary uses the /tv
@@ -361,7 +360,7 @@ in the global Settings at the Home level).
 
 - **Entry Form → Visible Fields** opens the shared **`VisibleFieldsSheet`** — toggles over the optional
   Entry/Edit fields, listed in **New/Edit form order**: Original Title, Year, **TMDB Metadata**, Rating,
-  LGBT+, Dynasty, the two dates, Season & Episode counts, **Poster URL**, Comments, **Last Update Date**.
+  LGBT+, Dynasty, the two dates, Season & Episode counts, **Poster URL**, Comments.
   Most are stored on `profile.show_visible_fields` (**NULL = all visible**, default-on) and auto-save per
   toggle; **Poster URL** is the exception (an `extra` interleaved in form-order position) — it's backed by
   `profile.show_poster_url_visible` (**default off**, kept separate because the visible-fields list is
@@ -376,9 +375,11 @@ in the global Settings at the Home level).
 
 An in-app bulk importer (the owner's choice over a script — same as Net Worth). One CSV covers English +
 Chinese across all three types. Columns:
-`title,type,status,rating,lgbtq_rep,dynasty,watched_seasons,watched_episodes,is_favorite` (`type` ∈
-`tv|movie|documentary`; `dynasty` kept only for Chinese titles; `is_favorite` optional trailing
-boolean — see `templates/shows-import-guide.md`).
+`title,type,status,rating,lgbtq_rep,dynasty,watched_seasons,watched_episodes,is_favorite,start_date,end_date`
+(`type` ∈ `tv|movie|documentary`; `dynasty` kept only for Chinese titles; `is_favorite` optional;
+`start_date` **required except for `want`** (which may omit it) and `end_date` **required for
+watched/dropped** (ignored otherwise); `created_at` is frozen to `start_date`, or — when a `want` row
+omits it — defaults to `updated_at` (import time) — see `templates/shows-import-guide.md`).
 `watched_episodes` accepts the literal **`all`** on a `watching`/`dropped` episodic row (with a
 `watched_seasons`), meaning "all episodes of the last-watched season" — resolved to that season's
 TMDB episode count at import (left blank if TMDB has no count); used anywhere else, the row is skipped.
@@ -391,8 +392,9 @@ TMDB episode count at import (left blank if TMDB has no count); used anywhere el
   pick the correct title (or leave it as-is to import with no metadata — common for niche documentaries,
   topped up later via a pasted Poster URL or Refresh).
 - **Import** writes all rows **idempotently** (dedup on lower(title) — re-running the same file updates
-  in place, never duplicates). Imported rows have **NULL dates**, so they appear in the Library but not
-  the Dashboard's "Recently Watched".
+  in place, never duplicates). Dates come from the file (`start_date` on every row except an optional
+  `want`, `end_date` on watched/dropped; `created_at` = `start_date`), so imported titles sort correctly and watched ones show
+  in the Dashboard's "Recently Watched".
 
 ## Books - Dashboard
 
@@ -452,8 +454,7 @@ TMDB episode count at import (left blank if TMDB has no count); used anywhere el
   row. **Dynasty** is a dropdown of the 13 values (全部 近代 … 先秦), defaulting to 全部, and is **editable
   only when the Title contains CJK**; for a non-Chinese title it's disabled and stored as NULL.
 - **Start Date** and **Finish / Drop Date** share a line; each opens the **Calendar** modal and is
-  clearable (Start defaults to today on a new entry). **Comments** (textarea), then **Last Update Date**
-  below it (defaults to today on a new entry).
+  clearable (Start defaults to today on a new entry). **Comments** (textarea) sits below.
 - Top-right **favourite heart** + the icon actions (Delete when editing · Reset · Create/Save), enabled
   only once something changes; Create needs a Title.
 - Which optional fields appear is controlled by **Books Settings → Visible Fields** (Title, Status, the
@@ -478,7 +479,7 @@ nav.
 
 - **Entry Form → Visible Fields** opens the shared **`VisibleFieldsSheet`** — toggles over the optional
   Entry/Edit fields in **New/Edit form order**: Author(s), Year, **Google Books Metadata**, Rating, LGBT+,
-  Dynasty, the two dates, Comments, **Last Update Date**. Stored on `profile.book_visible_fields`
+  Dynasty, the two dates, Comments. Stored on `profile.book_visible_fields`
   (**NULL = all visible**); auto-saves per toggle. Intro: "Choose which fields appear on the New/Edit Book
   form. Title and Status (and Search) are always shown." Title, Status and the Search button are always
   shown and not listed.
@@ -488,19 +489,22 @@ nav.
 ## Books - Import CSV (sheet, from Books Settings)
 
 An in-app bulk importer (the owner's choice over a script — same as Net Worth / Shows). Columns:
-`title,author,rating,lgbtq_rep,dynasty,end_date,is_favorite` (`dynasty` kept only for Chinese titles;
-`is_favorite` optional trailing boolean — see `templates/books-import-guide.md`).
+`title,author,status,rating,lgbtq_rep,dynasty,is_favorite,start_date,end_date` (`status` ∈
+`want|reading|read|dropped`; `dynasty` kept only for Chinese titles; `is_favorite` optional;
+`start_date` **required except for `want`** (which may omit it) and `end_date` **required for
+read/dropped** (ignored otherwise); `created_at` is frozen to `start_date`, or — when a `want` row omits
+it — defaults to `updated_at` (import time) — see `templates/books-import-guide.md`).
 
 - **Choose CSV** → rows are parsed/validated (bad rows listed as skipped) and each is **matched against
   Google Books** (searching `title author` for the top hit, Open Library fallback) with a progress count.
-- A **preview list** shows each row's cover + matched title/year + author(s) + the **Read** status chip +
+- A **preview list** shows each row's cover + matched title/year + author(s) + its status chip +
   the parsed rating/finish date; rows nothing was found for are flagged **No match** and rows whose top
   hit differs from the CSV title are flagged **review**. **Change** on any row opens the **Book Search**
   modal to pick the correct book (or leave it as-is to import with the CSV values + no metadata).
 - **Import** writes all rows **idempotently** (dedup on lower(title) + lower(author) — re-running the
-  same file updates in place, never duplicates). Every imported row is **Read**; `start_date` /
-  `last_update_date` are **NULL** and `end_date` comes from the file, so imported books appear in the
-  Library and (when dated) the Dashboard's "Recently Read".
+  same file updates in place, never duplicates). The row's **status** and dates come from the file
+  (`start_date` on every row except an optional `want`, `end_date` on read/dropped; `created_at` =
+  `start_date`), so imported books appear in the Library and (when read) the Dashboard's "Recently Read".
 
 ## Quotes - Moment of Zen (`/quotes`)
 
@@ -567,8 +571,9 @@ An in-app bulk importer (the owner's choice over a script — same as Net Worth 
 ## Quotes - Import CSV (sheet, from Quotes Settings)
 
 An in-app bulk importer (the owner's choice over a script — same as Net Worth / Shows / Books). Columns:
-`Quote,Author,Source,Title,Category,Tags,is_favorite` (`is_favorite` optional trailing boolean — see `templates/quotes-import-guide.md`). **No external API** —
-unlike Shows/Books, links resolve against the user's own Show/Book rows.
+`Quote,Author,Source,Title,Category,Tags,is_favorite,created_at` (`is_favorite` optional; `created_at`
+**required** `YYYY-MM-DD` and drives the Date sort — see `templates/quotes-import-guide.md`). **No
+external API** — unlike Shows/Books, links resolve against the user's own Show/Book rows.
 
 - **Choose CSV** → rows are parsed/validated; **Category** and **Source** are matched against the owner's
   **configured** lists by **key or label** (case-insensitive; blank/unknown → flagged + skipped), **Tags**

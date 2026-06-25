@@ -2,7 +2,16 @@ import { describe, expect, it } from 'vitest'
 import { buildImportRow, dedupKey, parseBooksCsv } from './books-import'
 import type { BookMetadata } from './books-api'
 
-const HEADER = ['title', 'author', 'rating', 'lgbtq_rep', 'end_date', 'is_favorite']
+const HEADER = [
+  'title',
+  'author',
+  'status',
+  'rating',
+  'lgbtq_rep',
+  'is_favorite',
+  'start_date',
+  'end_date',
+]
 
 describe('parseBooksCsv', () => {
   it('reports a missing required column', () => {
@@ -11,57 +20,95 @@ describe('parseBooksCsv', () => {
     expect(res.errors[0]).toMatch(/missing required column/i)
   })
 
-  it('parses a valid row and defaults blank lgbtq_rep to none', () => {
+  it('parses a valid Read row and defaults blank lgbtq_rep to none', () => {
     const res = parseBooksCsv([
       HEADER,
-      ['Dune', 'Frank Herbert', '5', '', '2026-03-01', 'true'],
+      ['Dune', 'Frank Herbert', 'read', '5', '', 'true', '2026-02-01', '2026-03-01'],
     ])
     expect(res.errors).toEqual([])
     expect(res.rows[0]).toEqual({
       title: 'Dune',
       author: 'Frank Herbert',
+      status: 'read',
       rating: 5,
       lgbtq_rep: 'none',
       dynasty: null,
-      end_date: '2026-03-01',
       is_favorite: true,
+      start_date: '2026-02-01',
+      end_date: '2026-03-01',
     })
   })
 
-  it('defaults a blank/omitted is_favorite to false', () => {
-    const res = parseBooksCsv([HEADER, ['Solo', 'Author', '', '', '']])
+  it('imports a non-Read status (Want needs only start_date)', () => {
+    const res = parseBooksCsv([
+      HEADER,
+      ['Solo', 'Author', 'want', '', '', '', '2026-02-01'],
+    ])
+    expect(res.errors).toEqual([])
+    expect(res.rows[0]).toMatchObject({
+      status: 'want',
+      start_date: '2026-02-01',
+      end_date: null,
+    })
     expect(res.rows[0]?.is_favorite).toBe(false)
   })
 
-  it('skips rows missing title or author', () => {
+  it('allows a blank start_date for a want row (created_at defaults to now())', () => {
+    const res = parseBooksCsv([HEADER, ['Solo', 'Author', 'want', '', '', '', '', '']])
+    expect(res.errors).toEqual([])
+    expect(res.rows[0]).toMatchObject({
+      status: 'want',
+      start_date: null,
+      end_date: null,
+    })
+  })
+
+  it('rejects an unknown status', () => {
+    const res = parseBooksCsv([HEADER, ['A', 'X', 'maybe', '', '', '', '2026-02-01']])
+    expect(res.rows).toHaveLength(0)
+    expect(res.errors[0]).toMatch(/status/i)
+  })
+
+  it('requires start_date, and end_date for finished (read/dropped) rows', () => {
     const res = parseBooksCsv([
       HEADER,
-      ['', 'Someone', '', '', ''],
-      ['Untitled', '', '', '', ''],
+      ['A', 'X', 'read', '', '', '', '', '2026-03-01'], // missing start_date
+      ['B', 'Y', 'read', '', '', '', '2026-02-01', ''], // read needs end_date
     ])
+    expect(res.rows).toHaveLength(0)
+    expect(res.errors[0]).toMatch(/start_date/i)
+    expect(res.errors[1]).toMatch(/end_date/i)
+  })
+
+  it('skips rows missing title or author', () => {
+    const res = parseBooksCsv([HEADER, ['', 'Someone'], ['Untitled', '']])
     expect(res.rows).toHaveLength(0)
     expect(res.errors).toHaveLength(2)
   })
 
-  it('rejects a bad rating and a bad end_date', () => {
+  it('rejects a bad rating', () => {
     const res = parseBooksCsv([
       HEADER,
-      ['A', 'X', '6', '', ''],
-      ['B', 'Y', '', '', '03/01/2026'],
+      ['A', 'X', 'read', '6', '', '', '2026-02-01', '2026-03-01'],
     ])
     expect(res.rows).toHaveLength(0)
     expect(res.errors[0]).toMatch(/rating/i)
-    expect(res.errors[1]).toMatch(/end_date/i)
   })
 
   it('rejects an unknown lgbtq_rep', () => {
-    const res = parseBooksCsv([HEADER, ['A', 'X', '', 'lots', '']])
+    const res = parseBooksCsv([
+      HEADER,
+      ['A', 'X', 'read', '', 'lots', '', '2026-02-01', '2026-03-01'],
+    ])
     expect(res.rows).toHaveLength(0)
     expect(res.errors[0]).toMatch(/lgbtq_rep/i)
   })
 
-  it('treats blank rating + end_date as null', () => {
-    const res = parseBooksCsv([HEADER, ['Solo', 'Author', '', 'some', '']])
+  it('treats a blank rating as null and ignores end_date for an unfinished row', () => {
+    const res = parseBooksCsv([
+      HEADER,
+      ['Solo', 'Author', 'reading', '', 'some', '', '2026-02-01', ''],
+    ])
     expect(res.rows[0]).toMatchObject({ rating: null, end_date: null, lgbtq_rep: 'some' })
   })
 })
@@ -80,14 +127,16 @@ describe('buildImportRow', () => {
   const input = {
     title: 'dune',
     author: 'frank herbert',
+    status: 'read' as const,
     rating: 4.5,
     lgbtq_rep: 'none' as const,
     dynasty: null,
-    end_date: '2026-03-01',
     is_favorite: true,
+    start_date: '2026-02-01',
+    end_date: '2026-03-01',
   }
 
-  it('uses the Google Books match and is always status read with NULL start/last-update', () => {
+  it('uses the Google Books match and carries status + CSV dates (created_at = start_date)', () => {
     const match: BookMetadata = {
       title: 'Dune',
       authors: ['Frank Herbert'],
@@ -118,9 +167,9 @@ describe('buildImportRow', () => {
       lgbtq_rep: 'none',
       dynasty: null,
       is_favorite: true,
-      start_date: null,
+      start_date: '2026-02-01',
       end_date: '2026-03-01',
-      last_update_date: null,
+      created_at: '2026-02-01T00:00:00Z',
       comments: null,
     })
   })
@@ -135,9 +184,18 @@ describe('buildImportRow', () => {
       cover_url: null,
       google_books_id: null,
       rating: 4.5,
+      start_date: '2026-02-01',
       end_date: '2026-03-01',
-      start_date: null,
-      last_update_date: null,
+      created_at: '2026-02-01T00:00:00Z',
     })
+  })
+
+  it('a want row with no start_date omits created_at (defaults to now() = updated_at)', () => {
+    const row = buildImportRow(
+      { ...input, status: 'want', start_date: null, end_date: null },
+      null,
+    )
+    expect(row.start_date).toBeNull()
+    expect(row.created_at).toBeUndefined()
   })
 })

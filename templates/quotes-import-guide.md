@@ -8,7 +8,7 @@ re-runs are safe.
 ## Columns
 
 ```
-Quote,Author,Source,Title,Category,Tags,is_favorite
+Quote,Author,Source,Title,Category,Tags,is_favorite,created_at
 ```
 
 - **Quote** — the quote text. **Required.** May contain commas, double-quotes, and even line breaks —
@@ -29,6 +29,8 @@ Quote,Author,Source,Title,Category,Tags,is_favorite
   Wrap it in quotes so the commas stay inside one cell; each tag is then trimmed and de-duplicated.
 - **is_favorite** — `true`/`1`/`yes` marks the quote a favourite (the ♥). Optional (blank = not a
   favourite).
+- **created_at** — `YYYY-MM-DD`. **Required** — the date to record the quote under; it drives the
+  Library/Zen **Date** sort (so older entries can sort after newer ones however you like).
 
 The **language** (English / Chinese) is detected automatically from the text — any CJK character marks
 the quote as Chinese.
@@ -36,8 +38,9 @@ the quote as Chinese.
 ## What gets imported
 
 The preview splits your file into **new** (imported), **duplicate** (skipped — same text as a quote you
-already have, or repeated within the file), and **flagged** (a missing Quote, a bad Category, or an
-unknown Source — listed with line numbers and **not** imported). Only the new, valid rows are written.
+already have, or repeated within the file), and **flagged** (a missing Quote, a bad Category, an unknown
+Source, or a missing/malformed `created_at` — listed with line numbers and **not** imported). Only the
+new, valid rows are written.
 
 ## Keep your real file private
 

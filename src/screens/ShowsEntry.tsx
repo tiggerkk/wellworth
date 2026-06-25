@@ -58,7 +58,6 @@ interface ShowDraft {
   is_favorite: boolean
   start_date: IsoDate | null
   end_date: IsoDate | null
-  last_update_date: IsoDate | null
   total_seasons: string
   total_episodes: string
   watched_seasons: string
@@ -87,7 +86,6 @@ interface ShowPrefill {
 }
 
 function blankDraft(prefill?: ShowPrefill): ShowDraft {
-  const today = todayLocal()
   return {
     type: prefill?.type ?? 'tv',
     title: prefill?.title ?? '',
@@ -102,7 +100,6 @@ function blankDraft(prefill?: ShowPrefill): ShowDraft {
     // the status moves to Watching/Watched/Dropped (see `changeStatus`).
     start_date: null,
     end_date: null,
-    last_update_date: today,
     total_seasons: '',
     total_episodes: '',
     watched_seasons: '',
@@ -133,7 +130,6 @@ function draftFromRow(row: ShowRow): ShowDraft {
     is_favorite: row.is_favorite,
     start_date: row.start_date,
     end_date: row.end_date,
-    last_update_date: row.last_update_date,
     total_seasons: numStr(row.total_seasons),
     total_episodes: numStr(row.total_episodes),
     watched_seasons: numStr(row.watched_seasons),
@@ -198,7 +194,7 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
 
   const [draft, setDraft] = useState<ShowDraft>(initial)
   const [saving, setSaving] = useState(false)
-  const [datePicker, setDatePicker] = useState<null | 'start' | 'end' | 'last'>(null)
+  const [datePicker, setDatePicker] = useState<null | 'start' | 'end'>(null)
   const [searchOpen, setSearchOpen] = useState(false)
   const [metaLoading, setMetaLoading] = useState(false)
   const [metaError, setMetaError] = useState(false)
@@ -345,10 +341,9 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
     update(patch)
   }
 
-  function setDate(which: 'start' | 'end' | 'last', d: IsoDate | null) {
+  function setDate(which: 'start' | 'end', d: IsoDate | null) {
     if (which === 'start') update({ start_date: d })
-    else if (which === 'end') update({ end_date: d })
-    else update({ last_update_date: d })
+    else update({ end_date: d })
   }
 
   async function save() {
@@ -372,7 +367,6 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
         is_favorite: draft.is_favorite,
         start_date: draft.start_date,
         end_date: draft.end_date,
-        last_update_date: draft.last_update_date,
         total_seasons: episodic ? intOrNull(draft.total_seasons) : null,
         total_episodes: episodic ? intOrNull(draft.total_episodes) : null,
         watched_seasons: episodic ? intOrNull(draft.watched_seasons) : null,
@@ -410,11 +404,7 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
   }
 
   const pickerDay =
-    (datePicker === 'start'
-      ? draft.start_date
-      : datePicker === 'end'
-        ? draft.end_date
-        : draft.last_update_date) ?? todayLocal()
+    (datePicker === 'start' ? draft.start_date : draft.end_date) ?? todayLocal()
 
   return (
     <>
@@ -727,15 +717,6 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
               className={`mt-1 ${inputClass} resize-none`}
             />
           </label>
-        )}
-
-        {show('last_update_date') && (
-          <DateField
-            label="Last Update Date"
-            value={draft.last_update_date}
-            onPick={() => setDatePicker('last')}
-            onClear={() => setDate('last', null)}
-          />
         )}
 
         {id && (

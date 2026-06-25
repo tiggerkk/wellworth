@@ -3,10 +3,19 @@
  * `templates/books-import-guide.md`). No I/O and no Google Books calls — the import screen reads the
  * file, resolves each row against Google Books, and writes via `saveImportedBooks`.
  *
- * Column spec: `title,author,rating,lgbtq_rep,dynasty,end_date,is_favorite`. Every imported row is a **Read** book;
- * the per-row lookup uses title **and** author to disambiguate (book titles collide far more than shows).
+ * Column spec: `title,author,status,rating,lgbtq_rep,dynasty,is_favorite,start_date,end_date`.
+ * `status` is want/reading/read/dropped; `start_date` is required on every row; `end_date` is required
+ * for finished rows (read/dropped) and ignored otherwise; `created_at` is frozen to `start_date`
+ * (`updated_at` is left to the DB). The per-row lookup uses title **and** author to disambiguate
+ * (book titles collide far more than shows).
  */
-import { LGBTQ_REPS, type BookInsert, type LgbtqRep } from './books'
+import {
+  BOOK_STATUSES,
+  LGBTQ_REPS,
+  type BookInsert,
+  type BookStatus,
+  type LgbtqRep,
+} from './books'
 import type { BookMetadata } from './books-api'
 import type { IsoDate } from './date'
 import { containsCjk } from './cjk'
@@ -17,12 +26,16 @@ const REQUIRED_COLUMNS = ['title', 'author']
 export interface ParsedBookRow {
   title: string
   author: string
+  status: BookStatus
   rating: number | null
   lgbtq_rep: LgbtqRep
   /** Owner-supplied dynasty (Chinese titles only); validated against `DYNASTIES`, else null. */
   dynasty: Dynasty | null
-  end_date: IsoDate | null
   is_favorite: boolean
+  /** Date the book was started. Required except for a `want` row, where it may be null. */
+  start_date: IsoDate | null
+  /** Finish / drop date — set only for finished rows (read/dropped), else null. */
+  end_date: IsoDate | null
 }
 
 export interface BooksImportResult {
@@ -33,9 +46,15 @@ export interface BooksImportResult {
 /** The `book` insert fields produced from a CSV row + its Google Books match (user_id added by the data layer). */
 export type ImportBookRow = Omit<BookInsert, 'user_id'>
 
+const statusSet = new Set<string>(BOOK_STATUSES)
 const lgbtqSet = new Set<string>(LGBTQ_REPS)
 const dynastySet = new Set<string>(DYNASTIES)
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
+
+/** Read/dropped rows are "finished" — they carry a finish date (`end_date`). */
+function isFinishedBookStatus(status: BookStatus): boolean {
+  return status === 'read' || status === 'dropped'
+}
 
 /** Lenient truthy parse for a CSV boolean cell: `true/1/yes/y` (case-insensitive) ⇒ true. */
 function parseBool(raw: string): boolean {
@@ -68,6 +87,15 @@ export function parseBooksCsv(rows: string[][]): BooksImportResult {
     const author = col(cells, 'author')
     if (title === '' || author === '') {
       errors.push(`Row ${line}: missing title or author — skipped.`)
+      continue
+    }
+
+    const statusRaw = col(cells, 'status')
+    const status = statusRaw.toLowerCase()
+    if (!statusSet.has(status)) {
+      errors.push(
+        `Row ${line} ("${title}"): status "${statusRaw}" must be want/reading/read/dropped — skipped.`,
+      )
       continue
     }
 
@@ -105,12 +133,31 @@ export function parseBooksCsv(rows: string[][]): BooksImportResult {
       dynasty = dynastyRaw as Dynasty
     }
 
-    const endRaw = col(cells, 'end_date')
+    // `start_date` is required except for a `want` row (not started yet), where it may be blank.
+    const startRaw = col(cells, 'start_date')
+    let start_date: IsoDate | null = null
+    if (startRaw !== '') {
+      if (!ISO_DATE.test(startRaw)) {
+        errors.push(
+          `Row ${line} ("${title}"): start_date "${startRaw}" must be a date (YYYY-MM-DD) — skipped.`,
+        )
+        continue
+      }
+      start_date = startRaw
+    } else if (status !== 'want') {
+      errors.push(
+        `Row ${line} ("${title}"): start_date is required (YYYY-MM-DD) unless status is want — skipped.`,
+      )
+      continue
+    }
+
+    // `end_date` is required for finished rows; for reading/want rows any value is ignored.
     let end_date: IsoDate | null = null
-    if (endRaw !== '') {
+    if (isFinishedBookStatus(status as BookStatus)) {
+      const endRaw = col(cells, 'end_date')
       if (!ISO_DATE.test(endRaw)) {
         errors.push(
-          `Row ${line} ("${title}"): end_date "${endRaw}" must be YYYY-MM-DD — skipped.`,
+          `Row ${line} ("${title}"): end_date "${endRaw}" is required (YYYY-MM-DD) for read/dropped — skipped.`,
         )
         continue
       }
@@ -120,11 +167,13 @@ export function parseBooksCsv(rows: string[][]): BooksImportResult {
     out.push({
       title,
       author,
+      status: status as BookStatus,
       rating,
       lgbtq_rep: lgbtq_rep as LgbtqRep,
       dynasty,
-      end_date,
       is_favorite: parseBool(col(cells, 'is_favorite')),
+      start_date,
+      end_date,
     })
   }
 
@@ -137,17 +186,18 @@ export function dedupKey(title: string, author: string | null | undefined): stri
 }
 
 /**
- * Combine a parsed CSV row with its Google Books match (or null) into a `book` insert. Every imported
- * row is **Read**; `start_date` and `last_update_date` are left NULL (genuinely unknown), `end_date`
- * comes from the file. A no-match row keeps the CSV title/author with null metadata so the owner can
- * fix it later (open → search → select).
+ * Combine a parsed CSV row with its Google Books match (or null) into a `book` insert. `status` comes
+ * from the CSV; `start_date` may be null for a `want` row; `end_date` only for finished rows. When
+ * `start_date` is set, `created_at` is frozen to it; when it's null (a not-yet-started `want`),
+ * `created_at` is left to the DB default so it equals `updated_at` (= import time). A no-match row keeps
+ * the CSV title/author with null metadata so the owner can fix it later (open → search → select).
  */
 export function buildImportRow(
   input: ParsedBookRow,
   match: BookMetadata | null,
 ): ImportBookRow {
   return {
-    status: 'read',
+    status: input.status,
     title: match?.title ?? input.title,
     authors: match?.authors ?? [input.author],
     year: match?.year ?? null,
@@ -164,9 +214,10 @@ export function buildImportRow(
     // Dynasty is kept only for a Chinese title (consistent with the Entry form).
     dynasty: containsCjk(match?.title ?? input.title) ? input.dynasty : null,
     is_favorite: input.is_favorite,
-    start_date: null,
+    start_date: input.start_date,
     end_date: input.end_date,
-    last_update_date: null,
+    // Freeze created_at to start_date; when absent (a `want` row), let it default to now() = updated_at.
+    ...(input.start_date ? { created_at: `${input.start_date}T00:00:00Z` } : {}),
     comments: null,
   }
 }

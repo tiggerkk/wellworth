@@ -292,13 +292,11 @@ export function ShowsLibrary() {
                       />
                       {s.rating ? <StarRating value={s.rating} size={13} /> : null}
                     </span>
-                    {(s.genres?.[0] || s.end_date || s.last_update_date) && (
+                    {(s.genres?.[0] || s.end_date || s.start_date) && (
                       <span className="mt-0.5 flex items-center gap-2 text-xs text-text-tertiary">
                         {s.genres?.[0] && <span>{s.genres[0]}</span>}
-                        {(s.end_date ?? s.last_update_date) && (
-                          <span>
-                            {formatMonthDay((s.end_date ?? s.last_update_date)!)}
-                          </span>
+                        {(s.end_date ?? s.start_date) && (
+                          <span>{formatMonthDay((s.end_date ?? s.start_date)!)}</span>
                         )}
                       </span>
                     )}

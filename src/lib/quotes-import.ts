@@ -4,10 +4,12 @@
  * (via the shared RFC-4180 `parseCsv`), resolves each row's Title against the user's local Show/Book
  * rows, and writes via `saveImportedQuotes`.
  *
- * Column spec: `Quote,Author,Source,Title,Category,Tags,is_favorite`. Quote + Category are required;
- * Source + Category must match one of the owner's configured Source Type / Category values (by key OR
- * label, case-insensitive — the values are configurable in Quotes Settings); Tags is a single (quoted)
- * cell of comma-separated tags; is_favorite is an optional trailing boolean (`true/1/yes/y`).
+ * Column spec: `Quote,Author,Source,Title,Category,Tags,is_favorite,created_at`. Quote + Category are
+ * required; Source + Category must match one of the owner's configured Source Type / Category values
+ * (by key OR label, case-insensitive — the values are configurable in Quotes Settings); Tags is a
+ * single (quoted) cell of comma-separated tags; is_favorite is an optional trailing boolean
+ * (`true/1/yes/y`); `created_at` (required, YYYY-MM-DD) is the date the quote is recorded under and
+ * drives the Library/Zen "Date" sort (`updated_at` is left to the DB).
  */
 import { detectLanguage, type QuoteInsert } from './quotes'
 import {
@@ -16,9 +18,11 @@ import {
   type QuoteCategoryConfig,
   type QuoteSourceTypeConfig,
 } from './quotes-config'
+import type { IsoDate } from './date'
 import type { QuoteLanguage } from '../constants/quotes'
 
 const REQUIRED_COLUMNS = ['quote', 'source', 'category']
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
 
 export interface ParsedQuoteRow {
   text: string
@@ -30,6 +34,8 @@ export interface ParsedQuoteRow {
   tags: string[]
   language: QuoteLanguage
   is_favorite: boolean
+  /** Date the quote is recorded under (drives the "Date" sort); frozen onto `created_at`. */
+  created_at: IsoDate
   /** lower(trim(text)) — the app-side mirror of the DB's generated `text_norm`. */
   text_norm: string
 }
@@ -99,6 +105,14 @@ export function parseQuotesCsv(
       continue
     }
 
+    const createdRaw = col(cells, 'created_at')
+    if (!ISO_DATE.test(createdRaw)) {
+      errors.push(
+        `Row ${line}: created_at "${createdRaw}" must be a date (YYYY-MM-DD) — skipped.`,
+      )
+      continue
+    }
+
     const author = col(cells, 'author') || null
     const title = col(cells, 'title') || null
     // Tags is one (quoted) cell of comma-separated tags: read the whole cell, THEN split on `,`.
@@ -116,6 +130,7 @@ export function parseQuotesCsv(
       tags,
       language: detectLanguage(text),
       is_favorite: parseBool(col(cells, 'is_favorite')),
+      created_at: createdRaw,
       text_norm: normalizeQuoteText(text),
     })
   }
@@ -191,10 +206,13 @@ export function resolveLink(
   return { show_id: null, book_id: null }
 }
 
-/** The `quote` insert fields produced from a parsed row (user_id + generated text_norm added later). */
+/**
+ * The `quote` insert fields produced from a parsed row (user_id + generated text_norm added later).
+ * `created_at` IS supplied (frozen from the CSV); `updated_at` is left to the DB.
+ */
 export type QuoteImportPayload = Omit<
   QuoteInsert,
-  'user_id' | 'text_norm' | 'id' | 'created_at' | 'updated_at'
+  'user_id' | 'text_norm' | 'id' | 'updated_at'
 >
 
 /** Combine a parsed row with its resolved local link into a `quote` insert payload. */
@@ -213,6 +231,7 @@ export function buildImportPayload(
     tags: row.tags,
     language: row.language,
     is_favorite: row.is_favorite,
+    created_at: `${row.created_at}T00:00:00Z`,
     show_id,
     book_id,
   }

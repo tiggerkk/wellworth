@@ -200,8 +200,7 @@ The migration is `supabase/migrations/03_networth_schema.sql`.
 - `lgbtq_rep` TEXT DEFAULT 'none' — LGBT+ representation: 'none' | 'some' | 'significant' (CHECK)
 - `dynasty` TEXT NULL — Chinese dynasty (CHECK against the 13 `DYNASTIES` values — `全部` (all/catch-all) + 12 dynasties — in `src/constants/dynasty.ts`); set **only for Chinese titles**, NULL otherwise. Editable in the Entry form only when the title contains CJK.
 - `is_favorite` BOOLEAN NOT NULL DEFAULT false — starred title (the ♥; favourites filter + Dashboard shelf)
-- `start_date` DATE NULL, `end_date` DATE NULL — finish/drop date
-- `last_update_date` DATE NULL — defaults to today in the UI, editable; NULL for imported rows
+- `start_date` DATE NULL, `end_date` DATE NULL — start and finish/drop date; the CSV importer sets `start_date` on every row except an optional `want`, and `end_date` for watched/dropped
 - `comments` TEXT NULL
 - `created_at`, `updated_at`
 - Index on (`user_id`, `status`) and on (`user_id`, `is_favorite`) — the latter backs the favourites filter.
@@ -227,8 +226,7 @@ Standard rules apply: own `user_id` for direct RLS, four owner policies using `(
 - `lgbtq_rep` TEXT DEFAULT 'none' — LGBT+ representation: 'none' | 'some' | 'significant' (CHECK)
 - `dynasty` TEXT NULL — Chinese dynasty (CHECK against the 13 `DYNASTIES` values — `全部` (all/catch-all) + 12 dynasties — in `src/constants/dynasty.ts`); set **only for Chinese titles**, NULL otherwise. Editable in the Entry form only when the title contains CJK.
 - `is_favorite` BOOLEAN NOT NULL DEFAULT false — starred book (the ♥; favourites filter + Dashboard shelf)
-- `start_date` DATE NULL, `end_date` DATE NULL — finish/drop date
-- `last_update_date` DATE NULL — defaults to today in the UI, editable; NULL for imported rows
+- `start_date` DATE NULL, `end_date` DATE NULL — start and finish/drop date; the CSV importer sets `start_date` on every row except an optional `want`, and `end_date` for read/dropped
 - `comments` TEXT NULL
 - `created_at`, `updated_at`
 - Index on (`user_id`, `status`) and on (`user_id`, `is_favorite`).

@@ -208,10 +208,12 @@ the cloud is authoritative (this also sidesteps iOS PWA storage eviction).
   shared `src/lib/csv.ts`, `buildImportRow`, `dedupKey`); the sheet resolves each row against TMDB
   (Chinese-aware `searchTitles` top hit + `getTitleDetails`, small concurrency pool) with an inline fix
   (`TitleSearchSheet`) for no-match / review rows — a niche documentary with no match imports with null
-  TMDB metadata + null poster (top up later via a pasted Poster URL or Refresh). The CSV's trailing
+  TMDB metadata + null poster (top up later via a pasted Poster URL or Refresh). The CSV's
   `is_favorite` column is carried through. Commit is the **idempotent** `saveImportedShows`
-  (`src/data/show.ts`) — dedup on lower(title), update-not-duplicate. Imported rows get **NULL dates**.
-  Sanitized template + guide in `templates/`.
+  (`src/data/show.ts`) — dedup on lower(title), update-not-duplicate. The CSV carries the dates —
+  `start_date` (required except for an optional `want`), `end_date` on watched/dropped, and `created_at`
+  frozen to `start_date` (or, when a `want` row omits it, left to default so it equals `updated_at`;
+  `updated_at` is always left to the DB). Sanitized template + guide in `templates/`.
 
 ## Books
 
@@ -271,12 +273,15 @@ _Books re-skins Shows (see the Shows section); only the differences are noted._
   shown).
 - **CSV importer (in-app):** enabled by the Settings toggle → `ImportBooksSheet`. Pure
   parse/build in `src/lib/books-import.ts` (`parseBooksCsv` via the shared `src/lib/csv.ts`,
-  `buildImportRow`, `dedupKey`) — columns `title,author,rating,lgbtq_rep,end_date,is_favorite`; the sheet resolves
+  `buildImportRow`, `dedupKey`) — columns
+  `title,author,status,rating,lgbtq_rep,dynasty,is_favorite,start_date,end_date`; the sheet resolves
   each row against Google Books (`searchBooks` of `title author` top hit + `getBookDetails`, a small
   concurrency pool) with an inline fix (`BookSearchSheet`) for no-match / review rows; commit is the
   **idempotent** `saveImportedBooks` (`src/data/book.ts`) — dedup on lower(title) + lower(author),
-  update-not-duplicate. Every imported row is **Read** with **NULL `start_date`/`last_update_date`**
-  (`end_date` from the file). Reuses the in-house RFC-4180 parser `src/lib/csv.ts` (**not Papa Parse** —
+  update-not-duplicate. The CSV carries the **status** (want/reading/read/dropped) and dates —
+  `start_date` (required except for an optional `want`), `end_date` on read/dropped, and `created_at`
+  frozen to `start_date` (or, when a `want` row omits it, left to default so it equals `updated_at`;
+  `updated_at` is always left to the DB). Reuses the in-house RFC-4180 parser `src/lib/csv.ts` (**not Papa Parse** —
   verified sufficient for the quoted/embedded-comma cells in the real Quotes seed). Sanitized template +
   guide in `templates/`.
 
@@ -345,10 +350,11 @@ _Quotes re-skins Books/Shows; only the differences are noted. There is **no exte
   through `useProfile` + `isFieldVisible` (Quote Text + Category always shown).
 - **CSV importer (in-app):** enabled by the Settings toggle → `ImportQuotesSheet`. Pure parse/validate
   in `src/lib/quotes-import.ts` (`parseQuotesCsv(rows, sourceTypes, categories)` via the shared
-  `src/lib/csv.ts`; columns `Quote,Author,Source,Title,Category,Tags,is_favorite`; **Category/Source
-  matched against the configured lists by key OR label (case-insensitive) via `matchKeyOrLabel`**, unknown
-  ⇒ skip-with-error; **Tags read-whole-cell-then-split-on-`,`**, Language auto-detected, the trailing
-  `is_favorite` boolean carried through), `partitionNewRows` (existing + in-file dedup on
+  `src/lib/csv.ts`; columns `Quote,Author,Source,Title,Category,Tags,is_favorite,created_at`;
+  **Category/Source matched against the configured lists by key OR label (case-insensitive) via
+  `matchKeyOrLabel`**, unknown ⇒ skip-with-error; **Tags read-whole-cell-then-split-on-`,`**, Language
+  auto-detected, the `is_favorite` boolean carried through, and a **required `created_at`** (`YYYY-MM-DD`,
+  frozen onto the row so it drives the Date sort; `updated_at` left to the DB)), `partitionNewRows` (existing + in-file dedup on
   `lower(trim(text))`), and `buildTitleIndex`/`resolveLink` (optional Title→Show/Book link **by the source
   type's `linkKind`**: show→Show, book→Book, none→neither). The sheet (which also reads the profile lists)
   loads existing-norms + the local title index once (no external API, no concurrency pool), previews

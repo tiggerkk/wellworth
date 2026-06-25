@@ -202,7 +202,8 @@ function sortKey(book: BookRow, field: SortField): string | number | null {
       // Chronological oldest→newest ascending (先秦 first … 近代 … 全部 last); non-Chinese sorts last.
       return dynastySortRank(book.dynasty)
     case 'date':
-      return book.end_date ?? book.last_update_date ?? book.updated_at
+      // Finish date if any, else the start/added date. (`updated_at` is import-time noise here.)
+      return book.end_date ?? book.start_date
   }
 }
 
@@ -245,7 +246,6 @@ export const BOOK_ENTRY_FIELDS: { key: string; label: string }[] = [
   { key: 'start_date', label: 'Start Date' },
   { key: 'end_date', label: 'Finish / Drop Date' },
   { key: 'comments', label: 'Comments' },
-  { key: 'last_update_date', label: 'Last Update Date' },
 ]
 
 /** Whether an Entry field is visible. NULL stored prefs (or an unknown key) ⇒ visible (default-on). */

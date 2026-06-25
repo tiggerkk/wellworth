@@ -130,7 +130,6 @@ export type Database = {
           is_favorite: boolean
           isbn: string | null
           language: string | null
-          last_update_date: string | null
           lgbtq_rep: string
           open_library_id: string | null
           page_count: number | null
@@ -156,7 +155,6 @@ export type Database = {
           is_favorite?: boolean
           isbn?: string | null
           language?: string | null
-          last_update_date?: string | null
           lgbtq_rep?: string
           open_library_id?: string | null
           page_count?: number | null
@@ -182,7 +180,6 @@ export type Database = {
           is_favorite?: boolean
           isbn?: string | null
           language?: string | null
-          last_update_date?: string | null
           lgbtq_rep?: string
           open_library_id?: string | null
           page_count?: number | null
@@ -792,7 +789,6 @@ export type Database = {
           id: string
           imdb_id: string | null
           is_favorite: boolean
-          last_update_date: string | null
           lgbtq_rep: string
           original_language: string | null
           original_title: string | null
@@ -824,7 +820,6 @@ export type Database = {
           id?: string
           imdb_id?: string | null
           is_favorite?: boolean
-          last_update_date?: string | null
           lgbtq_rep?: string
           original_language?: string | null
           original_title?: string | null
@@ -856,7 +851,6 @@ export type Database = {
           id?: string
           imdb_id?: string | null
           is_favorite?: boolean
-          last_update_date?: string | null
           lgbtq_rep?: string
           original_language?: string | null
           original_title?: string | null

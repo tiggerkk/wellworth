@@ -46,7 +46,6 @@ interface BookDraft {
   is_favorite: boolean
   start_date: IsoDate | null
   end_date: IsoDate | null
-  last_update_date: IsoDate | null
   comments: string
   // Carry-through metadata (Google Books / Open Library populate these in M3; persisted as-is).
   cover_url: string | null
@@ -74,7 +73,6 @@ function blankDraft(): BookDraft {
     is_favorite: false,
     start_date: today,
     end_date: null,
-    last_update_date: today,
     comments: '',
     cover_url: null,
     description: null,
@@ -99,7 +97,6 @@ function draftFromRow(row: BookRow): BookDraft {
     is_favorite: row.is_favorite,
     start_date: row.start_date,
     end_date: row.end_date,
-    last_update_date: row.last_update_date,
     comments: row.comments ?? '',
     cover_url: row.cover_url,
     description: row.description,
@@ -151,7 +148,7 @@ function BookForm({ id, initial }: { id: string | undefined; initial: BookDraft 
 
   const [draft, setDraft] = useState<BookDraft>(initial)
   const [saving, setSaving] = useState(false)
-  const [datePicker, setDatePicker] = useState<null | 'start' | 'end' | 'last'>(null)
+  const [datePicker, setDatePicker] = useState<null | 'start' | 'end'>(null)
   const [searchOpen, setSearchOpen] = useState(false)
   const [metaLoading, setMetaLoading] = useState(false)
   const [metaError, setMetaError] = useState(false)
@@ -208,10 +205,9 @@ function BookForm({ id, initial }: { id: string | undefined; initial: BookDraft 
     update(patch)
   }
 
-  function setDate(which: 'start' | 'end' | 'last', d: IsoDate | null) {
+  function setDate(which: 'start' | 'end', d: IsoDate | null) {
     if (which === 'start') update({ start_date: d })
-    else if (which === 'end') update({ end_date: d })
-    else update({ last_update_date: d })
+    else update({ end_date: d })
   }
 
   async function save() {
@@ -238,7 +234,6 @@ function BookForm({ id, initial }: { id: string | undefined; initial: BookDraft 
         is_favorite: draft.is_favorite,
         start_date: draft.start_date,
         end_date: draft.end_date,
-        last_update_date: draft.last_update_date,
         comments: draft.comments.trim() || null,
         cover_url: draft.cover_url,
         description: draft.description,
@@ -271,11 +266,7 @@ function BookForm({ id, initial }: { id: string | undefined; initial: BookDraft 
   }
 
   const pickerDay =
-    (datePicker === 'start'
-      ? draft.start_date
-      : datePicker === 'end'
-        ? draft.end_date
-        : draft.last_update_date) ?? todayLocal()
+    (datePicker === 'start' ? draft.start_date : draft.end_date) ?? todayLocal()
 
   return (
     <>
@@ -488,15 +479,6 @@ function BookForm({ id, initial }: { id: string | undefined; initial: BookDraft 
               className={`mt-1 ${inputClass} resize-none`}
             />
           </label>
-        )}
-
-        {show('last_update_date') && (
-          <DateField
-            label="Last Update Date"
-            value={draft.last_update_date}
-            onPick={() => setDatePicker('last')}
-            onClear={() => setDate('last', null)}
-          />
         )}
 
         {id && (

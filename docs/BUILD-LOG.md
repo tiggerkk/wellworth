@@ -57,7 +57,7 @@ been merged into the permanent docs (`00-PRD … 05-seed-data` + OWNER-RUNBOOK) 
   seeded owner profile + skips onboarding; blank ⇒ a single-entry allowlist is the owner). All
   build-time `VITE_` vars.
 - **Gates:** husky `.husky/pre-commit` → lint-staged + `typecheck` + `test`; GitHub Actions
-  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 467 Vitest tests (pure helpers).
+  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 475 Vitest tests (pure helpers).
 - **Deploy status:** Deployed. GitHub `main` → Vercel auto-deploy; the production URL is in the
   Supabase redirect URLs + Google JS origins (see `OWNER-RUNBOOK.md`). Installed + tested on iPhone (PWA).
 - Conventions (DB-access-via-`src/data`, metric storage, generated `database.ts` contract, etc.) live
@@ -2063,3 +2063,36 @@ derives from the single `DYNASTIES` constant.
   indexed; non-Chinese → null, sorted last by the existing comparator) and pointed both `shows.ts` /
   `books.ts` `sortKey('dynasty')` at it (replacing the old `DYNASTIES.indexOf`). One `DYNASTIES` list
   still drives both orderings. Sort tests updated to assert asc + desc + `全部`-last + non-Chinese-last.
+
+### Removed `last_update_date`; importer-supplied dates (Shows/Books/Quotes)
+
+Two owner requests, one pass. **(1)** Dropped the `last_update_date` column from `show` + `book` — it was
+a UI-only date (defaulted to today, editable) whose sole job was a fallback behind `end_date` in the
+Library Date sort + row display; the automatic `updated_at` already covers "row last touched". **(2)** The
+three CSV importers now carry **real dates** so back-catalogue rows sort correctly and populate the
+"Recently Watched/Read" shelves.
+
+- **Schema:** removed `last_update_date date` from `04_shows_schema.sql` + `06_books_schema.sql` (edited
+  in place; owner `db reset --linked` + `gen:types`). `database.ts` hand-aligned to match (regen confirms).
+- **`moddatetime` constraint drove the design.** The triggers are `BEFORE UPDATE` only, so a
+  client-supplied `updated_at` is honoured on INSERT but **forced to `now()` on UPDATE**. Rather than
+  fight it, the CSV carries explicit `start_date`/`end_date`, the importer **freezes `created_at =
+start_date`** (a plain column, honoured on insert _and_ update), and **`updated_at` is left to the DB**
+  (= import time). So `updated_at` is now a pure audit column, used by no sort/display.
+- **Importers** (`shows-import.ts` / `books-import.ts` / `quotes-import.ts`): new trailing columns —
+  Shows/Books `start_date,end_date` (start required on every row **except `want`** — a not-yet-started
+  `want` may leave it blank; end required for finished = watched/dropped / read/dropped, ignored
+  otherwise; `created_at = start_date`, or — when a `want` row omits `start_date` — left to default so it
+  equals `updated_at` = import time), and **Books also gains a `status` column** (was hardcoded `read` —
+  now want/reading/read/dropped). Quotes gains a **required `created_at`** (drives its existing
+  `created_at` Date sort). All validate as `YYYY-MM-DD`; written as `${date}T00:00:00Z`.
+  `QuoteImportPayload` stopped `Omit`-ing `created_at`.
+- **Date sort (Shows/Books)** changed `end_date ?? last_update_date ?? updated_at` → **`end_date ??
+start_date`** (and the Library row's secondary date likewise); `updated_at` is import-time noise now.
+- **Entry forms** lose the 3-way date picker's `'last'` branch (now Start/Finish only) and the
+  Last-Update field; removing it from `SHOW_ENTRY_FIELDS`/`BOOK_ENTRY_FIELDS` also drops it from the
+  **Visible Fields** modal. Templates + three guides + docs (`01-screens`, `02-tech-spec`,
+  `03-data-model`) updated; importer tests rewritten for the new columns. All gates green.
+- **Known limit:** `updated_at` can't be set to a historical value via the importer (the trigger), and a
+  re-import over an existing row rewrites `created_at` to the CSV `start_date` (idempotent) — both fine
+  for the owner's reset-and-reseed workflow.

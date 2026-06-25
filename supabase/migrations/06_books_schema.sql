@@ -18,8 +18,9 @@
 
 -- =====================================================================================
 -- book — one row per tracked book. Status only (no page/progress tracking, audiobooks,
--- format, or series — deliberately omitted). Dates are NULL for imported back-catalogue
--- rows (genuinely unknown — fabricating "today" would pollute "Recently Read" and date sorts).
+-- format, or series — deliberately omitted). The CSV importer supplies real
+-- `start_date`/`end_date` (and freezes `created_at = start_date`); `updated_at` is the
+-- automatic row-modified timestamp (moddatetime).
 -- =====================================================================================
 create table public.book (
   id               uuid primary key default gen_random_uuid(),
@@ -49,7 +50,6 @@ create table public.book (
   is_favorite      boolean not null default false,
   start_date       date,
   end_date         date,                     -- finish / drop date
-  last_update_date date,
   comments         text,
   created_at       timestamptz not null default now(),
   updated_at       timestamptz not null default now()

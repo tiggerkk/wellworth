@@ -17,9 +17,9 @@
 -- =====================================================================================
 -- show — one row per tracked title (TV show, movie or documentary). `type` chooses the
 -- TMDB endpoint (documentary → /tv) and the season/episode UI; `watched_*`/`total_*` are
--- for episodic types (TV + documentary). `is_favorite` flags a starred title. Dates are
--- NULL for imported back-catalogue rows (genuinely unknown — fabricating "today" would
--- pollute "Recently Watched" and date sorts).
+-- for episodic types (TV + documentary). `is_favorite` flags a starred title. The CSV
+-- importer supplies real `start_date`/`end_date` (and freezes `created_at = start_date`);
+-- `updated_at` is the automatic row-modified timestamp (moddatetime).
 -- =====================================================================================
 create table public.show (
   id               uuid primary key default gen_random_uuid(),
@@ -55,7 +55,6 @@ create table public.show (
   is_favorite      boolean not null default false,
   start_date       date,
   end_date         date,                     -- finish / drop date
-  last_update_date date,
   comments         text,
   created_at       timestamptz not null default now(),
   updated_at       timestamptz not null default now()

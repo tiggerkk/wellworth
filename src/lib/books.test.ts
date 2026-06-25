@@ -50,7 +50,6 @@ function makeBook(p: Partial<BookRow>): BookRow {
     is_favorite: false,
     start_date: null,
     end_date: null,
-    last_update_date: null,
     comments: null,
     created_at: '2026-01-01T00:00:00Z',
     updated_at: '2026-01-01T00:00:00Z',
@@ -296,10 +295,8 @@ describe('BOOK_ENTRY_FIELDS', () => {
       'start_date',
       'end_date',
       'comments',
-      'last_update_date',
     ])
     const byKey = Object.fromEntries(BOOK_ENTRY_FIELDS.map((f) => [f.key, f.label]))
     expect(byKey.metadata).toBe('Google Books Metadata')
-    expect(byKey.last_update_date).toBe('Last Update Date')
   })
 })
