@@ -239,6 +239,13 @@ describe('applyReportView (Reports search / filter / sort)', () => {
     ).toEqual(['b'])
   })
 
+  it('matches Chinese body part / narrative across Traditional/Simplified variants', () => {
+    const simp = makeReport({ id: 'zh', body_part: '肝脏' }) // Simplified
+    expect(applyReportView([simp], crit({ query: '肝臟' }))).toEqual([simp]) // Traditional query
+    const trad = makeReport({ id: 'zh-t', narrative: '腦部無異常' }) // Traditional
+    expect(applyReportView([trad], crit({ query: '脑部' }))).toEqual([trad]) // Simplified query
+  })
+
   it('filters by type, provider, and body part', () => {
     expect(
       applyReportView(reports, crit({ reportType: 'mri' })).map((r) => r.id),

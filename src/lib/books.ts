@@ -6,6 +6,7 @@
 import type { Tables, TablesInsert, TablesUpdate } from '../types/database'
 import type { IsoDate } from './date'
 import { type Dynasty, dynastySortRank } from '../constants/dynasty'
+import { foldZh } from './zh-fold'
 
 export type BookRow = Tables<'book'>
 export type BookInsert = TablesInsert<'book'>
@@ -53,9 +54,9 @@ export function markRead(today: IsoDate): Pick<BookUpdate, 'status' | 'end_date'
   return { status: 'read', end_date: today }
 }
 
-/** Lowercased text the (M2 basic) Library search matches: title + author(s). */
+/** Folded text the Library search matches: title + author(s) (Traditional⇄Simplified agnostic). */
 export function bookSearchText(book: Pick<BookRow, 'title' | 'authors'>): string {
-  return [book.title, ...(book.authors ?? [])].filter(Boolean).join(' ').toLowerCase()
+  return foldZh([book.title, ...(book.authors ?? [])].filter(Boolean).join(' '))
 }
 
 // --- Dashboard selectors (pure; the screen just renders the shelves) ---
@@ -169,7 +170,7 @@ export const DEFAULT_LIBRARY_CRITERIA: LibraryCriteria = {
 }
 
 function matchesCriteria(book: BookRow, c: LibraryCriteria): boolean {
-  const q = c.query.trim().toLowerCase()
+  const q = foldZh(c.query.trim())
   if (q && !bookSearchText(book).includes(q)) return false
   if (c.status !== 'all' && book.status !== c.status) return false
   if (c.lgbtq !== 'all' && (book.lgbtq_rep ?? 'none') !== c.lgbtq) return false

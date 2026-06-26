@@ -236,6 +236,13 @@ describe('applyLibraryView', () => {
     ).toEqual(['c'])
   })
 
+  it('matches Chinese text across Traditional/Simplified variants', () => {
+    const simp = makeQuote({ id: 'zh', text: '学而时习之' }) // Simplified
+    expect(applyLibraryView([simp], crit({ query: '學而時習之' }))).toEqual([simp])
+    const trad = makeQuote({ id: 'zh-t', text: '學而時習之' }) // Traditional
+    expect(applyLibraryView([trad], crit({ query: '学而时习之' }))).toEqual([trad])
+  })
+
   it('filters by category', () => {
     expect(
       applyLibraryView(quotes, crit({ category: 'philosophy' })).map((q) => q.id),

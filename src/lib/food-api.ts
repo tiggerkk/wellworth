@@ -1,5 +1,6 @@
 import type { NutrientMap } from './nutrients'
 import { toUsdaWildcardQuery } from './food-search'
+import { searchZhVariants } from './zh-query'
 
 /**
  * USDA FoodData Central client + nutrient mapping. Called directly from the browser with
@@ -185,8 +186,12 @@ const MAX_BRANDED_RESULTS = 15
  * well each name matches the query, so this only needs to guarantee variety, not order.
  */
 export async function searchFoods(query: string): Promise<ExternalFood[]> {
-  const trimmed = query.trim()
-  if (!trimmed) return []
+  // CJK queries are searched in both Simplified and HK-Traditional, merged + de-duped on
+  // source+id, so either input variant finds the food (see `searchZhVariants`).
+  return searchZhVariants(query, searchFoodsOne, (f) => `${f.source}:${f.externalId}`)
+}
+
+async function searchFoodsOne(trimmed: string): Promise<ExternalFood[]> {
   // Wildcard the last word so partial/plural input ("blueberr", "blueberrie") still matches; the
   // result scorer in the UI re-filters to the typed term, so over-broad recall is harmless.
   const wild = toUsdaWildcardQuery(trimmed)

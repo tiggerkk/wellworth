@@ -14,6 +14,7 @@ import {
   type LibraryCriteria,
   type SortField,
 } from '../lib/quotes'
+import { foldZh } from '../lib/zh-fold'
 import {
   categoryLabel,
   effectiveCategories,
@@ -123,12 +124,12 @@ export function QuotesLibrary() {
   // more, a search box narrows the FULL list. Selected tags always stay visible (so they're deselectable).
   const ranked = rankedTags(all)
   const showTagSearch = ranked.length > TOP_TAGS
-  const tagFilter = tagQuery.trim().toLowerCase()
+  const tagFilter = foldZh(tagQuery.trim())
   const pool = tagFilter
-    ? ranked.filter((r) => r.tag.toLowerCase().includes(tagFilter)).map((r) => r.tag)
+    ? ranked.filter((r) => foldZh(r.tag).includes(tagFilter)).map((r) => r.tag)
     : ranked.slice(0, TOP_TAGS).map((r) => r.tag)
   const displayTags = [
-    ...criteria.tags.filter((t) => !tagFilter || t.toLowerCase().includes(tagFilter)),
+    ...criteria.tags.filter((t) => !tagFilter || foldZh(t).includes(tagFilter)),
     ...pool.filter((t) => !criteria.tags.includes(t)),
   ]
   // The URL constraint is layered on at view time so the panel state stays purely local.

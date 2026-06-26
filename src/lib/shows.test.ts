@@ -422,6 +422,13 @@ describe('applyLibraryView', () => {
     expect(applyLibraryView(all, crit({ query: 'keanu' }))).toEqual([matrix])
     expect(applyLibraryView(all, crit({ query: 'wachowski' }))).toEqual([matrix])
   })
+
+  it('matches Chinese titles across Traditional/Simplified variants', () => {
+    const simp = makeShow({ title: '红楼梦', id: 'simp' })
+    expect(applyLibraryView([simp], crit({ query: '紅樓夢' }))).toEqual([simp])
+    const trad = makeShow({ title: '紅樓夢', id: 'trad' })
+    expect(applyLibraryView([trad], crit({ query: '红楼梦' }))).toEqual([trad])
+  })
   it('filters by type and status', () => {
     expect(applyLibraryView(all, crit({ type: 'tv' }))).toEqual([bb])
     expect(applyLibraryView(all, crit({ status: 'want' }))).toEqual([heat])

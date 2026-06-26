@@ -199,6 +199,13 @@ describe('applyLibraryView', () => {
     )
   })
 
+  it('matches Chinese titles across Traditional/Simplified variants', () => {
+    const simp = makeBook({ title: '红楼梦' })
+    expect(applyLibraryView([simp], crit({ query: '紅樓夢' }))).toEqual([simp])
+    const trad = makeBook({ title: '紅樓夢' })
+    expect(applyLibraryView([trad], crit({ query: '红楼梦' }))).toEqual([trad])
+  })
+
   it('filters by status, genre, and lgbtq', () => {
     expect(applyLibraryView(lib, crit({ status: 'read' })).map((b) => b.title)).toEqual([
       'Dune',

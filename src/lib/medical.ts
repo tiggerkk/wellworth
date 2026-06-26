@@ -9,6 +9,7 @@
  * exactly; `medical.test.ts` cross-checks the two so they can't drift.
  */
 import type { Tables, TablesInsert, TablesUpdate } from '../types/database'
+import { foldZh } from './zh-fold'
 
 // DB row/insert/update aliases — the data layer (`src/data/medical.ts`) imports these (mirrors how
 // `src/data/show.ts` imports its types from `src/lib/shows.ts`).
@@ -133,11 +134,11 @@ export function reportBodyParts(
   return [...set].sort((a, b) => a.localeCompare(b))
 }
 
-/** Lowercased text the Reports search matches: body part + narrative. */
+/** Folded text the Reports search matches: body part + narrative (Traditional⇄Simplified agnostic). */
 export function reportSearchText(
   report: Pick<MedicalReportRow, 'body_part' | 'narrative'>,
 ): string {
-  return [report.body_part, report.narrative].filter(Boolean).join(' ').toLowerCase()
+  return foldZh([report.body_part, report.narrative].filter(Boolean).join(' '))
 }
 
 function reportSortKey(report: MedicalReportRow, field: ReportSortField): string | null {
@@ -176,7 +177,7 @@ export function applyReportView(
   reports: MedicalReportRow[],
   c: ReportListCriteria,
 ): MedicalReportRow[] {
-  const q = c.query.trim().toLowerCase()
+  const q = foldZh(c.query.trim())
   return reports
     .filter((r) => {
       if (q && !reportSearchText(r).includes(q)) return false

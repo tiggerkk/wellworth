@@ -18,6 +18,17 @@
 - **Barcode:** `@zxing/browser` (`BrowserMultiFormatReader`) + `@zxing/library` decoding the device
   camera via `getUserMedia`. Requires HTTPS (localhost is exempt for dev). The scanner is lazy-loaded
   so ZXing is a separate chunk, fetched only when scanning.
+- **Chinese search (Traditional⇄Simplified agnostic):** every search bar matches across scripts.
+  **Local filters** normalize both query and row text with the sync `foldZh` (`src/lib/zh-fold.ts`), a
+  single-char Traditional→Simplified fold over the generated `src/constants/zh-fold-map.ts` (built by
+  `scripts/gen-zh-fold-map.mjs` from OpenCC's HK+TW+TWP dicts; ~60KB, always resident). **Remote
+  searches** (TMDB / Google Books / Nominatim / USDA) issue the query in both scripts and merge —
+  `src/lib/zh-query.ts` (`searchZhVariants`), using `opencc-js` (HK Traditional) for the
+  Simplified→Traditional direction. `opencc-js` (~1.12MB) is **lazy-loaded** via `import('opencc-js')`
+  (`src/lib/zh-convert.ts`) into its own `opencc-*.js` chunk (`build.rollupOptions.output.manualChunks`)
+  and **excluded from the PWA precache** (`workbox.globIgnores: ['**/opencc-*.js']`), so it only loads on
+  the first Chinese remote search and never bloats the install. It is **not** wrapped in `lazyWithReload`
+  (that is for `React.lazy` component chunks); a failed `import()` here just falls back to the typed query.
 - **Backend-as-a-service:** Supabase — Postgres, Auth (Google OAuth), auto-generated REST, RLS.
 - **Hosting:** Vercel / Netlify / Cloudflare Pages (any free tier; HTTPS automatic).
 - **Food data:** USDA FoodData Central (search + nutrients, free data.gov key, ~1000 req/hr,
@@ -517,6 +528,7 @@ testOrder?)` is **tolerant** (unknown categories/tests sort last); `trackedSerie
 ## External APIs
 
 - **Called directly from the browser** (no server proxy): the USDA key is a `VITE_` var and Open Food Facts allows browser requests. Results are cached into `food` on favorite/log to limit calls.
+- **CJK queries are Traditional⇄Simplified agnostic** (see Stack → Chinese search). A search whose query contains Chinese is fired in **both** scripts (Simplified fold + HK-Traditional via lazy `opencc-js`) and the results merged + de-duped — applies to **TMDB**, **Google Books / Open Library**, **Nominatim**, and **USDA** searches below (`searchZhVariants` in `src/lib/zh-query.ts`). Non-CJK queries are unchanged (single request, no opencc load).
 - **USDA FoodData Central** (`api.nal.usda.gov/fdc/v1`): free `api.data.gov` key. **Search uses POST** `/foods/search` with a JSON body — the GET form 400s when `dataType` includes `"Survey (FNDDS)"`. `searchFoods` issues **two POST searches** — the whole-food databases
   (`Foundation`/`SR Legacy`/`Survey (FNDDS)`) and `Branded` — and merges them whole-foods-first.
   This is deliberate: a single combined search ranks the thousands of identical Branded exact-name products (8000+ for "blueberries") above every varied whole-food entry, so they'd be the only thing on the page. Branded duplicates (same name + brand) are then collapsed and capped. The UI sorts the merged list (with local foods) by name-match relevance, so search only needs to guarantee variety. USDA matches **whole tokens**, so a partial word ("blueberr") returns nothing; `searchFoods` therefore wildcards the last word at a stem (`food-search.ts#toUsdaWildcardQuery`: "blueberry", "blueberries", "blueberrie", "blueberr" → `blueberr*`) so partial/plural input all returns the same set. Over-broad recall is fine — the UI scorer re-filters to the typed term.

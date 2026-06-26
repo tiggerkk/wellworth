@@ -6,6 +6,7 @@
 import type { Tables, TablesInsert, TablesUpdate } from '../types/database'
 import type { QuoteLanguage, QuoteSourceType } from '../constants/quotes'
 import { containsCjk } from './cjk'
+import { foldZh } from './zh-fold'
 
 export type QuoteRow = Tables<'quote'>
 export type QuoteInsert = TablesInsert<'quote'>
@@ -19,14 +20,14 @@ export function detectLanguage(text: string): QuoteLanguage {
   return containsCjk(text) ? 'zh' : 'en'
 }
 
-/** Lowercased text the Library search matches: quote text + author + title + tags. */
+/**
+ * Folded text the Library search matches: quote text + author + title + tags. Traditional⇄Simplified
+ * agnostic — `foldZh` lowercases and normalizes Chinese to one variant (see {@link foldZh}).
+ */
 export function quoteSearchText(
   q: Pick<QuoteRow, 'text' | 'author' | 'title' | 'tags'>,
 ): string {
-  return [q.text, q.author, q.title, ...(q.tags ?? [])]
-    .filter(Boolean)
-    .join(' ')
-    .toLowerCase()
+  return foldZh([q.text, q.author, q.title, ...(q.tags ?? [])].filter(Boolean).join(' '))
 }
 
 /**
@@ -54,9 +55,9 @@ export interface LinkCandidate {
   authors: string[]
 }
 
-/** Lowercased text the linker search matches: title + (book) authors. */
+/** Folded text the linker search matches: title + (book) authors (Traditional⇄Simplified agnostic). */
 export function linkSearchText(c: Pick<LinkCandidate, 'title' | 'authors'>): string {
-  return [c.title, ...c.authors].filter(Boolean).join(' ').toLowerCase()
+  return foldZh([c.title, ...c.authors].filter(Boolean).join(' '))
 }
 
 /** Filter link candidates by a free-text query (title / author substring). Empty query ⇒ all. */
@@ -64,7 +65,7 @@ export function filterLinkCandidates(
   candidates: LinkCandidate[],
   query: string,
 ): LinkCandidate[] {
-  const q = query.trim().toLowerCase()
+  const q = foldZh(query.trim())
   if (!q) return candidates
   return candidates.filter((c) => linkSearchText(c).includes(q))
 }
@@ -179,7 +180,7 @@ function compareQuotes(a: QuoteRow, b: QuoteRow, field: SortField, dir: SortDir)
  * source-type sort on the stored key. Pure; does not mutate `quotes`.
  */
 export function applyLibraryView(quotes: QuoteRow[], c: LibraryCriteria): QuoteRow[] {
-  const q = c.query.trim().toLowerCase()
+  const q = foldZh(c.query.trim())
   return quotes
     .filter((quote) => {
       if (q && !quoteSearchText(quote).includes(q)) return false

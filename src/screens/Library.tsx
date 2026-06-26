@@ -12,6 +12,7 @@ import { SegmentedTabs } from '../components/SegmentedTabs'
 import { SearchBar } from '../components/SearchBar'
 import { ListRow } from '../components/ListRow'
 import { SwipeRow } from '../components/SwipeRow'
+import { foldZh } from '../lib/zh-fold'
 
 type Tab = 'foods' | 'activities'
 
@@ -49,12 +50,12 @@ export function Library() {
   }, [version])
   const { data: activities } = useAsync(activitiesFn)
 
-  const q = query.trim().toLowerCase()
+  const q = foldZh(query.trim())
   const customFoods = (foods ?? []).filter(
-    (f) => f.source === 'custom' && (!q || f.name.toLowerCase().includes(q)),
+    (f) => f.source === 'custom' && (!q || foldZh(f.name).includes(q)),
   )
   const filteredActivities = (activities ?? []).filter(
-    (a) => !q || a.name.toLowerCase().includes(q),
+    (a) => !q || foldZh(a.name).includes(q),
   )
 
   async function removeFood(id: string) {

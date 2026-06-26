@@ -9,6 +9,8 @@
  * quota), so `googleKeyParam()` never throws; it just appends `&key=…` when one is configured.
  */
 
+import { searchZhVariants } from './zh-query'
+
 const GOOGLE_BOOKS_BASE = 'https://www.googleapis.com/books/v1'
 const OPEN_LIBRARY_BASE = 'https://openlibrary.org'
 const OL_COVERS_BASE = 'https://covers.openlibrary.org/b/id'
@@ -290,9 +292,20 @@ export async function searchBooks(
   query: string,
   opts?: { signal?: AbortSignal },
 ): Promise<BookSearchResult[]> {
-  const q = query.trim()
-  if (!q) return []
-  const signal = opts?.signal
+  // CJK queries are searched in both Simplified and HK-Traditional, merged + de-duped on
+  // source+id, so either input variant finds the book (see `searchZhVariants`).
+  return searchZhVariants(
+    query,
+    (q) => searchBooksOne(q, opts?.signal),
+    (r) => `${r.source}:${r.sourceId}`,
+  )
+}
+
+/** One book search (Google primary, Open Library fallback) for an exact query string. */
+async function searchBooksOne(
+  q: string,
+  signal?: AbortSignal,
+): Promise<BookSearchResult[]> {
   try {
     const google = await searchGoogle(q, signal)
     if (google.length) return google

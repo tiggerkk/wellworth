@@ -11,6 +11,7 @@ import {
   type StopType,
   type TripStatus,
 } from '../constants/travel'
+import { foldZh } from './zh-fold'
 
 export type TripRow = Tables<'trip'>
 export type TripInsert = TablesInsert<'trip'>
@@ -116,7 +117,9 @@ export function applyTripList(
   facetsByTrip: Map<string, TripFacets>,
   c: TripListCriteria,
 ): TripRow[] {
-  const q = c.query.trim().toLowerCase()
+  // foldZh lowercases + normalizes Chinese variant, so name/city/companion search is
+  // Traditional⇄Simplified agnostic (see src/lib/zh-fold.ts).
+  const q = foldZh(c.query.trim())
   return trips
     .filter((t) => {
       const f = facetsByTrip.get(t.id)
@@ -126,11 +129,9 @@ export function applyTripList(
       if (c.year !== 'all' && tripYear(t) !== c.year) return false
       if (c.minRating > 0 && (t.rating ?? 0) < c.minRating) return false
       if (q) {
-        const inName = t.name.toLowerCase().includes(q)
-        const inCity = [...(f?.cities ?? [])].some((city) =>
-          city.toLowerCase().includes(q),
-        )
-        const inCompanion = (t.companions ?? '').toLowerCase().includes(q)
+        const inName = foldZh(t.name).includes(q)
+        const inCity = [...(f?.cities ?? [])].some((city) => foldZh(city).includes(q))
+        const inCompanion = foldZh(t.companions ?? '').includes(q)
         if (!inName && !inCity && !inCompanion) return false
       }
       return true

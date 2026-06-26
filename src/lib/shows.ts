@@ -7,6 +7,7 @@ import type { Tables, TablesInsert, TablesUpdate } from '../types/database'
 import type { IsoDate } from './date'
 import type { ShowMetadata } from './tmdb-api'
 import { type Dynasty, dynastySortRank } from '../constants/dynasty'
+import { foldZh } from './zh-fold'
 
 export type ShowRow = Tables<'show'>
 export type ShowInsert = TablesInsert<'show'>
@@ -236,14 +237,18 @@ export function showGenres(shows: Pick<ShowRow, 'genres'>[]): string[] {
   return [...set].sort((a, b) => a.localeCompare(b))
 }
 
-/** Lowercased text the Library search matches: title + original title + director + cast. */
+/**
+ * Folded text the Library search matches: title + original title + director + cast.
+ * Traditional⇄Simplified agnostic via {@link foldZh} (lowercases + normalizes Chinese variant).
+ */
 export function searchableText(
   show: Pick<ShowRow, 'title' | 'original_title' | 'director' | 'cast'>,
 ): string {
-  return [show.title, show.original_title, show.director, ...(show.cast ?? [])]
-    .filter(Boolean)
-    .join(' ')
-    .toLowerCase()
+  return foldZh(
+    [show.title, show.original_title, show.director, ...(show.cast ?? [])]
+      .filter(Boolean)
+      .join(' '),
+  )
 }
 
 export type SortField =
@@ -292,7 +297,7 @@ export const DEFAULT_LIBRARY_CRITERIA: LibraryCriteria = {
 }
 
 function matchesCriteria(show: ShowRow, c: LibraryCriteria): boolean {
-  const q = c.query.trim().toLowerCase()
+  const q = foldZh(c.query.trim())
   if (q && !searchableText(show).includes(q)) return false
   if (c.type !== 'all' && show.type !== c.type) return false
   if (c.status !== 'all' && show.status !== c.status) return false

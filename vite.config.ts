@@ -34,6 +34,10 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
+        // The ~1MB opencc-js chunk (lazy Chinese conversion for remote search + the display
+        // toggle) is kept out of the precache so it never bloats the install footprint — it is
+        // fetched on demand on first use, like the vendored Travel GeoJSON.
+        globIgnores: ['**/opencc-*.js'],
         cleanupOutdatedCaches: true,
         // Don't let the precached index.html shadow the OAuth return (?code=) once the
         // service worker is live in production.
@@ -43,4 +47,13 @@ export default defineConfig({
       devOptions: { enabled: false },
     }),
   ],
+  build: {
+    rollupOptions: {
+      output: {
+        // Pin opencc-js to a predictably-named lazy chunk so the precache globIgnore above
+        // can target it; everything else keeps Vite's default splitting.
+        manualChunks: (id) => (id.includes('opencc-js') ? 'opencc' : undefined),
+      },
+    },
+  },
 })

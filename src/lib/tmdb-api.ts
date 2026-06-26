@@ -1,4 +1,5 @@
 import { containsCjk } from './cjk'
+import { searchZhVariants } from './zh-query'
 import type { ShowRow, ShowType } from './shows'
 
 export { containsCjk }
@@ -248,13 +249,24 @@ function apiKey(): string {
   return key
 }
 
-/** Search TMDB for the given Type → lightweight results (title, year, poster). CJK ⇒ zh-CN. */
+/**
+ * Search TMDB for the given Type → lightweight results (title, year, poster). CJK ⇒ zh-CN, and the
+ * query is searched in both Simplified and HK-Traditional so either input variant finds the title
+ * (see `searchZhVariants`); results merge + de-dupe on `tmdbId`.
+ */
 export async function searchTitles(
   type: ShowType,
   query: string,
 ): Promise<TmdbSearchResult[]> {
-  const q = query.trim()
-  if (!q) return []
+  return searchZhVariants(
+    query,
+    (q) => searchTitlesOne(type, q),
+    (r) => r.tmdbId,
+  )
+}
+
+/** One TMDB search request for an exact query string. */
+async function searchTitlesOne(type: ShowType, q: string): Promise<TmdbSearchResult[]> {
   const params = new URLSearchParams({
     api_key: apiKey(),
     query: q,

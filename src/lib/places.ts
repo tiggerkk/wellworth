@@ -10,6 +10,7 @@
  * Chinese province (e.g. a foreign admin-1), which callers store as-is.
  */
 import { CHINA_PROVINCES, type ChinaProvince } from '../constants/travel'
+import { searchZhVariants } from './zh-query'
 
 const CANONICAL = new Set<string>(CHINA_PROVINCES)
 
@@ -156,8 +157,19 @@ export async function geocodeCity(
   query: string,
   opts: { signal?: AbortSignal } = {},
 ): Promise<GeocodeSuggestion[]> {
-  const q = query.trim()
-  if (!q) return []
+  // CJK queries are geocoded in both Simplified and HK-Traditional, merged + de-duped on
+  // coordinates, so either input variant finds the city (see `searchZhVariants`).
+  return searchZhVariants(
+    query,
+    (q) => geocodeCityOne(q, opts),
+    (s) => `${s.lat},${s.lng}`,
+  )
+}
+
+async function geocodeCityOne(
+  q: string,
+  opts: { signal?: AbortSignal },
+): Promise<GeocodeSuggestion[]> {
   const url = `${NOMINATIM_URL}?q=${encodeURIComponent(q)}&format=jsonv2&addressdetails=1&accept-language=zh&limit=5`
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS)

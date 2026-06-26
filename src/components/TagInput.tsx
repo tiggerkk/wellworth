@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { IconX } from '@tabler/icons-react'
+import { foldZh } from '../lib/zh-fold'
 
 interface TagInputProps {
   value: string[]
@@ -37,11 +38,11 @@ export function TagInput({
 
   const remove = (tag: string) => onChange(value.filter((t) => t !== tag))
 
-  const q = input.trim().toLowerCase()
+  const q = foldZh(input.trim())
   const matches = suggestions.filter(
     (s) =>
       !value.some((t) => t.toLowerCase() === s.toLowerCase()) &&
-      (q === '' || s.toLowerCase().includes(q)),
+      (q === '' || foldZh(s).includes(q)),
   )
 
   function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {

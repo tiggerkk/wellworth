@@ -115,6 +115,12 @@ describe('applyTripList', () => {
       applyTripList([a, b], facets, crit({ query: '肇庆' })).map((t) => t.id),
     ).toEqual(['b'])
   })
+  it('matches a Chinese city across Traditional/Simplified variants', () => {
+    // city is stored Simplified ('肇庆'); a Traditional query ('肇慶') still finds it.
+    expect(
+      applyTripList([a, b], facets, crit({ query: '肇慶' })).map((t) => t.id),
+    ).toEqual(['b'])
+  })
   it('searches by companion', () => {
     const c = trip({ id: 'c', name: 'Solo', companions: 'Alice & Bob' })
     expect(

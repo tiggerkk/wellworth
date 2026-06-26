@@ -232,6 +232,28 @@ so distinct category colours would need a new palette. The single neutral `QUOTE
 entry (set in the Categories management sheet), defaulting to the neutral chip, and pass it to the
 existing chip. Purely additive.
 
+### Global Traditional/Simplified Chinese display toggle · Deferred
+
+**What:** A Settings preference that rewrites **all on-screen Chinese** to the chosen script
+(Traditional **HK** / Simplified) — display-only, **never** changing stored DB values. The owner is in
+Hong Kong, so Traditional means OpenCC **`hk`**. Target: user data **and** app-defined Chinese labels
+(dynasty names, hardcoded labels like 中国省份).
+
+**Why deferred:** It is moderately invasive — the app has ~80 inline text render sites and **no central
+text chokepoint** — whereas variant-agnostic **search** (the higher-value half) shipped first. Building
+search first also validates the `opencc-js` engine choice before the display work.
+
+**Decided (don't re-litigate):**
+
+- **Storage:** a `profile.zh_display` column (`'off' | 'traditional' | 'simplified'`, default `'off'`) —
+  migration + `npm run gen:types`. Mirrors the existing `units` preference exactly (Settings →
+  `ProfileMetricsFields` `SegmentedTabs` + `useProfileEditor` auto-save).
+- **Engine reuse:** the conversion is **already built** — `convertZh(text, 'hk' | 'cn')`
+  (`src/lib/zh-convert.ts`, lazy `opencc-js`, loaded for remote search). The toggle adds a
+  `DisplayPreferenceProvider` (wrap at `src/main.tsx`) + a memoized `<Zh>` text wrapper / `useZhText()`
+  applied at the render boundary (read screens + shared `StatusChip`/`ListRow`/`SectionCard`).
+- **Perf:** conversions memoized per `(text, target)` — a cached dictionary lookup, negligible steady-state.
+
 ### Automated tests beyond pure helpers · Deferred
 
 **What:** Component/integration tests; tests for `src/data/*` repositories.
@@ -273,8 +295,11 @@ forced through the **Onboarding** wizard (`src/screens/Onboarding.tsx`, gated in
   **parked.** The reliability and CORS of those sources are unproven, and manual entry + the `?text=`
   prefill + the CSV importer cover the need. The `language` field is kept so routing could be added
   later. (Quotes deliberately has **no external metadata API**, unlike Shows/Books.)
-- **Quotes — Traditional vs Simplified Chinese distinction** — one `zh` value is enough; no plan to
-  split or convert scripts.
+- **Quotes — Traditional vs Simplified Chinese `language` value** — the `language` enum keeps a single
+  `zh` (no Trad/Simp split of the stored field). Note this is now narrower than it once was: **search**
+  _is_ script-agnostic across all modules (Traditional⇄Simplified matching shipped — see
+  `BUILD-LOG.md` → "Variant-agnostic Chinese search"), and a display-only **script toggle** is a
+  Deferred item above — but neither splits or rewrites the stored `language`/text values.
 - **Quotes — direct Apple Books integration** — not possible from a PWA; the ingestion path is
   copy-paste, the **Paste from clipboard** button, the CSV importer, and the optional Apple **Shortcut**
   that opens `/quotes/entry?text=…` (see OWNER-RUNBOOK). The `Article` source type exists but the import

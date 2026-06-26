@@ -9,6 +9,7 @@ import { listRememberedCities, rememberCity } from '../data/travel'
 import { geocodeCity, snapProvince, type GeocodeSuggestion } from '../lib/places'
 import { CHINA_PROVINCES } from '../constants/travel'
 import type { ResolvedCity } from '../lib/travel'
+import { foldZh } from '../lib/zh-fold'
 
 interface CitySearchSheetProps {
   userId: string
@@ -48,9 +49,9 @@ export function CitySearchSheet({
   const { data: cache } = useAsync(loadCache)
 
   const matches = useMemo(() => {
-    const q = query.trim().toLowerCase()
+    const q = foldZh(query.trim())
     if (!q) return []
-    return (cache ?? []).filter((c) => c.city.toLowerCase().includes(q)).slice(0, 8)
+    return (cache ?? []).filter((c) => foldZh(c.city).includes(q)).slice(0, 8)
   }, [cache, query])
 
   async function lookUp() {

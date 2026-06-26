@@ -905,6 +905,37 @@ key** — guard it like the DB password.
 > git add -A && git commit -m "what changed" && git push   # save + push changes (auto-deploys on Vercel)
 ```
 
+**Chinese search fold-map (rarely needed).** Search matches Traditional and Simplified Chinese
+interchangeably. The local-filter part uses a committed character map
+(`src/constants/zh-fold-map.ts`) generated from the `opencc-js` dictionary. You only regenerate it
+after upgrading `opencc-js`:
+
+```
+> node scripts/gen-zh-fold-map.mjs   # rewrites src/constants/zh-fold-map.ts, then commit the result
+```
+
+**Why two different mechanisms (a small map for in-app search, but a ~1MB library for the movie/book/
+city searches).** The real dividing line isn't "local vs remote" — it's **"can we normalize both sides
+of the comparison?"**
+
+- **In-app search bars** (Shows/Books/Quotes/Medical/Travel filters, the food/city/test pickers) filter
+  data that's **already loaded in the phone's memory**. So the app controls _both_ sides: it folds the
+  text you typed **and** every stored title/name to one script (Simplified) and compares. Folding only
+  ever goes Traditional→Simplified, which is almost always **many-to-one** (後/后, and HK 裏 / TW 裡 both
+  → 里), so a plain per-character lookup is correct. That map is tiny (~60KB) and runs instantly on every
+  keystroke — no big library needed. (Even if app search were ever changed to ask the database directly,
+  this still wouldn't need `opencc-js`: it's _our_ database, so we'd store a folded column and query it
+  with the folded term.)
+- **The movie/TV (TMDB), book (Google Books), and city (Nominatim) searches** query **someone else's**
+  catalogue over the internet. We can't fold _their_ data — we only control the text we send. So instead
+  of folding both sides, the app sends the query in **both** scripts and merges the results. Generating
+  the opposite script — Simplified→Traditional — is the hard direction: it's **one-to-many** (面 could be
+  面 _or_ 麵; 里 could be 里/裡/裏) and needs phrase/context awareness to pick the right Hong-Kong
+  character. That intelligence is exactly the ~1MB dictionary inside `opencc-js`, which is why it's only
+  loaded — once, on demand — the first time you run one of those searches in Chinese, and never for the
+  in-app filters. (The size gap is real: the Traditional→Simplified data is ~66KB; the
+  Simplified→Traditional data is ~1MB.)
+
 If something breaks, the most common causes: a value mistyped in `.env` or Vercel; the Vercel URL not
 added to Google origins / Supabase redirect URLs (sign-in fails); or `SUPABASE_DB_PASSWORD` not set
 (`db push` prompts/hangs).

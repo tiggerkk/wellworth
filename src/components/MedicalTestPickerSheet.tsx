@@ -7,6 +7,7 @@ import {
   medicalTestsByCategory,
   type MedicalLabTestSeed,
 } from '../lib/medical'
+import { foldZh } from '../lib/zh-fold'
 
 interface MedicalTestPickerSheetProps {
   onSelect: (test: MedicalLabTestSeed) => void
@@ -28,15 +29,13 @@ export function MedicalTestPickerSheet({
   const [query, setQuery] = useState('')
   useEscapeKey(onClose)
 
-  const term = query.trim().toLowerCase()
+  const term = foldZh(query.trim())
   const groups = medicalTestsByCategory()
     .map((g) => ({
       ...g,
       tests: term
         ? g.tests.filter(
-            (t) =>
-              t.display_name.toLowerCase().includes(term) ||
-              t.key.toLowerCase().includes(term),
+            (t) => foldZh(t.display_name).includes(term) || foldZh(t.key).includes(term),
           )
         : g.tests,
     }))

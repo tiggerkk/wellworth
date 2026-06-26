@@ -57,7 +57,7 @@ been merged into the permanent docs (`00-PRD … 05-seed-data` + OWNER-RUNBOOK) 
   seeded owner profile + skips onboarding; blank ⇒ a single-entry allowlist is the owner). All
   build-time `VITE_` vars.
 - **Gates:** husky `.husky/pre-commit` → lint-staged + `typecheck` + `test`; GitHub Actions
-  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 477 Vitest tests (pure helpers).
+  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 496 Vitest tests (pure helpers).
 - **Deploy status:** Deployed. GitHub `main` → Vercel auto-deploy; the production URL is in the
   Supabase redirect URLs + Google JS origins (see `OWNER-RUNBOOK.md`). Installed + tested on iPhone (PWA).
 - Conventions (DB-access-via-`src/data`, metric storage, generated `database.ts` contract, etc.) live
@@ -1359,6 +1359,20 @@ already rendered on the form + detail since M2.) **No migration** — the six ke
   rows — clicking the dot "did nothing" for multi-trip cities (single-trip dots navigate from the marker
   click, so they were unaffected). Fix: give any DOM overlay layered over a Leaflet map an explicit
   z-index above **1000** (used `z-[1100]`). Don't assume DOM order is enough over a Leaflet map.
+- **F15 — Don't load the 1MB opencc-js dictionary on the search keystroke path.** Making Chinese search
+  Traditional⇄Simplified agnostic needs conversion, but `opencc-js` is ~1.12MB and its accurate
+  direction (Simplified→Traditional, `cn2t`) is where the weight sits (the reverse `t2cn` is only 66KB).
+  Local library filters run **synchronously on every keystroke**, so they must **not** depend on opencc.
+  The split: local filters use a tiny generated single-char **Traditional→Simplified fold map**
+  (`src/constants/zh-fold-map.ts`, ~60KB, from `scripts/gen-zh-fold-map.mjs`) via the sync `foldZh`
+  (`src/lib/zh-fold.ts`) — fold both query and row text to one variant and `.includes`. Only **remote**
+  search (where we can't normalize the other side) and the future display toggle use opencc, **lazy**
+  via `import('opencc-js')` in `src/lib/zh-convert.ts`. Two further gotchas: (a) folding must merge the
+  **HK + TW** Traditional dictionaries so either variant (HK 裏 / TW 裡) folds to the same Simplified
+  (里); (b) Workbox precaches `**/*.js`, so the opencc chunk would be pulled into the install footprint
+  unless excluded — pin it to a named chunk (`manualChunks` → `opencc`) and `globIgnores: ['**/opencc-*.js']`
+  in `vite.config.ts` (the geo JSON escaped precache only by being `.json`). Don't fold both sides with
+  opencc "for accuracy" — the fold map is correct for the many-to-one fold direction and 17× smaller.
 - **F15 — first-run seeding inherited the owner's body, and a profile gate must not gate on `loading`
   (multi-member).** Two traps when opening the app to family members: (a) `ensureOwnerProfile` seeded
   **every** new login with the owner's hardcoded birthday/sex/height/weight — a new member silently got
@@ -2152,3 +2166,31 @@ Owner refinements after daily Quotes use:
   visible); above 10 a **Filter tags…** box searches the full list (local `tagQuery`, reset by Clear
   Filters). +1 `linkedOnly` test, the field-order assertion updated, and `quoteTags`→`rankedTags` tests
   swapped → **477** tests.
+
+### Variant-agnostic Chinese search (session, June 2026)
+
+Owner request: typing **either** Traditional or Simplified Chinese into **any** search bar should find
+matches stored in **either** script — across all modules (library filters, Wellness food/activity
+Library, Travel city picker, Medical test picker, tag inputs, **and** the remote APIs TMDB / Google
+Books / Nominatim / USDA). See **F15** for the engine-split rationale and the precache gotcha.
+
+- **Local filters — fold both sides.** A generated single-char Traditional→Simplified fold map
+  (`src/constants/zh-fold-map.ts`, built by `scripts/gen-zh-fold-map.mjs` merging OpenCC's HK + TW + TWP
+  dictionaries) backs the sync `foldZh` (`src/lib/zh-fold.ts`). Every search-text builder + query is
+  routed through it: `quoteSearchText`/`linkSearchText` + `applyLibraryView`/`filterLinkCandidates`
+  (quotes), `searchableText`/`matchesCriteria` (shows), `bookSearchText`/`matchesCriteria` (books),
+  `reportSearchText`/`applyReportView` (medical), the inline name/city/companion match in `applyTripList`
+  (travel), plus the screen/component filters in `Library.tsx`, `CitySearchSheet`, `MedicalTestPickerSheet`,
+  `TagInput`, and the `QuotesLibrary` tag facet. Folding both sides to Simplified makes matching symmetric.
+- **Remote searches — dual-variant query + merge.** `src/lib/zh-query.ts` (`zhQueryVariants` +
+  `searchZhVariants`): for a CJK query it issues both the Simplified fold and the **HK-Traditional**
+  form (`convertZh(q, 'hk')`, lazy opencc), runs them in parallel, and merges + de-dupes by a stable id
+  (TMDB `tmdbId`, Books `source:sourceId`, Nominatim `lat,lng`, USDA `source:externalId`). A single
+  failing variant is tolerated; all-fail rethrows. Non-CJK queries keep the original single-request path
+  and never load opencc. Wired into `searchTitles` (tmdb-api), `searchBooks` (books-api), `geocodeCity`
+  (places), `searchFoods` (food-api) by extracting each body into a `*One(q)` helper.
+- **HK locale.** The owner is in Hong Kong, so the Traditional direction is OpenCC **`hk`**, not `tw`.
+- **Tests:** `zh-fold.test.ts` (fold + symmetry), `zh-query.test.ts` (variant generation + merge/dedupe +
+  partial-failure/all-fail), and a cross-variant case added to shows/books/quotes/medical/travel → **496**.
+- **Deferred:** a global Traditional/Simplified **display toggle** (rewrite on-screen Chinese without
+  touching DB values) — see `PARKED.md`. It reuses `convertZh` (already loaded for remote search).
