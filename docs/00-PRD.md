@@ -11,7 +11,7 @@
   (`VITE_ALLOWED_EMAILS`); the owner is identified by `VITE_OWNER_EMAIL`.
 - **First login:** the owner keeps the seeded owner profile; every other member is seeded with neutral
   defaults (never the owner's body metrics) and is **forced through a one-time onboarding wizard** to
-  enter their own birthday/sex/height/weight/units before reaching the app (see `01-screens.md`).
+  enter their own birthday/sex/height/weight/units before reaching the app (see `docs/03-global.md`).
 - **Strictly private, no sharing.** There is no household/shared data and no shared base currency
   (everyone is HKD); those remain deferred (see `PARKED.md`).
 

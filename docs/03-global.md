@@ -1,0 +1,138 @@
+# 03 — Global Screens & Data
+
+## Navigation
+
+The app opens to a **Home hub** — a launcher of module cards (Wellness, Net Worth, Shows, Books,
+Quotes, Medical, Travel; more later). Selecting a module enters it and the **bottom tab bar becomes
+that module's tabs**, with a **Home** item to return to the hub. On launch the app reopens the
+**last-used module** so daily Wellness use skips the hub.
+
+- **Wellness** tabs: **Home**, **Dashboard**, **Diary**, **Library**, **Settings**.
+- **Net Worth** tabs: **Home**, **Dashboard**, **Monthly Entry**.
+- **Shows** tabs: **Home**, **Dashboard**, **Library**, **New Show**, **Settings**. The Entry/Edit
+  screen is reached from the **New Show** tab (new) or by tapping a Library/Dashboard row (edit).
+  Dashboard/Library pages carry no title bar (the active tab signals location).
+- **Books** tabs: **Home**, **Dashboard**, **Library**, **New Book**, **Settings**. The Entry/Edit
+  screen is reached from the **New Book** tab (new) or by tapping a row (edit).
+- **Quotes** tabs: **Home**, **Zen** (the Moment-of-Zen dashboard), **Library**, **New Quote**,
+  **Settings**. The Add/Edit screen is reached from the **New Quote** tab (new) or by tapping a row.
+- **Medical** tabs: **Home**, **Dashboard**, **Reports**, **New Medical**, **Settings**. The Add/Edit
+  Report screen is reached from the **New Medical** tab (new) or by tapping a report. The
+  **biometric/PIN lock** gates entry to the whole module (see `docs/09-medical.md`).
+- **Travel** tabs: **Home**, **Dashboard**, **Map**, **Trips**, **New Trip**, **Settings**. The Trip
+  Builder is reached from the **New Trip** tab (new = header-only + Create) or by tapping a Trips/Map
+  row.
+- **Settings is global**, reached from a gear on the Home hub (profile, units, account — app-wide).
+  Module-specific settings live in the **Settings** bottom tab of each module.
+
+Modal sheets slide up over a module's tabs: Calendar, Add Food, Food Detail, Add Activity, Activity
+Log, New Food, New Activity, Month Picker (Net Worth), Title Search (Shows), Book Search (Books),
+Source Link (Quotes), City Picker / Stop Editor / Reorder Days / Expense Editor (Travel — local
+overlays so the builder draft survives).
+
+---
+
+## First-run Onboarding (forced, new members only)
+
+A full-screen wizard shown **once** to a brand-new family member (any signed-in account that isn't
+the owner) immediately after their first login — it covers the whole shell, so there's no nav chrome
+and no way past it except finishing or signing out. Its header shows the **PWA app icon**
+(`public/pwa-192x192.png`).
+
+- **Fields:** Units (Metric/Imperial), Birthday, Sex, Height, Weight — the same inputs as Global
+  Settings (shared `ProfileMetricsFields`; **Birthday opens the shared `Calendar`**; height/weight
+  follow the chosen units). Protein target is **not** asked (it defaults to the DRI; editable later
+  in Wellness Settings).
+- **"Get started"** validates that birthday/height/weight are filled, saves them in one write, and
+  stamps `onboarded_at` — which dismisses the gate and drops the member into the app (their
+  last-module default is the Home hub). A small **Sign out** link is the only escape.
+- While the member's profile row is still being created the gate shows a brief **splash**, never the
+  wizard with empty fields. The **owner** and any already-onboarded member never see this screen.
+- Members under 31 (or a non-binary `sex`) see no nutrient targets — the DRI bands cover adult
+  female & male 31–71+ (see `docs/04-wellness.md`).
+
+---
+
+## Global Settings (from the Home hub gear)
+
+App-wide; shared across all modules. Auto-save on change. A back chevron returns to the hub.
+
+- **PROFILE**: Birthday, Sex, Height, Weight (all editable; shared `ProfileMetricsFields`, so
+  **Birthday opens the shared `Calendar`** picker — same as Onboarding).
+- **PREFERENCES**: **Units** (Metric / Imperial — editable; display-only, DB stays metric).
+- **ACCOUNT**: Google account + **Sign out**. This card is driven by the **session, not the profile**,
+  so it renders even when the profile fails to load (e.g. after a DB reset deletes the user). Sign
+  out clears the session **locally** (`scope: 'local'`) and, as a guaranteed fallback, removes the
+  persisted `sb-*-auth-token` and reloads, so a stale token for a deleted user can always be cleared.
+
+---
+
+## `profile` table (one row per user)
+
+- `user_id` UUID PK → `auth.users.id`
+- `birthday` DATE, `sex` TEXT, `height_cm` NUMERIC, `weight_kg` NUMERIC
+- `protein_target_g` NUMERIC NULL — manual override; null = use DRI
+- `activity_factor` NUMERIC DEFAULT 1.4
+- `units` TEXT DEFAULT 'metric' — 'metric' | 'imperial' (display only)
+- `highlighted_nutrients` TEXT[] — up to 8 nutrient keys for the Diary grid
+- `visible_nutrients` TEXT[] — nutrient keys shown on Dashboard/Daily Report
+- `onboarded_at` TIMESTAMPTZ NULL — set when first-run onboarding completes; NULL = new member who
+  must be forced through the Onboarding wizard. The owner seed stamps it; the member seed leaves it NULL.
+- `show_visible_fields` TEXT[] NULL — Shows Entry-form field visibility; **NULL = all visible**
+- `show_importer_enabled` BOOLEAN NOT NULL DEFAULT false
+- `show_poster_url_visible` BOOLEAN NOT NULL DEFAULT false — **force** the Entry "Poster URL" field
+  always visible (default off; the field still auto-shows when TMDB supplied no poster). Stored
+  separately from `show_visible_fields` (which is default-on) so the toggle can default to off.
+  (added by `supabase/migrations/05_shows_profile_settings.sql`)
+- `book_visible_fields` TEXT[] NULL — Books Entry-form field visibility; **NULL = all visible**
+- `book_importer_enabled` BOOLEAN NOT NULL DEFAULT false
+  (added by `supabase/migrations/07_books_profile_settings.sql`)
+- `quote_visible_fields` TEXT[] NULL — Quotes Entry-form field visibility; **NULL = all visible**
+- `quote_importer_enabled` BOOLEAN NOT NULL DEFAULT false
+- `quote_source_types` JSONB NULL — owner's configurable Source Type list, `{key, label, linkKind}`
+  array; **NULL = canonical seed defaults**
+- `quote_categories` JSONB NULL — owner's configurable Category list, `{key, label}` array;
+  **NULL = canonical seed defaults**
+  (added by `supabase/migrations/09_quotes_profile_settings.sql`)
+- `medical_tracked_tests` TEXT[] NULL — `medical_lab_test.key`s whose trends show on the Dashboard;
+  NULL until first-run, then seeded from `default_tracked`
+- `medical_section_order` TEXT[] NULL — personal category-section order override
+- `medical_test_order` TEXT[] NULL — personal flat ordered list of test keys
+- `medical_visible_fields` TEXT[] NULL — Medical New/Edit-Report field visibility; **NULL = all visible**
+- `medical_importer_enabled` BOOLEAN NOT NULL DEFAULT true — on by default
+- `medical_lock_enabled` BOOLEAN NOT NULL DEFAULT false
+- `medical_lock_pin_hash` TEXT NULL — salted PBKDF2-SHA-256 hash of the fallback PIN (never the PIN)
+- `medical_lock_webauthn_id` TEXT NULL — registered platform-authenticator credential id
+- `medical_lock_timeout_minutes` INT NULL — auto-lock idle timeout; **NULL = Indefinite**;
+  choices: Immediately(0)/1/5/15/Indefinite(NULL)
+  (added by `supabase/migrations/12_medical_profile_settings.sql`)
+- `travel_expense_categories` JSONB NULL — owner's configurable Travel expense-category list,
+  `{key, label}` array; **NULL = canonical seed defaults** (`TRAVEL_EXPENSE_CATEGORIES` in
+  `src/constants/travel.ts`)
+- `travel_visible_fields` TEXT[] NULL — Trip Entry-form field visibility; **NULL = all visible**
+  (added by `supabase/migrations/14_travel_profile_settings.sql`)
+- `created_at`, `updated_at` TIMESTAMPTZ
+
+---
+
+## Profile seeds
+
+First-login seeding **branches on whether the signed-in email is the owner** (`isOwnerEmail` in
+`src/lib/access.ts`, driven by `VITE_OWNER_EMAIL`, falling back to a single-entry allowlist).
+`visible_nutrients` (from the nutrient table's `default_visible`) and `medical_tracked_tests` (from
+`medical_lab_test.default_tracked`) are appended to **both** seeds.
+
+### Owner seed (`OWNER_PROFILE_SEED`)
+
+- birthday: `1974-09-06`, sex: `female`, height_cm: `171`, weight_kg: `56`
+- protein_target_g: `90` (manual override)
+- activity_factor: `1.4`, units: `metric`
+- highlighted_nutrients (8): `protein, fiber, vitamin_d, calcium, iron, magnesium, folate, potassium`
+- visible_nutrients: all keys marked **Visible = yes** in `docs/04-wellness.md`
+- `onboarded_at`: stamped now ⇒ the owner **skips** the onboarding wizard.
+
+### Member seed (`MEMBER_PROFILE_SEED`, non-owner family members)
+
+- **No body metrics** — birthday / sex / height / weight / protein_target_g are left **NULL**.
+- activity_factor: `1.4`, units: `metric`, highlighted_nutrients: the same 8 keys as the owner seed.
+- `onboarded_at`: **NULL** ⇒ the member is forced through the first-run Onboarding wizard.
