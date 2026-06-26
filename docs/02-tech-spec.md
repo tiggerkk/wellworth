@@ -83,6 +83,13 @@ docs/                # the spec bundle
   listener over a LIFO handler stack, so the innermost overlay wins. Route `Sheet`s + local search
   sheets close themselves, the `Calendar` closes, an open `SelectMenu` collapses, and the Add/Edit
   screens `navigate(-1)` only when nothing is layered above them.
+- **Session-persistent list state** — `useSessionState(key, initial)` (`src/hooks/useSessionState.ts`)
+  is a `useState` drop-in backed by `sessionStorage` (resilient to disabled storage like
+  `src/lib/last-module.ts`, with an object schema-drift merge). The Library/Reports/Trips screens hold
+  their criteria object (search + filters + sort, + Shows Type) in it, so a list's view survives the
+  full-route-swap remount when the user opens an item and returns (via Back, bottom nav, or Home) and
+  clears only when the tab/app is closed. Keys: `wellworth:{shows,books,quotes}-library`,
+  `wellworth:medical-reports`, `wellworth:travel-trips`.
 
 ## Data flow
 

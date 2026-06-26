@@ -2194,3 +2194,32 @@ Books / Nominatim / USDA). See **F15** for the engine-split rationale and the pr
   partial-failure/all-fail), and a cross-variant case added to shows/books/quotes/medical/travel → **496**.
 - **Deferred:** a global Traditional/Simplified **display toggle** (rewrite on-screen Chinese without
   touching DB values) — see `PARKED.md`. It reuses `convertZh` (already loaded for remote search).
+
+## Session-persistent list state + Shows Type above the search bar (session, June 2026)
+
+Owner request: (1) the Shows Library **All/TV/Movies/Docs** type selector should be **always visible**
+rather than buried in the filter panel; (2) a list's **search + filter + sort** should survive clicking
+into an item and coming back, "within the same session". **UI-only — no schema/migration/`database.ts`/
+seed/test-count changes** (stays **496**); specs updated in `01-screens.md`, `02-tech-spec.md`,
+`04-design-system.md`, `PARKED.md`.
+
+- **Why these screens reset.** Unlike the Wellness Library (which opens an **Edit sheet** via the
+  background-location pattern and keeps its tab in the URL), the Shows/Books/Quotes/Medical/Travel lists
+  open a detail with a **full route swap** (`navigate(routes.shows.edit(id))`), so the screen **unmounts**
+  and its `useState` criteria reset to `DEFAULT_*` on return.
+- **Mechanism — `sessionStorage`, not URL params.** Added **`src/hooks/useSessionState.ts`**, a
+  `useState` drop-in backed by `sessionStorage` (lazy read + `JSON.parse`; functional + value setters;
+  swallows read/write failures like `last-module.ts`; shallow-merges a stored object over `initial` so a
+  future new criteria field falls back to its default). The five list screens swapped
+  `useState(DEFAULT_*)` → `useSessionState('wellworth:<screen>', DEFAULT_*)` for their criteria object
+  only (transient `filtersOpen`/`whichDate`/`tagQuery` stay plain `useState`). The owner picked
+  `sessionStorage` over the previously-noted **URL-as-state** plan (PARKED) because it restores on **every**
+  return path — Back, bottom nav, **and** Home re-entry — matches "within the session" (clears on tab/app
+  close), and stays DRY across five differently-shaped criteria objects via one generic hook; the only
+  thing given up is a shareable/bookmarkable URL, which a personal Library doesn't need (that variant
+  stays deferred in `PARKED.md`).
+- **Shows Type relocation.** Moved the existing `SegmentedTabs` (Type) out of `FilterPanel` and into the
+  sticky header **above** the `SearchBar` (its own full-width row over the search+filter row), mirroring
+  Wellness Library's Foods/Activities tabs. Pure JSX move — `criteria.type` + `applyLibraryView` unchanged.
+- **No new tests:** per project convention only pure `src/lib/*` helpers are unit-tested; the hook is
+  verified by `tsc` + the manual run (return via Back / bottom nav / Home restores; tab close clears).

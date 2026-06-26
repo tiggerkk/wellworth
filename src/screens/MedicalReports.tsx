@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
+import { useSessionState } from '../hooks/useSessionState'
 import { deleteReport, listReports } from '../data/medical'
 import { bumpMedical, useMedicalVersion } from '../lib/medical-refresh'
 import {
@@ -48,7 +49,8 @@ export function MedicalReports() {
   const userId = session?.user.id
   const navigate = useNavigate()
   const version = useMedicalVersion()
-  const [criteria, setCriteria] = useState<ReportListCriteria>(
+  const [criteria, setCriteria] = useSessionState<ReportListCriteria>(
+    'wellworth:medical-reports',
     DEFAULT_REPORT_LIST_CRITERIA,
   )
   const [filtersOpen, setFiltersOpen] = useState(false)

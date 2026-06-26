@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router'
 import { IconBook, IconHeartFilled } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
+import { useSessionState } from '../hooks/useSessionState'
 import { useBooksVersion, bumpBooks } from '../lib/books-refresh'
 import { deleteBook, listBooks } from '../data/book'
 import {
@@ -79,7 +80,10 @@ export function BooksLibrary() {
   const { session } = useAuth()
   const userId = session?.user.id
   const version = useBooksVersion()
-  const [criteria, setCriteria] = useState<LibraryCriteria>(DEFAULT_LIBRARY_CRITERIA)
+  const [criteria, setCriteria] = useSessionState<LibraryCriteria>(
+    'wellworth:books-library',
+    DEFAULT_LIBRARY_CRITERIA,
+  )
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [whichDate, setWhichDate] = useState<DateBound | null>(null)
 

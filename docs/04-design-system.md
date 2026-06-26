@@ -51,7 +51,9 @@ _not_ the primary-button color; it's for emphasis, active states, and energy.
 - **Toggle** — pill switch; on = coral with knob right, off = `track` with grey knob left.
 - **SegmentedTabs** — `input` track, active segment = `fill` pill with dark text (All/Favorites/Custom,
   Food/Supplement, Foods/Activities). Generic over N options — Shows reuses it for the **Type**
-  (TV/Movie), **Status** (Want/Watching/Watched/Dropped), and **LGBT+** (None/Some/Significant) controls.
+  (All/TV/Movies/Docs), **Status** (Want/Watching/Watched/Dropped), and **LGBT+** (None/Some/Significant)
+  controls. The Shows Library **Type** control sits in the **sticky header above the `SearchBar`** (always
+  visible, not inside the filter panel) — the same header layout as Wellness Library's Foods/Activities tabs.
 - **GroupHeader** — collapsible: expand chevron · category icon · title · kcal subtotal, with a green
   `+` on the right.
 - **SwipeRow** — swipe-left reveals a `delete` Delete action.
@@ -65,7 +67,11 @@ _not_ the primary-button color; it's for emphasis, active states, and energy.
   per-module labelled "Filters (N)" buttons.
 - **FilterPanel** — the collapsible filter-panel "pane" (`src/components/FilterPanel.tsx`): a
   `rounded-card border bg-surface p-3 text-xs` surface that wraps a module's dropdowns/date rows + the
-  Sort/Clear-Filters footer. Used by every Library/Reports/Trips filter.
+  Sort/Clear-Filters footer. Used by every Library/Reports/Trips filter. Each list screen's criteria
+  object (search + filters + sort, plus the Shows Type) is held in **`useSessionState`**
+  (`src/hooks/useSessionState.ts`) so it persists for the browser-tab session and survives the
+  navigate-into-an-item-and-back remount; the transient panel-open and active-calendar state stay plain
+  `useState`.
 - **SortControl** — the shared "Sort" cluster (`src/components/SortControl.tsx`): a label + sort-field
   `SelectMenu` + an asc/desc icon toggle. Lives in the `FilterPanel` footer next to **Clear Filters**.
   Each module passes its own `options` array, so editing a module's Sort menu is a one-line code change.

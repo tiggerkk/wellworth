@@ -280,11 +280,14 @@ Wellness-module sub-settings. Auto-save on change. A back chevron returns to the
 
 ## Shows - Library
 
+- A **Type** segmented control (All / TV / Movies / Docs) sits in the sticky header **above** the
+  search bar, so it's **always visible** without opening the filter (matching how Wellness Library puts
+  its `SegmentedTabs` above the search bar).
 - **Search bar** over a list of every tracked title — matches **Title, Director, and Cast** (when
   TMDB returned them). An **icon-only Filter button** sits to the right of the search bar and tints
   **accent** while its panel is open (the shared `FilterToggleButton`; mirrors Travel).
 - The Filter panel (shared `FilterPanel` pane) is **label-free** — the first option of each dropdown
-  names the field: **Type** segmented control (All/TV/Movies/Docs), **Any Status**, **Any Genre** (the
+  names the field: **Any Status**, **Any Genre** (the
   genres present in your own rows), **Any Rating** (minimum: Any / 1★+ … / 5★), **Any LGBT+**
   (None/Some/Significant), **Any Dynasty** (+ `全部` and the 12 dynasties), a **Favorites Only** toggle, and
   single-line **Started** + **Finished** date ranges (label · From · To; each bound via the Calendar
@@ -299,8 +302,9 @@ Wellness-module sub-settings. Auto-save on change. A back chevron returns to the
   of the title for Chinese titles, then **type badge · status chip · star rating** (when set) and a
   second line of **first genre · date** (the date as **month + day**, e.g. "Jun 22"; no prefix or
   weekday). Tap a row → **Entry/Edit**; **swipe-left → Delete** (hard, with a confirm).
-- _Filter/sort state is per-visit (not persisted); a wide-screen sortable table is parked — see
-  `PARKED.md`._
+- _Type, search, filter, and sort persist for the **browser-tab session** (`useSessionState` →
+  `sessionStorage`), so returning from an item — via Back, the bottom nav, or Home — restores them;
+  they clear when the tab/app is closed. A wide-screen sortable table is parked — see `PARKED.md`._
 
 ## Shows - Entry / Edit (form)
 
@@ -435,8 +439,9 @@ TMDB episode count at import (left blank if TMDB has no count); used anywhere el
   Chinese titles, the author(s), a **status chip** (Want / Reading / Read / Dropped — Want is blue),
   the **star rating** when rated, the first genre, and the date as **month + day** (e.g. "Jun 22"; no
   weekday). Tap a row → **Entry/Edit**; **swipe-left → Delete** (hard, with a confirm).
-- _Filter/sort state is per-visit (not persisted); a wide-screen sortable table is parked — see
-  `PARKED.md`._
+- _Search, filter, and sort persist for the **browser-tab session** (`useSessionState` →
+  `sessionStorage`), restored on return via Back / bottom nav / Home and cleared when the tab/app is
+  closed. A wide-screen sortable table is parked — see `PARKED.md`._
 
 ## Books - Entry / Edit (form)
 
@@ -538,6 +543,9 @@ it — defaults to `updated_at` (import time) — see `templates/books-import-gu
   key); default is **Date** descending.
 - **List**: rows — a quote snippet, the category badge, and author. Tap → Add/Edit; **swipe-left** →
   Delete (hard, with confirm).
+- _Search, filter, and sort persist for the **browser-tab session** (`useSessionState` →
+  `sessionStorage`), restored on return via Back / bottom nav / Home and cleared when the tab/app is
+  closed._
 
 ## Quotes - Add / Edit (form, `/quotes/entry`, `/quotes/:id`)
 
@@ -624,6 +632,8 @@ default is **Date** descending. Each row: the **full date** (with year — repor
 confirm → **delete** (hard; the FK cascades the report's results). New reports come from the **New
 Medical** bottom-nav tab. Explicit loading / empty / error states (empty → the centered **"No medical
 reports yet" / + New Medical Report** state; an active search/filter with no matches → "No matches.").
+The search, filter, and sort persist for the **browser-tab session** (`useSessionState` →
+`sessionStorage`), restored on return via Back / bottom nav / Home and cleared when the tab/app is closed.
 
 ## Medical - Report detail (`/medical/:id`)
 
@@ -742,6 +752,9 @@ lockout. The lock is a convenience gate on this device — the data is already p
   city use the trip's alphabetically-first itinerary value; undated trips last); default is **Date**
   descending (a reverse-chronological list). Row: cover thumbnail · name · status chip · date range ·
   primary region. Tap → Trip Builder; **swipe-left → Delete** (hard, cascades days/stops/expenses).
+- _Search, filter, and sort persist for the **browser-tab session** (`useSessionState` →
+  `sessionStorage`), restored on return via Back / bottom nav / Home and cleared when the tab/app is
+  closed._
 
 ## Travel - Trip Builder (`/travel/entry` new, `/travel/trip/:id` edit)
 

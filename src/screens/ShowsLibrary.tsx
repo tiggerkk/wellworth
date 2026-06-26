@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router'
 import { IconDeviceTv, IconHeartFilled } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
+import { useSessionState } from '../hooks/useSessionState'
 import { useShowsVersion, bumpShows } from '../lib/shows-refresh'
 import { deleteShow, listShows } from '../data/show'
 import {
@@ -89,7 +90,10 @@ export function ShowsLibrary() {
   const { session } = useAuth()
   const userId = session?.user.id
   const version = useShowsVersion()
-  const [criteria, setCriteria] = useState<LibraryCriteria>(DEFAULT_LIBRARY_CRITERIA)
+  const [criteria, setCriteria] = useSessionState<LibraryCriteria>(
+    'wellworth:shows-library',
+    DEFAULT_LIBRARY_CRITERIA,
+  )
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [whichDate, setWhichDate] = useState<DateBound | null>(null)
 
@@ -145,6 +149,11 @@ export function ShowsLibrary() {
   return (
     <div className="flex min-h-full flex-col gap-3 px-4 py-4">
       <div className="sticky top-0 z-10 -mx-4 flex flex-col gap-3 bg-bg/90 px-4 py-3 backdrop-blur">
+        <SegmentedTabs
+          value={criteria.type}
+          onChange={(t) => setCrit({ type: t })}
+          options={TYPE_OPTIONS}
+        />
         <div className="flex items-center gap-2">
           <SearchBar
             value={criteria.query}
@@ -161,11 +170,6 @@ export function ShowsLibrary() {
 
       {filtersOpen && (
         <FilterPanel>
-          <SegmentedTabs
-            value={criteria.type}
-            onChange={(t) => setCrit({ type: t })}
-            options={TYPE_OPTIONS}
-          />
           <div className="grid grid-cols-2 gap-3">
             <SelectMenu
               value={criteria.status}

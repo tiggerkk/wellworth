@@ -49,7 +49,10 @@ its routes.
   sheet. `/` → `RootRedirect` (last-used module via `src/lib/last-module.ts`, else `/home`).
   **Escape-to-dismiss** is centralised in `src/hooks/useEscapeKey.ts` (one document listener over a LIFO
   stack so the innermost overlay wins): sheets/Calendar/SelectMenu close themselves, and the Add/Edit
-  screens `navigate(-1)` only when nothing is layered above them.
+  screens `navigate(-1)` only when nothing is layered above them. The Library/Reports/Trips list screens
+  open a detail with a **full route swap** (not a sheet), so they hold their criteria object
+  (search + filters + sort, + Shows Type) in **`src/hooks/useSessionState.ts`** (a `useState` drop-in over
+  `sessionStorage`) so the view persists for the tab session across that remount.
 - **Shared New/Edit header actions:** every Entry/Edit form's top-right actions are the shared
   `src/components/EntryHeaderActions.tsx` (compact **icon** buttons — Delete [trash, editing-only, with a
   two-step inline confirm] · Reset [undo] · Create [plus] / Save [floppy]) — reuse it, don't re-roll a
@@ -90,7 +93,8 @@ its routes.
   `referrerpolicy="no-referrer"` (set on the shared `Thumb`). Components `StarRating` / `ShowTypeBadge`
   (TV/Movie/Documentary glyphs) / `StatusChip` / `PosterThumb` / `SelectMenu` / `TitleSearchSheet` (local
   overlay — **not** a route sheet, so the Entry form survives). Screens `ShowsDashboard` (Favourites shelf;
-  watching rows show the Watching chip + progress) / `ShowsLibrary` (favourites filter) / `ShowsEntry`
+  watching rows show the Watching chip + progress) / `ShowsLibrary` (favourites filter; the Type
+  `SegmentedTabs` sits in the sticky header **above** the search bar, always visible) / `ShowsEntry`
   (three-way Type, favourite heart, Poster URL field auto-shown when TMDB has no poster + a
   Visible-Fields toggle `show_poster_url_visible` (off by default) that forces it always visible,
   Want⇒blank Start Date, ⟳ Refresh, `?title=&poster=&overview=&type=` prefill) / `ShowsSettings` /

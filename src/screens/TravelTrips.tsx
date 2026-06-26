@@ -12,6 +12,7 @@ import { FilterPanel } from '../components/FilterPanel'
 import { SortControl } from '../components/SortControl'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
+import { useSessionState } from '../hooks/useSessionState'
 import { deleteTrip, listTripFacetRows, listTrips } from '../data/travel'
 import { bumpTravel, useTravelVersion } from '../lib/travel-refresh'
 import {
@@ -58,7 +59,10 @@ export function TravelTrips() {
   const { session } = useAuth()
   const userId = session?.user.id
   const version = useTravelVersion()
-  const [criteria, setCriteria] = useState<TripListCriteria>(DEFAULT_TRIP_LIST_CRITERIA)
+  const [criteria, setCriteria] = useSessionState<TripListCriteria>(
+    'wellworth:travel-trips',
+    DEFAULT_TRIP_LIST_CRITERIA,
+  )
   const [filtersOpen, setFiltersOpen] = useState(false)
 
   const fn = useCallback(() => {

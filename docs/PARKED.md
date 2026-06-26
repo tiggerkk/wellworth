@@ -155,15 +155,6 @@ column headers, instead of the list + Sort-menu.
   **Decided:** The pure `applyLibraryView(shows, criteria)` (`src/lib/shows.ts`) already does all the
   filtering/sorting; a table view would be an additive presentation over the same criteria + helper.
 
-### Shows Library — filter/sort URL-persistence · Deferred
-
-**What:** Persist the Library's filter + sort state across navigation (e.g. in `useSearchParams`), so
-leaving the tab and returning restores it.
-**Why deferred:** M5 keeps the criteria in local component state (resets on remount) — fine for a
-single user and simpler. The Wellness Library persists only its tab in the URL today.
-**Decided:** Mirror the Wellness "URL-as-state" pattern — serialize `LibraryCriteria` into query
-params written with `{replace:true}`; the screen already centralizes the criteria in one state object.
-
 ### Shows — bulk "sync all" refresh · Deferred
 
 **What:** A one-tap "refresh every show from TMDB" action.
@@ -201,24 +192,17 @@ idiom, avoiding a second responsive layout.
 **Decided:** The pure `applyLibraryView(books, criteria)` (`src/lib/books.ts`) already does all the
 filtering/sorting; a table view would be an additive presentation over the same criteria + helper.
 
-### Books Library — filter/sort URL-persistence · Deferred
+### List filter/sort — shareable-URL persistence · Deferred
 
-**What:** Persist the Books Library's filter + sort state across navigation, so leaving the tab and
-returning restores it.
-**Why deferred:** M5 keeps the criteria in local component state (resets on remount) — fine for a single
-user and simpler; same trade-off as the Shows Library.
-**Decided:** Mirror the Wellness "URL-as-state" pattern — serialize `LibraryCriteria` into query params
-written with `{replace:true}`; the screen already centralizes the criteria in one state object.
-
-### Quotes Library — filter/sort URL-persistence · Deferred
-
-**What:** Persist the Quotes Library's filter + sort state (Category / Tags / Favourites / Source /
-Language + the Sort field/direction) across navigation, so leaving the tab and returning restores it.
-**Why deferred:** Filter/sort state is local component state (resets on remount) — fine for a single
-user; same trade-off as the Shows/Books libraries. The `?show=`/`?book=` "Quotes from this title"
-constraint **is** already URL-driven. (Quotes now has a Sort menu — Date / Category / Source Type,
-default Date desc — which is likewise local state.)
-**Decided:** Mirror the Wellness "URL-as-state" pattern over the local `LibraryCriteria` object.
+**What:** Make a Library/Reports/Trips view's search + filter + sort **bookmarkable / shareable** by
+also reflecting the criteria in the URL (`useSearchParams`).
+**Why deferred:** Session persistence is now **built** — every list screen holds its criteria in
+`useSessionState` (`src/hooks/useSessionState.ts` → `sessionStorage`), so the view survives the
+navigate-into-an-item-and-back remount (via Back, bottom nav, or Home) and clears on tab/app close. The
+remaining gap is only a shareable URL, which a single-user personal Library doesn't need. (The
+`?show=`/`?book=` "Quotes from this title" constraint is already URL-driven.)
+**Decided:** If shareability is ever wanted, layer query-param encode/decode over the same centralized
+criteria object on top of (or in place of) the `sessionStorage` hook.
 
 ### Quotes — per-category badge colours · Deferred
 

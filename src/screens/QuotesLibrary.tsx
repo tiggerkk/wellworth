@@ -4,6 +4,7 @@ import { IconQuote, IconX } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useProfile } from '../hooks/useProfile'
+import { useSessionState } from '../hooks/useSessionState'
 import { bumpQuotes, useQuotesVersion } from '../lib/quotes-refresh'
 import { deleteQuote, listQuotes } from '../data/quote'
 import {
@@ -58,7 +59,10 @@ export function QuotesLibrary() {
   const showId = params.get('show')
   const bookId = params.get('book')
 
-  const [criteria, setCriteria] = useState<LibraryCriteria>(DEFAULT_LIBRARY_CRITERIA)
+  const [criteria, setCriteria] = useSessionState<LibraryCriteria>(
+    'wellworth:quotes-library',
+    DEFAULT_LIBRARY_CRITERIA,
+  )
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [tagQuery, setTagQuery] = useState('')
   const setCrit = (patch: Partial<LibraryCriteria>) =>
