@@ -534,7 +534,7 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
           <section className="flex flex-col gap-4">
             <div className="flex gap-2">
               <SecondaryButton size="sm" onClick={() => void addDay()}>
-                <span className="inline-flex items-center gap-1">
+                <span className="inline-flex items-center gap-1 text-positive">
                   <IconPlus size={15} /> Add Day
                 </span>
               </SecondaryButton>
@@ -688,7 +688,7 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
                                         aria-pressed={s.completion === 'skipped'}
                                         className={`rounded-full p-1 ${
                                           s.completion === 'skipped'
-                                            ? 'bg-track text-text-secondary'
+                                            ? 'bg-text-secondary text-bg'
                                             : 'text-text-secondary'
                                         }`}
                                       >

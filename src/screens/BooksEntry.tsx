@@ -286,7 +286,7 @@ function BookForm({ id, initial }: { id: string | undefined; initial: BookDraft 
           aria-label="Favourite"
         >
           {draft.is_favorite ? (
-            <IconHeartFilled size={20} className="text-accent" />
+            <IconHeartFilled size={20} className="text-favorite" />
           ) : (
             <IconHeart size={20} className="text-text-tertiary" />
           )}

@@ -25,7 +25,7 @@ that matters there:
   finish date as **month + day** (e.g. "Jun 22"). Imported rows with no `end_date` don't appear here.
 
 A small favourite rows anywhere shows a filled **♥** before the title. Status chip palette: **Want** =
-blue, **Watching** = coral, **Watched** = teal, **Dropped** = grey (the shared `StatusChip`).
+blue, **Watching** = orange, **Watched** = teal, **Dropped** = grey (the shared `StatusChip`).
 A small stat line: **"N watched this year"**.
 
 ### Library

@@ -43,8 +43,10 @@ export interface ResolvedCity {
 
 // --- Status palette (mirrors Shows/Books `*_STATUS_CHIP`) ---
 
+// want = blue (planned), planning = orange (active/in-progress), visited = teal (done) —
+// matches Shows/Books `*_STATUS_CHIP`.
 export const TRIP_STATUS_CHIP: Record<TripStatus, string> = {
-  want: 'bg-track text-text-secondary',
+  want: 'bg-info text-bg',
   planning: 'bg-warning text-bg',
   visited: 'bg-positive text-bg',
 }

@@ -108,7 +108,7 @@ export function TripExpensesPanel({ trip, userId }: Props) {
   return (
     <section className="flex flex-col gap-4">
       <SecondaryButton size="sm" onClick={() => setEditor({})}>
-        <span className="inline-flex items-center gap-1">
+        <span className="inline-flex items-center gap-1 text-positive">
           <IconPlus size={15} /> Add Expense
         </span>
       </SecondaryButton>

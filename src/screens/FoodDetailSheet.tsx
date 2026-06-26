@@ -277,7 +277,7 @@ export function FoodDetailSheet() {
         {food && (
           <button onClick={() => void toggleFavorite()} aria-label="Favorite">
             {favShown ? (
-              <IconHeartFilled size={20} className="text-accent" />
+              <IconHeartFilled size={20} className="text-favorite" />
             ) : (
               <IconHeart size={20} className="text-text-tertiary" />
             )}
@@ -296,6 +296,7 @@ export function FoodDetailSheet() {
           ) : (
             <PrimaryButton
               size="sm"
+              tone="positive"
               onClick={() => void submit()}
               disabled={saving}
               aria-label="Add to diary"

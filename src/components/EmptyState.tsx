@@ -24,7 +24,7 @@ export function EmptyState({ title, actionLabel, to, Icon }: EmptyStateProps) {
       <p className="text-sm text-text-secondary">{title}</p>
       <Link
         to={to}
-        className="flex items-center gap-1 rounded-pill bg-input px-3 py-1.5 text-sm text-accent"
+        className="flex items-center gap-1 rounded-pill bg-input px-3 py-1.5 text-sm text-positive"
       >
         <IconPlus size={16} /> {actionLabel.replace(/^\+\s*/, '')}
       </Link>

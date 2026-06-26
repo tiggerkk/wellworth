@@ -286,7 +286,7 @@ export function AddFoodSheet() {
                           className="shrink-0"
                         >
                           {r.favorite.isFavorite ? (
-                            <IconHeartFilled size={18} className="text-accent" />
+                            <IconHeartFilled size={18} className="text-favorite" />
                           ) : (
                             <IconHeart size={18} className="text-text-tertiary" />
                           )}

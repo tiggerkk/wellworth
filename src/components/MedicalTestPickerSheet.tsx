@@ -62,7 +62,7 @@ export function MedicalTestPickerSheet({
         <div className="min-h-0 flex-1 overflow-y-auto p-4">
           <button
             onClick={onAddCustom}
-            className="mb-4 flex w-full items-center justify-center gap-2 rounded-input bg-input py-2.5 text-sm text-accent active:bg-input/60"
+            className="mb-4 flex w-full items-center justify-center gap-2 rounded-input bg-input py-2.5 text-sm text-positive active:bg-input/60"
           >
             <IconPlus size={16} /> Add custom test
           </button>

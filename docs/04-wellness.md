@@ -58,7 +58,7 @@
 
 ### Food Detail (logging screen)
 
-- Top: `X` close · food name · **heart** (favorite toggle; coral = favorited).
+- Top: `X` close · food name · **heart** (favorite toggle; rose `favorite` = favorited).
 - Editable fields: **Amount**, **Serving Size** (dropdown), **Group** (pre-filled to the group tapped).
 - **Complete Nutrient Summary**: every nutrient as "name · value / target · %", same bar style as
   the Dashboard, recomputing live as Amount/Serving change.

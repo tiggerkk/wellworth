@@ -28,8 +28,9 @@ After the Phase-1 build, three living docs sit alongside the spec in `docs/`:
   and (Part Q) **encrypted DB backups + free-tier keep-alive**. Enough to stand up the whole app from a
   fresh clone.
 
-Ops lives in `scripts/` (`db-backup.sh` / `db-restore.sh`) + `.github/workflows/backup.yml` (scheduled
-encrypted backup to a private repo); see OWNER-RUNBOOK Part Q.
+Ops lives in `scripts/` (`db-backup.sh` / `db-restore.sh`, plus `gen-icons.mjs` which regenerates the
+app/PWA icons via `npm run gen:icons`) + `.github/workflows/backup.yml` (scheduled encrypted backup to
+a private repo); see OWNER-RUNBOOK Part Q.
 
 ## How to use it
 

@@ -16,6 +16,7 @@
     "test:watch": "vitest",
     "check": "npm run format:check && npm run lint && npm run typecheck && npm run test",
     "gen:types": "supabase gen types typescript --linked --schema public > src/types/database.ts",
+    "gen:icons": "node scripts/gen-icons.mjs",
     "db:backup": "bash scripts/db-backup.sh",
     "db:restore": "bash scripts/db-restore.sh",
     "prepare": "husky"
@@ -50,7 +51,9 @@
     "globals": "^17.6.0",
     "husky": "^9.1.7",
     "lint-staged": "^17.0.7",
+    "png-to-ico": "^3.0.1",
     "prettier": "^3.8.4",
+    "sharp": "^0.35.2",
     "tailwindcss": "^4.3.1",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",

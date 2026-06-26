@@ -258,7 +258,7 @@ export function BooksLibrary() {
                       {b.is_favorite && (
                         <IconHeartFilled
                           size={13}
-                          className="shrink-0 text-accent"
+                          className="shrink-0 text-favorite"
                           aria-label="Favourite"
                         />
                       )}

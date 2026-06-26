@@ -17,7 +17,7 @@ shows its **status chip** (Want / Reading / Read / Dropped) consistently across 
   **Start Reading** action (status → reading, start → today).
 
 A favourite row anywhere shows a small filled **♥** before the title. Status chip palette: **Want** =
-blue, **Reading** = coral, **Read** = teal, **Dropped** = grey (the shared `StatusChip`).
+blue, **Reading** = orange, **Read** = teal, **Dropped** = grey (the shared `StatusChip`).
 A small stat line: **"N read this year"**.
 
 ### Library

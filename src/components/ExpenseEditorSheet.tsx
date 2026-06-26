@@ -113,6 +113,7 @@ export function ExpenseEditorSheet({
           )}
           <PrimaryButton
             size="sm"
+            tone="positive"
             onClick={() => void save()}
             disabled={saving || !canSave}
           >

@@ -4,6 +4,7 @@ import { IconBrandGoogle } from '@tabler/icons-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../auth/AuthProvider'
 import { PrimaryButton } from '../components/PrimaryButton'
+import { RingMark } from '../components/RingMark'
 import { Splash } from '../components/Splash'
 
 export function Login() {
@@ -31,9 +32,10 @@ export function Login() {
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-bg px-8 text-center">
       <div className="flex flex-col items-center gap-2">
+        <RingMark className="size-16 text-accent" />
         <h1 className="text-2xl font-medium text-text-primary">WellWorth</h1>
         <p className="text-sm text-text-secondary">
-          Track food, supplements, and activity.
+          Track wellness, net-worth, shows, books, quote, medical reports and travel.
         </p>
       </div>
 

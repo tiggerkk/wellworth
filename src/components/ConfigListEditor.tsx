@@ -213,7 +213,7 @@ export function ConfigListEditor<T extends { key: string; label: string }>({
         <button
           onClick={commitAdd}
           disabled={!newLabel.trim()}
-          className="flex items-center gap-1 rounded-input bg-input px-3 py-2 text-sm text-accent disabled:opacity-40"
+          className="flex items-center gap-1 rounded-input bg-input px-3 py-2 text-sm text-positive disabled:opacity-40"
         >
           <IconPlus size={16} /> Add
         </button>

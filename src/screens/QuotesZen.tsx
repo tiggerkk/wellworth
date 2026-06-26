@@ -276,7 +276,7 @@ function QuoteCard({
         className="mt-6 inline-flex"
       >
         {favorite ? (
-          <IconHeartFilled size={26} className="text-accent" />
+          <IconHeartFilled size={26} className="text-favorite" />
         ) : (
           <IconHeart size={26} className="text-text-tertiary" />
         )}

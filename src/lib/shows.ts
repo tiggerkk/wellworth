@@ -46,10 +46,10 @@ export const LGBTQ_REP_LABELS: Record<LgbtqRep, string> = {
 }
 
 /** Status-chip palette (Tailwind classes on the design tokens): want = blue (planned), watching =
- * coral (active), watched = teal (positive), dropped = grey (muted). */
+ * orange (active/in-progress), watched = teal (positive), dropped = grey (muted). */
 export const SHOW_STATUS_CHIP: Record<ShowStatus, string> = {
   want: 'bg-info text-bg',
-  watching: 'bg-accent text-bg',
+  watching: 'bg-warning text-bg',
   watched: 'bg-positive text-bg',
   dropped: 'bg-track text-text-secondary',
 }

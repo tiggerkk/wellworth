@@ -52,6 +52,8 @@ src/
                      # activity-icons.ts maps icon name strings to named Tabler imports
   types/             # database.ts (generated), domain types
   hooks/
+public/              # static assets: app/PWA icons (generated — see scripts/gen-icons.mjs), map geojson
+scripts/             # gen-icons.mjs (app icons), gen-zh-fold-map.mjs, db-backup/db-restore
 supabase/
   migrations/        # source-of-truth SQL migrations
 docs/                # the spec bundle

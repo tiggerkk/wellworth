@@ -308,7 +308,7 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
               ))}
               <button
                 onClick={addUrl}
-                className="flex items-center gap-1.5 self-start text-sm text-accent"
+                className="flex items-center gap-1.5 self-start text-sm text-positive"
               >
                 <IconPlus size={16} /> Add link
               </button>
@@ -325,7 +325,7 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
             </p>
             <button
               onClick={() => setPickerOpen(true)}
-              className="flex items-center gap-1.5 text-sm text-accent"
+              className="flex items-center gap-1.5 text-sm text-positive"
             >
               <IconPlus size={16} /> Add result
             </button>

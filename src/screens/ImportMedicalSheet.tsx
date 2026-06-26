@@ -303,7 +303,7 @@ export function ImportMedicalSheet() {
                 ))}
                 <button
                   onClick={() => update({ document_urls: [...draft.document_urls, ''] })}
-                  className="flex items-center gap-1.5 self-start text-sm text-accent"
+                  className="flex items-center gap-1.5 self-start text-sm text-positive"
                 >
                   <IconPlus size={16} /> Add link
                 </button>
@@ -317,7 +317,7 @@ export function ImportMedicalSheet() {
                 </p>
                 <button
                   onClick={() => setPickerOpen(true)}
-                  className="flex items-center gap-1.5 text-sm text-accent"
+                  className="flex items-center gap-1.5 text-sm text-positive"
                 >
                   <IconPlus size={16} /> Add result
                 </button>

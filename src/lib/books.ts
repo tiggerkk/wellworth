@@ -34,10 +34,10 @@ export const LGBTQ_REP_LABELS: Record<LgbtqRep, string> = {
 }
 
 /** Status-chip palette (Tailwind classes on the design tokens): want = blue (planned), reading =
- * coral (active), read = teal (positive), dropped = grey (muted). */
+ * orange (active/in-progress), read = teal (positive), dropped = grey (muted). */
 export const BOOK_STATUS_CHIP: Record<BookStatus, string> = {
   want: 'bg-info text-bg',
-  reading: 'bg-accent text-bg',
+  reading: 'bg-warning text-bg',
   read: 'bg-positive text-bg',
   dropped: 'bg-track text-text-secondary',
 }

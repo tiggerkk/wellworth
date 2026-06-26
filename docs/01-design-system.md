@@ -4,31 +4,33 @@ Dark, calm. These tokens are taken directly from the approved wireframes — mat
 
 ## Color tokens
 
-| Token             | Hex                      | Use                                                        |
-| ----------------- | ------------------------ | ---------------------------------------------------------- |
-| `bg`              | `#161b28`                | App / screen background                                    |
-| `surface`         | `#232a3a`                | Cards, group headers, list groups                          |
-| `surface-alt`     | `#1b2130`                | Nested/expanded rows, summary panels                       |
-| `input`           | `#2a3142`                | Input boxes, segmented-control track, pills                |
-| `border`          | `rgba(255,255,255,0.08)` | Card borders, dividers (use 0.06–0.07 for inner rows)      |
-| `text-primary`    | `#e8eaf0`                | Primary text                                               |
-| `text-secondary`  | `#9aa3b5`                | Labels, captions, inactive                                 |
-| `text-muted`      | `#c2c7d4`                | Secondary values                                           |
-| `text-tertiary`   | `#5b6172`                | Disabled / future dates                                    |
-| `accent` (coral)  | `#e8623c`                | Brand, active tab, links, energy-negative, favorites heart |
-| `positive` (teal) | `#5dcaa5`                | Add `+`, activity/supplement accents, "food logged" dot    |
-| `info` (blue)     | `#5b8def`                | "Want" status chip (planned) on Shows/Books                |
-| `danger`          | `#e2574c`                | Over-limit bars and % text, destructive text               |
-| `delete`          | `#e24b4a`                | Swipe-to-delete background                                 |
-| `track`           | `#3a4253`                | Progress-bar track, off-toggle                             |
-| `fill`            | `#eef1f7`                | Progress-bar fill; primary-button background               |
-| `dynasty`         | `#d8a657`                | Gold dynasty badge (Shows/Books Chinese titles)            |
-| `cat-meal`        | `#e2574c`                | Diary category icon — Breakfast/Lunch/Dinner (red apple)   |
-| `cat-snack`       | `#e2933c`                | Diary category icon — Snacks (orange cookie)               |
-| `cat-supplement`  | `#a779e0`                | Diary category icon — Supplements (purple pill)            |
-| `cat-activity`    | `#5b8def`                | Diary category icon — Activities (blue runner)             |
+| Token              | Hex                      | Use                                                               |
+| ------------------ | ------------------------ | ----------------------------------------------------------------- |
+| `bg`               | `#161b28`                | App / screen background                                           |
+| `surface`          | `#232a3a`                | Cards, group headers, list groups                                 |
+| `surface-alt`      | `#1b2130`                | Nested/expanded rows, summary panels                              |
+| `input`            | `#2a3142`                | Input boxes, segmented-control track, pills                       |
+| `border`           | `rgba(255,255,255,0.08)` | Card borders, dividers (use 0.06–0.07 for inner rows)             |
+| `text-primary`     | `#e8eaf0`                | Primary text                                                      |
+| `text-secondary`   | `#9aa3b5`                | Labels, captions, inactive                                        |
+| `text-muted`       | `#c2c7d4`                | Secondary values                                                  |
+| `text-tertiary`    | `#5b6172`                | Disabled / future dates                                           |
+| `accent` (blue)    | `#5ba3f5`                | Brand, active tab, links, energy-negative                         |
+| `favorite` (rose)  | `#e06aa0`                | Filled favorite heart (decoupled from `accent`)                   |
+| `positive` (teal)  | `#5dcaa5`                | Add `+`, activity/supplement accents, "food logged" dot           |
+| `info` (blue)      | `#5b8def`                | "Want" status chip (planned) on Shows/Books/Travel                |
+| `warning` (orange) | `#e8623c`                | In-progress status chip (Watching·Reading·Planning); import notes |
+| `danger`           | `#e2574c`                | Over-limit bars and % text, destructive text                      |
+| `delete`           | `#e24b4a`                | Swipe-to-delete background                                        |
+| `track`            | `#3a4253`                | Progress-bar track, off-toggle                                    |
+| `fill`             | `#eef1f7`                | Progress-bar fill; primary-button background                      |
+| `dynasty`          | `#d8a657`                | Gold dynasty badge (Shows/Books Chinese titles)                   |
+| `cat-meal`         | `#e2574c`                | Diary category icon — Breakfast/Lunch/Dinner (red apple)          |
+| `cat-snack`        | `#e2933c`                | Diary category icon — Snacks (orange cookie)                      |
+| `cat-supplement`   | `#a779e0`                | Diary category icon — Supplements (purple pill)                   |
+| `cat-activity`     | `#5b8def`                | Diary category icon — Activities (blue runner)                    |
 
-Primary button = `fill` background with `#161b28` text (a light pill on dark). The accent coral is
+Primary button = `fill` background with `#161b28` text (a light pill on dark). The accent blue is
 _not_ the primary-button color; it's for emphasis, active states, and energy.
 
 ## Radii & spacing
@@ -44,11 +46,13 @@ _not_ the primary-button color; it's for emphasis, active states, and energy.
 
 ## Core components (build once in `src/components`)
 
-- **BottomNav** — leading **Home** item + module tabs; active item coral.
+- **BottomNav** — leading **Home** item + module tabs; active item tints `accent`. The **Home**
+  icon sits in a soft accent-tinted (`bg-accent/20`) rounded-pill chip so the hub anchor reads
+  apart from the flat module tabs.
 - **SectionCard** — `surface` rounded container wrapping rows with hairline dividers.
 - **ListRow** — leading icon, two-line name/subtitle, trailing value or chevron.
 - **NutrientBar** — name + "value / target" (muted) + %; thin track+fill; **red variant** when over UL.
-- **Toggle** — pill switch; on = coral with knob right, off = `track` with grey knob left.
+- **Toggle** — pill switch; on = `accent` with knob right, off = `track` with grey knob left.
 - **SegmentedTabs** — `input` track, active segment = `fill` pill with dark text. Generic over N
   options — used for multi-way controls (Type selectors, Status/LGBT+ filters, Food/Supplement toggle).
   The Library Type control sits in the **sticky header above the `SearchBar`** (always visible, not
@@ -74,7 +78,9 @@ _not_ the primary-button color; it's for emphasis, active states, and energy.
 - **DateRangeRow** — a single-line filter date range — `label · From · To` — opening the shared
   `Calendar`, with a small ✕ to clear a bound (`src/components/DateRangeRow.tsx`).
 - **PrimaryButton** / **SecondaryButton** — light `fill` pill / outline pill. A `size` prop toggles
-  `default` (full, e.g. sign-in) vs `sm` (compact header actions).
+  `default` (full, e.g. sign-in) vs `sm` (compact header actions). PrimaryButton's `tone` prop is
+  `fill` (neutral, default) or `positive` (teal) — Create / Add / Save actions use `positive` so the
+  `+` / floppy / Save matches the teal `+` elsewhere.
 - **FieldRow** — label + value/input + chevron, for forms and Settings. An optional `hint` adds a small
   muted note inline after the label.
 - **VisibleFieldsSheet** — the shared "Visible Fields" sheet used by every module's Settings
@@ -117,8 +123,8 @@ flex flex-col`, or `h-full` for Zen) so the `flex-1` fills the real content area
   form, greyed/disabled until a `tmdb_id` exists; spins while fetching and reports "Updated" / "Already
   up to date".
 - **StatusChip** — a **presentational** status pill taking a `label` + palette `className`. Palette
-  tokens: **Want** = blue (`info`, planned) / **Watching·Reading** = coral (`accent`, active) /
-  **Watched·Read** = teal (`positive`) / **Dropped** = grey (`track`). "Want" label is deliberately
+  tokens: **Want** = blue (`info`, planned) / **Watching·Reading·Planning** = orange (`warning`,
+  in-progress) / **Watched·Read·Visited** = teal (`positive`) / **Dropped** = grey (`track`). "Want" label is deliberately
   short so the chip stays compact; shelf titles still spell it out. Chips appear on every Library row
   **and** every Dashboard row. The Quotes module reuses the same chip for its **Category badge** (single
   neutral palette).

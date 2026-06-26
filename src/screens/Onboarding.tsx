@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { useProfileEditor } from '../hooks/useProfileEditor'
 import { PrimaryButton } from '../components/PrimaryButton'
+import { RingMark } from '../components/RingMark'
 import {
   ProfileMetricsFields,
   type ProfileMetrics,
@@ -66,9 +67,10 @@ export function Onboarding() {
     <div className="fixed inset-0 z-50 mx-auto flex max-w-md flex-col overflow-y-auto bg-bg pt-[env(safe-area-inset-top)]">
       <div className="flex flex-col gap-5 px-4 py-8">
         <header className="flex flex-col items-center gap-3 text-center">
-          {/* The PWA app icon (public/pwa-192x192.png — the same orange/red mark shown on the
-              home screen), reused here so onboarding feels like the installed app. */}
-          <img src="/pwa-192x192.png" alt="WellWorth" className="size-16 rounded-2xl" />
+          {/* Same brand mark as the Login screen (RingMark, inline SVG via currentColor) so the
+              two on-screen logos share one source and can't drift. The installed-app/home-screen
+              icon is necessarily a separate raster (public/*.png, see scripts/gen-icons.mjs). */}
+          <RingMark className="size-16 text-accent" />
           <div>
             <h1 className="text-lg font-medium text-text-primary">
               Welcome to WellWorth

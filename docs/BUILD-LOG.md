@@ -49,7 +49,9 @@ been merged into the permanent docs (`00-PRD … 05-seed-data` + OWNER-RUNBOOK) 
   `leaflet` + `leaflet.markercluster` power the **Travel** map, lazy-loaded into their own chunk
   (`TravelMapCanvas`) so they're off the main bundle.
 - **Scripts:** `dev`, `build` (`tsc -b && vite build`), `preview`, `lint`, `format`, `typecheck`,
-  `test`, `check` (all gates), `gen:types` (Supabase → `src/types/database.ts`), `prepare` (husky).
+  `test`, `check` (all gates), `gen:types` (Supabase → `src/types/database.ts`),
+  `gen:icons` (`scripts/gen-icons.mjs` → app/PWA icons in `public/`, via `sharp` + `png-to-ico`),
+  `prepare` (husky).
 - **Env (`.env`, gitignored; `.env.example` documents):** `VITE_SUPABASE_URL`,
   `VITE_SUPABASE_ANON_KEY`, `VITE_USDA_API_KEY`, `VITE_TMDB_API_KEY`, the optional
   `VITE_GOOGLE_BOOKS_API_KEY` (Books), the optional `VITE_ALLOWED_EMAILS` (email allowlist —
@@ -2282,3 +2284,53 @@ data. Touches the `stop` schema, so `database.ts` is regenerated. Test count **4
   collapsed section, preventing accidental use when search results are present.
 - **Country default changed to `中国`.** The `isChina()` recogniser already includes `'中国'`, so
   the province dropdown triggers correctly.
+
+### Colour-scheme follow-up after the accent swap (2026-06-26)
+
+The owner changed `--color-accent` from coral `#e8623c` to blue `#5ba3f5` in `src/index.css`. Because
+Tailwind v4 is CSS-first, every `text-accent` re-themed automatically — which surfaced three issues:
+
+- **Favourite heart decoupled from accent.** The filled heart was `text-accent`, so it turned blue with
+  everything else. Added a dedicated `--color-favorite: #e06aa0` (rose, the value already used by
+  `TravelExpenseChart`) and switched all 10 filled-heart call sites (`IconHeartFilled`) to
+  `text-favorite` (Shows/Books Library+Dashboard+Entry, QuotesZen/QuotesEntry, FoodDetailSheet,
+  AddFoodSheet). Outline hearts stay `text-text-tertiary`. No shared heart component exists; the edit
+  was a per-site class swap (a shared component was considered but deemed unwarranted for the scope).
+- **Home bottom-nav item distinguished.** `BottomNav` now wraps the leading Home icon in a subtle
+  `bg-input rounded-pill` chip so the hub anchor reads apart from the flat module tabs. The chip uses
+  `-my-0.5` to offset its vertical padding, keeping label baselines aligned across all items. Active
+  tint still tracks `accent`.
+- **App icon recoloured + made reproducible.** The `public/` icons were static orange-ring placeholders
+  with **no committed generator** (PARKED "Designed app icons"). Added `scripts/gen-icons.mjs` +
+  `npm run gen:icons` (devDeps `sharp` + `png-to-ico`): it builds the ring SVG in code (accent-blue ring
+  on `--color-bg`) and rasterises all sizes (pwa-192/512, padded maskable-512, apple-touch 180,
+  favicon 16/32/48). Added `src/components/RingMark.tsx` (inline ring via `currentColor`, tracks
+  `accent`) and used it for **both** on-screen logos — the Login screen (which had no logo before) and
+  the Onboarding header (previously an `<img>` of `pwa-192x192.png`). On-screen logos are a free choice
+  where inline SVG wins (crisp + themeable); the installed-app icon/favicon are forced to be raster
+  (iOS/manifest don't take SVG), so they stay a separate generated artifact that shares RingMark's
+  documented ring geometry. **Lessons:** (1) generated assets need a committed generator, not just the
+  output files, or a recolour means hand-editing rasters; (2) keep the two _on-screen_ logos on one
+  component so they can't drift — the raster icon is the only unavoidable duplicate.
+
+### Colour-scheme follow-up #2 — teal actions, status chips, nav/toggle contrast (2026-06-26)
+
+More fallout from the accent→blue swap, plus two latent bugs it exposed:
+
+- **Create / Add / Save actions → teal.** Added a `tone` prop to `PrimaryButton` (`fill` default |
+  `positive` teal); the shared `EntryHeaderActions` submit (the `+`/floppy used by every entry screen
+  via that component), plus `FoodDetailSheet` "Add to diary" and `ExpenseEditorSheet` Save/Add, now pass
+  `tone="positive"`. Inline `+` glyphs that were still `text-accent` (blue) flipped to `text-positive`
+  (`ConfigListEditor`, `EmptyState`, `MedicalTestPickerSheet`, `ImportMedicalSheet`/`MedicalEntry`
+  Add-link/Add-result, and the secondary `Add Day`/`Add Expense`). Most `+` glyphs were _already_
+  `text-positive`. Import/link/search actions stay `accent` (blue) — they aren't create/add/save.
+- **Status chips: in-progress = orange again.** Watching/Reading used `bg-accent`, so they went blue
+  with the swap. Introduced **`--color-warning: #e8623c`** (the old accent orange) and pointed
+  Watching/Reading at `bg-warning`. **Latent bug:** `--color-warning` was referenced in **4 places**
+  (`TRIP_STATUS_CHIP.planning` + three import "N notes" labels) but **never defined** — so Travel's
+  Planning badge had no background (unreadable) and the import notes weren't amber. Defining the token
+  fixed all of them. Travel **Want to Go** changed `bg-track` → `bg-info` to match Shows/Books **Want**.
+- **Bottom-nav Home chip** changed `bg-input` → `bg-accent/20`: the old chip (#2a3142) was nearly
+  invisible on the `bg-surface` (#232a3a) bar. A soft accent tint reads clearly and marks Home as the hub.
+- **Trip-stop "skipped" toggle** changed `bg-track text-text-secondary` (dark-on-dark, barely visible)
+  → `bg-text-secondary text-bg` (solid grey, dark icon), mirroring the teal `bg-positive` "done" fill.

@@ -12,13 +12,13 @@
 - **Shelves**: **Recently Visited** (reverse-chron, with a "See all trips" link), **Planning**,
   **Want to Visit** — each a card row (cover thumbnail · name · date range · primary region · status
   chip), tapping into the Trip Builder. Empty overall → **New Trip** CTA (shared EmptyState).
-- **Status chip palette** (`TRIP_STATUS_CHIP`): Want = neutral (`track`), Planning = amber (`warning`),
-  Visited = teal (`positive`) — via the shared `StatusChip`.
+- **Status chip palette** (`TRIP_STATUS_CHIP`, mirrors Shows/Books): Want = blue (`info`), Planning =
+  orange (`warning`), Visited = teal (`positive`) — via the shared `StatusChip`.
 
 ### Map (`/travel/map`)
 
 - A **Leaflet** map (OSM tiles), lazy-loaded into its own chunk.
-- A **markercluster dot per visited city** (coral `accent` = visited; neutral `text-secondary` =
+- A **markercluster dot per visited city** (`accent` = visited; neutral `text-secondary` =
   planned), placed from the city's `remembered_city` coords. A city without a cached pin shows no dot
   (a hint points to the picker's "Look up online").
 - A **Region fill** toggle (default on): China filled by province (DataV GeoJSON) + non-China countries
@@ -125,12 +125,13 @@ and a **Use "city"** PrimaryButton.
 - **Stop-type icons** (Tabler): Travel = plane/train (`IconPlane`/`IconTrain`), Visit = map-pin
   (`IconMapPin`), Eat = kitchen tools (`IconToolsKitchen`), Shop = shopping bag
   (`IconShoppingBag`), Stay = bed (`IconBed`), Other = dots.
-- **Completion**: Done = a teal "Done" chip (`positive`); Skipped = a muted, struck-through stop row.
+- **Completion**: Done = a teal fill (`positive`); Skipped = a solid grey fill (`bg-text-secondary`)
+  with the struck-through stop row.
 - **Trip cover**: a rounded image rendered `referrerpolicy="no-referrer"` (thumbnail in lists, larger
   in the header); a neutral placeholder when null (the shared `Thumb`).
-- **Status chip palette** (`TRIP_STATUS_CHIP`): Want = neutral (`track`), Planning = amber
-  (`warning`), Visited = teal (`positive`) — via the shared `StatusChip`.
-- **Map**: Leaflet over OSM tiles; **coral** dots (`accent` = visited) / **neutral** dots
+- **Status chip palette** (`TRIP_STATUS_CHIP`, mirrors Shows/Books): Want = blue (`info`), Planning =
+  orange (`warning`), Visited = teal (`positive`) — via the shared `StatusChip`.
+- **Map**: Leaflet over OSM tiles; **accent** dots (`accent` = visited) / **neutral** dots
   (`text-secondary` = planned), clustered; the visited-region fill is `positive` at low opacity.
 - **Expense breakdown**: a small Recharts donut over the categories (HKD-equivalent), lazy-loaded
   into its own chunk.

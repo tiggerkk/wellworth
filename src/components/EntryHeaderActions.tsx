@@ -87,6 +87,7 @@ export function EntryHeaderActions({
       </SecondaryButton>
       <PrimaryButton
         size="sm"
+        tone="positive"
         onClick={onSubmit}
         disabled={saving || !canSubmit || (editing && !dirty)}
         aria-label={editing ? 'Save' : 'Create'}

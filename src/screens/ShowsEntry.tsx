@@ -424,7 +424,7 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
           aria-label="Favourite"
         >
           {draft.is_favorite ? (
-            <IconHeartFilled size={20} className="text-accent" />
+            <IconHeartFilled size={20} className="text-favorite" />
           ) : (
             <IconHeart size={20} className="text-text-tertiary" />
           )}

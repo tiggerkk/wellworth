@@ -489,8 +489,8 @@ and run the two commands again. Once the commit succeeds:
 1. On the device, open the Vercel URL **in Safari** (must be Safari, not Chrome).
 2. Sign in with Google once to confirm it works.
 3. Tap the **Share** icon (the square with an up-arrow) → **Add to Home Screen** → **Add**.
-4. Launch **WellWorth** from the home screen — it opens full-screen like a normal app, with the coral
-   icon.
+4. Launch **WellWorth** from the home screen — it opens full-screen like a normal app, with the blue
+   ring icon.
 
 - ✅ Check: signed in, you can log a food and an activity, and the **barcode** button in Add Food
   opens the camera and scans a product (allow camera access when prompted).
@@ -902,6 +902,7 @@ key** — guard it like the DB password.
 > supabase db reset --linked   # ⚠️ wipe + rebuild the DB from migrations (Part M1)
 > npm run db:backup    # encrypted DB backup before anything risky (Part Q; or Actions → Run workflow)
 > npm run gen:types    # regenerate src/types/database.ts after a schema change
+> npm run gen:icons    # regenerate the app/PWA icons in public/ (after editing scripts/gen-icons.mjs)
 > git add -A && git commit -m "what changed" && git push   # save + push changes (auto-deploys on Vercel)
 ```
 
