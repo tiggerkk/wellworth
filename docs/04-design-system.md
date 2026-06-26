@@ -56,7 +56,9 @@ _not_ the primary-button color; it's for emphasis, active states, and energy.
   `+` on the right.
 - **SwipeRow** — swipe-left reveals a `delete` Delete action.
 - **SearchBar** — magnifier + input (+ barcode icon on Add Food). Takes an optional `className` so it can
-  fill a flex row beside a Filter icon (the list screens pass `min-w-0 flex-1`).
+  fill a flex row beside a Filter icon (the list screens pass `min-w-0 flex-1`), and an optional `icon`
+  to swap the leading glyph (the Shows/Books online-search sheets pass `IconWorldSearch`; default is the
+  magnifier `IconSearch`).
 - **FilterToggleButton** — the shared **icon-only** Filter toggle (`src/components/FilterToggleButton.tsx`):
   a bare `IconFilter` that tints **accent** while its panel is open, else `text-secondary`. Sits flush at
   the right edge of the row, after a `min-w-0 flex-1` `SearchBar` (every list module). Replaces the old
@@ -73,7 +75,8 @@ _not_ the primary-button color; it's for emphasis, active states, and energy.
 - **PrimaryButton** / **SecondaryButton** — light `fill` pill / outline pill. A `size` prop toggles
   `default` (full, e.g. sign-in) vs `sm` (compact, used by the top-right ADD / SAVE / CREATE / RESET
   header actions).
-- **FieldRow** — label + value/input + chevron, for forms and Settings.
+- **FieldRow** — label + value/input + chevron, for forms and Settings. An optional `hint` adds a small
+  muted note inline after the label (e.g. Medical Settings' "(Dashboard)" / "(Dashboard, Report & Entry)").
 - **VisibleFieldsSheet** — the shared "Visible Fields" sheet used by every module's Settings
   (`src/components/VisibleFieldsSheet.tsx`): a `full` `Sheet` + header + intro + auto-saving toggle list.
   Each module passes its `*_ENTRY_FIELDS` list (in New/Edit form order), the `profile` `text[]` column

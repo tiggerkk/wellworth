@@ -14,8 +14,8 @@ export const QUOTE_CATEGORIES = [
   'wit',
   'observation',
   'philosophy',
-  'heart',
-  'connection',
+  'love',
+  'relationship',
   'growth',
 ] as const
 export type QuoteCategory = (typeof QUOTE_CATEGORIES)[number]
@@ -24,8 +24,8 @@ export const QUOTE_CATEGORY_LABELS: Record<QuoteCategory, string> = {
   wit: 'Wit',
   observation: 'Observation',
   philosophy: 'Philosophy',
-  heart: 'Heart',
-  connection: 'Connection',
+  love: 'Love',
+  relationship: 'Relationship',
   growth: 'Growth',
 }
 

@@ -1,4 +1,4 @@
-import { IconBarcode, IconSearch } from '@tabler/icons-react'
+import { IconBarcode, IconSearch, type Icon } from '@tabler/icons-react'
 
 interface SearchBarProps {
   value: string
@@ -7,6 +7,8 @@ interface SearchBarProps {
   onScan?: () => void
   /** Applied to the root — pass `min-w-0 flex-1` to fill a flex row next to a Filter icon. */
   className?: string
+  /** Leading glyph; defaults to the magnifier (e.g. pass `IconWorldSearch` for online lookups). */
+  icon?: Icon
 }
 
 /** Magnifier + input, with an optional barcode-scan button (Add Food). */
@@ -16,11 +18,12 @@ export function SearchBar({
   placeholder = 'Search',
   onScan,
   className = '',
+  icon: LeadIcon = IconSearch,
 }: SearchBarProps) {
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       <div className="flex flex-1 items-center gap-2 rounded-input bg-input px-3 py-2">
-        <IconSearch size={18} className="shrink-0 text-text-secondary" />
+        <LeadIcon size={18} className="shrink-0 text-text-secondary" />
         <input
           value={value}
           onChange={(e) => onChange(e.target.value)}

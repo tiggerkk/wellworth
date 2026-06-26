@@ -4,7 +4,7 @@ import {
   IconHeart,
   IconHeartFilled,
   IconQuote,
-  IconSearch,
+  IconWorldSearch,
   IconX,
 } from '@tabler/icons-react'
 import { routes } from '../constants/routes'
@@ -317,7 +317,7 @@ function BookForm({ id, initial }: { id: string | undefined; initial: BookDraft 
               onClick={() => setSearchOpen(true)}
               className="flex shrink-0 items-center justify-center gap-1.5 rounded-input bg-input px-3 py-2 text-sm text-accent"
             >
-              <IconSearch size={16} /> Google Books
+              <IconWorldSearch size={16} /> Google Books
             </button>
           </div>
           {metaLoading && (
@@ -471,7 +471,7 @@ function BookForm({ id, initial }: { id: string | undefined; initial: BookDraft 
 
         {show('comments') && (
           <label className="text-xs text-text-secondary">
-            Comments
+            Notes
             <textarea
               value={draft.comments}
               onChange={(e) => update({ comments: e.target.value })}

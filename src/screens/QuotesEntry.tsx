@@ -348,33 +348,6 @@ function QuoteForm({
           />
         </div>
 
-        {(show('author') || show('source_type')) && (
-          <div className="flex gap-3">
-            {show('author') && (
-              <label className="flex-1 text-xs text-text-secondary">
-                Author
-                <input
-                  value={draft.author}
-                  onChange={(e) => update({ author: e.target.value })}
-                  placeholder="Who said or wrote it"
-                  className={`mt-1 ${inputClass} placeholder:text-text-tertiary`}
-                />
-              </label>
-            )}
-            {show('source_type') && (
-              <div className="w-32">
-                <p className="mb-1 text-xs text-text-secondary">Source Type</p>
-                <SelectMenu
-                  value={draft.source_type}
-                  options={sourceTypes.map((s) => ({ value: s.key, label: s.label }))}
-                  onChange={(s) => update({ source_type: s })}
-                  ariaLabel="Source type"
-                />
-              </div>
-            )}
-          </div>
-        )}
-
         {(show('title') || show('source_link')) && (
           <div className="flex items-end gap-2">
             {show('title') && (
@@ -406,6 +379,33 @@ function QuoteForm({
                   <IconLink size={16} /> Show or Book
                 </button>
               ))}
+          </div>
+        )}
+
+        {(show('author') || show('source_type')) && (
+          <div className="flex gap-3">
+            {show('author') && (
+              <label className="flex-1 text-xs text-text-secondary">
+                Author
+                <input
+                  value={draft.author}
+                  onChange={(e) => update({ author: e.target.value })}
+                  placeholder="Who said or wrote it"
+                  className={`mt-1 ${inputClass} placeholder:text-text-tertiary`}
+                />
+              </label>
+            )}
+            {show('source_type') && (
+              <div className="w-32">
+                <p className="mb-1 text-xs text-text-secondary">Source Type</p>
+                <SelectMenu
+                  value={draft.source_type}
+                  options={sourceTypes.map((s) => ({ value: s.key, label: s.label }))}
+                  onChange={(s) => update({ source_type: s })}
+                  ariaLabel="Source type"
+                />
+              </div>
+            )}
           </div>
         )}
 

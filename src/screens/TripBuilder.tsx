@@ -108,7 +108,7 @@ function NewTrip() {
           onSubmit={() => void create()}
         />
       </header>
-      <div className="flex flex-col gap-4 overflow-y-auto p-4">
+      <div className="flex flex-col gap-4 p-4">
         <div className="flex gap-3">
           <label className="flex-1 text-xs text-text-secondary">
             Trip Name

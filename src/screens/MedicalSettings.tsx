@@ -50,22 +50,16 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
           onClick={() => openSheet(routes.medical.settingsTracked)}
           className="w-full"
         >
-          <FieldRow label="Tracked Tests">
-            <span className="flex items-center gap-1">
-              {'(Dashboard)'}
-              <IconChevronRight size={18} className="text-text-tertiary" />
-            </span>
+          <FieldRow label="Tracked Tests" hint="(Dashboard)">
+            <IconChevronRight size={18} className="text-text-tertiary" />
           </FieldRow>
         </button>
         <button
           onClick={() => openSheet(routes.medical.settingsOrder)}
           className="w-full"
         >
-          <FieldRow label="Tests Display Order">
-            <span className="flex items-center gap-1">
-              {'(Dashboard, Report & Entry)'}
-              <IconChevronRight size={18} className="text-text-tertiary" />
-            </span>
+          <FieldRow label="Tests Display Order" hint="(Dashboard, Report & Entry)">
+            <IconChevronRight size={18} className="text-text-tertiary" />
           </FieldRow>
         </button>
       </SectionCard>

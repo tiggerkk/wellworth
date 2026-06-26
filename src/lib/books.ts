@@ -245,7 +245,7 @@ export const BOOK_ENTRY_FIELDS: { key: string; label: string }[] = [
   { key: 'dynasty', label: 'Dynasty' },
   { key: 'start_date', label: 'Start Date' },
   { key: 'end_date', label: 'Finish / Drop Date' },
-  { key: 'comments', label: 'Comments' },
+  { key: 'comments', label: 'Notes' },
 ]
 
 /** Whether an Entry field is visible. NULL stored prefs (or an unknown key) ⇒ visible (default-on). */

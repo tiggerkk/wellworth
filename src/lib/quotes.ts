@@ -109,6 +109,8 @@ export interface LibraryCriteria {
   /** Multi-select tags, OR semantics: a quote matches if it has ANY selected tag. */
   tags: string[]
   favoritesOnly: boolean
+  /** Only quotes linked to a Show or Book record (non-null `show_id`/`book_id`). */
+  linkedOnly: boolean
   /** A configured source-type key, or 'all'. */
   sourceType: 'all' | string
   language: 'all' | QuoteLanguage
@@ -124,6 +126,7 @@ export const DEFAULT_LIBRARY_CRITERIA: LibraryCriteria = {
   category: 'all',
   tags: [],
   favoritesOnly: false,
+  linkedOnly: false,
   sourceType: 'all',
   language: 'all',
   showId: null,
@@ -132,11 +135,19 @@ export const DEFAULT_LIBRARY_CRITERIA: LibraryCriteria = {
   sortDir: 'desc',
 }
 
-/** Sorted distinct tags across the given quotes — the Tags-facet options (derived, no DB call). */
-export function quoteTags(quotes: Pick<QuoteRow, 'tags'>[]): string[] {
-  const set = new Set<string>()
-  for (const q of quotes) for (const t of q.tags ?? []) set.add(t)
-  return [...set].sort((a, b) => a.localeCompare(b))
+/**
+ * Distinct tags with their quote counts — the Tags-facet source (derived, no DB call). Sorted by
+ * **count desc, then tag asc** so the most-used tags surface first (the Library shows a top-N slice).
+ */
+export function rankedTags(
+  quotes: Pick<QuoteRow, 'tags'>[],
+): { tag: string; count: number }[] {
+  const counts = new Map<string, number>()
+  for (const q of quotes)
+    for (const t of q.tags ?? []) counts.set(t, (counts.get(t) ?? 0) + 1)
+  return [...counts.entries()]
+    .map(([tag, count]) => ({ tag, count }))
+    .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag))
 }
 
 function quoteSortKey(quote: QuoteRow, field: SortField): string | null {
@@ -175,6 +186,7 @@ export function applyLibraryView(quotes: QuoteRow[], c: LibraryCriteria): QuoteR
       if (c.category !== 'all' && quote.category !== c.category) return false
       if (c.tags.length > 0 && !c.tags.some((t) => quote.tags.includes(t))) return false
       if (c.favoritesOnly && !quote.is_favorite) return false
+      if (c.linkedOnly && !quote.show_id && !quote.book_id) return false
       if (c.sourceType !== 'all' && quote.source_type !== c.sourceType) return false
       if (c.language !== 'all' && quote.language !== c.language) return false
       if (c.showId && quote.show_id !== c.showId) return false
@@ -192,10 +204,10 @@ export function applyLibraryView(quotes: QuoteRow[], c: LibraryCriteria): QuoteR
  * Stored on `profile.quote_visible_fields` (NULL = all visible).
  */
 export const QUOTE_ENTRY_FIELDS: { key: string; label: string }[] = [
-  { key: 'author', label: 'Author' },
-  { key: 'source_type', label: 'Source Type' },
   { key: 'title', label: 'Title' },
   { key: 'source_link', label: 'Source Link' },
+  { key: 'author', label: 'Author' },
+  { key: 'source_type', label: 'Source Type' },
   { key: 'language', label: 'Language' },
   { key: 'tags', label: 'Tags' },
 ]

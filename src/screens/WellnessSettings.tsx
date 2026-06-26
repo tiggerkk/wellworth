@@ -58,23 +58,6 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
 
   return (
     <>
-      <SectionCard title="Targets">
-        <FieldRow label="Protein Target (g)">
-          <input
-            type="number"
-            step="any"
-            placeholder="DRI"
-            value={proteinDraft}
-            onChange={(e) => setProteinDraft(e.target.value)}
-            onBlur={commitProtein}
-            className={inputCls}
-          />
-        </FieldRow>
-        <div className="px-4 py-2 text-xs text-text-tertiary">
-          Other targets are set automatically from your profile (DRI).
-        </div>
-      </SectionCard>
-
       <SectionCard title="Display">
         <button
           onClick={() => openSheet(routes.wellness.settingsHighlighted)}
@@ -92,6 +75,23 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
             <IconChevronRight size={18} className="text-text-tertiary" />
           </FieldRow>
         </button>
+      </SectionCard>
+
+      <SectionCard title="Targets">
+        <FieldRow label="Protein Target (g)">
+          <input
+            type="number"
+            step="any"
+            placeholder="DRI"
+            value={proteinDraft}
+            onChange={(e) => setProteinDraft(e.target.value)}
+            onBlur={commitProtein}
+            className={inputCls}
+          />
+        </FieldRow>
+        <div className="px-4 py-2 text-xs text-text-tertiary">
+          Other targets are set automatically from your profile (DRI).
+        </div>
       </SectionCard>
     </>
   )

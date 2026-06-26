@@ -40,8 +40,8 @@ describe('defaults', () => {
       'wit',
       'observation',
       'philosophy',
-      'heart',
-      'connection',
+      'love',
+      'relationship',
       'growth',
     ])
   })
@@ -65,9 +65,9 @@ describe('effectiveSourceTypes / effectiveCategories', () => {
   it('a non-null override is authoritative — a deleted default does NOT resurrect', () => {
     const override = [
       { key: 'wit', label: 'Wit' },
-      { key: 'heart', label: 'Heart' },
+      { key: 'love', label: 'Love' },
     ]
-    expect(effectiveCategories(override).map((e) => e.key)).toEqual(['wit', 'heart'])
+    expect(effectiveCategories(override).map((e) => e.key)).toEqual(['wit', 'love'])
   })
   it('keeps custom keys and de-dupes by key', () => {
     const override = [

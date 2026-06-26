@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { IconQuote, IconX } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
@@ -9,7 +9,7 @@ import { deleteQuote, listQuotes } from '../data/quote'
 import {
   applyLibraryView,
   DEFAULT_LIBRARY_CRITERIA,
-  quoteTags,
+  rankedTags,
   QUOTE_CATEGORY_CHIP,
   type LibraryCriteria,
   type SortField,
@@ -40,6 +40,8 @@ const SORT_OPTIONS: { value: SortField; label: string }[] = [
   { value: 'category', label: 'Category' },
   { value: 'sourceType', label: 'Source Type' },
 ]
+// The tag facet shows this many most-used tags by default; above it, a search box finds the rest.
+const TOP_TAGS = 10
 
 /**
  * Quotes — Library. Real-time search over text/author/title/tags + a collapsible faceted filter
@@ -57,6 +59,7 @@ export function QuotesLibrary() {
 
   const [criteria, setCriteria] = useState<LibraryCriteria>(DEFAULT_LIBRARY_CRITERIA)
   const [filtersOpen, setFiltersOpen] = useState(false)
+  const [tagQuery, setTagQuery] = useState('')
   const setCrit = (patch: Partial<LibraryCriteria>) =>
     setCriteria((c) => ({ ...c, ...patch }))
 
@@ -106,6 +109,7 @@ export function QuotesLibrary() {
       sortField: c.sortField,
       sortDir: c.sortDir,
     }))
+    setTagQuery('')
   }
   function toggleTag(tag: string) {
     setCriteria((c) => ({
@@ -115,7 +119,18 @@ export function QuotesLibrary() {
   }
 
   const all = quotes ?? []
-  const tagOptions = quoteTags(all)
+  // Tags ranked by quote count (most-used first). By default the facet shows the top N; once there are
+  // more, a search box narrows the FULL list. Selected tags always stay visible (so they're deselectable).
+  const ranked = rankedTags(all)
+  const showTagSearch = ranked.length > TOP_TAGS
+  const tagFilter = tagQuery.trim().toLowerCase()
+  const pool = tagFilter
+    ? ranked.filter((r) => r.tag.toLowerCase().includes(tagFilter)).map((r) => r.tag)
+    : ranked.slice(0, TOP_TAGS).map((r) => r.tag)
+  const displayTags = [
+    ...criteria.tags.filter((t) => !tagFilter || t.toLowerCase().includes(tagFilter)),
+    ...pool.filter((t) => !criteria.tags.includes(t)),
+  ]
   // The URL constraint is layered on at view time so the panel state stays purely local.
   const view = applyLibraryView(all, { ...criteria, showId, bookId })
 
@@ -186,25 +201,50 @@ export function QuotesLibrary() {
             </label>
           </div>
 
-          {tagOptions.length > 0 && (
-            <Field label="Tags">
-              <div className="flex flex-wrap gap-1.5">
-                {tagOptions.map((tag) => {
-                  const on = criteria.tags.includes(tag)
-                  return (
-                    <button
-                      key={tag}
-                      onClick={() => toggleTag(tag)}
-                      className={`rounded-pill px-2 py-0.5 text-xs ${
-                        on ? 'bg-accent text-bg' : 'bg-input text-text-secondary'
-                      }`}
-                    >
-                      {tag}
-                    </button>
-                  )
-                })}
-              </div>
-            </Field>
+          {/* Linked toggle + the tag search share one row to save vertical space. */}
+          <div className="grid grid-cols-2 gap-3">
+            <label className="flex items-center justify-between py-1.5">
+              <span className="text-text-secondary">Linked Titles Only</span>
+              <Toggle
+                checked={criteria.linkedOnly}
+                onChange={(v) => setCrit({ linkedOnly: v })}
+                label="Linked Titles Only"
+              />
+            </label>
+            {showTagSearch && (
+              <input
+                value={tagQuery}
+                onChange={(e) => setTagQuery(e.target.value)}
+                placeholder="Filter tags…"
+                aria-label="Filter tags"
+                className="w-full self-center rounded-input bg-input px-3 py-1.5 text-xs text-text-primary placeholder:text-text-tertiary focus:outline-none"
+              />
+            )}
+          </div>
+
+          {ranked.length > 0 && (
+            <div className="flex max-h-32 flex-wrap items-center gap-1.5 overflow-y-auto">
+              {displayTags.map((tag) => {
+                const on = criteria.tags.includes(tag)
+                return (
+                  <button
+                    key={tag}
+                    onClick={() => toggleTag(tag)}
+                    className={`rounded-pill px-2 py-0.5 text-xs ${
+                      on ? 'bg-accent text-bg' : 'bg-input text-text-secondary'
+                    }`}
+                  >
+                    {tag}
+                  </button>
+                )
+              })}
+              {displayTags.length === 0 && (
+                <span className="text-text-tertiary">No tags match.</span>
+              )}
+              {showTagSearch && !tagFilter && (
+                <span className="text-text-tertiary">· top {TOP_TAGS} by use</span>
+              )}
+            </div>
           )}
 
           <div className="flex items-center justify-between">
@@ -261,15 +301,6 @@ export function QuotesLibrary() {
           ))}
         </div>
       )}
-    </div>
-  )
-}
-
-function Field({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div>
-      <p className="mb-1 text-text-secondary">{label}</p>
-      {children}
     </div>
   )
 }

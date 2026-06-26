@@ -24,7 +24,7 @@ Quote,Author,Source,Title,Category,Tags,is_favorite,created_at
   is **linked** to that record automatically.
 - **Category** — **Required**, and must match one of your configured **Categories** (Quotes Settings →
   Values → Categories) by key or label, case-insensitive. Default values: Wit, Observation, Philosophy,
-  Heart, Connection, Growth. A blank or unrecognised value flags the row.
+  Love, Relationship, Growth. A blank or unrecognised value flags the row.
 - **Tags** — a single cell of comma-separated tags, e.g. `"wisdom, humility"`. Optional (blank = none).
   Wrap it in quotes so the commas stay inside one cell; each tag is then trimmed and de-duplicated.
 - **is_favorite** — `true`/`1`/`yes` marks the quote a favourite (the ♥). Optional (blank = not a

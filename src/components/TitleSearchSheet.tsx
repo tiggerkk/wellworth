@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { IconX } from '@tabler/icons-react'
+import { IconWorldSearch, IconX } from '@tabler/icons-react'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 import { SearchBar } from './SearchBar'
 import { ShowTypeBadge } from './ShowTypeBadge'
@@ -87,6 +87,7 @@ export function TitleSearchSheet({
               value={query}
               onChange={setQuery}
               placeholder={`Search ${typeLabel} titles`}
+              icon={IconWorldSearch}
             />
           </div>
         </div>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { IconX } from '@tabler/icons-react'
+import { IconWorldSearch, IconX } from '@tabler/icons-react'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 import { SearchBar } from './SearchBar'
 import { CoverThumb } from './CoverThumb'
@@ -94,6 +94,7 @@ export function BookSearchSheet({
               value={query}
               onChange={setQuery}
               placeholder="Search by title or author"
+              icon={IconWorldSearch}
             />
           </div>
         </div>

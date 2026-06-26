@@ -9,7 +9,7 @@ import {
   nextZenPool,
   QUOTE_ENTRY_FIELDS,
   quoteSearchText,
-  quoteTags,
+  rankedTags,
   randomItem,
   type LibraryCriteria,
   type LinkCandidate,
@@ -150,11 +150,21 @@ describe('randomItem', () => {
   })
 })
 
-describe('quoteTags', () => {
-  it('returns distinct tags sorted', () => {
+describe('rankedTags', () => {
+  it('counts distinct tags, sorted by count desc then alpha', () => {
     expect(
-      quoteTags([{ tags: ['wit', 'irony'] }, { tags: ['irony', 'clever'] }]),
-    ).toEqual(['clever', 'irony', 'wit'])
+      rankedTags([{ tags: ['wit', 'irony'] }, { tags: ['irony', 'clever'] }]),
+    ).toEqual([
+      { tag: 'irony', count: 2 },
+      { tag: 'clever', count: 1 },
+      { tag: 'wit', count: 1 },
+    ])
+  })
+
+  it('ignores missing tags', () => {
+    expect(rankedTags([{ tags: [] }, { tags: ['zen'] }])).toEqual([
+      { tag: 'zen', count: 1 },
+    ])
   })
 })
 
@@ -261,6 +271,13 @@ describe('applyLibraryView', () => {
     )
   })
 
+  it('filters to linked titles only', () => {
+    // 'a' is linked to a show, 'b' to a book, 'c' to neither.
+    expect(applyLibraryView(quotes, crit({ linkedOnly: true })).map((q) => q.id)).toEqual(
+      ['a', 'b'],
+    )
+  })
+
   it('combines facets and preserves input order', () => {
     const r = applyLibraryView(quotes, crit({ category: 'philosophy', tags: ['zen'] }))
     expect(r.map((q) => q.id)).toEqual(['b', 'c'])
@@ -307,10 +324,10 @@ describe('isFieldVisible', () => {
 describe('QUOTE_ENTRY_FIELDS', () => {
   it('lists fields in New/Edit form order', () => {
     expect(QUOTE_ENTRY_FIELDS.map((f) => f.key)).toEqual([
-      'author',
-      'source_type',
       'title',
       'source_link',
+      'author',
+      'source_type',
       'language',
       'tags',
     ])

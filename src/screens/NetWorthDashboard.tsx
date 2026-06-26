@@ -1,6 +1,8 @@
 import { Suspense, useCallback, useState } from 'react'
-import { IconChevronDown } from '@tabler/icons-react'
+import { IconCalendarPlus, IconChevronDown } from '@tabler/icons-react'
 import { lazyWithReload } from '../lib/lazy-with-reload'
+import { EmptyState } from '../components/EmptyState'
+import { routes } from '../constants/routes'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useNetWorthVersion } from '../lib/networth-refresh'
@@ -65,23 +67,24 @@ export function NetWorthDashboard() {
 
   return (
     <div className="pb-4">
-      <header className="sticky top-0 z-10 bg-bg/90 px-4 py-3 backdrop-blur">
-        <h1 className="text-lg font-medium text-text-primary">Net Worth</h1>
-      </header>
-
-      {loading && <p className="px-4 py-6 text-sm text-text-secondary">Loading…</p>}
+      {loading && <p className="px-4 pt-6 pb-6 text-sm text-text-secondary">Loading…</p>}
       {error && (
-        <p className="px-4 py-6 text-sm text-danger">Couldn’t load your net worth.</p>
-      )}
-
-      {!loading && !error && all.length === 0 && (
-        <p className="px-4 py-10 text-center text-sm text-text-secondary">
-          No data yet — add a month in Monthly Entry.
+        <p className="px-4 pt-6 pb-6 text-sm text-danger">
+          Couldn’t load your net worth.
         </p>
       )}
 
+      {!loading && !error && all.length === 0 && (
+        <EmptyState
+          Icon={IconCalendarPlus}
+          title="No entries yet"
+          actionLabel="Monthly Entry"
+          to={routes.networth.entry}
+        />
+      )}
+
       {!loading && !error && all.length > 0 && (
-        <div className="flex flex-col gap-3 px-4">
+        <div className="flex flex-col gap-3 px-4 pt-3">
           {/* Current total */}
           <SectionCard>
             <div className="px-4 py-4">

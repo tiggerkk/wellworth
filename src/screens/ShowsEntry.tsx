@@ -5,7 +5,7 @@ import {
   IconHeartFilled,
   IconQuote,
   IconRefresh,
-  IconSearch,
+  IconWorldSearch,
   IconX,
 } from '@tabler/icons-react'
 import { routes } from '../constants/routes'
@@ -461,7 +461,7 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
               onClick={() => setSearchOpen(true)}
               className="flex shrink-0 items-center justify-center gap-1.5 rounded-input bg-input px-3 py-2 text-sm text-accent"
             >
-              <IconSearch size={16} /> TMDB
+              <IconWorldSearch size={16} /> TMDB
             </button>
             <button
               onClick={() => void refresh()}
@@ -709,7 +709,7 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
 
         {show('comments') && (
           <label className="text-xs text-text-secondary">
-            Comments
+            Notes
             <textarea
               value={draft.comments}
               onChange={(e) => update({ comments: e.target.value })}

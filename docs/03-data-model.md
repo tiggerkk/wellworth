@@ -245,7 +245,7 @@ Standard rules apply: own `user_id` for direct RLS, four owner policies using `(
 - `title` TEXT NULL — source title (denormalised; survives a linked record's deletion)
 - `category` TEXT — a **configurable** Category `key` (NO CHECK; owner-configurable via
   `profile.quote_categories`, app-validated; required). Seed defaults: wit, observation, philosophy,
-  heart, connection, growth
+  love, relationship, growth
 - `tags` TEXT[] DEFAULT '{}' — optional; autocomplete reads distinct `unnest(tags)`
 - `language` TEXT DEFAULT 'en' — 'en' | 'zh' (CHECK)
 - `is_favorite` BOOLEAN DEFAULT false

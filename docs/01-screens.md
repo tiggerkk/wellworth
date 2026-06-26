@@ -92,7 +92,7 @@ App-wide; shared across all modules. Auto-save on change. A back chevron returns
 - Title `Daily average · {range} ▾`; the picker offers Last 7 Days (default), Last 2/3/4/8 Weeks,
   Last 3/6 Months, Last Year. The "daily average" divides totals by the number of **days that have at
   least one entry** in the range (not by calendar days) — a typical logged day. An empty range shows
-  "Nothing logged."
+  the shared centered **empty state** (Diary icon · "No entries yet" · "+ Diary").
 - **Energy Balance** card: Consumed, BMR, Activity, and a bold **Net = Consumed − BMR − Activity**.
 - Nutrient sections in fixed order — General, Vitamins, Minerals, Carbohydrates, Lipids,
   Protein & Amino Acids — each visible nutrient a "name · value / target · %" bar.
@@ -230,6 +230,8 @@ Wellness-module sub-settings. Auto-save on change. A back chevron returns to the
 
 ## Net Worth - Dashboard
 
+- No screen title header (the dashboard opens straight into its cards). With no snapshots yet, the
+  shared centered **empty state** shows (Monthly Entry icon · "No entries yet" · "+ Monthly Entry").
 - Large **current total net worth** in HKD (latest snapshot).
 - **Total net-worth trend graph** with a time-window selector (reuse the Wellness range-picker pattern; suggested windows: 6M, 12M, 2Y, 3Y, 5Y, All).
 - A view toggle on the trend graph: **Total** ⇄ **By asset type** (one line per asset type, each the monthly sum of that type's `value_base`).
@@ -326,7 +328,7 @@ Wellness-module sub-settings. Auto-save on change. A back chevron returns to the
 - **Start Date** and **Finish / Drop Date** share a line; each opens the **Calendar** modal and is
   clearable. Start Date stays blank until the status leaves Want.
 - **Total Seasons / Episodes** and **Watched Seasons / Episodes** (episodic types — TV + documentary):
-  two labels over four side-by-side number inputs. **Poster URL** sits just above **Comments** (textarea).
+  two labels over four side-by-side number inputs. **Poster URL** sits just above **Notes** (textarea).
 - **Search TMDB** (Chinese-aware: a CJK query is sent with `language=zh-CN`; documentary uses the /tv
   endpoint) opens the **Title Search** modal; selecting a result fetches details and populates the
   **metadata** — a poster thumbnail + Genres, Director/Creator, top Cast, Overview, Runtime (read-only
@@ -360,7 +362,7 @@ in the global Settings at the Home level).
 
 - **Entry Form → Visible Fields** opens the shared **`VisibleFieldsSheet`** — toggles over the optional
   Entry/Edit fields, listed in **New/Edit form order**: Original Title, Year, **TMDB Metadata**, Rating,
-  LGBT+, Dynasty, the two dates, Season & Episode counts, **Poster URL**, Comments.
+  LGBT+, Dynasty, the two dates, Season & Episode counts, **Poster URL**, Notes.
   Most are stored on `profile.show_visible_fields` (**NULL = all visible**, default-on) and auto-save per
   toggle; **Poster URL** is the exception (an `extra` interleaved in form-order position) — it's backed by
   `profile.show_poster_url_visible` (**default off**, kept separate because the visible-fields list is
@@ -454,7 +456,7 @@ TMDB episode count at import (left blank if TMDB has no count); used anywhere el
   row. **Dynasty** is a dropdown of the 13 values (全部 近代 … 先秦), defaulting to 全部, and is **editable
   only when the Title contains CJK**; for a non-Chinese title it's disabled and stored as NULL.
 - **Start Date** and **Finish / Drop Date** share a line; each opens the **Calendar** modal and is
-  clearable (Start defaults to today on a new entry). **Comments** (textarea) sits below.
+  clearable (Start defaults to today on a new entry). **Notes** (textarea) sits below.
 - Top-right **favourite heart** + the icon actions (Delete when editing · Reset · Create/Save), enabled
   only once something changes; Create needs a Title.
 - Which optional fields appear is controlled by **Books Settings → Visible Fields** (Title, Status, the
@@ -479,7 +481,7 @@ nav.
 
 - **Entry Form → Visible Fields** opens the shared **`VisibleFieldsSheet`** — toggles over the optional
   Entry/Edit fields in **New/Edit form order**: Author(s), Year, **Google Books Metadata**, Rating, LGBT+,
-  Dynasty, the two dates, Comments. Stored on `profile.book_visible_fields`
+  Dynasty, the two dates, Notes. Stored on `profile.book_visible_fields`
   (**NULL = all visible**); auto-saves per toggle. Intro: "Choose which fields appear on the New/Edit Book
   form. Title and Status (and Search) are always shown." Title, Status and the Search button are always
   shown and not listed.
@@ -524,9 +526,13 @@ it — defaults to `updated_at` (import time) — see `templates/books-import-gu
   author, title, and tags. An **icon-only Filter button** to the right tints **accent** while its
   panel is open.
 - **Filters** (shared `FilterPanel`, label-free): **Any Category**, **Any Source**, **Any Language**,
-  a **Favorites Only** toggle, and multi-select **Tags** (OR — any selected tag). When opened from a
-  Show/Book detail ("Quotes from this title", via a `?show=`/`?book=` param), the list is constrained
-  to that record's quotes with a clearable banner.
+  and a **Favorites Only** toggle share a 2-column grid. To save space the **Linked Titles Only** toggle
+  (quotes bound to a Show/Book record) shares the next row with the **Filter tags…** search box.
+  Multi-select **Tags** (OR — any selected tag) follow: the **top 10 tags by use** show by default
+  (most-used first; selected tags always visible, with a "· top 10 by use" hint) in a fixed-height
+  scroll area; once there are more than 10, the search box narrows the full tag list. When opened from a
+  Show/Book detail ("Quotes from this title", via a `?show=`/`?book=` param), the list is constrained to
+  that record's quotes with a clearable banner.
 - The panel footer carries the **Sort** control next to **Clear Filters**. Sort over { Date, Category,
   Source Type } with an **asc/desc** toggle (Date = date added; Category/Source Type sort on the stored
   key); default is **Date** descending.
@@ -537,13 +543,13 @@ it — defaults to `updated_at` (import time) — see `templates/books-import-gu
 
 - **Quote Text** (6-row textarea; required). Prefilled from `?text=` when launched via copy-paste / an
   Apple Books Shortcut; a **Paste from clipboard** button fills it from the clipboard.
-- **Author** + **Source Type** (TV Show / Movie / Book / Podcast / Article / Video / Song) share a line
-  (Author as wide as possible, the Source Type dropdown clamped to fit its longest value).
-- **Title** sits below Author with a **link control** to its right — a **Show or Book** button (icon)
+- **Title** sits above Author with a **link control** to its right — a **Show or Book** button (icon)
   opening a modal that searches local **Show** and **Book** records (pre-filled with the current Title);
   selecting one binds `show_id`/`book_id` and auto-fills **Source Type** + **Title** (for a Book, also
   **Author**; a Show leaves Author for the speaker/character). When linked the button shows **Linked**
   (tap to unlink, keeping the filled values). Title is entered manually for podcasts/songs/articles/videos.
+- **Author** + **Source Type** (TV Show / Movie / Book / Podcast / Article / Video / Song) share the
+  next line (Author as wide as possible, the Source Type dropdown clamped to fit its longest value).
 - **Category** (required, a clamped dropdown) + **Language** share a line; **Language** is an English /
   Chinese **toggle** that fills the rest of the line (auto-detected from the text — CJK → Chinese — and
   editable). **Tags** (optional): inline tag input with autocomplete against existing tags. **Favourite**
@@ -555,13 +561,13 @@ it — defaults to `updated_at` (import time) — see `templates/books-import-gu
 ## Quotes - Settings (from the Settings tab in the Quotes bottom nav)
 
 - **Entry Form → Visible Fields**: the shared **`VisibleFieldsSheet`** — toggles in **New/Edit form
-  order**: Author, Source Type, Title, Source Link, Language, Tags. Intro: "Choose which fields appear on
+  order**: Title, Source Link, Author, Source Type, Language, Tags. Intro: "Choose which fields appear on
   the New/Edit Quote form. Quote and Category are always shown."
 - **Values** — manage the dropdown lists used on the Add/Edit form (each opens a sheet):
   - **Source Types** and **Categories**: **add / rename / delete / reorder** (drag handle) the values;
     order = display order in the dropdowns + Library filters. Changes auto-save. Seed defaults — Source
     Types: Book, Podcast, TV Show, Movie, Interview, Article, Song, Video; Categories: Wit, Observation,
-    Philosophy, Heart, Connection, Growth.
+    Philosophy, Love, Relationship, Growth.
   - **Delete migration**: deleting a value still used by quotes prompts a **reassignment** — pick a
     replacement and the affected quotes are moved to it before the value is removed. A value can't be
     deleted if it's the last one in its list. **TV / Movie / Book** source types are **protected from

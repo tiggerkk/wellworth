@@ -1,10 +1,12 @@
 import { useCallback, useState } from 'react'
-import { IconChevronDown } from '@tabler/icons-react'
+import { IconChevronDown, IconNotebook } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { listEntriesByRange } from '../data/diary-entry'
 import { NutrientReport } from '../components/NutrientReport'
+import { EmptyState } from '../components/EmptyState'
 import { RANGES } from '../constants/ranges'
+import { routes } from '../constants/routes'
 import { todayLocal } from '../lib/date'
 
 export function Dashboard() {
@@ -62,7 +64,16 @@ export function Dashboard() {
         </div>
       </header>
 
-      <NutrientReport entries={entries} loading={loading} error={error} />
+      {!loading && !error && (entries?.length ?? 0) === 0 ? (
+        <EmptyState
+          Icon={IconNotebook}
+          title="No entries yet"
+          actionLabel="Diary"
+          to={routes.wellness.diary}
+        />
+      ) : (
+        <NutrientReport entries={entries} loading={loading} error={error} />
+      )}
     </div>
   )
 }

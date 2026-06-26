@@ -306,9 +306,11 @@ _Quotes re-skins Books/Shows; only the differences are noted. There is **no exte
 - **Logic** (`src/lib/quotes.ts`, pure + tested): `detectLanguage(text)` (any CJK char ⇒ `zh`, else
   `en`); `quoteSearchText`; the `QUOTE_CATEGORY_CHIP` chip class (a single neutral palette — per-category
   colours are an optional, deferred nicety); the Library view `applyLibraryView(quotes, criteria)`
-  (query over text+author+title+tags; Category / **multi-select Tags = OR** / Favourites / Source type /
-  Language — Category/Source compare configured keys; plus the `showId`/`bookId` URL constraint) with
-  `quoteTags` driving the tag facet, **plus a Sort menu** (Date = `created_at` / Category / Source Type,
+  (query over text+author+title+tags; Category / **multi-select Tags = OR** / Favourites / **Linked
+  Titles Only** (non-null `show_id`/`book_id`) / Source type / Language — Category/Source compare
+  configured keys; plus the `showId`/`bookId` URL constraint) with
+  `rankedTags` (count-ranked, most-used first) driving the tag facet — the Library shows the top 10 by
+  default and a search box narrows the full list — **plus a Sort menu** (Date = `created_at` / Category / Source Type,
   default Date descending; Category/Source sort on the stored key). The
   cross-module linker model is `LinkCandidate` + `filterLinkCandidates` (the screen maps `ShowRow`/`BookRow`
   → candidates, so `quotes.ts` stays decoupled from `shows.ts`/`books.ts`). The Zen randomiser is
@@ -399,7 +401,7 @@ testOrder?)` is **tolerant** (unknown categories/tests sort last); `trackedSerie
   `latestByCategory` take the same overrides, and the **New/Edit form's result cards** order the same way
   (`MedicalEntry` wraps its list in `orderResultsForDisplay` — purely presentational, keyed by
   `clientId`), so all four surfaces order identically. The drag-reorder sheet is now reached from a
-  **Display** Settings section labelled "Tests Display Order" (secondary "(Dashboard, Report & Entry)"). The overrides are
+  **Display** Settings section labelled "Tests DisplayOrder" (secondary "(Dashboard, Report & Entry)"). The overrides are
   edited by **drag-to-reorder** (M5): `MedicalOrderSheet` (`/medical/settings/order`) over the reusable
   in-house **`ReorderList`** (Pointer Events, no dnd dependency — `touch-action:none` on the drag handle
   only); pure model helpers in `src/lib/medical-order.ts` keep the saved override complete + de-duped

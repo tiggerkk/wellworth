@@ -57,7 +57,7 @@ been merged into the permanent docs (`00-PRD … 05-seed-data` + OWNER-RUNBOOK) 
   seeded owner profile + skips onboarding; blank ⇒ a single-entry allowlist is the owner). All
   build-time `VITE_` vars.
 - **Gates:** husky `.husky/pre-commit` → lint-staged + `typecheck` + `test`; GitHub Actions
-  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 475 Vitest tests (pure helpers).
+  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 477 Vitest tests (pure helpers).
 - **Deploy status:** Deployed. GitHub `main` → Vercel auto-deploy; the production URL is in the
   Supabase redirect URLs + Google JS origins (see `OWNER-RUNBOOK.md`). Installed + tested on iPhone (PWA).
 - Conventions (DB-access-via-`src/data`, metric storage, generated `database.ts` contract, etc.) live
@@ -1525,7 +1525,7 @@ Medical/Shows/Books precedent of additive `profile` columns; zero data migration
   (`09_quotes_profile_settings.sql`). NULL ⇒ canonical seed defaults (no per-user seeding /
   backfill). Regenerated `src/types/database.ts` (both surface as `Json | null`).
 - **New seed order + value**: Source Types now Book, Podcast, TV Show, Movie, **Interview** (new),
-  Article, Song, Video; Categories Wit, Observation, Philosophy, Heart, Connection, Growth (in
+  Article, Song, Video; Categories Wit, Observation, Philosophy, Love, Relationship, Growth (in
   `src/constants/quotes.ts`, which are now only the **seed defaults** — the literal-union types describe
   the defaults' shape, while stored values are plain `string` keys).
 - **Pure model** `src/lib/quotes-config.ts` (+ tests): `{key,label,linkKind}` / `{key,label}` configs;
@@ -2112,3 +2112,43 @@ pooler can't `pg_dump`); install **PG17** client (pg_dump ≥ server). Documente
 
 - auth reload, the `auth.users` UUID trap). `.gitignore` guards `backups/`/`*.age`/`*.key` (not a blanket
   `*.sql` — that would catch migrations). **GitHub disables crons after 60 days idle** — noted as a risk.
+
+### UI polish (session, June 2026)
+
+A cross-module cosmetic pass — no schema/data/behavior changes, all presentational:
+
+- **Empty states unified.** The Wellness Dashboard (empty range) and Net Worth Dashboard (no snapshots)
+  now use the shared centered `EmptyState` (icon · "No entries yet" · action pill) like every other
+  module — replacing the old inline `<p>` ("Nothing logged…" / "No data yet…"). Wellness branches in
+  `Dashboard` **before** the shared `NutrientReport` (which `DailyReportSheet` also uses, so its message
+  is untouched). The **Net Worth screen title header was removed** (content opens straight into the
+  cards; small `pt-3` keeps it off the safe area).
+- **Shared-component props added (non-breaking).** `SearchBar` gained an optional `icon` (default
+  `IconSearch`); the Shows/Books online-search sheets + their Entry "TMDB"/"Google Books" buttons now use
+  `IconWorldSearch` (the Travel city-lookup glyph) in `accent`. `FieldRow` gained an optional `hint` —
+  a small muted note inline after the label — used by Medical Settings so "(Dashboard)" sits next to
+  **Tracked Tests** and "(Dashboard, Report & Entry)" next to **Tests Display Order** (the smaller hint
+  text lets the label keep its full name on one line on iPhone).
+- **Labels.** Shows/Books Entry + Visible-Fields "Comments" → **Notes** (`SHOW_/BOOK_ENTRY_FIELDS`).
+  Quotes category **labels** "Heart" → **Love**, "Connection" → **Relationship** (keys `heart`/
+  `connection` unchanged — no data migration; importer still matches the old CSV values by key).
+- **Wellness Settings** "Display" section moved above "Targets".
+- **Travel New Trip** Status dropdown was clipped to ~1.5 options: the short form body's `overflow-y-auto`
+  was cropping the `SelectMenu`'s absolute panel — dropped it (the form needs no scroll; EditTrip is
+  unaffected). All gates green; 475 tests unchanged (presentational only).
+
+### Quotes enhancement (session, June 2026)
+
+Owner refinements after daily Quotes use:
+
+- **Entry field order** — **Title + Show/Book link** now render **above** Author + Source Type on the
+  New/Edit form (`QuotesEntry`), and `QUOTE_ENTRY_FIELDS` was reordered to match so the Visible-Fields
+  modal mirrors it (key reorder is data-safe — `isFieldVisible` is membership-based).
+- **"Linked Titles Only" filter** — new `linkedOnly` field on `LibraryCriteria` (+ default + a predicate
+  in `applyLibraryView`: excludes quotes with no `show_id`/`book_id`); surfaced as a `Toggle` on its own
+  line below the filter grid in `QuotesLibrary`. Language stays a dropdown, Favorites Only unchanged.
+- **Tag facet scales** — new pure `rankedTags(quotes)` (count desc, alpha tiebreak; replaces the old
+  alpha-only `quoteTags`). The Library shows the **top 10 tags by use** by default (selected tags always
+  visible); above 10 a **Filter tags…** box searches the full list (local `tagQuery`, reset by Clear
+  Filters). +1 `linkedOnly` test, the field-order assertion updated, and `quoteTags`→`rankedTags` tests
+  swapped → **477** tests.
