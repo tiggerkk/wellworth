@@ -19,15 +19,10 @@ describe('parseItineraryJson', () => {
             stops: [
               {
                 type: 'travel',
+                description: 'Train: 香港 → 荆州',
                 city: '荆州',
                 country: 'China',
                 province: '湖北省',
-                time: '19:49',
-                cost: 2067,
-                currency: 'CNY',
-                travel_mode: 'train',
-                from_loc: '香港',
-                to_loc: '荆州',
                 completion: 'done',
               },
             ],
@@ -44,19 +39,17 @@ describe('parseItineraryJson', () => {
     expect(trip.days[0]!.date).toBe('2026-03-28')
     const stop = trip.days[0]!.stops[0]!
     expect(stop.type).toBe('travel')
+    expect(stop.description).toBe('Train: 香港 → 荆州')
     expect(stop.province).toBe('湖北') // snapped from 湖北省
-    expect(stop.cost).toBe(2067)
-    expect(stop.cost_currency).toBe('CNY')
-    expect(stop.travel_mode).toBe('train')
     expect(stop.completion).toBe('done')
   })
 
-  it('coerces bad enums and defaults', () => {
+  it('coerces bad enums and defaults, ignoring removed fields', () => {
     const json = JSON.stringify([
       {
         trip_name: 'X',
         status: 'nope',
-        days: [{ stops: [{ type: 'weird', time: 'bad' }] }],
+        days: [{ stops: [{ type: 'weird', time: 'bad', cost: 12 }] }],
       },
     ])
     const r = parseItineraryJson(json)
@@ -64,8 +57,10 @@ describe('parseItineraryJson', () => {
     if (!r.ok) return
     expect(r.trips[0]!.status).toBe('visited')
     expect(r.trips[0]!.base_currency).toBe('CNY')
-    expect(r.trips[0]!.days[0]!.stops[0]!.type).toBe('other')
-    expect(r.trips[0]!.days[0]!.stops[0]!.time).toBeNull()
+    const stop = r.trips[0]!.days[0]!.stops[0]!
+    expect(stop.type).toBe('other')
+    expect(stop).not.toHaveProperty('time')
+    expect(stop).not.toHaveProperty('cost')
   })
 
   it('keeps a foreign province verbatim', () => {
@@ -102,11 +97,11 @@ describe('parseItineraryJson', () => {
 
   it('repairs a stray quote after a number', () => {
     const broken =
-      '[{"trip_name":"X","days":[{"date":null,"stops":[{"type":"visit","cost":58"}]}]}]'
+      '[{"trip_name":"X","days":[{"date":null,"stops":[{"type":"visit","sort":58"}]}]}]'
     const r = parseItineraryJson(broken)
     expect(r.ok).toBe(true)
     if (!r.ok) return
-    expect(r.trips[0]!.days[0]!.stops[0]!.cost).toBe(58)
+    expect(r.trips[0]!.days[0]!.stops[0]!.type).toBe('visit')
   })
 
   it('repairs a missing comma before a new key', () => {
@@ -138,13 +133,6 @@ describe('distinctCities / tripSummary', () => {
               country: 'China',
               province: '湖北',
               description: null,
-              time: null,
-              cost: null,
-              cost_currency: null,
-              travel_mode: null,
-              from_loc: null,
-              to_loc: null,
-              local_transit: null,
               details: null,
               completion: null,
             },
@@ -154,13 +142,6 @@ describe('distinctCities / tripSummary', () => {
               country: 'China',
               province: '湖北',
               description: null,
-              time: null,
-              cost: null,
-              cost_currency: null,
-              travel_mode: null,
-              from_loc: null,
-              to_loc: null,
-              local_transit: null,
               details: null,
               completion: null,
             },
@@ -170,13 +151,6 @@ describe('distinctCities / tripSummary', () => {
               country: 'China',
               province: '湖北',
               description: null,
-              time: null,
-              cost: null,
-              cost_currency: null,
-              travel_mode: 'train',
-              from_loc: null,
-              to_loc: null,
-              local_transit: null,
               details: null,
               completion: null,
             },

@@ -192,11 +192,18 @@ its routes.
   (safe mini-parser, **never `eval`**), `travel-config.ts` (category list helpers), `travel-expense-import.ts`
   (wide CSV → split expenses), `itinerary-import.ts` (tolerant JSON → trip drafts), `travel-refresh.ts`.
   Constants in `src/constants/travel.ts` (enums + labels, `CURRENCIES`, `TRAVEL_EXPENSE_CATEGORIES`,
-  `CHINA_PROVINCES`). **Map** = **Leaflet** (lazy `TravelMapCanvas`) over OSM tiles + markercluster dots +
-  a layered `regionName → shape` fill (DataV China provinces + Natural Earth world countries, vendored in
-  `public/geo/`, **not** precached; a build-time `travel-geo.test.ts` asserts the names line up).
-  **Stop cost is informational only — never summed**; the Expenses layer is the authoritative spend total.
-  Local overlays (not route sheets, so the Builder draft survives): `CitySearchSheet` / `StopEditorSheet` /
+  `CHINA_PROVINCES`). A **stop** is lean — `type` + `city`/`province`/`country` + free-text
+  `description`/`details` + `completion` (the former per-stop `time`/`cost`/`cost_currency`/`local_transit`/
+  `travel_mode`/`from_loc`/`to_loc` were removed and folded into `description`; **`local_transit` survives
+  only as an expense category**). City/province/country **carry forward** to a new stop from the previous
+  stop; the Stop editor's City is a text input + a **Lookup** button (mirrors Shows Title+TMDB — seeds the
+  auto-searching `CitySearchSheet`). The Edit Trip screen groups stops under **city-only sub-headers** and
+  offers inline **done/skipped** toggles; **Add Day** defaults to the previous day + 1. **Map** =
+  **Leaflet** (lazy `TravelMapCanvas`) over OSM tiles + markercluster dots + a layered `regionName → shape`
+  fill (DataV China provinces + Natural Earth world countries, vendored in `public/geo/`, **not**
+  precached; a build-time `travel-geo.test.ts` asserts the names line up). The **Expenses layer is the
+  sole, authoritative spend total** (stops carry no money). Local overlays (not route sheets, so the
+  Builder draft survives): `CitySearchSheet` / `StopEditorSheet` /
   `ExpenseEditorSheet` + the in-file Reorder-Days sheet. Screens `TravelDashboard` / `TravelMap` /
   `TravelTrips` / `TripBuilder` / `TravelSettings` / `TravelFieldsSheet` / `TravelCategoriesSheet` /
   `ImportTravelExpensesSheet` /

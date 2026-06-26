@@ -7,7 +7,6 @@ import {
   facetsForStops,
   isFieldVisible,
   primaryLabel,
-  timeHHMM,
   tripYear,
   type TripFacets,
   type TripListCriteria,
@@ -147,13 +146,6 @@ describe('applyTripList', () => {
         (t) => t.id,
       ),
     ).toEqual(['b', 'a'])
-  })
-})
-
-describe('timeHHMM', () => {
-  it('takes HH:MM, empty when null', () => {
-    expect(timeHHMM('14:30:00')).toBe('14:30')
-    expect(timeHHMM(null)).toBe('')
   })
 })
 

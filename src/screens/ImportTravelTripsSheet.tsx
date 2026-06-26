@@ -158,13 +158,6 @@ export function ImportTravelTripsSheet() {
               province: s.province,
               description: s.description,
               details: s.details,
-              time: s.time,
-              cost: s.cost,
-              cost_currency: s.cost_currency,
-              local_transit: s.local_transit,
-              travel_mode: s.travel_mode,
-              from_loc: s.from_loc,
-              to_loc: s.to_loc,
               completion: s.completion,
               sort_order: si,
             })

@@ -57,7 +57,7 @@ been merged into the permanent docs (`00-PRD … 05-seed-data` + OWNER-RUNBOOK) 
   seeded owner profile + skips onboarding; blank ⇒ a single-entry allowlist is the owner). All
   build-time `VITE_` vars.
 - **Gates:** husky `.husky/pre-commit` → lint-staged + `typecheck` + `test`; GitHub Actions
-  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 496 Vitest tests (pure helpers).
+  (`.github/workflows/ci.yml`, Node 24) re-runs `check` + `build`. 495 Vitest tests (pure helpers).
 - **Deploy status:** Deployed. GitHub `main` → Vercel auto-deploy; the production URL is in the
   Supabase redirect URLs + Google JS origins (see `OWNER-RUNBOOK.md`). Installed + tested on iPhone (PWA).
 - Conventions (DB-access-via-`src/data`, metric storage, generated `database.ts` contract, etc.) live
@@ -2223,3 +2223,35 @@ seed/test-count changes** (stays **496**); specs updated in `01-screens.md`, `02
   Wellness Library's Foods/Activities tabs. Pure JSX move — `criteria.type` + `applyLibraryView` unchanged.
 - **No new tests:** per project convention only pure `src/lib/*` helpers are unit-tested; the hook is
   verified by `tsc` + the manual run (return via Back / bottom nav / Home restores; tab close clears).
+
+## Travel simplification — leaner stops, city carry-forward, inline completion (session, June 2026)
+
+Owner request to make the **Edit Trip** screen the working surface and stop over-collecting per-stop
+data. Touches the `stop` schema, so `database.ts` is regenerated. Test count **496 → 495** (dropped the
+`timeHHMM` test with the helper). Specs updated in `00-PRD.md`, `01-screens.md`, `03-data-model.md`,
+`CLAUDE.md`, `PARKED.md`, and the two `templates/travel-itinerary*` files.
+
+- **Removed 7 stop fields** (`time`, `cost`, `cost_currency`, `local_transit`, `travel_mode`,
+  `from_loc`, `to_loc`) — they appeared on only some stops, so they're folded into the free-text
+  `description`. Dropped from the `stop` table (migration `13_travel_schema.sql` **edited in place** per
+  the owner's `supabase db reset --linked` workflow), `database.ts`, `StopEditorSheet`, `TripBuilder`
+  (duplicate-day payload + row display), `ImportTravelTripsSheet`, `itinerary-import.ts` (+ test), the
+  prompt/schema templates, and `constants/travel.ts` (`TRAVEL_MODES`/labels deleted). **Gotcha:**
+  `local_transit` is _also_ a default **expense category** in `constants/travel.ts` — that one stays;
+  only the stop field went.
+- **City carry-forward (no day-level city).** Kept `city`/`province`/`country` on the stop; a **new**
+  stop inherits them from the day's last stop, else the most recent prior day's last stop
+  (`carryForwardCity` in `TripBuilder`). The common 1-city-per-day flow needs zero city input. Editing a
+  stop does **not** cascade. Considered a day-level city + per-stop override; rejected — multi-city days
+  still need overrides, so carry-forward is the same input cost with less schema.
+- **City Lookup mirrors Shows Title+TMDB.** The Stop editor's City is now a text input + a **Lookup**
+  button; `CitySearchSheet` was refactored to seed from the typed city and **auto-search** (cache +
+  Nominatim, debounced) like `TitleSearchSheet`, with result-tap confirming directly. Still a local
+  overlay (not a route sheet) so the editor draft survives; manual entry remains the fallback.
+- **Grouped display + inline completion.** A day's stops render as consecutive **city-run** groups
+  (`cityRuns`), each a separate `ReorderList` under a city-only sub-header (the uniform-row ReorderList
+  can't host a header inside a row, so one list per run; cross-run order is rebuilt on reorder). Each row
+  has inline **done/skipped** icon toggles (`setStopCompletion`, tap-active-to-clear) so routine marking
+  never opens the sheet.
+- **Add Day** now defaults the new day's date to the previous day's `day_date` **+ 1** (reusing
+  `addDays` from `src/lib/date.ts`), then recomputes the trip span.

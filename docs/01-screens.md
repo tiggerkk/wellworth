@@ -759,7 +759,8 @@ lockout. The lock is a convenience gate on this device — the data is already p
 ## Travel - Trip Builder (`/travel/entry` new, `/travel/trip/:id` edit)
 
 The header's top-left is a **✕ Close** (returns to where you came from — falling back to the Trips list
-on a direct load/refresh — matching the other modules; Escape does the same).
+on a direct load/refresh — matching the other modules; Escape does the same). The Edit header title is the
+literal **"Edit Trip"** (consistent with the other modules), not the trip name.
 
 - **New** (`/travel/entry`): header-only — **Trip Name** + **Base Currency** on one line, **Status**
   below — with **Reset** + **Create** icon actions. **Create** persists the trip and opens it for editing
@@ -773,15 +774,23 @@ on a direct load/refresh — matching the other modules; Escape does the same).
   the header and returns to where you came from; days/stops/expenses auto-save on each change, so they're
   already persisted).
 - Two sub-tabs (segmented): **Itinerary** and **Expenses**.
-- **Itinerary**: **Add Day** + (when >1) **Reorder Days** (a drag-reorder sheet). Each **Day** card shows
-  `Day N`, a tappable **Calendar date chip** (the date or "Add date" — writes `trip_day.day_date` and
-  re-caches the trip's start/end), **duplicate**, and **delete**. Within a day, **Stops** are a
-  drag-reorder list (tap a stop to edit; a "Done" chip on done stops; skipped stops are struck through),
-  plus **Add Stop**.
-- **Stop editor** (local overlay): **Type** (Travel / Visit / Eat / Shop / Stay / Other), **City** (opens
-  the City picker), Description, type-specific fields (Travel → Mode/From/To; Visit → Local Transit),
-  Time, **Cost + currency** (defaults to the trip's base currency, overridable; **informational only,
-  never summed**), Details, **Completion** (Unmarked / Done / Skipped), and a **Move to day** picker.
+- **Itinerary**: **Add Day** (defaults the new day's date to the previous day's date **+ 1**) + (when >1)
+  **Reorder Days** (a drag-reorder sheet). Each **Day** card shows `Day N`, a tappable **Calendar date
+  chip** (the date or "Add date" — writes `trip_day.day_date` and re-caches the trip's start/end),
+  **duplicate**, and **delete**. Within a day, **Stops** are grouped under a **city-only sub-header** for
+  each run of consecutive same-city stops (matching the nested City → stops layout); each run is a
+  drag-reorder list. Each stop row shows `Type · description`, with inline **done / skipped** icon toggles
+  on the right (tap the active one to clear); skipped stops are struck through. Tap a stop to edit. Plus
+  **Add Stop**. (The Edit Trip screen is the working surface — you only open the Stop editor for initial
+  entry or to read a stop's details.)
+- **Stop editor** (local overlay): **Type** (Travel / Visit / Eat / Shop / Stay / Other), **City** (a text
+  input + a **Lookup** button that opens the City picker seeded with the typed city — mirroring the Shows
+  Title + TMDB search), **Province / Region** + **Country** (auto-filled by a lookup, editable),
+  Description (carries any leg/mode/transit detail), Details, **Completion** (Unmarked / Done / Skipped),
+  and a **Move to day** picker. A new stop's City/Province/Country **carry forward** from the previous
+  stop (same day → else the most recent prior day's last stop). Top-right uses the shared
+  **`EntryHeaderActions`** icon cluster (**Delete** [editing only, inline confirm] · **Reset** · **Create
+  / Save**), matching the other modules.
 - **Expenses**: **Add Expense**; a **Totals** card (per-currency cost/net, then the **HKD total**); a
   **Conversion to HKD** card (per non-HKD currency: an editable rate + a **Fetch missing rates** button —
   Frankfurter at the trip's first day; missing currencies are flagged and excluded until priced); a
@@ -791,12 +800,13 @@ on a direct load/refresh — matching the other modules; Escape does the same).
   - currency, and — when Track Reimbursement is on — a **Reimbursed** field accepting a number or a
     formula on `amount` (presets ½ / ⅖ / Full), with the computed reimbursed + net shown live.
 
-## Travel - City Picker (modal, from a Stop's City)
+## Travel - City Picker (modal, from a Stop's City Lookup)
 
-- Type a city → **remembered cities** matching fill instantly (tap to pick). An optional **Look up
-  online** runs Nominatim (assist-only) and lists suggestions that fill Country / Province / coords.
-  Manual entry always available: Country, and Province (a **CHINA_PROVINCES** select when the country is
-  China, else free text). Confirming caches the city (`remembered_city`) and returns it to the stop.
+- Seeded with the stop's current City, it searches as you type (mirroring the Shows TMDB search):
+  **remembered cities** match instantly, and a **Nominatim** lookup runs automatically (debounced) and
+  lists **Search results**. Selecting any result resolves City / Province / Country (province snapped to
+  **CHINA_PROVINCES** for China), caches it (`remembered_city`), and returns it to the stop. Manual entry
+  is the fallback: Country + Province (a CHINA_PROVINCES select for China, else free text) + **Use "city"**.
 
 ## Travel - Settings (`/travel/settings`)
 

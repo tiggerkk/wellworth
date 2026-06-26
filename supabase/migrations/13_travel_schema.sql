@@ -99,10 +99,10 @@ create trigger handle_updated_at before update on public.trip_day
   for each row execute procedure extensions.moddatetime (updated_at);
 
 -- =====================================================================================
--- stop — an ordered entry within a day. type drives which fields apply (travel_mode/from/to for
--- 'travel', local_transit for 'visit'). city/country/province resolve via the remembered_city
--- cache; province is snapped to a CHINA_PROVINCES canonical name in the app so the shaded map and
--- "N / 34" count line up. cost is informational only and never summed.
+-- stop — an ordered entry within a day. type labels the entry (travel/visit/eat/…). Any leg or
+-- transit detail lives in the free-text description. city/country/province resolve via the
+-- remembered_city cache and carry forward from the previous stop; province is snapped to a
+-- CHINA_PROVINCES canonical name in the app so the shaded map and "N / 34" count line up.
 -- =====================================================================================
 create table public.stop (
   id            uuid primary key default gen_random_uuid(),
@@ -114,13 +114,6 @@ create table public.stop (
   province      text,
   description   text,
   details       text,
-  time          time,
-  cost          numeric,                          -- informational only; never summed
-  cost_currency text,                             -- defaults to country CCY at UI; per-stop override
-  local_transit text,                             -- Visit only
-  travel_mode   text check (travel_mode in ('air', 'train', 'car', 'ferry')),  -- Travel only
-  from_loc      text,
-  to_loc        text,
   completion    text check (completion in ('done', 'skipped')),  -- null = unmarked
   sort_order    integer not null,
   created_at    timestamptz not null default now(),

@@ -162,7 +162,7 @@
 - **GCJ-02 offset correction** — parked (v1). Stored coords, the GeoJSON, and OSM tiles are treated as WGS-84; the GCJ-02 visual offset over Chinese areas isn't corrected (invisible at province/country zoom).
 - **Offline map** — the map needs network: OSM tiles aren't cached and the bundled `public/geo/*` GeoJSON are excluded from the PWA precache (loaded on demand with the lazy map chunk).
 - **Companions/cover as structured data, photo uploads, flight/train numbers** — companions + cover are free text / a pasted URL (no file storage; no Supabase Storage).
-- **Stop cost as the spend total** — decoupled; a stop's cost is informational, never summed. The Expenses layer is authoritative.
+- **Per-stop cost / time / travel-mode / from-to / local-transit fields** — removed; folded into the stop's free-text description. The Expenses layer is the sole, authoritative spend source.
 
 ## Key constraints
 

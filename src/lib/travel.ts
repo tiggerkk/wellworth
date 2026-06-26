@@ -57,18 +57,6 @@ export function stopTypeLabel(type: string): string {
   return STOP_TYPE_LABELS[type as StopType] ?? type
 }
 
-// --- Per-type field rules ---
-
-/** Travel legs carry mode / from / to. */
-export function isTravelStop(type: string): boolean {
-  return type === 'travel'
-}
-
-/** Local Transit ("how you got there") is a Visit-only field. */
-export function usesLocalTransit(type: string): boolean {
-  return type === 'visit'
-}
-
 // --- Trip-list view (search + filters + sort) ---
 
 export type TripSortField = 'date' | 'country' | 'province' | 'city' | 'status' | 'name'
@@ -230,11 +218,6 @@ export function facetsForStops(
     if (s.city) f.cities.add(s.city)
   }
   return f
-}
-
-/** The HH:MM portion of a Postgres `time` value (e.g. '14:30:00' → '14:30'); '' when null. */
-export function timeHHMM(time: string | null): string {
-  return time ? time.slice(0, 5) : ''
 }
 
 // --- Entry/Edit field visibility (Travel Settings; mirrors Shows/Books/Quotes/Medical) ---

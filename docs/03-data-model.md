@@ -331,13 +331,14 @@ its results). The migration is `supabase/migrations/10_medical_schema.sql`.
 
 - `id` · `user_id` · `trip_day_id` UUID → trip_day (**ON DELETE CASCADE**)
 - `type` TEXT — `travel` | `visit` | `eat` | `shop` | `stay` | `other` (CHECK)
-- `city`/`country`/`province`/`description`/`details` TEXT NULL · `time` TIME NULL
-- `cost` NUMERIC NULL · `cost_currency` TEXT NULL (defaults to the country CCY at the UI; per-stop
-  override; **informational only, never summed**)
-- `local_transit` TEXT NULL (Visit only) · `travel_mode` TEXT NULL — `air`|`train`|`car`|`ferry`
-  (CHECK; Travel only) · `from_loc`/`to_loc` TEXT NULL
+- `city`/`country`/`province`/`description`/`details` TEXT NULL — any leg/mode/transit detail lives in
+  the free-text `description`; `city`/`province`/`country` **carry forward** from the previous stop and
+  are snapped to a canonical `CHINA_PROVINCES` name in the app
 - `completion` TEXT NULL — `done` | `skipped` (CHECK; NULL = unmarked) · `sort_order` INT NOT NULL
 - timestamps · Index (`trip_day_id`, `sort_order`)
+- _(Removed in the simplification pass: `time`, `cost`, `cost_currency`, `local_transit`,
+  `travel_mode`, `from_loc`, `to_loc` — folded into `description`. The Expenses layer is the sole spend
+  source.)_
 
 ### trip_expense (the trip's authoritative spend log; decoupled from the itinerary)
 

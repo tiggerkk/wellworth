@@ -301,6 +301,10 @@ forced through the **Onboarding** wizard (`src/screens/Onboarding.tsx`, gated in
   cross-currency dashboard conversion beyond the per-trip HKD total). Each trip computes its own HKD total
   in its Expenses tab (M5); the Dashboard shows only count-based metrics (trips this year, days travelled),
   not a money figure, since a cross-trip total would need every trip's rates loaded at once.
+- **Travel — city-edit cascade** — **deliberately not built.** A new stop's City/Province/Country carry
+  forward from the previous stop, but **editing** an existing stop's city changes only that stop (no
+  cascade to following same-city stops). The owner chose the simpler, predictable behaviour; cascade
+  would be more "magic" for a rare relabel.
 
 ---
 

@@ -877,20 +877,13 @@ export type Database = {
         Row: {
           city: string | null
           completion: string | null
-          cost: number | null
-          cost_currency: string | null
           country: string | null
           created_at: string
           description: string | null
           details: string | null
-          from_loc: string | null
           id: string
-          local_transit: string | null
           province: string | null
           sort_order: number
-          time: string | null
-          to_loc: string | null
-          travel_mode: string | null
           trip_day_id: string
           type: string
           updated_at: string
@@ -899,20 +892,13 @@ export type Database = {
         Insert: {
           city?: string | null
           completion?: string | null
-          cost?: number | null
-          cost_currency?: string | null
           country?: string | null
           created_at?: string
           description?: string | null
           details?: string | null
-          from_loc?: string | null
           id?: string
-          local_transit?: string | null
           province?: string | null
           sort_order: number
-          time?: string | null
-          to_loc?: string | null
-          travel_mode?: string | null
           trip_day_id: string
           type: string
           updated_at?: string
@@ -921,20 +907,13 @@ export type Database = {
         Update: {
           city?: string | null
           completion?: string | null
-          cost?: number | null
-          cost_currency?: string | null
           country?: string | null
           created_at?: string
           description?: string | null
           details?: string | null
-          from_loc?: string | null
           id?: string
-          local_transit?: string | null
           province?: string | null
           sort_order?: number
-          time?: string | null
-          to_loc?: string | null
-          travel_mode?: string | null
           trip_day_id?: string
           type?: string
           updated_at?: string

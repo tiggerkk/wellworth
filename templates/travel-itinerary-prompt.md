@@ -35,7 +35,7 @@ DAYS & DATES:
 
 STOP TYPE (by meaning):
 - "travel" = INTER-CITY leg: "CityA-CityB（time-time, ¥fare）" or text with 机票/航班/飞机/高铁/动车/火车/船.
-  origin -> from_loc, destination -> to_loc, set travel_mode (air|train|car|ferry), city = ARRIVAL city.
+  Put the leg in "description" incl. the mode, e.g. "Train: 香港 → 荆州" / "Flight: HKG → PVG"; city = ARRIVAL city.
 - "eat" = restaurant/food/drink (菜/餐厅/饭店/火锅/面/食/咖啡/茶/烧烤, or wrapped in 【】).
 - "shop" = 沃尔玛/万达/Popmart/超市/购物/广场/mall/商城/免税/SKP.
 - "stay" = 酒店/宾馆/住/hotel.
@@ -43,19 +43,15 @@ STOP TYPE (by meaning):
 - "other" = performances/light shows/walks (表演/秀/灯光秀/巡游) and anything else.
 
 PER-STOP FIELDS:
-- "description": the place/restaurant/hotel name (for travel, null; use from_loc/to_loc).
+- "description": the place/restaurant/hotel name. For a travel leg, the leg itself incl. the mode
+  ("Train: A → B"). Fold any "how to get there" note (metro exit, 打车, 观光车) into this text too.
 - "city": the city the stop is in; CARRY FORWARD from the latest travel ARRIVAL or context; update when it
   changes; null if unknown. Do NOT use the trip name as a city unless it clearly is one.
 - "country": "China" for Chinese itineraries unless clearly elsewhere; else the country.
-- "time": "HH:MM" (arrival time for a travel range); else null.
-- "cost": numeric from a ¥/$ amount; if several are added ("¥40+70"), SUM and keep the original in "details".
-  null if none. "currency": "CNY" for ¥, else the code; null if no cost.
-- "local_transit": for a Visit, a 《》 how-to-get-there note (metro exit, 打车, 观光车).
-- "details": leftover notes (raw cost text, opening times, seat tips); else null.
+- "details": leftover notes — raw cost text (e.g. "¥58"), times, seat tips, anything not in description; else null.
 - "completion": "done" normally; "skipped" if under a 没去 / 未去 / 取消 / "didn't go" heading.
 
-Output EXACTLY this shape (valid JSON; commas between all properties; bare numbers; re-read once to confirm
-it parses):
+Output EXACTLY this shape (valid JSON; commas between all properties; re-read once to confirm it parses):
 
 [
   {
@@ -71,13 +67,6 @@ it parses):
             "description": "string | null",
             "city": "string | null",
             "country": "string | null",
-            "time": "HH:MM | null",
-            "cost": 0,
-            "currency": "string | null",
-            "travel_mode": "air|train|car|ferry | null",
-            "from_loc": "string | null",
-            "to_loc": "string | null",
-            "local_transit": "string | null",
             "details": "string | null",
             "completion": "done | skipped"
           }

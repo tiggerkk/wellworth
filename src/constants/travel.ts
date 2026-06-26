@@ -14,7 +14,7 @@ export const TRIP_STATUS_LABELS: Record<TripStatus, string> = {
   visited: 'Visited',
 }
 
-/** Stop kind. `travel` = inter-city legs only; `local_transit` is a field on a `visit`. */
+/** Stop kind. `travel` = an inter-city leg; any mode/transit detail goes in the stop description. */
 export const STOP_TYPES = ['travel', 'visit', 'eat', 'shop', 'stay', 'other'] as const
 export type StopType = (typeof STOP_TYPES)[number]
 
@@ -25,17 +25,6 @@ export const STOP_TYPE_LABELS: Record<StopType, string> = {
   shop: 'Shop',
   stay: 'Stay',
   other: 'Other',
-}
-
-/** Mode of an inter-city travel leg (Type = travel only). */
-export const TRAVEL_MODES = ['air', 'train', 'car', 'ferry'] as const
-export type TravelMode = (typeof TRAVEL_MODES)[number]
-
-export const TRAVEL_MODE_LABELS: Record<TravelMode, string> = {
-  air: 'Air',
-  train: 'Train',
-  car: 'Car',
-  ferry: 'Ferry',
 }
 
 /** Per-stop completion. Null (unmarked) is the default and isn't represented here. */

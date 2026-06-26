@@ -1,6 +1,14 @@
 import { useCallback, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router'
-import { IconCalendar, IconCopy, IconPlus, IconTrash, IconX } from '@tabler/icons-react'
+import {
+  IconBan,
+  IconCalendar,
+  IconCheck,
+  IconCopy,
+  IconPlus,
+  IconTrash,
+  IconX,
+} from '@tabler/icons-react'
 import { SegmentedTabs } from '../components/SegmentedTabs'
 import { SelectMenu } from '../components/SelectMenu'
 import { StarRating } from '../components/StarRating'
@@ -8,7 +16,6 @@ import { Toggle } from '../components/Toggle'
 import { Thumb } from '../components/Thumb'
 import { Calendar } from '../components/Calendar'
 import { ReorderList } from '../components/ReorderList'
-import { StatusChip } from '../components/StatusChip'
 import { SecondaryButton } from '../components/SecondaryButton'
 import { EntryHeaderActions } from '../components/EntryHeaderActions'
 import { StopEditorSheet } from '../components/StopEditorSheet'
@@ -28,6 +35,7 @@ import {
   reorderDays,
   reorderStops,
   updateDay,
+  updateStop,
   updateTrip,
 } from '../data/travel'
 import { bumpTravel, useTravelVersion } from '../lib/travel-refresh'
@@ -35,7 +43,6 @@ import { CURRENCIES, TRIP_STATUSES } from '../constants/travel'
 import {
   isFieldVisible,
   stopTypeLabel,
-  timeHHMM,
   tripStatusLabel,
   type StopRow,
   type TripBundle,
@@ -43,7 +50,7 @@ import {
 } from '../lib/travel'
 import { useProfile } from '../hooks/useProfile'
 import { routes } from '../constants/routes'
-import { formatFullDate, todayLocal } from '../lib/date'
+import { addDays, formatFullDate, todayLocal } from '../lib/date'
 
 const inputClass =
   'w-full rounded-input bg-input px-3 py-2 text-[15px] text-text-primary focus:outline-none'
@@ -51,6 +58,18 @@ const inputClass =
 export function TripBuilder() {
   const { id } = useParams()
   return id ? <EditTrip id={id} /> : <NewTrip />
+}
+
+/** Split a day's ordered stops into consecutive same-city runs (city '' groups the unset stops). */
+function cityRuns(stops: StopRow[]): { city: string; stops: StopRow[] }[] {
+  const runs: { city: string; stops: StopRow[] }[] = []
+  for (const s of stops) {
+    const c = s.city ?? ''
+    const last = runs[runs.length - 1]
+    if (last && last.city === c) last.stops.push(s)
+    else runs.push({ city: c, stops: [s] })
+  }
+  return runs
 }
 
 // --- New trip: header only; Days/Stops unlock once the trip exists ---
@@ -274,8 +293,46 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
   }
 
   async function addDay() {
-    await createDay({ user_id: userId!, trip_id: trip.id, sort_order: days.length })
+    // Default the new day to the day after the previous (dated) day; recompute the trip span.
+    const prev = days[days.length - 1]
+    const nextDate = prev?.day_date ? addDays(prev.day_date, 1) : null
+    await createDay({
+      user_id: userId!,
+      trip_id: trip.id,
+      day_date: nextDate,
+      sort_order: days.length,
+    })
+    if (nextDate) await recomputeTripDates(trip.id)
     bumpTravel()
+  }
+
+  // Inline done/skipped from the Edit Trip screen — tapping the active state clears it.
+  async function setStopCompletion(s: StopRow, value: 'done' | 'skipped') {
+    await updateStop(s.id, { completion: s.completion === value ? null : value })
+    bumpTravel()
+  }
+
+  // City/province/country carried forward to a NEW stop: the day's last stop, else the most
+  // recent prior day's last stop (typical 1-city-per-day flow needs no city input at all).
+  function carryForwardCity(forDayId: string): {
+    city: string
+    province: string
+    country: string
+  } {
+    const ordered = [...days].sort((a, b) => a.sort_order - b.sort_order)
+    const startIdx = ordered.findIndex((d) => d.id === forDayId)
+    for (let i = startIdx; i >= 0; i--) {
+      const dayStops = stopsByDay(ordered[i]!.id)
+      if (dayStops.length > 0) {
+        const last = dayStops[dayStops.length - 1]!
+        return {
+          city: last.city ?? '',
+          province: last.province ?? '',
+          country: last.country ?? '',
+        }
+      }
+    }
+    return { city: '', province: '', country: '' }
   }
 
   async function removeDay(dayId: string) {
@@ -305,13 +362,6 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
         province: s.province,
         description: s.description,
         details: s.details,
-        time: s.time,
-        cost: s.cost,
-        cost_currency: s.cost_currency,
-        local_transit: s.local_transit,
-        travel_mode: s.travel_mode,
-        from_loc: s.from_loc,
-        to_loc: s.to_loc,
         completion: s.completion,
         sort_order: i,
       })
@@ -340,7 +390,7 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
           <IconX size={22} />
         </button>
         <h1 className="flex-1 truncate text-[17px] font-medium text-text-primary">
-          {trip.name}
+          Edit Trip
         </h1>
         <EntryHeaderActions
           editing
@@ -531,41 +581,88 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
                     </button>
                   </div>
 
-                  {dayStops.length > 0 && (
-                    <ReorderList
-                      ids={dayStops.map((s) => s.id)}
-                      onReorder={(next) => {
-                        void reorderStops(next).then(bumpTravel)
-                      }}
-                      handleLabel={() => 'Drag to reorder stop'}
-                      renderLabel={(sid) => {
-                        const s = dayStops.find((x) => x.id === sid)!
-                        return (
-                          <button
-                            onClick={() => setStopEditor({ dayId: day.id, stop: s })}
-                            className={`w-full truncate text-left ${
-                              s.completion === 'skipped'
-                                ? 'text-text-tertiary line-through'
-                                : ''
-                            }`}
-                          >
-                            <span className="text-text-secondary">
-                              {stopTypeLabel(s.type)}
-                            </span>
-                            {' · '}
-                            {s.description || s.city || s.to_loc || '—'}
-                            {s.time ? ` · ${timeHHMM(s.time)}` : ''}
-                          </button>
-                        )
-                      }}
-                      renderTrailing={(sid) => {
-                        const s = dayStops.find((x) => x.id === sid)!
-                        return s.completion === 'done' ? (
-                          <StatusChip label="Done" className="bg-positive text-bg" />
-                        ) : null
-                      }}
-                    />
-                  )}
+                  {dayStops.length > 0 &&
+                    (() => {
+                      const runs = cityRuns(dayStops)
+                      return (
+                        <div className="flex flex-col gap-2">
+                          {runs.map((run, runIdx) => (
+                            <div key={runIdx} className="flex flex-col gap-1">
+                              {run.city && (
+                                <h3 className="px-1 text-[13px] font-medium text-text-primary">
+                                  {run.city}
+                                </h3>
+                              )}
+                              <ReorderList
+                                ids={run.stops.map((s) => s.id)}
+                                onReorder={(nextRun) => {
+                                  // Rebuild the whole day's order with this run replaced.
+                                  const nextDay = runs.flatMap((r, i) =>
+                                    i === runIdx ? nextRun : r.stops.map((s) => s.id),
+                                  )
+                                  void reorderStops(nextDay).then(bumpTravel)
+                                }}
+                                handleLabel={() => 'Drag to reorder stop'}
+                                renderLabel={(sid) => {
+                                  const s = run.stops.find((x) => x.id === sid)!
+                                  return (
+                                    <button
+                                      onClick={() =>
+                                        setStopEditor({ dayId: day.id, stop: s })
+                                      }
+                                      className={`w-full truncate text-left ${
+                                        s.completion === 'skipped'
+                                          ? 'text-text-tertiary line-through'
+                                          : ''
+                                      }`}
+                                    >
+                                      <span className="text-text-secondary">
+                                        {stopTypeLabel(s.type)}
+                                      </span>
+                                      {' · '}
+                                      {s.description || '—'}
+                                    </button>
+                                  )
+                                }}
+                                renderTrailing={(sid) => {
+                                  const s = run.stops.find((x) => x.id === sid)!
+                                  return (
+                                    <div className="flex items-center gap-0.5">
+                                      <button
+                                        onClick={() => void setStopCompletion(s, 'done')}
+                                        aria-label="Mark done"
+                                        aria-pressed={s.completion === 'done'}
+                                        className={`rounded-full p-1 ${
+                                          s.completion === 'done'
+                                            ? 'bg-positive text-bg'
+                                            : 'text-text-tertiary'
+                                        }`}
+                                      >
+                                        <IconCheck size={15} />
+                                      </button>
+                                      <button
+                                        onClick={() =>
+                                          void setStopCompletion(s, 'skipped')
+                                        }
+                                        aria-label="Mark skipped"
+                                        aria-pressed={s.completion === 'skipped'}
+                                        className={`rounded-full p-1 ${
+                                          s.completion === 'skipped'
+                                            ? 'bg-track text-text-secondary'
+                                            : 'text-text-tertiary'
+                                        }`}
+                                      >
+                                        <IconBan size={15} />
+                                      </button>
+                                    </div>
+                                  )
+                                }}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )
+                    })()}
 
                   <button
                     onClick={() => setStopEditor({ dayId: day.id })}
@@ -604,7 +701,13 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
           userId={userId}
           dayId={stopEditor.dayId}
           stop={stopEditor.stop}
-          defaultCurrency={baseCurrency}
+          {...(stopEditor.stop
+            ? {}
+            : ((c) => ({
+                defaultCity: c.city,
+                defaultProvince: c.province,
+                defaultCountry: c.country,
+              }))(carryForwardCity(stopEditor.dayId)))}
           days={days.map((d, i) => ({ id: d.id, label: dayLabel(d, i) }))}
           onClose={() => setStopEditor(null)}
           onSaved={() => {

@@ -12,10 +12,8 @@ import { snapProvince } from './places'
 import { isChinaCountry } from './travel-stats'
 import {
   STOP_TYPES,
-  TRAVEL_MODES,
   TRIP_STATUSES,
   type StopType,
-  type TravelMode,
   type TripStatus,
 } from '../constants/travel'
 
@@ -25,13 +23,6 @@ export interface StopDraft {
   city: string | null
   country: string | null
   province: string | null
-  time: string | null
-  cost: number | null
-  cost_currency: string | null
-  travel_mode: TravelMode | null
-  from_loc: string | null
-  to_loc: string | null
-  local_transit: string | null
   details: string | null
   completion: 'done' | 'skipped' | null
 }
@@ -93,7 +84,6 @@ function tolerantParse(raw: string): { data: unknown } | { error: string } {
 
 // ── coercion ────────────────────────────────────────────────────────────────────────────────
 const STOP_TYPE_SET = new Set<string>(STOP_TYPES)
-const MODE_SET = new Set<string>(TRAVEL_MODES)
 const STATUS_SET = new Set<string>(TRIP_STATUSES)
 
 function strOrNull(v: unknown): string | null {
@@ -101,21 +91,9 @@ function strOrNull(v: unknown): string | null {
   const s = v.trim()
   return s === '' ? null : s
 }
-function numOrNull(v: unknown): number | null {
-  if (typeof v === 'number') return Number.isFinite(v) ? v : null
-  if (typeof v === 'string' && v.trim() !== '') {
-    const n = Number(v.trim())
-    return Number.isFinite(n) ? n : null
-  }
-  return null
-}
 function asDate(v: unknown): string | null {
   const s = strOrNull(v)
   return s && /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : null
-}
-function asTime(v: unknown): string | null {
-  const s = strOrNull(v)
-  return s && /^\d{1,2}:\d{2}$/.test(s) ? s : null
 }
 
 function toStop(raw: unknown): StopDraft {
@@ -129,21 +107,12 @@ function toStop(raw: unknown): StopDraft {
   const rawProvince = strOrNull(o.province)
   // Chinese stops snap to a canonical CHINA_PROVINCES name; foreign provinces are kept verbatim.
   const province = isChinaCountry(country) ? snapProvince(rawProvince) : rawProvince
-  const cost = numOrNull(o.cost)
-  const modeStr = strOrNull(o.travel_mode)
   return {
     type,
     description: strOrNull(o.description),
     city: strOrNull(o.city),
     country,
     province,
-    time: asTime(o.time),
-    cost,
-    cost_currency: cost != null ? strOrNull(o.currency) : null,
-    travel_mode: modeStr && MODE_SET.has(modeStr) ? (modeStr as TravelMode) : null,
-    from_loc: strOrNull(o.from_loc),
-    to_loc: strOrNull(o.to_loc),
-    local_transit: strOrNull(o.local_transit),
     details: strOrNull(o.details),
     completion:
       strOrNull(o.completion) === 'skipped'
