@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { IconMapPin, IconWorldSearch, IconX } from '@tabler/icons-react'
+import {
+  IconChevronDown,
+  IconChevronRight,
+  IconMapPin,
+  IconWorldSearch,
+  IconX,
+} from '@tabler/icons-react'
 import { SearchBar } from './SearchBar'
 import { SelectMenu } from './SelectMenu'
 import { PrimaryButton } from './PrimaryButton'
@@ -25,9 +31,9 @@ const isChina = (country: string) => CHINA_NAMES.has(country.trim().toLowerCase(
  * The City picker — a **local** fixed overlay (not a route sheet, so the Trip Builder's draft
  * survives). Seeded with the stop's current City, it searches the remembered-cities cache (instant)
  * and Nominatim (auto, debounced) and lists matches immediately, mirroring the Shows TMDB search.
- * Selecting a result confirms it and returns; manual entry is the fallback. Province is snapped to a
- * canonical `CHINA_PROVINCES` value before saving so the shaded map stays consistent. Confirming a
- * city upserts it into the cache.
+ * Selecting a result confirms it and returns; manual entry is the fallback, collapsed by default and
+ * auto-expanded when search finds nothing. Province is snapped to a canonical `CHINA_PROVINCES` value
+ * before saving so the shaded map stays consistent. Confirming a city upserts it into the cache.
  */
 export function CitySearchSheet({
   userId,
@@ -39,10 +45,11 @@ export function CitySearchSheet({
 
   const [query, setQuery] = useState(initialQuery)
   const [debounced, setDebounced] = useState(initialQuery)
-  const [country, setCountry] = useState('China')
+  const [country, setCountry] = useState('中国')
   const [province, setProvince] = useState('')
   const [suggestions, setSuggestions] = useState<GeocodeSuggestion[]>([])
   const [geoState, setGeoState] = useState<'idle' | 'loading' | 'done'>('idle')
+  const [manualOpen, setManualOpen] = useState(false)
 
   const loadCache = useCallback(() => listRememberedCities(userId), [userId])
   const { data: cache } = useAsync(loadCache)
@@ -57,6 +64,15 @@ export function CitySearchSheet({
     const t = setTimeout(() => setDebounced(query), 350)
     return () => clearTimeout(t)
   }, [query])
+
+  // Auto-expand the manual section when search is done and found nothing.
+  useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect */
+    if (geoState === 'done' && suggestions.length === 0 && debounced.trim()) {
+      setManualOpen(true)
+    }
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, [geoState, suggestions.length, debounced])
 
   // Auto-run the Nominatim assist on open and as the typed city settles (mirrors TitleSearchSheet).
   useEffect(() => {
@@ -206,48 +222,60 @@ export function CitySearchSheet({
             </div>
           </section>
 
-          {/* Manual entry / confirmation */}
+          {/* Manual entry / confirmation — collapsed by default; auto-expands on zero results */}
           <section className="flex flex-col gap-3">
-            <h2 className="px-1 text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
-              Or enter manually
-            </h2>
-            <label className="text-xs text-text-secondary">
-              Country
-              <input
-                value={country}
-                onChange={(e) => setCountry(e.target.value)}
-                className="mt-1 w-full rounded-input bg-input px-3 py-2 text-[15px] text-text-primary focus:outline-none"
-              />
-            </label>
-            <div className="text-xs text-text-secondary">
-              Province / Region
-              {isChina(country) ? (
-                <div className="mt-1">
-                  <SelectMenu
-                    value={province}
-                    onChange={setProvince}
-                    ariaLabel="Province"
-                    placeholder="Select a province"
-                    options={[
-                      { value: '', label: '—' },
-                      ...CHINA_PROVINCES.map((p) => ({ value: p, label: p })),
-                    ]}
-                  />
-                </div>
-              ) : (
-                <input
-                  value={province}
-                  onChange={(e) => setProvince(e.target.value)}
-                  className="mt-1 w-full rounded-input bg-input px-3 py-2 text-[15px] text-text-primary focus:outline-none"
-                />
-              )}
-            </div>
-            <PrimaryButton
-              onClick={useManual}
-              disabled={!query.trim() || !country.trim()}
+            <button
+              onClick={() => setManualOpen((v) => !v)}
+              className="flex items-center gap-1 px-1 text-[13px] text-text-secondary"
             >
-              Use “{query.trim() || 'city'}”
-            </PrimaryButton>
+              {manualOpen ? (
+                <IconChevronDown size={14} className="shrink-0" />
+              ) : (
+                <IconChevronRight size={14} className="shrink-0" />
+              )}
+              Enter manually…
+            </button>
+            {manualOpen && (
+              <>
+                <label className="text-xs text-text-secondary">
+                  Country
+                  <input
+                    value={country}
+                    onChange={(e) => setCountry(e.target.value)}
+                    className="mt-1 w-full rounded-input bg-input px-3 py-2 text-[15px] text-text-primary focus:outline-none"
+                  />
+                </label>
+                <div className="text-xs text-text-secondary">
+                  Province / Region
+                  {isChina(country) ? (
+                    <div className="mt-1">
+                      <SelectMenu
+                        value={province}
+                        onChange={setProvince}
+                        ariaLabel="Province"
+                        placeholder="Select a province"
+                        options={[
+                          { value: '', label: '—' },
+                          ...CHINA_PROVINCES.map((p) => ({ value: p, label: p })),
+                        ]}
+                      />
+                    </div>
+                  ) : (
+                    <input
+                      value={province}
+                      onChange={(e) => setProvince(e.target.value)}
+                      className="mt-1 w-full rounded-input bg-input px-3 py-2 text-[15px] text-text-primary focus:outline-none"
+                    />
+                  )}
+                </div>
+                <PrimaryButton
+                  onClick={useManual}
+                  disabled={!query.trim() || !country.trim()}
+                >
+                  {'Use "' + (query.trim() || 'city') + '"'}
+                </PrimaryButton>
+              </>
+            )}
           </section>
         </div>
       </div>

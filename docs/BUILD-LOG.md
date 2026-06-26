@@ -2255,3 +2255,30 @@ data. Touches the `stop` schema, so `database.ts` is regenerated. Test count **4
   never opens the sheet.
 - **Add Day** now defaults the new day's date to the previous day's `day_date` **+ 1** (reusing
   `addDays` from `src/lib/date.ts`), then recomputes the trip span.
+
+### Travel UX Enhancement (2026-06-26)
+
+- **Header field rearrangement.** Edit Trip header card reordered: Trip Name + Status (row 1),
+  Companions + Rating (row 2), Notes (row 3), Cover Image URL (row 4). **Base Currency** and **Track
+  Reimburse** removed from the header — they now appear in a small card immediately below the
+  Itinerary/Expenses toggle **only when Expenses is active** (always visible there, not gated by
+  visible-fields settings). Rationale: currency and reimbursement are expense concerns, not trip-identity
+  concerns; moving them reduces header clutter.
+- **Day expand/collapse.** Each Day card now has a **chevron** at the left end of the header row (same
+  stateless pattern as the Diary `GroupHeader` — parent holds `collapsedDays: Set<string>`, chevron
+  toggles membership). All days are expanded by default. Icon order in the header: chevron · Day N ·
+  date chip · spacer · Trash · Copy · green +. Green + opens the Add Stop modal (replaces the old bottom
+  "Add Stop" button, which is removed).
+- **Stop swipe-to-delete.** `ReorderList` extended with an optional `onDelete?: (id: string) => void`
+  prop. When provided, each row is wrapped in the existing `SwipeRow` and the container switches to
+  `divide-y divide-border` for row separators (the original `border-b last:border-b-0` per-row approach
+  breaks when `SwipeRow` makes every row the last child of its own SwipeRow inner-div). Stops use
+  `deleteStop` directly; no modal — the two-step swipe+tap is sufficient.
+- **Stop completion icons more visible.** Inactive Done/Skipped icons changed from `text-text-tertiary`
+  to `text-text-secondary` so they look clickable, not disabled.
+- **City Picker manual-entry redesign.** "OR ENTER MANUALLY" section replaced with a collapsible
+  **Enter manually…** chevron disclosure, collapsed by default. Auto-expands when search returns zero
+  results (`geoState === 'done' && suggestions.length === 0`). The PrimaryButton is hidden inside the
+  collapsed section, preventing accidental use when search results are present.
+- **Country default changed to `中国`.** The `isChina()` recogniser already includes `'中国'`, so
+  the province dropdown triggers correctly.

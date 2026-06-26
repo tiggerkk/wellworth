@@ -1,7 +1,6 @@
 # WellWorth — Project Memory
 
-WellWorth is a personal (later: small-family) wellness, net-worth, and media tracker, styled after
-Cronometer. It is built as an installable PWA so it runs on iPhone and iPad with no Apple Developer account.
+WellWorth is a personal (later: small-family) wellness, net-worth, and media tracker. It is built as an installable PWA so it runs on iPhone and iPad with no Apple Developer account.
 
 **Read `/docs` before planning or building.** The spec docs there are the source of truth.
 (`docs/BUILD-LOG.md` is a non-spec engineering history — build sequence, rationale, and past-failure warnings — not a source of truth for behavior.)

@@ -6,7 +6,7 @@
  *   --color-surface     -> bg-surface / text-surface / border-surface
  *   --color-text-primary-> text-text-primary (token name is "text-primary")
  *   --radius-card       -> rounded-card
- * Dark, calm, Cronometer-like. Match these tokens exactly.
+ * Dark, calm. Match these tokens exactly.
  */
 @theme {
   /* Colors */
@@ -19,7 +19,7 @@
   --color-text-secondary: #9aa3b5;
   --color-text-muted: #c2c7d4;
   --color-text-tertiary: #5b6172;
-  --color-accent: #e8623c;
+  --color-accent: #5ba3f5;
   --color-positive: #5dcaa5;
   --color-info: #5b8def;
   --color-danger: #e2574c;

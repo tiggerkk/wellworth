@@ -46,22 +46,25 @@ literal **"Edit Trip"**.
 - **New** (`/travel/entry`): header-only — **Trip Name** + **Base Currency** on one line, **Status**
   below — with **Reset** + **Create** icon actions. **Create** persists the trip and opens it for
   editing (days/stops need a saved trip).
-- **Edit** header card: **Trip Name** + **Base Currency** on one line; **Status** (dropdown, filling
-  the line) + **Rating** (0–5 half-stars) on the next; **Cover Image URL** (rendered `no-referrer`,
-  previewed); **Companions** paired with a **Track Reimburse** toggle; **Notes**. Top-right icon
-  actions (Delete · Reset · Save); days/stops/expenses **auto-save on each change**, so Save only
-  persists the header fields.
-- Two sub-tabs: **Itinerary** and **Expenses**.
+- **Edit** header card — row order: **Trip Name** + **Status** on one line; **Companions** +
+  **Rating** (0–5 half-stars) on the next (both conditional); **Notes**; **Cover Image URL**
+  (rendered `no-referrer`, previewed). Top-right icon actions (Delete · Reset · Save);
+  days/stops/expenses **auto-save on each change**, so Save only persists the header fields.
+- Two sub-tabs: **Itinerary** and **Expenses**. When **Expenses** is selected, **Base Currency** and
+  **Track Reimburse** appear in a small card immediately below the tab strip (always visible in this
+  context, not gated by visible-fields settings).
 
 **Itinerary sub-tab:**
 
 - **Add Day** (defaults the new day's date to the previous day's date + 1) + (when >1) **Reorder
-  Days** (a drag-reorder sheet via shared `ReorderList`). Each **Day** card: `Day N`, a tappable
+  Days** (a drag-reorder sheet via shared `ReorderList`). Each **Day** card has a **collapse/expand
+  chevron** at the left (all days expanded by default). Header row: chevron · `Day N` · tappable
   **Calendar date chip** (the date or "Add date" — writes `trip_day.day_date` and re-caches the
-  trip's start/end), **duplicate**, and **delete**. Within a day, stops are grouped under
-  **city-only sub-headers** for consecutive same-city stops; each run is a drag-reorder list. Each
-  stop row: `Type · description`, with inline **done / skipped** icon toggles on the right (tap the
-  active one to clear); skipped stops are struck through. Tap a stop to edit. Plus **Add Stop**.
+  trip's start/end) · spacer · **Delete** (trash) · **Duplicate** (copy) · **Add Stop** (green `+`).
+  When expanded, stops are grouped under **city-only sub-headers** for consecutive same-city stops;
+  each run is a drag-reorder list (swipe-left on a stop to reveal a Delete action). Each stop row:
+  `Type · description`, with inline **done / skipped** icon toggles on the right (tap the active one
+  to clear); skipped stops are struck through. Tap a stop to edit.
 
 **Stop editor** (local overlay, not a route sheet — so the builder draft survives):
 
@@ -91,8 +94,11 @@ literal **"Edit Trip"**.
 Seeded with the stop's current City; searches as you type: **remembered cities** match instantly, and
 a **Nominatim** lookup runs automatically (debounced) and lists **Search results**. Selecting any result
 resolves City / Province / Country (province snapped to **CHINA_PROVINCES** for China), caches it in
-`remembered_city`, and returns it to the stop. Manual entry is the fallback: Country + Province (a
-CHINA_PROVINCES select for China, else free text) + **Use "city"**.
+`remembered_city`, and returns it to the stop. Manual entry is the fallback: the **Enter manually…**
+disclosure toggle at the bottom is **collapsed by default** (preventing accidental use when search
+results are present); it **auto-expands when search finds nothing**. When expanded: Country (defaults
+to `中国`, recognised by `isChina()`), Province (a CHINA_PROVINCES select for China, else free text),
+and a **Use "city"** PrimaryButton.
 
 ### Settings (`/travel/settings`)
 

@@ -1,5 +1,6 @@
 import { useRef, useState, type ReactNode } from 'react'
 import { IconGripVertical } from '@tabler/icons-react'
+import { SwipeRow } from './SwipeRow'
 
 interface ReorderListProps {
   /** Current order of row ids. */
@@ -12,6 +13,8 @@ interface ReorderListProps {
   handleLabel?: (id: string) => string
   /** Optional trailing controls for a row (e.g. rename / delete), rendered outside the truncated body. */
   renderTrailing?: (id: string) => ReactNode
+  /** When provided, wraps each row in SwipeRow so swiping left reveals a Delete action. */
+  onDelete?: (id: string) => void
 }
 
 interface DragState {
@@ -34,6 +37,7 @@ export function ReorderList({
   renderLabel,
   handleLabel,
   renderTrailing,
+  onDelete,
 }: ReorderListProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const startY = useRef(0)
@@ -69,11 +73,12 @@ export function ReorderList({
     setDrag(null)
   }
 
+  // When SwipeRow is used, borders between rows come from divide-y on the container (since each
+  // SwipeRow wrapper makes rowInner the last child of its own parent, breaking last:border-b-0).
+  const containerClass = `overflow-hidden rounded-card border border-border bg-surface${onDelete ? ' divide-y divide-border' : ''}`
+
   return (
-    <div
-      ref={containerRef}
-      className="overflow-hidden rounded-card border border-border bg-surface"
-    >
+    <div ref={containerRef} className={containerClass}>
       {ids.map((id, i) => {
         let translateY = 0
         let dragging = false
@@ -87,19 +92,16 @@ export function ReorderList({
             translateY = drag.rowH
           }
         }
-        return (
-          <div
-            key={id}
-            style={{
-              transform: `translateY(${translateY}px)`,
-              transition: dragging ? 'none' : 'transform 150ms ease',
-              zIndex: dragging ? 10 : undefined,
-              position: 'relative',
-            }}
-            className={`flex items-center gap-2 border-b border-border bg-surface px-3 py-2.5 last:border-b-0 ${
-              dragging ? 'shadow-lg' : ''
-            }`}
-          >
+
+        const style = {
+          transform: `translateY(${translateY}px)`,
+          transition: dragging ? 'none' : 'transform 150ms ease',
+          zIndex: dragging ? 10 : undefined,
+          position: 'relative' as const,
+        }
+
+        const rowContent = (
+          <>
             <button
               type="button"
               aria-label={handleLabel ? handleLabel(id) : 'Drag to reorder'}
@@ -116,6 +118,31 @@ export function ReorderList({
               {renderLabel(id)}
             </div>
             {renderTrailing && <div className="shrink-0">{renderTrailing(id)}</div>}
+          </>
+        )
+
+        if (onDelete) {
+          return (
+            <SwipeRow key={id} onDelete={() => onDelete(id)}>
+              <div
+                style={style}
+                className={`flex items-center gap-2 bg-surface px-3 py-2.5 ${dragging ? 'shadow-lg' : ''}`}
+              >
+                {rowContent}
+              </div>
+            </SwipeRow>
+          )
+        }
+
+        return (
+          <div
+            key={id}
+            style={style}
+            className={`flex items-center gap-2 border-b border-border bg-surface px-3 py-2.5 last:border-b-0 ${
+              dragging ? 'shadow-lg' : ''
+            }`}
+          >
+            {rowContent}
           </div>
         )
       })}

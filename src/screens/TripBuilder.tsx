@@ -4,6 +4,8 @@ import {
   IconBan,
   IconCalendar,
   IconCheck,
+  IconChevronDown,
+  IconChevronRight,
   IconCopy,
   IconPlus,
   IconTrash,
@@ -228,6 +230,14 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
   const [stopEditor, setStopEditor] = useState<{ dayId: string; stop?: StopRow } | null>(
     null,
   )
+  const [collapsedDays, setCollapsedDays] = useState<Set<string>>(new Set())
+  const toggleDay = (id: string) =>
+    setCollapsedDays((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
 
   const stopsByDay = (dayId: string) =>
     stops
@@ -406,6 +416,7 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
         {/* Trip header fields */}
         <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
+          {/* Row 1: Trip Name + Status */}
           <div className="flex gap-3">
             <label className="flex-1 text-xs text-text-secondary">
               Trip Name
@@ -415,19 +426,6 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
                 className={`mt-1 ${inputClass}`}
               />
             </label>
-            <div className="w-28 text-xs text-text-secondary">
-              Base Currency
-              <div className="mt-1">
-                <SelectMenu
-                  value={baseCurrency}
-                  onChange={setBaseCurrency}
-                  ariaLabel="Base currency"
-                  options={CURRENCIES.map((c) => ({ value: c, label: c }))}
-                />
-              </div>
-            </div>
-          </div>
-          <div className="flex gap-3">
             <div className="flex-1 text-xs text-text-secondary">
               Status
               <div className="mt-1">
@@ -442,15 +440,43 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
                 />
               </div>
             </div>
-            {show('rating') && (
-              <div className="text-xs text-text-secondary">
-                Rating
-                <div className="mt-1 flex h-8 items-center">
-                  <StarRating value={rating} onChange={setRating} />
-                </div>
-              </div>
-            )}
           </div>
+          {/* Row 2: Companions + Rating */}
+          {(show('companions') || show('rating')) && (
+            <div className="flex gap-3">
+              {show('companions') && (
+                <label className="flex-1 text-xs text-text-secondary">
+                  Companions
+                  <input
+                    value={companions}
+                    onChange={(e) => setCompanions(e.target.value)}
+                    className={`mt-1 ${inputClass}`}
+                  />
+                </label>
+              )}
+              {show('rating') && (
+                <div className="text-xs text-text-secondary">
+                  Rating
+                  <div className="mt-1 flex h-8 items-center">
+                    <StarRating value={rating} onChange={setRating} />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          {/* Row 3: Notes */}
+          {show('notes') && (
+            <label className="text-xs text-text-secondary">
+              Notes
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={2}
+                className={`mt-1 resize-none ${inputClass}`}
+              />
+            </label>
+          )}
+          {/* Row 4: Cover Image URL */}
           {show('cover_url') && (
             <>
               <label className="text-xs text-text-secondary">
@@ -467,43 +493,6 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
               )}
             </>
           )}
-          {(show('companions') || show('track_reimbursement')) && (
-            <div className="flex gap-3">
-              {show('companions') && (
-                <label className="flex-1 text-xs text-text-secondary">
-                  Companions
-                  <input
-                    value={companions}
-                    onChange={(e) => setCompanions(e.target.value)}
-                    className={`mt-1 ${inputClass}`}
-                  />
-                </label>
-              )}
-              {show('track_reimbursement') && (
-                <div className="text-xs text-text-secondary">
-                  Track Reimburse
-                  <div className="mt-1 flex h-[38px] items-center">
-                    <Toggle
-                      checked={trackReimb}
-                      onChange={setTrackReimb}
-                      label="Track reimbursement"
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-          {show('notes') && (
-            <label className="text-xs text-text-secondary">
-              Notes
-              <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                rows={2}
-                className={`mt-1 resize-none ${inputClass}`}
-              />
-            </label>
-          )}
         </section>
 
         <SegmentedTabs<'itinerary' | 'expenses'>
@@ -514,6 +503,32 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
             { value: 'expenses', label: 'Expenses' },
           ]}
         />
+
+        {tab === 'expenses' && (
+          <section className="flex gap-3 rounded-card border border-border bg-surface p-4">
+            <div className="w-28 text-xs text-text-secondary">
+              Base Currency
+              <div className="mt-1">
+                <SelectMenu
+                  value={baseCurrency}
+                  onChange={setBaseCurrency}
+                  ariaLabel="Base currency"
+                  options={CURRENCIES.map((c) => ({ value: c, label: c }))}
+                />
+              </div>
+            </div>
+            <div className="text-xs text-text-secondary">
+              Track Reimburse
+              <div className="mt-1 flex h-[38px] items-center">
+                <Toggle
+                  checked={trackReimb}
+                  onChange={setTrackReimb}
+                  label="Track reimbursement"
+                />
+              </div>
+            </div>
+          </section>
+        )}
 
         {tab === 'itinerary' ? (
           <section className="flex flex-col gap-4">
@@ -538,12 +553,27 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
 
             {days.map((day, i) => {
               const dayStops = stopsByDay(day.id)
+              const expanded = !collapsedDays.has(day.id)
               return (
                 <div
                   key={day.id}
                   className="flex flex-col gap-2 rounded-card border border-border bg-surface p-3"
                 >
+                  {/* Day header: chevron · Day X · date · spacer · trash · copy · green + */}
                   <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => toggleDay(day.id)}
+                      aria-label={
+                        expanded ? `Collapse Day ${i + 1}` : `Expand Day ${i + 1}`
+                      }
+                      className="shrink-0 p-0.5 text-text-tertiary"
+                    >
+                      {expanded ? (
+                        <IconChevronDown size={18} />
+                      ) : (
+                        <IconChevronRight size={18} />
+                      )}
+                    </button>
                     <span className="text-[15px] font-medium text-text-primary">
                       Day {i + 1}
                     </span>
@@ -554,7 +584,7 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
                           ? `Change date for Day ${i + 1}`
                           : `Add a date for Day ${i + 1}`
                       }
-                      className="flex flex-1 items-center gap-1 rounded-pill bg-input px-2.5 py-1 text-left text-xs"
+                      className="flex items-center gap-1 rounded-pill bg-input px-2.5 py-1 text-left text-xs"
                     >
                       <IconCalendar size={14} className="shrink-0 text-text-secondary" />
                       {day.day_date ? (
@@ -565,6 +595,14 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
                         <span className="text-text-tertiary">Add date</span>
                       )}
                     </button>
+                    <div className="flex-1" />
+                    <button
+                      onClick={() => void removeDay(day.id)}
+                      aria-label="Delete day"
+                      className="p-1 text-text-secondary"
+                    >
+                      <IconTrash size={18} />
+                    </button>
                     <button
                       onClick={() => void duplicateDay(day)}
                       aria-label="Duplicate day"
@@ -573,15 +611,16 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
                       <IconCopy size={18} />
                     </button>
                     <button
-                      onClick={() => void removeDay(day.id)}
-                      aria-label="Delete day"
-                      className="p-1 text-text-secondary"
+                      onClick={() => setStopEditor({ dayId: day.id })}
+                      aria-label="Add stop"
+                      className="p-1 text-positive"
                     >
-                      <IconTrash size={18} />
+                      <IconPlus size={18} stroke={2.25} />
                     </button>
                   </div>
 
-                  {dayStops.length > 0 &&
+                  {expanded &&
+                    dayStops.length > 0 &&
                     (() => {
                       const runs = cityRuns(dayStops)
                       return (
@@ -602,6 +641,7 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
                                   )
                                   void reorderStops(nextDay).then(bumpTravel)
                                 }}
+                                onDelete={(sid) => void removeStop(sid)}
                                 handleLabel={() => 'Drag to reorder stop'}
                                 renderLabel={(sid) => {
                                   const s = run.stops.find((x) => x.id === sid)!
@@ -635,7 +675,7 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
                                         className={`rounded-full p-1 ${
                                           s.completion === 'done'
                                             ? 'bg-positive text-bg'
-                                            : 'text-text-tertiary'
+                                            : 'text-text-secondary'
                                         }`}
                                       >
                                         <IconCheck size={15} />
@@ -649,7 +689,7 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
                                         className={`rounded-full p-1 ${
                                           s.completion === 'skipped'
                                             ? 'bg-track text-text-secondary'
-                                            : 'text-text-tertiary'
+                                            : 'text-text-secondary'
                                         }`}
                                       >
                                         <IconBan size={15} />
@@ -663,13 +703,6 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
                         </div>
                       )
                     })()}
-
-                  <button
-                    onClick={() => setStopEditor({ dayId: day.id })}
-                    className="flex items-center gap-1 self-start rounded-input px-2 py-1 text-sm text-accent"
-                  >
-                    <IconPlus size={15} /> Add Stop
-                  </button>
                 </div>
               )
             })}
