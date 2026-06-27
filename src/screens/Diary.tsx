@@ -279,7 +279,7 @@ export function Diary() {
             </button>
           </div>
           {/* Top-right: Delete · Copy · Paste for the whole day */}
-          <div className="flex items-center">
+          <div className="flex items-center gap-1">
             <IconAction
               Icon={IconTrash}
               label="Delete all entries today"
