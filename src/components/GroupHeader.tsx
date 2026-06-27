@@ -5,9 +5,9 @@ import {
   IconClipboard,
   IconCopy,
   IconPlus,
-  IconTrash,
 } from '@tabler/icons-react'
 import { IconAction } from './IconAction'
+import { ConfirmDeleteAction } from './ConfirmDeleteAction'
 
 interface GroupHeaderProps {
   title: string
@@ -68,10 +68,9 @@ export function GroupHeader({
         </span>
       </button>
       <div className="flex-1" />
-      <IconAction
-        Icon={IconTrash}
+      <ConfirmDeleteAction
         label={`Delete all in ${title}`}
-        onClick={onDelete}
+        onDelete={onDelete}
         disabled={count === 0}
       />
       <IconAction

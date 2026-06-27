@@ -112,9 +112,7 @@ export function TravelTrips() {
 
   const view = applyTripList(trips, facetsByTrip, criteria)
 
-  async function remove(id: string, name: string) {
-    if (!confirm(`Delete "${name}"? This also deletes its days, stops, and expenses.`))
-      return
+  async function remove(id: string) {
     await deleteTrip(id)
     bumpTravel()
   }
@@ -231,7 +229,7 @@ export function TravelTrips() {
             view.map((t) => {
               const label = primaryLabel(facetsByTrip.get(t.id))
               return (
-                <SwipeRow key={t.id} onDelete={() => void remove(t.id, t.name)}>
+                <SwipeRow key={t.id} onDelete={() => void remove(t.id)}>
                   <button
                     onClick={() => navigate(routes.travel.edit(t.id))}
                     className="flex w-full items-center gap-3 px-3 py-2.5 text-left active:bg-input/40"

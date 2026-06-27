@@ -49,7 +49,7 @@ that matters there:
 - Each row: **poster thumbnail**, title (+ year) with a small filled **♥** when favourited and a **gold
   Dynasty badge** to the right of the title for Chinese titles, then **type badge · status chip · star
   rating** (when set), and a second line of **first genre · date** (as "Jun 22"). Tap → Entry/Edit;
-  **swipe-left → Delete** (hard, with a confirm).
+  **swipe-left → Delete** (hard; tapping the revealed Delete acts immediately — no browser dialog).
 - _Type, search, filter, and sort persist for the **browser-tab session** (`useSessionState`), restored
   on return via Back/bottom nav/Home, cleared when the tab closes._
 

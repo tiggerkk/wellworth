@@ -107,8 +107,7 @@ export function BooksLibrary() {
     setOverride(undefined)
   }
 
-  async function remove(id: string, title: string) {
-    if (!confirm(`Delete “${title}”? This can’t be undone.`)) return
+  async function remove(id: string) {
     setOverride((prev) => (prev ?? books ?? []).filter((b) => b.id !== id))
     try {
       await deleteBook(id)
@@ -261,7 +260,7 @@ export function BooksLibrary() {
             </p>
           ) : (
             view.map((b) => (
-              <SwipeRow key={b.id} onDelete={() => void remove(b.id, b.title)}>
+              <SwipeRow key={b.id} onDelete={() => void remove(b.id)}>
                 <button
                   onClick={() => navigate(routes.books.edit(b.id))}
                   className="flex w-full items-center gap-3 px-3 py-2.5 text-left active:bg-input/40"

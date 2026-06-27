@@ -6,7 +6,6 @@ import {
   IconClipboard,
   IconCopy,
   IconReportAnalytics,
-  IconTrash,
 } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
@@ -40,6 +39,7 @@ import type { Tables } from '../types/database'
 import { Calendar, type DayCue } from '../components/Calendar'
 import { GroupHeader } from '../components/GroupHeader'
 import { IconAction } from '../components/IconAction'
+import { ConfirmDeleteAction } from '../components/ConfirmDeleteAction'
 import { NutrientBar } from '../components/NutrientBar'
 import { ReorderList } from '../components/ReorderList'
 
@@ -177,13 +177,6 @@ export function Diary() {
 
   async function deleteDay() {
     if (!userId || (entries ?? []).length === 0) return
-    if (
-      !window.confirm(
-        `Delete all entries for ${formatDayLabel(day)}? This can’t be undone.`,
-      )
-    ) {
-      return
-    }
     await deleteEntriesByDay(userId, day)
     bumpDiary()
   }
@@ -212,9 +205,6 @@ export function Diary() {
 
   async function deleteGroup(group: DiaryGroup) {
     if (!userId || entriesFor(group.key).length === 0) return
-    if (!window.confirm(`Delete all entries in ${group.label}? This can’t be undone.`)) {
-      return
-    }
     await deleteEntriesByGroup(userId, day, group.key)
     bumpDiary()
   }
@@ -279,11 +269,10 @@ export function Diary() {
             </button>
           </div>
           {/* Top-right: Delete · Copy · Paste for the whole day */}
-          <div className="flex items-center gap-1">
-            <IconAction
-              Icon={IconTrash}
+          <div className="flex items-center gap-2">
+            <ConfirmDeleteAction
               label="Delete all entries today"
-              onClick={() => void deleteDay()}
+              onDelete={() => void deleteDay()}
               disabled={dayCount === 0}
             />
             <IconAction

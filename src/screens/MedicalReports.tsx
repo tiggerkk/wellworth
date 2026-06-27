@@ -40,7 +40,7 @@ const SORT_OPTIONS: { value: ReportSortField; label: string }[] = [
 
 /**
  * Medical Reports — searchable/filterable/sortable list (newest first by default); tap a row →
- * Report detail, swipe-left to delete (hard, confirmed; the FK cascades the report's results). New
+ * Report detail, swipe-left to delete (hard, immediate; the FK cascades the report's results). New
  * reports come from the "New Medical" bottom-nav tab. All filtering/sorting is the pure
  * `applyReportView`; this screen just holds the criteria state. Mirrors `ShowsLibrary`.
  */
@@ -74,8 +74,7 @@ export function MedicalReports() {
     setOverride(undefined)
   }
 
-  async function remove(id: string, label: string) {
-    if (!confirm(`Delete the ${label} report? This can’t be undone.`)) return
+  async function remove(id: string) {
     setOverride((prev) => (prev ?? data ?? []).filter((r) => r.id !== id))
     try {
       await deleteReport(id)
@@ -178,10 +177,7 @@ export function MedicalReports() {
             view.map((r) => {
               const secondary = [r.provider, r.body_part].filter(Boolean).join(' · ')
               return (
-                <SwipeRow
-                  key={r.id}
-                  onDelete={() => void remove(r.id, typeLabel(r.report_type))}
-                >
+                <SwipeRow key={r.id} onDelete={() => void remove(r.id)}>
                   <button
                     onClick={() => navigate(routes.medical.detail(r.id))}
                     className="flex w-full items-center gap-3 px-3 py-2.5 text-left active:bg-input/40"

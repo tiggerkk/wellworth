@@ -58,17 +58,27 @@ _not_ the primary-button color; it's for emphasis, active states, and energy.
   The Library Type control sits in the **sticky header above the `SearchBar`** (always visible, not
   inside the filter panel).
 - **GroupHeader** — collapsible diary-group header: expand chevron · category icon · title · kcal
-  subtotal (kcal next to the title) · ⟨spacer⟩ · **Delete · Copy · Paste · Add** action icons. Delete/
-  Copy disable on an empty group; Paste tints **positive** (teal) only while the in-app clipboard
-  holds items; Add is the green `+`. The icons mirror the Edit Trip day-header cluster.
+  subtotal (kcal next to the title) · ⟨spacer⟩ · **Delete · Copy · Paste · Add** action icons. Delete
+  is a **`ConfirmDeleteAction`** (inline `Delete? ✓ ✗`); Delete/Copy disable on an empty group; Paste
+  tints **positive** (teal) only while the in-app clipboard holds items; Add is the green `+`. The
+  icons mirror the Edit Trip day-header cluster.
 - **IconAction** — the shared header action icon-button (`src/components/IconAction.tsx`): a bare
-  Tabler icon at `size 18`, `p-1` hit area, tinted `secondary` (Delete/Copy) or `positive` (Add, and
+  Tabler icon at `size 18`, `p-1` hit area, tinted `secondary` (Copy) or `positive` (Add, and
   Paste while armed), muted `text-tertiary` when `disabled`. Used by both the Diary day header and
   `GroupHeader`.
+- **ConfirmDeleteAction** — the icon-row delete control (`src/components/ConfirmDeleteAction.tsx`): an
+  `IconAction`-styled `IconTrash` that, on click, flips **inline** to `Delete?` + a ✓ (`danger`) /
+  ✗ (`secondary`) confirm — the compact, in-cluster counterpart to `EntryHeaderActions`' two-step
+  delete. `disabled` blocks entering the confirm. Sibling icons (Copy/Paste/Add) stay visible during
+  confirm; the "Delete?" text disambiguates. Used by the Diary day header, `GroupHeader`, the Net
+  Worth monthly row, and the Edit Trip day header. This is the single delete model for **icon rows**;
+  swipe lists delete on the revealed `SwipeRow` Delete instead (no browser dialog).
 - **Toaster** — a single app-wide transient toast (`src/components/Toaster.tsx` + `src/lib/toast.ts`).
   Mounted once in `AppShell`; `showToast(msg)` shows a bottom-centered pill (`bg-surface` border) for
   ~2s. Used for in-app cues like "Copied Breakfast · 3 items".
-- **SwipeRow** — swipe-left reveals a `delete` Delete action.
+- **SwipeRow** — swipe-left reveals a `delete` Delete action; tapping it deletes **immediately**
+  (the swipe + tap is the confirmation — no browser dialog). Used by every list/library/reports/trips
+  row and `ReorderList`'s `onDelete`.
 - **SearchBar** — magnifier + input (+ barcode icon on Add Food). Takes an optional `className` so it
   can fill a flex row beside a Filter icon (the list screens pass `min-w-0 flex-1`), and an optional
   `icon` to swap the leading glyph (online-search sheets pass `IconWorldSearch`; default is `IconSearch`).

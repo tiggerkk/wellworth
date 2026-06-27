@@ -25,8 +25,9 @@ entries yet" · "+ Monthly Entry").
 - The **header is pinned** — month selector, the live **NET WORTH** total in HKD, and
   **RESET**/**SAVE** stay visible while the **asset-type list scrolls** beneath.
 - Entries **grouped by asset type**; each row editable: name, currency, `value_native`, and the
-  type-specific `details`. **Add entry** (pick type) / edit / **delete** (omits the entry from this
-  month onward — each month is self-contained).
+  type-specific `details`. **Add entry** (pick type) / edit / **delete** (a `ConfirmDeleteAction`
+  beside the Name field — inline `Delete? ✓ ✗`; omits the entry from this month onward — each month
+  is self-contained).
 - **Exchange rates** panel: title `EXCHANGE RATES (HKD 1.0000)`, **CNY and USD rates on one line**,
   each auto-fetched (with ↻ refetch) and overridable. Native → HKD as of the 1st of the month, via
   Frankfurter (see `docs/02-tech-spec.md` → Shared external APIs).

@@ -36,8 +36,9 @@ Tracked tests are chosen in Medical Settings → Tracked Tests (seeded from `def
 - Sort over { Date, Type, Provider, Body Part } with **asc/desc** toggle (newest-first within ties);
   default: **Date** descending.
 - Each row: **full date** (with year — reports span years), the **type** label, and
-  `provider · body part` as a secondary line. Tap → Report detail; **swipe-left → confirm → delete**
-  (hard; the FK cascades the report's results). The delete is **optimistic** — the row drops from local
+  `provider · body part` as a secondary line. Tap → Report detail; **swipe-left → Delete**
+  (hard; tapping the revealed Delete acts immediately — no browser dialog; the FK cascades the
+  report's results). The delete is **optimistic** — the row drops from local
   state instantly, the DB delete runs in the background (no `bumpMedical()` → full-list refetch; bump
   only on error). See tech-spec F16b.
 - New reports from the **New Medical** bottom-nav tab.

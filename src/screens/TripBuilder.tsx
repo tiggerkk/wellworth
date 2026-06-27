@@ -8,7 +8,6 @@ import {
   IconChevronRight,
   IconCopy,
   IconPlus,
-  IconTrash,
   IconX,
 } from '@tabler/icons-react'
 import { SegmentedTabs } from '../components/SegmentedTabs'
@@ -20,6 +19,7 @@ import { Calendar } from '../components/Calendar'
 import { ReorderList } from '../components/ReorderList'
 import { SecondaryButton } from '../components/SecondaryButton'
 import { EntryHeaderActions } from '../components/EntryHeaderActions'
+import { ConfirmDeleteAction } from '../components/ConfirmDeleteAction'
 import { StopEditorSheet } from '../components/StopEditorSheet'
 import { TripExpensesPanel } from '../components/TripExpensesPanel'
 import { useAuth } from '../auth/AuthProvider'
@@ -375,7 +375,6 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
   }
 
   async function removeDay(dayId: string) {
-    if (!confirm('Delete this day and its stops?')) return
     setDays((d) => d.filter((x) => x.id !== dayId))
     setStops((st) => st.filter((x) => x.trip_day_id !== dayId))
     try {
@@ -646,13 +645,10 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
                       )}
                     </button>
                     <div className="flex-1" />
-                    <button
-                      onClick={() => void removeDay(day.id)}
-                      aria-label="Delete day"
-                      className="p-1 text-text-secondary"
-                    >
-                      <IconTrash size={18} />
-                    </button>
+                    <ConfirmDeleteAction
+                      label="Delete day"
+                      onDelete={() => void removeDay(day.id)}
+                    />
                     <button
                       onClick={() => void duplicateDay(day)}
                       aria-label="Duplicate day"

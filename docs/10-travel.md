@@ -35,7 +35,8 @@
   City, Status, Trip Name } with **asc/desc** toggle (country/province/city use the trip's
   alphabetically-first itinerary value; undated trips last); default: **Date** descending.
 - Row: cover thumbnail · name · status chip · date range · primary region. Tap → Trip Builder;
-  **swipe-left → Delete** (hard, cascades days/stops/expenses).
+  **swipe-left → Delete** (hard; tapping the revealed Delete acts immediately — no browser dialog;
+  cascades days/stops/expenses).
 - _Search, filter, and sort persist for the **browser-tab session** (`useSessionState`)._
 
 ### Trip Builder (`/travel/entry` new, `/travel/trip/:id` edit)
@@ -60,9 +61,11 @@ literal **"Edit Trip"**.
   Days** (a drag-reorder sheet via shared `ReorderList`). Each **Day** card has a **collapse/expand
   chevron** at the left (all days expanded by default). Header row: chevron · `Day N` · tappable
   **Calendar date chip** (the date or "Add date" — writes `trip_day.day_date` and re-caches the
-  trip's start/end) · spacer · **Delete** (trash) · **Duplicate** (copy) · **Add Stop** (green `+`).
+  trip's start/end) · spacer · **Delete** (a `ConfirmDeleteAction` — inline `Delete? ✓ ✗`, no browser
+  dialog) · **Duplicate** (copy) · **Add Stop** (green `+`).
   When expanded, stops are grouped under **city-only sub-headers** for consecutive same-city stops;
-  each run is a drag-reorder list (swipe-left on a stop to reveal a Delete action). Each stop row:
+  each run is a drag-reorder list (swipe-left on a stop reveals a Delete action that deletes on tap).
+  Each stop row:
   `Type · description`, with inline **done / skipped** icon toggles on the right (tap the active one
   to clear); skipped stops are struck through. Tap a stop to edit. **All Edit-Trip itinerary edits are
   optimistic**: the builder keeps `days`/`stops` in local state, and every action — add/copy/delete a

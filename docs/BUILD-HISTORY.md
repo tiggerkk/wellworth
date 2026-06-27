@@ -2258,3 +2258,25 @@ Two settings additions. Behavior/data are now in `03-global.md` (profile columns
   later redeploy never silently hides it for users who'd already customized their selection.
 - `database.ts` hand-patched to match the three new columns (owner regenerates on next `db reset`).
   Verified by `npm run check` (504 tests; no new pure helpers).
+
+## Standardized Delete interactions (2026-06-27)
+
+Unified the app on **two** delete models, retiring the native `window.confirm()` dialogs. Behavior is
+in `01-design-system.md` (the new component + the two models) and the touched module specs.
+
+- **Icon rows → inline confirm.** New shared **`ConfirmDeleteAction`** (`src/components/`): an
+  `IconAction`-styled `IconTrash` that flips **inline** to `Delete? ✓ ✗` (the compact counterpart to
+  `EntryHeaderActions`' two-step delete; sibling Copy/Paste/Add icons stay visible, the text
+  disambiguates). Replaced the immediate/`confirm()`-gated trash in **Diary day header** (and bumped
+  that row's `gap-1` → `gap-2` to match the group headers), **Diary `GroupHeader`**, **Net Worth
+  monthly row** (was an instant delete), and the **Edit Trip day header**. The corresponding
+  `deleteDay`/`deleteGroup`/`removeDay` handlers dropped their `window.confirm` guards.
+- **Swipe lists → delete immediately.** The revealed `SwipeRow` Delete now acts on tap with **no**
+  browser dialog, matching what Edit-Trip stops/expenses and the Wellness food/activity library
+  already did. Removed the `confirm()` from `remove()` in `ShowsLibrary`, `BooksLibrary`,
+  `QuotesLibrary`, `MedicalReports`, `TravelTrips` (and dropped the now-unused label params + their
+  call-site args). Swipe-to-delete already existed everywhere via `SwipeRow` — the only gap was the
+  inconsistent confirmation step.
+- No render test added: the suite is **node-env, pure-helpers only** (no jsdom/testing-library by
+  design), so a component test would mean new deps against that convention. Verified by
+  `npm run check` (504 tests).

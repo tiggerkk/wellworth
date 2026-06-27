@@ -4,7 +4,6 @@ import {
   IconChevronRight,
   IconPlus,
   IconRefresh,
-  IconTrash,
   IconUpload,
 } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
@@ -35,6 +34,7 @@ import { draftAmount } from '../lib/quantity'
 import { routes } from '../constants/routes'
 import { SectionCard } from '../components/SectionCard'
 import { EntryHeaderActions } from '../components/EntryHeaderActions'
+import { ConfirmDeleteAction } from '../components/ConfirmDeleteAction'
 import { MonthPicker } from '../components/MonthPicker'
 import type { Json, Tables } from '../types/database'
 
@@ -464,13 +464,10 @@ function EntryForm({
                           }
                           className={`flex-1 ${inputCls}`}
                         />
-                        <button
-                          onClick={() => removeRow(r.clientId)}
-                          aria-label="Remove entry"
-                          className="text-text-tertiary"
-                        >
-                          <IconTrash size={18} />
-                        </button>
+                        <ConfirmDeleteAction
+                          label="Remove entry"
+                          onDelete={() => removeRow(r.clientId)}
+                        />
                       </div>
 
                       <div className="mt-2 flex items-center gap-2">

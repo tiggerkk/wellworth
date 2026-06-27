@@ -30,7 +30,9 @@
   Each header reads, left-to-right: **expand chevron · category icon · group name · kcal subtotal**
   (kcal sits right next to the name; activities show negative kcal coral) · ⟨spacer⟩ · **Delete ·
   Copy · Paste · Add** icons (mirroring the Edit Trip day header — `IconTrash` / `IconCopy` /
-  `IconClipboard` / green `IconPlus`). Category icons use `cat-*` color tokens (see
+  `IconClipboard` / green `IconPlus`). **Delete** is a `ConfirmDeleteAction` (inline `Delete? ✓ ✗`,
+  no browser dialog) — as is the day-level Delete in the top-right header, whose icon row uses the
+  same `gap-2` spacing as the group headers. Category icons use `cat-*` color tokens (see
   `docs/01-design-system.md` → Icons).
 - **Default-expand on entry:** when a day's entries first load (on navigating to the Diary or picking
   another day), every group that **has items** auto-expands; empty groups stay collapsed. This runs

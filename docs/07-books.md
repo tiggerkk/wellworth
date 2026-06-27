@@ -40,7 +40,8 @@ shows its **status chip** (Want / Reading / Read / Dropped) consistently across 
 - Each row: **cover thumbnail** (2:3, neutral placeholder when there's no cover), title (+ year) with a
   small filled **♥** when favourited and a **gold Dynasty badge** for Chinese titles, the author(s), a
   **status chip**, the **star rating** when rated, the first genre, and the date as "Jun 22". Tap →
-  Entry/Edit; **swipe-left → Delete** (hard, with a confirm).
+  Entry/Edit; **swipe-left → Delete** (hard; tapping the revealed Delete acts immediately — no
+  browser dialog).
 - _Search, filter, and sort persist for the **browser-tab session** (`useSessionState`), restored on
   return via Back/bottom nav/Home, cleared when the tab closes._
 

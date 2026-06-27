@@ -112,7 +112,6 @@ export function QuotesLibrary() {
   )
 
   async function remove(id: string) {
-    if (!confirm('Delete this quote? This can’t be undone.')) return
     setOverride((prev) => (prev ?? quotes ?? []).filter((q) => q.id !== id))
     try {
       await deleteQuote(id)

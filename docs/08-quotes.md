@@ -30,7 +30,8 @@
   Source Type } with an **asc/desc** toggle (Date = date added; Category/Source Type sort on the stored
   key); default is **Date** descending.
 - **List**: rows — a quote snippet, the category badge, and author. Tap → Add/Edit; **swipe-left** →
-  Delete (hard, with confirm). The delete is **optimistic** — the row drops from local state instantly,
+  Delete (hard; tapping the revealed Delete acts immediately — no browser dialog). The delete is
+  **optimistic** — the row drops from local state instantly,
   the DB delete runs in the background (no `bumpQuotes()` → full-list refetch; bump only on error). See
   tech-spec F16b. (The Zen-mode favourite toggle is already optimistic via a `favOverride` map.)
 - _Search, filter, and sort persist for the **browser-tab session** (`useSessionState`), restored on
