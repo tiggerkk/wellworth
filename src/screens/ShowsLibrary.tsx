@@ -107,10 +107,24 @@ export function ShowsLibrary() {
   }, [userId, version])
   const { data: shows, loading, error } = useAsync(fn)
 
+  // Optimistic delete: drop the row locally so it disappears instantly, instead of waiting for a
+  // `bumpShows()` → full-library refetch. Override resets when a real fetch lands (adjust-state-
+  // during-render, not an effect — see tech-spec F16b).
+  const [override, setOverride] = useState<typeof shows>(undefined)
+  const [syncedShows, setSyncedShows] = useState(shows)
+  if (syncedShows !== shows) {
+    setSyncedShows(shows)
+    setOverride(undefined)
+  }
+
   async function remove(id: string, title: string) {
     if (!confirm(`Delete “${title}”? This can’t be undone.`)) return
-    await deleteShow(id)
-    bumpShows()
+    setOverride((prev) => (prev ?? shows ?? []).filter((s) => s.id !== id))
+    try {
+      await deleteShow(id)
+    } catch {
+      bumpShows() // resync from server on a failed delete
+    }
   }
 
   function setBound(which: DateBound, d: IsoDate | null) {
@@ -132,7 +146,7 @@ export function ShowsLibrary() {
     }))
   }
 
-  const allShows = shows ?? []
+  const allShows = override ?? shows ?? []
   const genreOptions = [
     { value: 'all', label: 'Any Genre' },
     ...showGenres(allShows).map((g) => ({ value: g, label: g })),

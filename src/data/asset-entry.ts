@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase'
 import type { Tables, TablesInsert } from '../types/database'
+import type { AssetType } from '../lib/networth'
 import { createSnapshot, getSnapshotByMonth } from './networth-snapshot'
 
 export async function listEntriesBySnapshot(
@@ -31,27 +32,34 @@ export async function getSnapshotWithEntries(
   return { snapshot, entries }
 }
 
-/** Minimal per-month rollup for the Net Worth dashboard (all months, oldest first). */
-export interface SnapshotEntries {
+/** A pre-aggregated per-(month, asset_type) HKD total — one dashboard row from the DB view. */
+export interface MonthlyTypeTotal {
   month: string
-  entries: { value_base: number; asset_type: string }[]
+  asset_type: AssetType
+  total_base: number
 }
 
 /**
- * Every snapshot with just its entries' `value_base` + `asset_type`, via one embedded select.
- * Net-worth data is small (≈monthly), so the dashboard fetches all and slices the time window
- * client-side. RLS scopes both tables to the owner.
+ * Per-(month, asset_type) HKD totals for the Net Worth dashboard, oldest month first. Reads the
+ * `networth_monthly_type_total` **view**, which aggregates `asset_entry` in the database — so the
+ * payload is O(months × asset_types), NOT every individual holding across all history (which grew
+ * unbounded with the asset count). The view is `security_invoker`, so the base tables' RLS scopes
+ * rows to the owner; we still filter on `user_id` to match the other queries. Group keys are never
+ * null (NOT NULL base columns); `total_base` is coerced via `Number` in case PostgREST returns the
+ * numeric sum as a string.
  */
-export async function listSnapshotsWithEntries(
-  userId: string,
-): Promise<SnapshotEntries[]> {
+export async function listMonthlyTypeTotals(userId: string): Promise<MonthlyTypeTotal[]> {
   const { data, error } = await supabase
-    .from('networth_snapshot')
-    .select('month, asset_entry(value_base, asset_type)')
+    .from('networth_monthly_type_total')
+    .select('month, asset_type, total_base')
     .eq('user_id', userId)
     .order('month', { ascending: true })
   if (error) throw error
-  return (data ?? []).map((s) => ({ month: s.month, entries: s.asset_entry ?? [] }))
+  return (data ?? []).map((r) => ({
+    month: r.month as string,
+    asset_type: r.asset_type as AssetType,
+    total_base: Number(r.total_base ?? 0),
+  }))
 }
 
 /** Caller-supplied entry to persist (snapshot_id + user_id are filled in by the save). */

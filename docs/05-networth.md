@@ -44,6 +44,12 @@ entries yet" · "+ Monthly Entry").
 - **By-type trend** = sum of `value_base` per month per `asset_type`.
 - **Asset-type summary** = sum of `value_base` per `asset_type` for the latest month, % = type
   sum / total.
+- These dashboard figures are **pre-aggregated in the database**, not summed client-side: the Dashboard
+  reads the `networth_monthly_type_total` **view** (one row per month × asset_type, `security_invoker`
+  so RLS still applies) via `listMonthlyTypeTotals`, then folds it with `foldMonthlyTotals`. The payload
+  is therefore O(months × asset_types), not every holding across all history — it no longer grows with
+  the number of assets. (Entry/editing still reads a single month's full `asset_entry` rows.) A month
+  whose snapshot has no entries is absent from the view, so the trend only plots months with holdings.
 - **Copy-forward** = clone the prior month's `asset_entry` rows (same names/currencies/details),
   then re-fetch FX and recompute `value_base`. The user only updates `value_native` for the new month.
 
@@ -86,6 +92,16 @@ entries yet" · "+ Monthly Entry").
 - **No soft-delete** — each month is a complete, self-contained set of rows; deleting an entry simply
   omits it from that month, and prior months are intact.
 - Migration: `supabase/migrations/03_networth_schema.sql`.
+
+### `networth_monthly_type_total` (view)
+
+- A `security_invoker` view: `select user_id, month, asset_type, sum(value_base) as total_base`
+  grouped by `(user_id, month, asset_type)`, joining `networth_snapshot` ⨝ `asset_entry`.
+- `security_invoker = true` (PG15+) makes it run as the querying user, so the base tables' RLS applies
+  (no separate policy on the view). `grant select` to `anon`/`authenticated` as for the tables.
+- Powers the Dashboard's trend + breakdown without fetching every holding (see Calculations above). The
+  project's **first DB view** — defined in the same migration, so a `supabase db reset --linked` creates
+  it and `npm run gen:types` reflects it in `src/types/database.ts`.
 
 ---
 

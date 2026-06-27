@@ -145,9 +145,32 @@ create trigger handle_updated_at before update on public.medical_result
   for each row execute procedure extensions.moddatetime (updated_at);
 
 -- =====================================================================================
+-- medical_latest_result — the most recent result **per test** (per user), with its report's
+-- date + type. Powers the Dashboard's "latest values by category" card without fetching every
+-- historical result: the payload is O(distinct tests), not O(reports × tests). DISTINCT ON keys
+-- by `coalesce(test_key, 'name:'||lower(btrim(test_name)))` — exactly mirroring the client's
+-- `latestResultPerTest` so ad-hoc (NULL test_key) tests dedupe by name; latest = greatest
+-- report_date (created_at breaks ties). `security_invoker = true` (PG15+) runs the view as the
+-- querying user, so the base tables' RLS still scopes rows to the owner.
+-- (Sparkline series still read per-test history from `medical_result`, filtered to tracked keys.)
+-- =====================================================================================
+create view public.medical_latest_result
+  with (security_invoker = true) as
+  select distinct on (r.user_id, coalesce(r.test_key, 'name:' || lower(btrim(r.test_name))))
+    r.*, mr.report_date, mr.report_type
+  from public.medical_result r
+  join public.medical_report mr on mr.id = r.report_id
+  order by
+    r.user_id,
+    coalesce(r.test_key, 'name:' || lower(btrim(r.test_name))),
+    mr.report_date desc,
+    r.created_at desc;
+
+-- =====================================================================================
 -- API role grants (init F1 — belt-and-braces against "42501 permission denied").
 -- medical_lab_test is read-only to clients; the user-owned tables get full CRUD (RLS gates rows).
 -- =====================================================================================
 grant select on public.medical_lab_test to anon, authenticated;
 grant select, insert, update, delete on public.medical_report to anon, authenticated;
 grant select, insert, update, delete on public.medical_result to anon, authenticated;
+grant select on public.medical_latest_result to anon, authenticated;

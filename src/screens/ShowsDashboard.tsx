@@ -58,7 +58,16 @@ export function ShowsDashboard() {
   }, [userId, version])
   const { data: shows, loading, error } = useAsync(fn)
 
-  const all = shows ?? []
+  // Optimistic override: a quick action patches the row locally so its shelf moves instantly, instead
+  // of waiting for a `bumpShows()` → full-library refetch. Reset whenever a real fetch lands (the
+  // adjust-state-during-render pattern, not an effect — see tech-spec F16b).
+  const [override, setOverride] = useState<ShowRow[] | null>(null)
+  const [syncedShows, setSyncedShows] = useState(shows)
+  if (syncedShows !== shows) {
+    setSyncedShows(shows)
+    setOverride(null)
+  }
+  const all = override ?? shows ?? []
   const filtered = filter === 'all' ? all : all.filter((s) => s.type === filter)
 
   const favorites = favoriteShows(filtered)
@@ -71,9 +80,13 @@ export function ShowsDashboard() {
 
   async function quickUpdate(id: string, patch: ShowUpdate) {
     setUpdatingId(id)
+    setOverride((prev) =>
+      (prev ?? shows ?? []).map((s) => (s.id === id ? { ...s, ...patch } : s)),
+    )
     try {
       await updateShow(id, patch)
-      bumpShows()
+    } catch {
+      bumpShows() // resync from server on a failed write
     } finally {
       setUpdatingId(null)
     }

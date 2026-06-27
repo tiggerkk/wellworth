@@ -20,6 +20,9 @@ shows its **status chip** (Want / Reading / Read / Dropped) consistently across 
 - Status chip palette: **Want** = blue, **Reading** = orange, **Read** = teal, **Dropped** = grey
   (the shared `StatusChip`).
 - A small stat line: **"N read this year"**.
+- The **Mark Read / Start Reading** quick actions are **optimistic**: the row patches in local state and
+  moves shelves instantly, persisting in the background (no `bumpBooks()` → full-library refetch on
+  success; bump only on error). The Library **swipe-delete** is optimistic the same way. See tech-spec F16b.
 
 ### Library
 

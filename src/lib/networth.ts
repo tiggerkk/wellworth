@@ -112,17 +112,55 @@ export interface TypeBreakdownRow {
   pct: number
 }
 
-/** Per-type HKD total + share of the grand total (fixed order; pct 0 when empty). */
-export function typeBreakdown(
-  entries: { value_base: number; asset_type: string }[],
+/** Per-type HKD total + share of the grand total from a totals record (fixed order; pct 0 empty). */
+export function typeBreakdownFromTotals(
+  totals: Record<AssetType, number>,
 ): TypeBreakdownRow[] {
-  const totals = typeTotals(entries)
   const grand = ASSET_TYPES.reduce((s, t) => s + totals[t], 0)
   return ASSET_TYPES.map((type) => ({
     type,
     total: totals[type],
     pct: grand > 0 ? totals[type] / grand : 0,
   }))
+}
+
+/** Per-type HKD total + share of the grand total (fixed order; pct 0 when empty). */
+export function typeBreakdown(
+  entries: { value_base: number; asset_type: string }[],
+): TypeBreakdownRow[] {
+  return typeBreakdownFromTotals(typeTotals(entries))
+}
+
+/** One per-asset-type totals record per month, oldest first, folded from the pre-aggregated
+ *  per-(month, type) rows of `networth_monthly_type_total` (all 7 type keys present, 0 default). */
+export interface MonthlyTotals {
+  month: string
+  totals: Record<AssetType, number>
+}
+
+export function foldMonthlyTotals(
+  rows: { month: string; asset_type: string; total_base: number }[],
+): MonthlyTotals[] {
+  const byMonth = new Map<string, Record<AssetType, number>>()
+  for (const r of rows) {
+    let rec = byMonth.get(r.month)
+    if (!rec) {
+      rec = Object.fromEntries(ASSET_TYPES.map((t) => [t, 0])) as Record<
+        AssetType,
+        number
+      >
+      byMonth.set(r.month, rec)
+    }
+    if (r.asset_type in rec) rec[r.asset_type as AssetType] += r.total_base ?? 0
+  }
+  return [...byMonth.entries()]
+    .sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0))
+    .map(([month, totals]) => ({ month, totals }))
+}
+
+/** Sum a totals record across all asset types (the month's net worth). */
+export function sumTotals(totals: Record<AssetType, number>): number {
+  return ASSET_TYPES.reduce((s, t) => s + totals[t], 0)
 }
 
 /** Chart/legend/summary color per asset type — CSS vars from the @theme palette (index.css). */

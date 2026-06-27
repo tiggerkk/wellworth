@@ -33,7 +33,7 @@ Each module's former staging spec (`docs/06-books.md`, `07-quotes.md`, `medical.
 
 ## Snapshot
 
-- **Tests:** 495 Vitest tests (pure helpers only).
+- **Tests:** 504 Vitest tests (pure helpers only).
 - **Deploy:** Deployed — GitHub `main` → Vercel auto-deploy; installed + tested on iPhone (PWA).
 - **Stack / scripts / env / gates / conventions:** see `02-tech-spec.md` (the canonical, current reference) — not duplicated here.
 
@@ -1195,6 +1195,7 @@ The actionable rules now live in the spec docs (read those every session); this 
 - **F16a** — bulk DB writes go in one batched `.insert`/`.upsert` (chunked), never a per-row `await` loop (the Shows CSV importer was N round-trips on IMPORT); pass `{ defaultToNull: false }` when batched rows have non-uniform keys over a `NOT NULL DEFAULT` column. → `02-tech-spec.md` (Data flow).
 - **F16b** — prefer optimistic local state over a module refresh-version bump (`bumpTravel`) on every mutation; mutate locally + persist in the background, bump only on a write error. Re-seed via the adjust-state-during-render pattern, not `setState`-in-effect. → `02-tech-spec.md` (Data flow) + `10-travel.md` (Itinerary).
 - **F17** — surface caught errors with `errorMessage(e, fallback)` (`src/lib/errors.ts`), not `e instanceof Error ? e.message : …`; the `data/*` layer rethrows the raw Supabase error object, which is not an `Error` instance, so `instanceof` hides the real cause (the `message`/`code`/`hint`). → `02-tech-spec.md` (Data flow).
+- **F18** — aggregate an unbounded child collection in a `security_invoker` DB view (RLS still applies; needs `grant select`), not by fetching every child row and reducing client-side. Instances: `networth_monthly_type_total` (sum), `medical_latest_result` (DISTINCT ON latest). → `02-tech-spec.md` (Database conventions).
 
 ## Shows / Books / global enhancement (favourites, Esc, master-series removal)
 
@@ -2139,3 +2140,63 @@ in a **sequential** per-stop loop).
   from design tokens (`var(--color-*)`, which Recharts resolves in `fill`, cf. `MedicalTrendChart`),
   **accent-led**; orange is demoted to the `--color-warning` slice. Now theme-driven, so it won't drift
   again. Verified by `npm run check` (500 tests).
+
+### Cross-module sweep — optimistic list/dashboard actions (2026-06-27)
+
+A repo-wide audit (parallel readers over every module) for the same `bump*()` → full-collection-refetch
+anti-pattern found the direct analogues of the Travel toggle, and they got the same optimistic-override
+treatment (`override ?? data`, reset via adjust-state-during-render; bump only on error). → **F16b**.
+
+- **Shows/Books Dashboards** — the **Mark Watched/Start Watching** and **Mark Read/Start Reading** quick
+  actions patch the row in a local override so its shelf moves instantly, instead of `bumpShows()`/
+  `bumpBooks()` → whole-library refetch + shelf recompute on every tap (the most-frequent offenders).
+- **Library/Reports swipe-deletes** — `ShowsLibrary`, `BooksLibrary`, `QuotesLibrary`, `MedicalReports`
+  now drop the row locally and delete in the background.
+- **Already correct:** `QuotesZen`'s favourite toggle (optimistic `favOverride` + rollback). It still does
+  a redundant background `bumpQuotes()`; left as-is (works; minor).
+- **Calibration:** these list refetches were each a single `listX(userId)` query (one round-trip, no
+  N+1), so the win is "instant + no extra round-trip" rather than the multi-query stall Travel had.
+- **Deferred (separate kind of problem):** `NetWorthDashboard` runs `listSnapshotsWithEntries` over **all**
+  history (unbounded, grows with months) and `useMedicalTrends` joins all results+reports — both refetch
+  on their own mount regardless of the bump, so they're a load-time/scaling concern, not a per-tap lag.
+  Left for a separate pass. Verified by `npm run check` (500 tests).
+
+### Net Worth dashboard — pre-aggregate in a DB view (2026-06-27)
+
+Addressed the deferred unbounded-query item above. `NetWorthDashboard` fetched
+`listSnapshotsWithEntries` — **every** `asset_entry` (`value_base`/`asset_type`) across all history —
+and summed per month/type on the client. That payload grows with **asset count × months**; the dashboard
+only ever needs aggregates, never individual holdings.
+
+- Added the project's **first DB view**, `networth_monthly_type_total` (`03_networth_schema.sql`, edited
+  in place per the reset workflow): `sum(value_base)` grouped by `(user_id, month, asset_type)`,
+  `security_invoker = true` so the base tables' RLS still scopes rows, `grant select` to the API roles.
+- Data layer: `listMonthlyTypeTotals` replaces `listSnapshotsWithEntries` (removed). Dashboard folds the
+  flat rows with new pure helpers `foldMonthlyTotals` / `sumTotals` / `typeBreakdownFromTotals`
+  (`networth.ts`, +tests). Payload is now O(months × asset_types), independent of holding count.
+- A snapshot with zero entries no longer appears in the trend (INNER JOIN) — a negligible, arguably
+  more-correct change. The Entry screen still reads a month's full `asset_entry` rows (unchanged).
+- **Types:** `src/types/database.ts` `Views` was hand-updated to mirror what `npm run gen:types` will
+  produce; the owner must `supabase db reset --linked` to create the view, then regen to confirm no
+  drift (the hand-added entry is byte-identical to the generator's output). → **F18**. Verified by
+  `npm run check` (504 tests).
+
+### Medical dashboard — same view treatment, for symmetry (2026-06-27)
+
+Applied F18 to the Medical dashboard. `useMedicalTrends` fetched **every** result (all tests × all
+reports) via `listResultsWithReportMeta` + the reports list, then derived both the sparklines and the
+latest-values card client-side — growing with full history.
+
+- Unlike Net Worth (pure sums), only **part** of the medical dashboard is aggregatable. Split the one
+  all-results fetch into **three bounded queries**: `listLatestResultPerTest` (new
+  `medical_latest_result` view — `DISTINCT ON (user_id, coalesce(test_key, name-fallback))`, latest
+  `report_date` wins; powers the latest-values card), `listTrackedResultSeries(trackedKeys)` (history
+  for only the tracked tests — the sparklines; drops every un-tracked test's history), and `listReports`
+  (the timeline). `listResultsWithReportMeta` removed.
+- The view's dedupe key **mirrors the client's `latestResultPerTest`** exactly, so `latestByCategory`
+  (which re-applies it) stays idempotent and ad-hoc NULL-`test_key` rows still dedupe by name. The
+  tracked set is computed from the profile **before** the fetch (it scopes the series query).
+- `medical_latest_result` returns full `medical_result.*` rows (the card renders rich rows), so its
+  hand-added `database.ts` `Views` entry mirrors `medical_result` (all nullable) + `report_date`/
+  `report_type`. Same owner step as Net Worth: `supabase db reset --linked` then `npm run gen:types`.
+  → **F18**. Verified by `npm run check` (504 tests).

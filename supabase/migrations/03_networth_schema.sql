@@ -88,9 +88,30 @@ create trigger handle_updated_at before update on public.asset_entry
   for each row execute procedure extensions.moddatetime (updated_at);
 
 -- =====================================================================================
+-- networth_monthly_type_total — per-(user, month, asset_type) HKD rollup for the Net Worth
+-- dashboard's trend + latest-month breakdown. Pre-aggregates `asset_entry` so the dashboard
+-- reads O(months × asset_types) small rows instead of every individual holding across all
+-- history (which grew unbounded with the asset count). `security_invoker = true` (PG15+) runs
+-- the view with the querying user's privileges, so the base tables' RLS still scopes rows to
+-- the owner. A month whose snapshot has no entries is absent (INNER JOIN) — the dashboard only
+-- charts months that have holdings.
+-- =====================================================================================
+create view public.networth_monthly_type_total
+  with (security_invoker = true) as
+  select
+    s.user_id,
+    s.month,
+    e.asset_type,
+    sum(e.value_base)::numeric as total_base
+  from public.networth_snapshot s
+  join public.asset_entry e on e.snapshot_id = s.id
+  group by s.user_id, s.month, e.asset_type;
+
+-- =====================================================================================
 -- API role grants. init's `alter default privileges` should already cover tables created
 -- by later migrations, but CLAUDE.md requires every migration to grant explicitly (init F1)
 -- — belt-and-braces against "42501 permission denied".
 -- =====================================================================================
 grant select, insert, update, delete on public.networth_snapshot to anon, authenticated;
 grant select, insert, update, delete on public.asset_entry to anon, authenticated;
+grant select on public.networth_monthly_type_total to anon, authenticated;

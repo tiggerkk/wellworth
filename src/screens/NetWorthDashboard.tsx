@@ -6,15 +6,15 @@ import { routes } from '../constants/routes'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useNetWorthVersion } from '../lib/networth-refresh'
-import { listSnapshotsWithEntries } from '../data/asset-entry'
+import { listMonthlyTypeTotals } from '../data/asset-entry'
 import {
   ASSET_TYPES,
   ASSET_TYPE_COLORS,
   ASSET_TYPE_LABELS,
+  foldMonthlyTotals,
   formatHkd,
-  totalBase,
-  typeBreakdown,
-  typeTotals,
+  sumTotals,
+  typeBreakdownFromTotals,
   type AssetType,
 } from '../lib/networth'
 import { NETWORTH_RANGES, rangeCutoff } from '../constants/networth-ranges'
@@ -41,28 +41,29 @@ export function NetWorthDashboard() {
   const fn = useCallback(() => {
     void version // refetch after an entry SAVE (bumpNetWorth)
     if (!userId) return Promise.resolve([])
-    return listSnapshotsWithEntries(userId)
+    return listMonthlyTypeTotals(userId)
   }, [userId, version])
-  const { data: snapshots, loading, error } = useAsync(fn)
+  const { data: rows, loading, error } = useAsync(fn)
 
-  const all = snapshots ?? []
+  // Fold the flat per-(month, type) view rows into one totals record per month (oldest first).
+  const all = foldMonthlyTotals(rows ?? [])
   const latest = all[all.length - 1]
-  const currentTotal = latest ? totalBase(latest.entries) : 0
+  const currentTotal = latest ? sumTotals(latest.totals) : 0
 
   const range = NETWORTH_RANGES.find((r) => r.key === rangeKey) ?? NETWORTH_RANGES[0]!
   const cutoff = rangeCutoff(range.months, startOfMonth(todayLocal()))
   const windowed = cutoff ? all.filter((s) => s.month >= cutoff) : all
 
   const presentTypes: AssetType[] = ASSET_TYPES.filter((t) =>
-    windowed.some((s) => typeTotals(s.entries)[t] !== 0),
+    windowed.some((s) => s.totals[t] !== 0),
   )
   const chartData: TrendRow[] =
     mode === 'total'
-      ? windowed.map((s) => ({ month: s.month, total: totalBase(s.entries) }))
-      : windowed.map((s) => ({ month: s.month, ...typeTotals(s.entries) }))
+      ? windowed.map((s) => ({ month: s.month, total: sumTotals(s.totals) }))
+      : windowed.map((s) => ({ month: s.month, ...s.totals }))
 
   const breakdown = latest
-    ? typeBreakdown(latest.entries).filter((r) => r.total !== 0)
+    ? typeBreakdownFromTotals(latest.totals).filter((r) => r.total !== 0)
     : []
 
   return (

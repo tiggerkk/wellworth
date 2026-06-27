@@ -28,6 +28,9 @@ that matters there:
 - Status chip palette: **Want** = blue, **Watching** = orange, **Watched** = teal, **Dropped** = grey
   (the shared `StatusChip`).
 - A small stat line: **"N watched this year"**.
+- The **Mark Watched / Start Watching** quick actions are **optimistic**: the row patches in local state
+  and moves shelves instantly, persisting in the background (no `bumpShows()` → full-library refetch on
+  success; bump only on error). The Library **swipe-delete** is optimistic the same way. See tech-spec F16b.
 
 ### Library
 

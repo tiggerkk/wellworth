@@ -64,10 +64,24 @@ export function MedicalReports() {
   }, [userId, version])
   const { data, loading, error } = useAsync(loadFn)
 
+  // Optimistic delete: drop the row locally so it disappears instantly, instead of waiting for a
+  // `bumpMedical()` → full-list refetch. Override resets when a real fetch lands (adjust-state-
+  // during-render, not an effect — see tech-spec F16b).
+  const [override, setOverride] = useState<typeof data>(undefined)
+  const [syncedData, setSyncedData] = useState(data)
+  if (syncedData !== data) {
+    setSyncedData(data)
+    setOverride(undefined)
+  }
+
   async function remove(id: string, label: string) {
     if (!confirm(`Delete the ${label} report? This can’t be undone.`)) return
-    await deleteReport(id)
-    bumpMedical()
+    setOverride((prev) => (prev ?? data ?? []).filter((r) => r.id !== id))
+    try {
+      await deleteReport(id)
+    } catch {
+      bumpMedical() // resync from server on a failed delete
+    }
   }
 
   function clearFilters() {
@@ -79,7 +93,7 @@ export function MedicalReports() {
     }))
   }
 
-  const reports = data ?? []
+  const reports = override ?? data ?? []
   const typeLabel = (t: string) => REPORT_TYPE_LABELS[t as ReportType] ?? t
   const providerOptions = [
     { value: 'all', label: 'Any Provider' },

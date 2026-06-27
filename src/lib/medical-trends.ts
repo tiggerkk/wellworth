@@ -1,10 +1,11 @@
 /**
  * Medical Dashboard trend derivations — pure, UI-framework-free, and unit-tested. This is the
- * **data side** of the Dashboard's data/presentation split: it turns the flat
- * `listResultsWithReportMeta` rows into per-test time series + latest-value-per-test, with no
- * knowledge of how they're drawn. The `useMedicalTrends` hook memoizes these; the sparkline grid /
- * expanded chart / latest-values card consume the hook's output. A future alternate layout reuses
- * this same layer untouched.
+ * **data side** of the Dashboard's data/presentation split: it turns flat result rows (the tracked
+ * tests' series + the latest-per-test view, fetched by `useMedicalTrends`) into per-test time series
+ * + latest-value-per-test, with no knowledge of how they're drawn. `latestByCategory` re-applies
+ * `latestResultPerTest` (idempotent on the already-latest view rows). The hook memoizes these; the
+ * sparkline grid / expanded chart / latest-values card consume the output. A future alternate layout
+ * reuses this same layer untouched.
  */
 import {
   labTestByKey,

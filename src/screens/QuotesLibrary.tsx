@@ -75,6 +75,16 @@ export function QuotesLibrary() {
   }, [userId, version])
   const { data: quotes, loading, error } = useAsync(fn)
 
+  // Optimistic delete: drop the row locally so it disappears instantly, instead of waiting for a
+  // `bumpQuotes()` → full-library refetch. Override resets when a real fetch lands (adjust-state-
+  // during-render, not an effect — see tech-spec F16b).
+  const [override, setOverride] = useState<typeof quotes>(undefined)
+  const [syncedQuotes, setSyncedQuotes] = useState(quotes)
+  if (syncedQuotes !== quotes) {
+    setSyncedQuotes(quotes)
+    setOverride(undefined)
+  }
+
   // Category / Source-type values are owner-configurable (Quotes Settings) — derive options + labels
   // from the profile lists (NULL ⇒ canonical defaults), tolerant of orphaned keys.
   const { data: profile } = useProfile()
@@ -103,8 +113,12 @@ export function QuotesLibrary() {
 
   async function remove(id: string) {
     if (!confirm('Delete this quote? This can’t be undone.')) return
-    await deleteQuote(id)
-    bumpQuotes()
+    setOverride((prev) => (prev ?? quotes ?? []).filter((q) => q.id !== id))
+    try {
+      await deleteQuote(id)
+    } catch {
+      bumpQuotes() // resync from server on a failed delete
+    }
   }
 
   function clearFilters() {
@@ -123,7 +137,7 @@ export function QuotesLibrary() {
     }))
   }
 
-  const all = quotes ?? []
+  const all = override ?? quotes ?? []
   // Tags ranked by quote count (most-used first). By default the facet shows the top N; once there are
   // more, a search box narrows the FULL list. Selected tags always stay visible (so they're deselectable).
   const ranked = rankedTags(all)

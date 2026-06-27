@@ -188,6 +188,16 @@ also sidesteps iOS PWA storage eviction).
 - **`updated_at`** is maintained by the `moddatetime` trigger on every table.
 - **Reference tables** (`nutrient`, `medical_lab_test`) have RLS on with a SELECT-only policy for
   `anon`/`authenticated`; no write policies — rows written only by migrations.
+- **F18** — when a dashboard aggregates an **unbounded child collection** (e.g. Net Worth holdings ×
+  months), pre-aggregate in a **`security_invoker` DB view** instead of fetching every child row and
+  summing client-side, so the payload doesn't grow with the collection size. `security_invoker = true`
+  (PG15+) makes the view run as the querying user, so the base tables' RLS applies — no policy on the
+  view itself — and it still needs an explicit `grant select`. Query it through the typed data layer
+  like a table (it appears under `Views` in `database.ts`). Instances: `networth_monthly_type_total`
+  (a `sum` rollup) → `asset-entry.listMonthlyTypeTotals`; `medical_latest_result` (a `DISTINCT ON`
+  latest-per-test) → `medical.listLatestResultPerTest`. The Medical dashboard also shows that the rule
+  is per-need: only the latest-values card is a pure aggregate (→ view); the sparklines are a genuine
+  time-series, so they stay a row query, just **scoped to the tracked tests** rather than all history.
 - After applying a migration, regenerate `src/types/database.ts` (`npm run gen:types`).
 - **Never drop a table** without explicit confirmation. Schema changes are migration files in
   `supabase/migrations/`; the human applies them with `supabase db push`.

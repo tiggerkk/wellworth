@@ -97,10 +97,24 @@ export function BooksLibrary() {
   }, [userId, version])
   const { data: books, loading, error } = useAsync(fn)
 
+  // Optimistic delete: drop the row locally so it disappears instantly, instead of waiting for a
+  // `bumpBooks()` → full-library refetch. Override resets when a real fetch lands (adjust-state-
+  // during-render, not an effect — see tech-spec F16b).
+  const [override, setOverride] = useState<typeof books>(undefined)
+  const [syncedBooks, setSyncedBooks] = useState(books)
+  if (syncedBooks !== books) {
+    setSyncedBooks(books)
+    setOverride(undefined)
+  }
+
   async function remove(id: string, title: string) {
     if (!confirm(`Delete “${title}”? This can’t be undone.`)) return
-    await deleteBook(id)
-    bumpBooks()
+    setOverride((prev) => (prev ?? books ?? []).filter((b) => b.id !== id))
+    try {
+      await deleteBook(id)
+    } catch {
+      bumpBooks() // resync from server on a failed delete
+    }
   }
 
   function setBound(which: DateBound, d: IsoDate | null) {
@@ -122,7 +136,7 @@ export function BooksLibrary() {
     }))
   }
 
-  const allBooks = books ?? []
+  const allBooks = override ?? books ?? []
   const genreOptions = [
     { value: 'all', label: 'Any Genre' },
     ...bookGenres(allBooks).map((g) => ({ value: g, label: g })),

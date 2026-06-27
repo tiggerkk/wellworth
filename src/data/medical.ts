@@ -38,28 +38,45 @@ export interface ResultWithReportMeta extends MedicalResultRow {
 }
 
 /**
- * Every result the user has, each flattened with its report's `report_date` + `report_type`, via one
- * embedded select (oldest report first). A single fetch powers both the Dashboard sparkline trends and
- * the latest-value-per-test card — avoiding an N+1 query per tracked test. Mirrors how
- * `asset-entry.listSnapshotsWithEntries` loads all rows and lets the dashboard derive client-side;
- * medical data is small (a handful of reports/year), so this is cheap. RLS scopes both tables.
+ * The most recent result **per test** (per user) with its report's date + type, from the
+ * `medical_latest_result` **view** (DISTINCT ON per test, in the database). Powers the Dashboard's
+ * latest-values-by-category card; the payload is O(distinct tests), NOT every historical result. The
+ * view is `security_invoker`, so the base tables' RLS scopes rows; we still filter on `user_id` to
+ * match the other queries. View columns are nullable (no NOT NULL on a view); the rows are real
+ * `medical_result` rows, so the cast to the non-null `ResultWithReportMeta` is safe.
  */
-export async function listResultsWithReportMeta(
+export async function listLatestResultPerTest(
   userId: string,
 ): Promise<ResultWithReportMeta[]> {
   const { data, error } = await supabase
-    .from('medical_report')
-    .select('report_date, report_type, medical_result(*)')
+    .from('medical_latest_result')
+    .select('*')
     .eq('user_id', userId)
-    .order('report_date', { ascending: true })
   if (error) throw error
-  return (data ?? []).flatMap((rep) =>
-    (rep.medical_result ?? []).map((r) => ({
-      ...r,
-      report_date: rep.report_date,
-      report_type: rep.report_type,
-    })),
-  )
+  return (data ?? []) as ResultWithReportMeta[]
+}
+
+/**
+ * Result history for the given test keys (the Dashboard's tracked sparkline tests), each flattened
+ * with its report's date + type. Filtered to `testKeys` so the sparkline fetch doesn't pull every
+ * un-tracked test's full history. Returns [] for an empty key list (no tracked tests). RLS-scoped.
+ */
+export async function listTrackedResultSeries(
+  userId: string,
+  testKeys: string[],
+): Promise<ResultWithReportMeta[]> {
+  if (testKeys.length === 0) return []
+  const { data, error } = await supabase
+    .from('medical_result')
+    .select('*, medical_report!inner(report_date, report_type)')
+    .eq('user_id', userId)
+    .in('test_key', testKeys)
+  if (error) throw error
+  return (data ?? []).map(({ medical_report, ...rest }) => ({
+    ...rest,
+    report_date: medical_report.report_date,
+    report_type: medical_report.report_type,
+  }))
 }
 
 /** A report together with its result rows, or null if the id doesn't resolve (RLS-scoped). */

@@ -1117,7 +1117,56 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      medical_latest_result: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          flag: string | null
+          id: string | null
+          normalized: boolean | null
+          ref_high: number | null
+          ref_low: number | null
+          ref_text: string | null
+          report_date: string | null
+          report_id: string | null
+          report_type: string | null
+          test_key: string | null
+          test_name: string | null
+          uncertain: boolean | null
+          unit: string | null
+          unit_original: string | null
+          updated_at: string | null
+          user_id: string | null
+          value_num: number | null
+          value_num_original: number | null
+          value_text: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medical_result_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "medical_report"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "medical_result_test_key_fkey"
+            columns: ["test_key"]
+            isOneToOne: false
+            referencedRelation: "medical_lab_test"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      networth_monthly_type_total: {
+        Row: {
+          asset_type: string | null
+          month: string | null
+          total_base: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never

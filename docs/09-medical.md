@@ -37,7 +37,9 @@ Tracked tests are chosen in Medical Settings → Tracked Tests (seeded from `def
   default: **Date** descending.
 - Each row: **full date** (with year — reports span years), the **type** label, and
   `provider · body part` as a secondary line. Tap → Report detail; **swipe-left → confirm → delete**
-  (hard; the FK cascades the report's results).
+  (hard; the FK cascades the report's results). The delete is **optimistic** — the row drops from local
+  state instantly, the DB delete runs in the background (no `bumpMedical()` → full-list refetch; bump
+  only on error). See tech-spec F16b.
 - New reports from the **New Medical** bottom-nav tab.
 
 _Search, filter, and sort persist for the **browser-tab session** (`useSessionState`)._
@@ -139,8 +141,11 @@ Sections in order: **Display**, **Report / Entry Form**, **Import**, **Security*
 - **Test matching** (`src/lib/medical-import.ts`, `matchTestKey`): fuzzy, CJK-aware, with a
   provider-alias map so provider-specific names resolve to canonical keys.
 - **Dashboard derivations** (`src/lib/medical-trends.ts`, `useMedicalTrends`): computes the latest
-  value per test across all reports, the sparkline data points per tracked test, and the recent
-  reports list.
+  value per test, the sparkline data points per tracked test, and the recent reports list. The hook
+  loads **three bounded queries**, never every historical result: `listLatestResultPerTest` (the
+  `medical_latest_result` view — latest per test, for the latest-values card),
+  `listTrackedResultSeries(trackedKeys)` (history for just the tracked tests — the sparklines), and
+  `listReports` (the timeline). So the payload doesn't grow with every test's full history.
 - **Display order** (`src/lib/medical-order.ts`): `orderResultsForDisplay` merges personal overrides
   with the seeded section/test order.
 - **Eye refraction** (`EYE_REFRACTION_*` in `src/lib/medical.ts`): the six test keys
@@ -203,6 +208,17 @@ using `(select auth.uid()) = user_id`, CHECK on enum columns, `moddatetime` trig
 explicit GRANT to `anon`/`authenticated`. **Hard delete** (deleting a report cascades its results).
 Migration: `supabase/migrations/10_medical_schema.sql`. Profile columns added by
 `supabase/migrations/12_medical_profile_settings.sql`.
+
+### `medical_latest_result` (view)
+
+- A `security_invoker` view: `DISTINCT ON (user_id, coalesce(test_key, 'name:'||lower(btrim(test_name))))`
+  of `medical_result` ⨝ `medical_report`, ordered so the **latest `report_date`** wins (`created_at`
+  breaks ties) — the most recent result per test, with its `report_date`/`report_type`. The dedupe key
+  mirrors the client's `latestResultPerTest` (ad-hoc NULL-`test_key` rows dedupe by name).
+- `security_invoker = true` (PG15+) → base-table RLS applies; `grant select` to the API roles. Powers
+  the Dashboard's latest-values card (`listLatestResultPerTest`) without fetching all history (cf. F18,
+  same pattern as `networth_monthly_type_total`). Created by the same migration; reflected in
+  `database.ts` after `npm run gen:types`.
 
 ---
 

@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import {
   ASSET_TYPES,
+  foldMonthlyTotals,
   formatHkd,
   formatHkdCompact,
   groupByType,
+  sumTotals,
   totalBase,
   typeBreakdown,
+  typeBreakdownFromTotals,
   typeTotals,
   valueBase,
 } from './networth'
@@ -91,5 +94,50 @@ describe('typeBreakdown', () => {
   })
   it('uses pct 0 when there is no value', () => {
     expect(typeBreakdown([]).every((r) => r.pct === 0 && r.total === 0)).toBe(true)
+  })
+})
+
+describe('typeBreakdownFromTotals', () => {
+  it('matches typeBreakdown for the equivalent totals record', () => {
+    const totals = typeTotals([
+      { asset_type: 'cash', value_base: 250 },
+      { asset_type: 'stock', value_base: 750 },
+    ])
+    expect(typeBreakdownFromTotals(totals)).toEqual(
+      typeBreakdown([
+        { asset_type: 'cash', value_base: 250 },
+        { asset_type: 'stock', value_base: 750 },
+      ]),
+    )
+  })
+})
+
+describe('sumTotals', () => {
+  it('sums a totals record across all asset types', () => {
+    const totals = typeTotals([
+      { asset_type: 'cash', value_base: 100 },
+      { asset_type: 'stock', value_base: 250 },
+    ])
+    expect(sumTotals(totals)).toBe(350)
+  })
+})
+
+describe('foldMonthlyTotals', () => {
+  it('folds flat per-(month, type) rows into one totals record per month, oldest first', () => {
+    const folded = foldMonthlyTotals([
+      { month: '2026-02-01', asset_type: 'stock', total_base: 300 },
+      { month: '2026-01-01', asset_type: 'cash', total_base: 100 },
+      { month: '2026-01-01', asset_type: 'stock', total_base: 200 },
+    ])
+    expect(folded.map((m) => m.month)).toEqual(['2026-01-01', '2026-02-01'])
+    expect(folded[0]!.totals.cash).toBe(100)
+    expect(folded[0]!.totals.stock).toBe(200)
+    expect(folded[0]!.totals.property).toBe(0)
+    expect(Object.keys(folded[0]!.totals)).toHaveLength(7)
+    expect(sumTotals(folded[1]!.totals)).toBe(300)
+  })
+
+  it('is empty for no rows', () => {
+    expect(foldMonthlyTotals([])).toEqual([])
   })
 })

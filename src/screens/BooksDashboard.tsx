@@ -49,7 +49,16 @@ export function BooksDashboard() {
   }, [userId, version])
   const { data: books, loading, error } = useAsync(fn)
 
-  const all = books ?? []
+  // Optimistic override: a quick action patches the row locally so its shelf moves instantly, instead
+  // of waiting for a `bumpBooks()` → full-library refetch. Reset whenever a real fetch lands (the
+  // adjust-state-during-render pattern, not an effect — see tech-spec F16b).
+  const [override, setOverride] = useState<BookRow[] | null>(null)
+  const [syncedBooks, setSyncedBooks] = useState(books)
+  if (syncedBooks !== books) {
+    setSyncedBooks(books)
+    setOverride(null)
+  }
+  const all = override ?? books ?? []
   const favorites = favoriteBooks(all)
   const reading = currentlyReading(all)
   const recent = recentlyRead(all, 5)
@@ -58,9 +67,13 @@ export function BooksDashboard() {
 
   async function quickUpdate(id: string, patch: BookUpdate) {
     setUpdatingId(id)
+    setOverride((prev) =>
+      (prev ?? books ?? []).map((b) => (b.id === id ? { ...b, ...patch } : b)),
+    )
     try {
       await updateBook(id, patch)
-      bumpBooks()
+    } catch {
+      bumpBooks() // resync from server on a failed write
     } finally {
       setUpdatingId(null)
     }

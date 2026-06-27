@@ -4,7 +4,8 @@ import { useProfile } from './useProfile'
 import { useAsync } from './useAsync'
 import { useMedicalVersion } from '../lib/medical-refresh'
 import {
-  listResultsWithReportMeta,
+  listLatestResultPerTest,
+  listTrackedResultSeries,
   listReports,
   type ResultWithReportMeta,
 } from '../data/medical'
@@ -30,11 +31,12 @@ export interface MedicalTrends {
 }
 
 /**
- * The **single data seam** for the Medical Dashboard. Loads every result (joined to its report date)
- * + the reports list in one async pass (refetching on the `bumpMedical` tick), reads the tracked-test
- * set + display-order overrides from the profile, and memoizes the pure derivations from
- * `lib/medical-trends`. Presentation (sparkline grid, expanded chart, latest-values card) consumes
- * only this hook — so a future alternate layout is a new component over the same data, no refetch.
+ * The **single data seam** for the Medical Dashboard. Loads three **bounded** queries in one async
+ * pass (refetching on the `bumpMedical` tick): the latest result per test (DB view — the latest card),
+ * the result history for just the tracked tests (the sparklines), and the reports list (the timeline).
+ * It never fetches every historical result of every test. Reads the tracked-test set + display-order
+ * overrides from the profile, and memoizes the pure derivations from `lib/medical-trends`. Presentation
+ * (sparkline grid, expanded chart, latest-values card) consumes only this hook.
  */
 export function useMedicalTrends(): MedicalTrends {
   const { session } = useAuth()
@@ -42,25 +44,8 @@ export function useMedicalTrends(): MedicalTrends {
   const version = useMedicalVersion()
   const { data: profile } = useProfile()
 
-  const fn = useCallback(() => {
-    void version // refetch after a report SAVE / delete (bumpMedical)
-    if (!userId) {
-      return Promise.resolve({
-        results: [] as ResultWithReportMeta[],
-        reports: [] as MedicalReportRow[],
-      })
-    }
-    return Promise.all([listResultsWithReportMeta(userId), listReports(userId)]).then(
-      ([results, reports]) => ({ results, reports }),
-    )
-  }, [userId, version])
-
-  const { data, loading, error } = useAsync(fn)
-
-  // Memoize the fallbacks so the derivations below don't re-run on every render (a bare `?? []` /
-  // `?? defaultTrackedTestKeys()` would build a fresh array each time).
-  const results = useMemo(() => data?.results ?? [], [data])
-  const reports = useMemo(() => data?.reports ?? [], [data])
+  // The tracked-test set scopes the sparkline fetch, so it's computed BEFORE the fetch (memoized so a
+  // bare `?? []` / `?? defaultTrackedTestKeys()` doesn't churn the fetch dep every render).
   const trackedKeys = useMemo(
     () => profile?.medical_tracked_tests ?? defaultTrackedTestKeys(),
     [profile],
@@ -68,13 +53,35 @@ export function useMedicalTrends(): MedicalTrends {
   const sectionOrder = profile?.medical_section_order
   const testOrder = profile?.medical_test_order
 
+  const fn = useCallback(() => {
+    void version // refetch after a report SAVE / delete (bumpMedical)
+    if (!userId) {
+      return Promise.resolve({
+        latest: [] as ResultWithReportMeta[],
+        series: [] as ResultWithReportMeta[],
+        reports: [] as MedicalReportRow[],
+      })
+    }
+    return Promise.all([
+      listLatestResultPerTest(userId),
+      listTrackedResultSeries(userId, trackedKeys),
+      listReports(userId),
+    ]).then(([latest, series, reports]) => ({ latest, series, reports }))
+  }, [userId, version, trackedKeys])
+
+  const { data, loading, error } = useAsync(fn)
+
+  const latest = useMemo(() => data?.latest ?? [], [data])
+  const series = useMemo(() => data?.series ?? [], [data])
+  const reports = useMemo(() => data?.reports ?? [], [data])
+
   const tracked = useMemo(
-    () => trackedSeries(results, trackedKeys, sectionOrder, testOrder),
-    [results, trackedKeys, sectionOrder, testOrder],
+    () => trackedSeries(series, trackedKeys, sectionOrder, testOrder),
+    [series, trackedKeys, sectionOrder, testOrder],
   )
   const grouped = useMemo(
-    () => latestByCategory(results, sectionOrder, testOrder),
-    [results, sectionOrder, testOrder],
+    () => latestByCategory(latest, sectionOrder, testOrder),
+    [latest, sectionOrder, testOrder],
   )
 
   return {
