@@ -29,6 +29,7 @@ import { Toggle } from '../components/Toggle'
 import { Calendar } from '../components/Calendar'
 import { FilterToggleButton } from '../components/FilterToggleButton'
 import { FilterPanel } from '../components/FilterPanel'
+import { ResultCount } from '../components/ResultCount'
 import { SortControl } from '../components/SortControl'
 import { DateRangeRow } from '../components/DateRangeRow'
 import { StatusChip } from '../components/StatusChip'
@@ -252,6 +253,9 @@ export function BooksLibrary() {
         />
       )}
 
+      {!loading && !error && allBooks.length > 0 && view.length > 0 && (
+        <ResultCount count={view.length} />
+      )}
       {!loading && !error && allBooks.length > 0 && (
         <div className="overflow-hidden rounded-card border border-border bg-surface">
           {view.length === 0 ? (

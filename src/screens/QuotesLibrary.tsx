@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
-import { IconQuote, IconX } from '@tabler/icons-react'
+import { IconHeartFilled, IconQuote, IconX } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useProfile } from '../hooks/useProfile'
@@ -32,6 +32,7 @@ import { StatusChip } from '../components/StatusChip'
 import { FilterToggleButton } from '../components/FilterToggleButton'
 import { FilterPanel } from '../components/FilterPanel'
 import { SortControl } from '../components/SortControl'
+import { ResultCount } from '../components/ResultCount'
 
 const LANGUAGE_OPTIONS: { value: string; label: string }[] = [
   { value: 'all', label: 'Any Language' },
@@ -297,27 +298,37 @@ export function QuotesLibrary() {
       )}
 
       {!loading && !error && view.length > 0 && (
-        <div className="overflow-hidden rounded-card border border-border">
-          {view.map((quote) => (
-            <SwipeRow key={quote.id} onDelete={() => void remove(quote.id)}>
-              <button
-                onClick={() => navigate(routes.quotes.edit(quote.id))}
-                className="block w-full border-b border-border px-3 py-3 text-left last:border-b-0"
-              >
-                <span className="line-clamp-2 text-[15px] text-text-primary">
-                  {quote.text}
-                </span>
-                <span className="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-secondary">
-                  <StatusChip
-                    label={categoryLabel(categories, quote.category)}
-                    className={QUOTE_CATEGORY_CHIP}
-                  />
-                  {quote.author && <span className="truncate">{quote.author}</span>}
-                </span>
-              </button>
-            </SwipeRow>
-          ))}
-        </div>
+        <>
+          <ResultCount count={view.length} />
+          <div className="overflow-hidden rounded-card border border-border">
+            {view.map((quote) => (
+              <SwipeRow key={quote.id} onDelete={() => void remove(quote.id)}>
+                <button
+                  onClick={() => navigate(routes.quotes.edit(quote.id))}
+                  className="block w-full border-b border-border px-3 py-3 text-left last:border-b-0"
+                >
+                  <span className="flex items-start gap-1.5 text-[15px] text-text-primary">
+                    {quote.is_favorite && (
+                      <IconHeartFilled
+                        size={13}
+                        className="mt-1 shrink-0 text-favorite"
+                        aria-label="Favourite"
+                      />
+                    )}
+                    <span className="line-clamp-2">{quote.text}</span>
+                  </span>
+                  <span className="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-secondary">
+                    <StatusChip
+                      label={categoryLabel(categories, quote.category)}
+                      className={QUOTE_CATEGORY_CHIP}
+                    />
+                    {quote.author && <span className="truncate">{quote.author}</span>}
+                  </span>
+                </button>
+              </SwipeRow>
+            ))}
+          </div>
+        </>
       )}
     </div>
   )

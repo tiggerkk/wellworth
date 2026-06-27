@@ -91,6 +91,10 @@ _not_ the primary-button color; it's for emphasis, active states, and energy.
   object (search + filters + sort) is held in **`useSessionState`** (`src/hooks/useSessionState.ts`) so
   it persists for the browser-tab session and survives the navigate-into-an-item-and-back remount; the
   transient panel-open and active-calendar state stay plain `useState`.
+- **ResultCount** — a small muted "N results" line (`src/components/ResultCount.tsx`) shown above the
+  list on every search/filter screen (Wellness Food/Activity Library, Shows/Books/Quotes Libraries,
+  Medical Reports, Travel Trips) so the current match count is always visible. Rendered only when the
+  filtered list is non-empty (the "No matches" empty line already conveys zero); pluralizes 1 → result.
 - **SortControl** — the shared "Sort" cluster (`src/components/SortControl.tsx`): a label + sort-field
   `SelectMenu` + an asc/desc icon toggle. Lives in the `FilterPanel` footer next to **Clear Filters**.
   Each module passes its own `options` array.
@@ -118,7 +122,9 @@ _not_ the primary-button color; it's for emphasis, active states, and energy.
   **Tapping the month-year header** switches to a **month grid**; **tapping the year there** opens a
   **paged year grid** (12 years; the ◀/▶ arrows jump a whole page) so distant years like a birthday are
   a few taps, not dozens. Picking a year returns to the month grid, and a month returns to that month's
-  day grid (the bottom Cancel/OK still commit the day).
+  day grid (the bottom Cancel/OK still commit the day). A **Today** button sits left of Cancel/OK and
+  jumps back to the current month's day grid with today selected (still confirmed via OK) — the common
+  date-picker "jump to today" shortcut.
 - **EntryHeaderActions** — the shared top-right action cluster for every New/Edit form
   (`src/components/EntryHeaderActions.tsx`): compact `sm` **icon** buttons in order **Delete · Reset ·
   Submit**. **Reset** = `IconArrowBackUp` (undo), **Submit** = `IconPlus` (new) /

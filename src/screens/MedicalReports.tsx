@@ -25,6 +25,7 @@ import { SearchBar } from '../components/SearchBar'
 import { SelectMenu } from '../components/SelectMenu'
 import { FilterToggleButton } from '../components/FilterToggleButton'
 import { FilterPanel } from '../components/FilterPanel'
+import { ResultCount } from '../components/ResultCount'
 import { SortControl } from '../components/SortControl'
 
 const TYPE_OPTIONS = [
@@ -166,6 +167,9 @@ export function MedicalReports() {
           to={routes.medical.entry}
           Icon={IconHeartbeat}
         />
+      )}
+      {!loading && !error && reports.length > 0 && view.length > 0 && (
+        <ResultCount count={view.length} />
       )}
       {!loading && !error && reports.length > 0 && (
         <div className="divide-y divide-border overflow-hidden rounded-card border border-border bg-surface">

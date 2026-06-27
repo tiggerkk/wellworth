@@ -9,6 +9,7 @@ import { Thumb } from '../components/Thumb'
 import { EmptyState } from '../components/EmptyState'
 import { FilterToggleButton } from '../components/FilterToggleButton'
 import { FilterPanel } from '../components/FilterPanel'
+import { ResultCount } from '../components/ResultCount'
 import { SortControl } from '../components/SortControl'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
@@ -219,6 +220,9 @@ export function TravelTrips() {
         />
       )}
 
+      {!loading && !error && trips.length > 0 && view.length > 0 && (
+        <ResultCount count={view.length} />
+      )}
       {!loading && !error && trips.length > 0 && (
         <div className="overflow-hidden rounded-card border border-border bg-surface">
           {view.length === 0 ? (

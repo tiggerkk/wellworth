@@ -249,6 +249,19 @@ export function Calendar({ day, onSelect, onClose, loadCues }: CalendarProps) {
 
         <div className="mt-4 flex gap-2">
           <button
+            onClick={() => {
+              // Jump back to today: show the current month's day grid with today selected
+              // (the user still confirms with OK), the common "Today" shortcut on date pickers.
+              setViewMonth(startOfMonth(today))
+              setSelected(today)
+              setPickYear(fromIsoDate(today).getFullYear())
+              setMode('days')
+            }}
+            className="flex-1 rounded-pill bg-input py-2.5 text-sm text-text-primary"
+          >
+            Today
+          </button>
+          <button
             onClick={onClose}
             className="flex-1 rounded-pill bg-input py-2.5 text-sm text-text-primary"
           >

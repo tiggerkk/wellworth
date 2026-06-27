@@ -12,6 +12,7 @@ import { SegmentedTabs } from '../components/SegmentedTabs'
 import { SearchBar } from '../components/SearchBar'
 import { ListRow } from '../components/ListRow'
 import { SwipeRow } from '../components/SwipeRow'
+import { ResultCount } from '../components/ResultCount'
 import { foldZh } from '../lib/zh-fold'
 
 type Tab = 'foods' | 'activities'
@@ -102,6 +103,13 @@ export function Library() {
           )}
         </div>
       </div>
+
+      {tab === 'foods' && customFoods.length > 0 && (
+        <ResultCount count={customFoods.length} />
+      )}
+      {tab === 'activities' && filteredActivities.length > 0 && (
+        <ResultCount count={filteredActivities.length} />
+      )}
 
       <div className="overflow-hidden rounded-card border border-border bg-surface">
         {tab === 'foods' &&
