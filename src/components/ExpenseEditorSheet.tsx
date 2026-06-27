@@ -19,7 +19,8 @@ interface ExpenseEditorSheetProps {
   trackReimbursement: boolean
   expense?: ExpenseRow
   onClose: () => void
-  onSaved: () => void
+  /** Called with the created/updated row so the caller can merge it optimistically (no refetch). */
+  onSaved: (expense: ExpenseRow) => void
   onDelete?: () => void
 }
 
@@ -75,12 +76,15 @@ export function ExpenseEditorSheet({
         reimbursed_formula: trackReimbursement && formula.trim() ? formula.trim() : null,
         reimbursed_amount: trackReimbursement ? reimbursed : null,
       }
+      let saved: ExpenseRow
       if (expense) {
         await updateExpense(expense.id, payload)
+        // The patch covers every edited field, so the merged row matches what the DB now holds.
+        saved = { ...expense, ...payload }
       } else {
-        await createExpense({ ...payload, user_id: userId, trip_id: tripId })
+        saved = await createExpense({ ...payload, user_id: userId, trip_id: tripId })
       }
-      onSaved()
+      onSaved(saved)
     } finally {
       setSaving(false)
     }

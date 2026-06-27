@@ -1192,6 +1192,9 @@ The actionable rules now live in the spec docs (read those every session); this 
 - **F14** — DOM overlays over a Leaflet map need a `z-index` above Leaflet's controls (`z-index:1000`; use `z-[1100]`). → `10-travel.md` (Visual design) + `01-design-system.md` (Layout gotchas).
 - **F15a** — opencc-js (~1.12MB) is lazy-loaded + excluded from the PWA precache; local Chinese filters use the tiny sync `foldZh` fold map, never opencc. → `02-tech-spec.md` (Chinese search).
 - **F15b** — never seed body metrics to a non-owner (`MEMBER_PROFILE_SEED`); a profile/onboarding gate reads `data`, not `loading`. → `03-global.md` (Profile seeds).
+- **F16a** — bulk DB writes go in one batched `.insert`/`.upsert` (chunked), never a per-row `await` loop (the Shows CSV importer was N round-trips on IMPORT); pass `{ defaultToNull: false }` when batched rows have non-uniform keys over a `NOT NULL DEFAULT` column. → `02-tech-spec.md` (Data flow).
+- **F16b** — prefer optimistic local state over a module refresh-version bump (`bumpTravel`) on every mutation; mutate locally + persist in the background, bump only on a write error. Re-seed via the adjust-state-during-render pattern, not `setState`-in-effect. → `02-tech-spec.md` (Data flow) + `10-travel.md` (Itinerary).
+- **F17** — surface caught errors with `errorMessage(e, fallback)` (`src/lib/errors.ts`), not `e instanceof Error ? e.message : …`; the `data/*` layer rethrows the raw Supabase error object, which is not an `Error` instance, so `instanceof` hides the real cause (the `message`/`code`/`hint`). → `02-tech-spec.md` (Data flow).
 
 ## Shows / Books / global enhancement (favourites, Esc, master-series removal)
 
@@ -2072,3 +2075,67 @@ More fallout from the accent→blue swap, plus two latent bugs it exposed:
   invisible on the `bg-surface` (#232a3a) bar. A soft accent tint reads clearly and marks Home as the hub.
 - **Trip-stop "skipped" toggle** changed `bg-track text-text-secondary` (dark-on-dark, barely visible)
   → `bg-text-secondary text-bg` (solid grey, dark icon), mirroring the teal `bg-positive` "done" fill.
+
+### Performance pass — Shows import + Travel stop toggle (2026-06-27)
+
+Two latency complaints, both traced to round-trip count rather than the suspected cause:
+
+- **Shows CSV importer, slow on IMPORT (~440 titles).** Suspected to be TMDB rate limiting, but TMDB
+  runs in the earlier "Matching titles…" phase (on file choose), not on IMPORT. The IMPORT cost was
+  `saveImportedShows` writing rows **one at a time in a sequential `await` loop** — ~440 separate
+  Supabase round-trips. Rewrote it to split new vs existing (by the existing `dedupKey`/`idByKey`
+  logic) and issue a **bulk `insert` + bulk `upsert`** (conflict on `id`), chunked at 500 — a couple of
+  calls instead of hundreds. Idempotency and the created/updated counts are unchanged. → **F16a**.
+  **Follow-up fix:** the first batched build failed IMPORT — `buildImportRow` emits `created_at` only
+  for rows with a `start_date`, so the batch had non-uniform keys and the bulk write sent the missing
+  `created_at` as NULL (the column is `NOT NULL DEFAULT now()`). Resolved with `{ defaultToNull: false }`
+  on both the insert and upsert so missing keys fall back to the column default. **Why it was opaque:**
+  the screen showed only the generic "Import failed." — the `data/*` layer rethrows the raw Supabase
+  error object, which is **not** a JS `Error`, so every importer's `e instanceof Error ? e.message : …`
+  fell through to the fallback. Added a shared **`errorMessage(e, fallback)`** (`src/lib/errors.ts`,
+  +tests) that reads the Postgrest `message`/`code`/`hint`/`details` (and still handles real `Error`s
+  and strings) and routed **all eight CSV/file importers** through it, so a failure now shows the real
+  database message + code. → **F17**.
+  Separately raised the match-phase worker pool `POOL` 5 → **10** (each worker = one connection, so ~10
+  peak — half TMDB's ~20 cap, rate well under ~50/s), ~halving the "Matching titles…" wall-clock.
+- **Travel Edit-Trip done/skipped toggle, slow per tap.** The handler did a fast single-row write then
+  `bumpTravel()`, whose version bump forced `EditTrip` to refetch the **entire trip bundle** (all days +
+  all stops) before the icon's pressed state updated — two sequential round-trips for one field.
+  `stop.completion` has no cross-screen consumer (read only in `TripBuilder.tsx`; not the Map/facets),
+  so the toggle is now **optimistic**: a local `completionOverrides` map updates instantly and the write
+  persists in the background with no `bumpTravel()` (rolls back on error). Structural edits still bump.
+  → **F16b**.
+- **Books importer, same pass.** `saveImportedBooks` had the identical sequential per-row write loop
+  and the identical conditional-`created_at` shape, so it got the same bulk insert + bulk upsert with
+  `{ defaultToNull: false }`. Separately, the match phase could stall ~30s on its **last** row: the
+  Google→Open Library fallback path had **no request timeout**, so one slow OL response held up the
+  whole batch. Added a `REQUEST_TIMEOUT_MS` ceiling via an `AbortController` (the
+  `searchBooks`/`getBookDetails` API already threads a `signal`); a timed-out row falls through to
+  `nomatch` like any other miss. `POOL` now scales with the key (`hasGoogleBooksApiKey`): 3 keyless,
+  **10** with `VITE_GOOGLE_BOOKS_API_KEY` set (higher project quota) — the owner has a key configured,
+  so imports run at the higher pool; the 429 backoff stays as the safety net.
+
+The DB-write fixes are behaviour-equivalent (no schema change); the diagnostics work added
+`src/lib/errors.ts` + tests. Verified by `npm run check`.
+
+### Travel Edit-Trip — optimistic itinerary + Expenses, token-driven chart (2026-06-27)
+
+Followed the done/skipped toggle's win across the rest of Edit Trip. Every itinerary action used to
+`await` its write(s) and then `bumpTravel()`, whose version bump made `EditTrip` refetch the **entire**
+trip bundle (all days + all stops) before the UI updated — so Add/Copy/Delete Day, Reorder, Add/Delete
+Stop, and the date picker all paid that refetch (Copy Day was worst: it also created the copied stops
+in a **sequential** per-stop loop).
+
+- **`EditTripBody` now holds `days`/`stops` in local state.** Each handler mutates that state instantly
+  and persists in the background with **no** `bumpTravel()` on success; a write bumps only **on error**,
+  which refetches and re-seeds local state (via the adjust-state-during-render pattern, not an effect —
+  the `react-hooks/set-state-in-effect` rule). Copy Day bulk-inserts its stops in one round-trip via a
+  new `createStops`. `StopEditorSheet`/`ExpenseEditorSheet` now return the saved row so the parent merges
+  it (replace on edit, append on add) without a refetch. → **F16b**.
+- **Expenses tab** got the same treatment (`TripExpensesPanel`): optimistic local override of the expense
+  list **and** the FX-rate map; add/edit/delete and rate edits no longer bump.
+- **Expense "By Category (HKD)" donut** (`TravelExpenseChart`) was hardcoded **coral-led** — its lead hex
+  was the _old_ accent orange, so it didn't follow the `--color-accent` → blue change. Rebuilt the palette
+  from design tokens (`var(--color-*)`, which Recharts resolves in `fill`, cf. `MedicalTrendChart`),
+  **accent-led**; orange is demoted to the `--color-warning` slice. Now theme-driven, so it won't drift
+  again. Verified by `npm run check` (500 tests).

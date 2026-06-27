@@ -6,16 +6,21 @@ export interface ExpenseSlice {
   hkd: number
 }
 
-/** Donut palette — coral-led, distinct hues that read on the dark surface. */
+/**
+ * Donut palette — **accent-led**, distinct hues that read on the dark surface. Driven by the design
+ * tokens (`var(--color-*)`) so it tracks the theme: when `--color-accent` changed blue, the lead slice
+ * followed instead of staying the old orange (now demoted to the `--color-warning` slice). Recharts
+ * resolves `var(...)` in `fill` (cf. `MedicalTrendChart`). One literal cyan remains — no matching token.
+ */
 const COLORS = [
-  '#e8623c',
-  '#5dcaa5',
-  '#5b8def',
-  '#e0b341',
-  '#a978e0',
-  '#e06aa0',
+  'var(--color-accent)',
+  'var(--color-positive)',
+  'var(--color-warning)',
+  'var(--color-favorite)',
+  'var(--color-dynasty)',
+  'var(--color-cat-supplement)',
   '#54b3c4',
-  '#9aa3b5',
+  'var(--color-text-secondary)',
 ]
 
 /**

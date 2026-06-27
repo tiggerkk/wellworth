@@ -93,6 +93,15 @@ export async function createStop(input: StopInsert): Promise<StopRow> {
   return data
 }
 
+/** Bulk-insert stops in one round-trip (duplicating a day), returning the created rows. Order isn't
+ * guaranteed by the API, but each carries its own `sort_order`, so callers re-sort by that. */
+export async function createStops(inputs: StopInsert[]): Promise<StopRow[]> {
+  if (inputs.length === 0) return []
+  const { data, error } = await supabase.from('stop').insert(inputs).select()
+  if (error) throw error
+  return data ?? []
+}
+
 export async function updateStop(id: string, patch: StopUpdate): Promise<void> {
   const { error } = await supabase.from('stop').update(patch).eq('id', id)
   if (error) throw error

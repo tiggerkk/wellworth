@@ -67,17 +67,35 @@ export async function saveImportedShows(
   const byKey = new Map<string, ImportShowRow>()
   for (const p of payloads) byKey.set(dedupKey(p.title), p)
 
-  let created = 0
-  let updated = 0
+  // Split into inserts (new titles) and updates (existing id), then batch each — a single bulk
+  // insert + bulk upsert instead of one round-trip per row (was sequential, ~N awaits for N rows).
+  const newRows: ShowInsert[] = []
+  const updRows: ShowInsert[] = []
   for (const [key, payload] of byKey) {
     const existingId = idByKey.get(key)
-    if (existingId) {
-      await updateShow(existingId, payload)
-      updated += 1
-    } else {
-      await createShow({ ...payload, user_id: userId })
-      created += 1
-    }
+    if (existingId) updRows.push({ ...payload, id: existingId, user_id: userId })
+    else newRows.push({ ...payload, user_id: userId })
   }
-  return { created, updated }
+
+  // Chunk to stay well under request-payload limits (one chunk each for a typical import).
+  // `defaultToNull: false` is REQUIRED: rows vary in keys (`created_at` is present only when the
+  // CSV has a `start_date`; `want` rows omit it). A bulk write unifies keys across the batch, and
+  // the default behaviour would send the missing `created_at` as NULL — violating its NOT NULL
+  // constraint. `false` instead falls back to the column DEFAULT (`now()`), the intended semantics.
+  const CHUNK = 500
+  for (let i = 0; i < newRows.length; i += CHUNK) {
+    const { error } = await supabase
+      .from('show')
+      .insert(newRows.slice(i, i + CHUNK), { defaultToNull: false })
+    if (error) throw error
+  }
+  for (let i = 0; i < updRows.length; i += CHUNK) {
+    // Default onConflict is the primary key (`id`), so each row updates in place.
+    const { error } = await supabase
+      .from('show')
+      .upsert(updRows.slice(i, i + CHUNK), { defaultToNull: false })
+    if (error) throw error
+  }
+
+  return { created: newRows.length, updated: updRows.length }
 }

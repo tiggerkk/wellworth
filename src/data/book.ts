@@ -67,17 +67,36 @@ export async function saveImportedBooks(
   const byKey = new Map<string, ImportBookRow>()
   for (const p of payloads) byKey.set(dedupKey(p.title, p.authors?.[0]), p)
 
-  let created = 0
-  let updated = 0
+  // Split into inserts (new) and updates (existing id), then batch each — a single bulk insert + bulk
+  // upsert instead of one round-trip per row (was sequential, ~N awaits for N rows). Mirrors
+  // `saveImportedShows`; see F16a.
+  const newRows: BookInsert[] = []
+  const updRows: BookInsert[] = []
   for (const [key, payload] of byKey) {
     const existingId = idByKey.get(key)
-    if (existingId) {
-      await updateBook(existingId, payload)
-      updated += 1
-    } else {
-      await createBook({ ...payload, user_id: userId })
-      created += 1
-    }
+    if (existingId) updRows.push({ ...payload, id: existingId, user_id: userId })
+    else newRows.push({ ...payload, user_id: userId })
   }
-  return { created, updated }
+
+  // Chunk to stay well under request-payload limits (one chunk each for a typical import).
+  // `defaultToNull: false` is REQUIRED: `buildImportRow` includes `created_at` only when the CSV has
+  // a `start_date` (`want` rows omit it), so batched rows have non-uniform keys. A bulk write unifies
+  // keys across the batch and would send the missing `created_at` as NULL — violating its NOT NULL
+  // constraint. `false` instead falls back to the column DEFAULT (`now()`), the intended semantics.
+  const CHUNK = 500
+  for (let i = 0; i < newRows.length; i += CHUNK) {
+    const { error } = await supabase
+      .from('book')
+      .insert(newRows.slice(i, i + CHUNK), { defaultToNull: false })
+    if (error) throw error
+  }
+  for (let i = 0; i < updRows.length; i += CHUNK) {
+    // Default onConflict is the primary key (`id`), so each row updates in place.
+    const { error } = await supabase
+      .from('book')
+      .upsert(updRows.slice(i, i + CHUNK), { defaultToNull: false })
+    if (error) throw error
+  }
+
+  return { created: newRows.length, updated: updRows.length }
 }

@@ -47,12 +47,32 @@ export function TripExpensesPanel({ trip, userId }: Props) {
     return listExpenses(trip.id)
   }, [trip.id, version])
   const { data, loading, error } = useAsync(fn)
-  const expenses = useMemo(() => data ?? [], [data])
+
+  // Optimistic overrides: expense add/edit/delete and FX-rate edits update these instantly and persist
+  // in the background (no `bumpTravel()` → no full refetch). Each override is reset to `null` whenever a
+  // real fetch lands (initial load, or an error-triggered bump), so the panel follows server truth then.
+  // Drop each override when a real fetch lands (initial load / error bump) so we follow server truth.
+  // React's "adjust state during render" pattern, not an effect (avoids cascading renders).
+  const [expenseOverride, setExpenseOverride] = useState<ExpenseRow[] | null>(null)
+  const [rateOverride, setRateOverride] = useState<RateMap | null>(null)
+  const [synced, setSynced] = useState<{ data: typeof data; fx: typeof trip.fx_rates }>({
+    data,
+    fx: trip.fx_rates,
+  })
+  if (synced.data !== data || synced.fx !== trip.fx_rates) {
+    if (synced.data !== data) setExpenseOverride(null)
+    if (synced.fx !== trip.fx_rates) setRateOverride(null)
+    setSynced({ data, fx: trip.fx_rates })
+  }
+  const expenses = useMemo(() => expenseOverride ?? data ?? [], [expenseOverride, data])
 
   const [editor, setEditor] = useState<{ expense?: ExpenseRow } | null>(null)
   const [fxBusy, setFxBusy] = useState(false)
 
-  const rates = useMemo(() => (trip.fx_rates as RateMap | null) ?? {}, [trip.fx_rates])
+  const rates = useMemo(
+    () => rateOverride ?? (trip.fx_rates as RateMap | null) ?? {},
+    [rateOverride, trip.fx_rates],
+  )
   const perCurrency = useMemo(() => perCurrencyTotals(expenses), [expenses])
   const hkd = useMemo(() => hkdTotals(expenses, rates), [expenses, rates])
   const nonHkdUsed = useMemo(
@@ -70,8 +90,12 @@ export function TripExpensesPanel({ trip, userId }: Props) {
   const track = trip.track_reimbursement
 
   async function saveRates(next: RateMap) {
-    await updateTrip(trip.id, { fx_rates: next })
-    bumpTravel()
+    setRateOverride(next)
+    try {
+      await updateTrip(trip.id, { fx_rates: next })
+    } catch {
+      bumpTravel() // resync from server on a failed write
+    }
   }
 
   function saveRate(currency: string, value: string) {
@@ -97,8 +121,12 @@ export function TripExpensesPanel({ trip, userId }: Props) {
   }
 
   async function removeExpense(id: string) {
-    await deleteExpense(id)
-    bumpTravel()
+    setExpenseOverride((prev) => (prev ?? data ?? []).filter((e) => e.id !== id))
+    try {
+      await deleteExpense(id)
+    } catch {
+      bumpTravel()
+    }
   }
 
   if (loading) return <p className="px-1 py-4 text-sm text-text-secondary">Loading…</p>
@@ -257,9 +285,15 @@ export function TripExpensesPanel({ trip, userId }: Props) {
           trackReimbursement={track}
           expense={editor.expense}
           onClose={() => setEditor(null)}
-          onSaved={() => {
+          onSaved={(saved) => {
             setEditor(null)
-            bumpTravel()
+            // Merge optimistically: replace on edit, prepend on add (newest-first; remount re-sorts).
+            setExpenseOverride((prev) => {
+              const base = prev ?? data ?? []
+              return base.some((e) => e.id === saved.id)
+                ? base.map((e) => (e.id === saved.id ? saved : e))
+                : [saved, ...base]
+            })
           }}
           onDelete={
             editor.expense

@@ -10,6 +10,7 @@ import { getSnapshotWithEntries, saveSnapshotEntries } from '../data/asset-entry
 import type { AssetEntryInput } from '../data/asset-entry'
 import { fetchRatesToHkd } from '../lib/fx'
 import { bumpNetWorth } from '../lib/networth-refresh'
+import { errorMessage } from '../lib/errors'
 import { formatHkd, valueBase, type Currency } from '../lib/networth'
 import { formatMonthLabel, startOfMonth, todayLocal } from '../lib/date'
 
@@ -63,7 +64,7 @@ export function ImportNetWorthSheet() {
       setFileName(file.name)
     } catch (e) {
       setResult(null)
-      setImportError(e instanceof Error ? e.message : 'Could not read the file.')
+      setImportError(errorMessage(e, 'Could not read the file.'))
     }
   }
 
@@ -97,7 +98,7 @@ export function ImportNetWorthSheet() {
       bumpNetWorth()
       setDoneCount(payload.length)
     } catch (e) {
-      setImportError(e instanceof Error ? e.message : 'Import failed.')
+      setImportError(errorMessage(e, 'Import failed.'))
     } finally {
       setImporting(false)
     }

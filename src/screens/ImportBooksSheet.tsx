@@ -19,17 +19,25 @@ import { BOOK_STATUS_CHIP, BOOK_STATUS_LABELS } from '../lib/books'
 import {
   BookSearchRateLimitError,
   getBookDetails,
+  hasGoogleBooksApiKey,
   searchBooks,
   type BookMetadata,
   type BookSearchResult,
 } from '../lib/books-api'
 import { saveImportedBooks } from '../data/book'
 import { bumpBooks } from '../lib/books-refresh'
+import { errorMessage } from '../lib/errors'
 
 const MAX_MESSAGES = 20
-// A small pool keeps the keyless Google Books quota from 429-ing; a key lets you raise it safely.
-const POOL = 3
+// Concurrent match workers. The keyless Google Books quota is tiny (429s quickly), so stay low
+// without a key; a configured key has the higher project quota, so raise the pool. The 429 backoff
+// (RATE_RETRIES) stays as a safety net either way.
+const POOL = hasGoogleBooksApiKey() ? 10 : 3
 const RATE_RETRIES = 3
+// Per-request ceiling. Without it a slow Open Library fallback (the Google→OL path on an empty/error
+// result) can hang ~30s with no timeout and stall the whole batch on its last unresolved row. On
+// timeout the row just becomes a `nomatch` the owner can fix via Change — same as any other miss.
+const REQUEST_TIMEOUT_MS = 10000
 
 interface ResolvedRow {
   input: ParsedBookRow
@@ -46,13 +54,26 @@ const norm = (s: string) =>
 const sleep = (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms))
 
+/** Run a signal-aware async call with a hard timeout (aborts the underlying fetch on expiry). */
+async function withTimeout<T>(run: (signal: AbortSignal) => Promise<T>): Promise<T> {
+  const ctrl = new AbortController()
+  const timer = setTimeout(() => ctrl.abort(), REQUEST_TIMEOUT_MS)
+  try {
+    return await run(ctrl.signal)
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
 async function resolveRow(input: ParsedBookRow): Promise<ResolvedRow> {
   for (let attempt = 0; ; attempt++) {
     try {
-      const results = await searchBooks(`${input.title} ${input.author}`)
+      const results = await withTimeout((signal) =>
+        searchBooks(`${input.title} ${input.author}`, { signal }),
+      )
       const top = results[0]
       if (!top) return { input, match: null, status: 'nomatch' }
-      const match = await getBookDetails(top)
+      const match = await withTimeout((signal) => getBookDetails(top, { signal }))
       return {
         input,
         match,
@@ -95,7 +116,7 @@ export function ImportBooksSheet() {
       if (result.rows.length > 0) void resolveAll(result.rows)
     } catch (e) {
       setParsed(null)
-      setImportError(e instanceof Error ? e.message : 'Could not read the file.')
+      setImportError(errorMessage(e, 'Could not read the file.'))
     }
   }
 
@@ -142,7 +163,7 @@ export function ImportBooksSheet() {
       bumpBooks()
       setDone(counts)
     } catch (e) {
-      setImportError(e instanceof Error ? e.message : 'Import failed.')
+      setImportError(errorMessage(e, 'Import failed.'))
     } finally {
       setImporting(false)
     }

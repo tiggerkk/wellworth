@@ -91,12 +91,21 @@ Columns: `title,author,status,rating,lgbtq_rep,dynasty,is_favorite,start_date,en
 Steps:
 
 1. **Choose CSV** → rows parsed/validated (bad rows listed as skipped) and each **matched against
-   Google Books** (searching `title author` for the top hit, Open Library fallback) with a progress count.
+   Google Books** (searching `title author` for the top hit, Open Library fallback) with a progress
+   count. Concurrency (`POOL`) scales with the API key: **3** keyless (the tiny per-IP quota 429s
+   quickly) or **10** when `VITE_GOOGLE_BOOKS_API_KEY` is set (higher project quota) — see
+   `hasGoogleBooksApiKey`; the 429 backoff + retry stays as a safety net either way. Each request also
+   has a `REQUEST_TIMEOUT_MS` ceiling so a slow Open Library fallback can't stall the batch on its last
+   row — a timed-out row becomes a `No match` to fix.
 2. **Preview list**: each row's cover + matched title/year + author(s) + its status chip + parsed
    rating/finish date. Rows nothing was found for are flagged **No match**; rows whose top hit differs
    are flagged **review**. **Change** on any row opens the Book Search modal.
 3. **Import** writes all rows **idempotently** (dedup on lower(title) + lower(author) — re-running the
    same file updates in place, never duplicates). Dates from the file; `created_at` = `start_date`.
+   `saveImportedBooks` **batches** the writes — one bulk `insert` for new books + one bulk `upsert`
+   (conflict on `id`) for existing ones, chunked at 500, with `{ defaultToNull: false }` (the
+   conditional `created_at` key — see Shows) — rather than a per-row round-trip. Mirrors
+   `saveImportedShows`; see tech-spec F16a.
 
 Full guide: `templates/books-import-guide.md`.
 

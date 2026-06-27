@@ -64,7 +64,15 @@ literal **"Edit Trip"**.
   When expanded, stops are grouped under **city-only sub-headers** for consecutive same-city stops;
   each run is a drag-reorder list (swipe-left on a stop to reveal a Delete action). Each stop row:
   `Type · description`, with inline **done / skipped** icon toggles on the right (tap the active one
-  to clear); skipped stops are struck through. Tap a stop to edit.
+  to clear); skipped stops are struck through. Tap a stop to edit. **All Edit-Trip itinerary edits are
+  optimistic**: the builder keeps `days`/`stops` in local state, and every action — add/copy/delete a
+  day, reorder days/stops, add/edit/delete a stop, the date picker, and the done/skipped toggle —
+  mutates that state instantly and persists in the background **without** `bumpTravel()`, so none of
+  them pay the full trip-bundle refetch. A write only bumps **on error**, which refetches and re-seeds
+  local state from server truth. Copying a day bulk-inserts its stops in one round-trip (`createStops`).
+  The **Expenses tab** is optimistic the same way (local override of the expense list + FX rates).
+  Trade-off: other Travel screens (Map/Dashboard/Trips list) update on their next mount, not live —
+  acceptable since they remount + refetch on navigation.
 
 **Stop editor** (local overlay, not a route sheet — so the builder draft survives):
 
@@ -138,7 +146,9 @@ literal **"Edit Trip"**.
   needs an explicit `z-index` above Leaflet's controls (`.leaflet-top/.leaflet-bottom` are
   `z-index:1000`) — use `z-[1100]`; otherwise the controls paint over it and swallow taps.
 - **Expense breakdown**: a small Recharts donut over the categories (HKD-equivalent), lazy-loaded
-  into its own chunk.
+  into its own chunk. Its palette is **accent-led and design-token-driven** (`var(--color-*)` in the
+  `Cell` fills, like the other charts), so it tracks the theme instead of hardcoding hexes — when
+  `--color-accent` changed to blue the lead slice followed (it used to hardcode the old accent orange).
 - **Reorder / category editors**: drag handles via the shared `ReorderList`; the category editor is
   the shared `ConfigListEditor`.
 

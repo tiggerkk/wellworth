@@ -96,6 +96,14 @@ docs/                # the spec bundle
 UI (`screens` + `components`) → `data/*` repository functions → `supabase-js` query builder →
 Supabase (Postgres + RLS). Components hold no SQL and never import the Supabase client directly.
 
+- **F17** — surface caught errors with **`errorMessage(e, fallback)`** (`src/lib/errors.ts`), never
+  `e instanceof Error ? e.message : fallback`. The `data/*` layer rethrows the raw Supabase error
+  object (`if (error) throw error`), and that object is **not** a JS `Error` instance — so the
+  `instanceof` check fails and the real cause is hidden behind the generic fallback (this is exactly
+  why a failed bulk import showed only "Import failed."). `errorMessage` reads the Postgrest shape
+  (`message` + the diagnostic `code`/`hint`/`details`; Postgres often puts the actionable fix in
+  `hint`) and still handles genuine `Error`s and thrown strings. All CSV/file importers use it.
+
 - **F4** — `useAsync(fn)` takes a single `useCallback`-stable `fn` and exposes `refetch` — NOT a `deps`
   array (the react-hooks lint rule rejects a variable deps array). Memoize `fn` at the call site.
 - **F8 + F13** — `useAsync` keeps the PREVIOUS `data` while a refetch is in flight (it flips
@@ -106,6 +114,25 @@ Supabase (Postgres + RLS). Components hold no SQL and never import the Supabase 
     unmounts the child and discards edits (**F13**, Travel Trip Builder); instead render once `data`
     exists and show a first-load spinner only when `loading && !data`.
   - Rule: a gate keyed on a fetched value reads `data`, never `loading`.
+- **F16a** — bulk DB ops go in **one batched call** (`.insert(rows)` / `.upsert(rows)`, chunked), never
+  a per-row `await` loop. The CSV importers move N rows, so a sequential loop is N round-trips (the
+  Shows importer stalled on IMPORT this way); `saveImportedShows` splits new/existing and issues a bulk
+  insert + bulk upsert (conflict on `id`). **Gotcha:** when batched rows have **non-uniform keys** (a
+  builder that includes a column only conditionally — e.g. `buildImportRow` adds `created_at` only when
+  the CSV has `start_date`), a bulk write unifies keys across the batch and sends the missing column as
+  NULL by default — which fails a `NOT NULL DEFAULT` column. Pass `{ defaultToNull: false }` so missing
+  keys fall back to the column DEFAULT instead. (Per-row inserts never hit this — each object is
+  self-consistent.)
+- **F16b** — prefer **optimistic local state** over bumping a module's global refresh version
+  (`bumpTravel()` etc.) on every mutation: a version bump forces every subscriber to refetch its whole
+  bundle (all days + all stops for one edit). Keep the edited collection in local state, mutate it
+  instantly, persist in the background, and bump **only on a write error** (which refetches + re-seeds
+  from server truth). Other screens then update on their next mount, not live — fine when they remount
+  - refetch on navigation. When a fetch DOES replace the source and you must re-seed local state, use
+    the **adjust-state-during-render** pattern (track the previous value, `setState` in render), NOT a
+    `setState`-in-effect (the `react-hooks/set-state-in-effect` lint rule). The whole Travel Edit-Trip
+    itinerary **and** Expenses tab work this way; editor sheets return the saved row so the parent merges
+    it without a refetch.
 
 ## Auth & first-run
 

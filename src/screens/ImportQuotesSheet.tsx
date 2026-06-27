@@ -28,6 +28,7 @@ import { listQuotes, saveImportedQuotes } from '../data/quote'
 import { listShows } from '../data/show'
 import { listBooks } from '../data/book'
 import { bumpQuotes } from '../lib/quotes-refresh'
+import { errorMessage } from '../lib/errors'
 
 const MAX_SAMPLE = 15
 
@@ -93,7 +94,7 @@ export function ImportQuotesSheet() {
       setPreview({ newRows, payloads, duplicates, errors: result.errors })
     } catch (e) {
       setPreview(null)
-      setImportError(e instanceof Error ? e.message : 'Could not read the file.')
+      setImportError(errorMessage(e, 'Could not read the file.'))
     }
   }
 
@@ -106,7 +107,7 @@ export function ImportQuotesSheet() {
       bumpQuotes()
       setDone({ inserted, duplicates: preview.duplicates })
     } catch (e) {
-      setImportError(e instanceof Error ? e.message : 'Import failed.')
+      setImportError(errorMessage(e, 'Import failed.'))
     } finally {
       setImporting(false)
     }

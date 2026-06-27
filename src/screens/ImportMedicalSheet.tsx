@@ -10,6 +10,7 @@ import { MedicalTestPickerSheet } from '../components/MedicalTestPickerSheet'
 import { useAuth } from '../auth/AuthProvider'
 import { saveImportedReport } from '../data/medical'
 import { bumpMedical } from '../lib/medical-refresh'
+import { errorMessage } from '../lib/errors'
 import { parseMedicalFile } from '../lib/medical-import'
 import {
   blankResultDraft,
@@ -137,7 +138,7 @@ export function ImportMedicalSheet() {
       bumpMedical()
       navigate(routes.medical.detail(id))
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Import failed.')
+      setError(errorMessage(e, 'Import failed.'))
       setImporting(false)
     }
   }

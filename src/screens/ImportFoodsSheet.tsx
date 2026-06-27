@@ -9,6 +9,7 @@ import { parseCsv } from '../lib/csv'
 import { parseFoodCsv, type ImportParseResult } from '../lib/food-import'
 import { importCustomFoods } from '../data/food'
 import { bumpDiary } from '../lib/diary-refresh'
+import { errorMessage } from '../lib/errors'
 
 const MAX_MESSAGES = 20
 
@@ -52,7 +53,7 @@ export function ImportFoodsSheet() {
       setFileName(file.name)
     } catch (e) {
       setResult(null)
-      setImportError(e instanceof Error ? e.message : 'Could not read the file.')
+      setImportError(errorMessage(e, 'Could not read the file.'))
     }
   }
 
@@ -65,7 +66,7 @@ export function ImportFoodsSheet() {
       bumpDiary()
       setDoneCount(n)
     } catch (e) {
-      setImportError(e instanceof Error ? e.message : 'Import failed.')
+      setImportError(errorMessage(e, 'Import failed.'))
     } finally {
       setImporting(false)
     }

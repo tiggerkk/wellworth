@@ -120,12 +120,17 @@ Columns: `title,type,status,rating,lgbtq_rep,dynasty,watched_seasons,watched_epi
 Steps:
 
 1. **Choose CSV** → rows parsed/validated (bad rows listed as skipped) and each **matched against TMDB**
-   (CJK-aware top hit + details) with a progress count.
+   (CJK-aware top hit + details) with a progress count. Matching runs a pool of **10** concurrent
+   workers (`POOL`); each holds one connection at a time, so peak connections ≈ 10 — half TMDB's ~20
+   connection cap, with the request rate well under ~50/s.
 2. **Preview list**: each row's poster + matched title/year + type/status + season·episode totals. Rows
    TMDB couldn't find are flagged **No match**; rows whose top hit differs from the CSV title are flagged
    **review**. **Change** on any row opens the Title Search modal.
 3. **Import** writes all rows **idempotently** (dedup on lower(title) — re-running the same file updates
-   in place, never duplicates). Dates from the file; `created_at` = `start_date`.
+   in place, never duplicates). Dates from the file; `created_at` = `start_date`. `saveImportedShows`
+   **batches** the writes — one bulk `insert` for new titles + one bulk `upsert` (conflict on `id`) for
+   existing ones, chunked at 500 — rather than a per-row round-trip, so a ~440-row import is a couple of
+   calls, not hundreds. (TMDB matching is the separate step 1, before this.)
 
 Full guide: `templates/shows-import-guide.md`.
 

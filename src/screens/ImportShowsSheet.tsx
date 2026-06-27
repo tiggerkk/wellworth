@@ -25,9 +25,13 @@ import {
 } from '../lib/tmdb-api'
 import { saveImportedShows } from '../data/show'
 import { bumpShows } from '../lib/shows-refresh'
+import { errorMessage } from '../lib/errors'
 
 const MAX_MESSAGES = 20
-const POOL = 5
+// Concurrent TMDB match workers. Each worker holds at most one connection at a time (search →
+// details run sequentially), so POOL ≈ peak open connections. TMDB's practical limits are ~20
+// connections / ~50 req/s; 10 sits at half the connection cap and keeps the rate well under 50/s.
+const POOL = 10
 
 interface ResolvedRow {
   input: ParsedShowRow
@@ -83,7 +87,7 @@ export function ImportShowsSheet() {
       if (result.rows.length > 0) void resolveAll(result.rows)
     } catch (e) {
       setParsed(null)
-      setImportError(e instanceof Error ? e.message : 'Could not read the file.')
+      setImportError(errorMessage(e, 'Could not read the file.'))
     }
   }
 
@@ -130,7 +134,7 @@ export function ImportShowsSheet() {
       bumpShows()
       setDone(counts)
     } catch (e) {
-      setImportError(e instanceof Error ? e.message : 'Import failed.')
+      setImportError(errorMessage(e, 'Import failed.'))
     } finally {
       setImporting(false)
     }

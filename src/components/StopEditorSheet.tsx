@@ -24,7 +24,8 @@ interface StopEditorSheetProps {
   defaultCountry?: string
   defaultProvince?: string
   onClose: () => void
-  onSaved: () => void
+  /** Called with the created/updated row so the caller can merge it optimistically (no refetch). */
+  onSaved: (stop: StopRow) => void
   /** Delete this stop (shown only when editing an existing stop). */
   onDelete?: () => void
 }
@@ -114,16 +115,19 @@ export function StopEditorSheet({
         details: details.trim() || null,
         completion: completion || null,
       }
+      let saved: StopRow
       if (stop) {
         // Moving to a different day appends it there; same-day edits keep their position.
         const moved = targetDay !== stop.trip_day_id
         const sortPatch = moved ? { sort_order: await nextStopSortOrder(targetDay) } : {}
         await updateStop(stop.id, { ...payload, ...sortPatch })
+        // The patch covers every edited field, so the merged row matches what the DB now holds.
+        saved = { ...stop, ...payload, ...sortPatch }
       } else {
         const sort_order = await nextStopSortOrder(targetDay)
-        await createStop({ ...payload, user_id: userId, sort_order })
+        saved = await createStop({ ...payload, user_id: userId, sort_order })
       }
-      onSaved()
+      onSaved(saved)
     } finally {
       setSaving(false)
     }

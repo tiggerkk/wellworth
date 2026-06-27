@@ -16,6 +16,7 @@ import {
   rememberCity,
 } from '../data/travel'
 import { bumpTravel } from '../lib/travel-refresh'
+import { errorMessage } from '../lib/errors'
 import { geocodeCity } from '../lib/places'
 import { TRIP_STATUS_CHIP, tripStatusLabel } from '../lib/travel'
 import {
@@ -168,7 +169,7 @@ export function ImportTravelTripsSheet() {
       bumpTravel()
       setDone({ trips: trips.length, days: totals.days, stops: totals.stops })
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Import failed.')
+      setError(errorMessage(e, 'Import failed.'))
     } finally {
       setImporting(false)
     }

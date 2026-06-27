@@ -27,7 +27,7 @@ import { useAsync } from '../hooks/useAsync'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 import {
   createDay,
-  createStop,
+  createStops,
   createTrip,
   deleteDay,
   deleteStop,
@@ -206,7 +206,22 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
   const { data: profile } = useProfile()
   const show = (key: string) =>
     isFieldVisible(profile?.travel_visible_fields ?? null, key)
-  const { trip, days, stops } = bundle
+  const { trip } = bundle
+  // Itinerary held in LOCAL state so every structural edit (add/copy/delete/reorder a day or stop,
+  // done/skipped, date) updates instantly and never triggers a full-bundle refetch — the days+stops
+  // read is the expensive part. Each op persists in the background; on a write error we `bumpTravel()`
+  // to refetch, and this effect re-seeds local state from the corrected bundle. On the happy path we
+  // never bump for itinerary, so `bundle` is stable and the effect doesn't clobber optimistic edits.
+  const [days, setDays] = useState<TripDayRow[]>(bundle.days)
+  const [stops, setStops] = useState<StopRow[]>(bundle.stops)
+  // Re-seed when a fetch replaces the bundle — only on an error-triggered bump, since itinerary edits
+  // don't bump. React's "adjust state during render" pattern (not an effect), so no cascading render.
+  const [syncedBundle, setSyncedBundle] = useState(bundle)
+  if (syncedBundle !== bundle) {
+    setSyncedBundle(bundle)
+    setDays(bundle.days)
+    setStops(bundle.stops)
+  }
   const [tab, setTab] = useState<'itinerary' | 'expenses'>('itinerary')
 
   // Close → back if we came from within the app, else fall back to the Trips list.
@@ -302,24 +317,38 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
     }
   }
 
+  // All itinerary handlers below follow one shape: mutate local state for instant feedback, persist in
+  // the background, and `bumpTravel()` ONLY on a write error (forces a refetch → the sync effect
+  // re-seeds from server truth). No bump on success, so they never pay the full-bundle refetch.
+
   async function addDay() {
-    // Default the new day to the day after the previous (dated) day; recompute the trip span.
+    // Default the new day to the day after the previous (dated) day.
     const prev = days[days.length - 1]
     const nextDate = prev?.day_date ? addDays(prev.day_date, 1) : null
-    await createDay({
-      user_id: userId!,
-      trip_id: trip.id,
-      day_date: nextDate,
-      sort_order: days.length,
-    })
-    if (nextDate) await recomputeTripDates(trip.id)
-    bumpTravel()
+    try {
+      const created = await createDay({
+        user_id: userId!,
+        trip_id: trip.id,
+        day_date: nextDate,
+        sort_order: days.length,
+      })
+      setDays((d) => [...d, created])
+      if (nextDate) void recomputeTripDates(trip.id)
+    } catch {
+      bumpTravel()
+    }
   }
 
-  // Inline done/skipped from the Edit Trip screen — tapping the active state clears it.
+  // Inline done/skipped — tapping the active state clears it. `completion` has no cross-screen
+  // consumer (Map/facets remount fresh), so the optimistic local write needs no bump.
   async function setStopCompletion(s: StopRow, value: 'done' | 'skipped') {
-    await updateStop(s.id, { completion: s.completion === value ? null : value })
-    bumpTravel()
+    const next = s.completion === value ? null : value
+    setStops((st) => st.map((x) => (x.id === s.id ? { ...x, completion: next } : x)))
+    try {
+      await updateStop(s.id, { completion: next })
+    } catch {
+      bumpTravel()
+    }
   }
 
   // City/province/country carried forward to a NEW stop: the day's last stop, else the most
@@ -347,50 +376,71 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
 
   async function removeDay(dayId: string) {
     if (!confirm('Delete this day and its stops?')) return
-    await deleteDay(dayId)
-    await recomputeTripDates(trip.id)
-    bumpTravel()
+    setDays((d) => d.filter((x) => x.id !== dayId))
+    setStops((st) => st.filter((x) => x.trip_day_id !== dayId))
+    try {
+      await deleteDay(dayId)
+      void recomputeTripDates(trip.id)
+    } catch {
+      bumpTravel()
+    }
   }
 
   async function duplicateDay(day: TripDayRow) {
-    const copy = await createDay({
-      user_id: userId!,
-      trip_id: trip.id,
-      day_date: day.day_date,
-      label: day.label,
-      sort_order: days.length,
-    })
     const src = stopsByDay(day.id)
-    for (let i = 0; i < src.length; i++) {
-      const s = src[i]!
-      await createStop({
+    try {
+      const copy = await createDay({
         user_id: userId!,
-        trip_day_id: copy.id,
-        type: s.type,
-        city: s.city,
-        country: s.country,
-        province: s.province,
-        description: s.description,
-        details: s.details,
-        completion: s.completion,
-        sort_order: i,
+        trip_id: trip.id,
+        day_date: day.day_date,
+        label: day.label,
+        sort_order: days.length,
       })
+      setDays((d) => [...d, copy])
+      if (src.length > 0) {
+        // One bulk insert for the copied stops (was a per-stop sequential loop — N round-trips).
+        const created = await createStops(
+          src.map((s, i) => ({
+            user_id: userId!,
+            trip_day_id: copy.id,
+            type: s.type,
+            city: s.city,
+            country: s.country,
+            province: s.province,
+            description: s.description,
+            details: s.details,
+            completion: s.completion,
+            sort_order: i,
+          })),
+        )
+        setStops((st) => [...st, ...created])
+      }
+      if (day.day_date) void recomputeTripDates(trip.id)
+    } catch {
+      bumpTravel()
     }
-    await recomputeTripDates(trip.id)
-    bumpTravel()
   }
 
   async function pickDate(iso: string) {
     if (!datePickerDay) return
-    await updateDay(datePickerDay.id, { day_date: iso })
-    await recomputeTripDates(trip.id)
+    const dayId = datePickerDay.id
+    setDays((d) => d.map((x) => (x.id === dayId ? { ...x, day_date: iso } : x)))
     setDatePickerDay(null)
-    bumpTravel()
+    try {
+      await updateDay(dayId, { day_date: iso })
+      void recomputeTripDates(trip.id)
+    } catch {
+      bumpTravel()
+    }
   }
 
   async function removeStop(stopId: string) {
-    await deleteStop(stopId)
-    bumpTravel()
+    setStops((st) => st.filter((x) => x.id !== stopId))
+    try {
+      await deleteStop(stopId)
+    } catch {
+      bumpTravel()
+    }
   }
 
   return (
@@ -639,7 +689,17 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
                                   const nextDay = runs.flatMap((r, i) =>
                                     i === runIdx ? nextRun : r.stops.map((s) => s.id),
                                   )
-                                  void reorderStops(nextDay).then(bumpTravel)
+                                  // Optimistic: re-stamp sort_order locally (render re-sorts), persist
+                                  // in the background; resync on error.
+                                  const order = new Map(nextDay.map((id, i) => [id, i]))
+                                  setStops((st) =>
+                                    st.map((s) =>
+                                      order.has(s.id)
+                                        ? { ...s, sort_order: order.get(s.id)! }
+                                        : s,
+                                    ),
+                                  )
+                                  void reorderStops(nextDay).catch(() => bumpTravel())
                                 }}
                                 onDelete={(sid) => void removeStop(sid)}
                                 handleLabel={() => 'Drag to reorder stop'}
@@ -724,7 +784,16 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
         <ReorderDaysSheet
           days={days}
           label={dayLabel}
-          onReorder={(ids) => void reorderDays(ids).then(bumpTravel)}
+          onReorder={(ids) => {
+            // Optimistic: reorder local days + re-stamp sort_order, persist in background.
+            const order = new Map(ids.map((id, i) => [id, i]))
+            setDays((d) =>
+              [...d]
+                .map((x) => ({ ...x, sort_order: order.get(x.id) ?? x.sort_order }))
+                .sort((a, b) => a.sort_order - b.sort_order),
+            )
+            void reorderDays(ids).catch(() => bumpTravel())
+          }}
           onClose={() => setReorderDaysOpen(false)}
         />
       )}
@@ -743,9 +812,14 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
               }))(carryForwardCity(stopEditor.dayId)))}
           days={days.map((d, i) => ({ id: d.id, label: dayLabel(d, i) }))}
           onClose={() => setStopEditor(null)}
-          onSaved={() => {
+          onSaved={(saved) => {
             setStopEditor(null)
-            bumpTravel()
+            // Merge the saved stop optimistically: replace on edit, append on add (no refetch).
+            setStops((st) =>
+              st.some((x) => x.id === saved.id)
+                ? st.map((x) => (x.id === saved.id ? saved : x))
+                : [...st, saved],
+            )
           }}
           onDelete={
             stopEditor.stop

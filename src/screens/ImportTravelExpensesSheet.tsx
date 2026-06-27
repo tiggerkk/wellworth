@@ -15,6 +15,7 @@ import {
   listTrips,
 } from '../data/travel'
 import { bumpTravel } from '../lib/travel-refresh'
+import { errorMessage } from '../lib/errors'
 import { effectiveCategories } from '../lib/travel-config'
 import {
   buildExpenses,
@@ -63,7 +64,7 @@ export function ImportTravelExpensesSheet() {
       setParsed(p)
     } catch (e) {
       setParsed(null)
-      setError(e instanceof Error ? e.message : 'Could not read the file.')
+      setError(errorMessage(e, 'Could not read the file.'))
     }
   }
 
@@ -116,7 +117,7 @@ export function ImportTravelExpensesSheet() {
       bumpTravel()
       setDone({ expenses: built.expenses.length, trips: groups.size, created })
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Import failed.')
+      setError(errorMessage(e, 'Import failed.'))
     } finally {
       setImporting(false)
     }

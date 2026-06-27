@@ -254,6 +254,15 @@ export class BookSearchRateLimitError extends Error {
   }
 }
 
+/**
+ * Whether a Google Books API key is configured. Keyless searches hit a tiny per-IP quota (aggressive
+ * 429s), so the importer keeps concurrency low without a key; with one, the higher project quota lets
+ * it raise the worker pool. Build-time (`VITE_`), so this is constant for the deployed build.
+ */
+export function hasGoogleBooksApiKey(): boolean {
+  return Boolean(import.meta.env.VITE_GOOGLE_BOOKS_API_KEY)
+}
+
 function googleKeyParam(): string {
   const key = import.meta.env.VITE_GOOGLE_BOOKS_API_KEY
   return key ? `&key=${encodeURIComponent(key)}` : ''
