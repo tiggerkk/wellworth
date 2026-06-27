@@ -502,12 +502,15 @@ and run the two commands again. Once the commit succeeds:
 Three maintenance jobs: **M1** wipes + rebuilds everything, **M2** refreshes the starter activities,
 and **M3** resets one module's data while leaving the others intact.
 
-Only **Wellness** has seed data: the owner's **profile** + **activity library** are re-seeded on the
-next sign-in (idempotent — only when that data is missing), and the **nutrient** reference table is
-seeded by a migration (not on login). **Net Worth, Shows, Books, Quotes, and Travel have no seed data**
-(the **Medical** `medical_lab_test` reference is migration-seeded) — their tables
-(`networth_snapshot`/`asset_entry`, `show`, `book`, `quote`, and the Travel five `trip`/`trip_day`/`stop`/
-`trip_expense`/`remembered_city`) come back **empty** after a reset and are filled entirely by you in the app.
+Seed data by module:
+
+- Only **Wellness** has seed data: the owner's **profile** + **activity library** are re-seeded on the
+  next sign-in (idempotent — only when that data is missing), and the **nutrient** reference table is
+  seeded by a migration (not on login).
+- **Net Worth, Shows, Books, Quotes, and Travel have no seed data** (the **Medical** `medical_lab_test`
+  reference is migration-seeded) — their tables (`networth_snapshot`/`asset_entry`, `show`, `book`,
+  `quote`, and the Travel five `trip`/`trip_day`/`stop`/`trip_expense`/`remembered_city`) come back
+  **empty** after a reset and are filled entirely by you in the app.
 
 > ⚠️ These act on your **live** Supabase project. There is no undo. Make sure you mean it.
 

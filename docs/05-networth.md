@@ -47,10 +47,12 @@ entries yet" · "+ Monthly Entry").
 - **Copy-forward** = clone the prior month's `asset_entry` rows (same names/currencies/details),
   then re-fetch FX and recompute `value_base`. The user only updates `value_native` for the new month.
 
-FX: Frankfurter returns the most recent rate on or before the requested date (handles non-trading
-days). Fetched rates are frozen on first write. HKD is always 1 (never fetched); CNY is stored as
-the `CNY` code (no RMB→CNY alias). Failures are non-fatal; the user can override manually. The
-fetched/overridden rate is written to `fx_rate_to_base` alongside `value_base`.
+- FX: Frankfurter returns the most recent rate on or before the requested date (handles non-trading
+  days).
+- Fetched rates are frozen on first write.
+- HKD is always 1 (never fetched); CNY is stored as the `CNY` code (no RMB→CNY alias).
+- Failures are non-fatal; the user can override manually.
+- The fetched/overridden rate is written to `fx_rate_to_base` alongside `value_base`.
 
 ---
 
@@ -80,9 +82,10 @@ fetched/overridden rate is written to `fx_rate_to_base` alongside `value_base`.
 - `created_at`, `updated_at`
 - Index on (`user_id`, `snapshot_id`)
 
-`asset_entry` cascades on snapshot delete. **No soft-delete** — each month is a complete,
-self-contained set of rows; deleting an entry simply omits it from that month, and prior months
-are intact. Migration: `supabase/migrations/03_networth_schema.sql`.
+- `asset_entry` cascades on snapshot delete.
+- **No soft-delete** — each month is a complete, self-contained set of rows; deleting an entry simply
+  omits it from that month, and prior months are intact.
+- Migration: `supabase/migrations/03_networth_schema.sql`.
 
 ---
 
@@ -106,11 +109,13 @@ All values are entered manually. `details` are preserved for reference only; the
 
 ### In-app CSV importer
 
-Real balances stay **out of the repo**. The **in-app importer** reads a local CSV and creates/replaces
-a month's snapshot + `asset_entry` rows. It is reusable for **any** month — bulk-replacing a month's
-holdings rather than typing them in. After the initial import, copy-forward takes over month to month.
-The importer is **idempotent per month** (re-running for a month replaces that month's entries, never
-duplicating them).
+- Real balances stay **out of the repo**.
+- The **in-app importer** reads a local CSV and creates/replaces a month's snapshot + `asset_entry`
+  rows.
+- It is reusable for **any** month — bulk-replacing a month's holdings rather than typing them in.
+- After the initial import, copy-forward takes over month to month.
+- The importer is **idempotent per month** (re-running for a month replaces that month's entries,
+  never duplicating them).
 
 - Template: `templates/networth-seed-template.csv` (sanitized example, committed). Filled copy must be gitignored (e.g. `templates/networth-seed.local.csv`).
 - **Number parsing:** CSV numbers may be quoted with thousands-separator commas (e.g. `"1,234,567.89"`) — the importer strips commas (and surrounding quotes) before converting to numeric, for both `value_native` and all detail values.

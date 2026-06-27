@@ -189,24 +189,35 @@ Wellness-module sub-settings. Auto-save on change.
 
 ## External APIs (Wellness-only)
 
-**USDA FoodData Central** (`api.nal.usda.gov/fdc/v1`): free `api.data.gov` key
-(`VITE_USDA_API_KEY`). **Search uses POST** `/foods/search` with a JSON body — the GET form 400s when
-`dataType` includes `"Survey (FNDDS)"`. `searchFoods` issues **two POST searches** — the whole-food
-databases (`Foundation`/`SR Legacy`/`Survey (FNDDS)`) and `Branded` — and merges them whole-foods-first.
-This is deliberate: a single combined search ranks the thousands of identical Branded exact-name products
-above every varied whole-food entry. Branded duplicates (same name + brand) are then collapsed and
-capped. USDA matches **whole tokens**, so a partial word returns nothing; `searchFoods` wildcards the
-last word at a stem (`food-search.ts#toUsdaWildcardQuery`) so partial/plural input returns the same set.
-Detail is `GET /food/{fdcId}`. Map nutrients on the stable INFOODS **`nutrient.number`** (e.g. 208
-energy kcal, 320 vitamin A µg RAE, 435 folate µg DFE, 328 vitamin D µg, 312 copper mg). USDA amounts
-are per 100 g. When a USDA food is favorited or logged, cache a copy into `food` (`source`, `external_id`);
-plain search hits aren't persisted. Source of truth for nutrient mappings: `src/lib/food-api.ts`.
+**USDA FoodData Central** (`api.nal.usda.gov/fdc/v1`): free `api.data.gov` key (`VITE_USDA_API_KEY`).
+Detail is `GET /food/{fdcId}`; amounts are per 100 g.
 
-**Open Food Facts** (`world.openfoodfacts.org/api/v2/product/{barcode}.json`): free, global. **Every
-`*_100g` value is in grams** (including vitamins/minerals) → scale to our mg (×1000) / µg (×1e6).
-Sodium = `salt_100g / 2.5 × 1000` when `sodium_100g` is absent. All fields optional/sparse. Scanned
-products save into Custom. Source of truth for nutrient mappings (with per-field scale factor):
-`src/lib/off-api.ts`.
+- **Search uses POST, not GET (F2):** `searchFoods` POSTs `/foods/search` with a JSON body — a GET
+  whose `dataType` includes `"Survey (FNDDS)"` returns HTTP 400 (the space/parens) and yields stale
+  `fdcId`s that then 404 on the detail endpoint.
+- **Two POST searches, merged whole-foods-first (F6):** issue separate searches for the whole-food
+  databases (`Foundation`/`SR Legacy`/`Survey (FNDDS)`) and `Branded`, then merge whole-foods-first —
+  a single combined search ranks the thousands of identical Branded exact-name products above every
+  varied whole-food entry. Branded duplicates (same name + brand) are collapsed and capped.
+- **Stem-wildcard the last word (F6):** USDA matches **whole tokens**, so a partial word returns
+  nothing — `searchFoods` wildcards the last word at a STEM (`food-search.ts#toUsdaWildcardQuery`,
+  `blueberr*` not the raw word) so partial/plural input recalls the same set. Exact + leading-prefix
+  matches share the top score tier so the nutrient-count tiebreak surfaces the fuller food.
+- **Plain-block results pane (F6):** the results scroll pane must be a plain block
+  `flex-1 overflow-y-auto`, not a flex-col (which shrinks the results card — see `01-design-system.md`
+  → Layout gotchas).
+- Map nutrients on the stable INFOODS **`nutrient.number`** (e.g. 208 energy kcal, 320 vitamin A µg
+  RAE, 435 folate µg DFE, 328 vitamin D µg, 312 copper mg). When a USDA food is favorited or logged,
+  cache a copy into `food` (`source`, `external_id`); plain search hits aren't persisted. Source of
+  truth for nutrient mappings: `src/lib/food-api.ts`.
+
+**Open Food Facts** (`world.openfoodfacts.org/api/v2/product/{barcode}.json`): free, global.
+
+- **Every `*_100g` value is in grams** (including vitamins/minerals) → scale to our mg (×1000) / µg
+  (×1e6).
+- Sodium = `salt_100g / 2.5 × 1000` when `sodium_100g` is absent.
+- All fields optional/sparse. Scanned products save into Custom.
+- Source of truth for nutrient mappings (with per-field scale factor): `src/lib/off-api.ts`.
 
 CJK-aware search (`searchZhVariants`) applies to USDA text search (see `docs/02-tech-spec.md` →
 Shared external APIs).

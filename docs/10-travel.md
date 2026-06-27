@@ -91,14 +91,15 @@ literal **"Edit Trip"**.
 
 ### City Picker (modal, from a Stop's City Lookup)
 
-Seeded with the stop's current City; searches as you type: **remembered cities** match instantly, and
-a **Nominatim** lookup runs automatically (debounced) and lists **Search results**. Selecting any result
-resolves City / Province / Country (province snapped to **CHINA_PROVINCES** for China), caches it in
-`remembered_city`, and returns it to the stop. Manual entry is the fallback: the **Enter manually…**
-disclosure toggle at the bottom is **collapsed by default** (preventing accidental use when search
-results are present); it **auto-expands when search finds nothing**. When expanded: Country (defaults
-to `中国`, recognised by `isChina()`), Province (a CHINA_PROVINCES select for China, else free text),
-and a **Use "city"** PrimaryButton.
+- Seeded with the stop's current City; searches as you type: **remembered cities** match instantly,
+  and a **Nominatim** lookup runs automatically (debounced) and lists **Search results**.
+- Selecting any result resolves City / Province / Country (province snapped to **CHINA_PROVINCES** for
+  China), caches it in `remembered_city`, and returns it to the stop.
+- Manual entry is the fallback: the **Enter manually…** disclosure toggle at the bottom is **collapsed
+  by default** (preventing accidental use when search results are present); it **auto-expands when
+  search finds nothing**.
+- When expanded: Country (defaults to `中国`, recognised by `isChina()`), Province (a CHINA_PROVINCES
+  select for China, else free text), and a **Use "city"** PrimaryButton.
 
 ### Settings (`/travel/settings`)
 
@@ -133,6 +134,9 @@ and a **Use "city"** PrimaryButton.
   orange (`warning`), Visited = teal (`positive`) — via the shared `StatusChip`.
 - **Map**: Leaflet over OSM tiles; **accent** dots (`accent` = visited) / **neutral** dots
   (`text-secondary` = planned), clustered; the visited-region fill is `positive` at low opacity.
+- **Map overlay z-index (F14):** any DOM overlay over the Leaflet map (e.g. the multi-trip chooser)
+  needs an explicit `z-index` above Leaflet's controls (`.leaflet-top/.leaflet-bottom` are
+  `z-index:1000`) — use `z-[1100]`; otherwise the controls paint over it and swallow taps.
 - **Expense breakdown**: a small Recharts donut over the categories (HKD-equivalent), lazy-loaded
   into its own chunk.
 - **Reorder / category editors**: drag handles via the shared `ReorderList`; the category editor is

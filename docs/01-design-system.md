@@ -175,6 +175,18 @@ flex flex-col`, or `h-full` for Zen) so the `flex-1` fills the real content area
   tracked-test grid so many render cheaply without a chart library. The full trend chart
   (`MedicalTrendChart`, recharts) is **lazy-loaded** only when a sparkline is expanded.
 
+## Layout gotchas
+
+- **Flex scroll panes (F6c/F9):** a flex-col scroll pane needs `min-h-0` on ITSELF **and** `shrink-0`
+  on EVERY direct child. A flex item's default `min-height:auto` makes the pane grow to fit content
+  (then `overflow-hidden` clips it / the whole `<main>` scrolls); once height-constrained, default
+  `flex-shrink:1` squishes children. Don't reach for a fixed pixel height; make a simple scroll pane a
+  plain block `flex-1 overflow-y-auto`.
+- **Overlays over third-party widgets (F14, general form):** a DOM overlay layered over a map or other
+  third-party widget needs an explicit `z-index` above that widget's own controls (e.g. Leaflet's
+  `.leaflet-top/.leaflet-bottom` sit at `z-index:1000`, so use `z-[1100]`), or the widget's controls
+  swallow taps.
+
 ## Icons
 
 Tabler Icons (or lucide-react), outline style. Mapping used in the wireframes:
@@ -190,9 +202,10 @@ icon↔group mapping lives in `constants/groups.ts`.
 
 ## Button convention
 
-Action buttons live in the **top-right of the screen/sheet header** at the compact `sm` size, rendered
-as **icons** via the shared **`EntryHeaderActions`** (see above): form screens show **Delete** (trash,
-editing only) · **Reset** (undo) · **Create** (plus, new) / **Save** (floppy, editing); logging sheets
-that add to the Diary keep a single **plus** (Add) in create mode. No bottom action bar. The header
-title sits left of the actions and **clamps to 2 lines with an ellipsis** when long. **Settings
-sub-screens auto-save on change.**
+- Action buttons live in the **top-right of the screen/sheet header** at the compact `sm` size,
+  rendered as **icons** via the shared **`EntryHeaderActions`** (see above): form screens show
+  **Delete** (trash, editing only) · **Reset** (undo) · **Create** (plus, new) / **Save** (floppy,
+  editing); logging sheets that add to the Diary keep a single **plus** (Add) in create mode.
+- No bottom action bar.
+- The header title sits left of the actions and **clamps to 2 lines with an ellipsis** when long.
+- **Settings sub-screens auto-save on change.**

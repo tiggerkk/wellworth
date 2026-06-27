@@ -24,9 +24,10 @@ that matters there:
 - **Recently Watched** — the last 5 by finish date; rows show the **"Watched"** chip + stars + the
   finish date as **month + day** (e.g. "Jun 22"). Imported rows with no `end_date` don't appear here.
 
-A small favourite rows anywhere shows a filled **♥** before the title. Status chip palette: **Want** =
-blue, **Watching** = orange, **Watched** = teal, **Dropped** = grey (the shared `StatusChip`).
-A small stat line: **"N watched this year"**.
+- A small favourite rows anywhere shows a filled **♥** before the title.
+- Status chip palette: **Want** = blue, **Watching** = orange, **Watched** = teal, **Dropped** = grey
+  (the shared `StatusChip`).
+- A small stat line: **"N watched this year"**.
 
 ### Library
 
@@ -87,10 +88,11 @@ Reached from the **New Show** bottom-nav tab (`/shows/entry`, new) or by tapping
 
 ### Title Search (local overlay inside Entry)
 
-Not a route sheet — a local overlay so the Entry form draft survives. A search bar over
-poster-thumbnail result rows (poster · title · year · type badge), scoped to the current Type toggle
-(documentary searches /tv) and **CJK-aware**. Tapping a result populates the live form and closes.
-Shows a hint if `VITE_TMDB_API_KEY` is unset.
+- Not a route sheet — a local overlay so the Entry form draft survives.
+- A search bar over poster-thumbnail result rows (poster · title · year · type badge), scoped to the
+  current Type toggle (documentary searches /tv) and **CJK-aware**.
+- Tapping a result populates the live form and closes.
+- Shows a hint if `VITE_TMDB_API_KEY` is unset.
 
 ### Settings
 

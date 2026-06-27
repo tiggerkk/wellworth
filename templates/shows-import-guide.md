@@ -49,14 +49,10 @@ in the preview; everything else imports.
 
 ## How resolution works
 
-For each row the importer searches TMDB for the title (scoped to `type`, Chinese-aware for CJK titles)
-and takes the **top hit**, filling in poster, genres, director/creator, top cast, overview, runtime, and
-(episodic) season/episode totals. Rows where the top hit's title differs from yours are **flagged for
-review**, and rows TMDB can't find are flagged **No match** — open either and pick the right title (or
-skip to keep it). A niche documentary with **no match** imports with **null TMDB metadata and no poster**;
-top it up later by hand (paste a **Poster URL** on the Entry form) or via **Refresh from TMDB** once it's
-been contributed to TMDB. **Dates come from your file** — `watched` rows carry their finish date, so
-imported history shows in both the Library **and** the Dashboard's "Recently Watched".
+- For each row the importer searches TMDB for the title (scoped to `type`, Chinese-aware for CJK titles) and takes the **top hit**, filling in poster, genres, director/creator, top cast, overview, runtime, and (episodic) season/episode totals.
+- Rows where the top hit's title differs from yours are **flagged for review**, and rows TMDB can't find are flagged **No match** — open either and pick the right title (or skip to keep it).
+- A niche documentary with **no match** imports with **null TMDB metadata and no poster**; top it up later by hand (paste a **Poster URL** on the Entry form) or via **Refresh from TMDB** once it's been contributed to TMDB.
+- **Dates come from your file** — `watched` rows carry their finish date, so imported history shows in both the Library **and** the Dashboard's "Recently Watched".
 
 Re-importing is **idempotent**: a row updates the existing show with the same case-insensitive
 **title** (type-agnostic), never a duplicate.

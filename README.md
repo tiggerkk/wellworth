@@ -7,22 +7,31 @@ Hand-off package for building **WellWorth** (a wellness + net-worth tracker PWA)
 - **CLAUDE.md** — always-on rules & conventions. Keep this at your repo root; Claude Code auto-loads it.
 - **docs/**
   - `00-PRD.md` — what we're building and why; the multi-module Home hub; scope (Wellness, Net Worth, Shows, Books, Quotes, Medical, Travel).
-  - `01-screens.md` — every screen and its behavior (functional spec).
-  - `02-tech-spec.md` — stack, architecture, folder layout, calculations, env vars, workflows.
-  - `03-data-model.md` — Postgres tables, RLS, relationships, multi-user readiness.
-  - `04-design-system.md` — exact dark-theme tokens and components from the approved wireframes.
-  - `05-seed-data.md` — full nutrient list (with visibility flags), the seeded activity library, the owner profile.
+  - `01-design-system.md` — dark-theme tokens, shared components, and the button/layout conventions.
+  - `02-tech-spec.md` — stack, architecture, folder layout, routing, DB conventions, shared APIs, env vars, quality gates, and the cross-cutting gotchas.
+  - `03-global.md` — navigation, first-run onboarding, global Settings, the `profile` table + seeds.
+  - `04-wellness.md` … `10-travel.md` — one spec per module (screens, calculations, external APIs, data model, seed data): Wellness, Net Worth, Shows, Books, Quotes, Medical, Travel.
   - `wireframes/` — drop screen screenshots here (optional).
-- **templates/** — `custom-foods-template.csv` + an import guide for bulk-adding custom foods/supplements (used by Library → **Import CSV**), `networth-seed-template.csv` + `networth-import-guide.md` for the Net Worth importer, `shows-import-template.csv` + `shows-import-guide.md` for the Shows importer, `books-import-template.csv` + `books-import-guide.md` for the Books importer, `quotes-import-template.csv` + `quotes-import-guide.md` for the Quotes importer, and for **Medical** the `medical-extraction-prompt.md` (model-agnostic AI prompt), `medical-import.schema.json` (JSON shape + CSV header), and a sanitized `medical-import-template.json`, and for **Travel** the `travel-expenses-template.csv` + `travel-expenses-import-guide.md` (wide expenses CSV) and `travel-itinerary.schema.json` + `travel-itinerary-prompt.md` (itinerary JSON) (sanitized examples; your real balances / watch + reading history / quote collection / **lab results + report PDFs** / **trip + expense files** stay gitignored).
+- **templates/** — sanitized example import files + guides (your real balances / watch + reading history / quote collection / **lab results + report PDFs** / **trip + expense files** stay gitignored):
+  - **Wellness** — `custom-foods-template.csv` + an import guide for bulk-adding custom foods/supplements (Library → **Import CSV**).
+  - **Net Worth** — `networth-seed-template.csv` + `networth-import-guide.md`.
+  - **Shows** — `shows-import-template.csv` + `shows-import-guide.md`.
+  - **Books** — `books-import-template.csv` + `books-import-guide.md`.
+  - **Quotes** — `quotes-import-template.csv` + `quotes-import-guide.md`.
+  - **Medical** — `medical-extraction-prompt.md` (model-agnostic AI prompt), `medical-import.schema.json` (JSON shape + CSV header), and a sanitized `medical-import-template.json`.
+  - **Travel** — `travel-expenses-template.csv` + `travel-expenses-import-guide.md` (wide expenses CSV); `travel-itinerary.schema.json` + `travel-itinerary-prompt.md` (itinerary JSON).
 
 ## Project documentation
 
-After the Phase-1 build, three living docs sit alongside the spec in `docs/`:
+After the Phase-1 build, three living docs sit alongside the spec in `docs/`. The first two are read
+on demand, not every session:
 
-- [`docs/BUILD-LOG.md`](docs/BUILD-LOG.md) — engineering history: the build sequence per milestone,
-  the rationale behind key decisions, and "we tried X, it failed, here's why" warnings. Read this to
-  understand how the existing app was built before changing it.
-- [`docs/PARKED.md`](docs/PARKED.md) — everything deliberately deferred or out of scope (multi-user, re-log/restore, etc.), with decisions already made so they aren't re-litigated.
+- [`docs/BUILD-HISTORY.md`](docs/BUILD-HISTORY.md) — chronological engineering history: the
+  per-milestone build sequence + dated enhancement passes, with the rationale behind key decisions.
+  Read it only for a deep refactor or regression analysis on an older module — durable constraints and
+  "don't repeat" gotchas now live in the spec docs.
+- [`docs/PARKED.md`](docs/PARKED.md) — the deferred / out-of-scope backlog (multi-user sharing,
+  re-log/restore, etc.), with decisions already made so they aren't re-litigated. Read on request.
 - [`docs/OWNER-RUNBOOK.md`](docs/OWNER-RUNBOOK.md) — non-developer, step-by-step setup: Supabase,
   Google OAuth, the USDA key, env vars, migrations, running locally, GitHub, the Vercel + iOS deploy,
   and (Part Q) **encrypted DB backups + free-tier keep-alive**. Enough to stand up the whole app from a
@@ -35,7 +44,7 @@ a private repo); see OWNER-RUNBOOK Part Q.
 ## How to use it
 
 1. Unzip into your project folder (`CLAUDE.md` at the root, `docs/` beside it).
-2. Open the folder in Trae.ai and follow **SETUP.md**.
+2. Follow **[`docs/OWNER-RUNBOOK.md`](docs/OWNER-RUNBOOK.md)** to set up Supabase, Google OAuth, env vars, and the Vercel + iOS deploy. The app is developed with Claude Code (see `CLAUDE.md`).
 3. Build **one milestone at a time**. Wellness, Net Worth, Shows, Books, Quotes, Medical, and Travel have all shipped (feature-complete).
 
 ## Phasing

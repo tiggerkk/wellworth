@@ -2,11 +2,22 @@
 
 WellWorth is a personal (later: small-family) wellness, net-worth, and media tracker. It is built as an installable PWA so it runs on iPhone and iPad with no Apple Developer account.
 
-**Read `/docs` before planning or building.** The spec docs there are the source of truth.
-(`docs/BUILD-LOG.md` is a non-spec engineering history — build sequence, rationale, and past-failure warnings — not a source of truth for behavior.)
+**Read the core spec docs before planning or building — not all of `/docs`.** The spec docs are the
+source of truth and now carry the durable architectural constraints + "don't repeat" gotchas (formerly
+in the build log).
 
-**Before changing existing code, read `docs/BUILD-LOG.md`** to understand how the app was built and
-which past approaches failed (and see `docs/PARKED.md` for what's intentionally deferred).
+- **Always read first (cross-cutting):** `docs/00-PRD.md` (scope + non-goals),
+  `docs/01-design-system.md` (tokens, shared components, conventions), `docs/02-tech-spec.md`
+  (architecture, routing, DB patterns, gotchas), and `docs/03-global.md` (navigation, onboarding,
+  global Settings, the `profile` table + seeds). These four cover normal work, **including changing
+  existing code**.
+- **Read on demand:** a module spec (`docs/04-wellness.md` … `10-travel.md`) only when a bug or
+  enhancement touches that module — see the [Modules](#modules) table below.
+- **`docs/BUILD-HISTORY.md`** — non-spec chronological engineering history (build sequence + dated
+  enhancement passes). **Read only when explicitly asked** to do a major refactor or regression
+  analysis on an older module.
+- **`docs/PARKED.md`** — deferred / out-of-scope backlog. **Read only when explicitly asked** about
+  deferred work or whether something was intentionally not built.
 
 ## Keep the docs in sync (every change — without being asked)
 
@@ -16,8 +27,10 @@ not wait to be reminded:
 - **Spec docs** (`/docs/00-PRD.md`, `01-design-system.md`, `02-tech-spec.md`, `03-global.md`,
   `04-wellness.md` … `10-travel.md`) — the behavior/data source of truth. Update when a screen's
   behavior, the data model, seed data, or the design system changes.
-- **`docs/BUILD-LOG.md`** — append the rationale for notable changes (schema changes, migrations, new patterns) and add any new "don't repeat this" lesson to its Failures list. Keep the Snapshot facts
-  current (test count, deploy status).
+- **`docs/BUILD-HISTORY.md`** — append the milestone/enhancement narrative + rationale for notable
+  changes (schema changes, migrations, new patterns), and keep its Snapshot (test count, deploy status)
+  current. Put the distilled "don't repeat" lesson + any new durable constraint in the relevant **spec
+  doc** (with its `F#` anchor), not buried in the history.
 - **`docs/PARKED.md`** — remove an item when it's built; add one when something is deliberately deferred or a limitation is discovered.
 - **`docs/OWNER-RUNBOOK.md`** — update when setup, scripts, env vars, migrations, or deploy/reset steps change (it must still stand up the app from a fresh clone).
 - **`README.md`** — update if the top-level overview or file/doc layout changes.

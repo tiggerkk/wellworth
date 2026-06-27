@@ -35,7 +35,7 @@ Status legend: **Net Worth** (built) · **Deferred** (later) ·
 
 **What:** A private multi-year record of lab results + narrative reports, with trend charts; intake via
 manual entry or a structured JSON/CSV import (no in-app OCR); Google-Drive-URL storage; a biometric/PIN
-lock. **Shipped** end-to-end (see BUILD-LOG → "Medical Build Sequence"; behaviour lives in the permanent
+lock. **Shipped** end-to-end (see BUILD-HISTORY → "Medical Build Sequence"; behaviour lives in the permanent
 `/docs`). The items below are decided **Medical** non-goals / deferrals so they aren't re-litigated:
 
 - **Alternate Dashboard trend layouts (one-chart-with-selector, sparkline-vs-chart Settings toggle)** —
@@ -73,7 +73,7 @@ lock. **Shipped** end-to-end (see BUILD-LOG → "Medical Build Sequence"; behavi
 
 ### Add-Food filter/sort control · Deferred
 
-**What:** A user-facing filter/sort control on Add Food (an earlier `01-screens.md` draft mentioned one; only search + the All/Favorites/Custom tabs were built, and that mention has since been removed).
+**What:** A user-facing filter/sort control on Add Food (an earlier draft in the old `01-screens.md` — whose behaviour now lives in the module specs `04-wellness.md`…`10-travel.md` + `03-global.md` — mentioned one; only search + the All/Favorites/Custom tabs were built, and that mention has since been removed).
 **Why deferred:** Search + tabs proved sufficient for a single user, and results now auto-sort by name-match relevance then nutrient count (`food-search.ts`), which covers the common need; a manual sort/filter is polish.
 **Decided:** Would let the user re-sort/filter the combined result list (e.g. by source, recency, or name).
 
@@ -243,15 +243,23 @@ search first also validates the `opencc-js` engine choice before the display wor
 **What:** Component/integration tests; tests for `src/data/*` repositories.
 **Why deferred:** The suite unit-tests the pure calc/mapping helpers (the spec's named targets, plus the CSV-parse, food/shows/books/quotes-import, quantity, and search helpers — 230+ tests). Repos are thin wrappers verified manually + by `tsc` against the generated schema.
 
+### Initial JS bundle size · Deferred
+
+**What:** The initial JS bundle is ~567 kB (`supabase-js` + `react-router` + tabler).
+**Why deferred:** Acceptable for a personal PWA; not further optimized.
+
 ---
 
 ## Multi-user / family · **Per-member login + onboarding SHIPPED** (sharing still deferred)
 
-**What shipped:** Multiple family members, each their own Google account + strictly-private data. Each
-member is allow-listed (`VITE_ALLOWED_EMAILS`), the owner is identified by `VITE_OWNER_EMAIL`
-(`isOwnerEmail`), non-owners get the neutral `MEMBER_PROFILE_SEED` (no owner body metrics) and are
-forced through the **Onboarding** wizard (`src/screens/Onboarding.tsx`, gated in `AppShell`) via the
-`profile.onboarded_at` flag. No schema-wide change — RLS already isolated every table per `user_id`.
+**What shipped:**
+
+- Multiple family members, each their own Google account + strictly-private data.
+- Each member is **allow-listed** (`VITE_ALLOWED_EMAILS`); the owner is identified by `VITE_OWNER_EMAIL`
+  (`isOwnerEmail`).
+- Non-owners get the neutral `MEMBER_PROFILE_SEED` (no owner body metrics) and are forced through the
+  **Onboarding** wizard (`src/screens/Onboarding.tsx`, gated in `AppShell`) via the `profile.onboarded_at` flag.
+- No schema-wide change — RLS already isolated every table per `user_id`.
 
 **Still deferred:** shared/household data and a couple of known limitations:
 
@@ -262,7 +270,7 @@ forced through the **Onboarding** wizard (`src/screens/Onboarding.tsx`, gated in
 - **Base currency is global HKD** (`BASE_CURRENCY` in `src/lib/networth.ts`; Travel converts to HKD).
   Not per-member — revisit as its own task (FX rework) if a member needs a different base.
 - **Shared household custom foods / shared net worth / shared trips** would be an **additive** change:
-  a nullable `household_id` + a shared-visibility RLS policy (per `03-data-model.md`), not a rebuild.
+  a nullable `household_id` + a shared-visibility RLS policy (per `02-tech-spec.md`'s "Database conventions"), not a rebuild.
   Strictly-private is the current, intended model.
 - **Allowlist + owner are build-time `VITE_*`** — adding a member or changing the owner needs a
   **redeploy**, not a runtime change.
@@ -275,6 +283,7 @@ forced through the **Onboarding** wizard (`src/screens/Onboarding.tsx`, gated in
 - **Social features, ads, third-party tracking/analytics** — non-goals (PRD).
 - **Medical-device claims** — nutrient targets are public-DRI guidance, not medical advice.
 - **Native app / App Store** — the whole point is a free installable PWA (no Apple Developer account).
+- **Barcode scanning needs an HTTPS origin** — the scanner works on the deployed PWA (or an HTTPS tunnel), not over a plain `http://<LAN-ip>` address (a browser secure-context requirement).
 - **Quotes — "Discover Quotes" / external quote fetch** (the Wikiquote + TV-quotes routing engine) —
   **parked.** The reliability and CORS of those sources are unproven, and manual entry + the `?text=`
   prefill + the CSV importer cover the need. The `language` field is kept so routing could be added
@@ -282,7 +291,7 @@ forced through the **Onboarding** wizard (`src/screens/Onboarding.tsx`, gated in
 - **Quotes — Traditional vs Simplified Chinese `language` value** — the `language` enum keeps a single
   `zh` (no Trad/Simp split of the stored field). Note this is now narrower than it once was: **search**
   _is_ script-agnostic across all modules (Traditional⇄Simplified matching shipped — see
-  `BUILD-LOG.md` → "Variant-agnostic Chinese search"), and a display-only **script toggle** is a
+  `BUILD-HISTORY.md` → "Variant-agnostic Chinese search"), and a display-only **script toggle** is a
   Deferred item above — but neither splits or rewrites the stored `language`/text values.
 - **Quotes — direct Apple Books integration** — not possible from a PWA; the ingestion path is
   copy-paste, the **Paste from clipboard** button, the CSV importer, and the optional Apple **Shortcut**

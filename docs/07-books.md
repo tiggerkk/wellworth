@@ -16,9 +16,10 @@ shows its **status chip** (Want / Reading / Read / Dropped) consistently across 
 - **Want to Read** — `status=want` titles; each with the blue **"Want"** chip + author(s) and a
   **Start Reading** action (status → reading, start → today).
 
-A favourite row anywhere shows a small filled **♥** before the title. Status chip palette: **Want** =
-blue, **Reading** = orange, **Read** = teal, **Dropped** = grey (the shared `StatusChip`).
-A small stat line: **"N read this year"**.
+- A favourite row anywhere shows a small filled **♥** before the title.
+- Status chip palette: **Want** = blue, **Reading** = orange, **Read** = teal, **Dropped** = grey
+  (the shared `StatusChip`).
+- A small stat line: **"N read this year"**.
 
 ### Library
 
@@ -64,10 +65,11 @@ edit).
 
 ### Book Search (local overlay inside Entry)
 
-Not a route sheet — a local overlay so the Entry form draft survives. A search bar over
-cover-thumbnail result rows (cover · title · author(s) · year). Tapping a result populates the live
-form and closes. Results from **Google Books**, falling back to **Open Library** when Google returns
-nothing. `VITE_GOOGLE_BOOKS_API_KEY` is optional (search works keyless at a lower quota).
+- Not a route sheet — a local overlay so the Entry form draft survives.
+- A search bar over cover-thumbnail result rows (cover · title · author(s) · year).
+- Tapping a result populates the live form and closes.
+- Results from **Google Books**, falling back to **Open Library** when Google returns nothing.
+- `VITE_GOOGLE_BOOKS_API_KEY` is optional (search works keyless at a lower quota).
 
 ### Settings
 
@@ -102,16 +104,21 @@ Full guide: `templates/books-import-guide.md`.
 
 ## External APIs (Books-only)
 
-**Google Books** (`www.googleapis.com/books/v1/volumes`): **optional** `VITE_GOOGLE_BOOKS_API_KEY`
-(raises quota; search works keyless without it — never throws when unset). Search queries
-`q=title+inauthor:author` for the top hit; details expand `categories`, `pageCount`, `language`,
-`description`, `imageLinks.thumbnail` (a full image URL — no CDN base). CJK-aware: `searchZhVariants`
-(see `docs/02-tech-spec.md`) fires in both scripts. `cover_url` is stored as the full image URL, no prefix.
-Persist only on CREATE/SAVE.
+**Google Books** (`www.googleapis.com/books/v1/volumes`):
 
-**Open Library** (`openlibrary.org/search.json`): free, no key. Fallback when Google Books returns
-nothing. Returns work + edition keys; cover URLs follow `https://covers.openlibrary.org/b/id/{id}-M.jpg`.
-`open_library_id` stored for future re-fetch.
+- **optional** `VITE_GOOGLE_BOOKS_API_KEY` (raises quota; search works keyless without it — never
+  throws when unset).
+- Search queries `q=title+inauthor:author` for the top hit; details expand `categories`, `pageCount`,
+  `language`, `description`, `imageLinks.thumbnail` (a full image URL — no CDN base).
+- CJK-aware: `searchZhVariants` (see `docs/02-tech-spec.md`) fires in both scripts.
+- `cover_url` is stored as the full image URL, no prefix.
+- Persist only on CREATE/SAVE.
+
+**Open Library** (`openlibrary.org/search.json`): free, no key.
+
+- Fallback when Google Books returns nothing.
+- Returns work + edition keys; cover URLs follow `https://covers.openlibrary.org/b/id/{id}-M.jpg`.
+- `open_library_id` stored for future re-fetch.
 
 ---
 

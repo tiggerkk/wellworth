@@ -1,12 +1,11 @@
 # Bulk-import template — custom foods & supplements
 
-Fill in **`custom-foods-template.csv`** (one row per item) and it becomes rows in the `food` table
-(plus the `serving` table). Everything you upload this way is stored as a **custom** food
-(`source = 'custom'`), so it shows under the **Custom** tab and — if you tick `is_favorite` —
-the **Favorites** tab, while the USDA search / **All** tab keeps working unchanged.
+- Fill in **`custom-foods-template.csv`** (one row per item) and it becomes rows in the `food` table (plus the `serving` table).
+- Everything you upload this way is stored as a **custom** food (`source = 'custom'`), so it shows under the **Custom** tab and — if you tick `is_favorite` — the **Favorites** tab, while the USDA search / **All** tab keeps working unchanged.
 
-You only fill the columns you have data for. **Blank cells are ignored** (the nutrient is simply
-not stored for that item). The only truly required column is `name`.
+- You only fill the columns you have data for.
+- **Blank cells are ignored** (the nutrient is simply not stored for that item).
+- The only truly required column is `name`.
 
 > Tip: open the CSV in Excel / Google Sheets, delete any nutrient columns you'll never use, fill
 > the rest, then export back to CSV (UTF-8). Keep the header row exactly as the column keys below.
@@ -36,10 +35,10 @@ not stored for that item). The only truly required column is `name`.
 
 ### Servings (`serving1_name`/`serving1_grams`, …`serving3_*`)
 
-Optional named measures. `*_name` is free text (`1/2 cup`, `1 capsule`, `1 scoop`);
-`*_grams` is the weight of that measure in grams (numeric). Add as many of the three pairs as you
-need; leave the rest blank. For supplements, use the pill/scoop as the serving and put its actual
-weight (a small number like `0.3`) in grams.
+- Optional named measures.
+- `*_name` is free text (`1/2 cup`, `1 capsule`, `1 scoop`); `*_grams` is the weight of that measure in grams (numeric).
+- Add as many of the three pairs as you need; leave the rest blank.
+- For supplements, use the pill/scoop as the serving and put its actual weight (a small number like `0.3`) in grams.
 
 ### `nutrient_basis` — what the nutrient numbers mean
 

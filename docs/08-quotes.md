@@ -55,8 +55,9 @@
 
 ### Source Link (local overlay inside Entry)
 
-Not a route sheet — a local overlay so the Entry form draft survives. A search bar over rows showing
-local Show/Book records (cover/poster · title · author). Tapping a result binds the link and closes.
+- Not a route sheet — a local overlay so the Entry form draft survives.
+- A search bar over rows showing local Show/Book records (cover/poster · title · author).
+- Tapping a result binds the link and closes.
 
 ### Settings (`/quotes/settings`)
 
@@ -99,11 +100,13 @@ Full guide: `templates/quotes-import-guide.md`.
 
 ## Tech details
 
-`source_type` and `category` are **owner-configurable** — no CHECK constraint on the columns. Their
-allowed values are stored on the profile (`profile.quote_source_types` / `profile.quote_categories`)
-as JSONB arrays of `{key, label, linkKind?}` / `{key, label}` and resolved partial-tolerantly by
-`src/lib/quotes-config.ts` (`effectiveSourceTypes`/`effectiveCategories`). NULL = canonical seed
-defaults. Logic: `matchKeyOrLabel`, `generateKey`, add/rename/remove/reorder transforms.
+- `source_type` and `category` are **owner-configurable** — no CHECK constraint on the columns.
+- Their allowed values are stored on the profile (`profile.quote_source_types` /
+  `profile.quote_categories`) as JSONB arrays of `{key, label, linkKind?}` / `{key, label}` and
+  resolved partial-tolerantly by `src/lib/quotes-config.ts`
+  (`effectiveSourceTypes`/`effectiveCategories`).
+- NULL = canonical seed defaults.
+- Logic: `matchKeyOrLabel`, `generateKey`, add/rename/remove/reorder transforms.
 
 **Zen pool**: `initialZenPool` + `nextZenPool` + `randomItem` in `src/lib/quotes.ts` avoid repeats
 by maintaining a shuffled pool, drawing from it in order and refilling when exhausted.

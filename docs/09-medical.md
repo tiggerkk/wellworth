@@ -27,41 +27,39 @@ Tracked tests are chosen in Medical Settings → Tracked Tests (seeded from `def
 
 ### Reports (`/medical/reports`)
 
-Searchable/filterable/sortable list (no screen-title header), newest report-date first by default. A
-**Search bar** (placeholder "Search body part, narrative") with an **icon-only Filter button** to its
-right (see `docs/01-design-system.md` → FilterToggleButton). Empty → shared **EmptyState**; active
-search/filter with no matches → "No matches."
-
-Shared **FilterPanel** (label-free): **Any Type**, **Any Provider** (providers present in your own
-reports), **Any Body Part** — footer carries the **SortControl** next to **Clear Filters**. Sort over
-{ Date, Type, Provider, Body Part } with **asc/desc** toggle (newest-first within ties); default:
-**Date** descending.
-
-Each row: **full date** (with year — reports span years), the **type** label, and `provider · body part`
-as a secondary line. Tap → Report detail; **swipe-left → confirm → delete** (hard; the FK cascades
-the report's results). New reports from the **New Medical** bottom-nav tab.
+- Searchable/filterable/sortable list (no screen-title header), newest report-date first by default.
+- A **Search bar** (placeholder "Search body part, narrative") with an **icon-only Filter button** to
+  its right (see `docs/01-design-system.md` → FilterToggleButton). Empty → shared **EmptyState**;
+  active search/filter with no matches → "No matches."
+- Shared **FilterPanel** (label-free): **Any Type**, **Any Provider** (providers present in your own
+  reports), **Any Body Part** — footer carries the **SortControl** next to **Clear Filters**.
+- Sort over { Date, Type, Provider, Body Part } with **asc/desc** toggle (newest-first within ties);
+  default: **Date** descending.
+- Each row: **full date** (with year — reports span years), the **type** label, and
+  `provider · body part` as a secondary line. Tap → Report detail; **swipe-left → confirm → delete**
+  (hard; the FK cascades the report's results).
+- New reports from the **New Medical** bottom-nav tab.
 
 _Search, filter, and sort persist for the **browser-tab session** (`useSessionState`)._
 
 ### Report detail (`/medical/:id`)
 
-Read-only. Header: **Date - Type** (e.g. `May 4, 2026 - Health Screening`, with `· body part` when
-relevant) on line 1; **Provider** as secondary text on line 2; an **Edit** (pencil icon) action.
-
-Below: **Open original** link(s) for each Google Drive URL (`target="_blank" rel="noreferrer"`); a
-**Narrative** block when present; then **results grouped under uppercase category headers** in the
-seeded section + sort order (filtered to the tests this report contains). Each result row: `test name ·
-reference range` on the left, `value (+ unit)` on the right — value **coloured by flag** (high/abnormal =
-`danger` red, low = `info` blue). A "normalized from …" note when the value was unit-converted on
-import; an "uncertain" marker when set.
+- Read-only. Header: **Date - Type** (e.g. `May 4, 2026 - Health Screening`, with `· body part` when
+  relevant) on line 1; **Provider** as secondary text on line 2; an **Edit** (pencil icon) action.
+- Below: **Open original** link(s) for each Google Drive URL (`target="_blank" rel="noreferrer"`); a
+  **Narrative** block when present; then **results grouped under uppercase category headers** in the
+  seeded section + sort order (filtered to the tests this report contains).
+- Each result row: `test name · reference range` on the left, `value (+ unit)` on the right — value
+  **coloured by flag** (high/abnormal = `danger` red, low = `info` blue).
+- A "normalized from …" note when the value was unit-converted on import; an "uncertain" marker when set.
 
 ### Add / Edit Report (`/medical/entry`, `/medical/:id/edit`)
 
-Reached from the **New Medical** tab (new) or Report detail **Edit** button. On the New form, an
-**Import JSON…** accent link sits in the **header** between the title and action icons (when the
-importer is enabled). Top-right icon actions (Delete when editing · Reset · Create/Save) via shared
-**EntryHeaderActions**. Close (✕)/Escape returns without saving.
-
+- Reached from the **New Medical** tab (new) or Report detail **Edit** button.
+- On the New form, an **Import JSON…** accent link sits in the **header** between the title and action
+  icons (when the importer is enabled).
+- Top-right icon actions (Delete when editing · Reset · Create/Save) via shared **EntryHeaderActions**.
+- Close (✕)/Escape returns without saving.
 - **Parent fields:** **Report Date** (Calendar; defaults today) + **Type** (dropdown) share one line;
   **Provider** below; then **Body Part** (shown for mri/ultrasound/mammogram/other), **Narrative**, and
   **Document Links** (repeatable Google Drive URL rows). Optional fields hidden when trimmed in Medical
@@ -81,19 +79,19 @@ importer is enabled). Top-right icon actions (Delete when editing · Reset · Cr
 
 ### Import (sheet, from Medical Settings)
 
-Reached from **Medical Settings → Import JSON / CSV…** or the **Import** button on the New-Report form
-(both gated by the importer toggle). Choose a `.json` (preferred) or `.csv` file produced outside the
-app by an AI vision tool (see `templates/medical-extraction-prompt.md`).
-
-The parse applies **tolerant JSON repair** (auto-fixes a stray quote after a number, e.g. `8.6"`); an
-unparseable file shows a specific error (line/column). Each result is **matched to a reference test**
-(fuzzy, CJK-aware, via the provider-alias map in `src/lib/medical-import.ts`) and **unit-normalized**
-to the test's canonical unit (flagged, original kept).
-
-The **review** shows **counts per category** (to catch a skipped section), every parsed row in the same
-editor as manual entry (edit/add/remove; uncertain + normalized noted), and the report header — where
-you **paste the Drive link(s)**. **Save** writes idempotently: a report with the same date + type is
-**replaced**, so re-importing the same file never duplicates.
+- Reached from **Medical Settings → Import JSON / CSV…** or the **Import** button on the New-Report
+  form (both gated by the importer toggle). Choose a `.json` (preferred) or `.csv` file produced
+  outside the app by an AI vision tool (see `templates/medical-extraction-prompt.md`).
+- The parse applies **tolerant JSON repair** (auto-fixes a stray quote after a number, e.g. `8.6"`);
+  an unparseable file shows a specific error (line/column).
+- Each result is **matched to a reference test** (fuzzy, CJK-aware, via the provider-alias map in
+  `src/lib/medical-import.ts`) and **unit-normalized** to the test's canonical unit (flagged, original
+  kept).
+- The **review** shows **counts per category** (to catch a skipped section), every parsed row in the
+  same editor as manual entry (edit/add/remove; uncertain + normalized noted), and the report header —
+  where you **paste the Drive link(s)**.
+- **Save** writes idempotently: a report with the same date + type is **replaced**, so re-importing
+  the same file never duplicates.
 
 ### Settings (`/medical/settings`)
 
@@ -117,15 +115,16 @@ Sections in order: **Display**, **Report / Entry Form**, **Import**, **Security*
 
 ### Lock screen
 
-Shown over the whole Medical module when it's locked — on cold start and after the chosen idle timeout
-(always re-locks on restart). A **mandatory PIN** is always available; if a biometric unlock was
-registered it is **auto-attempted** on appearance and re-tryable via a button, silently falling back
-to the PIN on any failure. A small **"Forgot PIN? Sign out"** escape avoids a hard lockout.
-
-The lock is a client-side UX convenience gate on this device — the data is already private to the
-account via RLS; it is **not** a server-verified boundary. Implementation: `src/lib/medical-lock.ts`
-(PBKDF2 PIN + timeout/idle), `src/lib/medical-webauthn.ts` (platform authenticator). Components:
-`MedicalLockScreen` / `PinInput` (see `docs/01-design-system.md`).
+- Shown over the whole Medical module when it's locked — on cold start and after the chosen idle
+  timeout (always re-locks on restart).
+- A **mandatory PIN** is always available; if a biometric unlock was registered it is **auto-attempted**
+  on appearance and re-tryable via a button, silently falling back to the PIN on any failure.
+- A small **"Forgot PIN? Sign out"** escape avoids a hard lockout.
+- The lock is a client-side UX convenience gate on this device — the data is already private to the
+  account via RLS; it is **not** a server-verified boundary.
+- Implementation: `src/lib/medical-lock.ts` (PBKDF2 PIN + timeout/idle), `src/lib/medical-webauthn.ts`
+  (platform authenticator).
+- Components: `MedicalLockScreen` / `PinInput` (see `docs/01-design-system.md`).
 
 ---
 

@@ -18,6 +18,8 @@
 - **Barcode:** `@zxing/browser` (`BrowserMultiFormatReader`) + `@zxing/library` decoding the device
   camera via `getUserMedia`. Requires HTTPS (localhost is exempt for dev). The scanner is lazy-loaded
   so ZXing is a separate chunk, fetched only when scanning.
+- **F3** — `@zxing/browser@0.2` peers `@zxing/library@^0.22`: keep `@zxing/library` pinned at `0.22`.
+  Bumping it needs a matching `@zxing/browser` move, or `npm install` requires `--legacy-peer-deps`.
 - **Chinese search (Traditional⇄Simplified agnostic):** every search bar matches across scripts.
   **Local filters** normalize both query and row text with the sync `foldZh` (`src/lib/zh-fold.ts`),
   a single-char Traditional→Simplified fold over the generated `src/constants/zh-fold-map.ts` (built
@@ -30,6 +32,9 @@
   is **not** wrapped in `lazyWithReload`; a failed `import()` falls back to the typed query.
 - **Backend-as-a-service:** Supabase — Postgres, Auth (Google OAuth), auto-generated REST, RLS.
 - **Hosting:** Vercel / Netlify / Cloudflare Pages (any free tier; HTTPS automatic).
+- **F10** (TypeScript) — under TS 6 a bare `Uint8Array` is `Uint8Array<ArrayBufferLike>`, which is NOT
+  assignable to WebCrypto / WebAuthn `BufferSource` params: annotate byte helpers feeding those APIs as
+  `Uint8Array<ArrayBuffer>`. Don't use `as unknown as` casts.
 
 ## Folder structure
 
@@ -91,6 +96,17 @@ docs/                # the spec bundle
 UI (`screens` + `components`) → `data/*` repository functions → `supabase-js` query builder →
 Supabase (Postgres + RLS). Components hold no SQL and never import the Supabase client directly.
 
+- **F4** — `useAsync(fn)` takes a single `useCallback`-stable `fn` and exposes `refetch` — NOT a `deps`
+  array (the react-hooks lint rule rejects a variable deps array). Memoize `fn` at the call site.
+- **F8 + F13** — `useAsync` keeps the PREVIOUS `data` while a refetch is in flight (it flips
+  `loading=true` but retains the old `data`). Therefore:
+  - Gate a view on `!loading` ONLY when the loaded subject's IDENTITY changes (and key the component by
+    it) — e.g. Net Worth Monthly Entry switching months (**F8**).
+  - NEVER gate on `!loading` when a child holds unsaved LOCAL state across a same-subject refetch — it
+    unmounts the child and discards edits (**F13**, Travel Trip Builder); instead render once `data`
+    exists and show a first-load spinner only when `loading && !data`.
+  - Rule: a gate keyed on a fetched value reads `data`, never `loading`.
+
 ## Auth & first-run
 
 - Supabase Auth with the Google provider. The client is created once in `src/lib/supabase.ts` with
@@ -148,6 +164,11 @@ also sidesteps iOS PWA storage eviction).
 - After applying a migration, regenerate `src/types/database.ts` (`npm run gen:types`).
 - **Never drop a table** without explicit confirmation. Schema changes are migration files in
   `supabase/migrations/`; the human applies them with `supabase db push`.
+- **F7** (security) — gitignore any private-data file (real balances, watch/reading history, quote
+  collection, lab results + report PDFs, trip/expense files) BEFORE the first `git add`: gitignore only
+  stops FUTURE commits; a committed file persists in pushed history and must be purged with
+  `git filter-repo --invert-paths` + force-push. Tracked templates must be sanitized example data, never
+  real values (sanitize example numbers in docs too).
 
 ## Cross-module relationships
 
@@ -162,10 +183,11 @@ also sidesteps iOS PWA storage eviction).
 
 ## Multi-user readiness
 
-Because every table carries `user_id` and RLS isolates rows by `auth.uid()`, additional family
-members work with no schema change: they sign in with their own Google account and get their own
-`profile` and data automatically. A future "shared household custom foods" feature would be an
-additive change (e.g. a nullable `household_id` + a shared-visibility policy), not a rebuild.
+- Because every table carries `user_id` and RLS isolates rows by `auth.uid()`, additional family
+  members work with no schema change: they sign in with their own Google account and get their own
+  `profile` and data automatically.
+- A future "shared household custom foods" feature would be an additive change (e.g. a nullable
+  `household_id` + a shared-visibility policy), not a rebuild.
 
 ## Shared external APIs
 
@@ -197,7 +219,9 @@ VITE_GOOGLE_BOOKS_API_KEY=...  # optional, raises Google Books quota — Books
 
 ## Quality gates
 
-Prettier (format), ESLint (no unused, no `any`), `tsc --noEmit` (via `npm run typecheck` using
-`tsconfig.app.json`; a bare `tsc --noEmit` checks nothing — the root `tsconfig.json` is
-references-only), and Vitest for the calculation helpers. Wire them into a pre-commit hook and/or
-CI via `npm run check`.
+- **Prettier** (format).
+- **ESLint** (no unused, no `any`).
+- **F5** — type-check with `npm run typecheck` (`tsc --noEmit -p tsconfig.app.json`) or `tsc -b`. A bare
+  `tsc --noEmit` checks nothing — the root `tsconfig.json` is references-only (`files: []`).
+- **Vitest** for the calculation helpers.
+- Wire them into a pre-commit hook and/or CI via `npm run check`.

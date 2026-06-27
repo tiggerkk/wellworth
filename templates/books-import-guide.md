@@ -35,13 +35,9 @@ everything else imports.
 
 ## How resolution works
 
-For each row the importer searches Google Books for `title author` and takes the **top hit** (falling
-back to Open Library when Google has nothing), filling in cover, authors, year, description, genres,
-page count, language, and ISBN. Rows where the top hit's title differs from yours are **flagged for
-review**, and rows nothing can be found for are flagged **No match** — tap **Change** on either to pick
-the right book (or import as-is to keep it with the CSV values and no metadata, then fix it later from
-the Library). **Dates come from your file** — `start_date` on every row and `end_date` on read/dropped
-rows — so imported books sort correctly and finished ones show in the Dashboard's "Recently Read".
+- For each row the importer searches Google Books for `title author` and takes the **top hit** (falling back to Open Library when Google has nothing), filling in cover, authors, year, description, genres, page count, language, and ISBN.
+- Rows where the top hit's title differs from yours are **flagged for review**, and rows nothing can be found for are flagged **No match** — tap **Change** on either to pick the right book (or import as-is to keep it with the CSV values and no metadata, then fix it later from the Library).
+- **Dates come from your file** — `start_date` on every row and `end_date` on read/dropped rows — so imported books sort correctly and finished ones show in the Dashboard's "Recently Read".
 
 ## Keep your real file private
 
