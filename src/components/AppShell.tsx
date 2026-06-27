@@ -4,6 +4,7 @@ import { BottomNav } from './BottomNav'
 import { MedicalLockProvider, useMedicalLock } from './MedicalLockProvider'
 import { MedicalLockScreen } from './MedicalLockScreen'
 import { Splash } from './Splash'
+import { Toaster } from './Toaster'
 import { useAuth } from '../auth/AuthProvider'
 import { useEnsureProfile } from '../hooks/useEnsureProfile'
 import { useProfile } from '../hooks/useProfile'
@@ -88,6 +89,7 @@ export function AppShell() {
             before anything else (they can't have set a Medical PIN yet). */}
         <OnboardingGate />
         <MedicalLockGate />
+        <Toaster />
       </div>
     </MedicalLockProvider>
   )

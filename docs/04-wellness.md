@@ -19,25 +19,43 @@
 
 ### Diary (Wellness home tab)
 
-- Header `‹ Today ›`: left/right arrows step one day; tapping the date opens the **Calendar** modal
-  (see `docs/01-design-system.md` → Calendar). The Calendar injects per-day cue dots: one colour if
-  food was logged, another if activity was logged, both if both; a legend explains the dots.
+- **Day header** — left-to-right: a **Daily Report** icon (top-left, `IconReportAnalytics`, opens the
+  day's report); the centered `‹ date ›` nav (arrows step one day, tapping the date opens the
+  **Calendar** modal — see `docs/01-design-system.md` → Calendar); and a top-right cluster of
+  **Delete · Copy · Paste** icons that act on the **whole day**. The Calendar injects per-day cue
+  dots: one colour if food was logged, another if activity, both if both; a legend explains the dots.
 - **Highlighted Nutrients**: a grid of up to 8 chosen nutrients (a 4×2 grid when 8 are chosen), each
   a name, % of target, and a thin progress bar. Chosen in Settings → Highlighted Nutrients (max 8).
 - **Diary groups, in order:** Breakfast, Lunch, Dinner, Snacks, Supplements, Activities.
   Each header reads, left-to-right: **expand chevron · category icon · group name · kcal subtotal**
-  (activities show negative kcal in coral), with the green **`+`** (add into that group) on the right.
-  Category icons use `cat-*` color tokens (see `docs/01-design-system.md` → Icons). **Collapsed by
-  default.** Expanded shows the logged entries. **Tap an entry** to edit it (reopens Food Detail /
-  Activity Log on the entry, with **RESET** + **SAVE**); **swipe-left** reveals Delete.
-- Top-right `⋯` menu:
-  - **View Daily Report** — opens the day's report.
-  - **Multi-Select** — shows a checkbox before each logged entry (expands all groups). Pick one or
-    more, then reopen `⋯` and choose **Copy** to copy them to an in-app clipboard (strength activities
-    carry their `strength_set` rows); **Cancel** exits the mode.
-  - **Paste** — shown only when the clipboard holds entries from a **different** day; **adds** them
-    to the day in view (does not replace) and stays on that day.
-  - **Delete All Diary Entries** — clears the day's entries after a confirm.
+  (kcal sits right next to the name; activities show negative kcal coral) · ⟨spacer⟩ · **Delete ·
+  Copy · Paste · Add** icons (mirroring the Edit Trip day header — `IconTrash` / `IconCopy` /
+  `IconClipboard` / green `IconPlus`). Category icons use `cat-*` color tokens (see
+  `docs/01-design-system.md` → Icons).
+- **Default-expand on entry:** when a day's entries first load (on navigating to the Diary or picking
+  another day), every group that **has items** auto-expands; empty groups stay collapsed. This runs
+  **once per day** — later same-day refetches (after add/delete) never clobber a manual collapse. A
+  **Paste** is the exception: it re-runs the auto-expand so the groups it just filled open. Expanded
+  shows the logged entries; **tap an entry** to edit it (reopens Food Detail /
+  Activity Log with **RESET** + **SAVE**), **swipe-left** reveals Delete, and a **drag handle**
+  reorders items within the group (the `ReorderList` component shared with Edit Trip; persisted via
+  `diary_entry.sort_order`).
+
+#### Copy / Paste (group- and day-level)
+
+There is **no `⋯` menu and no per-item Multi-Select** — copy granularity is a whole group or a whole
+day, via the header icons. The clipboard is an in-app, in-memory store (`src/lib/diary-clipboard.ts`)
+that survives sheets but not reloads; strength activities carry their `strength_set` rows.
+
+- **Delete** (group or day) — clears that group's / the day's entries after a confirm. Disabled when
+  there's nothing to delete.
+- **Copy** (group or day) — replaces the clipboard with those entries (each remembers its **own**
+  group). Fires a toast (e.g. "Copied Breakfast · 3 items"). Disabled when the source is empty.
+- **Paste** — enabled whenever the clipboard holds any item (across a different group **and/or** day).
+  A **group Paste** drops every clipboard item into the clicked group; a **day Paste** keeps each
+  item's original group. Both are **additive** (never overwrite existing rows) and **one-shot** — the
+  clipboard is cleared after a paste, so every Paste icon disables until the next Copy. Enabled Paste
+  icons take an active teal tint (`text-positive`) while the clipboard holds items.
 
 ### Add Food (modal, from a group's `+`)
 
@@ -95,7 +113,7 @@
 - Group defaults to **Activities**. **RESET** + **ADD** (logging) or **RESET** + **SAVE** (editing);
   editing prefills duration, effort, and the exercise/set list from the entry.
 
-### Daily Report (from the Diary `⋯`)
+### Daily Report (from the Diary day-header report icon)
 
 Identical layout to the Dashboard, scoped to a single day instead of an averaged range.
 
@@ -276,6 +294,10 @@ Shared external APIs).
 - `energy_kcal` NUMERIC — negative for activities
 - `label` TEXT — denormalized display name (snapshot; stable even after soft-delete of source)
 - `nutrients` JSONB — snapshot of this entry's nutrient contribution (stable after soft-delete)
+- `sort_order` NUMERIC NOT NULL DEFAULT 0 — manual order within a (`day`, `group_name`). Queries
+  order by (`sort_order`, `created_at`). New rows get `Date.now()` (a large epoch value) so they
+  append after any reordered rows; a drag (`reorderEntries`) renumbers a group's rows to small `0..n`
+  indices, and `cloneEntriesToDay` stamps ascending values on pasted clones so they append in order.
 - `created_at`, `updated_at`
 - Index on (`user_id`, `day`).
 

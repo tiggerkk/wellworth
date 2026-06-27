@@ -57,8 +57,17 @@ _not_ the primary-button color; it's for emphasis, active states, and energy.
   options — used for multi-way controls (Type selectors, Status/LGBT+ filters, Food/Supplement toggle).
   The Library Type control sits in the **sticky header above the `SearchBar`** (always visible, not
   inside the filter panel).
-- **GroupHeader** — collapsible: expand chevron · category icon · title · kcal subtotal, with a green
-  `+` on the right.
+- **GroupHeader** — collapsible diary-group header: expand chevron · category icon · title · kcal
+  subtotal (kcal next to the title) · ⟨spacer⟩ · **Delete · Copy · Paste · Add** action icons. Delete/
+  Copy disable on an empty group; Paste tints **positive** (teal) only while the in-app clipboard
+  holds items; Add is the green `+`. The icons mirror the Edit Trip day-header cluster.
+- **IconAction** — the shared header action icon-button (`src/components/IconAction.tsx`): a bare
+  Tabler icon at `size 18`, `p-1` hit area, tinted `secondary` (Delete/Copy) or `positive` (Add, and
+  Paste while armed), muted `text-tertiary` when `disabled`. Used by both the Diary day header and
+  `GroupHeader`.
+- **Toaster** — a single app-wide transient toast (`src/components/Toaster.tsx` + `src/lib/toast.ts`).
+  Mounted once in `AppShell`; `showToast(msg)` shows a bottom-centered pill (`bg-surface` border) for
+  ~2s. Used for in-app cues like "Copied Breakfast · 3 items".
 - **SwipeRow** — swipe-left reveals a `delete` Delete action.
 - **SearchBar** — magnifier + input (+ barcode icon on Add Food). Takes an optional `className` so it
   can fill a flex row beside a Filter icon (the list screens pass `min-w-0 flex-1`), and an optional
@@ -163,7 +172,10 @@ flex flex-col`, or `h-full` for Zen) so the `flex-1` fills the real content area
   per row (`IconGripVertical`); drag it to move the row (Pointer Events, no dnd dependency), rows shift
   to open a gap, commit on release. Uniform row height (rows truncate to one line). `touch-action:none`
   is on the handle only, so a row body still scrolls. An optional `renderTrailing(id)` slot adds per-row
-  controls. Used by the Medical Display-Order sheet and the configurable-list editors.
+  controls; an optional `containerClassName` overrides the default card chrome so the list can nest
+  inside an existing card (the Diary groups pass `border-t border-border divide-y divide-border`). Used
+  by the Medical Display-Order sheet, the configurable-list editors, and the Diary groups (drag to
+  reorder logged items).
 - **ConfigListEditor** — the shared add / rename (inline) / delete / drag-reorder editor for a
   configurable list, generic over `{key,label}` entries (`src/components/ConfigListEditor.tsx`).
   Wraps `ReorderList` (rename + delete in the trailing slot) and auto-saves each change; deleting a

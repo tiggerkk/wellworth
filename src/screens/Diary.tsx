@@ -1,11 +1,12 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import {
   IconChevronLeft,
   IconChevronRight,
-  IconDots,
-  IconSquare,
-  IconSquareCheckFilled,
+  IconClipboard,
+  IconCopy,
+  IconReportAnalytics,
+  IconTrash,
 } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
@@ -15,14 +16,17 @@ import { useSheetNavigate } from '../hooks/useSheetNavigate'
 import {
   cloneEntriesToDay,
   deleteEntriesByDay,
+  deleteEntriesByGroup,
   deleteEntry,
   listEntriesByDay,
   listEntriesByRange,
+  reorderEntries,
 } from '../data/diary-entry'
 import { listSetsForEntries } from '../data/strength-set'
 import { addDays, formatDayLabel, todayLocal, type IsoDate } from '../lib/date'
 import { bumpDiary, useDiaryVersion } from '../lib/diary-refresh'
 import { setDiaryClipboard, useDiaryClipboard } from '../lib/diary-clipboard'
+import { showToast } from '../lib/toast'
 import { computeTargets } from '../lib/targets'
 import {
   asNutrientMap,
@@ -30,14 +34,14 @@ import {
   isOverUpperLimit,
   sumNutrients,
 } from '../lib/nutrients'
-import { DIARY_GROUPS, type GroupName } from '../constants/groups'
+import { DIARY_GROUPS, type DiaryGroup, type GroupName } from '../constants/groups'
 import { routes } from '../constants/routes'
 import type { Tables } from '../types/database'
 import { Calendar, type DayCue } from '../components/Calendar'
 import { GroupHeader } from '../components/GroupHeader'
+import { IconAction } from '../components/IconAction'
 import { NutrientBar } from '../components/NutrientBar'
-import { SwipeRow } from '../components/SwipeRow'
-import { ListRow } from '../components/ListRow'
+import { ReorderList } from '../components/ReorderList'
 
 export function Diary() {
   const { session } = useAuth()
@@ -81,14 +85,16 @@ export function Diary() {
     },
     [userId],
   )
-  const [menuOpen, setMenuOpen] = useState(false)
   const [expanded, setExpanded] = useState<Partial<Record<GroupName, boolean>>>({})
+  // Optimistic per-group order override (drag-to-reorder). Keyed by group; used only while its id
+  // set still matches the fetched entries — once an item is added/removed there, it falls back to
+  // the fetched (sort_order) order. Survives the reorder's background persist + refetch.
+  const [orderOverride, setOrderOverride] = useState<
+    Partial<Record<GroupName, string[]>>
+  >({})
 
-  // Multi-select: checkboxes on each entry, the selected ids, and the in-app clipboard.
-  const [multiSelect, setMultiSelect] = useState(false)
-  const [selected, setSelected] = useState<Set<string>>(new Set())
   const clipboard = useDiaryClipboard()
-  const canPaste = clipboard != null && clipboard.day !== day
+  const canPaste = clipboard != null
 
   const openSheet = useSheetNavigate()
   const { data: profile } = useProfile()
@@ -103,13 +109,27 @@ export function Diary() {
   }, [userId, day, diaryVersion])
   const { data: entries, loading, error } = useAsync(entriesFn)
 
-  // Leaving the day abandons any in-progress selection (its ids belong to the old day).
+  // Default-expand on entry / day change: when a day's entries first settle, open every non-empty
+  // group (empty groups stay collapsed). Runs once per day — a `sawLoading` ref ignores the brief
+  // render where `day` already changed but `entries`/`loading` are still the previous day's (stale)
+  // values, and `autoExpandedDay` stops later same-day refetches (add/delete) from clobbering the
+  // user's manual collapses. Paste resets `autoExpandedDay` so its refetch re-expands non-empty groups.
+  const sawLoadingForDay = useRef<IsoDate | null>(null)
+  const autoExpandedDay = useRef<IsoDate | null>(null)
   useEffect(() => {
-    /* eslint-disable react-hooks/set-state-in-effect */
-    setMultiSelect(false)
-    setSelected(new Set())
-    /* eslint-enable react-hooks/set-state-in-effect */
-  }, [day])
+    if (loading) {
+      sawLoadingForDay.current = day
+      return
+    }
+    if (sawLoadingForDay.current !== day) return // stale window: data not yet for this day
+    if (!entries || autoExpandedDay.current === day) return
+    setExpanded(
+      Object.fromEntries(
+        DIARY_GROUPS.map((g) => [g.key, entries.some((e) => e.group_name === g.key)]),
+      ),
+    )
+    autoExpandedDay.current = day
+  }, [day, loading, entries])
 
   const targets = profile ? computeTargets(profile) : null
   const totals = deriveNetCarbs(
@@ -121,52 +141,42 @@ export function Diary() {
     bumpDiary()
   }
 
-  function enterMultiSelect() {
-    setMenuOpen(false)
-    setSelected(new Set())
-    // Expand every group so all entries are visible to select.
-    setExpanded(Object.fromEntries(DIARY_GROUPS.map((g) => [g.key, true])))
-    setMultiSelect(true)
-  }
-
-  function exitMultiSelect() {
-    setMultiSelect(false)
-    setSelected(new Set())
-  }
-
-  function toggleSelect(id: string) {
-    setSelected((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }
-
-  async function copySelected() {
-    const chosen = (entries ?? []).filter((e) => selected.has(e.id))
-    if (chosen.length === 0) return
-    setMenuOpen(false)
-    // Pull strength_set children for any selected activity entries so Copy carries them.
+  /** Bundle entries + their strength_set children into a clipboard payload. */
+  async function buildClipboard(chosen: Tables<'diary_entry'>[]) {
     const sets = await listSetsForEntries(
       chosen.filter((e) => e.kind === 'activity').map((e) => e.id),
     )
     const setsByEntry: Record<string, Tables<'strength_set'>[]> = {}
     for (const s of sets) (setsByEntry[s.entry_id] ??= []).push(s)
-    setDiaryClipboard({ day, entries: chosen, setsByEntry })
-    exitMultiSelect()
+    return { day, entries: chosen, setsByEntry }
   }
 
-  async function paste() {
-    if (!userId || !clipboard || clipboard.day === day) return
-    setMenuOpen(false)
+  function entriesFor(group: GroupName): Tables<'diary_entry'>[] {
+    return (entries ?? []).filter((e) => e.group_name === group)
+  }
+
+  // --- Day-level actions (header, top-right) ---
+
+  async function copyDay() {
+    const chosen = entries ?? []
+    if (chosen.length === 0) return
+    setDiaryClipboard(await buildClipboard(chosen))
+    showToast(
+      `Copied ${formatDayLabel(day)} · ${chosen.length} item${chosen.length === 1 ? '' : 's'}`,
+    )
+  }
+
+  async function pasteDay() {
+    if (!userId || !clipboard) return
+    // Day paste keeps each item's original group (no override).
     await cloneEntriesToDay(userId, day, clipboard.entries, clipboard.setsByEntry)
+    setDiaryClipboard(null) // one-shot
+    autoExpandedDay.current = null // re-expand non-empty groups once the paste refetch settles
     bumpDiary()
   }
 
-  async function deleteAll() {
-    if (!userId) return
-    setMenuOpen(false)
+  async function deleteDay() {
+    if (!userId || (entries ?? []).length === 0) return
     if (
       !window.confirm(
         `Delete all entries for ${formatDayLabel(day)}? This can’t be undone.`,
@@ -178,15 +188,75 @@ export function Diary() {
     bumpDiary()
   }
 
-  const menuItem =
-    'block w-full px-4 py-2.5 text-left text-text-primary active:bg-input/40'
+  // --- Group-level actions (group header) ---
+
+  async function copyGroup(group: DiaryGroup) {
+    const chosen = entriesFor(group.key)
+    if (chosen.length === 0) return
+    setDiaryClipboard(await buildClipboard(chosen))
+    showToast(
+      `Copied ${group.label} · ${chosen.length} item${chosen.length === 1 ? '' : 's'}`,
+    )
+  }
+
+  async function pasteGroup(group: DiaryGroup) {
+    if (!userId || !clipboard) return
+    // Group paste retargets every clipboard item into this group.
+    await cloneEntriesToDay(userId, day, clipboard.entries, clipboard.setsByEntry, {
+      groupOverride: group.key,
+    })
+    setDiaryClipboard(null) // one-shot
+    autoExpandedDay.current = null // re-expand non-empty groups once the paste refetch settles
+    bumpDiary()
+  }
+
+  async function deleteGroup(group: DiaryGroup) {
+    if (!userId || entriesFor(group.key).length === 0) return
+    if (!window.confirm(`Delete all entries in ${group.label}? This can’t be undone.`)) {
+      return
+    }
+    await deleteEntriesByGroup(userId, day, group.key)
+    bumpDiary()
+  }
+
+  function openEdit(e: Tables<'diary_entry'>) {
+    if (e.kind === 'activity' && e.activity_id)
+      openSheet(`${routes.wellness.activity(e.activity_id)}?entry=${e.id}&day=${day}`)
+    else if (e.kind === 'food' && e.food_id)
+      openSheet(
+        `${routes.wellness.food('local', e.food_id)}?entry=${e.id}&group=${e.group_name}&day=${day}`,
+      )
+  }
+
+  /** Apply the optimistic order override for a group when its id set still matches the fetched rows. */
+  function orderedEntries(group: GroupName, groupEntries: Tables<'diary_entry'>[]) {
+    const ov = orderOverride[group]
+    if (
+      ov &&
+      ov.length === groupEntries.length &&
+      groupEntries.every((e) => ov.includes(e.id))
+    ) {
+      const byId = new Map(groupEntries.map((e) => [e.id, e]))
+      return ov.map((id) => byId.get(id)!)
+    }
+    return groupEntries
+  }
+
+  const dayCount = (entries ?? []).length
 
   return (
     <div className="pb-4">
       {/* Pinned top pane: day header + highlighted nutrients stay visible while groups scroll. */}
       <div className="sticky top-0 z-10 bg-bg/90 backdrop-blur">
-        <header className="relative flex items-center justify-center px-3 py-3">
-          <div className="flex items-center gap-1">
+        <header className="flex items-center px-3 py-3">
+          {/* Top-left: Daily Report */}
+          <IconAction
+            Icon={IconReportAnalytics}
+            label="Daily report"
+            onClick={() => openSheet(routes.wellness.report(day))}
+          />
+          {/* Center: day nav */}
+          <div className="flex flex-1 items-center justify-center gap-1">
             <button
               onClick={() => setDay(addDays(day, -1))}
               aria-label="Previous day"
@@ -208,67 +278,27 @@ export function Diary() {
               <IconChevronRight size={22} />
             </button>
           </div>
-          <div className="absolute right-3 flex items-center gap-1">
-            <div className="relative">
-              <button
-                onClick={() => setMenuOpen((o) => !o)}
-                aria-label="Day options"
-                className="p-1 text-text-secondary"
-              >
-                <IconDots size={20} />
-              </button>
-              {menuOpen && (
-                <>
-                  <div
-                    className="fixed inset-0 z-10"
-                    onClick={() => setMenuOpen(false)}
-                    aria-hidden
-                  />
-                  <div className="absolute right-0 z-20 mt-1 w-56 divide-y divide-border overflow-hidden rounded-card border border-border bg-surface text-sm shadow-lg">
-                    {multiSelect ? (
-                      <>
-                        <button
-                          onClick={() => void copySelected()}
-                          disabled={selected.size === 0}
-                          className={`${menuItem} disabled:text-text-tertiary disabled:active:bg-transparent`}
-                        >
-                          Copy{selected.size > 0 ? ` (${selected.size})` : ''}
-                        </button>
-                        <button onClick={exitMultiSelect} className={menuItem}>
-                          Cancel
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button
-                          onClick={() => {
-                            setMenuOpen(false)
-                            openSheet(routes.wellness.report(day))
-                          }}
-                          className={menuItem}
-                        >
-                          View Daily Report
-                        </button>
-                        <button onClick={enterMultiSelect} className={menuItem}>
-                          Multi-Select
-                        </button>
-                        {canPaste && (
-                          <button onClick={() => void paste()} className={menuItem}>
-                            Paste
-                          </button>
-                        )}
-                        <button
-                          onClick={() => void deleteAll()}
-                          className={`${menuItem} text-danger`}
-                        >
-                          Delete All Diary Entries
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </>
-              )}
-            </div>
+          {/* Top-right: Delete · Copy · Paste for the whole day */}
+          <div className="flex items-center">
+            <IconAction
+              Icon={IconTrash}
+              label="Delete all entries today"
+              onClick={() => void deleteDay()}
+              disabled={dayCount === 0}
+            />
+            <IconAction
+              Icon={IconCopy}
+              label="Copy all entries today"
+              onClick={() => void copyDay()}
+              disabled={dayCount === 0}
+            />
+            <IconAction
+              Icon={IconClipboard}
+              label="Paste into today"
+              onClick={() => void pasteDay()}
+              disabled={!canPaste}
+              tone="positive"
+            />
           </div>
         </header>
 
@@ -308,12 +338,13 @@ export function Diary() {
       {!loading && !error && (
         <div className="flex flex-col gap-3 px-4">
           {DIARY_GROUPS.map((group) => {
-            const groupEntries = (entries ?? []).filter((e) => e.group_name === group.key)
+            const groupEntries = orderedEntries(group.key, entriesFor(group.key))
             const subtotal = groupEntries.reduce(
               (sum, e) => sum + (e.energy_kcal ?? 0),
               0,
             )
             const isOpen = expanded[group.key] ?? false
+            const byId = new Map(groupEntries.map((e) => [e.id, e]))
             return (
               <div
                 key={group.key}
@@ -324,6 +355,8 @@ export function Diary() {
                   Icon={group.Icon}
                   iconClass={group.iconClass}
                   kcal={subtotal}
+                  count={groupEntries.length}
+                  canPaste={canPaste}
                   expanded={isOpen}
                   onAdd={() =>
                     openSheet(
@@ -335,6 +368,9 @@ export function Diary() {
                   onToggle={() =>
                     setExpanded((prev) => ({ ...prev, [group.key]: !isOpen }))
                   }
+                  onDelete={() => void deleteGroup(group)}
+                  onCopy={() => void copyGroup(group)}
+                  onPaste={() => void pasteGroup(group)}
                 />
                 {isOpen &&
                   (groupEntries.length === 0 ? (
@@ -342,52 +378,34 @@ export function Diary() {
                       Nothing logged.
                     </p>
                   ) : (
-                    <div className="border-t border-border">
-                      {groupEntries.map((e) => {
-                        const row = (
-                          <ListRow
-                            leading={
-                              multiSelect ? (
-                                selected.has(e.id) ? (
-                                  <IconSquareCheckFilled
-                                    size={20}
-                                    className="text-positive"
-                                  />
-                                ) : (
-                                  <IconSquare size={20} className="text-text-tertiary" />
-                                )
-                              ) : undefined
-                            }
-                            title={e.label}
-                            subtitle={
-                              e.duration_min ? `${e.duration_min} min` : undefined
-                            }
-                            trailing={`${Math.round(e.energy_kcal ?? 0)} kcal`}
-                            onClick={
-                              multiSelect
-                                ? () => toggleSelect(e.id)
-                                : () => {
-                                    if (e.kind === 'activity' && e.activity_id)
-                                      openSheet(
-                                        `${routes.wellness.activity(e.activity_id)}?entry=${e.id}&day=${day}`,
-                                      )
-                                    else if (e.kind === 'food' && e.food_id)
-                                      openSheet(
-                                        `${routes.wellness.food('local', e.food_id)}?entry=${e.id}&group=${e.group_name}&day=${day}`,
-                                      )
-                                  }
-                            }
-                          />
+                    <ReorderList
+                      ids={groupEntries.map((e) => e.id)}
+                      containerClassName="border-t border-border divide-y divide-border"
+                      onReorder={(nextIds) => {
+                        setOrderOverride((prev) => ({ ...prev, [group.key]: nextIds }))
+                        void reorderEntries(nextIds).catch(() => bumpDiary())
+                      }}
+                      onDelete={(id) => void handleDelete(id)}
+                      handleLabel={() => `Drag to reorder in ${group.label}`}
+                      renderLabel={(id) => {
+                        const e = byId.get(id)
+                        if (!e) return null
+                        return (
+                          <button
+                            onClick={() => openEdit(e)}
+                            className="block w-full truncate text-left"
+                          >
+                            {e.label}
+                            {e.duration_min ? ` · ${e.duration_min} min` : ''}
+                          </button>
                         )
-                        return multiSelect ? (
-                          <div key={e.id}>{row}</div>
-                        ) : (
-                          <SwipeRow key={e.id} onDelete={() => handleDelete(e.id)}>
-                            {row}
-                          </SwipeRow>
-                        )
-                      })}
-                    </div>
+                      }}
+                      renderTrailing={(id) => (
+                        <span className="text-sm text-text-muted">
+                          {Math.round(byId.get(id)?.energy_kcal ?? 0)} kcal
+                        </span>
+                      )}
+                    />
                   ))}
               </div>
             )

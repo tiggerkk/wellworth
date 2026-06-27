@@ -15,6 +15,12 @@ interface ReorderListProps {
   renderTrailing?: (id: string) => ReactNode
   /** When provided, wraps each row in SwipeRow so swiping left reveals a Delete action. */
   onDelete?: (id: string) => void
+  /**
+   * Overrides the list container's classes. Default is a standalone card
+   * (`rounded-card border bg-surface`, plus `divide-y` when `onDelete` is set). Pass this to nest the
+   * list inside an existing card (e.g. a diary group) — include your own `divide-y` for row borders.
+   */
+  containerClassName?: string
 }
 
 interface DragState {
@@ -38,6 +44,7 @@ export function ReorderList({
   handleLabel,
   renderTrailing,
   onDelete,
+  containerClassName,
 }: ReorderListProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const startY = useRef(0)
@@ -75,7 +82,9 @@ export function ReorderList({
 
   // When SwipeRow is used, borders between rows come from divide-y on the container (since each
   // SwipeRow wrapper makes rowInner the last child of its own parent, breaking last:border-b-0).
-  const containerClass = `overflow-hidden rounded-card border border-border bg-surface${onDelete ? ' divide-y divide-border' : ''}`
+  const containerClass =
+    containerClassName ??
+    `overflow-hidden rounded-card border border-border bg-surface${onDelete ? ' divide-y divide-border' : ''}`
 
   return (
     <div ref={containerRef} className={containerClass}>

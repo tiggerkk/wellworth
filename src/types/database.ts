@@ -209,6 +209,7 @@ export type Database = {
           label: string
           nutrients: Json
           serving_id: string | null
+          sort_order: number
           updated_at: string
           user_id: string
         }
@@ -227,6 +228,7 @@ export type Database = {
           label: string
           nutrients?: Json
           serving_id?: string | null
+          sort_order?: number
           updated_at?: string
           user_id: string
         }
@@ -245,6 +247,7 @@ export type Database = {
           label?: string
           nutrients?: Json
           serving_id?: string | null
+          sort_order?: number
           updated_at?: string
           user_id?: string
         }

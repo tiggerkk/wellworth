@@ -210,6 +210,10 @@ create table public.diary_entry (
   energy_kcal  numeric not null default 0, -- negative for activities
   label        text not null, -- denormalized display name
   nutrients    jsonb not null default '{}'::jsonb, -- snapshot of this entry's contribution
+  -- Manual ordering within a (day, group_name). New rows get Date.now() (a large epoch value) so
+  -- they append after any reordered rows; a drag renumbers a group's rows to small 0..n indices.
+  -- Queries order by (sort_order, created_at) so un-reordered groups keep insertion order.
+  sort_order   numeric not null default 0,
   created_at   timestamptz not null default now(),
   updated_at   timestamptz not null default now()
 );

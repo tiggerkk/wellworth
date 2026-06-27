@@ -2199,4 +2199,37 @@ latest-values card client-side — growing with full history.
 - `medical_latest_result` returns full `medical_result.*` rows (the card renders rich rows), so its
   hand-added `database.ts` `Views` entry mirrors `medical_result` (all nullable) + `report_date`/
   `report_type`. Same owner step as Net Worth: `supabase db reset --linked` then `npm run gen:types`.
+
+## Diary group/day action bars, default-expand, drag-reorder (2026-06-27)
+
+Reworked the Wellness Diary day screen to mirror the Edit Trip ergonomics and retire the `⋯` menu.
+Behavior/data are now in `04-wellness.md`; design pieces in `01-design-system.md`.
+
+- **Schema:** added `diary_entry.sort_order numeric not null default 0` (edited `01_wellness_schema.sql`
+  in place — owner reset workflow). `listEntriesByDay` orders by `(sort_order, created_at)`. New rows
+  default `sort_order = Date.now()` (a large epoch value) in `createEntry`, so a freshly logged item
+  appends after any rows the user dragged into order; a drag (`reorderEntries`, mirrors travel's
+  `reorderStops`) renumbers a group to small `0..n`, and `cloneEntriesToDay` stamps ascending values
+  on pasted clones. `database.ts` hand-patched to match (owner regenerates on next `db reset`).
+- **Action bars:** each group header and the day header carry **Delete · Copy · Paste** icons (group
+  headers also keep **Add**, and move the kcal subtotal next to the title). Extracted a shared
+  `IconAction` button (Tabler icon, `secondary`/`positive` tint, muted when disabled) used by both.
+  Delete/Copy disable when the source is empty; Paste tints **positive** while armed.
+- **Copy/Paste:** removed per-item Multi-Select entirely. Copy is whole-group or whole-day (each item
+  remembers its own group); a group Paste retargets every clipboard item into the clicked group while
+  a day Paste preserves original groups (`cloneEntriesToDay`'s new `opts.groupOverride`). Paste is
+  **additive** and **one-shot** — the clipboard is cleared after a paste (`setDiaryClipboard(null)`),
+  disabling every Paste until the next Copy. `diary-clipboard.ts` dropped its different-day-only rule.
+- **Copied cue:** new app-wide `Toaster` (`src/components/Toaster.tsx` + `src/lib/toast.ts`, the same
+  module-scoped `useSyncExternalStore` pattern as `diary-clipboard.ts`), mounted once in `AppShell`;
+  Copy fires "Copied {group/day} · N items".
+- **Default-expand:** when a day's entries first settle, every non-empty group auto-expands (empty
+  stay collapsed). A `sawLoadingForDay` ref ignores the stale render where `day` changed but
+  `entries`/`loading` are still the previous day's; an `autoExpandedDay` ref makes it once-per-day so
+  same-day refetches don't undo a manual collapse.
+- **Reorder:** each group's rows are a `ReorderList` (the Edit Trip component) with a new optional
+  `containerClassName` so it nests inside the group card without double borders; drag persists
+  optimistically (per-group `orderOverride` applied while its id set matches the fetched rows) then
+  `reorderEntries` + refetch. Verified by `npm run check` (504 tests; no new pure helpers).
+
   → **F18**. Verified by `npm run check` (504 tests).
