@@ -10,7 +10,8 @@ export const routes = {
   root: '/',
   login: '/login',
   home: '/home',
-  settings: '/settings', // global: profile, units, account
+  settings: '/settings', // global: profile, units, display, account
+  settingsVisibleModules: '/settings/visible-modules', // Home-hub module visibility + order (sheet)
   wellness: {
     base: '/wellness',
     diary: '/wellness',

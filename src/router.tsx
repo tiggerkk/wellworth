@@ -48,6 +48,7 @@ import {
   QuoteSourceTypesSheet,
   QuotesZen,
   Settings,
+  VisibleModulesSheet,
   ShowsDashboard,
   ShowsEntry,
   ShowsFieldsSheet,
@@ -79,6 +80,7 @@ export const router = createBrowserRouter([
           { index: true, element: <RootRedirect /> },
           { path: 'home', element: <Home /> },
           { path: 'settings', element: <Settings /> },
+          { path: 'settings/visible-modules', element: <VisibleModulesSheet /> },
 
           // Wellness module — tabs
           { path: 'wellness', element: <Diary /> },

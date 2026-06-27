@@ -75,7 +75,8 @@
     deleted if it's the last one in its list. **TV Show / Movie / Book** source types are
     **protected from deletion** (their `linkKind` drives Show/Book auto-linking) — they can still be
     renamed/reordered.
-- **Enable CSV Import**: surfaces the **Import CSV…** launcher.
+- **Enable CSV Import** (`profile.quote_importer_enabled`, **on by default**): surfaces the
+  **Import CSV…** launcher.
 
 ### Import CSV (sheet, from Quotes Settings)
 

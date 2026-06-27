@@ -80,8 +80,8 @@ edit).
   over the optional Entry/Edit fields in New/Edit form order: Author(s), Year, **Google Books
   Metadata**, Rating, LGBT+, Dynasty, the two dates, Notes. Stored on `profile.book_visible_fields`
   (**NULL = all visible**). Title, Status, and the Search button are always shown and not listed.
-- **Import → Enable CSV Import** toggle (`profile.book_importer_enabled`); when on, an **Import CSV…**
-  launcher opens the importer sheet.
+- **Import → Enable CSV Import** toggle (`profile.book_importer_enabled`, **on by default**); when on,
+  an **Import CSV…** launcher opens the importer sheet.
 
 ### Import CSV (sheet, from Books Settings)
 

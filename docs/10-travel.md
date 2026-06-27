@@ -119,6 +119,9 @@ literal **"Edit Trip"**.
   add / rename / delete / **drag-reorder** the category list (stored on
   `profile.travel_expense_categories`). Deleting a category still used by expenses prompts a
   **reassignment** first; the last category can't be deleted.
+- **Import → Enable JSON / CSV Import** (`profile.travel_importer_enabled`, **on by default**): a single
+  toggle that surfaces **both** launchers below (mirrors Medical's importer toggle). When off, a
+  secondary note ("Turn this on to bulk-seed your trips from a JSON / CSV.") replaces them.
 - **Import → Import JSON Trips** (listed first): a JSON array of trips → one combined review
   (per-trip day/stop counts + a pooled **new-cities** list with optional per-city geocode) → import
   as drafts.

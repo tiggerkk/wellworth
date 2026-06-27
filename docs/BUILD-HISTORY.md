@@ -2233,3 +2233,28 @@ Behavior/data are now in `04-wellness.md`; design pieces in `01-design-system.md
   `reorderEntries` + refetch. Verified by `npm run check` (504 tests; no new pure helpers).
 
   → **F18**. Verified by `npm run check` (504 tests).
+
+## Importers on by default + Home-hub Visible Modules (2026-06-27)
+
+Two settings additions. Behavior/data are now in `03-global.md` (profile columns, Global Settings),
+`10-travel.md` (importer toggle), and the Shows/Books/Quotes spec Settings sections.
+
+- **Importers default ON:** flipped `show_importer_enabled` / `book_importer_enabled` /
+  `quote_importer_enabled` from `default false` → `default true` (edited migrations `05/07/09` in place —
+  owner reset workflow), matching `medical_importer_enabled`. The in-app toggles are unchanged.
+- **Travel single importer toggle:** added `travel_importer_enabled boolean not null default true` to
+  migration `14`; `TravelSettings` now gates **both** the JSON-Trips and CSV-Expenses launchers behind
+  one **Enable JSON / CSV Import** toggle (mirrors Medical), showing a secondary note when off.
+- **Home-hub Visible Modules:** added `module_order` / `visible_modules text[]` to `profile` (migration
+  `01`, both NULL = canonical order / all visible). New **DISPLAY** section in Global Settings →
+  **Visible Modules** opens a full sheet with a **single combined `ReorderList`** — drag to reorder, a
+  per-row `Toggle` (in `renderTrailing`) to show/hide. The last visible module's toggle refuses to turn
+  off (`showToast`), mirroring `ConfigListEditor`. Resolution lives in `src/lib/modules-display.ts`
+  (`orderedModules` / `homeModules`, tolerant of unknown/newly-shipped keys); `Home` consumes it and
+  falls back to all modules while the profile loads, so the hub never flashes empty. Hiding only removes
+  the card — module routes stay reachable by URL and the last-used-module launch default is unaffected.
+  **Newly-shipped modules default visible:** `module_order` doubles as a seen-set (the sheet writes it
+  on every visibility change), and `homeModules` shows any module not in it — so adding a module in a
+  later redeploy never silently hides it for users who'd already customized their selection.
+- `database.ts` hand-patched to match the three new columns (owner regenerates on next `db reset`).
+  Verified by `npm run check` (504 tests; no new pure helpers).

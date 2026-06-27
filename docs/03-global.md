@@ -73,6 +73,13 @@ App-wide; shared across all modules. Auto-save on change. A back chevron returns
 - **PROFILE**: Birthday, Sex, Height, Weight (all editable; shared `ProfileMetricsFields`, so
   **Birthday opens the shared `Calendar`** picker — same as Onboarding).
 - **PREFERENCES**: **Units** (Metric / Imperial — editable; display-only, DB stays metric).
+- **DISPLAY → Visible Modules** (secondary text "(Home)"): opens a full sheet listing every module in a
+  single **combined** list (shared `ReorderList`) — **drag the grip to reorder** the Home hub and
+  **toggle** each module to show/hide. Saved per profile to `module_order` / `visible_modules`; the Home
+  hub reads them via `homeModules` (`src/lib/modules-display.ts`). **At least one module must stay
+  visible** (the last toggle refuses to turn off, mirroring `ConfigListEditor`). Hiding only removes the
+  Home card — a module's routes stay reachable by direct URL and the "reopen last-used module" launch
+  default is unaffected.
 - **ACCOUNT**: Google account + **Sign out**. This card is driven by the **session, not the profile**,
   so it renders even when the profile fails to load (e.g. after a DB reset deletes the user). Sign
   out clears the session **locally** (`scope: 'local'`) and, as a guaranteed fallback, removes the
@@ -89,19 +96,26 @@ App-wide; shared across all modules. Auto-save on change. A back chevron returns
 - `units` TEXT DEFAULT 'metric' — 'metric' | 'imperial' (display only)
 - `highlighted_nutrients` TEXT[] — up to 8 nutrient keys for the Diary grid
 - `visible_nutrients` TEXT[] — nutrient keys shown on Dashboard/Daily Report
+- `module_order` TEXT[] NULL — Home-hub module order (module keys); **NULL = canonical `MODULES` order**.
+  Also the **seen-set**: the Visible Modules sheet always writes it on a visibility change, so a
+  newly-shipped module (absent here) defaults to visible.
+- `visible_modules` TEXT[] NULL — modules shown on the Home hub (module keys); **NULL = all visible**.
+  Set per user profile from Global Settings → Display → Visible Modules (≥1 module always stays visible).
+  A module **not in `module_order`** (newly shipped, never seen at customization time) defaults visible
+  even when absent here, so adding a module never silently hides it for existing users.
 - `onboarded_at` TIMESTAMPTZ NULL — set when first-run onboarding completes; NULL = new member who
   must be forced through the Onboarding wizard. The owner seed stamps it; the member seed leaves it NULL.
 - `show_visible_fields` TEXT[] NULL — Shows Entry-form field visibility; **NULL = all visible**
-- `show_importer_enabled` BOOLEAN NOT NULL DEFAULT false
+- `show_importer_enabled` BOOLEAN NOT NULL DEFAULT true — surfaces the Shows CSV importer (on by default)
 - `show_poster_url_visible` BOOLEAN NOT NULL DEFAULT false — **force** the Entry "Poster URL" field
   always visible (default off; the field still auto-shows when TMDB supplied no poster). Stored
   separately from `show_visible_fields` (which is default-on) so the toggle can default to off.
   (added by `supabase/migrations/05_shows_profile_settings.sql`)
 - `book_visible_fields` TEXT[] NULL — Books Entry-form field visibility; **NULL = all visible**
-- `book_importer_enabled` BOOLEAN NOT NULL DEFAULT false
+- `book_importer_enabled` BOOLEAN NOT NULL DEFAULT true — surfaces the Books CSV importer (on by default)
   (added by `supabase/migrations/07_books_profile_settings.sql`)
 - `quote_visible_fields` TEXT[] NULL — Quotes Entry-form field visibility; **NULL = all visible**
-- `quote_importer_enabled` BOOLEAN NOT NULL DEFAULT false
+- `quote_importer_enabled` BOOLEAN NOT NULL DEFAULT true — surfaces the Quotes CSV importer (on by default)
 - `quote_source_types` JSONB NULL — owner's configurable Source Type list, `{key, label, linkKind}`
   array; **NULL = canonical seed defaults**
 - `quote_categories` JSONB NULL — owner's configurable Category list, `{key, label}` array;
@@ -123,6 +137,8 @@ App-wide; shared across all modules. Auto-save on change. A back chevron returns
   `{key, label}` array; **NULL = canonical seed defaults** (`TRAVEL_EXPENSE_CATEGORIES` in
   `src/constants/travel.ts`)
 - `travel_visible_fields` TEXT[] NULL — Trip Entry-form field visibility; **NULL = all visible**
+- `travel_importer_enabled` BOOLEAN NOT NULL DEFAULT true — single toggle surfacing **both** Travel
+  importers (JSON Trips + CSV Expenses); on by default (mirrors `medical_importer_enabled`)
   (added by `supabase/migrations/14_travel_profile_settings.sql`)
 - `created_at`, `updated_at` TIMESTAMPTZ
 

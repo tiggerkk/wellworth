@@ -13,7 +13,11 @@
 --   * travel_visible_fields — which optional Trip-form fields are shown (mirrors the other modules'
 --     *_visible_fields). A text[] of TRIP_ENTRY_FIELDS keys; NULL = all visible (default-on). The core
 --     Trip Name / Base Currency / Status are always shown and aren't listed.
+--   * travel_importer_enabled — single toggle surfacing BOTH the JSON Trips and CSV Expenses importers
+--     in Travel Settings. ON by default (the owner bulk-seeds trips on first run); toggleable off in
+--     Travel Settings. Mirrors medical_importer_enabled (also default-on).
 
 alter table public.profile
   add column travel_expense_categories jsonb,
-  add column travel_visible_fields     text[];
+  add column travel_visible_fields     text[],
+  add column travel_importer_enabled   boolean not null default true;

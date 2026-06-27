@@ -553,6 +553,7 @@ export type Database = {
           medical_test_order: string[] | null
           medical_tracked_tests: string[] | null
           medical_visible_fields: string[] | null
+          module_order: string[] | null
           onboarded_at: string | null
           protein_target_g: number | null
           quote_categories: Json | null
@@ -564,10 +565,12 @@ export type Database = {
           show_poster_url_visible: boolean
           show_visible_fields: string[] | null
           travel_expense_categories: Json | null
+          travel_importer_enabled: boolean
           travel_visible_fields: string[] | null
           units: string
           updated_at: string
           user_id: string
+          visible_modules: string[] | null
           visible_nutrients: string[]
           weight_kg: number | null
         }
@@ -588,6 +591,7 @@ export type Database = {
           medical_test_order?: string[] | null
           medical_tracked_tests?: string[] | null
           medical_visible_fields?: string[] | null
+          module_order?: string[] | null
           onboarded_at?: string | null
           protein_target_g?: number | null
           quote_categories?: Json | null
@@ -599,10 +603,12 @@ export type Database = {
           show_poster_url_visible?: boolean
           show_visible_fields?: string[] | null
           travel_expense_categories?: Json | null
+          travel_importer_enabled?: boolean
           travel_visible_fields?: string[] | null
           units?: string
           updated_at?: string
           user_id: string
+          visible_modules?: string[] | null
           visible_nutrients?: string[]
           weight_kg?: number | null
         }
@@ -623,6 +629,7 @@ export type Database = {
           medical_test_order?: string[] | null
           medical_tracked_tests?: string[] | null
           medical_visible_fields?: string[] | null
+          module_order?: string[] | null
           onboarded_at?: string | null
           protein_target_g?: number | null
           quote_categories?: Json | null
@@ -634,10 +641,12 @@ export type Database = {
           show_poster_url_visible?: boolean
           show_visible_fields?: string[] | null
           travel_expense_categories?: Json | null
+          travel_importer_enabled?: boolean
           travel_visible_fields?: string[] | null
           units?: string
           updated_at?: string
           user_id?: string
+          visible_modules?: string[] | null
           visible_nutrients?: string[]
           weight_kg?: number | null
         }

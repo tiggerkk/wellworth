@@ -1,15 +1,17 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
-import { IconChevronLeft } from '@tabler/icons-react'
+import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { supabase } from '../lib/supabase'
 import { useProfileEditor } from '../hooks/useProfileEditor'
+import { useSheetNavigate } from '../hooks/useSheetNavigate'
 import { SectionCard } from '../components/SectionCard'
 import { FieldRow } from '../components/FieldRow'
 import {
   ProfileMetricsFields,
   type ProfileMetrics,
 } from '../components/ProfileMetricsFields'
+import { routes } from '../constants/routes'
 import type { Tables, TablesUpdate } from '../types/database'
 
 type SaveFn = (patch: TablesUpdate<'profile'>) => Promise<void>
@@ -104,10 +106,26 @@ function SettingsBody({ profile, save }: { profile: Tables<'profile'>; save: Sav
     weight_kg: profile.weight_kg,
   })
 
+  const openSheet = useSheetNavigate()
+
   function update(patch: Partial<ProfileMetrics>) {
     setValue((v) => ({ ...v, ...patch }))
     void save(patch)
   }
 
-  return <ProfileMetricsFields value={value} onChange={update} />
+  return (
+    <>
+      <ProfileMetricsFields value={value} onChange={update} />
+      <SectionCard title="Display">
+        <button
+          onClick={() => openSheet(routes.settingsVisibleModules)}
+          className="w-full"
+        >
+          <FieldRow label="Visible Modules" hint="(Home)">
+            <IconChevronRight size={18} className="text-text-tertiary" />
+          </FieldRow>
+        </button>
+      </SectionCard>
+    </>
+  )
 }

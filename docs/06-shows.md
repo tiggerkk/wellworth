@@ -106,8 +106,8 @@ Reached from the **New Show** bottom-nav tab (`/shows/entry`, new) or by tapping
   `profile.show_poster_url_visible` (**default off**) meaning "force always visible" — stored separately
   because the visible-fields list is default-on. Type, Title, Status, and the favourite heart are always
   shown and not listed.
-- **Import → Enable CSV Import** toggle (`profile.show_importer_enabled`); when on, an **Import CSV…**
-  launcher opens the importer sheet.
+- **Import → Enable CSV Import** toggle (`profile.show_importer_enabled`, **on by default**); when on,
+  an **Import CSV…** launcher opens the importer sheet.
 
 ### Import CSV (sheet, from Shows Settings)
 
