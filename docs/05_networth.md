@@ -17,17 +17,25 @@ entries yet" · "+ Monthly Entry").
 ### Monthly Entry
 
 - Month selector (defaults to the current month; can pick a past month for retrospective entry).
-  The `‹ month ›` arrows step one month; **tapping the month label opens a month/year picker**
-  (year stepper over a month grid, OK/Cancel — see `docs/01_design_system.md` → MonthPicker).
+  The `‹ month ›` cluster is **centered in the header** (mirrors the Wellness Diary day nav), with
+  the form actions to its right. The arrows step one month; **tapping the month label opens a
+  month/year picker** (year stepper over a month grid, OK/Cancel — see
+  `docs/01_design_system.md` → MonthPicker).
 - On a new month, **pre-fill every entry from the most recent prior snapshot** (copy-forward), then
   re-fetch that month's FX rates and recompute `value_base`. The user edits `value_native` (and
   adds/removes entries) from there.
 - The **header is pinned** — month selector, the live **NET WORTH** total in HKD, and
-  **RESET**/**SAVE** stay visible while the **asset-type list scrolls** beneath.
+  **RESET**/**SAVE** stay visible while the **asset-type list scrolls** beneath. **While a month
+  loads**, the month-nav header stays pinned (with a `—` total placeholder) and `Loading…` shows in
+  the body below — mirroring the Wellness Diary's persistent day-nav header.
 - Entries **grouped by asset type**; each row editable: name, currency, `value_native`, and the
-  type-specific `details`. **Add entry** (pick type) / edit / **delete** (a `ConfirmDeleteAction`
-  beside the Name field — inline `Delete? ✓ ✗`; omits the entry from this month onward — each month
-  is self-contained).
+  type-specific `details`. The row is **compact** — **Name · currency · value · delete on one
+  line**; the value box is **narrow** (drops the number-spinner via `.no-spinner`) and the trash
+  **hugs the right edge**. Any `details` fields flow **inline and wrap** on a second line, sharing
+  it with the HKD conversion (`= HK$…`, right-aligned) — so a Stock's **Ticker (narrow, ~3 chars) ·
+  Shares · `= HK$…` all share one line**. **Add entry** (pick type) / edit / **delete** (a
+  `ConfirmDeleteAction` at the end of the row — inline `Delete? ✓ ✗`; omits the entry from this
+  month onward — each month is self-contained).
 - **Exchange rates** panel: title `EXCHANGE RATES (HKD 1.0000)`, **CNY and USD rates on one line**,
   each auto-fetched (with ↻ refetch) and overridable. Native → HKD as of the 1st of the month, via
   Frankfurter (see `docs/02_tech_spec.md` → Shared external APIs).

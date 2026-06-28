@@ -232,6 +232,39 @@ export function NetWorthEntry() {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
+      {/* While the month loads, keep the month-nav header pinned and show Loading in the body
+          below — mirrors the Wellness Diary (its day-nav header stays put during a load). */}
+      {(loading || error) && (
+        <header className="shrink-0 border-b border-border bg-bg">
+          <div className="flex items-center px-3 pt-2">
+            <div className="flex flex-1 items-center justify-center gap-1">
+              <button
+                onClick={() => setMonth(addMonths(month, -1))}
+                aria-label="Previous month"
+                className="p-1 text-text-secondary"
+              >
+                <IconChevronLeft size={20} />
+              </button>
+              <span className="min-w-28 px-1 py-1 text-center text-[15px] font-medium text-text-primary">
+                {formatMonthLabel(month)}
+              </span>
+              <button
+                onClick={() => setMonth(addMonths(month, 1))}
+                aria-label="Next month"
+                className="p-1 text-text-secondary"
+              >
+                <IconChevronRight size={20} />
+              </button>
+            </div>
+          </div>
+          <div className="px-4 py-2">
+            <span className="block text-[11px] uppercase tracking-wide text-text-secondary">
+              Net worth
+            </span>
+            <span className="block text-lg font-semibold text-text-tertiary">—</span>
+          </div>
+        </header>
+      )}
       {loading && <p className="px-4 py-6 text-sm text-text-secondary">Loading…</p>}
       {error && (
         <p className="px-4 py-6 text-sm text-danger">Couldn’t load this month.</p>
@@ -407,29 +440,30 @@ function EntryForm({
     <>
       {/* Header: compact month nav + actions on one line, then NET WORTH total + Import CSV */}
       <header className="shrink-0 border-b border-border bg-bg">
-        <div className="flex items-center gap-1 px-3 pt-2">
-          <button
-            onClick={() => changeMonth(-1)}
-            aria-label="Previous month"
-            className="p-1 text-text-secondary"
-          >
-            <IconChevronLeft size={20} />
-          </button>
-          <button
-            onClick={() => setPickerOpen(true)}
-            aria-label="Choose month"
-            className="rounded-input px-1 py-1 text-center text-[15px] font-medium text-text-primary"
-          >
-            {formatMonthLabel(month)}
-          </button>
-          <button
-            onClick={() => changeMonth(1)}
-            aria-label="Next month"
-            className="p-1 text-text-secondary"
-          >
-            <IconChevronRight size={20} />
-          </button>
-          <div className="flex-1" />
+        <div className="flex items-center px-3 pt-2">
+          <div className="flex flex-1 items-center justify-center gap-1">
+            <button
+              onClick={() => changeMonth(-1)}
+              aria-label="Previous month"
+              className="p-1 text-text-secondary"
+            >
+              <IconChevronLeft size={20} />
+            </button>
+            <button
+              onClick={() => setPickerOpen(true)}
+              aria-label="Choose month"
+              className="min-w-28 rounded-input px-1 py-1 text-center text-[15px] font-medium text-text-primary"
+            >
+              {formatMonthLabel(month)}
+            </button>
+            <button
+              onClick={() => changeMonth(1)}
+              aria-label="Next month"
+              className="p-1 text-text-secondary"
+            >
+              <IconChevronRight size={20} />
+            </button>
+          </div>
           <EntryHeaderActions
             editing
             dirty={dirty}
@@ -666,22 +700,22 @@ function ManualRow({
   onDetail: (key: string, value: string) => void
   onRemove: () => void
 }) {
+  const details = DETAIL_FIELDS[row.asset_type]
+  const showConversion = row.currency !== 'HKD'
   return (
-    <div className="border-b border-border p-3 last:border-b-0">
+    <div className="border-b border-border py-3 pl-3 pr-2 last:border-b-0">
+      {/* Name · CCY · Value · Delete on one line; the trash hugs the right edge */}
       <div className="flex items-center gap-2">
         <input
           value={row.name}
           placeholder="Name"
           onChange={(e) => onChange({ name: e.target.value })}
-          className={`flex-1 ${inputCls}`}
+          className={`min-w-0 flex-1 ${inputCls}`}
         />
-        <ConfirmDeleteAction label="Remove entry" onDelete={onRemove} />
-      </div>
-      <div className="mt-2 flex items-center gap-2">
         <select
           value={row.currency}
           onChange={(e) => onChange({ currency: e.target.value as Currency })}
-          className={inputCls}
+          className={`shrink-0 ${inputCls}`}
         >
           {CURRENCIES.map((c) => (
             <option key={c} value={c}>
@@ -697,26 +731,29 @@ function ManualRow({
           placeholder="Value"
           value={row.valueNative}
           onChange={(e) => onChange({ valueNative: e.target.value })}
-          className={`flex-1 text-right ${inputCls}`}
+          className={`no-spinner w-20 shrink-0 text-right ${inputCls}`}
         />
+        <ConfirmDeleteAction label="Remove entry" onDelete={onRemove} />
       </div>
-      {row.currency !== 'HKD' && (
-        <p className="mt-1 text-right text-xs text-text-secondary">
-          = {formatHkd(rowBaseHkd)}
-        </p>
-      )}
-      {DETAIL_FIELDS[row.asset_type].length > 0 && (
-        <div className="mt-2 flex flex-col gap-2">
-          {DETAIL_FIELDS[row.asset_type].map((f) => (
-            <div key={f.key} className="flex items-center gap-2">
-              <span className="w-24 shrink-0 text-xs text-text-secondary">{f.label}</span>
+      {/* Detail fields + the HKD conversion flow inline on one wrapping line — e.g. a Stock's
+          Ticker (narrow, ~3 chars) · Shares · "= HK$…" all share a row. */}
+      {(details.length > 0 || showConversion) && (
+        <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-2">
+          {details.map((f) => (
+            <label key={f.key} className="flex items-center gap-1.5">
+              <span className="shrink-0 text-xs text-text-secondary">{f.label}</span>
               <input
                 value={row.details[f.key] ?? ''}
                 onChange={(e) => onDetail(f.key, e.target.value)}
-                className={`flex-1 ${inputCls}`}
+                className={`${f.key === 'ticker' ? 'w-16' : 'w-24'} ${inputCls}`}
               />
-            </div>
+            </label>
           ))}
+          {showConversion && (
+            <span className="ml-auto text-xs text-text-secondary">
+              = {formatHkd(rowBaseHkd)}
+            </span>
+          )}
         </div>
       )}
     </div>

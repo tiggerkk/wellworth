@@ -107,7 +107,7 @@ export function MedicalReports() {
 
   return (
     <div className="flex min-h-full flex-col gap-3 px-4 py-4">
-      {!loading && !error && reports.length > 0 && (
+      {!error && (loading || reports.length > 0) && (
         <div className="flex items-center gap-2">
           <SearchBar
             value={criteria.query}

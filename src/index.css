@@ -64,6 +64,17 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Hide the number-input spin buttons (compact value fields, e.g. Net Worth Monthly Entry). */
+.no-spinner::-webkit-outer-spin-button,
+.no-spinner::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.no-spinner {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
 /* Slide-up sheet animation (used by Sheet). */
 @keyframes slideUp {
   from {

@@ -203,6 +203,14 @@ flex flex-col`, or `h-full` for Zen) so the `flex-1` fills the real content area
   tracked-test grid so many render cheaply without a chart library. The full trend chart
   (`MedicalTrendChart`, recharts) is **lazy-loaded** only when a sparkline is expanded.
 
+## List-screen states
+
+- On every search/filter list screen (Wellness Libraries, Shows/Books/Quotes Libraries, Medical
+  Reports, Net Worth Insurance Policies, Travel Trips), the **`SearchBar` + Filter row stays
+  rendered during `loading`** so the `Loading…` line sits **below** it (not alone at the top). The
+  row hides only on the real **empty** result (`!loading && items.length === 0`), where the
+  `EmptyState` takes over. Condition: `!error && (loading || items.length > 0)`.
+
 ## Layout gotchas
 
 - **Flex scroll panes (F6c/F9):** a flex-col scroll pane needs `min-h-0` on ITSELF **and** `shrink-0`
