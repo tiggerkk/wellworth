@@ -5,17 +5,17 @@ import { useAsync } from '../hooks/useAsync'
 import { listEntriesByRange } from '../data/diary-entry'
 import { NutrientReport } from '../components/NutrientReport'
 import { EmptyState } from '../components/EmptyState'
-import { RANGES } from '../constants/ranges'
+import { WELLNESS_RANGES, WELLNESS_RANGE_DEFAULT } from '../constants/wellness-ranges'
 import { routes } from '../constants/routes'
 import { todayLocal } from '../lib/date'
 
 export function Dashboard() {
   const { session } = useAuth()
   const userId = session?.user.id
-  const [rangeKey, setRangeKey] = useState('7d')
+  const [rangeKey, setRangeKey] = useState(WELLNESS_RANGE_DEFAULT)
   const [menuOpen, setMenuOpen] = useState(false)
 
-  const option = RANGES.find((r) => r.key === rangeKey) ?? RANGES[0]!
+  const option = WELLNESS_RANGES.find((r) => r.key === rangeKey) ?? WELLNESS_RANGES[0]!
   const { from, to } = option.toRange(todayLocal())
 
   const fn = useCallback(() => {
@@ -44,7 +44,7 @@ export function Dashboard() {
                 aria-hidden
               />
               <div className="absolute left-0 z-20 mt-1 w-44 overflow-hidden rounded-card border border-border bg-surface text-sm shadow-lg">
-                {RANGES.map((r) => (
+                {WELLNESS_RANGES.map((r) => (
                   <button
                     key={r.key}
                     onClick={() => {

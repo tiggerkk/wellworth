@@ -14,8 +14,11 @@ When there is data, three sections:
   coloured by the latest flag), and a small **inline-SVG** sparkline (no chart library; shared
   `Sparkline` component). Tapping a card opens a bottom-sheet with the full trend chart (lazy-loaded
   Recharts, `MedicalTrendChart`): flag-coloured points, an optional shaded **reference band** from
-  the latest printed range, and a time-window selector (1Y / 2Y / 3Y / 5Y / All). Escape/tap-outside
-  closes.
+  the latest printed range, and a time-window selector (1Y / 2Y / 3Y / 5Y / All; default **All**).
+  Escape/tap-outside closes. The window list + default live in `src/constants/medical-ranges.ts`
+  (`MEDICAL_RANGES` + `MEDICAL_RANGE_DEFAULT`) — **pure UI constants**, not persisted, so editing them
+  takes effect on reload with **no DB change and no other code change** (the default lives beside the list
+  so the screen never hardcodes a key).
 - **Latest values by category** — for **every** test recorded, its **most recent** value across all
   reports (not just the newest report — a heterogeneous history means the latest report may omit most
   tests), grouped under uppercase category headers in the user's display order. Each row: test name +

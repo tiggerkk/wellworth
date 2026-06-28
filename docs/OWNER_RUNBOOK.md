@@ -589,13 +589,19 @@ re-seed for them.)
 ### M3 — Reset one module's data only (keep the other modules)
 
 Use this to start a module clean — test it, wipe just its tables, then enter real production data —
-without touching the others (e.g. reset Wellness and go live on it while Net Worth, Shows, Books, and
-Quotes stay as they are). Run the SQL in **Supabase → SQL Editor** (Dashboard → **SQL Editor** → **New query**
-→ paste → **Run**). It edits **data only** — never the schema or the migrations.
+without touching the others (e.g. reset Wellness and go live on it while Net Worth, Shows, Books,
+Quotes, Medical, and Travel stay as they are). Run the SQL in **Supabase → SQL Editor** (Dashboard →
+**SQL Editor** → **New query** → paste → **Run**). It edits **data only** — never the schema or the
+migrations.
 
 > ⚠️ The SQL Editor runs with full privileges (it bypasses row-level security), so `truncate` wipes
 > **all** rows in those tables — on a solo project that's exactly your data. `cascade` also clears the
-> dependent child rows (strength sets, servings, asset entries). There is no undo.
+> dependent child rows (strength sets, servings, asset entries, insurance schedule versions + points,
+> medical results, and Travel days/stops/expenses). There is no undo.
+>
+> **Views need nothing.** `networth_monthly_type_total` and `medical_latest_result` are **views** over
+> their base tables, not tables — they refresh automatically once the underlying rows are wiped, so they
+> never appear in a `truncate`.
 
 > Note: every table's primary key is a **random UUID** (`gen_random_uuid()`), not an auto-increment
 > counter, so there's no "id sequence" to reset — IDs don't go back to 1; new rows just get fresh
@@ -614,11 +620,21 @@ production starting point); foods and diary start empty. Your `profile` (identit
 target, nutrient visibility) is the **shared account row** and is left as-is — adjust it in the app's
 **Settings** if you want, rather than here.
 
-**Net Worth** — wipes every monthly snapshot and its asset entries:
+**Net Worth** — wipes every monthly snapshot + its asset entries **and** the insurance-policy catalogue:
 
 ```sql
-truncate public.networth_snapshot, public.asset_entry cascade;
+truncate public.networth_snapshot, public.asset_entry,
+         public.insurance_policy cascade;
 ```
+
+> Two independent parents here, so both must be listed: `networth_snapshot` cascades to `asset_entry`
+> (the monthly holdings — including funds, which are `asset_entry` rows of `asset_type = 'fund'`, not a
+> separate table), and `insurance_policy` cascades to its `insurance_schedule` versions → their
+> `insurance_schedule_point` rows. The **insurance catalogue is per-user reference data, not per-month**:
+> each month's `insurance` holdings are frozen into `asset_entry` from it at save time. So wiping only
+> the snapshots would leave the catalogue behind and it would re-freeze insurance rows into the next
+> month you save — include `insurance_policy` for a true from-scratch Net Worth reset. (To keep your
+> policies and clear only the monthly figures, drop `public.insurance_policy` from the command.)
 
 **Shows** — wipes every tracked title:
 
@@ -627,7 +643,7 @@ truncate public.show cascade;
 -- optional: also reset the Shows settings on your profile to defaults
 update public.profile
   set show_visible_fields = null,
-      show_importer_enabled = false,
+      show_importer_enabled = true,
       show_poster_url_visible = false;
 ```
 
@@ -650,7 +666,7 @@ update public.profile
 ```sql
 truncate public.book cascade;
 -- optional: also reset the Books settings on your profile to defaults
-update public.profile set book_visible_fields = null, book_importer_enabled = false;
+update public.profile set book_visible_fields = null, book_importer_enabled = true;
 ```
 
 **Quotes** — wipes every quote:
@@ -658,20 +674,52 @@ update public.profile set book_visible_fields = null, book_importer_enabled = fa
 ```sql
 truncate public.quote cascade;
 -- optional: also reset the Quotes settings on your profile to defaults
-update public.profile set quote_visible_fields = null, quote_importer_enabled = false;
+update public.profile
+  set quote_visible_fields   = null,
+      quote_importer_enabled = true,
+      quote_source_types     = null,  -- null = the seed Source Type list in src/constants/quotes.ts
+      quote_categories       = null;  -- null = the seed Category list in src/constants/quotes.ts
 ```
 
 > Quotes' optional `show_id`/`book_id` links are `ON DELETE SET NULL`, so wiping Shows/Books only nulls
 > those columns on surviving quotes (the denormalised author/title/source type stay). Wiping `quote`
 > never touches `show`/`book`.
 
+**Medical** — wipes every report and its results (the `medical_lab_test` reference is kept):
+
+```sql
+truncate public.medical_report, public.medical_result cascade;
+-- optional: also reset the Medical settings on your profile to defaults
+update public.profile
+  set medical_tracked_tests        = null,
+      medical_section_order        = null,
+      medical_test_order           = null,
+      medical_visible_fields       = null,
+      medical_importer_enabled     = true,
+      medical_lock_enabled         = false,
+      medical_lock_pin_hash        = null,
+      medical_lock_webauthn_id     = null,
+      medical_lock_timeout_minutes = null;
+```
+
+> `medical_report` cascades to `medical_result`, so listing both is just explicit. The
+> `medical_lab_test` reference table is **migration-seeded** (like `nutrient`) and read-only to clients —
+> leave it; it isn't user data. The optional `update` reverts the Medical preferences on your shared
+> `profile` row: `medical_tracked_tests = null` falls back to the seeded `default_tracked` set, the order
+> /visible-field overrides clear, the importer returns to its default-on state, and the **biometric
+> lock** is cleared — that last part also wipes a **forgotten Medical PIN** (the salted hash), an
+> alternative to the sign-out reset in Part O.
+
 **Travel** — wipes every trip (days, stops, and expenses cascade) + the remembered-cities cache:
 
 ```sql
 truncate public.trip cascade;          -- cascades trip_day → stop, and trip_expense
 truncate public.remembered_city cascade;
--- optional: also reset the Travel categories on your profile to the seed defaults
-update public.profile set travel_expense_categories = null;
+-- optional: also reset the Travel settings on your profile to defaults
+update public.profile
+  set travel_expense_categories = null,  -- null = the seed category list in src/constants/travel.ts
+      travel_visible_fields     = null,  -- null = all Trip-form fields visible
+      travel_importer_enabled   = true;
 ```
 
 - ✅ Check: open that module in the app — its lists are empty (Wellness shows the re-seeded starter
@@ -679,9 +727,12 @@ update public.profile set travel_expense_categories = null;
 
 > **Multi-user note (future household project):** `truncate` clears every user's rows. To scope a wipe
 > to **yourself**, instead run `delete from <table> where user_id = '<your-user-id>';` on each module's
-> **own** tables — `activity`, `food`, `diary_entry` (Wellness) / `networth_snapshot` (Net Worth) /
-> `show` / `book` / `quote` / `trip` + `remembered_city` (Travel) — and the child rows (`serving`,
-> `strength_set`, `asset_entry`, and Travel's `trip_day`/`stop`/`trip_expense`) cascade automatically.
+> **own** tables — `activity`, `food`, `diary_entry` (Wellness) / `networth_snapshot` +
+> `insurance_policy` (Net Worth) / `show` / `book` / `quote` / `medical_report` (Medical) / `trip` +
+> `remembered_city` (Travel) — and the child rows (`serving`, `strength_set`, `asset_entry`,
+> insurance's `insurance_schedule` → `insurance_schedule_point`, `medical_result`, and Travel's
+> `trip_day`/`stop`/`trip_expense`) cascade automatically. The insurance child tables carry no `user_id`
+> of their own (they're owned via the policy), so per-user scoping must go through `insurance_policy`.
 > Your user id is in **Supabase → Authentication → Users**.
 
 ---

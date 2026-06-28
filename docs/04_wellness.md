@@ -8,6 +8,11 @@
   Last 3/6 Months, Last Year. The "daily average" divides totals by the number of **days that have at
   least one entry** in the range (not by calendar days). An empty range shows the shared centered
   **empty state** (Diary icon · "No entries yet" · "+ Diary").
+  - The window list + default live in `src/constants/wellness-ranges.ts` (`WELLNESS_RANGES` +
+    `WELLNESS_RANGE_DEFAULT`). These are **pure UI constants** — not persisted to any table — so editing
+    them (add/remove/relabel windows, change counts, change the default) takes effect on reload with **no
+    DB change and no other code change**. The default lives beside the list so the screen never hardcodes a
+    key; just keep it pointing at one of the list's keys.
 - **Energy Balance** card: Consumed, BMR, Activity, and a bold **Net = Consumed − BMR − Activity**.
 - Nutrient sections in fixed order — General, Vitamins, Minerals, Carbohydrates, Lipids,
   Protein & Amino Acids — each visible nutrient a "name · value / target · %" bar.

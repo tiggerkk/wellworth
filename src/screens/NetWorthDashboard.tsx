@@ -26,7 +26,11 @@ import {
   typeBreakdownFromTotals,
   type AssetType,
 } from '../lib/networth'
-import { NETWORTH_RANGES, rangeCutoff } from '../constants/networth-ranges'
+import {
+  NETWORTH_RANGES,
+  NETWORTH_RANGE_DEFAULT,
+  rangeCutoff,
+} from '../constants/networth-ranges'
 import { formatMonthLabel, startOfMonth, todayLocal } from '../lib/date'
 import { SectionCard } from '../components/SectionCard'
 import { SegmentedTabs } from '../components/SegmentedTabs'
@@ -115,7 +119,7 @@ export function NetWorthDashboard() {
   const { data: profile } = useProfile()
   const version = useNetWorthVersion()
   const [mode, setMode] = useState<'total' | 'type'>('total')
-  const [rangeKey, setRangeKey] = useState('all')
+  const [rangeKey, setRangeKey] = useState(NETWORTH_RANGE_DEFAULT)
   const [menuOpen, setMenuOpen] = useState(false)
 
   const fn = useCallback(() => {

@@ -9,7 +9,11 @@ No screen-title header (opens straight into cards). With no snapshots yet, the s
 entries yet" · "+ Monthly Entry").
 
 - Large **current total net worth** in HKD (latest snapshot).
-- **Total net-worth trend graph** with a time-window selector (windows: 6M, 12M, 2Y, 3Y, 5Y, All).
+- **Total net-worth trend graph** with a time-window selector (windows: 6M, 12M, 2Y, 3Y, 5Y, All;
+  default **All**). The window list + default live in `src/constants/networth-ranges.ts`
+  (`NETWORTH_RANGES` + `NETWORTH_RANGE_DEFAULT`) — **pure UI constants**, not persisted, so editing them
+  takes effect on reload with **no DB change and no other code change** (the default lives beside the list
+  so the screen never hardcodes a key).
   A view toggle: **Total** ⇄ **By asset type** (one line per asset type, each the monthly sum of
   that type's `value_base`).
 - A **per-asset-type summary** for the latest month: type, total HKD, % of net worth.

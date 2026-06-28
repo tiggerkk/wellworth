@@ -11,7 +11,11 @@ import { useMedicalTrends } from '../hooks/useMedicalTrends'
 import { Sparkline } from '../components/Sparkline'
 import { EmptyState } from '../components/EmptyState'
 import { SectionCard } from '../components/SectionCard'
-import { MEDICAL_RANGES, medicalRangeCutoff } from '../constants/medical-ranges'
+import {
+  MEDICAL_RANGES,
+  MEDICAL_RANGE_DEFAULT,
+  medicalRangeCutoff,
+} from '../constants/medical-ranges'
 import { asFlag, latestPoint, type TrackedTrend } from '../lib/medical-trends'
 import {
   formatRefRange,
@@ -218,7 +222,7 @@ function ExpandedTrend({
   refHigh: number | null
   onClose: () => void
 }) {
-  const [rangeKey, setRangeKey] = useState('all')
+  const [rangeKey, setRangeKey] = useState(MEDICAL_RANGE_DEFAULT)
   const [menuOpen, setMenuOpen] = useState(false)
   useEscapeKey(onClose)
 
