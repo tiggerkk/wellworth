@@ -54,7 +54,9 @@ _Search, filter, and sort persist for the **browser-tab session** (`useSessionSt
   seeded section + sort order (filtered to the tests this report contains).
 - Each result row: `test name · reference range` on the left, `value (+ unit)` on the right — value
   **coloured by flag** (high/abnormal = `danger` red, low = `info` blue).
-- A "normalized from …" note when the value was unit-converted on import; an "uncertain" marker when set.
+- A "normalized from …" note when the value was unit-converted on import; a still-flagged row is
+  **accent-tinted** with a **`Review – <reason>`** marker (accent, read-only — no button here); see the
+  review lifecycle under Add / Edit Report.
 
 ### Add / Edit Report (`/medical/entry`, `/medical/:id/edit`)
 
@@ -70,10 +72,23 @@ _Search, filter, and sort persist for the **browser-tab session** (`useSessionSt
 - **Results:** an **Add result** button opens a searchable **test picker** (the seeded reference
   grouped by category) or **Add custom test** (an ad-hoc row with editable name + category). Result
   cards render in the owner's **Tests Display Order** (same `orderResultsForDisplay` as Dashboard +
-  Report detail), so an added test slots into its section/test position, not the end. Each result row
-  edits the value (number and/or text, per the test's `value_kind`), unit, reference range (as printed),
-  flag (none/high/low/abnormal), and an uncertain toggle; rows can be removed. Manual values are
-  stored as-entered (no unit normalization — that's the importer's job).
+  Report detail) and are **grouped under uppercase category headers** (shared `groupResultsByCategory`,
+  like Report detail), so an added test slots into its section/test position, not the end. Each result
+  card edits the value (number and/or text, per the test's `value_kind`), unit, and flag
+  (none/high/low/abnormal) on **one line** (Value · Unit · Flag), then reference range (as printed);
+  rows can be removed. The category isn't shown per-card for a matched row (the section header carries
+  it); a **custom** row keeps a category picker. Manual values are stored as-entered (no unit
+  normalization — that's the importer's job).
+- **Review ("uncertain") lifecycle:** there is **no manual uncertain toggle** — the owner never sets it
+  by hand. A row is flagged for review when the **importer** raises `uncertain` (see Import); a flagged
+  card is **accent-tinted** (`bg-accent/10`, accent border) and shows **`Review – <reason>`** (accent)
+  as its **last row** with a **Mark Reviewed** pill button (`bg-input` accent, like the Shows importer's
+  controls). The flag clears on **Mark Reviewed** _or_ on **editing any field** of the row (so reviewing it
+  — here or back in Edit Report after an unreviewed import — resolves it). The `<reason>` is derived
+  from row state (`medicalReviewReason`): `no numeric value` (numeric test, no number), `unmatched test`
+  (name matched no reference test), else `check value` (the AI's low-confidence flag). Same editor + flag
+  behaviour on the Import review screen.
+- Deleting a report here returns to the **Reports list** (not the now-deleted read-only detail).
 - **Eye reports** (type = eye) surface a dedicated **Eye Refraction** grid above the results: a row
   per eye (OD / OS) × **Sphere / Cylinder / Addition** (dioptres). Each cell edits the `value_num`
   of the matching `eye`-category `medical_result` row (created on first input, removed when cleared),
@@ -90,9 +105,14 @@ _Search, filter, and sort persist for the **browser-tab session** (`useSessionSt
 - Each result is **matched to a reference test** (fuzzy, CJK-aware, via the provider-alias map in
   `src/lib/medical-import.ts`) and **unit-normalized** to the test's canonical unit (flagged, original
   kept).
-- The **review** shows **counts per category** (to catch a skipped section), every parsed row in the
-  same editor as manual entry (edit/add/remove; uncertain + normalized noted), and the report header —
-  where you **paste the Drive link(s)**.
+- **Flagged for review** (`uncertain`): set from the AI's file flag (the extraction prompt marks an
+  unreadable/low-confidence value) **or** an app-side rule in `makeResult` — a **numeric** test that
+  imported with no number, or a name that matched **no** reference test. These surface as
+  `Review – <reason>` in the editor (see Add / Edit Report) and clear on review.
+- The **review** shows **counts per category** (to catch a skipped section) and a **"· N to review"**
+  tally, every parsed row in the same editor as manual entry — now **grouped under category headers**
+  (display order) like Report detail — (edit/add/remove; review + normalized noted), and the report
+  header where you **paste the Drive link(s)**.
 - **Save** writes idempotently: a report with the same date + type is **replaced**, so re-importing
   the same file never duplicates.
 

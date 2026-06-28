@@ -21,11 +21,14 @@ import {
 import {
   MEDICAL_CATEGORIES,
   MEDICAL_CATEGORY_LABELS,
+  orderResultsForDisplay,
   REPORT_TYPE_LABELS,
   REPORT_TYPES,
   usesBodyPart,
   type MedicalLabTestSeed,
 } from '../lib/medical'
+import { groupResultsByCategory } from '../lib/medical-order'
+import { useProfile } from '../hooks/useProfile'
 import { formatDayLabel } from '../lib/date'
 import { routes } from '../constants/routes'
 
@@ -43,6 +46,7 @@ export function ImportMedicalSheet() {
   const navigate = useNavigate()
   const { session } = useAuth()
   const userId = session?.user.id
+  const { data: profile } = useProfile()
 
   const inputRef = useRef<HTMLInputElement>(null)
   const [fileName, setFileName] = useState<string | null>(null)
@@ -150,7 +154,15 @@ export function ImportMedicalSheet() {
       })).filter((x) => x.n > 0)
     : []
   const total = draft?.results.length ?? 0
-  const uncertain = draft?.results.filter((r) => r.uncertain).length ?? 0
+  const toReview = draft?.results.filter((r) => r.uncertain).length ?? 0
+  // Group the review cards by category (display order) — same sections as Report detail / Edit Report.
+  const orderedResults = draft
+    ? orderResultsForDisplay(
+        draft.results,
+        profile?.medical_section_order,
+        profile?.medical_test_order,
+      )
+    : []
 
   return (
     <Sheet variant="full" label="Import Medical report">
@@ -206,7 +218,7 @@ export function ImportMedicalSheet() {
             <div className="rounded-card border border-border bg-surface p-3">
               <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
                 Parsed {total} result{total === 1 ? '' : 's'}
-                {uncertain > 0 ? ` · ${uncertain} uncertain` : ''}
+                {toReview > 0 ? ` · ${toReview} to review` : ''}
               </p>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {counts.map(({ c, n }) => (
@@ -323,14 +335,23 @@ export function ImportMedicalSheet() {
                   <IconPlus size={16} /> Add result
                 </button>
               </div>
-              <div className="flex flex-col gap-3">
-                {draft.results.map((r) => (
-                  <MedicalResultCard
-                    key={r.clientId}
-                    row={r}
-                    onChange={(patch) => updateResult(r.clientId, patch)}
-                    onRemove={() => removeResult(r.clientId)}
-                  />
+              <div className="flex flex-col gap-5">
+                {groupResultsByCategory(orderedResults).map((g) => (
+                  <div key={g.category} className="flex flex-col gap-2">
+                    <p className="px-1 text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
+                      {MEDICAL_CATEGORY_LABELS[g.category]}
+                    </p>
+                    <div className="flex flex-col gap-3">
+                      {g.rows.map((r) => (
+                        <MedicalResultCard
+                          key={r.clientId}
+                          row={r}
+                          onChange={(patch) => updateResult(r.clientId, patch)}
+                          onRemove={() => removeResult(r.clientId)}
+                        />
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>

@@ -33,7 +33,7 @@ Each module's former staging spec (`docs/06-books.md`, `07-quotes.md`, `medical.
 
 ## Snapshot
 
-- **Tests:** 557 Vitest tests (pure helpers only).
+- **Tests:** 566 Vitest tests (pure helpers only).
 - **Deploy:** Deployed — GitHub `main` → Vercel auto-deploy; installed + tested on iPhone (PWA).
 - **Stack / scripts / env / gates / conventions:** see `02_tech_spec.md` (the canonical, current reference) — not duplicated here.
 
@@ -2438,3 +2438,33 @@ Behavior is in `06_shows.md` + `templates/shows-import-guide.md`. No schema/data
   author/year/cover (mirrors the Open Library path) and only enriches description/genres/etc. from the
   detail. Also: the importer's "Change" `applyFix` no longer **silently** swallows a failed re-fetch
   (e.g. a 429) — it surfaces a message so the wrong match isn't left in place unnoticed. +2 tests (555 → 557).
+
+## Medical — result-card grouping + "Review" lifecycle + delete-nav (2026-06-28)
+
+Reworked the shared Medical result-card editor (Add/Edit Report + Import review) and turned the
+persisted `uncertain` flag into a self-clearing "needs review" marker. Behavior is in `09_medical.md`.
+No schema/migration — the `uncertain` boolean is unchanged; only how it's raised, shown, and cleared.
+
+- **Section grouping (Edit + Import):** both result lists now render cards under uppercase **category
+  headers** (the read-only Report screen's grouping), via a new generic `groupResultsByCategory` in
+  `medical-order.ts` (replaces the private copy in `MedicalReportDetail`). Both call
+  `orderResultsForDisplay` first; the import review gained `useProfile` so it uses the owner's order.
+  The per-card category badge is gone for matched rows (the header carries it); a **custom** row keeps
+  its category `SelectMenu` (it picks the row's group).
+- **One-line inputs:** `MedicalResultCard` puts **Value · Unit · Flag** on a single row.
+- **"Uncertain" → "Review" lifecycle:** the manual toggle is removed (the owner never set it by hand).
+  `uncertain` is now raised by the AI file flag **OR** an app-side rule in `medical-import.ts`
+  (`makeResult`): a **numeric** test that imported with no number, or a name that matched **no**
+  reference test. A flagged card is **accent-tinted** (`bg-accent/10` + accent border) and shows
+  **`Review – <reason>`** (accent) as its last row + a **Mark Reviewed** pill button (`bg-input` accent,
+  matching the Shows importer's controls); **editing any field also clears it** (the card's `edit`
+  wrapper). The read-only Report detail tints the row and shows the same `Review – <reason>` marker (no
+  button) so an unresolved value is visible before tapping Edit. Reason is **derived** from row state
+  (`medicalReviewReason` in
+  `medical.ts`) — works on parsed/draft and saved rows alike, so nothing extra is persisted. Import
+  review counts now read **"· N to review"**.
+- **Delete-nav fix:** deleting a report from Edit Report `navigate(-1)`'d back onto its own now-deleted
+  read-only detail ("Couldn't load this report"); it now lands on the **Reports list**
+  (`routes.medical.reports`).
+- Verified by `npm run check` (**566 tests** — +9 for `groupResultsByCategory`, `medicalReviewReason`,
+  and the import app-side review rule).

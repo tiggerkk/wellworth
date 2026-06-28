@@ -64,6 +64,38 @@ describe('parseMedicalJson', () => {
     const r = parseMedicalJson('{"report_type":"eye"}')
     expect(r.ok).toBe(false)
   })
+
+  it('app-side review rule: flags a numeric test that imported with no number', () => {
+    const r = parseMedicalJson(
+      `{"report_type":"health_screening","results":[{"test_name":"LDL Cholesterol","category":"lipids","value_num":null,"value_text":"illegible"}]}`,
+    )
+    expect(r.ok).toBe(true)
+    if (r.ok) {
+      const row = r.report.results[0]!
+      expect(row.test_key).toBe('ldl_cholesterol')
+      expect(row.uncertain).toBe(true)
+    }
+  })
+
+  it('app-side review rule: flags a test name that matched no reference test', () => {
+    const r = parseMedicalJson(
+      `{"report_type":"health_screening","results":[{"test_name":"Some Novel Assay","category":"other","value_num":1.2}]}`,
+    )
+    expect(r.ok).toBe(true)
+    if (r.ok) {
+      const row = r.report.results[0]!
+      expect(row.test_key).toBeNull()
+      expect(row.uncertain).toBe(true)
+    }
+  })
+
+  it('does not flag a matched numeric test that has a value', () => {
+    const r = parseMedicalJson(
+      `{"report_type":"health_screening","results":[{"test_name":"LDL Cholesterol","category":"lipids","value_num":2.9}]}`,
+    )
+    expect(r.ok).toBe(true)
+    if (r.ok) expect(r.report.results[0]!.uncertain).toBe(false)
+  })
 })
 
 describe('matchTestKey', () => {

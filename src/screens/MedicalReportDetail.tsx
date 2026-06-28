@@ -11,14 +11,15 @@ import {
   MEDICAL_CATEGORY_LABELS,
   MEDICAL_FLAG_CLASS,
   MEDICAL_FLAG_LABELS,
+  medicalReviewReason,
   orderResultsForDisplay,
   REPORT_TYPE_LABELS,
   usesBodyPart,
-  type MedicalCategory,
   type MedicalFlag,
   type MedicalResultRow,
   type ReportType,
 } from '../lib/medical'
+import { groupResultsByCategory } from '../lib/medical-order'
 import { formatFullDate } from '../lib/date'
 import { routes } from '../constants/routes'
 import { PrimaryButton } from '../components/PrimaryButton'
@@ -101,7 +102,7 @@ function Body({ data }: { data: ReportWithResults }) {
     profile?.medical_section_order,
     profile?.medical_test_order,
   )
-  const groups = groupByCategory(ordered)
+  const groups = groupResultsByCategory(ordered)
 
   return (
     <div className="flex flex-col gap-5">
@@ -156,8 +157,19 @@ function Body({ data }: { data: ReportWithResults }) {
 function ResultRow({ r }: { r: MedicalResultRow }) {
   const flag = (r.flag as MedicalFlag | null) ?? null
   const ref = formatRefRange(r)
+  // "uncertain" rows imported without review show the same `Review – <reason>` marker as the editor,
+  // so an unresolved value is visible before tapping Edit (no Mark Reviewed button — this is read-only).
+  const reviewReason = medicalReviewReason({
+    uncertain: r.uncertain,
+    testKey: r.test_key,
+    hasNumericValue: r.value_num != null,
+  })
   return (
-    <div className="flex items-start justify-between gap-3 px-3 py-2.5">
+    <div
+      className={`flex items-start justify-between gap-3 px-3 py-2.5 ${
+        reviewReason ? 'bg-accent/10' : ''
+      }`}
+    >
       <div className="min-w-0 flex-1">
         <p className="text-[15px] text-text-primary">{r.test_name}</p>
         {ref && <p className="text-xs text-text-tertiary">Ref: {ref}</p>}
@@ -167,33 +179,19 @@ function ResultRow({ r }: { r: MedicalResultRow }) {
             {r.unit_original ? ` ${r.unit_original}` : ''}
           </p>
         )}
+        {reviewReason && (
+          <p className="text-xs font-medium text-accent">Review – {reviewReason}</p>
+        )}
       </div>
       <div className="shrink-0 text-right">
         <p className={flag ? MEDICAL_FLAG_CLASS[flag] : 'text-text-primary'}>
           {formatResultValue(r)}
           {r.unit ? ` ${r.unit}` : ''}
         </p>
-        {(flag || r.uncertain) && (
-          <p className="text-[11px] text-text-tertiary">
-            {flag ? MEDICAL_FLAG_LABELS[flag] : ''}
-            {flag && r.uncertain ? ' · ' : ''}
-            {r.uncertain ? 'uncertain' : ''}
-          </p>
+        {flag && (
+          <p className="text-[11px] text-text-tertiary">{MEDICAL_FLAG_LABELS[flag]}</p>
         )}
       </div>
     </div>
   )
-}
-
-function groupByCategory(
-  rows: MedicalResultRow[],
-): { category: MedicalCategory; rows: MedicalResultRow[] }[] {
-  const groups: { category: MedicalCategory; rows: MedicalResultRow[] }[] = []
-  for (const r of rows) {
-    const category = r.category as MedicalCategory
-    const last = groups[groups.length - 1]
-    if (last && last.category === category) last.rows.push(r)
-    else groups.push({ category, rows: [r] })
-  }
-  return groups
 }

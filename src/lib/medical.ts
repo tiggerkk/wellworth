@@ -636,6 +636,27 @@ export function orderResultsForDisplay<
   )
 }
 
+/**
+ * Why an imported result is flagged for review (the "uncertain" lifecycle). Derived from row state so
+ * it works identically on a parsed/draft row and a saved DB row (no persisted reason). The importer
+ * raises `uncertain` from the AI file flag OR an app-side rule (numeric test with no number read, or a
+ * name that matched no reference test); this turns the flag into a short reason for the
+ * `Review – <reason>` marker. Returns null when the row isn't flagged.
+ */
+export function medicalReviewReason(args: {
+  uncertain: boolean
+  testKey: string | null
+  hasNumericValue: boolean
+}): string | null {
+  if (!args.uncertain) return null
+  const numeric = args.testKey
+    ? labTestByKey.get(args.testKey)?.value_kind === 'numeric'
+    : false
+  if (numeric && !args.hasNumericValue) return 'no numeric value'
+  if (args.testKey == null) return 'unmatched test'
+  return 'check value'
+}
+
 /** Optional Add/Edit-Report parent fields, gated by `profile.medical_visible_fields`. */
 export const MEDICAL_REPORT_FIELDS: { key: string; label: string }[] = [
   { key: 'provider', label: 'Provider' },

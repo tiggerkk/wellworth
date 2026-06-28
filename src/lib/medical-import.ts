@@ -397,6 +397,11 @@ function makeResult(input: {
     ref_high: input.ref_high,
     test_key,
   })
+  // Flag for review (the "uncertain" lifecycle) from the AI file flag OR an app-side rule: a numeric
+  // test that imported with no number read, or a name that matched no reference test. Reviewing the
+  // row (edit or "Mark Reviewed") clears it; see `medicalReviewReason`.
+  const appReview =
+    (seed?.value_kind === 'numeric' && norm.value_num == null) || test_key == null
   return {
     test_key,
     test_name: input.test_name,
@@ -409,7 +414,7 @@ function makeResult(input: {
     ref_high: norm.ref_high,
     ref_text: input.ref_text,
     flag: input.flag,
-    uncertain: input.uncertain,
+    uncertain: input.uncertain || appReview,
     normalized: norm.normalized,
     value_num_original: norm.value_num_original,
     unit_original: norm.unit_original,

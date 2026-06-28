@@ -4,8 +4,9 @@ import {
   effectiveSectionOrder,
   effectiveTestOrderForCategory,
   flattenTestOrder,
+  groupResultsByCategory,
 } from './medical-order'
-import { MEDICAL_CATEGORIES, MEDICAL_LAB_TESTS } from './medical'
+import { MEDICAL_CATEGORIES, MEDICAL_LAB_TESTS, medicalReviewReason } from './medical'
 
 describe('effectiveSectionOrder', () => {
   it('returns the canonical order when there is no override', () => {
@@ -65,5 +66,62 @@ describe('buildOrderModel + flattenTestOrder', () => {
     // every seeded test appears exactly once
     expect(flat).toHaveLength(MEDICAL_LAB_TESTS.length)
     expect(new Set(flat).size).toBe(MEDICAL_LAB_TESTS.length)
+  })
+})
+
+describe('groupResultsByCategory', () => {
+  it('collapses consecutive rows of the same category into one group, preserving order', () => {
+    const rows = [
+      { category: 'lipids', k: 1 },
+      { category: 'lipids', k: 2 },
+      { category: 'renal', k: 3 },
+      { category: 'lipids', k: 4 }, // a later run of the same category stays a separate group
+    ]
+    const groups = groupResultsByCategory(rows)
+    expect(groups.map((g) => g.category)).toEqual(['lipids', 'renal', 'lipids'])
+    expect(groups[0]!.rows.map((r) => r.k)).toEqual([1, 2])
+    expect(groups[2]!.rows.map((r) => r.k)).toEqual([4])
+  })
+
+  it('returns no groups for an empty list', () => {
+    expect(groupResultsByCategory([])).toEqual([])
+  })
+})
+
+describe('medicalReviewReason', () => {
+  it('returns null when the row is not flagged', () => {
+    expect(
+      medicalReviewReason({
+        uncertain: false,
+        testKey: 'ldl_cholesterol',
+        hasNumericValue: false,
+      }),
+    ).toBeNull()
+  })
+
+  it('flags a numeric test that imported with no number read', () => {
+    expect(
+      medicalReviewReason({
+        uncertain: true,
+        testKey: 'ldl_cholesterol',
+        hasNumericValue: false,
+      }),
+    ).toBe('no numeric value')
+  })
+
+  it('flags an unmatched (ad-hoc) test name', () => {
+    expect(
+      medicalReviewReason({ uncertain: true, testKey: null, hasNumericValue: false }),
+    ).toBe('unmatched test')
+  })
+
+  it('falls back to a generic reason for a matched row with a value (AI low-confidence flag)', () => {
+    expect(
+      medicalReviewReason({
+        uncertain: true,
+        testKey: 'ldl_cholesterol',
+        hasNumericValue: true,
+      }),
+    ).toBe('check value')
   })
 })

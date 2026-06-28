@@ -87,3 +87,21 @@ export function flattenTestOrder(
 export function testDisplayName(key: string): string {
   return labTestByKey.get(key)?.display_name ?? key
 }
+
+/**
+ * Group already-ordered result rows into consecutive category runs, for the section headers shared by
+ * Report detail, the Add/Edit form, and the import review. Callers pass rows already sorted by
+ * `orderResultsForDisplay`, so a category appears once; generic over any row carrying `category`.
+ */
+export function groupResultsByCategory<T extends { category: string }>(
+  rows: T[],
+): { category: MedicalCategory; rows: T[] }[] {
+  const groups: { category: MedicalCategory; rows: T[] }[] = []
+  for (const r of rows) {
+    const category = r.category as MedicalCategory
+    const last = groups[groups.length - 1]
+    if (last && last.category === category) last.rows.push(r)
+    else groups.push({ category, rows: [r] })
+  }
+  return groups
+}

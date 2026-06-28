@@ -19,12 +19,14 @@ import {
   EYE_REFRACTION_KEYS,
   isMedicalFieldVisible,
   labTestByKey,
+  MEDICAL_CATEGORY_LABELS,
   orderResultsForDisplay,
   REPORT_TYPE_LABELS,
   REPORT_TYPES,
   usesBodyPart,
   type MedicalLabTestSeed,
 } from '../lib/medical'
+import { groupResultsByCategory } from '../lib/medical-order'
 import { formatDayLabel } from '../lib/date'
 import { routes } from '../constants/routes'
 import { Calendar } from '../components/Calendar'
@@ -185,7 +187,9 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
     try {
       await deleteReport(id)
       bumpMedical()
-      navigate(-1)
+      // Don't navigate(-1) — that returns to this report's now-deleted read-only detail ("Couldn't
+      // load this report"). Land on the Reports list instead.
+      navigate(routes.medical.reports)
     } finally {
       setSaving(false)
     }
@@ -337,14 +341,23 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
                 : 'No results yet. Tap “Add result”.'}
             </p>
           ) : (
-            <div className="flex flex-col gap-3">
-              {listResults.map((r) => (
-                <MedicalResultCard
-                  key={r.clientId}
-                  row={r}
-                  onChange={(patch) => updateResult(r.clientId, patch)}
-                  onRemove={() => removeResult(r.clientId)}
-                />
+            <div className="flex flex-col gap-5">
+              {groupResultsByCategory(listResults).map((g) => (
+                <div key={g.category} className="flex flex-col gap-2">
+                  <p className="px-1 text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
+                    {MEDICAL_CATEGORY_LABELS[g.category]}
+                  </p>
+                  <div className="flex flex-col gap-3">
+                    {g.rows.map((r) => (
+                      <MedicalResultCard
+                        key={r.clientId}
+                        row={r}
+                        onChange={(patch) => updateResult(r.clientId, patch)}
+                        onRemove={() => removeResult(r.clientId)}
+                      />
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           )}
