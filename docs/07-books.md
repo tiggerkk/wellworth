@@ -62,7 +62,11 @@ edit).
   **Dynasty** is a dropdown of the 13 values (全部 近代 … 先秦), defaulting to 全部, and is **editable only
   when the Title contains CJK**; for non-Chinese titles it's disabled and stored as NULL.
 - **Start Date** and **Finish / Drop Date** share a line; each opens the Calendar modal and is
-  clearable. **Notes** (textarea) sits below.
+  clearable. **Notes** sits below: a **4-row** textarea with an **expand icon** beside the label that
+  opens the shared full-screen **`NotesEditorModal`** (header `Title (Year)`, title only when Year is
+  unknown) — a **buffered** editor (only Save writes back) using the shared **EntryHeaderActions**
+  (Delete clears · Reset reverts · Save applies), a top-left ✕ to cancel, and a **paste** icon that
+  inserts clipboard text **at the cursor**. Stored as `notes` (TEXT, effectively unbounded).
 - Top-right icon actions (Delete when editing · Reset · Create/Save) via shared **EntryHeaderActions**.
   Create requires a Title.
 - Field visibility controlled by **Books Settings → Visible Fields**.
@@ -86,10 +90,12 @@ edit).
 
 ### Import CSV (sheet, from Books Settings)
 
-Columns: `title,author,status,rating,lgbtq_rep,dynasty,is_favorite,start_date,end_date`
+Columns: `title,author,status,rating,lgbtq_rep,dynasty,is_favorite,start_date,end_date,notes`
 
 - `status` ∈ `want|reading|read|dropped`; `dynasty` for Chinese titles only; `is_favorite` optional.
 - `start_date` required except for `want`; `end_date` required for `read|dropped`.
+- `notes` is the optional, nullable **right-most** column (free text; wrap multi-line values in quotes);
+  never errors, so it can't skip a row.
 - `created_at` frozen to `start_date`, or — when a `want` omits it — defaults to import time.
 
 Steps:
@@ -152,7 +158,7 @@ Full guide: `templates/books-import-guide.md`.
   Title contains CJK
 - `is_favorite` BOOLEAN NOT NULL DEFAULT false — ♥; favourites filter + Dashboard shelf
 - `start_date` DATE NULL · `end_date` DATE NULL
-- `comments` TEXT NULL
+- `notes` TEXT NULL — free-text user notes (effectively unbounded; edited inline or via `NotesEditorModal`)
 - `created_at`, `updated_at`
 - Index on (`user_id`, `status`) and (`user_id`, `is_favorite`)
 

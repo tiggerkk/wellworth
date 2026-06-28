@@ -50,7 +50,7 @@ create table public.book (
   is_favorite      boolean not null default false,
   start_date       date,
   end_date         date,                     -- finish / drop date
-  comments         text,
+  notes            text,
   created_at       timestamptz not null default now(),
   updated_at       timestamptz not null default now()
 );

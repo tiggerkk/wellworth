@@ -1,12 +1,14 @@
-title,type,status,rating,lgbtq_rep,dynasty,watched_seasons,watched_episodes,is_favorite,start_date,end_date
-The Matrix,movie,watched,5,some,,,,true,2026-01-03,2026-01-03
-Breaking Bad,tv,watched,5,none,,,,true,2025-11-01,2026-01-20
-Heartstopper,tv,watching,4.5,significant,,1,8,,2026-02-10,
-Severance,tv,want,,some,,,,,,
-Dune,movie,want,,none,,,,,2026-02-18,
-The OA,tv,dropped,3,some,,2,16,,2026-01-05,2026-02-25
-Foundation,tv,watching,4,none,,2,all,,2026-03-01,
-Portrait of a Lady on Fire,movie,watched,4.5,significant,,,,,2026-03-12,2026-03-12
-Sense8,tv,watched,4,significant,,,,,2025-12-01,2026-01-15
-国宝档案 — 从东晋到北魏,documentary,watched,5,none,南北朝,,,,2026-04-01,2026-04-02
-河西走廊,documentary,watching,4.5,none,兩漢,1,5,,2026-04-10,
+title,type,status,rating,lgbtq_rep,dynasty,watched_seasons,watched_episodes,is_favorite,start_date,end_date,notes
+The Matrix,movie,watched,5,some,,,,true,2026-01-03,2026-01-03,Rewatch — still holds up.
+Breaking Bad,tv,watched,5,none,,,,true,2025-11-01,2026-01-20,"Favourite arc: Ozymandias.
+Track the colour symbolism next time.
+S5 is the strongest."
+Heartstopper,tv,watching,4.5,significant,,1,8,,2026-02-10,,
+Severance,tv,want,,some,,,,,,,
+Dune,movie,want,,none,,,,,2026-02-18,,
+The OA,tv,dropped,3,some,,2,16,,2026-01-05,2026-02-25,Dropped after the cancellation news.
+Foundation,tv,watching,4,none,,2,all,,2026-03-01,,
+Portrait of a Lady on Fire,movie,watched,4.5,significant,,,,,2026-03-12,2026-03-12,
+Sense8,tv,watched,4,significant,,,,,2025-12-01,2026-01-15,
+国宝档案 — 从东晋到北魏,documentary,watched,5,none,南北朝,,,,2026-04-01,2026-04-02,
+河西走廊,documentary,watching,4.5,none,兩漢,1,5,,2026-04-10,,

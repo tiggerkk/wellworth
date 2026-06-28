@@ -35,6 +35,8 @@ not wait to be reminded:
 - **`docs/OWNER-RUNBOOK.md`** — update when setup, scripts, env vars, migrations, or deploy/reset steps change (it must still stand up the app from a fresh clone).
 - **`README.md`** — update if the top-level overview or file/doc layout changes.
 
+Write in concise bullet points and avoid long paragraphs.
+
 Then run `npm run format` so the docs pass Prettier.
 
 ## Modules

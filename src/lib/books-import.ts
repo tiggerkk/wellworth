@@ -3,9 +3,10 @@
  * `templates/books-import-guide.md`). No I/O and no Google Books calls — the import screen reads the
  * file, resolves each row against Google Books, and writes via `saveImportedBooks`.
  *
- * Column spec: `title,author,status,rating,lgbtq_rep,dynasty,is_favorite,start_date,end_date`.
+ * Column spec: `title,author,status,rating,lgbtq_rep,dynasty,is_favorite,start_date,end_date,notes`.
  * `status` is want/reading/read/dropped; `start_date` is required on every row; `end_date` is required
- * for finished rows (read/dropped) and ignored otherwise; `created_at` is frozen to `start_date`
+ * for finished rows (read/dropped) and ignored otherwise; `notes` is the optional, nullable right-most
+ * column (free text; wrap multi-line values in quotes); `created_at` is frozen to `start_date`
  * (`updated_at` is left to the DB). The per-row lookup uses title **and** author to disambiguate
  * (book titles collide far more than shows).
  */
@@ -36,6 +37,8 @@ export interface ParsedBookRow {
   start_date: IsoDate | null
   /** Finish / drop date — set only for finished rows (read/dropped), else null. */
   end_date: IsoDate | null
+  /** Optional free-text notes (right-most column); null when blank. */
+  notes: string | null
 }
 
 export interface BooksImportResult {
@@ -164,6 +167,8 @@ export function parseBooksCsv(rows: string[][]): BooksImportResult {
       end_date = endRaw
     }
 
+    const notesRaw = col(cells, 'notes')
+
     out.push({
       title,
       author,
@@ -174,6 +179,7 @@ export function parseBooksCsv(rows: string[][]): BooksImportResult {
       is_favorite: parseBool(col(cells, 'is_favorite')),
       start_date,
       end_date,
+      notes: notesRaw === '' ? null : notesRaw,
     })
   }
 
@@ -218,6 +224,6 @@ export function buildImportRow(
     end_date: input.end_date,
     // Freeze created_at to start_date; when absent (a `want` row), let it default to now() = updated_at.
     ...(input.start_date ? { created_at: `${input.start_date}T00:00:00Z` } : {}),
-    comments: null,
+    notes: input.notes,
   }
 }

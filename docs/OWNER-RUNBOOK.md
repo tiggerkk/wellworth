@@ -700,7 +700,7 @@ documentaries / CCTV series). To add one (**Shows → New Show**):
      Baidu/Douban _search_ URL — those can expire.)
 4. **⟳ Refresh from TMDB** (the button beside Search; enabled once a `tmdb_id` exists): use it when your
    contributed entry clears moderation, or when a show adds seasons/episodes. It updates TMDB-sourced
-   fields only and **never** overwrites your status, rating, dates, comments, favourite flag, or a
+   fields only and **never** overwrites your status, rating, dates, notes, favourite flag, or a
    manually pasted poster. (Bulk "refresh everything" is intentionally not built — see `PARKED.md`.)
 
 **Bulk import:** to seed a back-catalogue, enable **Shows Settings → Enable CSV import** and use one CSV

@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import {
+  IconArrowsDiagonal,
   IconHeart,
   IconHeartFilled,
   IconQuote,
@@ -32,6 +33,7 @@ import { Calendar } from '../components/Calendar'
 import { BookSearchSheet } from '../components/BookSearchSheet'
 import { CoverThumb } from '../components/CoverThumb'
 import { EntryHeaderActions } from '../components/EntryHeaderActions'
+import { NotesEditorModal } from '../components/NotesEditorModal'
 import { SelectMenu } from '../components/SelectMenu'
 import { StarRating } from '../components/StarRating'
 
@@ -46,7 +48,7 @@ interface BookDraft {
   is_favorite: boolean
   start_date: IsoDate | null
   end_date: IsoDate | null
-  comments: string
+  notes: string
   // Carry-through metadata (Google Books / Open Library populate these in M3; persisted as-is).
   cover_url: string | null
   description: string | null
@@ -73,7 +75,7 @@ function blankDraft(): BookDraft {
     is_favorite: false,
     start_date: today,
     end_date: null,
-    comments: '',
+    notes: '',
     cover_url: null,
     description: null,
     genres: null,
@@ -97,7 +99,7 @@ function draftFromRow(row: BookRow): BookDraft {
     is_favorite: row.is_favorite,
     start_date: row.start_date,
     end_date: row.end_date,
-    comments: row.comments ?? '',
+    notes: row.notes ?? '',
     cover_url: row.cover_url,
     description: row.description,
     genres: row.genres,
@@ -150,6 +152,7 @@ function BookForm({ id, initial }: { id: string | undefined; initial: BookDraft 
   const [saving, setSaving] = useState(false)
   const [datePicker, setDatePicker] = useState<null | 'start' | 'end'>(null)
   const [searchOpen, setSearchOpen] = useState(false)
+  const [notesOpen, setNotesOpen] = useState(false)
   const [metaLoading, setMetaLoading] = useState(false)
   const [metaError, setMetaError] = useState(false)
   useEscapeKey(() => navigate(-1))
@@ -166,7 +169,7 @@ function BookForm({ id, initial }: { id: string | undefined; initial: BookDraft 
     !!draft.language
 
   // Selecting a search result fetches details and overwrites the metadata fields (incl. Title /
-  // Author(s) / Year), keeping the user's Status / Rating / LGBT+ / dates / comments.
+  // Author(s) / Year), keeping the user's Status / Rating / LGBT+ / dates / notes.
   async function selectBook(r: BookSearchResult) {
     setSearchOpen(false)
     setMetaLoading(true)
@@ -234,7 +237,7 @@ function BookForm({ id, initial }: { id: string | undefined; initial: BookDraft 
         is_favorite: draft.is_favorite,
         start_date: draft.start_date,
         end_date: draft.end_date,
-        comments: draft.comments.trim() || null,
+        notes: draft.notes.trim() || null,
         cover_url: draft.cover_url,
         description: draft.description,
         genres: draft.genres,
@@ -469,16 +472,26 @@ function BookForm({ id, initial }: { id: string | undefined; initial: BookDraft 
           </div>
         )}
 
-        {show('comments') && (
-          <label className="text-xs text-text-secondary">
-            Notes
+        {show('notes') && (
+          <div className="text-xs text-text-secondary">
+            <div className="flex items-center justify-between">
+              <span>Notes</span>
+              <button
+                type="button"
+                onClick={() => setNotesOpen(true)}
+                aria-label="Expand notes"
+                className="text-accent"
+              >
+                <IconArrowsDiagonal size={16} />
+              </button>
+            </div>
             <textarea
-              value={draft.comments}
-              onChange={(e) => update({ comments: e.target.value })}
-              rows={3}
+              value={draft.notes}
+              onChange={(e) => update({ notes: e.target.value })}
+              rows={4}
               className={`mt-1 ${inputClass} resize-none`}
             />
-          </label>
+          </div>
         )}
 
         {id && (
@@ -507,6 +520,16 @@ function BookForm({ id, initial }: { id: string | undefined; initial: BookDraft 
           initialQuery={draft.title}
           onSelect={(r) => void selectBook(r)}
           onClose={() => setSearchOpen(false)}
+        />
+      )}
+
+      {notesOpen && (
+        <NotesEditorModal
+          title={draft.title}
+          year={Number.parseInt(draft.year, 10) || null}
+          value={draft.notes}
+          onSave={(next) => update({ notes: next })}
+          onClose={() => setNotesOpen(false)}
         />
       )}
     </>

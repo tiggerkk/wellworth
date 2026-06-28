@@ -33,7 +33,7 @@ Each module's former staging spec (`docs/06-books.md`, `07-quotes.md`, `medical.
 
 ## Snapshot
 
-- **Tests:** 504 Vitest tests (pure helpers only).
+- **Tests:** 507 Vitest tests (pure helpers only).
 - **Deploy:** Deployed — GitHub `main` → Vercel auto-deploy; installed + tested on iPhone (PWA).
 - **Stack / scripts / env / gates / conventions:** see `02-tech-spec.md` (the canonical, current reference) — not duplicated here.
 
@@ -2280,3 +2280,27 @@ in `01-design-system.md` (the new component + the two models) and the touched mo
 - No render test added: the suite is **node-env, pure-helpers only** (no jsdom/testing-library by
   design), so a component test would mean new deps against that convention. Verified by
   `npm run check` (504 tests).
+
+## Shows/Books Notes rename + long-notes editor (2026-06-28)
+
+Renamed the column and added comfortable long-note editing across **Shows** and **Books**. Behavior is
+in `06-shows.md` / `07-books.md`; the new shared modal is referenced from both.
+
+- **`comments` → `notes`** end-to-end: the `show`/`book` create migrations (`04_`/`06_`, edited in
+  place — owner reconciles via `db reset`), `database.ts` (hand-patched, regen on next reset),
+  `SHOW_ENTRY_FIELDS`/`BOOK_ENTRY_FIELDS` keys, the Entry drafts/save, the importers, and tests/docs.
+  The visible-fields key changed too; stored `*_visible_fields` arrays default NULL (= all visible) and
+  the owner's reset clears any stale `'comments'` entry, so no data migration. Postgres `text` is
+  effectively unbounded, so no type change for long notes.
+- **New shared `NotesEditorModal`** (`src/components/`): full-screen, **buffered** editor opened by an
+  expand icon beside the inline Notes label (which grew `rows={3}` → `4`). Header `Title (Year)` (title
+  only when Year is null); reuses **`EntryHeaderActions`** (Delete clears the text · Reset reverts to
+  the value at open · Save applies + closes) with a top-left ✕ to cancel. A **paste** icon inserts
+  clipboard text **at the cursor** (reads the textarea's retained `selectionStart/End` off a ref, then
+  restores the caret) — unlike the Quotes paste, which overwrites the whole field. Local overlay
+  modelled on `Calendar` (not the route-based `Sheet`) since it's a sub-modal of the Entry form.
+- **CSV import** gained `notes` as the **right-most**, nullable, multi-line column in both
+  `shows-import.ts` / `books-import.ts` (the RFC-4180 `parseCsv` already handles quoted newlines) plus
+  the template CSVs and import guides. +3 pure-helper tests (notes parse + carry-through) → **507**.
+- No component test (node-env, pure-helpers-only convention — same as prior passes). Verified by
+  `npm run check` (507 tests).

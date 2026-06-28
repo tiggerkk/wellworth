@@ -118,7 +118,6 @@ export type Database = {
       book: {
         Row: {
           authors: string[] | null
-          comments: string | null
           cover_url: string | null
           created_at: string
           description: string | null
@@ -131,6 +130,7 @@ export type Database = {
           isbn: string | null
           language: string | null
           lgbtq_rep: string
+          notes: string | null
           open_library_id: string | null
           page_count: number | null
           rating: number | null
@@ -143,7 +143,6 @@ export type Database = {
         }
         Insert: {
           authors?: string[] | null
-          comments?: string | null
           cover_url?: string | null
           created_at?: string
           description?: string | null
@@ -156,6 +155,7 @@ export type Database = {
           isbn?: string | null
           language?: string | null
           lgbtq_rep?: string
+          notes?: string | null
           open_library_id?: string | null
           page_count?: number | null
           rating?: number | null
@@ -168,7 +168,6 @@ export type Database = {
         }
         Update: {
           authors?: string[] | null
-          comments?: string | null
           cover_url?: string | null
           created_at?: string
           description?: string | null
@@ -181,6 +180,7 @@ export type Database = {
           isbn?: string | null
           language?: string | null
           lgbtq_rep?: string
+          notes?: string | null
           open_library_id?: string | null
           page_count?: number | null
           rating?: number | null
@@ -792,7 +792,6 @@ export type Database = {
       show: {
         Row: {
           cast: string[] | null
-          comments: string | null
           created_at: string
           director: string | null
           dynasty: string | null
@@ -802,6 +801,7 @@ export type Database = {
           imdb_id: string | null
           is_favorite: boolean
           lgbtq_rep: string
+          notes: string | null
           original_language: string | null
           original_title: string | null
           overview: string | null
@@ -823,7 +823,6 @@ export type Database = {
         }
         Insert: {
           cast?: string[] | null
-          comments?: string | null
           created_at?: string
           director?: string | null
           dynasty?: string | null
@@ -833,6 +832,7 @@ export type Database = {
           imdb_id?: string | null
           is_favorite?: boolean
           lgbtq_rep?: string
+          notes?: string | null
           original_language?: string | null
           original_title?: string | null
           overview?: string | null
@@ -854,7 +854,6 @@ export type Database = {
         }
         Update: {
           cast?: string[] | null
-          comments?: string | null
           created_at?: string
           director?: string | null
           dynasty?: string | null
@@ -864,6 +863,7 @@ export type Database = {
           imdb_id?: string | null
           is_favorite?: boolean
           lgbtq_rep?: string
+          notes?: string | null
           original_language?: string | null
           original_title?: string | null
           overview?: string | null

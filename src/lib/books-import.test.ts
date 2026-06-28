@@ -11,6 +11,7 @@ const HEADER = [
   'is_favorite',
   'start_date',
   'end_date',
+  'notes',
 ]
 
 describe('parseBooksCsv', () => {
@@ -36,7 +37,29 @@ describe('parseBooksCsv', () => {
       is_favorite: true,
       start_date: '2026-02-01',
       end_date: '2026-03-01',
+      notes: null,
     })
+  })
+
+  it('reads a multi-line notes cell and treats a blank notes cell as null', () => {
+    const res = parseBooksCsv([
+      HEADER,
+      [
+        'A',
+        'X',
+        'read',
+        '',
+        '',
+        '',
+        '2026-02-01',
+        '2026-03-01',
+        'first line\nsecond line',
+      ],
+      ['B', 'Y', 'read', '', '', '', '2026-02-01', '2026-03-01', ''],
+    ])
+    expect(res.errors).toEqual([])
+    expect(res.rows[0]?.notes).toBe('first line\nsecond line')
+    expect(res.rows[1]?.notes).toBeNull()
   })
 
   it('imports a non-Read status (Want needs only start_date)', () => {
@@ -134,6 +157,7 @@ describe('buildImportRow', () => {
     is_favorite: true,
     start_date: '2026-02-01',
     end_date: '2026-03-01',
+    notes: 'Loved it.',
   }
 
   it('uses the Google Books match and carries status + CSV dates (created_at = start_date)', () => {
@@ -170,7 +194,7 @@ describe('buildImportRow', () => {
       start_date: '2026-02-01',
       end_date: '2026-03-01',
       created_at: '2026-02-01T00:00:00Z',
-      comments: null,
+      notes: 'Loved it.',
     })
   })
 

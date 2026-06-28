@@ -75,6 +75,12 @@ Reached from the **New Show** bottom-nav tab (`/shows/entry`, new) or by tapping
   clearable.
 - **Total Seasons / Episodes** and **Watched Seasons / Episodes** (episodic types — TV + documentary):
   two labels over four side-by-side number inputs.
+- **Notes** (free text): a **4-row** textarea. An **expand icon** beside the label opens the shared
+  full-screen **`NotesEditorModal`** for long notes — header `Title (Year)` (title only when Year is
+  unknown), a **buffered** editor (only Save writes back to the form) using the shared
+  **EntryHeaderActions** (Delete clears the text · Reset reverts to the value at open · Save applies +
+  closes), a top-left ✕ to cancel/discard, and a **paste** icon that inserts clipboard text **at the
+  cursor**. Stored as `notes` (TEXT, effectively unbounded).
 - **Search TMDB** opens the Title Search modal (CJK-aware; documentary uses the /tv endpoint). Selecting
   a result fetches details and populates metadata — poster thumbnail + Genres, Director/Creator, top
   Cast, Overview, Runtime (read-only display) — plus Title/Original Title/Year (editable) and season/episode
@@ -82,7 +88,7 @@ Reached from the **New Show** bottom-nav tab (`/shows/entry`, new) or by tapping
 - **⟳ Refresh from TMDB** (beside Search; enabled only when `tmdb_id` exists): re-fetches TMDB metadata
   and updates **only TMDB-sourced fields** (title, original_title, overview, genres, director, cast,
   season/episode totals, runtime, original_language, TMDB poster). Never touches owner fields (status,
-  rating, lgbtq_rep, dates, comments, watched counts, is_favorite) or a **manually pasted** poster.
+  rating, lgbtq_rep, dates, notes, watched counts, is_favorite) or a **manually pasted** poster.
   Reports "Updated" / "Already up to date".
 - Top-right icon actions (Delete when editing · Reset · Create/Save) via shared **EntryHeaderActions**.
   Create requires a Title.
@@ -111,10 +117,12 @@ Reached from the **New Show** bottom-nav tab (`/shows/entry`, new) or by tapping
 
 ### Import CSV (sheet, from Shows Settings)
 
-Columns: `title,type,status,rating,lgbtq_rep,dynasty,watched_seasons,watched_episodes,is_favorite,start_date,end_date`
+Columns: `title,type,status,rating,lgbtq_rep,dynasty,watched_seasons,watched_episodes,is_favorite,start_date,end_date,notes`
 
 - `type` ∈ `tv|movie|documentary`; `dynasty` for Chinese titles only; `is_favorite` optional.
 - `start_date` required except for `want`; `end_date` required for `watched|dropped`.
+- `notes` is the optional, nullable **right-most** column (free text; wrap multi-line values in quotes);
+  never errors, so it can't skip a row.
 - `created_at` is frozen to `start_date`, or — when a `want` omits it — defaults to import time.
 - `watched_episodes` accepts the literal **`all`** on a `watching|dropped` episodic row (with
   `watched_seasons`), resolved to that season's TMDB episode count at import (left blank if TMDB has
@@ -188,7 +196,7 @@ Full guide: `templates/shows-import-guide.md`.
   form only when the title contains CJK
 - `is_favorite` BOOLEAN NOT NULL DEFAULT false — ♥; favourites filter + Dashboard shelf
 - `start_date` DATE NULL · `end_date` DATE NULL — start and finish/drop date
-- `comments` TEXT NULL
+- `notes` TEXT NULL — free-text user notes (effectively unbounded; edited inline or via `NotesEditorModal`)
 - `created_at`, `updated_at`
 - Index on (`user_id`, `status`) and (`user_id`, `is_favorite`)
 

@@ -8,7 +8,7 @@ duplicates), so partial re-runs are safe.
 ## Columns
 
 ```
-title,author,status,rating,lgbtq_rep,dynasty,is_favorite,start_date,end_date
+title,author,status,rating,lgbtq_rep,dynasty,is_favorite,start_date,end_date,notes
 ```
 
 - **title** — the book title to look up. Required.
@@ -27,6 +27,9 @@ title,author,status,rating,lgbtq_rep,dynasty,is_favorite,start_date,end_date
   `created_at`; left blank on a `want` row, the record is just dated by its import time.
 - **end_date** — `YYYY-MM-DD`. The finish / drop date. **Required for `read` and `dropped` rows**; left
   blank (and ignored) for `reading` / `want` rows.
+- **notes** — free-text notes, the **right-most** column. Optional and nullable (blank = no notes).
+  Stored verbatim, so it can be **multi-line** — wrap the whole value in double quotes and put line
+  breaks inside the quotes (escape a literal `"` as `""`). Never errors, so it can't skip a row.
 
 The Library's **Date** sort uses `end_date` if present, else `start_date`. Rows with a missing
 `title`/`author`, an unknown `status`/`lgbtq_rep`/`dynasty`, a bad `rating`, a missing `start_date` on a

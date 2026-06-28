@@ -29,6 +29,7 @@ describe('parseShowsCsv', () => {
         is_favorite: false, // blank → false
         start_date: '2023-01-01',
         end_date: null, // ignored for an unfinished (want) row
+        notes: null, // no notes column in this HEADER → null
       },
     ])
   })
@@ -90,6 +91,17 @@ describe('parseShowsCsv', () => {
       status: 'watched',
     })
   })
+  it('reads a notes cell (multi-line) and treats blank as null', () => {
+    const header = HEADER.split(',').concat('notes')
+    const res = parseShowsCsv([
+      header,
+      ['A', 'movie', 'want', '', '', '', '', '', '2023-01-01', '', 'line1\nline2'],
+      ['B', 'movie', 'want', '', '', '', '', '', '2023-01-01', '', ''],
+    ])
+    expect(res.errors).toEqual([])
+    expect(res.rows[0]?.notes).toBe('line1\nline2')
+    expect(res.rows[1]?.notes).toBeNull()
+  })
   it('reports the required columns when missing', () => {
     expect(parseShowsCsv([['type', 'status']]).errors[0]).toContain('title')
   })
@@ -144,6 +156,7 @@ const row = (p: Partial<ParsedShowRow>): ParsedShowRow => ({
   is_favorite: false,
   start_date: '2023-01-01',
   end_date: '2023-02-01',
+  notes: null,
   ...p,
 })
 
@@ -159,6 +172,10 @@ describe('buildImportRow', () => {
   })
   it('carries is_favorite through', () => {
     expect(buildImportRow(row({ is_favorite: true }), tvMeta).is_favorite).toBe(true)
+  })
+  it('carries notes through (null when blank)', () => {
+    expect(buildImportRow(row({ notes: 'great show' }), tvMeta).notes).toBe('great show')
+    expect(buildImportRow(row({}), tvMeta).notes).toBeNull()
   })
   it('a want row with no start_date omits created_at (defaults to now() = updated_at)', () => {
     const out = buildImportRow(

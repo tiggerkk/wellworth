@@ -4,9 +4,10 @@
  * resolves each row against TMDB, and writes via `saveImportedShows`.
  *
  * Column spec:
- * `title,type,status,rating,lgbtq_rep,dynasty,watched_seasons,watched_episodes,is_favorite,start_date,end_date`.
+ * `title,type,status,rating,lgbtq_rep,dynasty,watched_seasons,watched_episodes,is_favorite,start_date,end_date,notes`.
  * `start_date` is required on every row; `end_date` is required for finished rows (watched/dropped)
- * and ignored otherwise. `created_at` is frozen to `start_date`; `updated_at` is left to the DB.
+ * and ignored otherwise; `notes` is the optional, nullable right-most column (free text; wrap
+ * multi-line values in quotes). `created_at` is frozen to `start_date`; `updated_at` is left to the DB.
  */
 import {
   LGBTQ_REPS,
@@ -44,6 +45,8 @@ export interface ParsedShowRow {
   start_date: IsoDate | null
   /** Finish / drop date — set only for finished rows (watched/dropped), else null. */
   end_date: IsoDate | null
+  /** Optional free-text notes (right-most column); null when blank. */
+  notes: string | null
 }
 
 export interface ShowsImportResult {
@@ -217,6 +220,8 @@ export function parseShowsCsv(rows: string[][]): ShowsImportResult {
       end_date = endRaw
     }
 
+    const notesRaw = col(cells, 'notes')
+
     out.push({
       title,
       type: type as ShowType,
@@ -229,6 +234,7 @@ export function parseShowsCsv(rows: string[][]): ShowsImportResult {
       is_favorite: parseBool(col(cells, 'is_favorite')),
       start_date,
       end_date,
+      notes: notesRaw === '' ? null : notesRaw,
     })
   }
 
@@ -300,6 +306,6 @@ export function buildImportRow(
     end_date: input.end_date,
     // Freeze created_at to start_date; when absent (a `want` row), let it default to now() = updated_at.
     ...(input.start_date ? { created_at: `${input.start_date}T00:00:00Z` } : {}),
-    comments: null,
+    notes: input.notes,
   }
 }

@@ -51,7 +51,7 @@ function makeShow(p: Partial<ShowRow>): ShowRow {
     is_favorite: false,
     start_date: null,
     end_date: null,
-    comments: null,
+    notes: null,
     created_at: '2026-01-01T00:00:00Z',
     updated_at: '2026-01-01T00:00:00Z',
     ...p,
@@ -500,8 +500,8 @@ describe('isFieldVisible', () => {
     expect(isFieldVisible(['rating'], 'newly_added_field')).toBe(false)
   })
   it('honours an explicit visible list', () => {
-    expect(isFieldVisible(['year', 'comments'], 'comments')).toBe(true)
-    expect(isFieldVisible(['year', 'comments'], 'rating')).toBe(false)
+    expect(isFieldVisible(['year', 'notes'], 'notes')).toBe(true)
+    expect(isFieldVisible(['year', 'notes'], 'rating')).toBe(false)
   })
 })
 
@@ -517,7 +517,7 @@ describe('SHOW_ENTRY_FIELDS', () => {
       'start_date',
       'end_date',
       'episodes',
-      'comments',
+      'notes',
     ])
     const byKey = Object.fromEntries(SHOW_ENTRY_FIELDS.map((f) => [f.key, f.label]))
     expect(byKey.metadata).toBe('TMDB Metadata')

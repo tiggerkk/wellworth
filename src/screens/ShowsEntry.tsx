@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import {
+  IconArrowsDiagonal,
   IconHeart,
   IconHeartFilled,
   IconQuote,
@@ -38,6 +39,7 @@ import { containsCjk } from '../lib/cjk'
 import { DEFAULT_DYNASTY, DYNASTIES, type Dynasty } from '../constants/dynasty'
 import { useProfile } from '../hooks/useProfile'
 import { bumpShows } from '../lib/shows-refresh'
+import { NotesEditorModal } from '../components/NotesEditorModal'
 import { formatDayLabel, todayLocal, type IsoDate } from '../lib/date'
 import { Calendar } from '../components/Calendar'
 import { EntryHeaderActions } from '../components/EntryHeaderActions'
@@ -62,7 +64,7 @@ interface ShowDraft {
   total_episodes: string
   watched_seasons: string
   watched_episodes: string
-  comments: string
+  notes: string
   // TMDB-sourced metadata (read-only display; populated on select, persisted on save).
   poster_path: string | null
   overview: string | null
@@ -104,7 +106,7 @@ function blankDraft(prefill?: ShowPrefill): ShowDraft {
     total_episodes: '',
     watched_seasons: '',
     watched_episodes: '',
-    comments: '',
+    notes: '',
     poster_path: prefill?.poster || null,
     overview: prefill?.overview || null,
     genres: null,
@@ -134,7 +136,7 @@ function draftFromRow(row: ShowRow): ShowDraft {
     total_episodes: numStr(row.total_episodes),
     watched_seasons: numStr(row.watched_seasons),
     watched_episodes: numStr(row.watched_episodes),
-    comments: row.comments ?? '',
+    notes: row.notes ?? '',
     poster_path: row.poster_path,
     overview: row.overview,
     genres: row.genres,
@@ -196,6 +198,7 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
   const [saving, setSaving] = useState(false)
   const [datePicker, setDatePicker] = useState<null | 'start' | 'end'>(null)
   const [searchOpen, setSearchOpen] = useState(false)
+  const [notesOpen, setNotesOpen] = useState(false)
   const [metaLoading, setMetaLoading] = useState(false)
   const [metaError, setMetaError] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
@@ -227,7 +230,7 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
     isAbsoluteUrl(draft.poster_path)
 
   // Selecting a TMDB result fetches details and overwrites the metadata fields (incl. Title /
-  // Original Title / Year + TV totals), keeping the user's Status / Rating / LGBT+ / dates / comments.
+  // Original Title / Year + TV totals), keeping the user's Status / Rating / LGBT+ / dates / notes.
   async function selectTitle(r: TmdbSearchResult) {
     setSearchOpen(false)
     setMetaLoading(true)
@@ -371,7 +374,7 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
         total_episodes: episodic ? intOrNull(draft.total_episodes) : null,
         watched_seasons: episodic ? intOrNull(draft.watched_seasons) : null,
         watched_episodes: episodic ? intOrNull(draft.watched_episodes) : null,
-        comments: draft.comments.trim() || null,
+        notes: draft.notes.trim() || null,
         poster_path: draft.poster_path,
         overview: draft.overview,
         genres: draft.genres,
@@ -707,16 +710,26 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
           </label>
         )}
 
-        {show('comments') && (
-          <label className="text-xs text-text-secondary">
-            Notes
+        {show('notes') && (
+          <div className="text-xs text-text-secondary">
+            <div className="flex items-center justify-between">
+              <span>Notes</span>
+              <button
+                type="button"
+                onClick={() => setNotesOpen(true)}
+                aria-label="Expand notes"
+                className="text-accent"
+              >
+                <IconArrowsDiagonal size={16} />
+              </button>
+            </div>
             <textarea
-              value={draft.comments}
-              onChange={(e) => update({ comments: e.target.value })}
-              rows={3}
+              value={draft.notes}
+              onChange={(e) => update({ notes: e.target.value })}
+              rows={4}
               className={`mt-1 ${inputClass} resize-none`}
             />
-          </label>
+          </div>
         )}
 
         {id && (
@@ -746,6 +759,16 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
           initialQuery={draft.title}
           onSelect={(r) => void selectTitle(r)}
           onClose={() => setSearchOpen(false)}
+        />
+      )}
+
+      {notesOpen && (
+        <NotesEditorModal
+          title={draft.title}
+          year={Number.parseInt(draft.year, 10) || null}
+          value={draft.notes}
+          onSave={(next) => update({ notes: next })}
+          onClose={() => setNotesOpen(false)}
         />
       )}
     </>

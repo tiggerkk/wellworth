@@ -50,7 +50,7 @@ function makeBook(p: Partial<BookRow>): BookRow {
     is_favorite: false,
     start_date: null,
     end_date: null,
-    comments: null,
+    notes: null,
     created_at: '2026-01-01T00:00:00Z',
     updated_at: '2026-01-01T00:00:00Z',
     ...p,
@@ -285,8 +285,8 @@ describe('isFieldVisible', () => {
   })
 
   it('respects an explicit visible list', () => {
-    expect(isFieldVisible(['rating', 'comments'], 'rating')).toBe(true)
-    expect(isFieldVisible(['rating', 'comments'], 'year')).toBe(false)
+    expect(isFieldVisible(['rating', 'notes'], 'rating')).toBe(true)
+    expect(isFieldVisible(['rating', 'notes'], 'year')).toBe(false)
   })
 })
 
@@ -301,7 +301,7 @@ describe('BOOK_ENTRY_FIELDS', () => {
       'dynasty',
       'start_date',
       'end_date',
-      'comments',
+      'notes',
     ])
     const byKey = Object.fromEntries(BOOK_ENTRY_FIELDS.map((f) => [f.key, f.label]))
     expect(byKey.metadata).toBe('Google Books Metadata')

@@ -10,7 +10,7 @@ One CSV covers **English and Chinese** titles across **all three types** (TV / m
 ## Columns
 
 ```
-title,type,status,rating,lgbtq_rep,dynasty,watched_seasons,watched_episodes,is_favorite,start_date,end_date
+title,type,status,rating,lgbtq_rep,dynasty,watched_seasons,watched_episodes,is_favorite,start_date,end_date,notes
 ```
 
 - **title** — the title to look up on TMDB. Required. (A CJK title is searched in Chinese.) For a
@@ -39,6 +39,9 @@ title,type,status,rating,lgbtq_rep,dynasty,watched_seasons,watched_episodes,is_f
   `created_at`; left blank on a `want` row, the record is just dated by its import time.
 - **end_date** — `YYYY-MM-DD`. The finish / drop date. **Required for `watched` and `dropped` rows**;
   left blank (and ignored) for `watching` / `want` rows.
+- **notes** — free-text notes, the **right-most** column. Optional and nullable (blank = no notes).
+  Stored verbatim, so it can be **multi-line** — wrap the whole value in double quotes and put line
+  breaks inside the quotes (escape a literal `"` as `""`). Never errors, so it can't skip a row.
 
 The Library's **Date** sort uses `end_date` if present, else `start_date` — so finished titles sort by
 when you finished and in-progress/want titles by when you started.

@@ -115,7 +115,7 @@ const sameArray = (a: string[] | null, b: string[] | null): boolean =>
 /**
  * Build the patch for a per-show Refresh: only the TMDB-sourced fields above, plus the poster.
  * Never `year`/`imdb_id` (per spec) and never owner fields (status, rating, lgbtq_rep, dates,
- * comments, watched counts, is_favorite). A **manually pasted** poster (an absolute URL) is
+ * notes, watched counts, is_favorite). A **manually pasted** poster (an absolute URL) is
  * preserved; otherwise the TMDB poster is applied. `changed` is false when nothing differs, so
  * the caller can skip the write and report "no changes" (idempotent + non-destructive).
  */
@@ -376,7 +376,7 @@ export const SHOW_ENTRY_FIELDS: { key: string; label: string }[] = [
   { key: 'start_date', label: 'Start Date' },
   { key: 'end_date', label: 'Finish / Drop Date' },
   { key: 'episodes', label: 'Season & Episode Counts' },
-  { key: 'comments', label: 'Notes' },
+  { key: 'notes', label: 'Notes' },
 ]
 
 /** Whether an Entry field is visible. NULL stored prefs (or an unknown key) ⇒ visible (default-on). */
