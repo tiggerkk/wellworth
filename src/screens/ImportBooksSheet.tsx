@@ -20,6 +20,8 @@ import {
   BookSearchRateLimitError,
   getBookDetails,
   hasGoogleBooksApiKey,
+  isConfidentMatch,
+  rankSearchResults,
   searchBooks,
   type BookMetadata,
   type BookSearchResult,
@@ -42,14 +44,19 @@ const REQUEST_TIMEOUT_MS = 10000
 interface ResolvedRow {
   input: ParsedBookRow
   match: BookMetadata | null
-  status: 'ok' | 'review' | 'nomatch'
+  // `manual` = the owner accepted the CSV row as-is, with no Google Books link (match cleared).
+  status: 'ok' | 'review' | 'nomatch' | 'manual'
 }
 
-const norm = (s: string) =>
-  s
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim()
+// Rows needing attention sort to the top of the preview (no-match first, then review); resolved rows
+// (ok/manual) follow. A stable sort keeps CSV order within each group. Frozen once at resolve time so
+// rows don't jump around as the owner fixes them (Change/Manual map by position, preserving order).
+const STATUS_RANK: Record<ResolvedRow['status'], number> = {
+  nomatch: 0,
+  review: 1,
+  ok: 2,
+  manual: 2,
+}
 
 const sleep = (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms))
@@ -68,16 +75,26 @@ async function withTimeout<T>(run: (signal: AbortSignal) => Promise<T>): Promise
 async function resolveRow(input: ParsedBookRow): Promise<ResolvedRow> {
   for (let attempt = 0; ; attempt++) {
     try {
+      // Query Google with title + author for recall, but rank against the title + author (not the
+      // combined string) and pick the best — the same ranking the interactive search uses.
       const results = await withTimeout((signal) =>
         searchBooks(`${input.title} ${input.author}`, { signal }),
       )
-      const top = results[0]
+      const top = rankSearchResults(results, {
+        title: input.title,
+        author: input.author,
+      })[0]
       if (!top) return { input, match: null, status: 'nomatch' }
       const match = await withTimeout((signal) => getBookDetails(top, { signal }))
       return {
         input,
         match,
-        status: norm(match.title) === norm(input.title) ? 'ok' : 'review',
+        status: isConfidentMatch(
+          { title: match.title, authors: match.authors },
+          { title: input.title, author: input.author },
+        )
+          ? 'ok'
+          : 'review',
       }
     } catch (e) {
       // On a 429, back off and retry — the keyless quota recovers within a second or two.
@@ -135,12 +152,25 @@ export function ImportBooksSheet() {
       }
     }
     await Promise.all(Array.from({ length: Math.min(POOL, rows.length) }, worker))
+    out.sort((a, b) => STATUS_RANK[a.status] - STATUS_RANK[b.status])
     setProgress(null)
     setResolved(out)
   }
 
+  // Accept the CSV row as-is — clear any (wrong) match so the book imports with the owner's title/
+  // author and no Google Books link. For rows where none of the search hits is the right book.
+  function acceptManual(i: number) {
+    setResolved(
+      (prev) =>
+        prev?.map((row, j) =>
+          j === i ? { ...row, match: null, status: 'manual' } : row,
+        ) ?? prev,
+    )
+  }
+
   async function applyFix(i: number, r: BookSearchResult) {
     setFixIndex(null)
+    setImportError(null)
     try {
       const match = await getBookDetails(r)
       setResolved(
@@ -148,8 +178,13 @@ export function ImportBooksSheet() {
           prev?.map((row, j) => (j === i ? { ...row, match, status: 'ok' } : row)) ??
           prev,
       )
-    } catch {
-      /* leave the row as-is on a failed fix */
+    } catch (e) {
+      // Don't silently leave the wrong match — tell the owner the fix didn't take (e.g. a 429).
+      setImportError(
+        e instanceof BookSearchRateLimitError
+          ? 'Rate-limited by Google Books — pause a moment, then try Change again.'
+          : 'Could not load that title — please try Change again.',
+      )
     }
   }
 
@@ -298,14 +333,26 @@ export function ImportBooksSheet() {
                           {r.status === 'review' && (
                             <span className="text-accent">review “{r.input.title}”</span>
                           )}
+                          {r.status === 'manual' && (
+                            <span className="text-text-tertiary">manual entry</span>
+                          )}
                         </p>
                       </div>
-                      <button
-                        onClick={() => setFixIndex(i)}
-                        className="shrink-0 rounded-pill bg-input px-2.5 py-1 text-xs font-medium text-accent"
-                      >
-                        Change
-                      </button>
+                      <div className="flex shrink-0 items-center gap-1.5">
+                        <button
+                          onClick={() => setFixIndex(i)}
+                          className="rounded-pill bg-input px-2.5 py-1 text-xs font-medium text-accent"
+                        >
+                          Change
+                        </button>
+                        <button
+                          onClick={() => acceptManual(i)}
+                          disabled={r.status === 'manual'}
+                          className="rounded-pill bg-input px-2.5 py-1 text-xs font-medium text-text-secondary disabled:opacity-40"
+                        >
+                          Manual
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -339,6 +386,8 @@ export function ImportBooksSheet() {
 
       {fixIndex !== null && resolved && (
         <BookSearchSheet
+          initialQuery={`${resolved[fixIndex]!.input.title} ${resolved[fixIndex]!.input.author}`}
+          authorHint={resolved[fixIndex]!.input.author}
           onSelect={(r) => void applyFix(fixIndex, r)}
           onClose={() => setFixIndex(null)}
         />

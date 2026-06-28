@@ -757,6 +757,7 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
         <TitleSearchSheet
           type={draft.type}
           initialQuery={draft.title}
+          yearHint={Number.parseInt(draft.year, 10) || null}
           onSelect={(r) => void selectTitle(r)}
           onClose={() => setSearchOpen(false)}
         />

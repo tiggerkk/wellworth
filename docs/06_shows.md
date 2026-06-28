@@ -18,14 +18,14 @@ that matters there:
   shows the **"Watching"** chip + season·episode progress for an episodic title with a known total,
   otherwise **"Started {start date}"** — plus a **Mark Watched** action. Up Next is de-duplicated out
   so a show isn't listed twice.
-- **Want to Watch** — `status=want` titles; each showing the blue **"Want"** chip + first genre +
+- **Want to Watch** — `status=want` titles; each showing the purple **"Want"** chip + first genre +
   a compact **length hint** (`~2h 10m` for movies, `3 seasons`/`12 eps` for episodic) and a **Start
   Watching** action (status → watching, start → today).
 - **Recently Watched** — the last 5 by finish date; rows show the **"Watched"** chip + stars + the
   finish date as **month + day** (e.g. "Jun 22"). Imported rows with no `end_date` don't appear here.
 
 - A small favourite rows anywhere shows a filled **♥** before the title.
-- Status chip palette: **Want** = blue, **Watching** = orange, **Watched** = teal, **Dropped** = grey
+- Status chip palette: **Want** = purple, **Watching** = orange, **Watched** = teal, **Dropped** = grey
   (the shared `StatusChip`).
 - A small stat line: **"N watched this year"**.
 - The **Mark Watched / Start Watching** quick actions are **optimistic**: the row patches in local state
@@ -131,12 +131,22 @@ Columns: `title,type,status,rating,lgbtq_rep,dynasty,watched_seasons,watched_epi
 Steps:
 
 1. **Choose CSV** → rows parsed/validated (bad rows listed as skipped) and each **matched against TMDB**
-   (CJK-aware top hit + details) with a progress count. Matching runs a pool of **10** concurrent
-   workers (`POOL`); each holds one connection at a time, so peak connections ≈ 10 — half TMDB's ~20
-   connection cap, with the request rate well under ~50/s.
-2. **Preview list**: each row's poster + matched title/year + type/status + season·episode totals. Rows
-   TMDB couldn't find are flagged **No match**; rows whose top hit differs from the CSV title are flagged
-   **review**. **Change** on any row opens the Title Search modal.
+   (CJK-aware) with a progress count. A trailing **`(YYYY)`** on the title (e.g. `Beyond (2017)`) is
+   split off before searching — TMDB returns nothing for that literal — and the year is then used to
+   **rank** + confirm. Hits are ranked by the shared author-/year-aware ranker (`rankTitleResults` —
+   title tier, then closeness to the hinted year, then year descending) rather than the raw top hit, so
+   the right title wins even when TMDB's relevance order buries it. Matching runs a pool of **10**
+   concurrent workers (`POOL`); each holds one connection at a time, so peak connections ≈ 10 — half
+   TMDB's ~20 connection cap, with the request rate well under ~50/s.
+2. **Preview list** — rows needing attention sort to the **top** (No-match first, then review; resolved
+   rows follow, CSV order kept within each group; frozen at resolve time so rows don't jump as you fix
+   them). Each row: poster + matched title/year + type/status + season·episode totals. Rows
+   TMDB couldn't find are flagged **No match**; rows where the match isn't confident — weak title
+   overlap, or the matched year is off from a `(YYYY)` hint (`isConfidentTitleMatch`) — are flagged
+   **review**. **Change** on any row opens the Title Search modal, **pre-seeded with the row's title**
+   (year hint applied to ranking). **Manual** accepts the row as-is — it clears any (wrong) match so the
+   title imports with the CSV title/metadata and **no** TMDB link (for titles no search hit covers); the
+   row is then marked `manual entry`.
 3. **Import** writes all rows **idempotently** (dedup on lower(title) — re-running the same file updates
    in place, never duplicates). Dates from the file; `created_at` = `start_date`. `saveImportedShows`
    **batches** the writes — one bulk `insert` for new titles + one bulk `upsert` (conflict on `id`) for

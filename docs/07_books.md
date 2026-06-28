@@ -13,11 +13,11 @@ shows its **status chip** (Want / Reading / Read / Dropped) consistently across 
   chip, and author(s), plus a **Mark Read** action (status → read, finish → today).
 - **Recently Read** — the last 5 by finish date; rows show the status chip + star rating + the finish
   date as **month + day** (e.g. "Jun 22"). Imported rows with no `end_date` don't appear here.
-- **Want to Read** — `status=want` titles; each with the blue **"Want"** chip + author(s) and a
+- **Want to Read** — `status=want` titles; each with the purple **"Want"** chip + author(s) and a
   **Start Reading** action (status → reading, start → today).
 
 - A favourite row anywhere shows a small filled **♥** before the title.
-- Status chip palette: **Want** = blue, **Reading** = orange, **Read** = teal, **Dropped** = grey
+- Status chip palette: **Want** = purple, **Reading** = orange, **Read** = teal, **Dropped** = grey
   (the shared `StatusChip`).
 - A small stat line: **"N read this year"**.
 - The **Mark Read / Start Reading** quick actions are **optimistic**: the row patches in local state and
@@ -101,15 +101,23 @@ Columns: `title,author,status,rating,lgbtq_rep,dynasty,is_favorite,start_date,en
 Steps:
 
 1. **Choose CSV** → rows parsed/validated (bad rows listed as skipped) and each **matched against
-   Google Books** (searching `title author` for the top hit, Open Library fallback) with a progress
-   count. Concurrency (`POOL`) scales with the API key: **3** keyless (the tiny per-IP quota 429s
-   quickly) or **10** when `VITE_GOOGLE_BOOKS_API_KEY` is set (higher project quota) — see
-   `hasGoogleBooksApiKey`; the 429 backoff + retry stays as a safety net either way. Each request also
-   has a `REQUEST_TIMEOUT_MS` ceiling so a slow Open Library fallback can't stall the batch on its last
-   row — a timed-out row becomes a `No match` to fix.
-2. **Preview list**: each row's cover + matched title/year + author(s) + its status chip + parsed
-   rating/finish date. Rows nothing was found for are flagged **No match**; rows whose top hit differs
-   are flagged **review**. **Change** on any row opens the Book Search modal.
+   Google Books** (searching `title author`, Open Library fallback) with a progress count. The hits are
+   **ranked** with the shared author-aware `rankSearchResults({ title, author })` (not the raw top hit)
+   and the best is taken — the same ranking the search box uses (see Matching above). Concurrency
+   (`POOL`) scales with the API key: **3** keyless (the tiny per-IP quota 429s quickly) or **10** when
+   `VITE_GOOGLE_BOOKS_API_KEY` is set (higher project quota) — see `hasGoogleBooksApiKey`; the 429
+   backoff + retry stays as a safety net either way. Each request also has a `REQUEST_TIMEOUT_MS`
+   ceiling so a slow Open Library fallback can't stall the batch on its last row — a timed-out row
+   becomes a `No match` to fix.
+2. **Preview list** — rows needing attention sort to the **top** (No-match first, then review; resolved
+   rows follow, CSV order kept within each group; frozen at resolve time so rows don't jump as you fix
+   them). Each row: cover + matched title/year + author(s) + its status chip + parsed
+   rating/finish date. Rows nothing was found for are flagged **No match**; rows where the match isn't
+   confident — weak title overlap, or the CSV author doesn't match (`isConfidentMatch`) — are flagged
+   **review** (this now works for CJK titles, which the old ASCII-only check silently passed). **Change**
+   on any row opens the Book Search modal, pre-seeded with the row's title + author. **Manual** accepts
+   the row as-is — it clears any (wrong) match so the book imports with the CSV title/author and **no**
+   Google Books link (for titles no search hit covers); the row is then marked `manual entry`.
 3. **Import** writes all rows **idempotently** (dedup on lower(title) + lower(author) — re-running the
    same file updates in place, never duplicates). Dates from the file; `created_at` = `start_date`.
    `saveImportedBooks` **batches** the writes — one bulk `insert` for new books + one bulk `upsert`
@@ -127,17 +135,39 @@ Full guide: `templates/books-import-guide.md`.
 
 - **optional** `VITE_GOOGLE_BOOKS_API_KEY` (raises quota; search works keyless without it — never
   throws when unset).
-- Search queries `q=title+inauthor:author` for the top hit; details expand `categories`, `pageCount`,
-  `language`, `description`, `imageLinks.thumbnail` (a full image URL — no CDN base).
+- The search query is the **plain combined string** (`title author` from the importer; the typed term
+  from the search box) — **no** `intitle:`/`inauthor:` qualifiers (Google's whole-word AND semantics
+  over-narrow CJK, which has no word boundaries). Title/author discrimination is **client-side** (see
+  Matching below). Details expand `categories`, `pageCount`, `language`, `description`,
+  `imageLinks.thumbnail` (a full image URL — no CDN base).
 - CJK-aware: `searchZhVariants` (see `docs/02_tech_spec.md`) fires in both scripts.
 - `cover_url` is stored as the full image URL, no prefix.
 - Persist only on CREATE/SAVE.
 
 **Open Library** (`openlibrary.org/search.json`): free, no key.
 
-- Fallback when Google Books returns nothing.
+- Fallback when Google Books returns **nothing** (fallback-only — not merged on every search, to spare
+  the keyless quota). HKPL/other Chinese catalogues were evaluated and deferred (see `PARKED.md`).
 - Returns work + edition keys; cover URLs follow `https://covers.openlibrary.org/b/id/{id}-M.jpg`.
 - `open_library_id` stored for future re-fetch.
+
+**Matching (shared by the importer + the New/Edit search — `src/lib/books-api.ts`):**
+
+- `rankSearchResults(results, { title, author? })` re-ranks hits. With a **known author** it orders by
+  has-title-overlap → **author match** → title tier → year, so the right author wins over a wrong-author
+  _exact_ title (e.g. `坐天下` by 张敞 vs `坐天下：张宏杰解读中国帝王` by 张宏杰). With no author it's just
+  title tier (exact > prefix > contains) → year descending. Both flows call it, so a book resolves the
+  same way in bulk import and in the search box.
+- `getBookDetails` **honors the author/year/cover of the selected result** (Google's full volume record
+  can list a different, mis-attributed author than the displayed search snippet); the detail only
+  enriches description/genres/page-count/ISBN/language. Mirrors the Open Library path.
+- `normMatch` is the canonical match key: `foldZh` (Traditional→Simplified + lowercase) then strip all
+  whitespace + ASCII/CJK punctuation, **keeping** CJK ideographs (an earlier ASCII-only normalizer
+  collapsed every Chinese title to '', so every CJK match looked exact).
+- The importer's ok/`review` flag uses `isConfidentMatch` (title exact/prefix **and** the CSV author
+  matches when present) — wrong-author or weak-title rows are flagged `review`, not silently accepted.
+- The search box ranks with an optional **author hint** (the Entry form's draft author; the importer's
+  "Change" seeds the box with `title author` + the row's author) — `BookSearchSheet`'s `authorHint` prop.
 
 ---
 

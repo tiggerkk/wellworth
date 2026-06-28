@@ -250,6 +250,12 @@ frozen** from the catalogue per month; funds use `asset_entry` with importer-fil
   fired in **both** scripts — Simplified (the typed form) + HK-Traditional (via lazy `opencc-js`) —
   and results merged + de-duped (`searchZhVariants` in `src/lib/zh-query.ts`). Applies to each
   module's remote search API; see the respective module spec for which API is searched.
+- **Matching remote results** (Books): `normMatch` (`src/lib/books-api.ts`) is the shared canonical
+  match key — `foldZh` (Traditional→Simplified + lowercase) then strip whitespace + ASCII/CJK
+  punctuation, keeping CJK ideographs. It backs the author-aware `rankSearchResults({ title, author })`
+  and the importer's `isConfidentMatch`, so the bulk importer and the New/Edit search resolve a book
+  identically. (An earlier ASCII-only normalizer collapsed every Chinese title to '', so all CJK
+  matches looked exact and were never flagged for review.)
 - **Frankfurter** (`api.frankfurter.dev/v1/{date}?from={currency}&to=HKD`): **keyless**, ECB-sourced,
   CORS-enabled. Returns the most recent rate on or before the requested date (handles non-trading days).
   The fetched rate is **frozen** on first write so saved records are immune to later rate revisions.

@@ -4,7 +4,12 @@ import { useEscapeKey } from '../hooks/useEscapeKey'
 import { SearchBar } from './SearchBar'
 import { ShowTypeBadge } from './ShowTypeBadge'
 import { PosterThumb } from './PosterThumb'
-import { searchTitles, type TmdbSearchResult } from '../lib/tmdb-api'
+import {
+  parseTitleYear,
+  rankTitleResults,
+  searchTitles,
+  type TmdbSearchResult,
+} from '../lib/tmdb-api'
 import { SHOW_TYPE_LABELS, type ShowType } from '../lib/shows'
 
 interface TitleSearchSheetProps {
@@ -13,6 +18,8 @@ interface TitleSearchSheetProps {
   onClose: () => void
   /** Seed the search box (e.g. the Entry form's current Title) so results show on open. */
   initialQuery?: string
+  /** Year used **only** to rank results (does not change the typed query); e.g. the draft year. */
+  yearHint?: number | null
 }
 
 /**
@@ -25,6 +32,7 @@ export function TitleSearchSheet({
   onSelect,
   onClose,
   initialQuery = '',
+  yearHint = null,
 }: TitleSearchSheetProps) {
   const [query, setQuery] = useState(initialQuery)
   const [debounced, setDebounced] = useState(initialQuery)
@@ -50,9 +58,12 @@ export function TitleSearchSheet({
     setLoading(true)
     setError(false)
     /* eslint-enable react-hooks/set-state-in-effect */
-    searchTitles(type, term)
+    // Tolerate a "(YYYY)" suffix in the typed term too; rank by title (+ year hint, or the year
+    // parsed off the term) so the best match floats to the top.
+    const { title, year } = parseTitleYear(term)
+    searchTitles(type, title)
       .then((r) => {
-        if (!cancelled) setResults(r)
+        if (!cancelled) setResults(rankTitleResults(r, { title, year: yearHint ?? year }))
       })
       .catch(() => {
         if (!cancelled) setError(true)
@@ -63,7 +74,7 @@ export function TitleSearchSheet({
     return () => {
       cancelled = true
     }
-  }, [type, debounced])
+  }, [type, debounced, yearHint])
 
   useEscapeKey(onClose)
 

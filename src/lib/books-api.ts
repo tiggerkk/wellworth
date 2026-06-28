@@ -10,6 +10,10 @@
  */
 
 import { searchZhVariants } from './zh-query'
+import { normMatch, titleTier } from './title-match'
+
+// Re-exported so existing `books-api` importers (and tests) keep a single import site.
+export { normMatch, titleTier } from './title-match'
 
 const GOOGLE_BOOKS_BASE = 'https://www.googleapis.com/books/v1'
 const OPEN_LIBRARY_BASE = 'https://openlibrary.org'
@@ -204,32 +208,67 @@ export function mapOpenLibraryWork(
   }
 }
 
-// --- Search-result ranking (pure) ---
+// --- Author matching + search-result ranking (pure; title primitives live in `title-match.ts`) ---
 
-const normTitle = (s: string): string => s.toLowerCase().replace(/\s+/g, ' ').trim()
+/** Split a (possibly comma- or 、-separated) author string into normalized, non-empty tokens. */
+export function splitAuthorInput(author: string | null | undefined): string[] {
+  return (author ?? '')
+    .split(/[,/&;、]+/)
+    .map(normMatch)
+    .filter((a) => a.length > 0)
+}
 
 /**
- * Re-rank interactive search results for the typed `query`: titles that **start with** the query
- * first, then titles that merely **contain** it, then the rest; within each tier, **year descending**
- * (undated last). A stable tiebreak preserves the upstream (Google relevance) order. Pure — the
- * importer keeps the raw top hit (its query is `"title author"`, where prefix ranking doesn't apply).
+ * Whether any of a result's authors matches one of the (already-normalized) target tokens — equal,
+ * or a length-guarded containment (so "Tolkien" ↔ "J.R.R. Tolkien" and a Chinese surname+given vs
+ * full name match, without a single initial matching everything).
+ */
+export function authorMatches(
+  resultAuthors: string[] | null,
+  targetTokens: string[],
+): boolean {
+  if (targetTokens.length === 0) return false
+  const got = (resultAuthors ?? []).map(normMatch).filter(Boolean)
+  return got.some((g) =>
+    targetTokens.some(
+      (t) =>
+        g === t || (g.length >= 2 && t.length >= 2 && (g.includes(t) || t.includes(g))),
+    ),
+  )
+}
+
+/**
+ * Re-rank search results for a target title (and optional author) — used by BOTH the interactive
+ * search and the importer so a book resolves the same way either way. With a **known author**, a
+ * title-overlapping result that also matches the author beats one whose title is a marginally better
+ * match (exact vs prefix) but whose author is wrong — order: has-title-overlap → author match → title
+ * tier → year descending. With no author, just title tier → year descending. A stable tiebreak
+ * preserves upstream (Google relevance) order. Pure.
  */
 export function rankSearchResults(
   results: BookSearchResult[],
-  query: string,
+  target: { title: string; author?: string | null },
 ): BookSearchResult[] {
-  const q = normTitle(query)
-  if (!q) return results
-  const tier = (r: BookSearchResult): number => {
-    const t = normTitle(r.title)
-    if (t.startsWith(q)) return 2
-    if (t.includes(q)) return 1
-    return 0
-  }
+  const tokens = splitAuthorInput(target.author)
+  const hasAuthor = tokens.length > 0
+  if (!normMatch(target.title) && !hasAuthor) return results
   return results
-    .map((r, i) => ({ r, i, t: tier(r) }))
+    .map((r, i) => ({
+      r,
+      i,
+      t: titleTier(r.title, target.title),
+      a: authorMatches(r.authors, tokens) ? 1 : 0,
+    }))
     .sort((a, b) => {
-      if (a.t !== b.t) return b.t - a.t
+      if (hasAuthor) {
+        // Any title overlap (tier ≥ 1) first, then author match — so the right author wins over a
+        // wrong-author exact title. A no-overlap (tier 0) result never floats up on author alone.
+        const oa = a.t >= 1 ? 1 : 0
+        const ob = b.t >= 1 ? 1 : 0
+        if (oa !== ob) return ob - oa
+        if (a.a !== b.a) return b.a - a.a
+      }
+      if (a.t !== b.t) return b.t - a.t // title tier
       const ay = a.r.year
       const by = b.r.year
       if (ay == null && by == null) return a.i - b.i
@@ -239,6 +278,22 @@ export function rankSearchResults(
       return a.i - b.i // stable
     })
     .map((x) => x.r)
+}
+
+/**
+ * The importer's ok/review decision for a fetched match. Confident (`ok`) when the title clearly
+ * overlaps (exact or prefix) AND — if the CSV row gave an author — that author matches; otherwise
+ * `review` so the owner can verify. Replaces the old ASCII-only equality that silently passed every
+ * Chinese title (CJK folded to '' on both sides).
+ */
+export function isConfidentMatch(
+  result: { title: string; authors: string[] | null },
+  target: { title: string; author?: string | null },
+): boolean {
+  if (titleTier(result.title, target.title) < 2) return false
+  const tokens = splitAuthorInput(target.author)
+  if (tokens.length === 0) return true
+  return authorMatches(result.authors, tokens)
 }
 
 /**
@@ -338,7 +393,17 @@ export async function getBookDetails(
     if (res.status === 429) throw new BookSearchRateLimitError()
     if (!res.ok) throw new Error(`Google Books details failed (${res.status})`)
     const json = (await res.json()) as GoogleVolume
-    return mapGoogleVolume(json)
+    const meta = mapGoogleVolume(json)
+    // Honor the author/year/cover of the result the user actually selected: Google's full volume
+    // record sometimes lists a different (mis-attributed) author than the search snippet that was
+    // displayed and picked, so the carried value wins; the detail only enriches the rest (description,
+    // genres, page count, ISBN, language). Mirrors the Open Library path (`mapOpenLibraryWork`).
+    return {
+      ...meta,
+      authors: result.authors ?? meta.authors,
+      year: result.year ?? meta.year,
+      cover_url: meta.cover_url ?? result.coverUrl,
+    }
   }
   const url = `${OPEN_LIBRARY_BASE}/works/${encodeURIComponent(result.sourceId)}.json`
   const res = await fetch(url, { signal })

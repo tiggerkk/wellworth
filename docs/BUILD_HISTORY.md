@@ -33,7 +33,7 @@ Each module's former staging spec (`docs/06-books.md`, `07-quotes.md`, `medical.
 
 ## Snapshot
 
-- **Tests:** 527 Vitest tests (pure helpers only).
+- **Tests:** 557 Vitest tests (pure helpers only).
 - **Deploy:** Deployed — GitHub `main` → Vercel auto-deploy; installed + tested on iPhone (PWA).
 - **Stack / scripts / env / gates / conventions:** see `02_tech_spec.md` (the canonical, current reference) — not duplicated here.
 
@@ -2350,3 +2350,91 @@ import) and `03_global.md` (new profile columns). Source plan: the (now-deleted)
   any snapshot lacking it.
 - `database.ts` was bridge-edited during the build (no DB access mid-session), then regenerated
   authoritatively after the owner's `db reset --linked`. Verified by `npm run check` (**527 tests**).
+
+## Books matching — CJK-safe, author-aware, shared by importer + search (2026-06-28)
+
+Importing 32 Chinese titles surfaced inconsistent matches between the bulk importer and the New/Edit
+search. Root cause was **selection bugs, not missing records** (Google Books has the titles). Behavior
+is in `07_books.md` (External APIs → Matching) + `02_tech_spec.md` (Chinese search). No schema/RLS/data
+changes.
+
+- **Bug 1 — every Chinese title looked like an exact match.** The importer's ok/`review` check used an
+  ASCII-only `norm` (`/[^a-z0-9]+/`), which strips all CJK → both sides became `''` → status was
+  **always `ok`**, so wrong Chinese matches were never flagged. **Bug 2 — divergent selection:** the
+  importer took the raw Google `results[0]` while the search box applied `rankSearchResults`. **Bug 3 —
+  no author scoring:** same-title records with the wrong author (e.g. 张宏杰 books returned under 张敞)
+  were picked by both. **Doc drift:** `07_books.md` claimed a `q=title+inauthor:author` query that the
+  code never used.
+- **Fix (all in `src/lib/books-api.ts`, pure + unit-tested):** a shared CJK-safe `normMatch` (`foldZh`
+  fold/lowercase, then strip whitespace + ASCII/CJK punctuation, keeping ideographs); `titleTier`
+  (exact > bidirectional-prefix > contains > none); `splitAuthorInput` + `authorMatches` (fold-aware,
+  length-guarded containment, comma/`、`/`/`-split multi-author); an **author-aware**
+  `rankSearchResults(results, { title, author? })` (title tier → author match → year desc → stable);
+  and `isConfidentMatch` for the importer's ok/`review` decision.
+- **Wiring:** `ImportBooksSheet.resolveRow` now ranks the hits (not raw `[0]`) and flags `review` via
+  `isConfidentMatch`; its "Change" search is seeded with `title author` + an `authorHint`.
+  `BookSearchSheet` gained an `authorHint` prop (ranking only, doesn't change the typed query);
+  `BooksEntry` passes the draft author. Both flows now resolve a book identically.
+- **APIs unchanged:** kept Google → Open Library **fallback-only** (no always-merge — owner decision, to
+  spare the keyless quota). **HKPL/parse.bot** as a third Chinese source was evaluated and **deferred**
+  (CORS-uncertain for a backend-less app, US$30/mo for usable quota, sparse metadata, scraper
+  fragility) — see `PARKED.md`.
+- Verified by `npm run check` (**545 tests** — +18 for `normMatch`, `splitAuthorInput`/`authorMatches`,
+  the new `rankSearchResults` signature incl. the 文化苦旅/张宏杰 cases, and `isConfidentMatch`).
+- **Follow-up — importer `Manual` button:** each preview row gained a **Manual** action beside
+  **Change** that clears the match (status `manual`) so the row imports with the CSV title/author and no
+  Google Books link — for titles no search hit covers. `buildImportRow(input, null)` already handled the
+  null-match case, so this is UI-only.
+
+## Shows `Manual` import button + purple "Want" chip (2026-06-28)
+
+Two small UI parity/polish changes across the media modules. Behavior is in `06_shows.md` /
+`07_books.md` / `01_design_system.md`. No schema/data changes.
+
+- **`Manual` button on Shows import** (mirrors the Books importer): each preview row gained a **Manual**
+  action beside **Change** that clears the match (new `manual` status) so the title imports with the CSV
+  title/metadata and no TMDB link — for titles no search hit covers. `buildImportRow(input, null)`
+  already guards every field with `match?.`, so this is UI-only.
+- **Purple "Want" chip** (was blue): added a dedicated `--color-plan: #a779e0` design token and pointed
+  `SHOW_STATUS_CHIP.want` / `BOOK_STATUS_CHIP.want` / `TRIP_STATUS_CHIP.want` at `bg-plan`. Each module
+  reads the chip from these centralized maps, so it changes on **every** screen (Dashboard shelves,
+  Library rows, importer preview). Applied to Shows/Books first, then **Travel** in the same pass; `info`
+  (blue) is now unused for status chips.
+
+## Shows import — title/year ranking + pre-seeded Change (2026-06-28)
+
+The Shows importer mis-resolved common titles the way the Books importer used to (before the CJK fix).
+Behavior is in `06_shows.md` + `templates/shows-import-guide.md`. No schema/data changes.
+
+- **Bugs:** (1) the importer took the raw TMDB `results[0]` with an ASCII-only equality check — no
+  ranking — so the correct hit buried at #2/#10 was never picked (`Girls` lost to `Gilmore Girls`,
+  `The Chair` to `The Chair Company`, etc.). (2) A CSV title carrying a trailing `(YYYY)` disambiguator
+  (`Beyond (2017)`) was searched **literally**; TMDB returns nothing for that, so the row flagged
+  **No match**. (3) The "Change" search opened **blank** (the Books importer pre-seeds it).
+- **Shared primitives:** extracted `normMatch` + `titleTier` from `books-api.ts` into a new pure
+  `src/lib/title-match.ts` (re-exported from `books-api` for its callers/tests) so the TMDB client can
+  reuse them without coupling Shows↔Books.
+- **TMDB matching (`tmdb-api.ts`, pure + unit-tested):** `parseTitleYear` (splits a trailing `(YYYY)`),
+  `rankTitleResults({ title, year? })` (title tier → closeness to the hinted year → year descending,
+  stable), and `isConfidentTitleMatch` for the ok/`review` decision.
+- **Wiring:** `ImportShowsSheet.resolveRow` searches the clean title, ranks (not raw `[0]`), and flags
+  `review` via `isConfidentTitleMatch`; its "Change" opens pre-seeded with the clean title + a year hint.
+  `TitleSearchSheet` gained a `yearHint` prop and now ranks its results (also tolerating a typed
+  `(YYYY)`); `ShowsEntry` passes the draft year. The Books importer's identical `Manual`/ranking work
+  from earlier this day stays unchanged.
+- Verified by `npm run check` (**555 tests** — +10 for `parseTitleYear`, `rankTitleResults`, and
+  `isConfidentTitleMatch`; the relocated `normMatch`/`titleTier` keep their existing `books-api` tests).
+- **Follow-up — preview sorts to-fix rows first:** both importers sort the resolved rows once (No-match
+  → review → resolved, stable on CSV order) before `setResolved`, so the rows needing attention sit at
+  the top. Sorting the underlying array (not just the display) keeps the Change/Manual row indices valid;
+  freezing it at resolve time means rows don't reshuffle as the owner fixes them. UI-only.
+- **Follow-up — author beats wrong-author exact title + honor the picked result (Books):** two
+  author-matching bugs surfaced on 张宏杰 titles. (1) `rankSearchResults` sorted **title tier first**, so a
+  wrong-author _exact_ title (`坐天下` by 张敞) beat the right-author _prefix_ title
+  (`坐天下：张宏杰解读中国帝王` by 张宏杰); when an author is known it now orders has-overlap → author →
+  tier → year (a no-overlap result still never floats up on author alone). (2) `getBookDetails` rebuilt
+  everything from Google's volume record, which can list a different author than the picked search
+  snippet — so manually selecting the 张宏杰 row repopulated 张敞; it now carries the selected result's
+  author/year/cover (mirrors the Open Library path) and only enriches description/genres/etc. from the
+  detail. Also: the importer's "Change" `applyFix` no longer **silently** swallows a failed re-fetch
+  (e.g. a 429) — it surfaces a message so the wrong match isn't left in place unnoticed. +2 tests (555 → 557).

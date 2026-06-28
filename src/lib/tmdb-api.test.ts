@@ -1,13 +1,26 @@
 import { describe, expect, it } from 'vitest'
 import {
+  isConfidentTitleMatch,
   mapMovieDetails,
   mapSearchResults,
   mapTvDetails,
+  parseTitleYear,
   pickCast,
   pickDirectorFromCrew,
   pickSeasonEpisodeCounts,
   pickYear,
+  rankTitleResults,
+  type TmdbSearchResult,
 } from './tmdb-api'
+
+const hit = (p: Partial<TmdbSearchResult>): TmdbSearchResult => ({
+  tmdbId: p.tmdbId ?? Math.abs((p.title ?? 'x').length + (p.year ?? 0)),
+  type: 'tv',
+  title: 'Untitled',
+  year: null,
+  posterPath: null,
+  ...p,
+})
 
 describe('pickYear', () => {
   it('extracts the year from a TMDB date', () => {
@@ -190,5 +203,93 @@ describe('mapTvDetails', () => {
       tmdb_id: 1396,
       imdb_id: 'tt0903747',
     })
+  })
+})
+
+describe('parseTitleYear', () => {
+  it('splits a trailing (YYYY) suffix off the title', () => {
+    expect(parseTitleYear('Beyond (2017)')).toEqual({ title: 'Beyond', year: 2017 })
+    expect(parseTitleYear('One Day at a Time (2017)')).toEqual({
+      title: 'One Day at a Time',
+      year: 2017,
+    })
+  })
+  it('leaves a title with no suffix untouched (year null)', () => {
+    expect(parseTitleYear('The Chair')).toEqual({ title: 'The Chair', year: null })
+    expect(parseTitleYear('  Girls  ')).toEqual({ title: 'Girls', year: null })
+  })
+})
+
+describe('rankTitleResults', () => {
+  it('floats an exact title above contains/prefix noise (the "Beyond" case)', () => {
+    const results = [
+      hit({ tmdbId: 1, title: 'Love Beyond Dreams', year: 2010 }),
+      hit({ tmdbId: 2, title: 'Batman Beyond', year: 1999 }),
+      hit({ tmdbId: 3, title: 'Beyond', year: 2017 }),
+    ]
+    expect(
+      rankTitleResults(results, { title: 'Beyond', year: 2017 }).map((r) => r.tmdbId),
+    ).toEqual([3, 1, 2])
+  })
+
+  it('puts an exact title above a prefix one (the "The Chair" case)', () => {
+    const results = [
+      hit({ tmdbId: 1, title: 'The Chair Company', year: 2025 }),
+      hit({ tmdbId: 2, title: 'The Chair', year: 2021 }),
+    ]
+    expect(
+      rankTitleResults(results, { title: 'The Chair', year: 2021 }).map((r) => r.tmdbId),
+    ).toEqual([2, 1])
+  })
+
+  it('disambiguates same-titled results by the hinted year', () => {
+    const results = [
+      hit({ tmdbId: 1, title: 'One Day at a Time', year: 1975 }),
+      hit({ tmdbId: 2, title: 'One Day at a Time', year: 2017 }),
+    ]
+    expect(
+      rankTitleResults(results, { title: 'One Day at a Time', year: 2017 }).map(
+        (r) => r.tmdbId,
+      ),
+    ).toEqual([2, 1])
+  })
+
+  it('with no year hint, prefers the more recent same-titled result', () => {
+    const results = [
+      hit({ tmdbId: 1, title: 'One Day at a Time', year: 1975 }),
+      hit({ tmdbId: 2, title: 'One Day at a Time', year: 2017 }),
+    ]
+    expect(
+      rankTitleResults(results, { title: 'One Day at a Time' }).map((r) => r.tmdbId),
+    ).toEqual([2, 1])
+  })
+})
+
+describe('isConfidentTitleMatch', () => {
+  it('is confident on an exact title within a year of the hint', () => {
+    expect(
+      isConfidentTitleMatch(
+        { title: 'Beyond', year: 2017 },
+        { title: 'Beyond', year: 2017 },
+      ),
+    ).toBe(true)
+  })
+  it('flags an exact title whose year is far from the hint', () => {
+    expect(
+      isConfidentTitleMatch(
+        { title: 'One Day at a Time', year: 1975 },
+        { title: 'One Day at a Time', year: 2017 },
+      ),
+    ).toBe(false)
+  })
+  it('is confident on title alone when there is no year hint', () => {
+    expect(
+      isConfidentTitleMatch({ title: 'The Chair', year: 2021 }, { title: 'The Chair' }),
+    ).toBe(true)
+  })
+  it('flags a contains-only title for review', () => {
+    expect(
+      isConfidentTitleMatch({ title: 'Batman Beyond', year: 1999 }, { title: 'Beyond' }),
+    ).toBe(false)
   })
 })

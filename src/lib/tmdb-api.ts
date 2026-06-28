@@ -1,5 +1,6 @@
 import { containsCjk } from './cjk'
 import { searchZhVariants } from './zh-query'
+import { normMatch, titleTier } from './title-match'
 import type { ShowRow, ShowType } from './shows'
 
 export { containsCjk }
@@ -239,6 +240,68 @@ export function mapTvDetails(d: TmdbTvDetails): ShowMetadata {
     tmdb_id: d.id,
     imdb_id: d.external_ids?.imdb_id ?? null,
   }
+}
+
+// --- Title matching + result ranking (pure; shared title primitives in `title-match.ts`) ---
+
+/**
+ * Split a trailing `(YYYY)` disambiguation suffix off a title (e.g. CSV `"Beyond (2017)"` →
+ * `{ title: "Beyond", year: 2017 }`). TMDB search chokes on the literal `(2017)` and returns no
+ * hits, so the importer searches the clean title and uses the year only to rank/confirm. A title
+ * with no such suffix returns the trimmed title and `year: null`.
+ */
+export function parseTitleYear(raw: string): { title: string; year: number | null } {
+  const m = raw.trim().match(/^(.*\S)\s*\((\d{4})\)$/)
+  if (!m) return { title: raw.trim(), year: null }
+  return { title: m[1]!, year: Number(m[2]) }
+}
+
+/**
+ * Re-rank TMDB results for a target title (+ optional year) — used by both the interactive Title
+ * Search and the importer so a title resolves the same way either way. Order: title tier (exact >
+ * prefix > contains > none), then **closeness to the hinted year**, then **year descending** (more
+ * recent first — so same-named titles prefer the newer one), with a stable tiebreak preserving
+ * upstream TMDB relevance. Pure.
+ */
+export function rankTitleResults(
+  results: TmdbSearchResult[],
+  target: { title: string; year?: number | null },
+): TmdbSearchResult[] {
+  if (!normMatch(target.title)) return results
+  const hint = target.year ?? null
+  return results
+    .map((r, i) => ({ r, i, t: titleTier(r.title, target.title) }))
+    .sort((a, b) => {
+      if (a.t !== b.t) return b.t - a.t
+      if (hint != null) {
+        const da = a.r.year == null ? Infinity : Math.abs(a.r.year - hint)
+        const db = b.r.year == null ? Infinity : Math.abs(b.r.year - hint)
+        if (da !== db) return da - db
+      }
+      const ay = a.r.year
+      const by = b.r.year
+      if (ay == null && by == null) return a.i - b.i
+      if (ay == null) return 1 // undated sorts last
+      if (by == null) return -1
+      if (ay !== by) return by - ay // year descending
+      return a.i - b.i // stable
+    })
+    .map((x) => x.r)
+}
+
+/**
+ * The importer's ok/review decision for a fetched match: confident (`ok`) when the title clearly
+ * overlaps (exact or prefix) AND — if the row carried a `(YYYY)` hint — the matched year is within a
+ * year of it; otherwise `review` so the owner can verify.
+ */
+export function isConfidentTitleMatch(
+  result: { title: string; year: number | null },
+  target: { title: string; year?: number | null },
+): boolean {
+  if (titleTier(result.title, target.title) < 2) return false
+  const hint = target.year ?? null
+  if (hint == null) return true
+  return result.year != null && Math.abs(result.year - hint) <= 1
 }
 
 function apiKey(): string {

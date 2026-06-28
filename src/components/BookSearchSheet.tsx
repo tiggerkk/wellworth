@@ -17,6 +17,8 @@ interface BookSearchSheetProps {
   onClose: () => void
   /** Seed the search box (e.g. the Entry form's current Title) so results show on open. */
   initialQuery?: string
+  /** Author used **only** to rank results (does not change the typed query); e.g. the draft author. */
+  authorHint?: string | null
 }
 
 /**
@@ -29,6 +31,7 @@ export function BookSearchSheet({
   onSelect,
   onClose,
   initialQuery = '',
+  authorHint = null,
 }: BookSearchSheetProps) {
   const [query, setQuery] = useState(initialQuery)
   const [debounced, setDebounced] = useState(initialQuery)
@@ -58,7 +61,8 @@ export function BookSearchSheet({
     /* eslint-enable react-hooks/set-state-in-effect */
     searchBooks(term, { signal: controller.signal })
       .then((r) => {
-        if (!cancelled) setResults(rankSearchResults(r, term))
+        if (!cancelled)
+          setResults(rankSearchResults(r, { title: term, author: authorHint }))
       })
       .catch((e) => {
         if (cancelled || controller.signal.aborted) return
@@ -72,7 +76,7 @@ export function BookSearchSheet({
       cancelled = true
       controller.abort()
     }
-  }, [debounced])
+  }, [debounced, authorHint])
 
   useEscapeKey(onClose)
 

@@ -9,7 +9,7 @@ export const TRIP_STATUSES = ['want', 'planning', 'visited'] as const
 export type TripStatus = (typeof TRIP_STATUSES)[number]
 
 export const TRIP_STATUS_LABELS: Record<TripStatus, string> = {
-  want: 'Want to Visit',
+  want: 'Want',
   planning: 'Planning',
   visited: 'Visited',
 }

@@ -18,7 +18,8 @@ Dark, calm. These tokens are taken directly from the approved wireframes — mat
 | `accent` (blue)    | `#5ba3f5`                | Brand, active tab, links, energy-negative                         |
 | `favorite` (rose)  | `#e06aa0`                | Filled favorite heart (decoupled from `accent`)                   |
 | `positive` (teal)  | `#5dcaa5`                | Add `+`, activity/supplement accents, "food logged" dot           |
-| `info` (blue)      | `#5b8def`                | "Want" status chip (planned) on Shows/Books/Travel                |
+| `info` (blue)      | `#5b8def`                | (legacy; no longer used for status chips)                         |
+| `plan` (purple)    | `#a779e0`                | "Want" status chip (planned) on Shows/Books/Travel                |
 | `warning` (orange) | `#e8623c`                | In-progress status chip (Watching·Reading·Planning); import notes |
 | `danger`           | `#e2574c`                | Over-limit bars and % text, destructive text                      |
 | `delete`           | `#e24b4a`                | Swipe-to-delete background                                        |
@@ -148,7 +149,8 @@ flex flex-col`, or `h-full` for Zen) so the `flex-1` fills the real content area
   form, greyed/disabled until a `tmdb_id` exists; spins while fetching and reports "Updated" / "Already
   up to date".
 - **StatusChip** — a **presentational** status pill taking a `label` + palette `className`. Palette
-  tokens: **Want** = blue (`info`, planned) / **Watching·Reading·Planning** = orange (`warning`,
+  tokens: **Want** = purple (`plan`, planned) on Shows/Books/Travel /
+  **Watching·Reading·Planning** = orange (`warning`,
   in-progress) / **Watched·Read·Visited** = teal (`positive`) / **Dropped** = grey (`track`). "Want" label is deliberately
   short so the chip stays compact; shelf titles still spell it out. Chips appear on every Library row
   **and** every Dashboard row. The Quotes module reuses the same chip for its **Category badge** (single

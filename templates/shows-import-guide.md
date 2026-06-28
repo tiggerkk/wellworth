@@ -15,7 +15,9 @@ title,type,status,rating,lgbtq_rep,dynasty,watched_seasons,watched_episodes,is_f
 
 - **title** — the title to look up on TMDB. Required. (A CJK title is searched in Chinese.) For a
   documentary sub-series, fold the parent series into the title yourself (e.g.
-  `国宝档案 — 从东晋到北魏`).
+  `国宝档案 — 从东晋到北魏`). To disambiguate a common title (several shows share it), add the year in
+  parentheses — `Beyond (2017)`, `One Day at a Time (2017)`: the importer searches the bare title and
+  uses the year to pick (and confirm) the right match.
 - **type** — `tv`, `movie`, or `documentary`. Required (it picks the TMDB endpoint — documentary uses
   `/tv`).
 - **status** — `want`, `watching`, `watched`, or `dropped`. Required.

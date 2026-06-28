@@ -518,6 +518,7 @@ function BookForm({ id, initial }: { id: string | undefined; initial: BookDraft 
       {searchOpen && (
         <BookSearchSheet
           initialQuery={draft.title}
+          authorHint={draft.authors}
           onSelect={(r) => void selectBook(r)}
           onClose={() => setSearchOpen(false)}
         />

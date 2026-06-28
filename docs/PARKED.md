@@ -61,6 +61,26 @@ lock. **Shipped** end-to-end (see BUILD-HISTORY → "Medical Build Sequence"; be
 
 ## Deferred
 
+### HKPL / extra Chinese book catalogue as a match fallback · Deferred
+
+**What:** A third book-metadata source (beyond Google Books + Open Library) with strong Hong Kong /
+Traditional-Chinese coverage, e.g. the **HKPL catalogue** via a parse.bot REST wrapper.
+**Why deferred:** Evaluated 2026-06-28 and **not** worth it now —
+
+- **CORS-uncertain** for a backend-less app: every book API is called directly from the browser; the
+  parse.bot wrapper doesn't document CORS, and adding a proxy is new infrastructure we don't have.
+- **Quota too small / paid:** free tier is 100 credits/mo + 5 req/min — one 32-book import (~64
+  search+detail calls) blows the month and the rate limit; the usable tier is **US$30/mo**.
+- **Sparse metadata:** search returns title/author/publisher/availability only — **no cover, year,
+  description, or ISBN** — so it couldn't replace Google Books, only supplement matching (a complex
+  two-source merge).
+- It's a **third-party scraper**, not an official HKPL API (breaks when HKPL's site changes).
+
+**Decided:** The reported Chinese-import mismatches were **selection bugs, not missing records** — Google
+Books has the titles. Fixed client-side instead (shared CJK-safe, author-aware `rankSearchResults` +
+`isConfidentMatch`; see `docs/07_books.md` → Matching). Revisit a richer Chinese source only if Google
+coverage proves genuinely insufficient, and only with a CORS-safe path.
+
 ### "Log this again" re-log · Deferred
 
 **What:** Re-log a past diary entry to today (e.g. from a history/favorites view) in one tap.

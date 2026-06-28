@@ -18,6 +18,9 @@ import {
 import { SHOW_STATUS_CHIP, SHOW_STATUS_LABELS, usesEpisodes } from '../lib/shows'
 import {
   getTitleDetails,
+  isConfidentTitleMatch,
+  parseTitleYear,
+  rankTitleResults,
   searchTitles,
   tmdbLanguage,
   type ShowMetadata,
@@ -36,25 +39,38 @@ const POOL = 10
 interface ResolvedRow {
   input: ParsedShowRow
   match: ShowMetadata | null
-  status: 'ok' | 'review' | 'nomatch'
+  // `manual` = the owner accepted the CSV row as-is, with no TMDB link (match cleared).
+  status: 'ok' | 'review' | 'nomatch' | 'manual'
 }
 
-const norm = (s: string) =>
-  s
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim()
+// Rows needing attention sort to the top of the preview (no-match first, then review); resolved rows
+// (ok/manual) follow. A stable sort keeps CSV order within each group. Frozen once at resolve time so
+// rows don't jump around as the owner fixes them (Change/Manual map by position, preserving order).
+const STATUS_RANK: Record<ResolvedRow['status'], number> = {
+  nomatch: 0,
+  review: 1,
+  ok: 2,
+  manual: 2,
+}
 
 async function resolveRow(input: ParsedShowRow): Promise<ResolvedRow> {
   try {
-    const results = await searchTitles(input.type, input.title)
-    const top = results[0]
+    // A CSV title may carry a trailing "(YYYY)" to disambiguate (e.g. "Beyond (2017)"); TMDB
+    // returns nothing for that literal, so search the clean title and rank/confirm with the year.
+    const { title, year } = parseTitleYear(input.title)
+    const results = await searchTitles(input.type, title)
+    const top = rankTitleResults(results, { title, year })[0]
     if (!top) return { input, match: null, status: 'nomatch' }
-    const match = await getTitleDetails(input.type, top.tmdbId, tmdbLanguage(input.title))
+    const match = await getTitleDetails(input.type, top.tmdbId, tmdbLanguage(title))
     return {
       input,
       match,
-      status: norm(match.title) === norm(input.title) ? 'ok' : 'review',
+      status: isConfidentTitleMatch(
+        { title: match.title, year: match.year },
+        { title, year },
+      )
+        ? 'ok'
+        : 'review',
     }
   } catch {
     return { input, match: null, status: 'nomatch' }
@@ -106,8 +122,20 @@ export function ImportShowsSheet() {
       }
     }
     await Promise.all(Array.from({ length: Math.min(POOL, rows.length) }, worker))
+    out.sort((a, b) => STATUS_RANK[a.status] - STATUS_RANK[b.status])
     setProgress(null)
     setResolved(out)
+  }
+
+  // Accept the CSV row as-is — clear any (wrong) match so the title imports with the owner's
+  // title/metadata and no TMDB link. For rows where none of the search hits is the right title.
+  function acceptManual(i: number) {
+    setResolved(
+      (prev) =>
+        prev?.map((row, j) =>
+          j === i ? { ...row, match: null, status: 'manual' } : row,
+        ) ?? prev,
+    )
   }
 
   async function applyFix(i: number, r: TmdbSearchResult) {
@@ -269,14 +297,26 @@ export function ImportShowsSheet() {
                           {r.status === 'review' && (
                             <span className="text-accent">review “{r.input.title}”</span>
                           )}
+                          {r.status === 'manual' && (
+                            <span className="text-text-tertiary">manual entry</span>
+                          )}
                         </p>
                       </div>
-                      <button
-                        onClick={() => setFixIndex(i)}
-                        className="shrink-0 rounded-pill bg-input px-2.5 py-1 text-xs font-medium text-accent"
-                      >
-                        Change
-                      </button>
+                      <div className="flex shrink-0 items-center gap-1.5">
+                        <button
+                          onClick={() => setFixIndex(i)}
+                          className="rounded-pill bg-input px-2.5 py-1 text-xs font-medium text-accent"
+                        >
+                          Change
+                        </button>
+                        <button
+                          onClick={() => acceptManual(i)}
+                          disabled={r.status === 'manual'}
+                          className="rounded-pill bg-input px-2.5 py-1 text-xs font-medium text-text-secondary disabled:opacity-40"
+                        >
+                          Manual
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -311,6 +351,8 @@ export function ImportShowsSheet() {
       {fixIndex !== null && resolved && (
         <TitleSearchSheet
           type={resolved[fixIndex]!.input.type}
+          initialQuery={parseTitleYear(resolved[fixIndex]!.input.title).title}
+          yearHint={parseTitleYear(resolved[fixIndex]!.input.title).year}
           onSelect={(r) => void applyFix(fixIndex, r)}
           onClose={() => setFixIndex(null)}
         />
