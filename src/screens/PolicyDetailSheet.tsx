@@ -8,6 +8,7 @@ import { useAuth } from '../auth/AuthProvider'
 import { useProfile } from '../hooks/useProfile'
 import { getPolicyWithSchedules } from '../data/insurance'
 import { ageForYear, DEFAULT_BIRTH_YEAR } from '../lib/networth'
+import { effectiveProviders, providerLabel } from '../lib/insurance-config'
 import { todayLocal } from '../lib/date'
 import { routes } from '../constants/routes'
 
@@ -62,7 +63,15 @@ export function PolicyDetailSheet() {
           <p className="text-sm text-danger">Couldn’t load this policy.</p>
         )}
         {data && (
-          <PolicyDetail policy={data.policy} schedules={data.schedules} age={age} />
+          <PolicyDetail
+            policy={data.policy}
+            schedules={data.schedules}
+            age={age}
+            providerLabel={providerLabel(
+              effectiveProviders(profile?.insurance_providers),
+              data.policy.provider,
+            )}
+          />
         )}
       </div>
     </Sheet>

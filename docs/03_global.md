@@ -118,7 +118,11 @@ App-wide; shared across all modules. Auto-save on change. A back chevron returns
 - `networth_bulk_insurance_import_enabled` BOOLEAN NOT NULL DEFAULT true — surfaces the **one-time
   bulk insurance seed** importer in Net Worth Settings (on by default). Gates only the bulk seed; the
   manual, fund-monthly, and single-policy importers are always enabled.
-  (added by `supabase/migrations/04_networth_profile_settings.sql`)
+- `insurance_providers` JSONB NULL — owner's configurable insurance-provider list,
+  `{key, label, defaultCurrency}[]` in display order (Net Worth Settings → Manage Providers). **NULL =
+  the seed defaults** (CHUBB/BOC/Manulife in `src/lib/networth.ts`), resolved by
+  `src/lib/insurance-config.ts`. `insurance_policy.provider` stores the stable `key` (no DB CHECK).
+  (all added by `supabase/migrations/04_networth_profile_settings.sql`)
 - `show_visible_fields` TEXT[] NULL — Shows Entry-form field visibility; **NULL = all visible**
 - `show_importer_enabled` BOOLEAN NOT NULL DEFAULT true — surfaces the Shows CSV importer (on by default)
 - `show_poster_url_visible` BOOLEAN NOT NULL DEFAULT false — **force** the Entry "Poster URL" field

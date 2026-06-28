@@ -128,6 +128,34 @@ export async function deletePolicy(policyId: string): Promise<void> {
   if (error) throw error
 }
 
+/** How many of the owner's policies use a provider key — gates that provider's deletion. */
+export async function countPoliciesByProvider(
+  userId: string,
+  key: string,
+): Promise<number> {
+  const { count, error } = await supabase
+    .from('insurance_policy')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .eq('provider', key)
+  if (error) throw error
+  return count ?? 0
+}
+
+/** Bulk-move policies from one provider key to another before the source key is deleted. */
+export async function reassignProvider(
+  userId: string,
+  fromKey: string,
+  toKey: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from('insurance_policy')
+    .update({ provider: toKey })
+    .eq('user_id', userId)
+    .eq('provider', fromKey)
+  if (error) throw error
+}
+
 export async function setSurrender(
   policyId: string,
   s: { month: string; date: string; proceeds: number },

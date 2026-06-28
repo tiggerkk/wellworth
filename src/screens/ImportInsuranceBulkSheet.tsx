@@ -5,23 +5,17 @@ import { Sheet } from '../components/Sheet'
 import { PrimaryButton } from '../components/PrimaryButton'
 import { SegmentedTabs } from '../components/SegmentedTabs'
 import { useAuth } from '../auth/AuthProvider'
+import { useProfile } from '../hooks/useProfile'
 import { parseCsv } from '../lib/csv'
 import { parseInsuranceBulkCsv, type InsuranceBulkResult } from '../lib/insurance-import'
 import { upsertBulkPolicies } from '../data/insurance'
 import { bumpNetWorth } from '../lib/networth-refresh'
 import { errorMessage } from '../lib/errors'
-import {
-  INSURANCE_PROVIDERS,
-  INSURANCE_PROVIDER_LABELS,
-  PROVIDER_DEFAULT_CURRENCY,
-  type InsuranceProvider,
-} from '../lib/networth'
+import { CURRENCIES, type Currency } from '../lib/networth'
+import { effectiveProviders } from '../lib/insurance-config'
 
 const MAX_MESSAGES = 20
-const CCY_OPTIONS = [
-  { value: 'USD', label: 'USD' },
-  { value: 'HKD', label: 'HKD' },
-]
+const CCY_OPTIONS = CURRENCIES.map((c) => ({ value: c, label: c }))
 
 /**
  * One-time BULK SEED of the insurance policy catalogue from the wide spreadsheet (saved as CSV).
@@ -32,20 +26,21 @@ export function ImportInsuranceBulkSheet() {
   const navigate = useNavigate()
   const { session } = useAuth()
   const userId = session?.user.id
+  const { data: profile } = useProfile()
+  const providers = effectiveProviders(profile?.insurance_providers)
 
   const inputRef = useRef<HTMLInputElement>(null)
   const [fileName, setFileName] = useState<string | null>(null)
   const [raw, setRaw] = useState<string[][] | null>(null)
-  const [currencies, setCurrencies] = useState<Record<InsuranceProvider, 'HKD' | 'USD'>>(
-    () => ({ ...PROVIDER_DEFAULT_CURRENCY }),
-  )
+  // Per-provider currency override (keyed by provider key); empty = use each provider's defaultCurrency.
+  const [currencies, setCurrencies] = useState<Record<string, Currency>>({})
   const [importing, setImporting] = useState(false)
   const [importError, setImportError] = useState<string | null>(null)
   const [doneCount, setDoneCount] = useState<number | null>(null)
 
   // Re-parse whenever the file or a currency choice changes (currency flows into each policy).
   const result: InsuranceBulkResult | null = raw
-    ? parseInsuranceBulkCsv(raw, currencies)
+    ? parseInsuranceBulkCsv(raw, providers, currencies)
     : null
 
   async function onFile(file: File) {
@@ -62,8 +57,8 @@ export function ImportInsuranceBulkSheet() {
   }
 
   const policies = result?.policies ?? []
-  const presentProviders = INSURANCE_PROVIDERS.filter((p) =>
-    policies.some((pol) => pol.provider === p),
+  const presentProviders = providers.filter((p) =>
+    policies.some((pol) => pol.provider === p.key),
   )
 
   async function runImport() {
@@ -153,16 +148,17 @@ export function ImportInsuranceBulkSheet() {
                       Confirm provider currency
                     </p>
                     {presentProviders.map((p) => (
-                      <div key={p} className="flex items-center justify-between gap-3">
-                        <span className="text-[15px] text-text-primary">
-                          {INSURANCE_PROVIDER_LABELS[p]}
-                        </span>
-                        <div className="w-32">
+                      <div
+                        key={p.key}
+                        className="flex items-center justify-between gap-3"
+                      >
+                        <span className="text-[15px] text-text-primary">{p.label}</span>
+                        <div className="w-36">
                           <SegmentedTabs
-                            value={currencies[p]}
+                            value={currencies[p.key] ?? p.defaultCurrency}
                             options={CCY_OPTIONS}
                             onChange={(v) =>
-                              setCurrencies((c) => ({ ...c, [p]: v as 'HKD' | 'USD' }))
+                              setCurrencies((c) => ({ ...c, [p.key]: v as Currency }))
                             }
                           />
                         </div>

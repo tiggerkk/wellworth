@@ -625,6 +625,12 @@ target, nutrient visibility) is the **shared account row** and is left as-is —
 ```sql
 truncate public.networth_snapshot, public.asset_entry,
          public.insurance_policy cascade;
+-- optional: also reset the Net Worth settings on your profile to defaults
+update public.profile
+  set networth_visible_asset_types          = null,
+      networth_asset_type_order             = null,
+      networth_bulk_insurance_import_enabled = true,
+      insurance_providers                   = null;  -- null = the seed providers (CHUBB/BOC/Manulife)
 ```
 
 > Two independent parents here, so both must be listed: `networth_snapshot` cascades to `asset_entry`

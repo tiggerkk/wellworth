@@ -180,7 +180,8 @@ All values are entered manually. `details` are preserved for reference only; the
 - **Fund section**: read-only rows `Name (truncated) · Total Value (HKD) · Return Rate %`; header has an
   import icon → Fund CSV importer (overwrites the month's fund rows only); tap a row → Fund detail
   modal (Units · Avg Unit Cost · NAV/Unit · priced-as-of · Total Cost · P/L · Asset Class · Currency).
-- **Insurance section**: auto-populated, grouped CHUBB→BOC→Manulife, ordered by policy number;
+- **Insurance section**: auto-populated, grouped by the owner's configured provider order (orphan
+  providers last), ordered by policy number within a provider;
   surrendered policies excluded from their surrender month onward; rows `Number · Name (truncated) ·
 Policy Year · Premium · Cash Value (native→HKD)` with an "as of yr N" tag when carried; tap → Policy
   detail (read-only, resolved at the month's age).
@@ -191,7 +192,8 @@ Policy Year · Premium · Cash Value (native→HKD)` with an "as of yr N" tag wh
   only, Past break-even only, Started date range), sort (Start Date / Policy Number / Policy Name /
   Provider, descending default). Tap → New/Edit Insurance. Mirrors Medical Reports.
 - **New/Edit Insurance** (`IconFileCertificate` tab): header X · title · **Import Policy Schedule** ·
-  Delete/Reset/Create/Save. Body: Provider, Policy Number, Currency (**mandatory**), Policy Name,
+  Delete/Reset/Create/Save. Body: Provider (picked from the configured list — manage it in Settings →
+  Manage Providers), Policy Number, Currency (**mandatory**; HKD/CNY/USD), Policy Name,
   Start Date, **Notes**; an inline **SURRENDER** section (surrender month + date + proceeds, all
   mandatory) with an inline-confirm **Un-Surrender**; a **SCHEDULE** section listing versions
   (selectable; editable `effective_date`; hard-delete with earliest-remaining promotion to Original).
@@ -213,6 +215,13 @@ Policy Year · Premium · Cash Value (native→HKD)` with an "as of yr N" tag wh
 ### Settings (`IconSettings` tab)
 
 - **DISPLAY → Visible Asset Types** → reorder/visibility sheet (mirrors Visible Modules; ≥1 visible).
+- **DISPLAY → Manage Providers** → add/rename/delete/reorder the insurance-provider list + each
+  provider's **default import currency** (the Quotes/Travel configurable-list pattern; shared
+  `ConfigListEditor` with a per-row currency control). Stored on `profile.insurance_providers` (JSONB
+  `{key,label,defaultCurrency}[]`; NULL = the seed defaults CHUBB/BOC/Manulife in `src/lib/networth.ts`,
+  resolved by `src/lib/insurance-config.ts`). Provider is **required** on every policy, so the last one
+  can't be deleted; deleting an in-use provider reassigns its policies first. `insurance_policy.provider`
+  has **no DB CHECK** — it stores the stable `key` (orphan keys still render via the raw-key fallback).
 - **IMPORT → Enable Bulk Insurance Import** toggle (`networth_bulk_insurance_import_enabled`) →
   `Import CSV Insurance` (one-time bulk seed). Manual / fund / single-policy imports are always enabled.
 
@@ -223,12 +232,15 @@ Policy Year · Premium · Cash Value (native→HKD)` with an "as of yr N" tag wh
   manual rows + the month's funds (kept, else carried forward) + insurance (kept if frozen, else
   resolved + frozen now) — so a manual import never drops funds/insurance and the Dashboard total is
   complete without a separate Monthly Entry SAVE. Re-importing keeps already-frozen fund/insurance.
-- **Fund** (`src/lib/fund-import.ts`): JPM "My Portfolio" CSV — strips `HKD `/`USD ` + commas; splits
+- **Fund** (`src/lib/fund-import.ts`): JPM "My Portfolio" CSV — strips currency-code + commas; splits
   the NAV cell `HKD 16.43(2026/06/25)` (optional space + embedded newline) into NAV + as-of date;
-  Total Value is HKD (no FX); base currency kept in `details`. Stops at the blank row + footer.
+  Total Value is HKD (no FX); base currency (HKD/CNY/USD) kept in `details`. Stops at the blank row +
+  footer.
 - **Insurance bulk** (`src/lib/insurance-import.ts`): wide sheet, 4-col blocks from col B, provider
-  carried forward, blocks without a policy number skipped, trailing total columns dropped; confirms
-  per-provider currency (default CHUBB/BOC = USD, Manulife = HKD).
+  carried forward (label matched to the configured provider list — an **unknown provider skips its
+  block** with an error until you add it in Settings), blocks without a policy number skipped, trailing
+  total columns dropped; confirms per-provider currency (seeded from each provider's `defaultCurrency`;
+  HKD/CNY/USD).
 - **Insurance single**: narrow key/value header (Provider, Policy Number, optional Policy Name / Start
   Date) + the `Age, Policy Year, Total Premium Paid, Cash Value, Surrender Gain %/Yr` table (Surrender
   Gain ignored).

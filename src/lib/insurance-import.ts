@@ -14,18 +14,19 @@
  *
  * No I/O. Only real (printed) premium+cash points are emitted — carry-forward is a display rule.
  */
+import { type Currency, type SchedulePoint } from './networth'
 import {
-  PROVIDER_DEFAULT_CURRENCY,
-  type InsuranceProvider,
-  type SchedulePoint,
-} from './networth'
+  defaultCurrencyFor,
+  matchKeyOrLabel,
+  type InsuranceProviderConfig,
+} from './insurance-config'
 
 export interface ParsedPolicy {
-  provider: InsuranceProvider
+  provider: string // configured provider key
   policy_number: string
   policy_name: string
   start_date: string | null // ISO yyyy-mm-dd
-  currency: 'HKD' | 'USD'
+  currency: Currency
   first_year: number
   points: SchedulePoint[]
 }
@@ -62,15 +63,6 @@ export function parseLooseDate(raw: string): string | null {
   return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
 }
 
-/** Map a provider label to its key (null if not a known provider). */
-export function providerKey(raw: string): InsuranceProvider | null {
-  const v = raw.trim().toLowerCase()
-  if (v === 'chubb') return 'chubb'
-  if (v === 'boc') return 'boc'
-  if (v === 'manulife') return 'manulife'
-  return null
-}
-
 function num(raw: string | undefined): number {
   return Number((raw ?? '').replace(/[",]/g, '').trim())
 }
@@ -90,12 +82,15 @@ function splitNumberDate(cell: string): { number: string; startDate: string | nu
 }
 
 /**
- * Parse the wide bulk-seed CSV. `currencyByProvider` is the per-provider currency confirmed at
- * import (defaults to PROVIDER_DEFAULT_CURRENCY).
+ * Parse the wide bulk-seed CSV. `providers` is the owner's configured provider list (the CSV's
+ * provider labels are matched against it); `currencyByProvider` is the per-provider currency confirmed
+ * at import (defaults to each provider's `defaultCurrency`). A provider label that matches none of the
+ * configured providers makes its block skip with an error — add it in Settings, then re-import.
  */
 export function parseInsuranceBulkCsv(
   rows: string[][],
-  currencyByProvider: Partial<Record<InsuranceProvider, 'HKD' | 'USD'>> = {},
+  providers: InsuranceProviderConfig[],
+  currencyByProvider: Record<string, Currency> = {},
 ): InsuranceBulkResult {
   const errors: string[] = []
   const warnings: string[] = []
@@ -122,12 +117,12 @@ export function parseInsuranceBulkCsv(
     subHeaderRow.length,
   )
 
-  // Carry the provider label forward across blank cells (CSV flattens merged cells).
-  let carriedProvider: InsuranceProvider | null = null
+  // Carry the provider key forward across blank cells (CSV flattens merged cells).
+  let carriedProvider: string | null = null
 
   for (let c = 1; c + 2 < colCount; c += 4) {
     if (!isBlank(providerRow[c])) {
-      const pk = providerKey(providerRow[c]!)
+      const pk = matchKeyOrLabel(providers, providerRow[c]!)
       if (pk) carriedProvider = pk
     }
 
@@ -174,7 +169,8 @@ export function parseInsuranceBulkCsv(
       policy_name: name,
       start_date: startDate,
       currency:
-        currencyByProvider[carriedProvider] ?? PROVIDER_DEFAULT_CURRENCY[carriedProvider],
+        currencyByProvider[carriedProvider] ??
+        defaultCurrencyFor(providers, carriedProvider),
       first_year: Math.min(...points.map((p) => p.age)),
       points,
     })
@@ -187,7 +183,7 @@ export function parseInsuranceBulkCsv(
 }
 
 export interface ParsedSinglePolicy {
-  provider: InsuranceProvider | null
+  provider: string | null // matched configured provider key, or null if absent/unknown
   policy_number: string
   policy_name: string | null
   start_date: string | null
@@ -201,7 +197,10 @@ export interface InsuranceSingleResult {
 }
 
 /** Parse the narrow single-policy CSV (key/value header + data table). */
-export function parseInsuranceSingleCsv(rows: string[][]): InsuranceSingleResult {
+export function parseInsuranceSingleCsv(
+  rows: string[][],
+  providers: InsuranceProviderConfig[],
+): InsuranceSingleResult {
   const errors: string[] = []
   if (rows.length === 0) return { policy: null, errors: ['The file is empty.'] }
 
@@ -227,7 +226,7 @@ export function parseInsuranceSingleCsv(rows: string[][]): InsuranceSingleResult
 
   const policyNumber = header['policy number'] ?? ''
   if (policyNumber === '') errors.push('Missing "Policy Number" in the header.')
-  const provider = providerKey(header['provider'] ?? '')
+  const provider = matchKeyOrLabel(providers, header['provider'] ?? '')
   if (header['provider'] && !provider)
     errors.push(`Unknown provider "${header['provider']}".`)
 

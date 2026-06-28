@@ -214,6 +214,10 @@ export const ASSET_TYPE_COLORS: Record<AssetType, string> = {
 // yr N"). Variance is measured against the Original (baseline) version. See docs/05_networth.md.
 // =====================================================================================
 
+// Seed defaults only — the live provider list is owner-configurable (the Quotes pattern), stored on
+// `profile.insurance_providers` and resolved by src/lib/insurance-config.ts. These three feed the NULL
+// fallback (`defaultProviders()`); `InsuranceProvider` describes the seeds' keys, but stored values are
+// plain string keys (insurance_policy.provider has no CHECK).
 export const INSURANCE_PROVIDERS = ['chubb', 'boc', 'manulife'] as const
 export type InsuranceProvider = (typeof INSURANCE_PROVIDERS)[number]
 export const INSURANCE_PROVIDER_LABELS: Record<InsuranceProvider, string> = {
@@ -221,8 +225,8 @@ export const INSURANCE_PROVIDER_LABELS: Record<InsuranceProvider, string> = {
   boc: 'BOC',
   manulife: 'Manulife',
 }
-/** Default currency confirmed at bulk import per provider (overridable). */
-export const PROVIDER_DEFAULT_CURRENCY: Record<InsuranceProvider, 'HKD' | 'USD'> = {
+/** Seed default currency per provider (the bulk-import per-provider currency starts here). */
+export const PROVIDER_DEFAULT_CURRENCY: Record<InsuranceProvider, Currency> = {
   chubb: 'USD',
   boc: 'USD',
   manulife: 'HKD',

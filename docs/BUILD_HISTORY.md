@@ -2468,3 +2468,33 @@ No schema/migration — the `uncertain` boolean is unchanged; only how it's rais
   (`routes.medical.reports`).
 - Verified by `npm run check` (**566 tests** — +9 for `groupResultsByCategory`, `medicalReviewReason`,
   and the import app-side review rule).
+
+## Net Worth — configurable insurance providers + CNY currency (2026-06-29)
+
+Made the insurance **provider** list owner-configurable (it was a hardcoded `chubb`/`boc`/`manulife`
+enum) and allowed **CNY** as an insurance + fund currency. Behavior is in `05_networth.md`; the new
+profile column is in `03_global.md`.
+
+- **Providers → the Quotes/Travel configurable-list pattern.** New `src/lib/insurance-config.ts`
+  resolves `profile.insurance_providers` (JSONB `{key,label,defaultCurrency}[]`; **NULL = the seed
+  defaults** still in `src/lib/networth.ts`) tolerantly — orphan keys fall back to the raw key. New
+  **Net Worth → Settings → Manage Providers** sheet (`InsuranceProvidersSheet`) reuses the shared
+  `ConfigListEditor`; it gained one optional generic `rowExtra` render-prop so each row can edit the
+  provider's **default import currency** (a per-row `SelectMenu`). Delete is gated by
+  `countPoliciesByProvider` + `reassignProvider` (data/insurance), mirroring Quotes/Travel.
+- **Migration (edited in place, owner re-runs `db reset`):** `03_networth_schema.sql` **drops the
+  `provider` CHECK** on `insurance_policy` (provider is now an app-validated key, like
+  `quote.source_type`) and **widens the `currency` CHECK** to `('HKD','CNY','USD')`;
+  `04_networth_profile_settings.sql` adds `insurance_providers jsonb`. Types hand-edited in
+  `database.ts` pending the owner's `gen:types`.
+- **Enum removed everywhere:** entry dropdown + default, policy list filter/label, `PolicyDetail`
+  (now takes a resolved `providerLabel`), Monthly Entry freeze-sort + grouping (by configured order,
+  orphans last), and both CSV importers (`providerKey()` → `matchKeyOrLabel` against the configured
+  list; an unknown provider skips its block until added in Settings).
+- **CNY:** literal `'HKD' | 'USD'` widened to the shared `Currency` type across the insurance entry,
+  bulk-import, and parser; both `CCY_OPTIONS` dropdowns now list HKD/CNY/USD. The insurance **freeze**
+  FX (`buildResolvedInsuranceEntries` / `saveManualImportComplete` in `asset-entry.ts`, and
+  `buildInsuranceAgg` in `NetWorthDashboard`) now takes `{usd,cny}` rates (sourced from the existing
+  `fetchRatesToHkd`, which already returns both) instead of a single USD rate. Funds (`fund-import.ts`)
+  accept a CNY base currency (still FX-free — Total Value is already HKD).
+- Verified by `npm run check` (**575 tests** — +9 for `insurance-config` + CNY import/fund cases).

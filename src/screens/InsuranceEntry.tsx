@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router'
 import { IconCheck, IconUpload, IconX } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
+import { useProfile } from '../hooks/useProfile'
 import {
   addScheduleVersion,
   createPolicy,
@@ -17,12 +18,8 @@ import { bumpNetWorth } from '../lib/networth-refresh'
 import { errorMessage } from '../lib/errors'
 import { parseCsv } from '../lib/csv'
 import { parseInsuranceSingleCsv, type ParsedSinglePolicy } from '../lib/insurance-import'
-import {
-  INSURANCE_PROVIDERS,
-  INSURANCE_PROVIDER_LABELS,
-  type InsuranceProvider,
-  type ScheduleVersion,
-} from '../lib/networth'
+import { CURRENCIES, type Currency, type ScheduleVersion } from '../lib/networth'
+import { effectiveProviders, type InsuranceProviderConfig } from '../lib/insurance-config'
 import { formatDayLabel, formatFullDate, todayLocal } from '../lib/date'
 import { routes } from '../constants/routes'
 import { showToast } from '../lib/toast'
@@ -34,24 +31,25 @@ import { ConfirmDeleteAction } from '../components/ConfirmDeleteAction'
 import { PrimaryButton } from '../components/PrimaryButton'
 
 interface PolicyDraft {
-  provider: InsuranceProvider
+  provider: string // configured provider key
   policy_number: string
   policy_name: string
   start_date: string | null
-  currency: 'HKD' | 'USD'
+  currency: Currency
   notes: string
   surrendered_from_month: string | null
   surrender_date: string | null
   surrender_proceeds: string // editable numeric
 }
 
-function blankDraft(): PolicyDraft {
+function blankDraft(providers: InsuranceProviderConfig[]): PolicyDraft {
+  const first = providers[0]
   return {
-    provider: 'chubb',
+    provider: first?.key ?? '',
     policy_number: '',
     policy_name: '',
     start_date: null,
-    currency: 'USD',
+    currency: first?.defaultCurrency ?? 'HKD',
     notes: '',
     surrendered_from_month: null,
     surrender_date: null,
@@ -62,32 +60,28 @@ function blankDraft(): PolicyDraft {
 const inputClass =
   'w-full rounded-input bg-input px-3 py-2 text-[15px] text-text-primary focus:outline-none'
 
-const PROVIDER_OPTIONS = INSURANCE_PROVIDERS.map((p) => ({
-  value: p,
-  label: INSURANCE_PROVIDER_LABELS[p],
-}))
-const CCY_OPTIONS = [
-  { value: 'USD', label: 'USD' },
-  { value: 'HKD', label: 'HKD' },
-]
+const CCY_OPTIONS = CURRENCIES.map((c) => ({ value: c, label: c }))
 
 export function InsuranceEntry() {
   const { id } = useParams()
   const { session } = useAuth()
   const userId = session?.user.id
+  const { data: profile } = useProfile()
+  const providers = effectiveProviders(profile?.insurance_providers)
 
   const loadFn = useCallback(async () => {
-    if (!id || !userId) return { draft: blankDraft(), schedules: [] as ScheduleVersion[] }
+    if (!id || !userId)
+      return { draft: blankDraft(providers), schedules: [] as ScheduleVersion[] }
     const data = await getPolicyWithSchedules(userId, id)
     if (!data) return null
     const p = data.policy
     return {
       draft: {
-        provider: p.provider as InsuranceProvider,
+        provider: p.provider,
         policy_number: p.policy_number,
         policy_name: p.policy_name,
         start_date: p.start_date,
-        currency: (p.currency as 'HKD' | 'USD') ?? 'USD',
+        currency: (p.currency as Currency) ?? 'USD',
         notes: p.notes ?? '',
         surrendered_from_month: p.surrendered_from_month,
         surrender_date: p.surrender_date,
@@ -96,7 +90,8 @@ export function InsuranceEntry() {
       },
       schedules: data.schedules,
     }
-  }, [id, userId])
+    // providers only affect the blank-draft default; re-resolving on profile load is harmless.
+  }, [id, userId, providers])
   const { data: initial, loading, error } = useAsync(loadFn)
 
   return (
@@ -112,6 +107,7 @@ export function InsuranceEntry() {
           userId={userId ?? ''}
           initialDraft={initial.draft}
           initialSchedules={initial.schedules}
+          providers={providers}
         />
       )}
     </div>
@@ -123,13 +119,16 @@ function PolicyForm({
   userId,
   initialDraft,
   initialSchedules,
+  providers,
 }: {
   id: string | undefined
   userId: string
   initialDraft: PolicyDraft
   initialSchedules: ScheduleVersion[]
+  providers: InsuranceProviderConfig[]
 }) {
   const navigate = useNavigate()
+  const providerOptions = providers.map((p) => ({ value: p.key, label: p.label }))
   const [draft, setDraft] = useState<PolicyDraft>(initialDraft)
   const [schedules, setSchedules] = useState<ScheduleVersion[]>(initialSchedules)
   const [selectedSchedule, setSelectedSchedule] = useState<string>(
@@ -336,8 +335,8 @@ function PolicyForm({
             <p className="mb-1 text-xs text-text-secondary">Provider</p>
             <SelectMenu
               value={draft.provider}
-              options={PROVIDER_OPTIONS}
-              onChange={(v) => update({ provider: v as InsuranceProvider })}
+              options={providerOptions}
+              onChange={(v) => update({ provider: v })}
               ariaLabel="Provider"
             />
           </div>
@@ -346,7 +345,7 @@ function PolicyForm({
             <SegmentedTabs
               value={draft.currency}
               options={CCY_OPTIONS}
-              onChange={(v) => update({ currency: v as 'HKD' | 'USD' })}
+              onChange={(v) => update({ currency: v as Currency })}
             />
           </div>
         </div>
@@ -575,6 +574,7 @@ function PolicyForm({
       {importOpen && (
         <ImportScheduleOverlay
           provider={draft.provider}
+          providers={providers}
           policyNumber={draft.policy_number.trim()}
           schedules={schedules}
           busy={saving}
@@ -590,13 +590,15 @@ function PolicyForm({
 
 function ImportScheduleOverlay({
   provider,
+  providers,
   policyNumber,
   schedules,
   busy,
   onApply,
   onClose,
 }: {
-  provider: InsuranceProvider
+  provider: string
+  providers: InsuranceProviderConfig[]
   policyNumber: string
   schedules: ScheduleVersion[]
   busy: boolean
@@ -616,7 +618,7 @@ function ImportScheduleOverlay({
     setParseErrors([])
     try {
       const text = await file.text()
-      const res = parseInsuranceSingleCsv(parseCsv(text))
+      const res = parseInsuranceSingleCsv(parseCsv(text), providers)
       setParsed(res.policy)
       setParseErrors(res.errors)
       setFileName(file.name)

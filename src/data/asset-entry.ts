@@ -151,7 +151,7 @@ export function buildResolvedInsuranceEntries(
   catalogue: PolicyWithSchedules[],
   month: string,
   birthYear: number,
-  usdRate: number,
+  rates: { usd: number; cny: number },
 ): AssetEntryInput[] {
   const age = ageForYear(Number(month.slice(0, 4)), birthYear)
   const out: AssetEntryInput[] = []
@@ -167,7 +167,8 @@ export function buildResolvedInsuranceEntries(
     const original = originalCashValueAtAge(schedules, age)
     const variance = varianceAtAge(schedules, age)
     const pct = surrenderGainPctPerYear(r.cashValue, r.premium, r.policyYear)
-    const rate = policy.currency === 'USD' ? usdRate : 1
+    const rate =
+      policy.currency === 'USD' ? rates.usd : policy.currency === 'CNY' ? rates.cny : 1
     out.push({
       asset_type: 'insurance',
       name: policy.policy_name || policy.policy_number,
@@ -204,7 +205,7 @@ export async function saveManualImportComplete(
   month: string,
   manualRows: AssetEntryInput[],
   birthYear: number,
-  usdRate: number,
+  rates: { usd: number; cny: number },
 ): Promise<void> {
   const existing = await getSnapshotWithEntries(userId, month)
   const entries = existing?.entries ?? []
@@ -222,7 +223,7 @@ export async function saveManualImportComplete(
   let insurance = entries.filter((e) => e.asset_type === 'insurance').map(entryToInput)
   if (insurance.length === 0) {
     const catalogue = await listCatalogue(userId)
-    insurance = buildResolvedInsuranceEntries(catalogue, month, birthYear, usdRate)
+    insurance = buildResolvedInsuranceEntries(catalogue, month, birthYear, rates)
   }
 
   await saveSnapshotEntries(userId, month, [...manualRows, ...fund, ...insurance])

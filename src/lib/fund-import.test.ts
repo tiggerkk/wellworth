@@ -63,4 +63,22 @@ describe('parseFundCsv', () => {
       /Missing/,
     )
   })
+
+  it('accepts a CNY base-currency fund (value still HKD)', () => {
+    const csv = [
+      HEADER,
+      '"JPM China A (CNY)",Master Account,Asia Pacific Equity,100,CNY,CNY 10,"CNY 12(2026/06/25)","HKD 1,000","HKD 1,300",30%,"HKD 300"',
+    ].join('\n')
+    const { rows, errors } = parseFundCsv(parseCsv(csv))
+    expect(errors).toEqual([])
+    expect(rows[0]).toMatchObject({ currency: 'CNY', value_hkd: 1300 })
+  })
+
+  it('rejects an unsupported base currency', () => {
+    const csv = [
+      HEADER,
+      '"Euro Fund",Master Account,Equity,1,EUR,EUR 1,EUR 1(2026/06/25),HKD 1,"HKD 100",0%,HKD 0',
+    ].join('\n')
+    expect(parseFundCsv(parseCsv(csv)).errors[0]).toMatch(/HKD, CNY, or USD/)
+  })
 })

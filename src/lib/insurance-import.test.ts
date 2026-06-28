@@ -1,23 +1,22 @@
 import { describe, expect, it } from 'vitest'
 import { parseCsv } from './csv'
+import { defaultProviders } from './insurance-config'
 import {
   parseInsuranceBulkCsv,
   parseInsuranceSingleCsv,
   parseLooseDate,
-  providerKey,
 } from './insurance-import'
 
-describe('parseLooseDate / providerKey', () => {
+// The CSV importers match provider labels against the owner's configured list; the tests use the
+// seed defaults (CHUBB/BOC/Manulife). Provider key/label matching itself is covered in
+// insurance-config.test.ts.
+const PROVIDERS = defaultProviders()
+
+describe('parseLooseDate', () => {
   it('parses loose dates', () => {
     expect(parseLooseDate('Aug 6, 2014')).toBe('2014-08-06')
     expect(parseLooseDate('Oct 7, 2015')).toBe('2015-10-07')
     expect(parseLooseDate('nope')).toBeNull()
-  })
-  it('maps provider labels', () => {
-    expect(providerKey('CHUBB')).toBe('chubb')
-    expect(providerKey('boc')).toBe('boc')
-    expect(providerKey('Manulife')).toBe('manulife')
-    expect(providerKey('Other')).toBeNull()
   })
 })
 
@@ -35,7 +34,7 @@ describe('parseInsuranceBulkCsv', () => {
   ].join('\n')
 
   it('parses numbered blocks, carries the provider, skips unnumbered + totals', () => {
-    const { policies, warnings } = parseInsuranceBulkCsv(parseCsv(csv))
+    const { policies, warnings } = parseInsuranceBulkCsv(parseCsv(csv), PROVIDERS)
     expect(policies.map((p) => p.policy_number)).toEqual(['2150202771', '28-9340140-4'])
 
     const chubb = policies[0]!
@@ -60,9 +59,15 @@ describe('parseInsuranceBulkCsv', () => {
     expect(warnings.join(' ')).toMatch(/Elapsed Policy/) // skipped, no number
   })
 
-  it('honours a per-provider currency override', () => {
-    const { policies } = parseInsuranceBulkCsv(parseCsv(csv), { chubb: 'HKD' })
-    expect(policies[0]?.currency).toBe('HKD')
+  it('honours a per-provider currency override (incl. CNY)', () => {
+    expect(
+      parseInsuranceBulkCsv(parseCsv(csv), PROVIDERS, { chubb: 'HKD' }).policies[0]
+        ?.currency,
+    ).toBe('HKD')
+    expect(
+      parseInsuranceBulkCsv(parseCsv(csv), PROVIDERS, { chubb: 'CNY' }).policies[0]
+        ?.currency,
+    ).toBe('CNY')
   })
 
   it('only emits points with both premium and cash present', () => {
@@ -74,7 +79,7 @@ describe('parseInsuranceBulkCsv', () => {
       `45,4,"60,000","37,276",-9.5`,
       `46,5,,,`, // blank premium/cash → no point
     ].join('\n')
-    const { policies } = parseInsuranceBulkCsv(parseCsv(sparse))
+    const { policies } = parseInsuranceBulkCsv(parseCsv(sparse), PROVIDERS)
     expect(policies[0]?.points).toHaveLength(1)
   })
 })
@@ -92,7 +97,7 @@ describe('parseInsuranceSingleCsv', () => {
   ].join('\n')
 
   it('parses the key/value header + data table (ignoring surrender gain)', () => {
-    const { policy, errors } = parseInsuranceSingleCsv(parseCsv(csv))
+    const { policy, errors } = parseInsuranceSingleCsv(parseCsv(csv), PROVIDERS)
     expect(errors).toEqual([])
     expect(policy).toMatchObject({
       provider: 'chubb',
@@ -105,15 +110,15 @@ describe('parseInsuranceSingleCsv', () => {
   })
 
   it('errors when the policy number or table is missing', () => {
-    expect(parseInsuranceSingleCsv(parseCsv('Provider,CHUBB')).errors[0]).toMatch(
-      /table header/i,
-    )
+    expect(
+      parseInsuranceSingleCsv(parseCsv('Provider,CHUBB'), PROVIDERS).errors[0],
+    ).toMatch(/table header/i)
     const noNum = [
       'Provider,CHUBB',
       'Age,Policy Year,Total Premium Paid,Cash Value',
       '45,4,1,2',
     ].join('\n')
-    expect(parseInsuranceSingleCsv(parseCsv(noNum)).errors.join(' ')).toMatch(
+    expect(parseInsuranceSingleCsv(parseCsv(noNum), PROVIDERS).errors.join(' ')).toMatch(
       /Policy Number/,
     )
   })

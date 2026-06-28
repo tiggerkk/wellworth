@@ -11,7 +11,10 @@ Insurance Import_ toggle). Save the wide spreadsheet (`Insurance.xlsx`) as CSV.
 Layout — one **4-column block per policy**, with a shared `Age` in column A:
 
 - **Row 1 — Provider**: the provider name appears in each provider's first column; the importer
-  **carries it forward** across blank cells (CHUBB → BOC → Manulife).
+  **carries it forward** across blank cells (e.g. CHUBB → BOC → Manulife). Each name is matched (by
+  key or label, case-insensitive) against your **configured provider list** (Net Worth → Settings →
+  Manage Providers). A name that matches none **skips its block** with an error — add the provider in
+  Settings first, then re-import.
 - **Row 2 — Policy Name**: in each block's first column.
 - **Row 3 — `Policy Number: Start Date`**: e.g. `2150202771: Oct 7, 2015`. The number is the
   policy's identity / update key; a block **without a number is skipped**.
@@ -21,8 +24,9 @@ Surrender Gain %/Yr`.
   Value become schedule points.
 - **Trailing total columns are ignored** (their sub-header is `USD`/`HKD`, not `Policy Year`).
 
-At import you **confirm each provider's currency** (defaults: CHUBB = USD, BOC = USD,
-Manulife = HKD). Each imported policy gets an **Original** schedule from its points.
+At import you **confirm each provider's currency** (HKD / CNY / USD; pre-filled from each provider's
+configured **default currency** — Manage Providers — e.g. CHUBB = USD, BOC = USD, Manulife = HKD). Each
+imported policy gets an **Original** schedule from its points.
 
 ## 2. Single policy add / update — narrow CSV
 

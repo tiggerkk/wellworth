@@ -99,13 +99,10 @@ export function ImportNetWorthSheet() {
       const birthYear = profile?.birthday
         ? Number(profile.birthday.slice(0, 4))
         : DEFAULT_BIRTH_YEAR
-      await saveManualImportComplete(
-        userId,
-        month,
-        payload,
-        birthYear,
-        rateOf('USD') ?? 1,
-      )
+      await saveManualImportComplete(userId, month, payload, birthYear, {
+        usd: rateOf('USD') ?? 1,
+        cny: rateOf('CNY') ?? 1,
+      })
       bumpNetWorth()
       setDoneCount(payload.length)
     } catch (e) {

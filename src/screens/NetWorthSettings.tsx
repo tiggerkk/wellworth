@@ -53,6 +53,14 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
             <IconChevronRight size={18} className="text-text-tertiary" />
           </FieldRow>
         </button>
+        <button
+          onClick={() => openSheet(routes.networth.settingsProviders)}
+          className="w-full"
+        >
+          <FieldRow label="Manage Providers">
+            <IconChevronRight size={18} className="text-text-tertiary" />
+          </FieldRow>
+        </button>
       </SectionCard>
 
       <SectionCard title="Import">

@@ -12,8 +12,16 @@
 --   * networth_bulk_insurance_import_enabled — surfaces the ONE-TIME bulk insurance seed importer
 --     in Net Worth Settings. ON by default; toggleable. Gates ONLY the bulk seed — the manual,
 --     fund-monthly, and single-policy importers are always enabled.
+--   * insurance_providers — the owner's configurable insurance-provider list (add/rename/delete/
+--     reorder in Net Worth Settings → Manage Providers), the Quotes pattern. A JSONB array of
+--     {key,label,defaultCurrency} objects in display order; defaultCurrency (HKD/CNY/USD) seeds the
+--     bulk-import per-provider currency. NULL = the canonical seed defaults in code (INSURANCE_PROVIDERS
+--     etc. in src/lib/networth.ts), resolved tolerantly by src/lib/insurance-config.ts — so a
+--     newly-shipped default appears for owners who never customized. A non-null array is authoritative
+--     (a deleted default does not resurrect). insurance_policy.provider stores the stable `key`.
 
 alter table public.profile
   add column networth_visible_asset_types          text[],
   add column networth_asset_type_order             text[],
-  add column networth_bulk_insurance_import_enabled boolean not null default true;
+  add column networth_bulk_insurance_import_enabled boolean not null default true,
+  add column insurance_providers                   jsonb;

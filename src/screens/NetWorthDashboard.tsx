@@ -69,9 +69,11 @@ interface InsuranceAgg {
 /** Build the aggregate Cash Value vs Total Premiums series (HKD) by age, across all policies. */
 function buildInsuranceAgg(
   catalogue: PolicyWithSchedules[],
-  usdRate: number,
+  rates: { usd: number; cny: number },
   currentAge: number,
 ): InsuranceAgg {
+  const rateFor = (ccy: string) =>
+    ccy === 'USD' ? rates.usd : ccy === 'CNY' ? rates.cny : 1
   const ages = new Set<number>()
   for (const { schedules } of catalogue)
     for (const s of schedules) for (const p of s.points) ages.add(p.age)
@@ -83,7 +85,7 @@ function buildInsuranceAgg(
       for (const { policy, schedules } of catalogue) {
         const r = resolvePolicyAtAge(schedules, age)
         if (!r) continue
-        const rate = policy.currency === 'USD' ? usdRate : 1
+        const rate = rateFor(policy.currency)
         cash += r.cashValue * rate
         premium += r.premium * rate
       }
@@ -97,7 +99,7 @@ function buildInsuranceAgg(
     const r = resolvePolicyAtAge(schedules, currentAge)
     if (!r) continue
     activeCount += 1
-    const rate = policy.currency === 'USD' ? usdRate : 1
+    const rate = rateFor(policy.currency)
     currentCash += r.cashValue * rate
     currentPremium += r.premium * rate
   }
@@ -153,8 +155,9 @@ export function NetWorthDashboard() {
           .sort((a, b) => b.valueHkd - a.valueHkd)
       : []
     const catalogue = await listCatalogue(userId)
-    const usdRate = latestSnap ? ((await fetchRatesToHkd(latestSnap.month)).USD ?? 1) : 1
-    return { funds, catalogue, usdRate }
+    const fx = latestSnap ? await fetchRatesToHkd(latestSnap.month) : null
+    const rates = { usd: fx?.USD ?? 1, cny: fx?.CNY ?? 1 }
+    return { funds, catalogue, rates }
   }, [userId, version])
   const { data: extra } = useAsync(extraFn)
 
@@ -186,7 +189,7 @@ export function NetWorthDashboard() {
   const funds = extra?.funds ?? []
   const agg =
     extra && extra.catalogue.length > 0
-      ? buildInsuranceAgg(extra.catalogue, extra.usdRate, currentAge)
+      ? buildInsuranceAgg(extra.catalogue, extra.rates, currentAge)
       : null
 
   return (

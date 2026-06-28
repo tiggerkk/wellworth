@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import {
   IconChevronDown,
@@ -28,8 +28,6 @@ import {
   DEFAULT_BIRTH_YEAR,
   DETAIL_FIELDS,
   formatHkd,
-  INSURANCE_PROVIDERS,
-  INSURANCE_PROVIDER_LABELS,
   originalCashValueAtAge,
   resolvePolicyAtAge,
   surrenderGainPctPerYear,
@@ -39,8 +37,12 @@ import {
   visibleAssetTypes,
   type AssetType,
   type Currency,
-  type InsuranceProvider,
 } from '../lib/networth'
+import {
+  effectiveProviders,
+  providerLabel,
+  type InsuranceProviderConfig,
+} from '../lib/insurance-config'
 import { bumpNetWorth, useNetWorthVersion } from '../lib/networth-refresh'
 import { fetchRateToHkd, fetchRatesToHkd, type FetchableCurrency } from '../lib/fx'
 import { addMonths, formatMonthLabel, startOfMonth, todayLocal } from '../lib/date'
@@ -109,6 +111,7 @@ function resolveInsuranceRows(
   catalogue: PolicyWithSchedules[],
   month: string,
   birthYear: number,
+  providers: InsuranceProviderConfig[],
 ): EntryDraft[] {
   const age = ageForYear(Number(month.slice(0, 4)), birthYear)
   const rows: EntryDraft[] = []
@@ -142,10 +145,11 @@ function resolveInsuranceRows(
       },
     })
   }
+  // Sort by the owner's configured provider order; orphan keys (deleted providers) sort last.
+  const order = new Map(providers.map((p, i) => [p.key, i]))
+  const idx = (k: string | undefined) => order.get(k ?? '') ?? Number.MAX_SAFE_INTEGER
   return rows.sort((a, b) => {
-    const pi =
-      INSURANCE_PROVIDERS.indexOf(a.details.provider as InsuranceProvider) -
-      INSURANCE_PROVIDERS.indexOf(b.details.provider as InsuranceProvider)
+    const pi = idx(a.details.provider) - idx(b.details.provider)
     return pi !== 0
       ? pi
       : (a.details.policy_number ?? '') < (b.details.policy_number ?? '')
@@ -183,6 +187,10 @@ export function NetWorthEntry() {
   const birthYear = profile?.birthday
     ? Number(profile.birthday.slice(0, 4))
     : DEFAULT_BIRTH_YEAR
+  const providers = useMemo(
+    () => effectiveProviders(profile?.insurance_providers),
+    [profile?.insurance_providers],
+  )
   const visibleTypes = visibleAssetTypes(
     profile?.networth_asset_type_order,
     profile?.networth_visible_asset_types,
@@ -201,7 +209,10 @@ export function NetWorthEntry() {
       const base = draftFromEntries(existing.entries)
       if (!base.rows.some((r) => r.asset_type === 'insurance')) {
         const catalogue = await listCatalogue(userId)
-        base.rows = [...base.rows, ...resolveInsuranceRows(catalogue, month, birthYear)]
+        base.rows = [
+          ...base.rows,
+          ...resolveInsuranceRows(catalogue, month, birthYear, providers),
+        ]
       }
       return { ...base, snapshotId: existing.snapshot.id }
     }
@@ -217,7 +228,7 @@ export function NetWorthEntry() {
       ? draftFromEntries(await listEntriesBySnapshot(prior.id))
       : null
     const carried = (priorRows?.rows ?? []).filter((r) => r.asset_type !== 'insurance')
-    const insurance = resolveInsuranceRows(catalogue, month, birthYear)
+    const insurance = resolveInsuranceRows(catalogue, month, birthYear, providers)
     return {
       rows: [...carried, ...insurance],
       fxRates: {
@@ -227,7 +238,7 @@ export function NetWorthEntry() {
       },
       snapshotId: null,
     }
-  }, [userId, month, version, birthYear])
+  }, [userId, month, version, birthYear, providers])
   const { data: initial, loading, error } = useAsync(loadFn)
 
   return (
@@ -278,6 +289,7 @@ export function NetWorthEntry() {
           initial={initial}
           initialSnapshotId={initial.snapshotId}
           visibleTypes={visibleTypes}
+          providers={providers}
         />
       )}
     </div>
@@ -293,6 +305,7 @@ function EntryForm({
   initial,
   initialSnapshotId,
   visibleTypes,
+  providers,
 }: {
   userId: string
   month: string
@@ -300,6 +313,7 @@ function EntryForm({
   initial: MonthDraft
   initialSnapshotId: string | null
   visibleTypes: AssetType[]
+  providers: InsuranceProviderConfig[]
 }) {
   const navigate = useNavigate()
   const openSheet = useSheetNavigate()
@@ -639,6 +653,7 @@ function EntryForm({
                     <InsuranceRows
                       rows={entries}
                       month={month}
+                      providers={providers}
                       rowBase={rowBase}
                       navigate={navigate}
                     />
@@ -765,23 +780,34 @@ function ManualRow({
 function InsuranceRows({
   rows,
   month,
+  providers,
   rowBase,
   navigate,
 }: {
   rows: EntryDraft[]
   month: string
+  providers: InsuranceProviderConfig[]
   rowBase: (r: EntryDraft) => number
   navigate: ReturnType<typeof useNavigate>
 }) {
+  // Group by the configured providers in order, then any orphan-keyed rows (deleted providers) last.
+  const orphanKeys = [
+    ...new Set(
+      rows
+        .map((r) => r.details.provider ?? '')
+        .filter((k) => !providers.some((p) => p.key === k)),
+    ),
+  ]
+  const groups = [...providers.map((p) => p.key), ...orphanKeys]
   return (
     <>
-      {INSURANCE_PROVIDERS.map((provider) => {
+      {groups.map((provider) => {
         const group = rows.filter((r) => r.details.provider === provider)
         if (group.length === 0) return null
         return (
           <div key={provider}>
             <p className="bg-surface-alt px-3 py-1 text-[11px] uppercase tracking-wide text-text-secondary">
-              {INSURANCE_PROVIDER_LABELS[provider]}
+              {providerLabel(providers, provider)}
             </p>
             {group.map((r) => (
               <button

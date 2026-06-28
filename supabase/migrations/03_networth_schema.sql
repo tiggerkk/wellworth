@@ -121,11 +121,14 @@ create view public.networth_monthly_type_total
 create table public.insurance_policy (
   id                     uuid primary key default gen_random_uuid(),
   user_id                uuid not null references auth.users (id) on delete cascade,
-  provider               text not null check (provider in ('chubb', 'boc', 'manulife')),
+  -- provider is an owner-configurable key (no CHECK; app-validated against
+  -- profile.insurance_providers — like quote.source_type / trip_expense.category). Orphan keys
+  -- still render via the raw-key fallback in src/lib/insurance-config.ts.
+  provider               text not null,
   policy_number          text not null,
   policy_name            text not null default '',
   start_date             date,
-  currency               text not null check (currency in ('HKD', 'USD')),
+  currency               text not null check (currency in ('HKD', 'CNY', 'USD')),
   notes                  text,
   surrendered_from_month date, -- 1st-of-month; policy is excluded from this month forward
   surrender_date         date,

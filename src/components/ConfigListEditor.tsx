@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { IconCheck, IconPencil, IconPlus, IconTrash, IconX } from '@tabler/icons-react'
 import { ReorderList } from './ReorderList'
 import { SelectMenu } from './SelectMenu'
@@ -29,6 +29,12 @@ interface ConfigListEditorProps<T extends { key: string; label: string }> {
   isProtected?: (key: string) => boolean
   /** Optional sub-label shown under a row (e.g. "links to Shows"). */
   hint?: (entry: T) => string | null
+  /**
+   * Optional per-row control rendered before the rename/delete actions, for editing an extra field on
+   * the entry (e.g. an insurance provider's default currency). `update` merges a patch into that entry
+   * and auto-saves. Consumers that don't pass it (Quotes/Travel) are unaffected.
+   */
+  rowExtra?: (entry: T, update: (patch: Partial<T>) => void) => ReactNode
 }
 
 /**
@@ -55,6 +61,7 @@ export function ConfigListEditor<T extends { key: string; label: string }>({
   onChanged,
   isProtected,
   hint,
+  rowExtra,
 }: ConfigListEditorProps<T>) {
   const [items, setItems] = useState<T[]>(list)
   const [newLabel, setNewLabel] = useState('')
@@ -73,6 +80,11 @@ export function ConfigListEditor<T extends { key: string; label: string }>({
   function apply(next: T[]) {
     setItems(next)
     persist(next)
+  }
+
+  /** Merge a patch into one entry (by key) and auto-save — backs the optional `rowExtra` control. */
+  function updateEntry(key: string, patch: Partial<T>) {
+    apply(items.map((e) => (e.key === key ? { ...e, ...patch } : e)))
   }
 
   function commitAdd() {
@@ -175,6 +187,9 @@ export function ConfigListEditor<T extends { key: string; label: string }>({
             </button>
           ) : (
             <div className="flex items-center gap-1">
+              {rowExtra?.(items.find((e) => e.key === key)!, (patch) =>
+                updateEntry(key, patch),
+              )}
               <button
                 onClick={() => {
                   setEditingKey(key)

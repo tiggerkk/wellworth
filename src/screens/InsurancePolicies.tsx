@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router'
 import { IconFileCertificate } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
+import { useProfile } from '../hooks/useProfile'
 import { useSessionState } from '../hooks/useSessionState'
 import { listCatalogue } from '../data/insurance'
 import { useNetWorthVersion } from '../lib/networth-refresh'
@@ -12,12 +13,8 @@ import {
   type InsuranceCriteria,
   type InsuranceSortField,
 } from '../lib/insurance-view'
-import {
-  breakEven,
-  INSURANCE_PROVIDERS,
-  INSURANCE_PROVIDER_LABELS,
-  type InsuranceProvider,
-} from '../lib/networth'
+import { breakEven } from '../lib/networth'
+import { effectiveProviders, providerLabel } from '../lib/insurance-config'
 import { formatFullDate, todayLocal } from '../lib/date'
 import { routes } from '../constants/routes'
 import { SearchBar } from '../components/SearchBar'
@@ -47,6 +44,8 @@ export function InsurancePolicies() {
   const navigate = useNavigate()
   const { session } = useAuth()
   const userId = session?.user.id
+  const { data: profile } = useProfile()
+  const providers = effectiveProviders(profile?.insurance_providers)
   const version = useNetWorthVersion()
   const [criteria, setCriteria] = useSessionState<InsuranceCriteria>(
     'wellworth:networth-insurance',
@@ -67,9 +66,9 @@ export function InsurancePolicies() {
   const items = data ?? []
   const providerOptions = [
     { value: 'all', label: 'Any Provider' },
-    ...INSURANCE_PROVIDERS.filter((p) => items.some((i) => i.policy.provider === p)).map(
-      (p) => ({ value: p, label: INSURANCE_PROVIDER_LABELS[p] }),
-    ),
+    ...providers
+      .filter((p) => items.some((i) => i.policy.provider === p.key))
+      .map((p) => ({ value: p.key, label: p.label })),
   ]
   const view = applyInsuranceView(items, criteria)
 
@@ -173,8 +172,7 @@ export function InsurancePolicies() {
             view.map(({ policy, schedules }) => {
               const be = breakEven(schedules)
               const tags = [
-                INSURANCE_PROVIDER_LABELS[policy.provider as InsuranceProvider] ??
-                  policy.provider,
+                providerLabel(providers, policy.provider),
                 policy.surrendered_from_month ? 'Surrendered' : null,
                 be ? 'Past break-even' : null,
               ].filter(Boolean)

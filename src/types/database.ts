@@ -668,6 +668,7 @@ export type Database = {
           created_at: string
           height_cm: number | null
           highlighted_nutrients: string[]
+          insurance_providers: Json | null
           medical_importer_enabled: boolean
           medical_lock_enabled: boolean
           medical_lock_pin_hash: string | null
@@ -709,6 +710,7 @@ export type Database = {
           created_at?: string
           height_cm?: number | null
           highlighted_nutrients?: string[]
+          insurance_providers?: Json | null
           medical_importer_enabled?: boolean
           medical_lock_enabled?: boolean
           medical_lock_pin_hash?: string | null
@@ -750,6 +752,7 @@ export type Database = {
           created_at?: string
           height_cm?: number | null
           highlighted_nutrients?: string[]
+          insurance_providers?: Json | null
           medical_importer_enabled?: boolean
           medical_lock_enabled?: boolean
           medical_lock_pin_hash?: string | null

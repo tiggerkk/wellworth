@@ -6,12 +6,10 @@
 import {
   breakEven,
   buildResolvedSeries,
-  INSURANCE_PROVIDER_LABELS,
   originalCashValueAtAge,
   resolvePolicyAtAge,
   surrenderGainPctPerYear,
   varianceAtAge,
-  type InsuranceProvider,
   type ScheduleVersion,
 } from '../lib/networth'
 
@@ -30,10 +28,13 @@ export function PolicyDetail({
   policy,
   schedules,
   age,
+  providerLabel,
 }: {
   policy: PolicyDetailData
   schedules: ScheduleVersion[]
   age: number
+  /** Resolved provider label (from the configured list); falls back to the raw key. */
+  providerLabel?: string
 }) {
   const ccy = policy.currency
   const resolved = resolvePolicyAtAge(schedules, age)
@@ -81,9 +82,7 @@ export function PolicyDetail({
       <div>
         <p className="text-[15px] text-text-primary">{policy.policy_name}</p>
         <p className="text-xs text-text-secondary">
-          {INSURANCE_PROVIDER_LABELS[policy.provider as InsuranceProvider] ??
-            policy.provider}{' '}
-          · {policy.policy_number} · {ccy}
+          {providerLabel ?? policy.provider} · {policy.policy_number} · {ccy}
         </p>
       </div>
 

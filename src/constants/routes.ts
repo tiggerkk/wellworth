@@ -45,6 +45,7 @@ export const routes = {
     policy: (id: string) => `/networth/policy/${id}`, // policy detail (drill-in, read-only month)
     settings: '/networth/settings', // net-worth sub-settings: visible asset types, imports
     settingsVisibleAssetTypes: '/networth/settings/asset-types', // visible/order sheet
+    settingsProviders: '/networth/settings/providers', // manage insurance-provider list (sheet)
   },
   shows: {
     base: '/shows',
