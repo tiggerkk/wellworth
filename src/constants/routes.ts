@@ -34,8 +34,17 @@ export const routes = {
   networth: {
     base: '/networth',
     dashboard: '/networth',
-    entry: '/networth/entry',
-    import: '/networth/import',
+    entry: '/networth/entry', // Monthly Entry editor
+    import: '/networth/import', // manual-asset CSV importer (sheet)
+    importFund: '/networth/import-fund', // JPM monthly fund CSV importer (sheet)
+    insurancePolicies: '/networth/insurance', // searchable/filterable policy list
+    insuranceEntry: '/networth/insurance/new', // blank New Insurance (new)
+    insuranceEdit: (id: string) => `/networth/insurance/${id}`, // New/Edit Insurance form
+    importInsuranceBulk: '/networth/import-insurance', // one-time bulk seed (sheet)
+    fund: (id: string) => `/networth/fund/${id}`, // fund detail (drill-in)
+    policy: (id: string) => `/networth/policy/${id}`, // policy detail (drill-in, read-only month)
+    settings: '/networth/settings', // net-worth sub-settings: visible asset types, imports
+    settingsVisibleAssetTypes: '/networth/settings/asset-types', // visible/order sheet
   },
   shows: {
     base: '/shows',

@@ -7,7 +7,7 @@ export const ASSET_TYPES = [
   'cash',
   'time_deposit',
   'stock',
-  'mutual_fund',
+  'fund',
   'retirement',
   'insurance',
   'property',
@@ -18,7 +18,7 @@ export const ASSET_TYPE_LABELS: Record<AssetType, string> = {
   cash: 'Cash',
   time_deposit: 'Time Deposit',
   stock: 'Stock',
-  mutual_fund: 'Mutual Fund',
+  fund: 'Fund',
   retirement: 'Retirement',
   insurance: 'Insurance',
   property: 'Property',
@@ -40,17 +40,26 @@ export const DETAIL_FIELDS: Record<AssetType, DetailField[]> = {
     { key: 'ticker', label: 'Ticker' },
     { key: 'shares', label: 'Shares' },
   ],
-  mutual_fund: [
-    { key: 'units', label: 'Units' },
-    { key: 'cost', label: 'Cost' },
-  ],
+  // Fund rows are populated by the JPM CSV importer (not the generic detail editor); their
+  // detail fields are surfaced read-only in the Fund detail modal (FUND_DETAIL_FIELDS below).
+  fund: [],
   retirement: [],
-  insurance: [
-    { key: 'premium', label: 'Premium' },
-    { key: 'policy_year', label: 'Policy Year' },
-  ],
+  // Insurance rows are auto-generated from the policy catalogue (no manual detail editing);
+  // their resolved figures are shown read-only in the Policy detail modal.
+  insurance: [],
   property: [],
 }
+
+/** Read-only fields shown in the Fund detail modal, sourced from the importer's `details`. */
+export const FUND_DETAIL_FIELDS: DetailField[] = [
+  { key: 'units', label: 'Units (Total Holdings)' },
+  { key: 'avg_cost', label: 'Avg Unit Cost' },
+  { key: 'nav', label: 'NAV per Unit' },
+  { key: 'nav_as_of', label: 'Priced as of' },
+  { key: 'total_cost', label: 'Total Cost' },
+  { key: 'pnl', label: 'Profit / Loss' },
+  { key: 'asset_class', label: 'Asset Class' },
+]
 
 /** value in base currency (HKD) = native value × native→HKD rate (1 for HKD). */
 export function valueBase(valueNative: number, fxRate: number): number {
@@ -163,13 +172,201 @@ export function sumTotals(totals: Record<AssetType, number>): number {
   return ASSET_TYPES.reduce((s, t) => s + totals[t], 0)
 }
 
+/** The owner's asset-type order (NULL = canonical), with any newer types appended. */
+export function orderedAssetTypes(order: string[] | null | undefined): AssetType[] {
+  if (!order) return [...ASSET_TYPES]
+  const known = order.filter((k): k is AssetType =>
+    (ASSET_TYPES as readonly string[]).includes(k),
+  )
+  const missing = ASSET_TYPES.filter((k) => !known.includes(k))
+  return [...known, ...missing]
+}
+
+/** Visible asset types in display order — NULL visible = all; a type absent from `order` (newer
+ *  than the saved customization) defaults visible (mirrors the Home-hub module rule). */
+export function visibleAssetTypes(
+  order: string[] | null | undefined,
+  visible: string[] | null | undefined,
+): AssetType[] {
+  const ordered = orderedAssetTypes(order)
+  if (!visible) return ordered
+  const seen = new Set(order ?? [])
+  return ordered.filter((k) => visible.includes(k) || !seen.has(k))
+}
+
 /** Chart/legend/summary color per asset type — CSS vars from the @theme palette (index.css). */
 export const ASSET_TYPE_COLORS: Record<AssetType, string> = {
   cash: 'var(--color-positive)',
   time_deposit: 'var(--color-cat-activity)',
   stock: 'var(--color-accent)',
-  mutual_fund: 'var(--color-cat-supplement)',
+  fund: 'var(--color-cat-supplement)',
   retirement: 'var(--color-cat-snack)',
   insurance: 'var(--color-cat-meal)',
   property: 'var(--color-text-muted)',
+}
+
+// =====================================================================================
+// Insurance — provider catalogue + age-based schedule resolution (pure helpers).
+// A policy has one or more schedule VERSIONS (an Original baseline + later anniversary
+// updates); each version is a set of per-age points carrying only real (printed) values.
+// For a given age, the resolved figure comes from the newest-effective version whose
+// first_year ≤ age, using the value at that age or the nearest earlier real point ("as of
+// yr N"). Variance is measured against the Original (baseline) version. See docs/05_networth.md.
+// =====================================================================================
+
+export const INSURANCE_PROVIDERS = ['chubb', 'boc', 'manulife'] as const
+export type InsuranceProvider = (typeof INSURANCE_PROVIDERS)[number]
+export const INSURANCE_PROVIDER_LABELS: Record<InsuranceProvider, string> = {
+  chubb: 'CHUBB',
+  boc: 'BOC',
+  manulife: 'Manulife',
+}
+/** Default currency confirmed at bulk import per provider (overridable). */
+export const PROVIDER_DEFAULT_CURRENCY: Record<InsuranceProvider, 'HKD' | 'USD'> = {
+  chubb: 'USD',
+  boc: 'USD',
+  manulife: 'HKD',
+}
+
+/** The user's birth year — insurance ages are computed as `entry_year − BIRTH_YEAR`. */
+export const DEFAULT_BIRTH_YEAR = 1974
+
+export interface SchedulePoint {
+  age: number
+  policy_year: number
+  total_premium_paid: number
+  cash_value: number
+}
+
+export interface ScheduleVersion {
+  id: string
+  kind: 'original' | 'update'
+  first_year: number
+  effective_date: string | null
+  points: SchedulePoint[]
+}
+
+/** Resolved figure for a policy at a given age (native currency; convert to HKD at the UI). */
+export interface ResolvedPolicy {
+  policyYear: number
+  premium: number
+  cashValue: number
+  /** Policy year of the source point — used for the "as of yr N" tag when carried. */
+  asOfYear: number
+  /** True when no real point existed at `age` and an earlier point was carried forward. */
+  isCarried: boolean
+  sourceAge: number
+}
+
+/** Insurance age for a calendar year (same age for every month in the year). */
+export function ageForYear(year: number, birthYear: number = DEFAULT_BIRTH_YEAR): number {
+  return year - birthYear
+}
+
+/** The point at `age`, or the nearest earlier real point in this version (null if none ≤ age). */
+function pointAtOrBefore(version: ScheduleVersion, age: number): SchedulePoint | null {
+  let best: SchedulePoint | null = null
+  for (const p of version.points) {
+    if (p.age <= age && (best === null || p.age > best.age)) best = p
+  }
+  return best
+}
+
+/** The newest-effective version whose first_year ≤ age (effective_date desc; null sorts last). */
+function pickVersion(schedules: ScheduleVersion[], age: number): ScheduleVersion | null {
+  const applicable = schedules.filter((s) => s.first_year <= age && s.points.length > 0)
+  if (applicable.length === 0) return null
+  return applicable.reduce((best, s) => {
+    const a = s.effective_date ?? ''
+    const b = best.effective_date ?? ''
+    return a > b ? s : best
+  })
+}
+
+/** Resolve a policy's premium / cash value / policy year at an age, or null if not yet started. */
+export function resolvePolicyAtAge(
+  schedules: ScheduleVersion[],
+  age: number,
+): ResolvedPolicy | null {
+  const version = pickVersion(schedules, age)
+  if (!version) return null
+  const point = pointAtOrBefore(version, age)
+  if (!point) return null
+  return {
+    policyYear: point.policy_year,
+    premium: point.total_premium_paid,
+    cashValue: point.cash_value,
+    asOfYear: point.policy_year,
+    isCarried: point.age !== age,
+    sourceAge: point.age,
+  }
+}
+
+/** The Original (baseline) version — `kind: 'original'`, else the earliest-effective version. */
+export function originalSchedule(schedules: ScheduleVersion[]): ScheduleVersion | null {
+  const orig = schedules.find((s) => s.kind === 'original')
+  if (orig) return orig
+  if (schedules.length === 0) return null
+  return schedules.reduce((earliest, s) =>
+    (s.effective_date ?? '') < (earliest.effective_date ?? '') ? s : earliest,
+  )
+}
+
+/** Original (baseline) cash value at an age (nearest earlier real point), or null. */
+export function originalCashValueAtAge(
+  schedules: ScheduleVersion[],
+  age: number,
+): number | null {
+  const orig = originalSchedule(schedules)
+  if (!orig || orig.first_year > age) return null
+  return pointAtOrBefore(orig, age)?.cash_value ?? null
+}
+
+/** Resolved − Original cash value at an age (actual vs. original proposal), or null. */
+export function varianceAtAge(schedules: ScheduleVersion[], age: number): number | null {
+  const resolved = resolvePolicyAtAge(schedules, age)
+  const original = originalCashValueAtAge(schedules, age)
+  if (resolved === null || original === null) return null
+  return resolved.cashValue - original
+}
+
+export interface ResolvedSeriesPoint extends ResolvedPolicy {
+  age: number
+}
+
+/** The resolved trajectory across every age that appears as a real point in any version. */
+export function buildResolvedSeries(schedules: ScheduleVersion[]): ResolvedSeriesPoint[] {
+  const ages = new Set<number>()
+  for (const s of schedules) for (const p of s.points) ages.add(p.age)
+  return [...ages]
+    .sort((a, b) => a - b)
+    .map((age) => {
+      const r = resolvePolicyAtAge(schedules, age)
+      return r ? { age, ...r } : null
+    })
+    .filter((r): r is ResolvedSeriesPoint => r !== null)
+}
+
+export interface BreakEven {
+  age: number
+  /** True when the first tracked year already qualifies (schedule starts mid-life). */
+  atOrBeforeFirst: boolean
+}
+
+/** First age where cash value ≥ total premium paid over the resolved series (null if never). */
+export function breakEven(schedules: ScheduleVersion[]): BreakEven | null {
+  const series = buildResolvedSeries(schedules)
+  const idx = series.findIndex((p) => p.cashValue >= p.premium)
+  if (idx === -1) return null
+  return { age: series[idx]!.age, atOrBeforeFirst: idx === 0 }
+}
+
+/** Surrender gain %/yr = (cash − premium) / premium / policyYear × 100 (0 when undefined). */
+export function surrenderGainPctPerYear(
+  cashValue: number,
+  premium: number,
+  policyYear: number,
+): number {
+  if (premium <= 0 || policyYear <= 0) return 0
+  return ((cashValue - premium) / premium / policyYear) * 100
 }

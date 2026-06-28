@@ -76,11 +76,11 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
       </SectionCard>
 
       <SectionCard title="Import">
-        <FieldRow label="Enable JSON / CSV Import">
+        <FieldRow label="Enable Medical Import">
           <Toggle
             checked={profile.medical_importer_enabled}
             onChange={(on) => void save({ medical_importer_enabled: on })}
-            label="Enable JSON / CSV Import"
+            label="Enable Medical Import"
           />
         </FieldRow>
         {profile.medical_importer_enabled ? (
@@ -88,7 +88,7 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
             onClick={() => openSheet(routes.medical.import)}
             className="flex w-full items-center gap-2 border-b border-border px-4 py-3 text-[15px] text-accent last:border-b-0 active:bg-input/40"
           >
-            <IconUpload size={18} /> Import JSON / CSV…
+            <IconUpload size={18} /> Import JSON / CSV Medical
           </button>
         ) : (
           <div className="px-4 py-2 text-xs text-text-tertiary">

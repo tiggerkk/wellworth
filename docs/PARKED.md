@@ -9,19 +9,21 @@ Status legend: **Net Worth** (built) · **Deferred** (later) ·
 
 ## Net Worth (built)
 
-**What:** Monthly entry of asset values across categories — cash, time deposits, stocks, mutual funds, retirement, insurance, property — each held in one of three currencies (**HKD = base**, CNY, USD). A net-worth figure computed in the base currency, plus total and by-asset-type trend graphs with a selectable time window.
+**What:** Monthly entry of asset values across categories — cash, time deposits, stocks, funds, retirement, insurance, property — each held in one of three currencies (**HKD = base**, CNY, USD). A net-worth figure computed in the base currency, plus total and by-asset-type trend graphs with a selectable time window. Funds import from the JPM monthly CSV; insurance is an age-resolved policy catalogue (`insurance_policy`/`insurance_schedule`/`insurance_schedule_point`).
 
-**Status:** **Built** (Net Worth, M1–M6) — Home hub + module nav, the two tables (`networth_snapshot`, `asset_entry`), Monthly Entry, Frankfurter FX, the Dashboard, and the in-app CSV importer all shipped. The items below are the sub-features that remain **deliberately deferred** within Net Worth:
+**Status:** **Built** (Net Worth, M1–M6 + the 2026-06-28 funds/insurance enhancement) — Home hub + module nav, `networth_snapshot` + `asset_entry` + the insurance catalogue tables, Monthly Entry, Frankfurter FX, the Dashboard, and the manual/fund/insurance importers all shipped. The items below are the sub-features that remain **deliberately deferred** within Net Worth:
 
 - **Auto stock price lookup** (Alpha Vantage) — manual value entry for now; `details.shares` is stored to support it later.
-- **Mutual fund NAV lookup** — no reliable free source for HK/China-domiciled funds; manual only.
+- **Auto fund NAV lookup** — no reliable free source for HK/China-domiciled funds; NAV/return/P&L now come from the **JPM monthly CSV import** instead.
 - **Per-asset-type stacked-area composition graph** — scope is one line per type, not stacked bands.
 - **Liabilities / net-of-debt** tracking — asset-only for now.
 - **Individual-asset (sub-type) trends** — aggregates at asset-type level only.
 - **Multi-currency display toggle** for the dashboard.
-- **Cost-basis / unrealized gain** — `details.cost`/`details.premium` are captured but not yet surfaced.
+- **Dedicated per-policy & aggregate insurance line charts** — the 2026-06-28 enhancement ships the data + metrics for **Actual-vs-Original Variance**, the **Surrender Curve**, and the **Premiums Trajectory** (in the Policy detail metrics/schedule table), plus an aggregate **Cash Value vs Total Premiums** chart with break-even on the Dashboard. The remaining items — dedicated _line charts_ for per-policy Variance / Surrender Curve / Premiums Trajectory, and an aggregate Variance chart — are deferred; the resolution helpers (`buildResolvedSeries`, `varianceAtAge`, `surrenderGainPctPerYear`) already provide every series, so these are presentational-only follow-ups.
+- **Elapsed insurance policies without a policy number** (4 CHUBB blocks in the bulk sheet) are **intentionally skipped** on import (owner no longer tracks them); the importer needs a policy number as the identity/update key. Re-add later via the single-policy import once numbered.
+- **Cost-basis / unrealized gain** — funds now surface Total Cost + Profit/Loss (from the JPM import); `details.cost` for other types is still informational only.
 
-**Design notes / constraints already decided (00-PRD.md):**
+**Design notes / constraints already decided (00_PRD.md):**
 
 - **Separate tables.** Net Worth shares only **auth + `profile` + the app shell** with Wellness; it does not touch the wellness tables. Additive, not a rebuild.
 - Base currency is **HKD**; CNY/USD values convert to base via **Frankfurter** (keyless, ECB-sourced; quotes CNY directly) as of the 1st of the month, with a manual per-currency override; the rate + `value_base` are frozen on each entry.
@@ -73,7 +75,7 @@ lock. **Shipped** end-to-end (see BUILD-HISTORY → "Medical Build Sequence"; be
 
 ### Add-Food filter/sort control · Deferred
 
-**What:** A user-facing filter/sort control on Add Food (an earlier draft in the old `01-screens.md` — whose behaviour now lives in the module specs `04-wellness.md`…`10-travel.md` + `03-global.md` — mentioned one; only search + the All/Favorites/Custom tabs were built, and that mention has since been removed).
+**What:** A user-facing filter/sort control on Add Food (an earlier draft in the old `01-screens.md` — whose behaviour now lives in the module specs `04_wellness.md`…`10_travel.md` + `03_global.md` — mentioned one; only search + the All/Favorites/Custom tabs were built, and that mention has since been removed).
 **Why deferred:** Search + tabs proved sufficient for a single user, and results now auto-sort by name-match relevance then nutrient count (`food-search.ts`), which covers the common need; a manual sort/filter is polish.
 **Decided:** Would let the user re-sort/filter the combined result list (e.g. by source, recency, or name).
 
@@ -123,7 +125,7 @@ lock. **Shipped** end-to-end (see BUILD-HISTORY → "Medical Build Sequence"; be
 ### Imperial display for food amounts · Deferred / decided-against for now
 
 **What:** Showing food amounts / the per-100 g basis in ounces in Imperial mode.
-**Why:** Only **Settings** height/weight are imperialized (in/lb); food amounts and nutrient values stay metric/absolute. This was a deliberate simplification (now reflected in `02-tech-spec.md`).
+**Why:** Only **Settings** height/weight are imperialized (in/lb); food amounts and nutrient values stay metric/absolute. This was a deliberate simplification (now reflected in `02_tech_spec.md`).
 
 ### Diary food-entry serving fidelity on edit · Deferred
 
@@ -148,7 +150,7 @@ default_duration_min, met_by_effort, icon) parsed in-browser and inserted via th
 
 **What:** On wide screens (iPad), render the Shows Library as a sortable **table** with tappable
 column headers, instead of the list + Sort-menu.
-**Why deferred:** `06-shows.md` lists it as a "may"; header-click sorting is a desktop idiom. Phones
+**Why deferred:** `06_shows.md` lists it as a "may"; header-click sorting is a desktop idiom. Phones
 
 - iPad both ship the **list + Sort-menu** (the Sort menu already covers every column), which is the
   correct mobile-first idiom and avoids a second responsive layout.
@@ -270,7 +272,7 @@ search first also validates the `opencc-js` engine choice before the display wor
 - **Base currency is global HKD** (`BASE_CURRENCY` in `src/lib/networth.ts`; Travel converts to HKD).
   Not per-member — revisit as its own task (FX rework) if a member needs a different base.
 - **Shared household custom foods / shared net worth / shared trips** would be an **additive** change:
-  a nullable `household_id` + a shared-visibility RLS policy (per `02-tech-spec.md`'s "Database conventions"), not a rebuild.
+  a nullable `household_id` + a shared-visibility RLS policy (per `02_tech_spec.md`'s "Database conventions"), not a rebuild.
   Strictly-private is the current, intended model.
 - **Allowlist + owner are build-time `VITE_*`** — adding a member or changing the owner needs a
   **redeploy**, not a runtime change.
@@ -291,7 +293,7 @@ search first also validates the `opencc-js` engine choice before the display wor
 - **Quotes — Traditional vs Simplified Chinese `language` value** — the `language` enum keeps a single
   `zh` (no Trad/Simp split of the stored field). Note this is now narrower than it once was: **search**
   _is_ script-agnostic across all modules (Traditional⇄Simplified matching shipped — see
-  `BUILD-HISTORY.md` → "Variant-agnostic Chinese search"), and a display-only **script toggle** is a
+  `BUILD_HISTORY.md` → "Variant-agnostic Chinese search"), and a display-only **script toggle** is a
   Deferred item above — but neither splits or rewrites the stored `language`/text values.
 - **Quotes — direct Apple Books integration** — not possible from a PWA; the ingestion path is
   copy-paste, the **Paste from clipboard** button, the CSV importer, and the optional Apple **Shortcut**

@@ -13,7 +13,7 @@
 --   * HARD DELETE: deleting a trip cascades its trip_day / stop / trip_expense rows. Stops
 --     cascade from their trip_day.
 --   * Expense categories are NOT a table — they are an owner-configurable {key,label} JSONB list on
---     profile.travel_expense_categories (see 14_travel_profile_settings.sql), the same
+--     profile.travel_expense_categories (see 15_travel_profile_settings.sql), the same
 --     pattern as Quotes. trip_expense.category stores the stable TEXT key (no FK); reassign-before-
 --     delete and can't-delete-last are enforced in the app, and an orphaned key still renders via the
 --     raw-key fallback in src/lib/travel-config.ts.

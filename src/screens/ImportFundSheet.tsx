@@ -4,24 +4,29 @@ import { IconUpload, IconX } from '@tabler/icons-react'
 import { Sheet } from '../components/Sheet'
 import { PrimaryButton } from '../components/PrimaryButton'
 import { useAuth } from '../auth/AuthProvider'
-import { useProfile } from '../hooks/useProfile'
 import { parseCsv } from '../lib/csv'
-import { parseNetWorthCsv, type NetWorthImportResult } from '../lib/networth-import'
-import { getSnapshotWithEntries, saveManualImportComplete } from '../data/asset-entry'
-import type { AssetEntryInput } from '../data/asset-entry'
-import { fetchRatesToHkd } from '../lib/fx'
+import { parseFundCsv, type FundImportResult } from '../lib/fund-import'
+import {
+  getSnapshotWithEntries,
+  replaceAssetTypeEntries,
+  type AssetEntryInput,
+} from '../data/asset-entry'
 import { bumpNetWorth } from '../lib/networth-refresh'
 import { errorMessage } from '../lib/errors'
-import { DEFAULT_BIRTH_YEAR, formatHkd, valueBase, type Currency } from '../lib/networth'
+import { formatHkd } from '../lib/networth'
 import { formatMonthLabel, startOfMonth, todayLocal } from '../lib/date'
 
 const MAX_MESSAGES = 20
 
-export function ImportNetWorthSheet() {
+/**
+ * Monthly Fund importer — the JPM "My Portfolio" export saved as CSV. OVERWRITES the chosen month's
+ * `fund` rows only (manual + insurance entries are preserved). Total Value is already HKD in the
+ * export, so no FX is needed; the fund's Base Currency is kept in `details` for the detail modal.
+ */
+export function ImportFundSheet() {
   const navigate = useNavigate()
   const { session } = useAuth()
   const userId = session?.user.id
-  const { data: profile } = useProfile()
   const [params] = useSearchParams()
 
   const defaultMonth = (params.get('month') ?? todayLocal()).slice(0, 7)
@@ -30,27 +35,23 @@ export function ImportNetWorthSheet() {
 
   const inputRef = useRef<HTMLInputElement>(null)
   const [fileName, setFileName] = useState<string | null>(null)
-  const [result, setResult] = useState<NetWorthImportResult | null>(null)
-  const [rates, setRates] = useState<{ CNY: number | null; USD: number | null } | null>(
-    null,
-  )
+  const [result, setResult] = useState<FundImportResult | null>(null)
   const [existingCount, setExistingCount] = useState<number | null>(null)
   const [importing, setImporting] = useState(false)
   const [importError, setImportError] = useState<string | null>(null)
   const [doneCount, setDoneCount] = useState<number | null>(null)
 
-  // Fetch this month's FX + any existing entry count whenever the month changes.
   useEffect(() => {
     if (!userId) return
     let cancelled = false
-    // Intentional: clear the previous month's rates/count while the new ones load.
-    /* eslint-disable react-hooks/set-state-in-effect */
-    setRates(null)
-    setExistingCount(null)
-    /* eslint-enable react-hooks/set-state-in-effect */
-    void fetchRatesToHkd(month).then((r) => !cancelled && setRates(r))
     void getSnapshotWithEntries(userId, month)
-      .then((s) => !cancelled && setExistingCount(s ? s.entries.length : 0))
+      .then(
+        (s) =>
+          !cancelled &&
+          setExistingCount(
+            s ? s.entries.filter((e) => e.asset_type === 'fund').length : 0,
+          ),
+      )
       .catch(() => {})
     return () => {
       cancelled = true
@@ -62,7 +63,7 @@ export function ImportNetWorthSheet() {
     setDoneCount(null)
     try {
       const text = await file.text()
-      setResult(parseNetWorthCsv(parseCsv(text)))
+      setResult(parseFundCsv(parseCsv(text)))
       setFileName(file.name)
     } catch (e) {
       setResult(null)
@@ -70,42 +71,35 @@ export function ImportNetWorthSheet() {
     }
   }
 
-  const rateOf = (c: Currency): number | null => (c === 'HKD' ? 1 : (rates?.[c] ?? null))
-  const usedCurrencies = [...new Set((result?.rows ?? []).map((r) => r.currency))]
-  const missingRate = usedCurrencies.some((c) => rateOf(c) == null)
-  const total = (result?.rows ?? []).reduce((sum, r) => {
-    const rate = rateOf(r.currency)
-    return sum + (rate != null ? valueBase(r.value_native, rate) : 0)
-  }, 0)
+  const rows = result?.rows ?? []
+  const total = rows.reduce((s, r) => s + r.value_hkd, 0)
 
   async function runImport() {
-    if (!userId || !result || result.rows.length === 0 || missingRate) return
+    if (!userId || rows.length === 0) return
     setImporting(true)
     setImportError(null)
     try {
-      const payload: AssetEntryInput[] = result.rows.map((r, i) => {
-        const rate = rateOf(r.currency) ?? 1
-        return {
-          asset_type: r.asset_type,
-          name: r.name,
-          currency: r.currency,
-          details: r.details,
-          value_native: r.value_native,
-          fx_rate_to_base: rate,
-          value_base: valueBase(r.value_native, rate),
-          sort_order: i,
-        }
-      })
-      const birthYear = profile?.birthday
-        ? Number(profile.birthday.slice(0, 4))
-        : DEFAULT_BIRTH_YEAR
-      await saveManualImportComplete(
-        userId,
-        month,
-        payload,
-        birthYear,
-        rateOf('USD') ?? 1,
-      )
+      const payload: AssetEntryInput[] = rows.map((r, i) => ({
+        asset_type: 'fund',
+        name: r.name,
+        currency: 'HKD', // Total Value is already HKD in the export
+        details: {
+          units: r.units,
+          avg_cost: r.avg_cost,
+          nav: r.nav,
+          nav_as_of: r.nav_as_of,
+          total_cost: r.total_cost,
+          return_rate: r.return_rate,
+          pnl: r.pnl,
+          asset_class: r.asset_class,
+          currency: r.currency, // the fund's base currency (for the detail modal)
+        },
+        value_native: r.value_hkd,
+        fx_rate_to_base: 1,
+        value_base: r.value_hkd,
+        sort_order: i,
+      }))
+      await replaceAssetTypeEntries(userId, month, 'fund', payload)
       bumpNetWorth()
       setDoneCount(payload.length)
     } catch (e) {
@@ -115,25 +109,22 @@ export function ImportNetWorthSheet() {
     }
   }
 
-  const rowCount = result?.rows.length ?? 0
   const errs = result?.errors ?? []
 
   return (
-    <Sheet variant="full" label="Import Net Worth">
+    <Sheet variant="full" label="Import funds">
       <header className="flex items-center gap-3 border-b border-border px-4 py-3">
         <button onClick={() => navigate(-1)} aria-label="Close">
           <IconX size={22} className="text-text-secondary" />
         </button>
-        <h1 className="text-[17px] font-medium text-text-primary">
-          Import Net Worth CSV
-        </h1>
+        <h1 className="text-[17px] font-medium text-text-primary">Import Funds CSV</h1>
       </header>
 
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
         {doneCount !== null ? (
           <div className="flex flex-col gap-2">
             <p className="text-[15px] font-medium text-text-primary">
-              Imported {doneCount} entr{doneCount === 1 ? 'y' : 'ies'} for{' '}
+              Imported {doneCount} fund{doneCount === 1 ? '' : 's'} for{' '}
               {formatMonthLabel(month)}.
             </p>
             <p className="text-sm text-text-secondary">
@@ -143,14 +134,13 @@ export function ImportNetWorthSheet() {
         ) : (
           <>
             <p className="text-sm text-text-secondary">
-              Upload a CSV in the{' '}
-              <code className="text-text-primary">networth-seed-template.csv</code> format
-              (see <code className="text-text-primary">templates/</code>). This{' '}
-              <strong>replaces</strong> the chosen month’s entries.
+              Upload the JPM “My Portfolio” export saved as CSV (see{' '}
+              <code className="text-text-primary">templates/fund-import-guide.md</code>).
+              This <strong>overwrites</strong> the chosen month’s fund holdings.
             </p>
 
             <label className="text-xs text-text-secondary">
-              Snapshot month
+              Month
               <input
                 type="month"
                 value={monthInput}
@@ -167,7 +157,7 @@ export function ImportNetWorthSheet() {
               onChange={(e) => {
                 const f = e.target.files?.[0]
                 if (f) void onFile(f)
-                e.target.value = '' // allow re-picking the same file
+                e.target.value = ''
               }}
             />
             <button
@@ -186,56 +176,23 @@ export function ImportNetWorthSheet() {
             {result && (
               <div className="flex flex-col gap-3">
                 <div className="rounded-card border border-border bg-surface px-4 py-3 text-sm text-text-primary">
-                  {rowCount === 0 ? (
-                    'No valid rows found to import.'
+                  {rows.length === 0 ? (
+                    'No valid fund rows found to import.'
                   ) : (
                     <>
-                      Ready to import <strong>{rowCount}</strong> entr
-                      {rowCount === 1 ? 'y' : 'ies'} — total{' '}
+                      Ready to import <strong>{rows.length}</strong> fund
+                      {rows.length === 1 ? '' : 's'} — total{' '}
                       <strong>{formatHkd(total)}</strong>.
                       {existingCount != null && existingCount > 0 && (
                         <>
                           {' '}
-                          Replaces the {existingCount} existing entr
-                          {existingCount === 1 ? 'y' : 'ies'} for{' '}
-                          {formatMonthLabel(month)}.
+                          Replaces the {existingCount} existing fund
+                          {existingCount === 1 ? '' : 's'} for {formatMonthLabel(month)}.
                         </>
                       )}
                     </>
                   )}
                 </div>
-
-                {/* FX status */}
-                {rowCount > 0 && (
-                  <div className="rounded-card border border-border bg-surface px-4 py-3 text-xs text-text-secondary">
-                    {rates == null ? (
-                      'Fetching exchange rates…'
-                    ) : (
-                      <div className="flex flex-col gap-0.5">
-                        {usedCurrencies
-                          .filter((c) => c !== 'HKD')
-                          .map((c) => (
-                            <div key={c}>
-                              {c} → HKD:{' '}
-                              <span
-                                className={
-                                  rateOf(c) == null ? 'text-danger' : 'text-text-primary'
-                                }
-                              >
-                                {rateOf(c) ?? 'couldn’t fetch'}
-                              </span>
-                            </div>
-                          ))}
-                        {missingRate && (
-                          <p className="text-danger">
-                            Couldn’t fetch a needed rate — check your connection and
-                            re-choose the file.
-                          </p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
 
                 {errs.length > 0 && (
                   <div className="flex flex-col gap-1">
@@ -268,13 +225,13 @@ export function ImportNetWorthSheet() {
         ) : (
           <PrimaryButton
             onClick={() => void runImport()}
-            disabled={importing || rowCount === 0 || missingRate}
+            disabled={importing || rows.length === 0}
             className="w-full"
           >
             {importing
               ? 'Importing…'
-              : rowCount > 0
-                ? `IMPORT ${rowCount} ENTR${rowCount === 1 ? 'Y' : 'IES'}`
+              : rows.length > 0
+                ? `IMPORT ${rows.length} FUND${rows.length === 1 ? '' : 'S'}`
                 : 'IMPORT'}
           </PrimaryButton>
         )}

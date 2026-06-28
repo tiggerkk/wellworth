@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 // `?raw` inlines the file as a string (declared by vite/client); vitest resolves it at runtime,
 // so the seed migration is cross-checked against the TS list without needing node fs types.
-import SEED_SQL from '../../supabase/migrations/11_medical_seed_lab_test.sql?raw'
+import SEED_SQL from '../../supabase/migrations/12_medical_seed_lab_test.sql?raw'
 import {
   applyReportView,
   DEFAULT_REPORT_LIST_CRITERIA,

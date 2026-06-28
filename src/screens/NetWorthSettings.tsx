@@ -11,11 +11,10 @@ import type { Tables, TablesUpdate } from '../types/database'
 type SaveFn = (patch: TablesUpdate<'profile'>) => Promise<void>
 
 /**
- * Books-specific sub-settings (Entry field visibility + the CSV importer toggle). Reached from a
- * gear in the Books headers — mirrors the Wellness/Shows Settings split. App-wide settings live in
- * the global Settings screen at the Home level.
+ * Net Worth sub-settings: Visible Asset Types (display order/visibility) + the one-time bulk
+ * insurance importer toggle. Manual / fund / single-policy imports are always enabled elsewhere.
  */
-export function BooksSettings() {
+export function NetWorthSettings() {
   const { profile, loading, save } = useProfileEditor()
   const navigate = useNavigate()
 
@@ -29,7 +28,7 @@ export function BooksSettings() {
         >
           <IconChevronLeft size={22} />
         </button>
-        <h1 className="text-lg font-medium text-text-primary">Books Settings</h1>
+        <h1 className="text-lg font-medium text-text-primary">Net Worth Settings</h1>
       </header>
       {loading && <p className="text-sm text-text-secondary">Loading…</p>}
       {!loading && !profile && (
@@ -45,35 +44,35 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
 
   return (
     <>
-      <SectionCard title="Entry Form">
+      <SectionCard title="Display">
         <button
-          onClick={() => openSheet(routes.books.settingsVisible)}
+          onClick={() => openSheet(routes.networth.settingsVisibleAssetTypes)}
           className="w-full"
         >
-          <FieldRow label="Visible Fields">
+          <FieldRow label="Visible Asset Types">
             <IconChevronRight size={18} className="text-text-tertiary" />
           </FieldRow>
         </button>
       </SectionCard>
 
       <SectionCard title="Import">
-        <FieldRow label="Enable Bulk Books Import">
+        <FieldRow label="Enable Bulk Insurance Import">
           <Toggle
-            checked={profile.book_importer_enabled}
-            onChange={(on) => void save({ book_importer_enabled: on })}
-            label="Enable Bulk Books Import"
+            checked={profile.networth_bulk_insurance_import_enabled}
+            onChange={(on) => void save({ networth_bulk_insurance_import_enabled: on })}
+            label="Enable Bulk Insurance Import"
           />
         </FieldRow>
-        {profile.book_importer_enabled ? (
+        {profile.networth_bulk_insurance_import_enabled ? (
           <button
-            onClick={() => openSheet(routes.books.import)}
+            onClick={() => openSheet(routes.networth.importInsuranceBulk)}
             className="flex w-full items-center gap-2 border-b border-border px-4 py-3 text-[15px] text-accent last:border-b-0 active:bg-input/40"
           >
-            <IconUpload size={18} /> Import CSV Books
+            <IconUpload size={18} /> Import CSV Insurance
           </button>
         ) : (
           <div className="px-4 py-2 text-xs text-text-tertiary">
-            Turn this on to bulk-seed your library from a CSV.
+            Turn this on to bulk-seed your insurance policy catalogue from a CSV.
           </div>
         )}
       </SectionCard>

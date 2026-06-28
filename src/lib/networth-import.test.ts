@@ -20,7 +20,7 @@ describe('parseNetWorthCsv', () => {
       'cash,Bank HKD,HKD,"500,000.00",,,,',
       'cash,Bank CNY,CNY,"6,399.41",,,,',
       'stock,HPE,USD,"41,420.61",ticker,HPE,shares,859.88',
-      'insurance,Policy,USD,"25,000.00",premium,"3,000.00",policy_year,5.00',
+      'time_deposit,TD,USD,"25,000.00",detail_a,"3,000.00",detail_b,5.00',
     ].join('\n')
     const result = parseNetWorthCsv(parseCsv(csv))
     expect(result.errors).toEqual([])
@@ -34,7 +34,22 @@ describe('parseNetWorthCsv', () => {
       details: { ticker: 'HPE', shares: '859.88' },
     })
     // detail values are comma-stripped too
-    expect(result.rows[3]?.details).toEqual({ premium: '3000.00', policy_year: '5.00' })
+    expect(result.rows[3]?.details).toEqual({ detail_a: '3000.00', detail_b: '5.00' })
+  })
+
+  it('rejects fund and insurance rows (handled by their own pipelines)', () => {
+    const csv = [
+      HEADER,
+      'fund,JPM China,HKD,100,,,,',
+      'insurance,Policy,USD,200,,,,',
+      'cash,Good,HKD,"1,000",,,,',
+    ].join('\n')
+    const result = parseNetWorthCsv(parseCsv(csv))
+    expect(result.rows).toHaveLength(1)
+    expect(result.rows[0]).toMatchObject({ name: 'Good' })
+    expect(result.errors).toHaveLength(2)
+    expect(result.errors.join(' ')).toMatch(/fund/i)
+    expect(result.errors.join(' ')).toMatch(/insurance/i)
   })
 
   it('skips rows with a bad asset_type, currency, or value', () => {

@@ -10,14 +10,16 @@ its entries (idempotent — no duplicates).
 asset_type,name,currency,value_native,detail1_key,detail1_value,detail2_key,detail2_value
 ```
 
-- **asset_type** — one of `cash, time_deposit, stock, mutual_fund, retirement, insurance, property`.
-- **name** — your label (institution, ticker/company, fund, policy, address…).
+- **asset_type** — one of the **manual** types only: `cash, time_deposit, stock, retirement, property`.
+  `fund` and `insurance` are **rejected** here — funds import from the JPM monthly CSV (Monthly Entry →
+  Fund section), and insurance is generated from the policy catalogue (see
+  `templates/fund-import-guide.md` / `templates/insurance-import-guide.md`).
+- **name** — your label (institution, ticker/company, address…).
 - **currency** — `HKD`, `CNY`, or `USD`.
 - **value_native** — the value in that currency. Quoted thousands separators are fine
   (`"8,466,568.80"`); the importer strips commas/quotes before parsing.
 - **detailN_key / detailN_value** — optional, type-specific, stored as-is (informational). Any number
-  of pairs is accepted. Suggested keys: time_deposit → `maturity_date`; stock → `ticker`, `shares`;
-  mutual_fund → `units`, `cost`; insurance → `premium`, `policy_year`.
+  of pairs is accepted. Suggested keys: time_deposit → `maturity_date`; stock → `ticker`, `shares`.
 
 Rows with an unknown `asset_type`/`currency`, a missing `name`, or a non-numeric `value_native` are
 listed as skipped in the preview; everything else imports.

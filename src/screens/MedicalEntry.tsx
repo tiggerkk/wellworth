@@ -209,7 +209,7 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
             onClick={() => openSheet(routes.medical.import)}
             className="flex shrink-0 items-center gap-1.5 pl-2 text-sm text-accent"
           >
-            <IconUpload size={16} /> Import JSON…
+            <IconUpload size={16} /> Import JSON
           </button>
         )}
         <EntryHeaderActions

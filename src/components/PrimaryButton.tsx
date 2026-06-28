@@ -13,7 +13,7 @@ const TONE = { fill: 'bg-fill', positive: 'bg-positive' } as const
 
 /** The primary action button (e.g. Google sign-in, the top-right ADD / SAVE / CREATE actions):
  * a light `fill` pill on dark, or a teal `positive` pill for create/add/save. See
- * docs/01-design-system.md. */
+ * docs/01_design_system.md. */
 export function PrimaryButton({
   children,
   className = '',

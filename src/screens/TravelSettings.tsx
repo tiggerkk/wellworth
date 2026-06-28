@@ -75,11 +75,11 @@ function ImportSection({
 }) {
   return (
     <SectionCard title="Import">
-      <FieldRow label="Enable JSON / CSV Import">
+      <FieldRow label="Enable Bulk Trips Import">
         <Toggle
           checked={profile.travel_importer_enabled}
           onChange={(on) => void save({ travel_importer_enabled: on })}
-          label="Enable JSON / CSV Import"
+          label="Enable Bulk Trips Import"
         />
       </FieldRow>
       {profile.travel_importer_enabled ? (

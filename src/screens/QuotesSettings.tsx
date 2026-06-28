@@ -77,11 +77,11 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
       </SectionCard>
 
       <SectionCard title="Import">
-        <FieldRow label="Enable CSV Import">
+        <FieldRow label="Enable Bulk Quotes Import">
           <Toggle
             checked={profile.quote_importer_enabled}
             onChange={(on) => void save({ quote_importer_enabled: on })}
-            label="Enable CSV Import"
+            label="Enable Bulk Quotes Import"
           />
         </FieldRow>
         {profile.quote_importer_enabled ? (
@@ -89,7 +89,7 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
             onClick={() => openSheet(routes.quotes.import)}
             className="flex w-full items-center gap-2 border-b border-border px-4 py-3 text-[15px] text-accent last:border-b-0 active:bg-input/40"
           >
-            <IconUpload size={18} /> Import CSV…
+            <IconUpload size={18} /> Import CSV Quotes
           </button>
         ) : (
           <div className="px-4 py-2 text-xs text-text-tertiary">

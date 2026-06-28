@@ -18,7 +18,7 @@
 
 - **Search** (placeholder "Search quote, author, title, tag"): real-time match across quote text,
   author, title, and tags (via `quoteSearchText`). An **icon-only Filter button** to the right
-  (see `docs/01-design-system.md` → FilterToggleButton).
+  (see `docs/01_design_system.md` → FilterToggleButton).
 - **FilterPanel** (label-free): **Any Category**, **Any Source**, **Any Language**, and a **Favorites
   Only** toggle share a 2-column grid. **Linked Titles Only** toggle (quotes bound to a Show/Book
   record) shares the next row with the **Filter tags…** search box. Multi-select **Tags** (OR — any
@@ -52,7 +52,7 @@
 - **Author** + **Source Type** (configured list dropdown) share the next line.
 - **Category** (required, a configured dropdown) + **Language** share a line; **Language** is an English /
   Chinese **toggle** (auto-detected from the text — CJK → Chinese — and editable).
-- **Tags** (optional): shared `TagInput` with autocomplete against existing tags (see `docs/01-design-system.md`).
+- **Tags** (optional): shared `TagInput` with autocomplete against existing tags (see `docs/01_design_system.md`).
   **Favourite** heart in the header.
 - Top-right icon actions (Delete when editing · Reset · Create/Save) via shared **EntryHeaderActions**.
   Requires Quote Text + exactly one Category. A duplicate (same normalised text) is rejected inline.
@@ -66,20 +66,20 @@
 
 ### Settings (`/quotes/settings`)
 
-- **Entry Form → Visible Fields**: shared **VisibleFieldsSheet** (see `docs/01-design-system.md`)
+- **Entry Form → Visible Fields**: shared **VisibleFieldsSheet** (see `docs/01_design_system.md`)
   over the optional fields in New/Edit form order: Title, Source Link, Author, Source Type, Language,
   Tags. Quote Text and Category are always shown.
 - **Values** — manage the dropdown lists used on the Add/Edit form (each opens a sheet):
   - **Source Types** and **Categories**: **add / rename / delete / drag-reorder** the values (display
     order = dropdown order + Library filter order). Changes auto-save via shared **ConfigListEditor**
-    (see `docs/01-design-system.md`).
+    (see `docs/01_design_system.md`).
   - **Delete migration**: deleting a value still used by quotes prompts a **reassignment** — pick a
     replacement and the affected quotes are moved to it before the value is removed. A value can't be
     deleted if it's the last one in its list. **TV Show / Movie / Book** source types are
     **protected from deletion** (their `linkKind` drives Show/Book auto-linking) — they can still be
     renamed/reordered.
-- **Enable CSV Import** (`profile.quote_importer_enabled`, **on by default**): surfaces the
-  **Import CSV…** launcher.
+- **Enable Bulk Quotes Import** (`profile.quote_importer_enabled`, **on by default**): surfaces the
+  **Import CSV Quotes** launcher.
 
 ### Import CSV (sheet, from Quotes Settings)
 
@@ -119,7 +119,7 @@ by maintaining a shuffled pool, drawing from it in order and refilling when exha
 
 **CJK-aware search**: `detectLanguage` (`containsCjk` → 'zh'). `quoteSearchText` builds the
 searchable text; `foldZh` normalises both query and row text for Traditional⇄Simplified-agnostic
-local filtering (see `docs/02-tech-spec.md` → Chinese search).
+local filtering (see `docs/02_tech_spec.md` → Chinese search).
 
 ---
 
@@ -151,8 +151,8 @@ only `language` keeps a CHECK; `source_type` and `category` are plain TEXT with 
 in app). `moddatetime` trigger on `updated_at`, explicit GRANT to `anon`/`authenticated`.
 **Hard delete** (leaf table; no `deleted_at`). `show_id`/`book_id` are optional enrichment — because
 `author`, `title`, and `source_type` live on the quote, it stays complete after a linked Show/Book is
-hard-deleted (the FK just nulls). Migration: `supabase/migrations/08_quotes_schema.sql`. Profile
-columns added by `supabase/migrations/09_quotes_profile_settings.sql`.
+hard-deleted (the FK just nulls). Migration: `supabase/migrations/09_quotes_schema.sql`. Profile
+columns added by `supabase/migrations/10_quotes_profile_settings.sql`.
 
 ---
 

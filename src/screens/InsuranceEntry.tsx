@@ -1,0 +1,728 @@
+import { useCallback, useRef, useState } from 'react'
+import { useNavigate, useParams } from 'react-router'
+import { IconCheck, IconUpload, IconX } from '@tabler/icons-react'
+import { useAuth } from '../auth/AuthProvider'
+import { useAsync } from '../hooks/useAsync'
+import {
+  addScheduleVersion,
+  createPolicy,
+  deletePolicy,
+  deleteSchedule,
+  getPolicyWithSchedules,
+  replaceScheduleVersion,
+  savePolicyFields,
+  updateScheduleEffectiveDate,
+} from '../data/insurance'
+import { bumpNetWorth } from '../lib/networth-refresh'
+import { errorMessage } from '../lib/errors'
+import { parseCsv } from '../lib/csv'
+import { parseInsuranceSingleCsv, type ParsedSinglePolicy } from '../lib/insurance-import'
+import {
+  INSURANCE_PROVIDERS,
+  INSURANCE_PROVIDER_LABELS,
+  type InsuranceProvider,
+  type ScheduleVersion,
+} from '../lib/networth'
+import { formatDayLabel, formatFullDate, todayLocal } from '../lib/date'
+import { routes } from '../constants/routes'
+import { showToast } from '../lib/toast'
+import { Calendar } from '../components/Calendar'
+import { SelectMenu } from '../components/SelectMenu'
+import { SegmentedTabs } from '../components/SegmentedTabs'
+import { EntryHeaderActions } from '../components/EntryHeaderActions'
+import { ConfirmDeleteAction } from '../components/ConfirmDeleteAction'
+import { PrimaryButton } from '../components/PrimaryButton'
+
+interface PolicyDraft {
+  provider: InsuranceProvider
+  policy_number: string
+  policy_name: string
+  start_date: string | null
+  currency: 'HKD' | 'USD'
+  notes: string
+  surrendered_from_month: string | null
+  surrender_date: string | null
+  surrender_proceeds: string // editable numeric
+}
+
+function blankDraft(): PolicyDraft {
+  return {
+    provider: 'chubb',
+    policy_number: '',
+    policy_name: '',
+    start_date: null,
+    currency: 'USD',
+    notes: '',
+    surrendered_from_month: null,
+    surrender_date: null,
+    surrender_proceeds: '',
+  }
+}
+
+const inputClass =
+  'w-full rounded-input bg-input px-3 py-2 text-[15px] text-text-primary focus:outline-none'
+
+const PROVIDER_OPTIONS = INSURANCE_PROVIDERS.map((p) => ({
+  value: p,
+  label: INSURANCE_PROVIDER_LABELS[p],
+}))
+const CCY_OPTIONS = [
+  { value: 'USD', label: 'USD' },
+  { value: 'HKD', label: 'HKD' },
+]
+
+export function InsuranceEntry() {
+  const { id } = useParams()
+  const { session } = useAuth()
+  const userId = session?.user.id
+
+  const loadFn = useCallback(async () => {
+    if (!id || !userId) return { draft: blankDraft(), schedules: [] as ScheduleVersion[] }
+    const data = await getPolicyWithSchedules(userId, id)
+    if (!data) return null
+    const p = data.policy
+    return {
+      draft: {
+        provider: p.provider as InsuranceProvider,
+        policy_number: p.policy_number,
+        policy_name: p.policy_name,
+        start_date: p.start_date,
+        currency: (p.currency as 'HKD' | 'USD') ?? 'USD',
+        notes: p.notes ?? '',
+        surrendered_from_month: p.surrendered_from_month,
+        surrender_date: p.surrender_date,
+        surrender_proceeds:
+          p.surrender_proceeds == null ? '' : String(p.surrender_proceeds),
+      },
+      schedules: data.schedules,
+    }
+  }, [id, userId])
+  const { data: initial, loading, error } = useAsync(loadFn)
+
+  return (
+    <div className="flex h-full min-h-0 flex-col">
+      {loading && <p className="p-4 text-sm text-text-secondary">Loading…</p>}
+      {(error || (!loading && !initial)) && (
+        <p className="p-4 text-sm text-danger">Couldn’t load this policy.</p>
+      )}
+      {!loading && initial && (
+        <PolicyForm
+          key={id ?? 'new'}
+          id={id}
+          userId={userId ?? ''}
+          initialDraft={initial.draft}
+          initialSchedules={initial.schedules}
+        />
+      )}
+    </div>
+  )
+}
+
+function PolicyForm({
+  id,
+  userId,
+  initialDraft,
+  initialSchedules,
+}: {
+  id: string | undefined
+  userId: string
+  initialDraft: PolicyDraft
+  initialSchedules: ScheduleVersion[]
+}) {
+  const navigate = useNavigate()
+  const [draft, setDraft] = useState<PolicyDraft>(initialDraft)
+  const [schedules, setSchedules] = useState<ScheduleVersion[]>(initialSchedules)
+  const [selectedSchedule, setSelectedSchedule] = useState<string>(
+    initialSchedules[0]?.id ?? '',
+  )
+  const [saving, setSaving] = useState(false)
+  const [surrenderingOpen, setSurrenderingOpen] = useState(false)
+  const [confirmUnsurr, setConfirmUnsurr] = useState(false)
+  const [cal, setCal] = useState<
+    'start' | 'surrenderMonth' | 'surrenderDate' | 'eff' | null
+  >(null)
+  const [importOpen, setImportOpen] = useState(false)
+
+  const update = (patch: Partial<PolicyDraft>) => setDraft((d) => ({ ...d, ...patch }))
+  const dirty = JSON.stringify(draft) !== JSON.stringify(initialDraft)
+  const isSurrendered = !!draft.surrendered_from_month
+
+  async function reload() {
+    if (!id) return
+    const data = await getPolicyWithSchedules(userId, id)
+    if (data) {
+      setSchedules(data.schedules)
+      setSelectedSchedule((s) =>
+        data.schedules.some((v) => v.id === s) ? s : (data.schedules[0]?.id ?? ''),
+      )
+    }
+  }
+
+  function validateRequired(): boolean {
+    if (!draft.policy_number.trim()) {
+      showToast('Policy number is required')
+      return false
+    }
+    if (
+      (surrenderingOpen || isSurrendered) &&
+      !(
+        draft.surrendered_from_month &&
+        draft.surrender_date &&
+        draft.surrender_proceeds.trim()
+      )
+    ) {
+      showToast('Surrender needs month, date, and proceeds')
+      return false
+    }
+    return true
+  }
+
+  function policyPatch() {
+    return {
+      provider: draft.provider,
+      policy_number: draft.policy_number.trim(),
+      policy_name: draft.policy_name.trim(),
+      start_date: draft.start_date,
+      currency: draft.currency,
+      notes: draft.notes.trim() || null,
+      surrendered_from_month: draft.surrendered_from_month,
+      surrender_date: draft.surrender_date,
+      surrender_proceeds: draft.surrender_proceeds.trim()
+        ? Number(draft.surrender_proceeds)
+        : null,
+    }
+  }
+
+  async function save() {
+    if (!validateRequired()) return
+    setSaving(true)
+    try {
+      if (id) {
+        await savePolicyFields(id, policyPatch())
+      } else {
+        await createPolicy(userId, policyPatch())
+      }
+      bumpNetWorth()
+      navigate(-1)
+    } catch (e) {
+      showToast(errorMessage(e, 'Could not save the policy.'))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function remove() {
+    if (!id) return
+    setSaving(true)
+    try {
+      await deletePolicy(id)
+      bumpNetWorth()
+      navigate(-1)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  function unsurrender() {
+    setSurrenderingOpen(false)
+    update({
+      surrendered_from_month: null,
+      surrender_date: null,
+      surrender_proceeds: '',
+    })
+  }
+
+  // --- Apply a parsed single-policy import (create-or-attach / add-or-replace) ----------
+  async function applyImport(
+    parsed: ParsedSinglePolicy,
+    target: { mode: 'new' } | { mode: 'replace'; scheduleId: string },
+  ) {
+    setSaving(true)
+    try {
+      let policyId = id
+      if (!policyId) {
+        const created = await createPolicy(userId, policyPatch())
+        policyId = created.id
+      }
+      // The file may override name / start date.
+      const overridePatch: Record<string, string> = {}
+      if (parsed.policy_name) overridePatch.policy_name = parsed.policy_name
+      if (parsed.start_date) overridePatch.start_date = parsed.start_date
+      if (Object.keys(overridePatch).length > 0) {
+        await savePolicyFields(policyId, overridePatch)
+      }
+
+      if (target.mode === 'replace') {
+        await replaceScheduleVersion(target.scheduleId, {
+          first_year: parsed.first_year,
+          points: parsed.points,
+        })
+      } else {
+        const hasOriginal = schedules.some((v) => v.kind === 'original')
+        const startYear = (parsed.start_date ?? draft.start_date ?? todayLocal()).slice(
+          0,
+          4,
+        )
+        const effective = hasOriginal
+          ? `${todayLocal().slice(0, 4)}-${(parsed.start_date ?? draft.start_date ?? todayLocal()).slice(5)}`
+          : (parsed.start_date ?? draft.start_date ?? `${startYear}-01-01`)
+        await addScheduleVersion(policyId, {
+          kind: hasOriginal ? 'update' : 'original',
+          first_year: parsed.first_year,
+          effective_date: effective,
+          points: parsed.points,
+        })
+      }
+      bumpNetWorth()
+      setImportOpen(false)
+      if (!id) {
+        navigate(routes.networth.insuranceEdit(policyId), { replace: true })
+      } else {
+        await reload()
+      }
+    } catch (e) {
+      showToast(errorMessage(e, 'Import failed.'))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const selected = schedules.find((v) => v.id === selectedSchedule) ?? null
+
+  async function onPickCalendar(d: string) {
+    if (cal === 'start') update({ start_date: d })
+    else if (cal === 'surrenderMonth') update({ surrendered_from_month: d })
+    else if (cal === 'surrenderDate') update({ surrender_date: d })
+    else if (cal === 'eff' && selected && id) {
+      await updateScheduleEffectiveDate(selected.id, d)
+      bumpNetWorth()
+      await reload()
+    }
+    setCal(null)
+  }
+
+  return (
+    <>
+      <header className="flex items-center gap-3 border-b border-border px-4 py-3">
+        <button
+          onClick={() => navigate(-1)}
+          aria-label="Close"
+          className="text-text-secondary"
+        >
+          <IconX size={22} />
+        </button>
+        <h1 className="flex-1 truncate text-[17px] font-medium text-text-primary">
+          {id ? 'Edit Insurance' : 'New Insurance'}
+        </h1>
+        <button
+          onClick={() => setImportOpen(true)}
+          className="flex shrink-0 items-center gap-1.5 pl-2 text-sm text-accent"
+        >
+          <IconUpload size={16} /> Import Policy Schedule
+        </button>
+        <EntryHeaderActions
+          editing={!!id}
+          dirty={dirty}
+          saving={saving}
+          onReset={() => setDraft(initialDraft)}
+          onSubmit={() => void save()}
+          onDelete={id ? () => void remove() : undefined}
+        />
+      </header>
+
+      <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
+        <div className="flex gap-3">
+          <div className="flex-1">
+            <p className="mb-1 text-xs text-text-secondary">Provider</p>
+            <SelectMenu
+              value={draft.provider}
+              options={PROVIDER_OPTIONS}
+              onChange={(v) => update({ provider: v as InsuranceProvider })}
+              ariaLabel="Provider"
+            />
+          </div>
+          <div className="w-32">
+            <p className="mb-1 text-xs text-text-secondary">Currency</p>
+            <SegmentedTabs
+              value={draft.currency}
+              options={CCY_OPTIONS}
+              onChange={(v) => update({ currency: v as 'HKD' | 'USD' })}
+            />
+          </div>
+        </div>
+
+        <label className="text-xs text-text-secondary">
+          Policy Number
+          <input
+            value={draft.policy_number}
+            onChange={(e) => update({ policy_number: e.target.value })}
+            className={`mt-1 ${inputClass}`}
+          />
+        </label>
+
+        <label className="text-xs text-text-secondary">
+          Policy Name
+          <input
+            value={draft.policy_name}
+            onChange={(e) => update({ policy_name: e.target.value })}
+            className={`mt-1 ${inputClass}`}
+          />
+        </label>
+
+        <div>
+          <p className="mb-1 text-xs text-text-secondary">Start Date</p>
+          <button onClick={() => setCal('start')} className={`text-left ${inputClass}`}>
+            {draft.start_date ? formatDayLabel(draft.start_date) : 'Pick a date'}
+          </button>
+        </div>
+
+        <label className="text-xs text-text-secondary">
+          Notes
+          <textarea
+            value={draft.notes}
+            onChange={(e) => update({ notes: e.target.value })}
+            rows={3}
+            className={`mt-1 ${inputClass} resize-none`}
+          />
+        </label>
+
+        {/* SURRENDER */}
+        <div>
+          <div className="mb-2 flex items-center justify-between">
+            <p className="text-[11px] uppercase tracking-[0.08em] text-text-secondary">
+              Surrender
+            </p>
+            {isSurrendered ? (
+              confirmUnsurr ? (
+                <div className="flex items-center gap-1">
+                  <span className="text-xs text-text-secondary">Un-surrender?</span>
+                  <button
+                    onClick={() => {
+                      setConfirmUnsurr(false)
+                      unsurrender()
+                    }}
+                    aria-label="Confirm un-surrender"
+                    className="p-1 text-danger"
+                  >
+                    <IconCheck size={18} />
+                  </button>
+                  <button
+                    onClick={() => setConfirmUnsurr(false)}
+                    aria-label="Cancel un-surrender"
+                    className="p-1 text-text-secondary"
+                  >
+                    <IconX size={18} />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setConfirmUnsurr(true)}
+                  className="text-sm text-accent"
+                >
+                  Un-Surrender
+                </button>
+              )
+            ) : (
+              <button
+                onClick={() => setSurrenderingOpen((o) => !o)}
+                className="text-sm text-accent"
+              >
+                {surrenderingOpen ? 'Cancel' : 'Surrendered'}
+              </button>
+            )}
+          </div>
+          {(isSurrendered || surrenderingOpen) && (
+            <div className="flex flex-col gap-3 rounded-card border border-border bg-surface p-3">
+              <div>
+                <p className="mb-1 text-xs text-text-secondary">
+                  Surrender Month (excluded from this month on)
+                </p>
+                <button
+                  onClick={() => setCal('surrenderMonth')}
+                  className={`text-left ${inputClass}`}
+                >
+                  {draft.surrendered_from_month
+                    ? formatDayLabel(draft.surrendered_from_month)
+                    : 'Pick a month'}
+                </button>
+              </div>
+              <div>
+                <p className="mb-1 text-xs text-text-secondary">Surrender Date</p>
+                <button
+                  onClick={() => setCal('surrenderDate')}
+                  className={`text-left ${inputClass}`}
+                >
+                  {draft.surrender_date
+                    ? formatDayLabel(draft.surrender_date)
+                    : 'Pick a date'}
+                </button>
+              </div>
+              <label className="text-xs text-text-secondary">
+                Actual Proceeds ({draft.currency})
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  step="any"
+                  value={draft.surrender_proceeds}
+                  onChange={(e) => update({ surrender_proceeds: e.target.value })}
+                  className={`mt-1 ${inputClass}`}
+                />
+              </label>
+              <p className="text-xs text-text-tertiary">
+                Enter the cash received as a Cash entry in Monthly Entry.
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* SCHEDULE */}
+        <div>
+          <p className="mb-2 text-[11px] uppercase tracking-[0.08em] text-text-secondary">
+            Schedule
+          </p>
+          {!id ? (
+            <p className="rounded-card border border-dashed border-border px-4 py-6 text-center text-sm text-text-tertiary">
+              Save the policy, then import a schedule — or use Import Policy Schedule to
+              create it from a file.
+            </p>
+          ) : schedules.length === 0 ? (
+            <p className="rounded-card border border-dashed border-border px-4 py-6 text-center text-sm text-text-tertiary">
+              No schedule versions yet. Use Import Policy Schedule.
+            </p>
+          ) : (
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-2">
+                <SelectMenu
+                  value={selectedSchedule}
+                  options={schedules.map((v) => ({
+                    value: v.id,
+                    label: `${v.kind === 'original' ? 'Original' : 'Update'}${v.effective_date ? ` · ${formatFullDate(v.effective_date)}` : ''}`,
+                  }))}
+                  onChange={setSelectedSchedule}
+                  ariaLabel="Schedule version"
+                />
+                {selected && (
+                  <ConfirmDeleteAction
+                    label="Delete schedule version"
+                    onDelete={() =>
+                      void deleteSchedule(id, selected.id).then(() => {
+                        bumpNetWorth()
+                        void reload()
+                      })
+                    }
+                  />
+                )}
+              </div>
+              {selected && (
+                <div>
+                  <p className="mb-1 text-xs text-text-secondary">Effective Date</p>
+                  <button
+                    onClick={() => setCal('eff')}
+                    className={`text-left ${inputClass}`}
+                  >
+                    {selected.effective_date
+                      ? formatDayLabel(selected.effective_date)
+                      : 'Pick a date'}
+                  </button>
+                </div>
+              )}
+              {selected && (
+                <div className="overflow-hidden rounded-card border border-border bg-surface">
+                  <div className="grid grid-cols-4 gap-2 border-b border-border px-3 py-2 text-[11px] uppercase tracking-wide text-text-secondary">
+                    <span>Age</span>
+                    <span>Yr</span>
+                    <span className="text-right">Premium</span>
+                    <span className="text-right">Cash</span>
+                  </div>
+                  {selected.points.map((p) => (
+                    <div
+                      key={p.age}
+                      className="grid grid-cols-4 gap-2 border-b border-border px-3 py-1.5 text-[13px] text-text-primary last:border-b-0"
+                    >
+                      <span>{p.age}</span>
+                      <span className="text-text-secondary">{p.policy_year}</span>
+                      <span className="text-right">
+                        {Math.round(p.total_premium_paid).toLocaleString('en-US')}
+                      </span>
+                      <span className="text-right">
+                        {Math.round(p.cash_value).toLocaleString('en-US')}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {cal && (
+        <Calendar
+          day={
+            (cal === 'start'
+              ? draft.start_date
+              : cal === 'surrenderMonth'
+                ? draft.surrendered_from_month
+                : cal === 'surrenderDate'
+                  ? draft.surrender_date
+                  : selected?.effective_date) ?? todayLocal()
+          }
+          onSelect={(d) => void onPickCalendar(d)}
+          onClose={() => setCal(null)}
+        />
+      )}
+
+      {importOpen && (
+        <ImportScheduleOverlay
+          provider={draft.provider}
+          policyNumber={draft.policy_number.trim()}
+          schedules={schedules}
+          busy={saving}
+          onApply={applyImport}
+          onClose={() => setImportOpen(false)}
+        />
+      )}
+    </>
+  )
+}
+
+// --- Local import overlay (does not remount the form) ------------------------------------
+
+function ImportScheduleOverlay({
+  provider,
+  policyNumber,
+  schedules,
+  busy,
+  onApply,
+  onClose,
+}: {
+  provider: InsuranceProvider
+  policyNumber: string
+  schedules: ScheduleVersion[]
+  busy: boolean
+  onApply: (
+    parsed: ParsedSinglePolicy,
+    target: { mode: 'new' } | { mode: 'replace'; scheduleId: string },
+  ) => void
+  onClose: () => void
+}) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [fileName, setFileName] = useState<string | null>(null)
+  const [parsed, setParsed] = useState<ParsedSinglePolicy | null>(null)
+  const [parseErrors, setParseErrors] = useState<string[]>([])
+  const [mode, setMode] = useState<'new' | string>('new') // 'new' | scheduleId
+
+  async function onFile(file: File) {
+    setParseErrors([])
+    try {
+      const text = await file.text()
+      const res = parseInsuranceSingleCsv(parseCsv(text))
+      setParsed(res.policy)
+      setParseErrors(res.errors)
+      setFileName(file.name)
+    } catch (e) {
+      setParsed(null)
+      setParseErrors([errorMessage(e, 'Could not read the file.')])
+    }
+  }
+
+  // Match validation: number must equal the screen's; provider (if present) must match.
+  const mismatch =
+    parsed != null &&
+    (parsed.policy_number !== policyNumber ||
+      (parsed.provider != null && parsed.provider !== provider))
+
+  const canApply = parsed != null && parseErrors.length === 0 && !mismatch && !busy
+
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col bg-bg">
+      <header className="flex items-center gap-3 border-b border-border px-4 py-3">
+        <button onClick={onClose} aria-label="Close">
+          <IconX size={22} className="text-text-secondary" />
+        </button>
+        <h1 className="text-[17px] font-medium text-text-primary">
+          Import Policy Schedule
+        </h1>
+      </header>
+      <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
+        {!policyNumber && (
+          <p className="text-xs text-warning">
+            Enter the Policy Number first — the file must match it.
+          </p>
+        )}
+        <input
+          ref={inputRef}
+          type="file"
+          accept=".csv,text/csv"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0]
+            if (f) void onFile(f)
+            e.target.value = ''
+          }}
+        />
+        <button
+          onClick={() => inputRef.current?.click()}
+          className="flex items-center justify-center gap-2 rounded-input border border-border bg-input px-4 py-3 text-[15px] text-text-primary"
+        >
+          <IconUpload size={18} />
+          {fileName ? 'Choose a different file' : 'Choose CSV File'}
+        </button>
+
+        {parseErrors.length > 0 && (
+          <ul className="flex flex-col gap-1 text-xs text-danger">
+            {parseErrors.map((m, i) => (
+              <li key={i}>{m}</li>
+            ))}
+          </ul>
+        )}
+
+        {parsed && (
+          <div className="flex flex-col gap-3">
+            <div className="rounded-card border border-border bg-surface px-4 py-3 text-sm text-text-primary">
+              {parsed.policy_number} · {parsed.points.length} schedule point
+              {parsed.points.length === 1 ? '' : 's'}
+            </div>
+            {mismatch && (
+              <p className="text-xs text-danger">
+                File doesn’t match this policy’s provider / number.
+              </p>
+            )}
+            <div>
+              <p className="mb-1 text-xs uppercase tracking-[0.08em] text-text-secondary">
+                Apply as
+              </p>
+              <SelectMenu
+                value={mode}
+                ariaLabel="Apply target"
+                options={[
+                  { value: 'new', label: 'Add new version' },
+                  ...schedules.map((v) => ({
+                    value: v.id,
+                    label: `Replace ${v.kind === 'original' ? 'Original' : 'Update'}${v.effective_date ? ` · ${formatFullDate(v.effective_date)}` : ''}`,
+                  })),
+                ]}
+                onChange={setMode}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+      <div className="border-t border-border p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
+        <PrimaryButton
+          onClick={() =>
+            parsed &&
+            onApply(
+              parsed,
+              mode === 'new' ? { mode: 'new' } : { mode: 'replace', scheduleId: mode },
+            )
+          }
+          disabled={!canApply}
+          className="w-full"
+        >
+          {busy ? 'Importing…' : 'IMPORT SCHEDULE'}
+        </PrimaryButton>
+      </div>
+    </div>
+  )
+}

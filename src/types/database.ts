@@ -320,6 +320,130 @@ export type Database = {
         }
         Relationships: []
       }
+      insurance_policy: {
+        Row: {
+          created_at: string
+          currency: string
+          id: string
+          notes: string | null
+          policy_name: string
+          policy_number: string
+          provider: string
+          start_date: string | null
+          surrender_date: string | null
+          surrender_proceeds: number | null
+          surrendered_from_month: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          currency: string
+          id?: string
+          notes?: string | null
+          policy_name?: string
+          policy_number: string
+          provider: string
+          start_date?: string | null
+          surrender_date?: string | null
+          surrender_proceeds?: number | null
+          surrendered_from_month?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          id?: string
+          notes?: string | null
+          policy_name?: string
+          policy_number?: string
+          provider?: string
+          start_date?: string | null
+          surrender_date?: string | null
+          surrender_proceeds?: number | null
+          surrendered_from_month?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      insurance_schedule: {
+        Row: {
+          created_at: string
+          effective_date: string | null
+          first_year: number
+          id: string
+          imported_at: string
+          kind: string
+          policy_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          effective_date?: string | null
+          first_year: number
+          id?: string
+          imported_at?: string
+          kind: string
+          policy_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          effective_date?: string | null
+          first_year?: number
+          id?: string
+          imported_at?: string
+          kind?: string
+          policy_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insurance_schedule_policy_id_fkey"
+            columns: ["policy_id"]
+            isOneToOne: false
+            referencedRelation: "insurance_policy"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      insurance_schedule_point: {
+        Row: {
+          age: number
+          cash_value: number
+          id: string
+          policy_year: number
+          schedule_id: string
+          total_premium_paid: number
+        }
+        Insert: {
+          age: number
+          cash_value: number
+          id?: string
+          policy_year: number
+          schedule_id: string
+          total_premium_paid: number
+        }
+        Update: {
+          age?: number
+          cash_value?: number
+          id?: string
+          policy_year?: number
+          schedule_id?: string
+          total_premium_paid?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insurance_schedule_point_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "insurance_schedule"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       medical_lab_test: {
         Row: {
           category: string
@@ -554,6 +678,9 @@ export type Database = {
           medical_tracked_tests: string[] | null
           medical_visible_fields: string[] | null
           module_order: string[] | null
+          networth_asset_type_order: string[] | null
+          networth_bulk_insurance_import_enabled: boolean
+          networth_visible_asset_types: string[] | null
           onboarded_at: string | null
           protein_target_g: number | null
           quote_categories: Json | null
@@ -592,6 +719,9 @@ export type Database = {
           medical_tracked_tests?: string[] | null
           medical_visible_fields?: string[] | null
           module_order?: string[] | null
+          networth_asset_type_order?: string[] | null
+          networth_bulk_insurance_import_enabled?: boolean
+          networth_visible_asset_types?: string[] | null
           onboarded_at?: string | null
           protein_target_g?: number | null
           quote_categories?: Json | null
@@ -630,6 +760,9 @@ export type Database = {
           medical_tracked_tests?: string[] | null
           medical_visible_fields?: string[] | null
           module_order?: string[] | null
+          networth_asset_type_order?: string[] | null
+          networth_bulk_insurance_import_enabled?: boolean
+          networth_visible_asset_types?: string[] | null
           onboarded_at?: string | null
           protein_target_g?: number | null
           quote_categories?: Json | null

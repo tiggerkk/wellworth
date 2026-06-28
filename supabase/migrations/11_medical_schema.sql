@@ -1,6 +1,6 @@
 -- WellWorth Medical module schema (docs/medical.md → 03-data-model.md).
 --
--- Conventions (identical to 04_shows_schema.sql):
+-- Conventions (identical to 05_shows_schema.sql):
 --   * Table names singular, snake_case. RLS ON from creation.
 --   * User-owned tables (medical_report, medical_result) carry their own user_id and isolate
 --     rows with (select auth.uid()) = user_id; four policies each (select/insert/update/delete).

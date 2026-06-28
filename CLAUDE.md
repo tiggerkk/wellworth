@@ -6,14 +6,14 @@ WellWorth is a personal (later: small-family) wellness, net-worth, and media tra
 source of truth and now carry the durable architectural constraints + "don't repeat" gotchas (formerly
 in the build log).
 
-- **Always read first (cross-cutting):** `docs/00-PRD.md` (scope + non-goals),
-  `docs/01-design-system.md` (tokens, shared components, conventions), `docs/02-tech-spec.md`
-  (architecture, routing, DB patterns, gotchas), and `docs/03-global.md` (navigation, onboarding,
+- **Always read first (cross-cutting):** `docs/00_PRD.md` (scope + non-goals),
+  `docs/01_design_system.md` (tokens, shared components, conventions), `docs/02_tech_spec.md`
+  (architecture, routing, DB patterns, gotchas), and `docs/03_global.md` (navigation, onboarding,
   global Settings, the `profile` table + seeds). These four cover normal work, **including changing
   existing code**.
-- **Read on demand:** a module spec (`docs/04-wellness.md` … `10-travel.md`) only when a bug or
+- **Read on demand:** a module spec (`docs/04_wellness.md` … `10_travel.md`) only when a bug or
   enhancement touches that module — see the [Modules](#modules) table below.
-- **`docs/BUILD-HISTORY.md`** — non-spec chronological engineering history (build sequence + dated
+- **`docs/BUILD_HISTORY.md`** — non-spec chronological engineering history (build sequence + dated
   enhancement passes). **Read only when explicitly asked** to do a major refactor or regression
   analysis on an older module.
 - **`docs/PARKED.md`** — deferred / out-of-scope backlog. **Read only when explicitly asked** about
@@ -24,15 +24,15 @@ in the build log).
 Documentation updates are part of "done," not a follow-up. Whenever a change affects behavior, the schema, seed data, workflow, or project layout, update the relevant doc(s) **in the same task** — do
 not wait to be reminded:
 
-- **Spec docs** (`/docs/00-PRD.md`, `01-design-system.md`, `02-tech-spec.md`, `03-global.md`,
-  `04-wellness.md` … `10-travel.md`) — the behavior/data source of truth. Update when a screen's
+- **Spec docs** (`/docs/00_PRD.md`, `01_design_system.md`, `02_tech_spec.md`, `03_global.md`,
+  `04_wellness.md` … `10_travel.md`) — the behavior/data source of truth. Update when a screen's
   behavior, the data model, seed data, or the design system changes.
-- **`docs/BUILD-HISTORY.md`** — append the milestone/enhancement narrative + rationale for notable
+- **`docs/BUILD_HISTORY.md`** — append the milestone/enhancement narrative + rationale for notable
   changes (schema changes, migrations, new patterns), and keep its Snapshot (test count, deploy status)
   current. Put the distilled "don't repeat" lesson + any new durable constraint in the relevant **spec
   doc** (with its `F#` anchor), not buried in the history.
 - **`docs/PARKED.md`** — remove an item when it's built; add one when something is deliberately deferred or a limitation is discovered.
-- **`docs/OWNER-RUNBOOK.md`** — update when setup, scripts, env vars, migrations, or deploy/reset steps change (it must still stand up the app from a fresh clone).
+- **`docs/OWNER_RUNBOOK.md`** — update when setup, scripts, env vars, migrations, or deploy/reset steps change (it must still stand up the app from a fresh clone).
 - **`README.md`** — update if the top-level overview or file/doc layout changes.
 
 Write in concise bullet points and avoid long paragraphs.
@@ -46,21 +46,21 @@ All modules are feature-complete. Adding a module = append a `ModuleDef` to
 
 | Module    | Routes       | Spec                |
 | --------- | ------------ | ------------------- |
-| Wellness  | /wellness/\* | docs/04-wellness.md |
-| Net Worth | /networth/\* | docs/05-networth.md |
-| Shows     | /shows/\*    | docs/06-shows.md    |
-| Books     | /books/\*    | docs/07-books.md    |
-| Quotes    | /quotes/\*   | docs/08-quotes.md   |
-| Medical   | /medical/\*  | docs/09-medical.md  |
-| Travel    | /travel/\*   | docs/10-travel.md   |
+| Wellness  | /wellness/\* | docs/04_wellness.md |
+| Net Worth | /networth/\* | docs/05_networth.md |
+| Shows     | /shows/\*    | docs/06_shows.md    |
+| Books     | /books/\*    | docs/07_books.md    |
+| Quotes    | /quotes/\*   | docs/08_quotes.md   |
+| Medical   | /medical/\*  | docs/09_medical.md  |
+| Travel    | /travel/\*   | docs/10_travel.md   |
 
-Global screens (Home hub, Onboarding, Settings): `docs/03-global.md`
-Shared UI components & design tokens: `docs/01-design-system.md`
-Tech stack, DB patterns, routing, shared APIs: `docs/02-tech-spec.md`
+Global screens (Home hub, Onboarding, Settings): `docs/03_global.md`
+Shared UI components & design tokens: `docs/01_design_system.md`
+Tech stack, DB patterns, routing, shared APIs: `docs/02_tech_spec.md`
 
 ## Stack (do not substitute without asking)
 
-See `docs/02-tech-spec.md` for the full stack, folder structure, routing, DB patterns, and shared
+See `docs/02_tech_spec.md` for the full stack, folder structure, routing, DB patterns, and shared
 external APIs. Key libraries: React + Vite + TypeScript (strict), Tailwind CSS, `vite-plugin-pwa`,
 React Router (`react-router`), Supabase (Postgres + Auth + Google OAuth), Recharts (charts),
 Leaflet + markercluster (Travel map), `@zxing/browser` (barcode scanner).
@@ -80,13 +80,13 @@ Leaflet + markercluster (Travel map), `@zxing/browser` (barcode scanner).
 - RLS is ON for every table from its first migration; policy = `user_id = auth.uid()` for user-owned tables. Child tables without their own `user_id` (`serving`, `strength_set`) enforce ownership via
   an `EXISTS` check against their parent.
 - **Migrations must also `GRANT` table privileges to the `anon`/`authenticated` roles.** RLS gates _rows_; the role still needs table-level access. Tables created by raw-SQL migrations do **not**
-  inherit Supabase's default grants, so an explicit grant migration is required (see `docs/02-tech-spec.md`).
+  inherit Supabase's default grants, so an explicit grant migration is required (see `docs/02_tech_spec.md`).
 - The client uses only the **public anon key** (RLS-respecting), injected via a `VITE_`-prefixed env var.
 - The **service-role key bypasses RLS** — it must never appear in client code or the repo. Secrets in `.env` (gitignored). Only `VITE_`-prefixed vars are exposed to the browser.
 - **App access is gated to an optional email allowlist** (`VITE_ALLOWED_EMAILS`): `src/lib/access.ts`
   (`isEmailAllowed`) + enforcement in `src/auth/AuthProvider.tsx` sign out any account whose email
   isn't listed (empty list ⇒ no restriction). This is a convenience layer over RLS + the Supabase/
-  Google sign-up controls (see `OWNER-RUNBOOK.md` Part H3), not a replacement for them. `access.ts`
+  Google sign-up controls (see `OWNER_RUNBOOK.md` Part H3), not a replacement for them. `access.ts`
   also exposes `parseOAuthError`, which `AuthProvider` captures from the redirect URL on first render
   so Login surfaces a failed sign-in (e.g. `signup_disabled` after a `db reset` wipes `auth.users`)
   instead of looping silently.
@@ -104,8 +104,8 @@ Leaflet + markercluster (Travel map), `@zxing/browser` (barcode scanner).
 - Schema changes are written as **migration files** in `/supabase/migrations/` (Supabase CLI format).
   You draft the migration; the human reviews and applies it with `supabase db push`.
 - **Migration filenames are `NN_<module>_<name>.sql`** — a two-digit global ordinal (apply order) +
-  the module + a short name (e.g. `01_wellness_schema.sql`, `05_shows_profile_settings.sql`,
-  `11_medical_seed_lab_test.sql`). The ordinal is the Supabase migration version and fixes apply order
+  the module + a short name (e.g. `01_wellness_schema.sql`, `06_shows_profile_settings.sql`,
+  `12_medical_seed_lab_test.sql`). The ordinal is the Supabase migration version and fixes apply order
   (dependencies: `01_wellness_schema.sql` creates `profile`, so every `*_profile_settings.sql` is later).
   A new module appends the next ordinal. Renaming/renumbering changes the version, so it only reconciles
   via a full **`supabase db reset --linked`** (a `db push` can't), which matches the owner's reset workflow.
@@ -113,7 +113,7 @@ Leaflet + markercluster (Travel map), `@zxing/browser` (barcode scanner).
 - After applying a migration, regenerate `/src/types/database.ts`.
 - **Backups (free tier has none):** `scripts/db-backup.sh` (encrypted, age) + `.github/workflows/backup.yml`
   (scheduled, off-site to a private repo) + `scripts/db-restore.sh`; full setup + the two-tier restore
-  (incl. the `auth.users` UUID caveat) live in **`OWNER-RUNBOOK.md` Part Q**. Schema lives in migrations,
+  (incl. the `auth.users` UUID caveat) live in **`OWNER_RUNBOOK.md` Part Q**. Schema lives in migrations,
   so backups capture **user data + `auth.users`/`auth.identities`** only.
 
 ## Naming

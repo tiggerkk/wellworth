@@ -1,16 +1,23 @@
 import { describe, expect, it } from 'vitest'
 import {
+  ageForYear,
   ASSET_TYPES,
+  breakEven,
   foldMonthlyTotals,
   formatHkd,
   formatHkdCompact,
   groupByType,
+  originalCashValueAtAge,
+  resolvePolicyAtAge,
+  type ScheduleVersion,
   sumTotals,
+  surrenderGainPctPerYear,
   totalBase,
   typeBreakdown,
   typeBreakdownFromTotals,
   typeTotals,
   valueBase,
+  varianceAtAge,
 } from './networth'
 
 describe('valueBase', () => {
@@ -139,5 +146,84 @@ describe('foldMonthlyTotals', () => {
 
   it('is empty for no rows', () => {
     expect(foldMonthlyTotals([])).toEqual([])
+  })
+})
+
+describe('insurance resolution', () => {
+  const original: ScheduleVersion = {
+    id: 'orig',
+    kind: 'original',
+    first_year: 45,
+    effective_date: '2019-01-01',
+    points: [
+      { age: 45, policy_year: 5, total_premium_paid: 100, cash_value: 60 },
+      { age: 46, policy_year: 6, total_premium_paid: 100, cash_value: 90 },
+      { age: 47, policy_year: 7, total_premium_paid: 100, cash_value: 110 },
+      // gap at 48
+      { age: 49, policy_year: 9, total_premium_paid: 100, cash_value: 150 },
+    ],
+  }
+  const update: ScheduleVersion = {
+    id: 'upd',
+    kind: 'update',
+    first_year: 47,
+    effective_date: '2021-06-01',
+    points: [
+      { age: 47, policy_year: 7, total_premium_paid: 100, cash_value: 130 },
+      { age: 48, policy_year: 8, total_premium_paid: 100, cash_value: 145 },
+    ],
+  }
+
+  it('ageForYear subtracts the birth year (default 1974)', () => {
+    expect(ageForYear(2019)).toBe(45)
+    expect(ageForYear(2026, 1974)).toBe(52)
+  })
+
+  it('uses the newest version whose first_year ≤ age', () => {
+    // age 47 — both versions apply; the newer (update, effective 2021) wins.
+    expect(resolvePolicyAtAge([original, update], 47)?.cashValue).toBe(130)
+    // age 46 — only the original applies (update.first_year is 47).
+    expect(resolvePolicyAtAge([original, update], 46)?.cashValue).toBe(90)
+  })
+
+  it('carries the nearest earlier real point and tags it', () => {
+    // age 48: original has a gap; only original applies via carry... but update also applies at 48.
+    const r = resolvePolicyAtAge([original, update], 48)
+    expect(r).toMatchObject({ cashValue: 145, isCarried: false }) // update has a real point at 48
+    // age 50: update's newest applies, nearest earlier point is 48 → carried.
+    const carried = resolvePolicyAtAge([original, update], 50)
+    expect(carried).toMatchObject({ cashValue: 145, isCarried: true, asOfYear: 8 })
+  })
+
+  it('returns null before the earliest first_year', () => {
+    expect(resolvePolicyAtAge([original, update], 44)).toBeNull()
+  })
+
+  it('original baseline + variance use the original schedule only', () => {
+    expect(originalCashValueAtAge([original, update], 47)).toBe(110)
+    // variance at 47 = resolved (130, from update) − original (110) = 20
+    expect(varianceAtAge([original, update], 47)).toBe(20)
+  })
+
+  it('break-even is the first age where cash ≥ premium', () => {
+    // original alone: cash crosses 100 at age 47 (110 ≥ 100).
+    expect(breakEven([original])).toEqual({ age: 47, atOrBeforeFirst: false })
+  })
+
+  it('flags break-even at/before the first tracked year', () => {
+    const midLife: ScheduleVersion = {
+      id: 'm',
+      kind: 'original',
+      first_year: 60,
+      effective_date: '2020-01-01',
+      points: [{ age: 60, policy_year: 20, total_premium_paid: 100, cash_value: 200 }],
+    }
+    expect(breakEven([midLife])).toEqual({ age: 60, atOrBeforeFirst: true })
+  })
+
+  it('surrenderGainPctPerYear matches the formula and guards divide-by-zero', () => {
+    expect(surrenderGainPctPerYear(110, 100, 5)).toBeCloseTo(2)
+    expect(surrenderGainPctPerYear(100, 0, 5)).toBe(0)
+    expect(surrenderGainPctPerYear(100, 100, 0)).toBe(0)
   })
 })

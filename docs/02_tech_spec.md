@@ -45,7 +45,8 @@ src/
   data/              # typed data-access layer (wraps supabase-js) — the ONLY db access
   lib/               # supabase client, units, dri, energy, met, nutrients, targets, report,
                      # date, food-api, off-api, food-search, diary-refresh, diary-clipboard, toast, csv,
-                     # networth, fx, networth-refresh, shows, shows-refresh, tmdb-api, shows-import,
+                     # networth, fx, networth-refresh, networth-import, fund-import, insurance-import,
+                     # insurance-view, shows, shows-refresh, tmdb-api, shows-import,
                      # books, books-refresh, books-api, books-import, quotes, quotes-refresh,
                      # quotes-import, travel, travel-config, travel-refresh, travel-stats,
                      # travel-geo, places, trip-fx, expenses, reimburse, travel-expense-import,
@@ -174,7 +175,7 @@ also sidesteps iOS PWA storage eviction).
 
 - **Table naming:** singular, `snake_case` (`food`, `diary_entry`, `show`).
 - **Migration filenames:** `NN_<module>_<name>.sql` — a two-digit global ordinal (apply order) + the
-  module + a short name (e.g. `01_wellness_schema.sql`, `05_shows_profile_settings.sql`). The ordinal
+  module + a short name (e.g. `01_wellness_schema.sql`, `06_shows_profile_settings.sql`). The ordinal
   is the Supabase migration version and fixes apply order. New modules append the next ordinal.
 - **Every user-owned table** carries a `user_id` UUID → `auth.users.id` `ON DELETE CASCADE` and four
   RLS policies (select/insert/update/delete) using `(select auth.uid()) = user_id`. Child tables
@@ -216,7 +217,22 @@ also sidesteps iOS PWA storage eviction).
 `profile` 1—_ `medical_report` · `medical_report` 1—_ `medical_result` ·
 `medical_lab_test` 1—_ `medical_result` (optional; `test_key` NULL for ad-hoc tests) ·
 `profile` 1—_ `trip` · `trip` 1—_ `trip_day` 1—_ `stop` · `trip` 1—_ `trip_expense` ·
-`profile` 1—_ `remembered_city`. Travel expense categories are a JSONB list on `profile`, not a table.
+`profile` 1—_ `remembered_city`. Travel expense categories are a JSONB list on `profile`, not a table. ·
+`auth.users` 1—_ `networth_snapshot` 1—_ `asset_entry` (asset*type `cash | time_deposit | stock | fund
+| retirement | insurance | property`) · the insurance catalogue: `insurance_policy` 1—*
+`insurance_schedule` 1—\_ `insurance_schedule_point` (per-user reference data; child tables enforce
+ownership via an `EXISTS` check up the parent chain). Insurance `asset_entry` rows are **generated +
+frozen** from the catalogue per month; funds use `asset_entry` with importer-filled `details`.
+
+- **F19** — load the insurance catalogue (policies → schedules → points) in **one** query via PostgREST
+  resource embedding (`insurance_policy.select('*, insurance_schedule(*, insurance_schedule_point(*))')`),
+  not three sequential round-trips, or Monthly Entry / Insurance Policies stall on free-tier latency
+  (`data/insurance.listCatalogue`). The independent Monthly-Entry loads (prior snapshot · catalogue ·
+  FX) run via `Promise.all`.
+- **F20** — the **manual** Net Worth CSV import writes a **complete** snapshot
+  (`asset-entry.saveManualImportComplete`): imported manual rows + the month's funds (kept, else carried
+  forward) + insurance (kept if frozen, else resolved + frozen now). A naive full-replace save would
+  wipe the not-yet-frozen insurance/fund rows; the manual importer only owns the manual types.
 
 ## Multi-user readiness
 

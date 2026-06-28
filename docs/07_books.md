@@ -27,7 +27,7 @@ shows its **status chip** (Want / Reading / Read / Dropped) consistently across 
 ### Library
 
 - **Search bar** over a list of every tracked book — matches **Title and Author(s)** (author is
-  searched, not filtered). An **icon-only Filter button** to the right (see `docs/01-design-system.md`
+  searched, not filtered). An **icon-only Filter button** to the right (see `docs/01_design_system.md`
   → FilterToggleButton).
 - The shared **FilterPanel** is label-free: **Any Status**, **Any Genre** (genres in your own rows),
   **Any Rating** (minimum: Any / 1★+ … / 5★), **Any LGBT+** (None/Some/Significant), **Any Dynasty**
@@ -81,12 +81,12 @@ edit).
 
 ### Settings
 
-- **Entry Form → Visible Fields**: shared **VisibleFieldsSheet** (see `docs/01-design-system.md`)
+- **Entry Form → Visible Fields**: shared **VisibleFieldsSheet** (see `docs/01_design_system.md`)
   over the optional Entry/Edit fields in New/Edit form order: Author(s), Year, **Google Books
   Metadata**, Rating, LGBT+, Dynasty, the two dates, Notes. Stored on `profile.book_visible_fields`
   (**NULL = all visible**). Title, Status, and the Search button are always shown and not listed.
-- **Import → Enable CSV Import** toggle (`profile.book_importer_enabled`, **on by default**); when on,
-  an **Import CSV…** launcher opens the importer sheet.
+- **Import → Enable Bulk Books Import** toggle (`profile.book_importer_enabled`, **on by default**); when on,
+  an **Import CSV Books** launcher opens the importer sheet.
 
 ### Import CSV (sheet, from Books Settings)
 
@@ -129,7 +129,7 @@ Full guide: `templates/books-import-guide.md`.
   throws when unset).
 - Search queries `q=title+inauthor:author` for the top hit; details expand `categories`, `pageCount`,
   `language`, `description`, `imageLinks.thumbnail` (a full image URL — no CDN base).
-- CJK-aware: `searchZhVariants` (see `docs/02-tech-spec.md`) fires in both scripts.
+- CJK-aware: `searchZhVariants` (see `docs/02_tech_spec.md`) fires in both scripts.
 - `cover_url` is stored as the full image URL, no prefix.
 - Persist only on CREATE/SAVE.
 
@@ -168,5 +168,5 @@ CHECK on enum columns, `moddatetime` trigger on `updated_at`, explicit GRANT to 
 `quote.book_id` link is declared ON DELETE SET NULL on `quote`, so it imposes no FK constraint here.
 Imported back-catalogue rows carry their status, `start_date` (required except a not-yet-started Want),
 `end_date` (read/dropped), and `created_at` frozen to `start_date`. Migration:
-`supabase/migrations/06_books_schema.sql`. Profile columns added by
-`supabase/migrations/07_books_profile_settings.sql`.
+`supabase/migrations/07_books_schema.sql`. Profile columns added by
+`supabase/migrations/08_books_profile_settings.sql`.

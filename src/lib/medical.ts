@@ -5,7 +5,7 @@
  * aliases are added there once `database.ts` is regenerated from the applied migrations.
  *
  * MEDICAL_LAB_TESTS is the **source of truth** for the seed migration
- * (`supabase/migrations/11_medical_seed_lab_test.sql`). The seed mirrors this list
+ * (`supabase/migrations/12_medical_seed_lab_test.sql`). The seed mirrors this list
  * exactly; `medical.test.ts` cross-checks the two so they can't drift.
  */
 import type { Tables, TablesInsert, TablesUpdate } from '../types/database'

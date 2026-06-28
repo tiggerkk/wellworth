@@ -1,5 +1,5 @@
 # Encrypted off-site backup of the Supabase database + free-tier keep-alive.
-# See docs/OWNER-RUNBOOK.md Part Q for one-time setup, the secrets, and the restore runbook.
+# See docs/OWNER_RUNBOOK.md Part Q for one-time setup, the secrets, and the restore runbook.
 #
 # Runs every ~3 days (well under Supabase's 7-day inactivity pause): the pg_dump connection counts as
 # project activity, so this doubles as the keep-alive. Dumps are encrypted to an age public key on the

@@ -204,11 +204,13 @@ This creates the tables, security rules, and the nutrient reference data in your
    > supabase db push
    ```
    The CLI applies **every** file in `supabase/migrations/` — Wellness (`01_wellness_schema.sql` +
-   `02_wellness_seed_nutrient.sql`), Net Worth (`03_networth_schema.sql`), Shows, Books, Quotes (each a schema +
-   a `profile` settings migration), **Medical** (`10_medical_schema.sql` — the three Medical tables;
-   `12_medical_profile_settings.sql` — the Medical `profile` columns; `11_medical_seed_lab_test.sql` —
-   the seeded lab-test reference), and **Travel** (`13_travel_schema.sql` — the five Travel tables;
-   `14_travel_profile_settings.sql` — the Travel `profile` columns: `travel_expense_categories` +
+   `02_wellness_seed_nutrient.sql`), Net Worth (`03_networth_schema.sql` — snapshots, asset entries +
+   the insurance catalogue tables; `04_networth_profile_settings.sql` — the Net Worth `profile`
+   columns), Shows, Books, Quotes (each a schema +
+   a `profile` settings migration), **Medical** (`11_medical_schema.sql` — the three Medical tables;
+   `13_medical_profile_settings.sql` — the Medical `profile` columns; `12_medical_seed_lab_test.sql` —
+   the seeded lab-test reference), and **Travel** (`14_travel_schema.sql` — the five Travel tables;
+   `15_travel_profile_settings.sql` — the Travel `profile` columns: `travel_expense_categories` +
    `travel_visible_fields`). You never list them yourself; whatever
    is in the folder is applied.
 
@@ -406,14 +408,20 @@ Part K.)
    > Same for your **Net Worth balances**: keep your real CSV as `templates/networth-seed.local.csv`
    > (git-ignored). Only the **sanitized** `templates/networth-seed-template.csv` is tracked. Never
    > commit a CSV with real values. To load them into the app, use **Net Worth → Monthly Entry →
-   > Import CSV** (pick the month; re-importing replaces that month — see
-   > `templates/networth-import-guide.md`). (History note: real balances were once committed and later
-   > purged from git history with a force-push — if you have an old clone, re-clone it so it doesn't
-   > push the old history back.)
+   > Import CSV** (pick the month; re-importing replaces that month's manual assets, and also freezes
+   > insurance + carries funds so the snapshot is complete — see `templates/networth-import-guide.md`).
+   > **Funds** import from the JPM "My Portfolio" export saved as CSV via **Monthly Entry → Fund
+   > section → import icon** (overwrites that month's funds; `templates/fund-import-guide.md`).
+   > **Insurance** is a policy catalogue: one-time bulk-seed the wide sheet via **Net Worth → Settings →
+   > Import CSV Insurance**, and add/update a single policy from **New Insurance / Edit Insurance →
+   > Import Policy Schedule** (`templates/insurance-import-guide.md`). Keep the real `Insurance.csv` /
+   > `Insurance.xlsx` and JPM exports git-ignored. (History note: real balances were once committed and
+   > later purged from git history with a force-push — if you have an old clone, re-clone it so it
+   > doesn't push the old history back.)
    > The same applies to your **Shows / Books / Quotes** lists: keep your real CSV git-ignored (e.g.
-   > `quotes-seed-local.csv`), and load it in-app via that module's **Settings → Enable CSV import →
-   > Import CSV…** (idempotent — re-importing skips duplicates). Only the sanitized
-   > `*-import-template.csv` files are tracked.
+   > `quotes-seed-local.csv`), and load it in-app via that module's **Settings → Enable Bulk {Shows |
+   > Books | Quotes} Import → Import CSV {Shows | Books | Quotes}** (idempotent — re-importing skips
+   > duplicates). Only the sanitized `*-import-template.csv` files are tracked.
 
 > **Optional — add quotes straight from Apple Books (iPhone/iPad).** Quotes has no API, so you add
 > quotes by typing, pasting (the **Paste from clipboard** button on the New Quote form), the **CSV
@@ -530,9 +538,10 @@ From the project folder (the database password must be available — see Part F)
 ```
 
 Confirm at the prompt. The CLI re-runs **every** file in `supabase/migrations/` — currently
-`01_wellness_schema.sql`, `02_wellness_seed_nutrient.sql`, `03_networth_schema.sql`, `04_shows_schema.sql`,
-`05_shows_profile_settings.sql`, `06_books_schema.sql`, `07_books_profile_settings.sql`,
-`08_quotes_schema.sql`, and `09_quotes_profile_settings.sql` — against the remote, leaving a clean schema +
+`01_wellness_schema.sql`, `02_wellness_seed_nutrient.sql`, `03_networth_schema.sql`,
+`04_networth_profile_settings.sql`, `05_shows_schema.sql`,
+`06_shows_profile_settings.sql`, `07_books_schema.sql`, `08_books_profile_settings.sql`,
+`09_quotes_schema.sql`, and `10_quotes_profile_settings.sql` — against the remote, leaving a clean schema +
 the 80 nutrient rows and a migration-ledger that matches the files.
 (You never list them yourself; the CLI applies whatever is in the folder, so new migrations are picked
 up automatically.)
@@ -722,7 +731,7 @@ Originals are **not** uploaded — you keep Google Drive links. Extraction happe
 3. **Spot-check the JSON** against the PDF — especially decimals (LDL / HDL / glucose / creatinine) and
    that no section was skipped (bone density, BMI, vitals, imaging findings). Fix any `uncertain` rows.
 4. First time only: in **Medical → Settings**, turn on **Enable structured import**. Then open the
-   importer from there (**Import JSON / CSV…**) or the **Import** button on the New-Report form.
+   importer from there (**Import JSON / CSV Medical**) or the **Import** button on the New-Report form.
 5. Choose the file. The importer auto-repairs the known AI glitch (a stray quote after a number),
    normalizes provider names + units, and shows a **review screen** (counts by category, so a missing
    group is obvious). Correct/add anything, set type / date / provider, paste the **Drive link(s)**,

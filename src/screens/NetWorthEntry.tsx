@@ -1,13 +1,17 @@
 import { useCallback, useState } from 'react'
+import { useNavigate } from 'react-router'
 import {
+  IconChevronDown,
   IconChevronLeft,
   IconChevronRight,
   IconPlus,
   IconRefresh,
   IconUpload,
+  IconX,
 } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
+import { useProfile } from '../hooks/useProfile'
 import { useSheetNavigate } from '../hooks/useSheetNavigate'
 import {
   getSnapshotWithEntries,
@@ -16,23 +20,33 @@ import {
   type AssetEntryInput,
 } from '../data/asset-entry'
 import { deleteSnapshot, getLatestSnapshotBefore } from '../data/networth-snapshot'
+import { listCatalogue, type PolicyWithSchedules } from '../data/insurance'
 import {
+  ageForYear,
   ASSET_TYPE_LABELS,
   CURRENCIES,
+  DEFAULT_BIRTH_YEAR,
   DETAIL_FIELDS,
   formatHkd,
-  groupByType,
+  INSURANCE_PROVIDERS,
+  INSURANCE_PROVIDER_LABELS,
+  originalCashValueAtAge,
+  resolvePolicyAtAge,
+  surrenderGainPctPerYear,
   totalBase,
   valueBase,
+  varianceAtAge,
+  visibleAssetTypes,
   type AssetType,
   type Currency,
+  type InsuranceProvider,
 } from '../lib/networth'
 import { bumpNetWorth, useNetWorthVersion } from '../lib/networth-refresh'
 import { fetchRateToHkd, fetchRatesToHkd, type FetchableCurrency } from '../lib/fx'
 import { addMonths, formatMonthLabel, startOfMonth, todayLocal } from '../lib/date'
 import { draftAmount } from '../lib/quantity'
 import { routes } from '../constants/routes'
-import { SectionCard } from '../components/SectionCard'
+import { FundDetail } from '../components/FundDetail'
 import { EntryHeaderActions } from '../components/EntryHeaderActions'
 import { ConfirmDeleteAction } from '../components/ConfirmDeleteAction'
 import { MonthPicker } from '../components/MonthPicker'
@@ -45,7 +59,7 @@ interface EntryDraft {
   asset_type: AssetType
   name: string
   currency: Currency
-  valueNative: string // editable numeric draft
+  valueNative: string
   details: Record<string, string>
 }
 type RateDraft = Record<Currency, string>
@@ -56,6 +70,8 @@ interface MonthDraft {
 
 let uid = 0
 const nextId = () => `e${++uid}`
+
+const READONLY_TYPES = new Set<AssetType>(['fund', 'insurance'])
 
 function blankRates(): RateDraft {
   return { HKD: '1', CNY: '', USD: '' }
@@ -69,7 +85,6 @@ function detailsToStrings(details: Json): Record<string, string> {
   return out
 }
 
-/** Build an editable draft from saved entries (used for both an existing month and copy-forward). */
 function draftFromEntries(entries: Tables<'asset_entry'>[]): MonthDraft {
   const fxRates = blankRates()
   for (const e of entries) {
@@ -89,11 +104,60 @@ function draftFromEntries(entries: Tables<'asset_entry'>[]): MonthDraft {
   }
 }
 
+/** Resolve live insurance rows from the catalogue for a month's age (new/unsaved months only). */
+function resolveInsuranceRows(
+  catalogue: PolicyWithSchedules[],
+  month: string,
+  birthYear: number,
+): EntryDraft[] {
+  const age = ageForYear(Number(month.slice(0, 4)), birthYear)
+  const rows: EntryDraft[] = []
+  for (const { policy, schedules } of catalogue) {
+    if (
+      policy.surrendered_from_month &&
+      month >= startOfMonth(policy.surrendered_from_month)
+    )
+      continue
+    const r = resolvePolicyAtAge(schedules, age)
+    if (!r) continue
+    const original = originalCashValueAtAge(schedules, age)
+    const variance = varianceAtAge(schedules, age)
+    const pct = surrenderGainPctPerYear(r.cashValue, r.premium, r.policyYear)
+    rows.push({
+      clientId: nextId(),
+      asset_type: 'insurance',
+      name: policy.policy_name || policy.policy_number,
+      currency: (policy.currency as Currency) ?? 'HKD',
+      valueNative: String(r.cashValue),
+      details: {
+        policy_id: policy.id,
+        policy_number: policy.policy_number,
+        provider: policy.provider,
+        policy_year: String(r.policyYear),
+        premium: String(r.premium),
+        cash_value_original: original == null ? '' : String(original),
+        variance: variance == null ? '' : String(variance),
+        surrender_pct: pct.toFixed(2),
+        as_of_year: r.isCarried ? String(r.asOfYear) : '',
+      },
+    })
+  }
+  return rows.sort((a, b) => {
+    const pi =
+      INSURANCE_PROVIDERS.indexOf(a.details.provider as InsuranceProvider) -
+      INSURANCE_PROVIDERS.indexOf(b.details.provider as InsuranceProvider)
+    return pi !== 0
+      ? pi
+      : (a.details.policy_number ?? '') < (b.details.policy_number ?? '')
+        ? -1
+        : 1
+  })
+}
+
 function cloneRows(rows: EntryDraft[]): EntryDraft[] {
   return rows.map((r) => ({ ...r, details: { ...r.details } }))
 }
 
-/** Stable serialization for the dirty check (excludes the non-persisted clientId). */
 function serialize(rows: EntryDraft[], fx: RateDraft): string {
   return JSON.stringify({
     rows: rows.map((r) => ({
@@ -112,34 +176,58 @@ function serialize(rows: EntryDraft[], fx: RateDraft): string {
 export function NetWorthEntry() {
   const { session } = useAuth()
   const userId = session?.user.id
+  const { data: profile } = useProfile()
   const version = useNetWorthVersion()
   const [month, setMonth] = useState(() => startOfMonth(todayLocal()))
+
+  const birthYear = profile?.birthday
+    ? Number(profile.birthday.slice(0, 4))
+    : DEFAULT_BIRTH_YEAR
+  const visibleTypes = visibleAssetTypes(
+    profile?.networth_asset_type_order,
+    profile?.networth_visible_asset_types,
+  )
 
   const loadFn = useCallback(async (): Promise<
     MonthDraft & { snapshotId: string | null }
   > => {
-    void version // refetch after an import (or SAVE) bumps the Net Worth tick
+    void version
     if (!userId) return { rows: [], fxRates: blankRates(), snapshotId: null }
     const existing = await getSnapshotWithEntries(userId, month)
-    // stored rates stay frozen; a saved month can be deleted from the header
-    if (existing)
-      return { ...draftFromEntries(existing.entries), snapshotId: existing.snapshot.id }
-    // New month → copy entries forward (if any) and auto-fetch this month's FX.
-    const prior = await getLatestSnapshotBefore(userId, month)
-    const base = prior
+    // A saved month shows its FROZEN rows (manual + fund + insurance). If it has no frozen insurance
+    // yet (e.g. the snapshot was created by the manual CSV import, which never freezes insurance),
+    // live-resolve insurance from the catalogue so it still appears — a Monthly Entry SAVE freezes it.
+    if (existing) {
+      const base = draftFromEntries(existing.entries)
+      if (!base.rows.some((r) => r.asset_type === 'insurance')) {
+        const catalogue = await listCatalogue(userId)
+        base.rows = [...base.rows, ...resolveInsuranceRows(catalogue, month, birthYear)]
+      }
+      return { ...base, snapshotId: existing.snapshot.id }
+    }
+
+    // New month: copy manual + fund forward; insurance is re-resolved from the catalogue. The prior
+    // snapshot, the catalogue, and this month's FX are independent → fetch them concurrently.
+    const [prior, catalogue, fetched] = await Promise.all([
+      getLatestSnapshotBefore(userId, month),
+      listCatalogue(userId),
+      fetchRatesToHkd(month),
+    ])
+    const priorRows = prior
       ? draftFromEntries(await listEntriesBySnapshot(prior.id))
-      : { rows: [], fxRates: blankRates() }
-    const fetched = await fetchRatesToHkd(month)
+      : null
+    const carried = (priorRows?.rows ?? []).filter((r) => r.asset_type !== 'insurance')
+    const insurance = resolveInsuranceRows(catalogue, month, birthYear)
     return {
-      rows: base.rows,
+      rows: [...carried, ...insurance],
       fxRates: {
         HKD: '1',
-        CNY: fetched.CNY != null ? String(fetched.CNY) : base.fxRates.CNY,
-        USD: fetched.USD != null ? String(fetched.USD) : base.fxRates.USD,
+        CNY: fetched.CNY != null ? String(fetched.CNY) : (priorRows?.fxRates.CNY ?? ''),
+        USD: fetched.USD != null ? String(fetched.USD) : (priorRows?.fxRates.USD ?? ''),
       },
       snapshotId: null,
     }
-  }, [userId, month, version])
+  }, [userId, month, version, birthYear])
   const { data: initial, loading, error } = useAsync(loadFn)
 
   return (
@@ -149,7 +237,6 @@ export function NetWorthEntry() {
         <p className="px-4 py-6 text-sm text-danger">Couldn’t load this month.</p>
       )}
       {!loading && !error && initial && (
-        // key=month: remount with a fresh draft when the month changes (data is current here).
         <EntryForm
           key={month}
           userId={userId ?? ''}
@@ -157,6 +244,7 @@ export function NetWorthEntry() {
           setMonth={setMonth}
           initial={initial}
           initialSnapshotId={initial.snapshotId}
+          visibleTypes={visibleTypes}
         />
       )}
     </div>
@@ -171,16 +259,19 @@ function EntryForm({
   setMonth,
   initial,
   initialSnapshotId,
+  visibleTypes,
 }: {
   userId: string
   month: string
   setMonth: (m: string) => void
   initial: MonthDraft
   initialSnapshotId: string | null
+  visibleTypes: AssetType[]
 }) {
+  const navigate = useNavigate()
+  const openSheet = useSheetNavigate()
   const [rows, setRows] = useState<EntryDraft[]>(() => cloneRows(initial.rows))
   const [fxRates, setFxRates] = useState<RateDraft>(() => ({ ...initial.fxRates }))
-  // Baseline for dirty/RESET; re-seated after a successful SAVE so the screen can stay open.
   const [baseline, setBaseline] = useState<MonthDraft>(() => ({
     rows: cloneRows(initial.rows),
     fxRates: { ...initial.fxRates },
@@ -189,7 +280,12 @@ function EntryForm({
   const [fetching, setFetching] = useState<FetchableCurrency | null>(null)
   const [fxError, setFxError] = useState<Partial<Record<FetchableCurrency, boolean>>>({})
   const [pickerOpen, setPickerOpen] = useState(false)
-  const openSheet = useSheetNavigate()
+  const [expanded, setExpanded] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(
+      visibleTypes.map((t) => [t, initial.rows.some((r) => r.asset_type === t)]),
+    ),
+  )
+  const [fundModal, setFundModal] = useState<EntryDraft | null>(null)
 
   const dirty = serialize(rows, fxRates) !== serialize(baseline.rows, baseline.fxRates)
 
@@ -221,7 +317,6 @@ function EntryForm({
     if (dirty && !window.confirm('Discard unsaved changes for this month?')) return
     setMonth(addMonths(month, delta))
   }
-
   function goToMonth(target: string) {
     const m = startOfMonth(target)
     setPickerOpen(false)
@@ -231,6 +326,7 @@ function EntryForm({
   }
 
   function addRow(type: AssetType) {
+    setExpanded((e) => ({ ...e, [type]: true }))
     setRows((prev) => [
       ...prev,
       {
@@ -243,19 +339,16 @@ function EntryForm({
       },
     ])
   }
-  function updateRow(clientId: string, patch: Partial<EntryDraft>) {
+  const updateRow = (clientId: string, patch: Partial<EntryDraft>) =>
     setRows((prev) => prev.map((r) => (r.clientId === clientId ? { ...r, ...patch } : r)))
-  }
-  function updateDetail(clientId: string, key: string, value: string) {
+  const updateDetail = (clientId: string, key: string, value: string) =>
     setRows((prev) =>
       prev.map((r) =>
         r.clientId === clientId ? { ...r, details: { ...r.details, [key]: value } } : r,
       ),
     )
-  }
-  function removeRow(clientId: string) {
+  const removeRow = (clientId: string) =>
     setRows((prev) => prev.filter((r) => r.clientId !== clientId))
-  }
 
   async function save() {
     if (!userId) return
@@ -266,10 +359,14 @@ function EntryForm({
         .map((r, i) => {
           const fx = rateOf(r.currency)
           const native = draftAmount(r.valueNative, 0)
-          const details: Record<string, string> = {}
-          for (const f of DETAIL_FIELDS[r.asset_type]) {
-            const v = (r.details[f.key] ?? '').trim()
-            if (v) details[f.key] = v
+          let details: Record<string, string> = {}
+          if (READONLY_TYPES.has(r.asset_type)) {
+            details = { ...r.details } // fund/insurance carry their full detail set
+          } else {
+            for (const f of DETAIL_FIELDS[r.asset_type]) {
+              const v = (r.details[f.key] ?? '').trim()
+              if (v) details[f.key] = v
+            }
           }
           return {
             asset_type: r.asset_type,
@@ -284,15 +381,12 @@ function EntryForm({
         })
       await saveSnapshotEntries(userId, month, payload)
       bumpNetWorth()
-      // Re-seat the baseline so dirty resets and the screen stays on this month.
       setBaseline({ rows: cloneRows(rows), fxRates: { ...fxRates } })
     } finally {
       setSaving(false)
     }
   }
 
-  // Delete this month's saved snapshot (and its entries, via cascade). Clears the form to an empty
-  // month; the screen stays open so the user can re-enter or navigate away.
   async function removeMonth() {
     if (!initialSnapshotId) return
     setSaving(true)
@@ -308,24 +402,23 @@ function EntryForm({
 
   const inputCls =
     'rounded-input bg-input px-2 py-1.5 text-[15px] text-text-primary focus:outline-none'
-  const groups = groupByType(rows)
 
   return (
     <>
-      {/* Header: month nav + live total + RESET/SAVE */}
+      {/* Header: compact month nav + actions on one line, then NET WORTH total + Import CSV */}
       <header className="shrink-0 border-b border-border bg-bg">
-        <div className="flex items-center justify-center gap-3 px-3 pt-3">
+        <div className="flex items-center gap-1 px-3 pt-2">
           <button
             onClick={() => changeMonth(-1)}
             aria-label="Previous month"
             className="p-1 text-text-secondary"
           >
-            <IconChevronLeft size={22} />
+            <IconChevronLeft size={20} />
           </button>
           <button
             onClick={() => setPickerOpen(true)}
             aria-label="Choose month"
-            className="min-w-36 rounded-input py-1 text-center text-[15px] font-medium text-text-primary"
+            className="rounded-input px-1 py-1 text-center text-[15px] font-medium text-text-primary"
           >
             {formatMonthLabel(month)}
           </button>
@@ -334,18 +427,9 @@ function EntryForm({
             aria-label="Next month"
             className="p-1 text-text-secondary"
           >
-            <IconChevronRight size={22} />
+            <IconChevronRight size={20} />
           </button>
-        </div>
-        <div className="flex items-center justify-between gap-2 px-4 py-2.5">
-          <div>
-            <span className="block text-[11px] uppercase tracking-wide text-text-secondary">
-              Net worth
-            </span>
-            <span className="block text-lg font-semibold text-text-primary">
-              {formatHkd(total)}
-            </span>
-          </div>
+          <div className="flex-1" />
           <EntryHeaderActions
             editing
             dirty={dirty}
@@ -355,176 +439,176 @@ function EntryForm({
             onDelete={initialSnapshotId ? () => void removeMonth() : undefined}
           />
         </div>
+        <div className="flex items-center justify-between gap-2 px-4 py-2">
+          <div>
+            <span className="block text-[11px] uppercase tracking-wide text-text-secondary">
+              Net worth
+            </span>
+            <span className="block text-lg font-semibold text-text-primary">
+              {formatHkd(total)}
+            </span>
+          </div>
+          <button
+            onClick={() => openSheet(`${routes.networth.import}?month=${month}`)}
+            className="flex items-center gap-1 text-sm text-positive"
+          >
+            <IconUpload size={16} /> Import CSV
+          </button>
+        </div>
       </header>
 
       {/* Scrolling body */}
       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4">
-        <button
-          onClick={() => openSheet(`${routes.networth.import}?month=${month}`)}
-          className="flex shrink-0 items-center gap-1 self-end text-sm text-positive"
-        >
-          <IconUpload size={16} /> Import CSV
-        </button>
-
         {/* Exchange rates */}
-        <SectionCard className="shrink-0" title="Exchange rates (HKD 1.0000)">
-          <div className="flex items-stretch gap-2 px-4 py-2.5">
-            {(['CNY', 'USD'] as const).map((ccy) => (
-              <div key={ccy} className="flex flex-1 items-center gap-1.5">
-                <span className="text-[15px] text-text-primary">{ccy}</span>
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  step="any"
-                  min={0}
-                  placeholder="rate"
-                  value={fxRates[ccy]}
-                  onChange={(e) => {
-                    const v = e.target.value
-                    setFxRates((prev) => ({ ...prev, [ccy]: v }))
-                    setFxError((er) => ({ ...er, [ccy]: false }))
-                  }}
-                  className={`w-0 min-w-0 flex-1 text-right ${inputCls}`}
-                />
-                <button
-                  onClick={() => void refreshRate(ccy)}
-                  disabled={fetching === ccy}
-                  aria-label={`Refresh ${ccy} rate`}
-                  className="shrink-0 text-text-secondary disabled:opacity-50"
-                >
-                  <IconRefresh size={16} />
-                </button>
-              </div>
-            ))}
+        <section className="shrink-0">
+          <h2 className="mb-2 px-1 text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
+            Exchange rates{' '}
+            <span className="font-normal normal-case tracking-normal text-text-tertiary">
+              (as of 1st of the month from Frankfurter)
+            </span>
+          </h2>
+          <div className="overflow-hidden rounded-card border border-border bg-surface">
+            <div className="flex items-stretch gap-2 px-4 py-2.5">
+              {(['CNY', 'USD'] as const).map((ccy) => (
+                <div key={ccy} className="flex flex-1 items-center gap-1.5">
+                  <span className="text-[15px] text-text-primary">{ccy}</span>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    step="any"
+                    min={0}
+                    placeholder="rate"
+                    value={fxRates[ccy]}
+                    onChange={(e) => {
+                      const v = e.target.value
+                      setFxRates((prev) => ({ ...prev, [ccy]: v }))
+                      setFxError((er) => ({ ...er, [ccy]: false }))
+                    }}
+                    className={`w-0 min-w-0 flex-1 text-right ${inputCls}`}
+                  />
+                  <button
+                    onClick={() => void refreshRate(ccy)}
+                    disabled={fetching === ccy}
+                    aria-label={`Refresh ${ccy} rate`}
+                    className="shrink-0 text-text-secondary disabled:opacity-50"
+                  >
+                    <IconRefresh size={16} />
+                  </button>
+                </div>
+              ))}
+            </div>
+            {(['CNY', 'USD'] as const).some((c) => fetching === c || fxError[c]) && (
+              <p className="px-4 pb-2 text-xs text-text-tertiary">
+                {(['CNY', 'USD'] as const)
+                  .map((c) =>
+                    fetching === c
+                      ? `${c}: fetching…`
+                      : fxError[c]
+                        ? `${c}: couldn’t fetch — enter manually.`
+                        : null,
+                  )
+                  .filter(Boolean)
+                  .join('  ')}
+              </p>
+            )}
           </div>
-          {(['CNY', 'USD'] as const).some((c) => fetching === c || fxError[c]) && (
-            <p className="px-4 pb-1 text-xs text-text-tertiary">
-              {(['CNY', 'USD'] as const)
-                .map((c) =>
-                  fetching === c
-                    ? `${c}: fetching…`
-                    : fxError[c]
-                      ? `${c}: couldn’t fetch — enter manually.`
-                      : null,
-                )
-                .filter(Boolean)
-                .join('  ')}
-            </p>
-          )}
-          <p className="px-4 py-2 text-xs text-text-tertiary">
-            Native → HKD as of 1st of the month from Frankfurter
-          </p>
-        </SectionCard>
+        </section>
 
-        {rows.length === 0 && (
-          <p className="shrink-0 px-1 text-xs text-text-tertiary">No entries yet</p>
-        )}
-
-        {/* Asset-type groups */}
-        {groups.map(({ type, entries }) => {
+        {/* Asset-type sections (visible, ordered, collapsible) */}
+        {visibleTypes.map((type) => {
+          const entries = rows.filter((r) => r.asset_type === type)
           const subtotal = totalBase(entries.map((r) => ({ value_base: rowBase(r) })))
+          const isOpen = expanded[type] ?? false
+          const isFund = type === 'fund'
+          const isInsurance = type === 'insurance'
+          const isManual = !READONLY_TYPES.has(type)
           return (
             <div
               key={type}
               className="shrink-0 overflow-hidden rounded-card border border-border bg-surface"
             >
-              <div className="flex items-center justify-between gap-3 px-4 py-2.5">
-                <span className="min-w-0 flex-1 text-[15px] font-medium text-text-primary">
+              <div className="flex items-center gap-2 px-3 py-2.5">
+                <button
+                  onClick={() => setExpanded((e) => ({ ...e, [type]: !isOpen }))}
+                  aria-label={isOpen ? 'Collapse' : 'Expand'}
+                  className="text-text-secondary"
+                >
+                  {isOpen ? (
+                    <IconChevronDown size={18} />
+                  ) : (
+                    <IconChevronRight size={18} />
+                  )}
+                </button>
+                <span className="min-w-0 flex-1 truncate text-[15px] font-medium text-text-primary">
                   {ASSET_TYPE_LABELS[type]}
                 </span>
-                <div className="flex shrink-0 items-center gap-3">
-                  {entries.length > 0 && (
-                    <span className="text-sm text-text-secondary">
-                      {formatHkd(subtotal)}
-                    </span>
-                  )}
+                {entries.length > 0 && (
+                  <span className="shrink-0 text-sm text-text-secondary">
+                    {formatHkd(subtotal)}
+                  </span>
+                )}
+                {isManual && (
                   <button
                     onClick={() => addRow(type)}
                     aria-label={`Add ${ASSET_TYPE_LABELS[type]}`}
-                    className="text-positive"
+                    className="shrink-0 text-positive"
                   >
                     <IconPlus size={18} />
                   </button>
-                </div>
+                )}
+                {isFund && (
+                  <button
+                    onClick={() =>
+                      openSheet(`${routes.networth.importFund}?month=${month}`)
+                    }
+                    aria-label="Import funds CSV"
+                    className="shrink-0 text-positive"
+                  >
+                    <IconUpload size={18} />
+                  </button>
+                )}
               </div>
 
-              {entries.length > 0 && (
+              {isOpen && entries.length > 0 && (
                 <div className="border-t border-border">
-                  {entries.map((r) => (
-                    <div
-                      key={r.clientId}
-                      className="border-b border-border p-3 last:border-b-0"
-                    >
-                      <div className="flex items-center gap-2">
-                        <input
-                          value={r.name}
-                          placeholder="Name"
-                          onChange={(e) =>
-                            updateRow(r.clientId, { name: e.target.value })
-                          }
-                          className={`flex-1 ${inputCls}`}
-                        />
-                        <ConfirmDeleteAction
-                          label="Remove entry"
-                          onDelete={() => removeRow(r.clientId)}
-                        />
-                      </div>
-
-                      <div className="mt-2 flex items-center gap-2">
-                        <select
-                          value={r.currency}
-                          onChange={(e) =>
-                            updateRow(r.clientId, {
-                              currency: e.target.value as Currency,
-                            })
-                          }
-                          className={inputCls}
-                        >
-                          {CURRENCIES.map((c) => (
-                            <option key={c} value={c}>
-                              {c}
-                            </option>
-                          ))}
-                        </select>
-                        <input
-                          type="number"
-                          inputMode="decimal"
-                          step="any"
-                          min={0}
-                          placeholder="Value"
-                          value={r.valueNative}
-                          onChange={(e) =>
-                            updateRow(r.clientId, { valueNative: e.target.value })
-                          }
-                          className={`flex-1 text-right ${inputCls}`}
-                        />
-                      </div>
-                      {r.currency !== 'HKD' && (
-                        <p className="mt-1 text-right text-xs text-text-secondary">
-                          = {formatHkd(rowBase(r))}
-                        </p>
-                      )}
-
-                      {DETAIL_FIELDS[type].length > 0 && (
-                        <div className="mt-2 flex flex-col gap-2">
-                          {DETAIL_FIELDS[type].map((f) => (
-                            <div key={f.key} className="flex items-center gap-2">
-                              <span className="w-24 shrink-0 text-xs text-text-secondary">
-                                {f.label}
-                              </span>
-                              <input
-                                value={r.details[f.key] ?? ''}
-                                onChange={(e) =>
-                                  updateDetail(r.clientId, f.key, e.target.value)
-                                }
-                                className={`flex-1 ${inputCls}`}
-                              />
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                  {isManual &&
+                    entries.map((r) => (
+                      <ManualRow
+                        key={r.clientId}
+                        row={r}
+                        inputCls={inputCls}
+                        rowBaseHkd={rowBase(r)}
+                        onChange={(patch) => updateRow(r.clientId, patch)}
+                        onDetail={(k, v) => updateDetail(r.clientId, k, v)}
+                        onRemove={() => removeRow(r.clientId)}
+                      />
+                    ))}
+                  {isFund &&
+                    entries.map((r) => (
+                      <button
+                        key={r.clientId}
+                        onClick={() => setFundModal(r)}
+                        className="flex w-full items-center gap-2 border-b border-border px-3 py-2.5 text-left last:border-b-0 active:bg-input/40"
+                      >
+                        <span className="min-w-0 flex-1 truncate text-[15px] text-text-primary">
+                          {r.name}
+                        </span>
+                        <span className="shrink-0 text-sm text-text-secondary">
+                          {formatHkd(rowBase(r))}
+                        </span>
+                        <span className="w-16 shrink-0 text-right text-xs text-text-tertiary">
+                          {r.details.return_rate ? `${r.details.return_rate}%` : ''}
+                        </span>
+                      </button>
+                    ))}
+                  {isInsurance && (
+                    <InsuranceRows
+                      rows={entries}
+                      month={month}
+                      rowBase={rowBase}
+                      navigate={navigate}
+                    />
+                  )}
                 </div>
               )}
             </div>
@@ -539,6 +623,156 @@ function EntryForm({
           onClose={() => setPickerOpen(false)}
         />
       )}
+
+      {fundModal && (
+        <div className="fixed inset-0 z-50 flex flex-col bg-bg">
+          <header className="flex items-center gap-3 border-b border-border px-4 py-3">
+            <button onClick={() => setFundModal(null)} aria-label="Close">
+              <IconX size={22} className="text-text-secondary" />
+            </button>
+            <h1 className="line-clamp-2 flex-1 text-[17px] font-medium text-text-primary">
+              {fundModal.name}
+            </h1>
+          </header>
+          <div className="flex-1 overflow-y-auto p-4">
+            <FundDetail
+              data={{
+                name: fundModal.name,
+                valueHkd: rowBase(fundModal),
+                details: fundModal.details,
+              }}
+            />
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
+
+// --- Manual (editable) row ---------------------------------------------------------------
+
+function ManualRow({
+  row,
+  inputCls,
+  rowBaseHkd,
+  onChange,
+  onDetail,
+  onRemove,
+}: {
+  row: EntryDraft
+  inputCls: string
+  rowBaseHkd: number
+  onChange: (patch: Partial<EntryDraft>) => void
+  onDetail: (key: string, value: string) => void
+  onRemove: () => void
+}) {
+  return (
+    <div className="border-b border-border p-3 last:border-b-0">
+      <div className="flex items-center gap-2">
+        <input
+          value={row.name}
+          placeholder="Name"
+          onChange={(e) => onChange({ name: e.target.value })}
+          className={`flex-1 ${inputCls}`}
+        />
+        <ConfirmDeleteAction label="Remove entry" onDelete={onRemove} />
+      </div>
+      <div className="mt-2 flex items-center gap-2">
+        <select
+          value={row.currency}
+          onChange={(e) => onChange({ currency: e.target.value as Currency })}
+          className={inputCls}
+        >
+          {CURRENCIES.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
+        <input
+          type="number"
+          inputMode="decimal"
+          step="any"
+          min={0}
+          placeholder="Value"
+          value={row.valueNative}
+          onChange={(e) => onChange({ valueNative: e.target.value })}
+          className={`flex-1 text-right ${inputCls}`}
+        />
+      </div>
+      {row.currency !== 'HKD' && (
+        <p className="mt-1 text-right text-xs text-text-secondary">
+          = {formatHkd(rowBaseHkd)}
+        </p>
+      )}
+      {DETAIL_FIELDS[row.asset_type].length > 0 && (
+        <div className="mt-2 flex flex-col gap-2">
+          {DETAIL_FIELDS[row.asset_type].map((f) => (
+            <div key={f.key} className="flex items-center gap-2">
+              <span className="w-24 shrink-0 text-xs text-text-secondary">{f.label}</span>
+              <input
+                value={row.details[f.key] ?? ''}
+                onChange={(e) => onDetail(f.key, e.target.value)}
+                className={`flex-1 ${inputCls}`}
+              />
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// --- Insurance (read-only) rows, grouped by provider -------------------------------------
+
+function InsuranceRows({
+  rows,
+  month,
+  rowBase,
+  navigate,
+}: {
+  rows: EntryDraft[]
+  month: string
+  rowBase: (r: EntryDraft) => number
+  navigate: ReturnType<typeof useNavigate>
+}) {
+  return (
+    <>
+      {INSURANCE_PROVIDERS.map((provider) => {
+        const group = rows.filter((r) => r.details.provider === provider)
+        if (group.length === 0) return null
+        return (
+          <div key={provider}>
+            <p className="bg-surface-alt px-3 py-1 text-[11px] uppercase tracking-wide text-text-secondary">
+              {INSURANCE_PROVIDER_LABELS[provider]}
+            </p>
+            {group.map((r) => (
+              <button
+                key={r.clientId}
+                onClick={() =>
+                  navigate(
+                    `${routes.networth.policy(r.details.policy_id ?? '')}?month=${month}`,
+                  )
+                }
+                className="flex w-full items-center gap-2 border-b border-border px-3 py-2 text-left last:border-b-0 active:bg-input/40"
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[15px] text-text-primary">
+                    {r.name}
+                  </span>
+                  <span className="block truncate text-xs text-text-secondary">
+                    {r.details.policy_number} · yr {r.details.policy_year}
+                    {r.details.as_of_year ? ` · as of yr ${r.details.as_of_year}` : ''}
+                  </span>
+                </span>
+                <span className="shrink-0 text-sm text-text-secondary">
+                  {formatHkd(rowBase(r))}
+                </span>
+              </button>
+            ))}
+          </div>
+        )
+      })}
     </>
   )
 }

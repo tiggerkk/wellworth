@@ -5,7 +5,7 @@
 ### Dashboard
 
 No screen-title header (opens straight into cards). With no snapshots yet, the shared centered
-**empty state** (see `docs/01-design-system.md` → EmptyState) shows (Monthly Entry icon · "No
+**empty state** (see `docs/01_design_system.md` → EmptyState) shows (Monthly Entry icon · "No
 entries yet" · "+ Monthly Entry").
 
 - Large **current total net worth** in HKD (latest snapshot).
@@ -18,7 +18,7 @@ entries yet" · "+ Monthly Entry").
 
 - Month selector (defaults to the current month; can pick a past month for retrospective entry).
   The `‹ month ›` arrows step one month; **tapping the month label opens a month/year picker**
-  (year stepper over a month grid, OK/Cancel — see `docs/01-design-system.md` → MonthPicker).
+  (year stepper over a month grid, OK/Cancel — see `docs/01_design_system.md` → MonthPicker).
 - On a new month, **pre-fill every entry from the most recent prior snapshot** (copy-forward), then
   re-fetch that month's FX rates and recompute `value_base`. The user edits `value_native` (and
   adds/removes entries) from there.
@@ -30,9 +30,9 @@ entries yet" · "+ Monthly Entry").
   is self-contained).
 - **Exchange rates** panel: title `EXCHANGE RATES (HKD 1.0000)`, **CNY and USD rates on one line**,
   each auto-fetched (with ↻ refetch) and overridable. Native → HKD as of the 1st of the month, via
-  Frankfurter (see `docs/02-tech-spec.md` → Shared external APIs).
+  Frankfurter (see `docs/02_tech_spec.md` → Shared external APIs).
 - **Running total in HKD** updates live as you edit.
-- **RESET** and **SAVE** buttons (icon style — see `docs/01-design-system.md` → EntryHeaderActions).
+- **RESET** and **SAVE** buttons (icon style — see `docs/01_design_system.md` → EntryHeaderActions).
 
 ---
 
@@ -75,7 +75,7 @@ entries yet" · "+ Monthly Entry").
 
 - `id` UUID PK · `user_id` UUID → auth.users
 - `snapshot_id` UUID → networth_snapshot (**ON DELETE CASCADE**)
-- `asset_type` TEXT — `cash | time_deposit | stock | mutual_fund | retirement | insurance | property`
+- `asset_type` TEXT — `cash | time_deposit | stock | fund | retirement | insurance | property`
   (CHECK)
 - `name` TEXT — institution, fund name, address, etc.
 - `currency` TEXT — `'HKD' | 'CNY' | 'USD'`
@@ -110,14 +110,14 @@ entries yet" · "+ Monthly Entry").
 
 ### Asset types (fixed enum, in this order)
 
-`cash, time_deposit, stock, mutual_fund, retirement, insurance, property`
+`cash, time_deposit, stock, fund, retirement, insurance, property`
 
 | Type         | `name` is       | Type-specific `details` (informational) | `value_native` holds |
 | ------------ | --------------- | --------------------------------------- | -------------------- |
 | cash         | institution     | —                                       | balance              |
 | time_deposit | institution     | `maturity_date`                         | principal + interest |
 | stock        | ticker/company  | `ticker`, `shares`                      | total value (manual) |
-| mutual_fund  | fund name       | `units`, `cost` (purchase cost)         | total value (manual) |
+| fund         | fund name       | `units`, `cost` (purchase cost)         | total value (manual) |
 | retirement   | provider        | —                                       | portfolio value      |
 | insurance    | policy label    | `premium`, `policy_year`                | net cash value       |
 | property     | address / label | —                                       | market value         |
@@ -140,3 +140,95 @@ All values are entered manually. `details` are preserved for reference only; the
   - `detail*` columns are optional, type-specific, stored as-is in `details`.
   - The importer asks you for the snapshot month (e.g. `2026-06`) and normalizes it to the **first day** of that month.
   - Full column rules + examples: `templates/networth-import-guide.md`. (Implemented in `src/lib/networth-import.ts` + `src/screens/ImportNetWorthSheet.tsx`.)
+  - The manual importer accepts **only** manual types (`cash, time_deposit, stock, retirement, property`); `fund`/`insurance` rows are rejected (handled by their own pipelines).
+
+---
+
+## Funds, Insurance, Settings & Dashboards (enhancement)
+
+### Bottom-nav tabs
+
+`Dashboard · Monthly Entry · Insurance Policies · New Insurance · Settings` (plus Home).
+
+### Asset types
+
+- `mutual_fund` was **renamed to `fund`** (DB CHECK value, `ASSET_TYPES`, labels/colours/details).
+  Migration `03_networth_schema.sql` edited in place (owner resets).
+
+### Monthly Entry
+
+- **Header**: compact `‹ month ›` with Delete/Reset/Save (`EntryHeaderActions`) to the right of the
+  next-arrow; the **manual Import CSV** sits on the NET WORTH total line.
+- **Exchange rates**: title `EXCHANGE RATES` + small grey `(as of 1st of the month from Frankfurter)`.
+- **Collapsible asset-type sections** (chevron; Diary pattern). Sections with ≥1 entry auto-expand;
+  visibility + order come from `profile.networth_visible_asset_types` / `networth_asset_type_order`.
+- **Copy-forward**: manual types cloned; **fund** cloned as a placeholder (overwritten by import);
+  **insurance** is NOT cloned — it is **re-resolved from the catalogue** at the month's age and
+  **frozen into the snapshot on SAVE**.
+- **Fund section**: read-only rows `Name (truncated) · Total Value (HKD) · Return Rate %`; header has an
+  import icon → Fund CSV importer (overwrites the month's fund rows only); tap a row → Fund detail
+  modal (Units · Avg Unit Cost · NAV/Unit · priced-as-of · Total Cost · P/L · Asset Class · Currency).
+- **Insurance section**: auto-populated, grouped CHUBB→BOC→Manulife, ordered by policy number;
+  surrendered policies excluded from their surrender month onward; rows `Number · Name (truncated) ·
+Policy Year · Premium · Cash Value (native→HKD)` with an "as of yr N" tag when carried; tap → Policy
+  detail (read-only, resolved at the month's age).
+
+### Insurance Policies (browse) + New/Edit Insurance
+
+- **Insurance Policies** (`IconLibrary` tab): search (number/name), filters (Provider, Surrendered
+  only, Past break-even only, Started date range), sort (Start Date / Policy Number / Policy Name /
+  Provider, descending default). Tap → New/Edit Insurance. Mirrors Medical Reports.
+- **New/Edit Insurance** (`IconFileCertificate` tab): header X · title · **Import Policy Schedule** ·
+  Delete/Reset/Create/Save. Body: Provider, Policy Number, Currency (**mandatory**), Policy Name,
+  Start Date, **Notes**; an inline **SURRENDER** section (surrender month + date + proceeds, all
+  mandatory) with an inline-confirm **Un-Surrender**; a **SCHEDULE** section listing versions
+  (selectable; editable `effective_date`; hard-delete with earliest-remaining promotion to Original).
+- **Single-policy import** (local overlay): file must match Provider + Policy Number; Policy Name /
+  Start Date may be overridden; currency + effective date are NOT in the file. Choose **Add new
+  version** or **Replace existing version**; a brand-new policy's first import creates the **Original**.
+
+### Insurance model + resolution (pure helpers in `src/lib/networth.ts`)
+
+- New tables (in `03_networth_schema.sql`): `insurance_policy`, `insurance_schedule` (kind
+  `original|update`, `first_year`, `effective_date`), `insurance_schedule_point` (real values only).
+- **Version identity = the schedule row's id** (not the date); `effective_date` is editable and drives
+  recency. **Resolved** at an age = newest-effective version with `first_year ≤ age`, value at the age
+  or nearest earlier real point ("as of yr N"). **Original** (`kind: original`) is the variance
+  baseline. `age = entry_year − birth_year` (birth year from `profile.birthday`, default 1974).
+- Helpers: `resolvePolicyAtAge`, `originalCashValueAtAge`, `varianceAtAge`, `breakEven`,
+  `surrenderGainPctPerYear`, `buildResolvedSeries`, `ageForYear`.
+
+### Settings (`IconSettings` tab)
+
+- **DISPLAY → Visible Asset Types** → reorder/visibility sheet (mirrors Visible Modules; ≥1 visible).
+- **IMPORT → Enable Bulk Insurance Import** toggle (`networth_bulk_insurance_import_enabled`) →
+  `Import CSV Insurance` (one-time bulk seed). Manual / fund / single-policy imports are always enabled.
+
+### Imports
+
+- **Manual** (`src/lib/networth-import.ts`): manual types only (`fund`/`insurance` rejected).
+  `saveManualImportComplete` (`src/data/asset-entry.ts`) writes a **complete** snapshot — imported
+  manual rows + the month's funds (kept, else carried forward) + insurance (kept if frozen, else
+  resolved + frozen now) — so a manual import never drops funds/insurance and the Dashboard total is
+  complete without a separate Monthly Entry SAVE. Re-importing keeps already-frozen fund/insurance.
+- **Fund** (`src/lib/fund-import.ts`): JPM "My Portfolio" CSV — strips `HKD `/`USD ` + commas; splits
+  the NAV cell `HKD 16.43(2026/06/25)` (optional space + embedded newline) into NAV + as-of date;
+  Total Value is HKD (no FX); base currency kept in `details`. Stops at the blank row + footer.
+- **Insurance bulk** (`src/lib/insurance-import.ts`): wide sheet, 4-col blocks from col B, provider
+  carried forward, blocks without a policy number skipped, trailing total columns dropped; confirms
+  per-provider currency (default CHUBB/BOC = USD, Manulife = HKD).
+- **Insurance single**: narrow key/value header (Provider, Policy Number, optional Policy Name / Start
+  Date) + the `Age, Policy Year, Total Premium Paid, Cash Value, Surrender Gain %/Yr` table (Surrender
+  Gain ignored).
+
+### Dashboards
+
+- **Fund Performance** (latest month: Total Value + Return %) and the existing **By-type** trend
+  (the fund value trend). **Insurance** aggregate card: current Cash Value vs Premiums (HKD) +
+  past-break-even count + a lazy **Cash Value vs Total Premiums by age** chart (break-even marked).
+  Per-fund / per-policy detail is the drill-in (`networth/fund/:id`, `networth/policy/:id`).
+
+### New `profile` columns (`04_networth_profile_settings.sql`)
+
+`networth_visible_asset_types text[]` (NULL = all) · `networth_asset_type_order text[]` (NULL =
+canonical) · `networth_bulk_insurance_import_enabled boolean NOT NULL DEFAULT true`.

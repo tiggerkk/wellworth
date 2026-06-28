@@ -3,17 +3,17 @@
 Chronological engineering history: the per-milestone build sequence and the dated enhancement passes, with the rationale behind key decisions.
 
 - **Read this only when explicitly asked** to do a major refactor or regression analysis on an older module. It is **not** part of the per-session context.
-- **Not a behavior spec.** The source of truth for behavior/data is `00-PRD.md`, `01-design-system.md`, `02-tech-spec.md`, `03-global.md`, and the module specs `04-wellness.md … 10-travel.md`.
+- **Not a behavior spec.** The source of truth for behavior/data is `00_PRD.md`, `01_design_system.md`, `02_tech_spec.md`, `03_global.md`, and the module specs `04_wellness.md … 10_travel.md`.
 - **Durable constraints + "don't repeat" lessons live in those spec docs now** — this file keeps only one-line pointers (see [Failures & gotchas](#failures--gotchas-to-not-repeat)).
 
 ## Old doc-name legend
 
 Older entries cite a previous doc-naming scheme that has since been renumbered:
 
-- `01-screens.md` → module specs `04-wellness.md … 10-travel.md` + `03-global.md` (screen behavior).
-- `03-data-model.md` → each module spec's "Data model" section + `02-tech-spec.md` "Database conventions".
-- `04-design-system.md` → `01-design-system.md`.
-- `05-seed-data.md` → each module spec's "Seed data" section + `04-wellness.md`.
+- `01-screens.md` → module specs `04_wellness.md … 10_travel.md` + `03_global.md` (screen behavior).
+- `03-data-model.md` → each module spec's "Data model" section + `02_tech_spec.md` "Database conventions".
+- `04-design-system.md` → `01_design_system.md`.
+- `05-seed-data.md` → each module spec's "Seed data" section + `04_wellness.md`.
 
 ## Module status
 
@@ -33,9 +33,9 @@ Each module's former staging spec (`docs/06-books.md`, `07-quotes.md`, `medical.
 
 ## Snapshot
 
-- **Tests:** 507 Vitest tests (pure helpers only).
+- **Tests:** 527 Vitest tests (pure helpers only).
 - **Deploy:** Deployed — GitHub `main` → Vercel auto-deploy; installed + tested on iPhone (PWA).
-- **Stack / scripts / env / gates / conventions:** see `02-tech-spec.md` (the canonical, current reference) — not duplicated here.
+- **Stack / scripts / env / gates / conventions:** see `02_tech_spec.md` (the canonical, current reference) — not duplicated here.
 
 ---
 
@@ -69,7 +69,7 @@ Goal: Google sign-in, session-gated 4-tab shell, first-login owner data.
 Goal: the computational + data foundation; no UI; 29 tests.
 
 - **Built:** `src/lib/{energy,met,nutrients,dri,targets}.ts` and `src/data/*` repos for all 7 tables.
-- **Rationale & key decisions** (all now in `02-tech-spec.md`): DRI is a sex/age-band lookup populated only for the owner's band (female 51–70) and throws otherwise; upper limits are **scope-tagged** so supplement-only ULs never fire a red bar on dietary intake; fat/saturated/added-sugars get energy-derived soft targets; protein honors the profile override.
+- **Rationale & key decisions** (all now in `02_tech_spec.md`): DRI is a sex/age-band lookup populated only for the owner's band (female 51–70) and throws otherwise; upper limits are **scope-tagged** so supplement-only ULs never fire a red bar on dietary intake; fat/saturated/added-sugars get energy-derived soft targets; protein honors the profile override.
 
 ### M5 — Diary + Add Food/Activity logging (`094a401`, `27e4b89`)
 
@@ -132,7 +132,7 @@ engineering decisions:
 - **Schema:** added `activity.default_duration_min` (prefills the Activity Log duration). Then
   **consolidated migrations** — folded the API-role grants (old F1 migration) _and_ the new column
   into `01_wellness_schema.sql`, so the tree is just `wellness_schema` + `wellness_seed_nutrient`. The live
-  DB was reconciled with `supabase db reset --linked` (documented in `OWNER-RUNBOOK.md` Part M). Editing
+  DB was reconciled with `supabase db reset --linked` (documented in `OWNER_RUNBOOK.md` Part M). Editing
   already-applied migrations is only OK because this is a solo pre-/early-prod DB that can be reset.
 - **URL-as-state pattern:** the viewed Diary **day**, the Add Food **tab/search**, and the Library
   **tab** now live in `useSearchParams` (written with `{replace:true}`), not component state — so they
@@ -218,7 +218,7 @@ the running Wellness app.
   — idempotent per month. Built in a later Net Worth milestone.
 - **Navigation grows into a Home hub** (owner's decision): instead of a two-way Wellness⇄Net Worth
   switch, a top-level Home hub of module cards, Wellness moved under `/wellness/*`, Settings lifted to
-  the global level, last-used-module reopen. Built in the next milestone (M2). `00-PRD.md` carries the
+  the global level, last-used-module reopen. Built in the next milestone (M2). `00_PRD.md` carries the
   navigation model.
 
 ### M2 — Home hub + module routing refactor
@@ -353,8 +353,8 @@ Cross-module consistency pass after the Net Worth build:
 
 ## Shows Build Sequence (per milestone)
 
-- The **Shows module** (TV shows + movies) is specced in `docs/06-shows.md` (a staging doc whose sections merge into the permanent specs as each feature lands). It drops into the multi-module architecture with no structural change.
-- Two **owner decisions deviate from `06-shows.md`** and are carried in the permanent docs as built:
+- The **Shows module** (TV shows + movies) is specced in `docs/06_shows.md` (a staging doc whose sections merge into the permanent specs as each feature lands). It drops into the multi-module architecture with no structural change.
+- Two **owner decisions deviate from `06_shows.md`** and are carried in the permanent docs as built:
   - (1) the back-catalogue importer is **in-app, not a CLI script** (same reversal as Net Worth — an in-app preview table lets the owner fix no-match/ambiguous TMDB rows inline);
   - (2) a **Shows Settings** screen (`/shows/settings`) adds Entry/Edit **field-visibility** + an **importer enable/disable** toggle, with both prefs synced on `profile`.
 
@@ -362,7 +362,7 @@ Cross-module consistency pass after the Net Worth build:
 
 Goal: a runnable, navigable Shows module behind a hub card, before any data layer or external API.
 
-- **Schema:** `04_shows_schema.sql` — one `show` table (own `user_id` for direct RLS like
+- **Schema:** `05_shows_schema.sql` — one `show` table (own `user_id` for direct RLS like
   `asset_entry`; CHECKs on `type`/`status`/`lgbtq_rep` and `rating` 0–5 in 0.5 steps via
   `(rating*2)=floor(rating*2)`; `index (user_id, status)`; 4 owner policies; `moddatetime`; explicit
   grants). `cast` is a SQL reserved word → declared as `"cast"`; the M2 data layer will map it to a
@@ -374,7 +374,7 @@ Goal: a runnable, navigable Shows module behind a hub card, before any data laye
   `AppShell.TAB_FOR_PATH`. `Home` + `moduleForPath` need no change.
 - **Stub screens:** `ShowsDashboard` / `ShowsLibrary` / `ShowsEntry` — navigable empty states (the
   real shelves, list/filters/sort, and the Entry form arrive in M2–M5). Exported from `screens/index`.
-- Verified by `npm run typecheck` + manual click-through; the data-model section of `06-shows.md` was
+- Verified by `npm run typecheck` + manual click-through; the data-model section of `06_shows.md` was
   merged into `03-data-model.md` and the PRD module list / nav / non-goals updated.
 
 ### M2 — Data layer + manual Entry/Edit + basic Library
@@ -471,7 +471,7 @@ Goal: the full Library — poster rows + a filter panel + a Sort menu, search ov
 Goal: a Shows Settings screen (the Wellness Settings split, mirrored) for Entry field-visibility + an
 importer-enable toggle, both synced on `profile`.
 
-- **Migration** `05_shows_profile_settings.sql`: adds `profile.show_visible_fields text[]`
+- **Migration** `06_shows_profile_settings.sql`: adds `profile.show_visible_fields text[]`
   (**nullable — NULL = all visible**, default-on, no seeding) + `show_importer_enabled boolean default
 false`. Additive columns on an existing table → RLS/grants/`moddatetime` already cover them. Owner
   `db push` + `gen:types`.
@@ -516,7 +516,7 @@ type)` once → `dedupKey → id` map → update-or-insert (collapsing in-file d
 Goal: track Chinese-language content — esp. Chinese documentaries / CCTV series TMDB often lacks or only carries under Chinese titles.
 
 - Four owner decisions taken before building (see `06-shows-enhancement.md`'s ambiguities):
-  - **(1)** edit the original `04_shows_schema.sql` + recreate the table (the DB held no live data) rather than ship an additive migration;
+  - **(1)** edit the original `05_shows_schema.sql` + recreate the table (the DB held no live data) rather than ship an additive migration;
   - **(2)** **remove** the dormant `content_rating` column outright (it was fetched/displayed nowhere);
   - **(3)** Library handles `master_series` with a **filter only** (no grouped headers);
   - **(4)** documentary uses the **`/tv`** endpoint by default.
@@ -560,7 +560,7 @@ Goal: track Chinese-language content — esp. Chinese documentaries / CCTV serie
 
 Goal: a runnable, navigable Books module behind a hub card, before any data layer or external API.
 
-- **Schema:** `06_books_schema.sql` — one `book` table (own `user_id` for direct RLS like
+- **Schema:** `07_books_schema.sql` — one `book` table (own `user_id` for direct RLS like
   `show`; CHECKs on `status`/`lgbtq_rep` and `rating` 0–5 in 0.5 steps via
   `(rating*2)=floor(rating*2)`; `index (user_id, status)`; 4 owner policies; `moddatetime`; explicit
   grants). Unlike Shows' `poster_path`, `cover_url` stores a **full image URL** (Google Books / Open
@@ -682,7 +682,7 @@ Goal: the full Library — cover rows + a filter panel + a Sort menu, search ove
 Goal: a Books Settings screen (the Wellness/Shows Settings split, mirrored) for Entry field-visibility +
 an importer-enable toggle, both synced on `profile`.
 
-- **Migration** `07_books_profile_settings.sql`: adds `profile.book_visible_fields text[]`
+- **Migration** `08_books_profile_settings.sql`: adds `profile.book_visible_fields text[]`
   (**nullable — NULL = all visible**, default-on, no seeding) + `book_importer_enabled boolean default
 false`. Additive columns on an existing table → RLS/grants/`moddatetime` already cover them. Owner
   `db push` + `gen:types`.
@@ -744,7 +744,7 @@ authors)` once → `dedupKey(title, authors[0])` map → update-or-insert (colla
 
 ## Quotes Build Sequence (per milestone)
 
-- The **Quotes module** (favourite quotes from TV/film/books/podcasts/articles/videos/songs, English or Chinese) is specced in `docs/07-quotes.md` (a staging doc whose sections merge into the permanent specs as each milestone lands, then it is deleted — same lifecycle as `06-shows.md`/`06-books.md`). It drops into the multi-module architecture with no structural change.
+- The **Quotes module** (favourite quotes from TV/film/books/podcasts/articles/videos/songs, English or Chinese) is specced in `docs/07-quotes.md` (a staging doc whose sections merge into the permanent specs as each milestone lands, then it is deleted — same lifecycle as `06_shows.md`/`06-books.md`). It drops into the multi-module architecture with no structural change.
 - Structurally it is **Books/Shows re-skinned** with three genuinely new pieces landing in later milestones: a cross-module **Show/Book linker** (local search — there is **no external metadata API**; "Discover Quotes" external fetch is out of scope), a **tags input + tag facet**, and the **Moment-of-Zen** randomiser.
 - **Owner decisions** carried as built:
   - (1) Show-link auto-fill leaves **Author empty** (the seed uses the speaker/character as `author`); a Book link still fills Author from `book.authors`.
@@ -761,7 +761,7 @@ Goal: a runnable, navigable Quotes module behind a hub card, before any data lay
   and not yet ignored** (a `git add .` would have committed private data). Added the Quotes block
   (`quotes-import*.csv` + `quotes-seed-local.csv` + `!templates/quotes-import-template.csv`) **before**
   any staging; verified `git check-ignore` now reports the seed file ignored.
-- **Schema:** `08_quotes_schema.sql` — one `quote` table (own `user_id` for direct RLS like
+- **Schema:** `09_quotes_schema.sql` — one `quote` table (own `user_id` for direct RLS like
   `book`; CHECKs on `source_type`/`category`/`language`; generated `text_norm = lower(btrim(text))` STORED
   backing `UNIQUE(user_id, text_norm)` for "no exact duplicates" + import idempotency; indexes
   `(user_id, category)` + `(user_id, is_favorite)`; FKs `show_id`/`book_id` → show/book **ON DELETE SET
@@ -907,7 +907,7 @@ facets. No schema/data-layer change.
 Goal: a Quotes Settings screen (the Wellness/Shows/Books Settings split, mirrored) for Entry
 field-visibility + an importer-enable toggle, both synced on `profile`.
 
-- **Migration** `09_quotes_profile_settings.sql`: adds `profile.quote_visible_fields text[]`
+- **Migration** `10_quotes_profile_settings.sql`: adds `profile.quote_visible_fields text[]`
   (**nullable — NULL = all visible**, default-on, no seeding) + `quote_importer_enabled boolean default
 false`. Additive columns on an existing table → RLS/grants/`moddatetime` already cover them. Owner
   `db push` + `gen:types`.
@@ -973,13 +973,13 @@ migration, no env.
 
 Goal: the three tables, the seeded reference list, and a navigable module behind the Home hub.
 
-- **Migrations:** `10_medical_schema.sql` (three tables — `medical_lab_test` reference
+- **Migrations:** `11_medical_schema.sql` (three tables — `medical_lab_test` reference
   [read-only to clients: single permissive SELECT policy + `grant select` only],
   `medical_report`, `medical_result` — RLS + 4 owner policies each on the user-owned tables, 18-value
   `category` CHECK, `moddatetime`, grants; `medical_result` cascades on report delete and carries the
   unit-normalization columns `normalized`/`value_num_original`/`unit_original`);
-  `12_medical_profile_settings.sql` (nine `medical_*` profile columns incl. the lock +
-  `medical_lock_timeout_minutes`); `11_medical_seed_lab_test.sql` (~150 tests, idempotent
+  `13_medical_profile_settings.sql` (nine `medical_*` profile columns incl. the lock +
+  `medical_lock_timeout_minutes`); `12_medical_seed_lab_test.sql` (~150 tests, idempotent
   `ON CONFLICT (key) DO UPDATE`).
 - **Source of truth + drift guard:** the seed mirrors `src/lib/medical.ts` `MEDICAL_LAB_TESTS`;
   `src/lib/medical.test.ts` reads the seed `.sql` via a `?raw` import (declared by `vite/client`, so no
@@ -1176,26 +1176,26 @@ already rendered on the form + detail since M2.) **No migration** — the six ke
 
 The actionable rules now live in the spec docs (read those every session); this list keeps the `F#` anchors plus a one-line pointer. The narratives that produced each rule are in the milestone/enhancement sections above.
 
-- **F1** — RLS without table GRANTs → `42501 permission denied`; every migration must also grant to the API roles, and don't loosen RLS to "fix" it. → `02-tech-spec.md` (Database conventions).
-- **F2** — USDA `/foods/search` must POST, not GET (400 on `dataType`). → `04-wellness.md` (External APIs).
-- **F3** — pin `@zxing/library@0.22` to match `@zxing/browser@0.2`'s peer range. → `02-tech-spec.md` (Stack).
-- **F4** — `useAsync(fn)` takes one `useCallback`-stable `fn`, no `deps` array. → `02-tech-spec.md` (Data flow).
-- **F5** — type-check with `npm run typecheck`; a bare `tsc --noEmit` checks nothing (root tsconfig is references-only). → `02-tech-spec.md` (Quality gates).
-- **F6** — Add-Food search: separate whole-food vs Branded POST searches; stem-wildcard the last word; exact + leading-prefix share the top score tier; plain-block scroll pane. → `04-wellness.md` (External APIs) + `01-design-system.md` (Layout gotchas).
-- **F7** — gitignore private data before the first `git add`; sanitize tracked templates (and example numbers in docs). → `02-tech-spec.md` (Database conventions / security).
-- **F8** — `useAsync` keeps stale `data` during a refetch: gate on `!loading` only when the loaded subject's identity changes (and key by it). → `02-tech-spec.md` (Data flow).
-- **F9** — a flex-col scroll pane needs `min-h-0` on itself + `shrink-0` on its children; don't use a fixed pixel height. → `01-design-system.md` (Layout gotchas).
-- **F10** — annotate WebCrypto/WebAuthn byte helpers as `Uint8Array<ArrayBuffer>` under TS 6. → `02-tech-spec.md` (Stack / TypeScript).
-- **F11** — `lazyWithReload` wraps every `React.lazy` (a one-time reload recovers a stale hashed chunk after a deploy). → `02-tech-spec.md` (Stack, lazy loading).
-- **F12** — `parseOAuthError` surfaces `signup_disabled` after a `db reset --linked` wipes `auth.users` with sign-ups off; check the redirect `?error=` + the Supabase sign-up toggle. → `02-tech-spec.md` (Auth & first-run).
-- **F13** — don't gate a child holding unsaved local state on `!loading` (it unmounts on every refetch); render once `data` exists. The inverse of F8. → `02-tech-spec.md` (Data flow).
-- **F14** — DOM overlays over a Leaflet map need a `z-index` above Leaflet's controls (`z-index:1000`; use `z-[1100]`). → `10-travel.md` (Visual design) + `01-design-system.md` (Layout gotchas).
-- **F15a** — opencc-js (~1.12MB) is lazy-loaded + excluded from the PWA precache; local Chinese filters use the tiny sync `foldZh` fold map, never opencc. → `02-tech-spec.md` (Chinese search).
-- **F15b** — never seed body metrics to a non-owner (`MEMBER_PROFILE_SEED`); a profile/onboarding gate reads `data`, not `loading`. → `03-global.md` (Profile seeds).
-- **F16a** — bulk DB writes go in one batched `.insert`/`.upsert` (chunked), never a per-row `await` loop (the Shows CSV importer was N round-trips on IMPORT); pass `{ defaultToNull: false }` when batched rows have non-uniform keys over a `NOT NULL DEFAULT` column. → `02-tech-spec.md` (Data flow).
-- **F16b** — prefer optimistic local state over a module refresh-version bump (`bumpTravel`) on every mutation; mutate locally + persist in the background, bump only on a write error. Re-seed via the adjust-state-during-render pattern, not `setState`-in-effect. → `02-tech-spec.md` (Data flow) + `10-travel.md` (Itinerary).
-- **F17** — surface caught errors with `errorMessage(e, fallback)` (`src/lib/errors.ts`), not `e instanceof Error ? e.message : …`; the `data/*` layer rethrows the raw Supabase error object, which is not an `Error` instance, so `instanceof` hides the real cause (the `message`/`code`/`hint`). → `02-tech-spec.md` (Data flow).
-- **F18** — aggregate an unbounded child collection in a `security_invoker` DB view (RLS still applies; needs `grant select`), not by fetching every child row and reducing client-side. Instances: `networth_monthly_type_total` (sum), `medical_latest_result` (DISTINCT ON latest). → `02-tech-spec.md` (Database conventions).
+- **F1** — RLS without table GRANTs → `42501 permission denied`; every migration must also grant to the API roles, and don't loosen RLS to "fix" it. → `02_tech_spec.md` (Database conventions).
+- **F2** — USDA `/foods/search` must POST, not GET (400 on `dataType`). → `04_wellness.md` (External APIs).
+- **F3** — pin `@zxing/library@0.22` to match `@zxing/browser@0.2`'s peer range. → `02_tech_spec.md` (Stack).
+- **F4** — `useAsync(fn)` takes one `useCallback`-stable `fn`, no `deps` array. → `02_tech_spec.md` (Data flow).
+- **F5** — type-check with `npm run typecheck`; a bare `tsc --noEmit` checks nothing (root tsconfig is references-only). → `02_tech_spec.md` (Quality gates).
+- **F6** — Add-Food search: separate whole-food vs Branded POST searches; stem-wildcard the last word; exact + leading-prefix share the top score tier; plain-block scroll pane. → `04_wellness.md` (External APIs) + `01_design_system.md` (Layout gotchas).
+- **F7** — gitignore private data before the first `git add`; sanitize tracked templates (and example numbers in docs). → `02_tech_spec.md` (Database conventions / security).
+- **F8** — `useAsync` keeps stale `data` during a refetch: gate on `!loading` only when the loaded subject's identity changes (and key by it). → `02_tech_spec.md` (Data flow).
+- **F9** — a flex-col scroll pane needs `min-h-0` on itself + `shrink-0` on its children; don't use a fixed pixel height. → `01_design_system.md` (Layout gotchas).
+- **F10** — annotate WebCrypto/WebAuthn byte helpers as `Uint8Array<ArrayBuffer>` under TS 6. → `02_tech_spec.md` (Stack / TypeScript).
+- **F11** — `lazyWithReload` wraps every `React.lazy` (a one-time reload recovers a stale hashed chunk after a deploy). → `02_tech_spec.md` (Stack, lazy loading).
+- **F12** — `parseOAuthError` surfaces `signup_disabled` after a `db reset --linked` wipes `auth.users` with sign-ups off; check the redirect `?error=` + the Supabase sign-up toggle. → `02_tech_spec.md` (Auth & first-run).
+- **F13** — don't gate a child holding unsaved local state on `!loading` (it unmounts on every refetch); render once `data` exists. The inverse of F8. → `02_tech_spec.md` (Data flow).
+- **F14** — DOM overlays over a Leaflet map need a `z-index` above Leaflet's controls (`z-index:1000`; use `z-[1100]`). → `10_travel.md` (Visual design) + `01_design_system.md` (Layout gotchas).
+- **F15a** — opencc-js (~1.12MB) is lazy-loaded + excluded from the PWA precache; local Chinese filters use the tiny sync `foldZh` fold map, never opencc. → `02_tech_spec.md` (Chinese search).
+- **F15b** — never seed body metrics to a non-owner (`MEMBER_PROFILE_SEED`); a profile/onboarding gate reads `data`, not `loading`. → `03_global.md` (Profile seeds).
+- **F16a** — bulk DB writes go in one batched `.insert`/`.upsert` (chunked), never a per-row `await` loop (the Shows CSV importer was N round-trips on IMPORT); pass `{ defaultToNull: false }` when batched rows have non-uniform keys over a `NOT NULL DEFAULT` column. → `02_tech_spec.md` (Data flow).
+- **F16b** — prefer optimistic local state over a module refresh-version bump (`bumpTravel`) on every mutation; mutate locally + persist in the background, bump only on a write error. Re-seed via the adjust-state-during-render pattern, not `setState`-in-effect. → `02_tech_spec.md` (Data flow) + `10_travel.md` (Itinerary).
+- **F17** — surface caught errors with `errorMessage(e, fallback)` (`src/lib/errors.ts`), not `e instanceof Error ? e.message : …`; the `data/*` layer rethrows the raw Supabase error object, which is not an `Error` instance, so `instanceof` hides the real cause (the `message`/`code`/`hint`). → `02_tech_spec.md` (Data flow).
+- **F18** — aggregate an unbounded child collection in a `security_invoker` DB view (RLS still applies; needs `grant select`), not by fetching every child row and reducing client-side. Instances: `networth_monthly_type_total` (sum), `medical_latest_result` (DISTINCT ON latest). → `02_tech_spec.md` (Database conventions).
 
 ## Shows / Books / global enhancement (favourites, Esc, master-series removal)
 
@@ -1205,7 +1205,7 @@ additive ones — see `memory/db-migration-workflow.md`). 242 → **249** Vitest
 
 - **Removed `master_series` from Shows.** The documentary sub-series text now lives in the **title**
   itself (owner folds it in, e.g. `国宝档案 — 从东晋到北魏`). Dropped the column + its `(user_id,
-master_series)` index from `04_shows_schema.sql`; removed `masterSeriesOptions`, the
+master_series)` index from `05_shows_schema.sql`; removed `masterSeriesOptions`, the
   `masterSeries` `LibraryCriteria` filter, the Entry field, the Library filter, the Dashboard/Library/
   importer eyebrow, and the `?master_series=` prefill param. `dedupKey` is now **title-only**
   (`saveImportedShows` selects just `id, title`). Existing master_series values were **not** migrated
@@ -1269,7 +1269,7 @@ No tests asserted on these headers/nav, so none needed updating.
 Google OAuth + Supabase mint a session for **any** Google account once the consent screen is
 published and sign-ups are enabled; RLS isolates each user's rows, but a stranger could still create
 their own account on the project and consume its quota. Added an **optional** email allowlist as a
-convenience layer (the real locks are dashboard-side — see `OWNER-RUNBOOK.md` Part H3):
+convenience layer (the real locks are dashboard-side — see `OWNER_RUNBOOK.md` Part H3):
 
 - **`src/lib/access.ts`** — pure `parseAllowlist` + `isEmailAllowed` (comma/whitespace-split,
   case-insensitive) and `ALLOWED_EMAILS = parseAllowlist(import.meta.env.VITE_ALLOWED_EMAILS)`. An
@@ -1281,7 +1281,7 @@ convenience layer (the real locks are dashboard-side — see `OWNER-RUNBOOK.md` 
   Login↔RequireAuth redirect loop — Login's `session ⇒ Navigate('/')` never sees a denied session.
   `Login.tsx` renders "… isn't authorized to use this app." from `deniedEmail`.
 - **Build-time var** (`VITE_`), so it's baked into the bundle — changing it needs a redeploy / dev
-  restart. Documented in `.env.example`, `OWNER-RUNBOOK.md` (Parts D/H3/K + quick-ref), and the
+  restart. Documented in `.env.example`, `OWNER_RUNBOOK.md` (Parts D/H3/K + quick-ref), and the
   `CLAUDE.md` Security section. Typed in `src/vite-env.d.ts`.
 
 ## Shows row secondary-text scheme (Dashboard vs Library)
@@ -1337,9 +1337,9 @@ convenience layer (the real locks are dashboard-side — see `OWNER-RUNBOOK.md` 
 - Chose **profile JSONB config + stable text key on the row** over dedicated tables (consistent with the Medical/Shows/Books precedent of additive `profile` columns; zero data migration since `quote.source_type`/`category` already hold the keys). 329 → **348**.
 
 - **Schema (existing migrations edited in place; DB reset workflow)**: dropped the `source_type` /
-  `category` CHECK constraints on `quote` (`08_quotes_schema.sql`); added
+  `category` CHECK constraints on `quote` (`09_quotes_schema.sql`); added
   `quote_source_types jsonb` + `quote_categories jsonb` to `profile`
-  (`09_quotes_profile_settings.sql`). NULL ⇒ canonical seed defaults (no per-user seeding /
+  (`10_quotes_profile_settings.sql`). NULL ⇒ canonical seed defaults (no per-user seeding /
   backfill). Regenerated `src/types/database.ts` (both surface as `Json | null`).
 - **New seed order + value**: Source Types now Book, Podcast, TV Show, Movie, **Interview** (new),
   Article, Song, Video; Categories Wit, Observation, Philosophy, Love, Relationship, Growth (in
@@ -1415,7 +1415,7 @@ convenience layer (the real locks are dashboard-side — see `OWNER-RUNBOOK.md` 
 
 Goal: stand up the Travel data layer + shared vocabulary (no UI yet).
 
-- **Migrations:** `13_travel_schema.sql` (5 user-owned tables — `trip`, `trip_day`, `stop`, `trip_expense`, `remembered_city` — each with `user_id`, four `(select auth.uid()) = user_id` RLS policies, CHECK enums, `moddatetime`, indexes, and API-role GRANTs; hard delete cascades trip → day → stop and trip → expense) + `14_travel_profile_settings.sql` (`profile.travel_expense_categories` JSONB).
+- **Migrations:** `14_travel_schema.sql` (5 user-owned tables — `trip`, `trip_day`, `stop`, `trip_expense`, `remembered_city` — each with `user_id`, four `(select auth.uid()) = user_id` RLS policies, CHECK enums, `moddatetime`, indexes, and API-role GRANTs; hard delete cascades trip → day → stop and trip → expense) + `15_travel_profile_settings.sql` (`profile.travel_expense_categories` JSONB).
 - **Code:** `src/constants/travel.ts` (enums + labels, the `TRAVEL_EXPENSE_CATEGORIES` seed, and the 34-entry `CHINA_PROVINCES`) and `src/lib/travel-config.ts` (the category list helpers).
 - **Tests:** `travel-config.test.ts` + `travel.test.ts`.
 
@@ -1713,7 +1713,7 @@ A second round of small follow-ups (same session, UI-only):
 - **Medical Settings** — section **"Report Form" → "Entry Form"**, toggle **"Enable Structured Import"
   → "Enable JSON / CSV Import"**, and the **Security** section moved to **last**.
 - **Travel visible-fields (new).** Schema change: `profile.travel_visible_fields text[]` added to the
-  **existing** `14_travel_profile_settings.sql` (edited in place per the DB-reset workflow)
+  **existing** `15_travel_profile_settings.sql` (edited in place per the DB-reset workflow)
   and to `src/types/database.ts` (owner applies via `supabase db reset --linked`). `src/lib/travel.ts`
   gained `TRIP_ENTRY_FIELDS` (rating, cover_url, companions, **track_reimbursement** — owner chose to
   make it hideable — notes) + `isFieldVisible`; new route `travel/settings/visible`, `TravelFieldsSheet`,
@@ -1732,13 +1732,13 @@ Two unrelated cosmetic/housekeeping changes; no schema or behaviour change.
 - **Migrations renamed `NN_<module>_<name>.sql`** (owner request) — the 14-digit timestamp prefix was
   replaced with a two-digit global ordinal that preserves the original apply order, and the descriptive
   part now leads with the module (`20260613120000_init_schema.sql` → `01_wellness_schema.sql`,
-  `20260617130000_profile_show_settings.sql` → `05_shows_profile_settings.sql`,
-  `20260622121000_seed_medical_lab_test.sql` → `11_medical_seed_lab_test.sql`, …). Done with `git mv`
+  `20260617130000_profile_show_settings.sql` → `06_shows_profile_settings.sql`,
+  `20260622121000_seed_medical_lab_test.sql` → `12_medical_seed_lab_test.sql`, …). Done with `git mv`
   (history preserved). The ordinal is required: pure module-first names sort alphabetically and would run
   e.g. `books_profile_settings` before `wellness_schema` (which creates `profile`), breaking the reset.
   All references updated — the `src/lib/medical.test.ts` `?raw` seed import, the `src/lib/medical.ts`
   comment, the cross-referencing comments inside the SQL files, and every doc (`CLAUDE.md`,
-  `03-data-model.md`, `05-seed-data.md`, `OWNER-RUNBOOK.md`, this log). Renumbering changes each
+  `03-data-model.md`, `05-seed-data.md`, `OWNER_RUNBOOK.md`, this log). Renumbering changes each
   migration's **version**, so it reconciles only via `supabase db reset --linked` (a `db push` can't) —
   already the owner's workflow. The historical `…_grant_api_roles.sql` mention (a long-merged, deleted
   file) is left as-is.
@@ -1819,7 +1819,7 @@ Goal: let a few family members each use the app with their own Google account an
   `DYNASTIES[0]`) — owner's choice: new Chinese titles default to `全部`. Sort places it first (its
   index-0 position), ahead of 近代.
 - **Schema (existing migrations edited in place; DB reset workflow)**: added `'全部'` to the `dynasty`
-  CHECK in `04_shows_schema.sql` + `06_books_schema.sql`. `database.ts` **not** regenerated — the CHECK
+  CHECK in `05_shows_schema.sql` + `07_books_schema.sql`. `database.ts` **not** regenerated — the CHECK
   column already surfaces as plain `string`.
 - The Library filter keeps **`Any Dynasty`** (the `'all'` no-filter sentinel) as a distinct option;
   `全部` appears below it as a real stored value (English "Any Dynasty" vs. the Chinese tag — no clash).
@@ -1839,7 +1839,7 @@ Goal: let a few family members each use the app with their own Google account an
   - **(1)** Dropped the `last_update_date` column from `show` + `book` — it was a UI-only date (defaulted to today, editable) whose sole job was a fallback behind `end_date` in the Library Date sort + row display; the automatic `updated_at` already covers "row last touched".
   - **(2)** The three CSV importers now carry **real dates** so back-catalogue rows sort correctly and populate the "Recently Watched/Read" shelves.
 
-- **Schema:** removed `last_update_date date` from `04_shows_schema.sql` + `06_books_schema.sql` (edited
+- **Schema:** removed `last_update_date date` from `05_shows_schema.sql` + `07_books_schema.sql` (edited
   in place; owner `db reset --linked` + `gen:types`). `database.ts` hand-aligned to match (regen confirms).
 - **`moddatetime` constraint drove the design.** The triggers are `BEFORE UPDATE` only, so a
   client-supplied `updated_at` is honoured on INSERT but **forced to `now()` on UPDATE**. Rather than
@@ -1945,7 +1945,7 @@ Owner refinements after daily Quotes use:
 - **Owner request:**
   - (1) the Shows Library **All/TV/Movies/Docs** type selector should be **always visible** rather than buried in the filter panel;
   - (2) a list's **search + filter + sort** should survive clicking into an item and coming back, "within the same session".
-- **UI-only — no schema/migration/`database.ts`/seed/test-count changes** (stays **496**); specs updated in `01-screens.md`, `02-tech-spec.md`, `04-design-system.md`, `PARKED.md`.
+- **UI-only — no schema/migration/`database.ts`/seed/test-count changes** (stays **496**); specs updated in `01-screens.md`, `02_tech_spec.md`, `04-design-system.md`, `PARKED.md`.
 
 - **Why these screens reset.** Unlike the Wellness Library (which opens an **Edit sheet** via the
   background-location pattern and keeps its tab in the URL), the Shows/Books/Quotes/Medical/Travel lists
@@ -1973,11 +1973,11 @@ Owner refinements after daily Quotes use:
 - Owner request to make the **Edit Trip** screen the working surface and stop over-collecting per-stop data.
 - Touches the `stop` schema, so `database.ts` is regenerated.
 - Test count **496 → 495** (dropped the `timeHHMM` test with the helper).
-- Specs updated in `00-PRD.md`, `01-screens.md`, `03-data-model.md`, `CLAUDE.md`, `PARKED.md`, and the two `templates/travel-itinerary*` files.
+- Specs updated in `00_PRD.md`, `01-screens.md`, `03-data-model.md`, `CLAUDE.md`, `PARKED.md`, and the two `templates/travel-itinerary*` files.
 
 - **Removed 7 stop fields** (`time`, `cost`, `cost_currency`, `local_transit`, `travel_mode`,
   `from_loc`, `to_loc`) — they appeared on only some stops, so they're folded into the free-text
-  `description`. Dropped from the `stop` table (migration `13_travel_schema.sql` **edited in place** per
+  `description`. Dropped from the `stop` table (migration `14_travel_schema.sql` **edited in place** per
   the owner's `supabase db reset --linked` workflow), `database.ts`, `StopEditorSheet`, `TripBuilder`
   (duplicate-day payload + row display), `ImportTravelTripsSheet`, `itinerary-import.ts` (+ test), the
   prompt/schema templates, and `constants/travel.ts` (`TRAVEL_MODES`/labels deleted). **Gotcha:**
@@ -2203,7 +2203,7 @@ latest-values card client-side — growing with full history.
 ## Diary group/day action bars, default-expand, drag-reorder (2026-06-27)
 
 Reworked the Wellness Diary day screen to mirror the Edit Trip ergonomics and retire the `⋯` menu.
-Behavior/data are now in `04-wellness.md`; design pieces in `01-design-system.md`.
+Behavior/data are now in `04_wellness.md`; design pieces in `01_design_system.md`.
 
 - **Schema:** added `diary_entry.sort_order numeric not null default 0` (edited `01_wellness_schema.sql`
   in place — owner reset workflow). `listEntriesByDay` orders by `(sort_order, created_at)`. New rows
@@ -2236,8 +2236,8 @@ Behavior/data are now in `04-wellness.md`; design pieces in `01-design-system.md
 
 ## Importers on by default + Home-hub Visible Modules (2026-06-27)
 
-Two settings additions. Behavior/data are now in `03-global.md` (profile columns, Global Settings),
-`10-travel.md` (importer toggle), and the Shows/Books/Quotes spec Settings sections.
+Two settings additions. Behavior/data are now in `03_global.md` (profile columns, Global Settings),
+`10_travel.md` (importer toggle), and the Shows/Books/Quotes spec Settings sections.
 
 - **Importers default ON:** flipped `show_importer_enabled` / `book_importer_enabled` /
   `quote_importer_enabled` from `default false` → `default true` (edited migrations `05/07/09` in place —
@@ -2262,7 +2262,7 @@ Two settings additions. Behavior/data are now in `03-global.md` (profile columns
 ## Standardized Delete interactions (2026-06-27)
 
 Unified the app on **two** delete models, retiring the native `window.confirm()` dialogs. Behavior is
-in `01-design-system.md` (the new component + the two models) and the touched module specs.
+in `01_design_system.md` (the new component + the two models) and the touched module specs.
 
 - **Icon rows → inline confirm.** New shared **`ConfirmDeleteAction`** (`src/components/`): an
   `IconAction`-styled `IconTrash` that flips **inline** to `Delete? ✓ ✗` (the compact counterpart to
@@ -2284,7 +2284,7 @@ in `01-design-system.md` (the new component + the two models) and the touched mo
 ## Shows/Books Notes rename + long-notes editor (2026-06-28)
 
 Renamed the column and added comfortable long-note editing across **Shows** and **Books**. Behavior is
-in `06-shows.md` / `07-books.md`; the new shared modal is referenced from both.
+in `06_shows.md` / `07_books.md`; the new shared modal is referenced from both.
 
 - **`comments` → `notes`** end-to-end: the `show`/`book` create migrations (`04_`/`06_`, edited in
   place — owner reconciles via `db reset`), `database.ts` (hand-patched, regen on next reset),
@@ -2304,3 +2304,49 @@ in `06-shows.md` / `07-books.md`; the new shared modal is referenced from both.
   the template CSVs and import guides. +3 pure-helper tests (notes parse + carry-through) → **507**.
 - No component test (node-env, pure-helpers-only convention — same as prior passes). Verified by
   `npm run check` (507 tests).
+
+## Net Worth — Funds, Insurance, Settings & Dashboards (2026-06-28)
+
+Major Net Worth enhancement. Behavior/data are now in `05_networth.md` (spec of record); the durable
+constraints live in `02_tech_spec.md` (**F19** nested-embed catalogue load, **F20** complete manual
+import) and `03_global.md` (new profile columns). Source plan: the (now-deleted)
+`05-network-enhancements.md`.
+
+- **Schema (`03_networth_schema.sql`, edited in place):** renamed asset type `mutual_fund` → `fund`;
+  added the insurance catalogue — `insurance_policy` (provider/number unique per user, currency,
+  notes, surrender fields), `insurance_schedule` (kind `original|update`, `first_year`,
+  `effective_date`), `insurance_schedule_point` (real values only; child tables use parent-`EXISTS`
+  RLS). New `04_networth_profile_settings.sql` adds `networth_visible_asset_types` /
+  `networth_asset_type_order` / `networth_bulk_insurance_import_enabled`. **All migrations 04–14 were
+  renumbered → 05–15** (to slot networth profile settings at 04), and **all `.md` docs renamed
+  dashes → underscores** (SQL filenames stay underscored to keep the Supabase version parser happy);
+  every reference updated. Owner reset + `npm run gen:types` regenerated `database.ts`.
+- **Insurance model (`src/lib/networth.ts`):** age-based resolution — `resolvePolicyAtAge`
+  (newest-effective version with `first_year ≤ age`, value-at-age or nearest-earlier "as of yr N"),
+  `originalCashValueAtAge`/`varianceAtAge`, `breakEven` (incl. "≤ first tracked year"),
+  `surrenderGainPctPerYear`, `buildResolvedSeries`, `ageForYear` (birth year from `profile.birthday`,
+  default 1974). **Version identity is the schedule row id**, not the date — `effective_date` is an
+  editable attribute, so a typo'd date is fixed in place, not by spawning a phantom version.
+- **Parsers (+ tests):** `fund-import.ts` (JPM "My Portfolio" — currency-prefix/comma strip, NAV+date
+  split incl. embedded newline, footer stop), `insurance-import.ts` (wide bulk seed — provider
+  carry-forward, skip-unnumbered, drop trailing totals; narrow single-policy key/value header).
+  `networth-import.ts` restricted to manual types (rejects fund/insurance).
+- **Data (`src/data/insurance.ts`):** catalogue CRUD; schedule add/replace/delete with
+  earliest-remaining → Original promotion; surrender/clear; batched bulk upsert. `listCatalogue` /
+  `getPolicyWithSchedules` use **one nested-embed query** (F19). `asset-entry.ts` gained
+  `entryToInput`, `replaceAssetTypeEntries` (fund overwrite), and `saveManualImportComplete` (F20 —
+  manual import freezes insurance + carries funds so the snapshot is complete).
+- **Screens:** Monthly Entry rework (collapsible asset sections, header/exchange-rate restyle,
+  copy-forward = manual clone / fund placeholder / insurance re-resolve, read-only fund + insurance
+  sections with detail drill-ins); Insurance Policies browse (mirrors Medical Reports); New/Edit
+  Insurance (mandatory provider/number/currency, Notes, inline SURRENDER + inline-confirm
+  Un-Surrender, SCHEDULE table with editable effective_date + delete, local add/replace import
+  overlay); Net Worth Settings + Visible Asset Types sheet; Fund & Insurance importer sheets; Fund &
+  Policy detail sheets; dashboard Fund Performance card + Insurance aggregate card with a lazy
+  cash-vs-premiums chart. Cross-module Settings import labels standardized (incl. Medical
+  "Import JSON").
+- **Bug fixes this pass:** manual import was wiping not-yet-frozen insurance (→ F20); catalogue loads
+  were 3 sequential queries → slow on free tier (→ F19); Monthly Entry now live-resolves insurance for
+  any snapshot lacking it.
+- `database.ts` was bridge-edited during the build (no DB access mid-session), then regenerated
+  authoritatively after the owner's `db reset --linked`. Verified by `npm run check` (**527 tests**).

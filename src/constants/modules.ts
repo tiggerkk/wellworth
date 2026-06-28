@@ -4,7 +4,9 @@ import {
   IconCalendarPlus,
   IconChartBar,
   IconDeviceTv,
+  IconFileCertificate,
   IconHeartbeat,
+  IconLibrary,
   IconList,
   IconMap,
   IconNotebook,
@@ -71,6 +73,17 @@ export const MODULES: ModuleDef[] = [
         end: true,
       },
       { to: routes.networth.entry, label: 'Monthly Entry', Icon: IconCalendarPlus },
+      {
+        to: routes.networth.insurancePolicies,
+        label: 'Insurance Policies',
+        Icon: IconLibrary,
+      },
+      {
+        to: routes.networth.insuranceEntry,
+        label: 'New Insurance',
+        Icon: IconFileCertificate,
+      },
+      { to: routes.networth.settings, label: 'Settings', Icon: IconSettings },
     ],
   },
   {

@@ -1,18 +1,27 @@
 import { Suspense, useCallback, useState } from 'react'
+import { useNavigate } from 'react-router'
 import { IconCalendarPlus, IconChevronDown } from '@tabler/icons-react'
 import { lazyWithReload } from '../lib/lazy-with-reload'
 import { EmptyState } from '../components/EmptyState'
 import { routes } from '../constants/routes'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
+import { useProfile } from '../hooks/useProfile'
 import { useNetWorthVersion } from '../lib/networth-refresh'
-import { listMonthlyTypeTotals } from '../data/asset-entry'
+import { listMonthlyTypeTotals, listEntriesBySnapshot } from '../data/asset-entry'
+import { listSnapshots } from '../data/networth-snapshot'
+import { listCatalogue, type PolicyWithSchedules } from '../data/insurance'
+import { fetchRatesToHkd } from '../lib/fx'
 import {
+  ageForYear,
   ASSET_TYPES,
   ASSET_TYPE_COLORS,
   ASSET_TYPE_LABELS,
+  breakEven,
+  DEFAULT_BIRTH_YEAR,
   foldMonthlyTotals,
   formatHkd,
+  resolvePolicyAtAge,
   sumTotals,
   typeBreakdownFromTotals,
   type AssetType,
@@ -22,6 +31,7 @@ import { formatMonthLabel, startOfMonth, todayLocal } from '../lib/date'
 import { SectionCard } from '../components/SectionCard'
 import { SegmentedTabs } from '../components/SegmentedTabs'
 import type { TrendRow } from '../components/NetWorthTrendChart'
+import type { InsuranceAggPoint } from '../components/InsuranceTrendChart'
 
 // Lazy so recharts is fetched only when the dashboard renders (own chunk).
 const NetWorthTrendChart = lazyWithReload(() =>
@@ -29,10 +39,80 @@ const NetWorthTrendChart = lazyWithReload(() =>
     default: m.NetWorthTrendChart,
   })),
 )
+const InsuranceTrendChart = lazyWithReload(() =>
+  import('../components/InsuranceTrendChart').then((m) => ({
+    default: m.InsuranceTrendChart,
+  })),
+)
+
+interface FundPerfRow {
+  id: string
+  name: string
+  valueHkd: number
+  returnRate: number | null
+  pnl: number | null
+}
+
+interface InsuranceAgg {
+  series: InsuranceAggPoint[]
+  breakEvenAge: number | null
+  currentCash: number
+  currentPremium: number
+  pastBreakEven: number
+  activeCount: number
+}
+
+/** Build the aggregate Cash Value vs Total Premiums series (HKD) by age, across all policies. */
+function buildInsuranceAgg(
+  catalogue: PolicyWithSchedules[],
+  usdRate: number,
+  currentAge: number,
+): InsuranceAgg {
+  const ages = new Set<number>()
+  for (const { schedules } of catalogue)
+    for (const s of schedules) for (const p of s.points) ages.add(p.age)
+  const series: InsuranceAggPoint[] = [...ages]
+    .sort((a, b) => a - b)
+    .map((age) => {
+      let cash = 0
+      let premium = 0
+      for (const { policy, schedules } of catalogue) {
+        const r = resolvePolicyAtAge(schedules, age)
+        if (!r) continue
+        const rate = policy.currency === 'USD' ? usdRate : 1
+        cash += r.cashValue * rate
+        premium += r.premium * rate
+      }
+      return { age, cash, premium }
+    })
+  const beIdx = series.findIndex((p) => p.cash >= p.premium)
+  let currentCash = 0
+  let currentPremium = 0
+  let activeCount = 0
+  for (const { policy, schedules } of catalogue) {
+    const r = resolvePolicyAtAge(schedules, currentAge)
+    if (!r) continue
+    activeCount += 1
+    const rate = policy.currency === 'USD' ? usdRate : 1
+    currentCash += r.cashValue * rate
+    currentPremium += r.premium * rate
+  }
+  const pastBreakEven = catalogue.filter((c) => breakEven(c.schedules) !== null).length
+  return {
+    series,
+    breakEvenAge: beIdx === -1 ? null : series[beIdx]!.age,
+    currentCash,
+    currentPremium,
+    pastBreakEven,
+    activeCount,
+  }
+}
 
 export function NetWorthDashboard() {
   const { session } = useAuth()
   const userId = session?.user.id
+  const navigate = useNavigate()
+  const { data: profile } = useProfile()
   const version = useNetWorthVersion()
   const [mode, setMode] = useState<'total' | 'type'>('total')
   const [rangeKey, setRangeKey] = useState('all')
@@ -44,6 +124,35 @@ export function NetWorthDashboard() {
     return listMonthlyTypeTotals(userId)
   }, [userId, version])
   const { data: rows, loading, error } = useAsync(fn)
+
+  // Secondary load: latest funds (return %/P&L) + insurance catalogue + USD rate (for HKD agg).
+  const extraFn = useCallback(async () => {
+    void version
+    if (!userId) return null
+    const snaps = await listSnapshots(userId)
+    const latestSnap = snaps[snaps.length - 1] ?? null
+    const funds: FundPerfRow[] = latestSnap
+      ? (await listEntriesBySnapshot(latestSnap.id))
+          .filter((e) => e.asset_type === 'fund')
+          .map((e) => {
+            const d = (e.details ?? {}) as Record<string, unknown>
+            const rr = Number(d.return_rate)
+            const pl = Number(d.pnl)
+            return {
+              id: e.id,
+              name: e.name,
+              valueHkd: Number(e.value_base),
+              returnRate: Number.isFinite(rr) ? rr : null,
+              pnl: Number.isFinite(pl) ? pl : null,
+            }
+          })
+          .sort((a, b) => b.valueHkd - a.valueHkd)
+      : []
+    const catalogue = await listCatalogue(userId)
+    const usdRate = latestSnap ? ((await fetchRatesToHkd(latestSnap.month)).USD ?? 1) : 1
+    return { funds, catalogue, usdRate }
+  }, [userId, version])
+  const { data: extra } = useAsync(extraFn)
 
   // Fold the flat per-(month, type) view rows into one totals record per month (oldest first).
   const all = foldMonthlyTotals(rows ?? [])
@@ -65,6 +174,16 @@ export function NetWorthDashboard() {
   const breakdown = latest
     ? typeBreakdownFromTotals(latest.totals).filter((r) => r.total !== 0)
     : []
+
+  const birthYear = profile?.birthday
+    ? Number(profile.birthday.slice(0, 4))
+    : DEFAULT_BIRTH_YEAR
+  const currentAge = ageForYear(Number(startOfMonth(todayLocal()).slice(0, 4)), birthYear)
+  const funds = extra?.funds ?? []
+  const agg =
+    extra && extra.catalogue.length > 0
+      ? buildInsuranceAgg(extra.catalogue, extra.usdRate, currentAge)
+      : null
 
   return (
     <div className="pb-4">
@@ -186,6 +305,72 @@ export function NetWorthDashboard() {
                   </span>
                 </div>
               ))}
+            </SectionCard>
+          )}
+
+          {/* Fund Performance (latest month) */}
+          {funds.length > 0 && (
+            <SectionCard title="Fund performance · latest month">
+              {funds.map((f) => (
+                <button
+                  key={f.id}
+                  onClick={() => navigate(routes.networth.fund(f.id))}
+                  className="flex w-full items-center gap-3 border-b border-border px-4 py-2.5 text-left last:border-b-0 active:bg-input/40"
+                >
+                  <span className="min-w-0 flex-1 truncate text-[15px] text-text-primary">
+                    {f.name}
+                  </span>
+                  <span className="shrink-0 text-sm text-text-primary">
+                    {formatHkd(f.valueHkd)}
+                  </span>
+                  {f.returnRate != null && (
+                    <span
+                      className={`w-16 shrink-0 text-right text-xs ${f.returnRate < 0 ? 'text-danger' : 'text-positive'}`}
+                    >
+                      {f.returnRate > 0 ? '+' : ''}
+                      {f.returnRate.toFixed(1)}%
+                    </span>
+                  )}
+                </button>
+              ))}
+            </SectionCard>
+          )}
+
+          {/* Insurance — aggregate Cash Value vs Total Premiums */}
+          {agg && agg.series.length > 0 && (
+            <SectionCard title="Insurance · cash value vs premiums">
+              <div className="flex flex-wrap gap-x-6 gap-y-1 px-4 py-3 text-sm">
+                <span className="text-text-secondary">
+                  Cash value{' '}
+                  <span className="text-text-primary">{formatHkd(agg.currentCash)}</span>
+                </span>
+                <span className="text-text-secondary">
+                  Premiums{' '}
+                  <span className="text-text-primary">
+                    {formatHkd(agg.currentPremium)}
+                  </span>
+                </span>
+                <span className="text-text-secondary">
+                  Past break-even{' '}
+                  <span className="text-text-primary">
+                    {agg.pastBreakEven}/{agg.activeCount}
+                  </span>
+                </span>
+              </div>
+              <div className="px-2 py-3">
+                <Suspense
+                  fallback={
+                    <p className="py-10 text-center text-sm text-text-secondary">
+                      Loading chart…
+                    </p>
+                  }
+                >
+                  <InsuranceTrendChart
+                    data={agg.series}
+                    breakEvenAge={agg.breakEvenAge}
+                  />
+                </Suspense>
+              </div>
             </SectionCard>
           )}
         </div>

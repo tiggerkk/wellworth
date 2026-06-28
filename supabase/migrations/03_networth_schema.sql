@@ -54,7 +54,7 @@ create table public.asset_entry (
   snapshot_id     uuid not null references public.networth_snapshot (id) on delete cascade,
   asset_type      text not null check (
                     asset_type in (
-                      'cash', 'time_deposit', 'stock', 'mutual_fund',
+                      'cash', 'time_deposit', 'stock', 'fund',
                       'retirement', 'insurance', 'property'
                     )
                   ),
@@ -108,6 +108,170 @@ create view public.networth_monthly_type_total
   group by s.user_id, s.month, e.asset_type;
 
 -- =====================================================================================
+-- Insurance catalogue — per-user reference data (NOT per-month). Monthly `asset_entry`
+-- rows of asset_type 'insurance' are generated/frozen from this catalogue at SAVE time, so
+-- the net-worth math is unchanged. A policy has one or more schedule VERSIONS (an Original
+-- baseline + later anniversary updates); each version is a set of per-age points carrying
+-- only real (printed) values. Resolution for a given age uses the newest-effective version
+-- whose first_year ≤ age (a pure helper in src/lib/networth.ts).
+--   * insurance_policy carries user_id → direct RLS.
+--   * insurance_schedule / insurance_schedule_point have no user_id; they enforce ownership
+--     with an EXISTS check up the parent chain (like serving/strength_set).
+-- =====================================================================================
+create table public.insurance_policy (
+  id                     uuid primary key default gen_random_uuid(),
+  user_id                uuid not null references auth.users (id) on delete cascade,
+  provider               text not null check (provider in ('chubb', 'boc', 'manulife')),
+  policy_number          text not null,
+  policy_name            text not null default '',
+  start_date             date,
+  currency               text not null check (currency in ('HKD', 'USD')),
+  notes                  text,
+  surrendered_from_month date, -- 1st-of-month; policy is excluded from this month forward
+  surrender_date         date,
+  surrender_proceeds     numeric,
+  created_at             timestamptz not null default now(),
+  updated_at             timestamptz not null default now(),
+  unique (user_id, policy_number) -- policy_number is the import / update key
+);
+
+create index on public.insurance_policy (user_id);
+
+alter table public.insurance_policy enable row level security;
+
+create policy "select own insurance_policy" on public.insurance_policy
+  for select to authenticated using ((select auth.uid()) = user_id);
+create policy "insert own insurance_policy" on public.insurance_policy
+  for insert to authenticated with check ((select auth.uid()) = user_id);
+create policy "update own insurance_policy" on public.insurance_policy
+  for update to authenticated
+  using ((select auth.uid()) = user_id)
+  with check ((select auth.uid()) = user_id);
+create policy "delete own insurance_policy" on public.insurance_policy
+  for delete to authenticated using ((select auth.uid()) = user_id);
+
+create trigger handle_updated_at before update on public.insurance_policy
+  for each row execute procedure extensions.moddatetime (updated_at);
+
+-- A schedule version belonging to a policy. kind 'original' is the baseline (variance is
+-- measured against it); 'update' is an anniversary version. Identity is this row's id — the
+-- effective_date is an editable attribute (drives recency ordering + the month from which the
+-- version's values apply), never the version key.
+create table public.insurance_schedule (
+  id             uuid primary key default gen_random_uuid(),
+  policy_id      uuid not null references public.insurance_policy (id) on delete cascade,
+  kind           text not null check (kind in ('original', 'update')),
+  first_year     integer not null, -- lowest age present in this version
+  effective_date date,
+  imported_at    timestamptz not null default now(),
+  created_at     timestamptz not null default now(),
+  updated_at     timestamptz not null default now()
+);
+
+create index on public.insurance_schedule (policy_id);
+
+alter table public.insurance_schedule enable row level security;
+
+create policy "select own insurance_schedule" on public.insurance_schedule
+  for select to authenticated using (
+    exists (
+      select 1 from public.insurance_policy p
+      where p.id = insurance_schedule.policy_id and p.user_id = (select auth.uid())
+    )
+  );
+create policy "insert own insurance_schedule" on public.insurance_schedule
+  for insert to authenticated with check (
+    exists (
+      select 1 from public.insurance_policy p
+      where p.id = insurance_schedule.policy_id and p.user_id = (select auth.uid())
+    )
+  );
+create policy "update own insurance_schedule" on public.insurance_schedule
+  for update to authenticated using (
+    exists (
+      select 1 from public.insurance_policy p
+      where p.id = insurance_schedule.policy_id and p.user_id = (select auth.uid())
+    )
+  )
+  with check (
+    exists (
+      select 1 from public.insurance_policy p
+      where p.id = insurance_schedule.policy_id and p.user_id = (select auth.uid())
+    )
+  );
+create policy "delete own insurance_schedule" on public.insurance_schedule
+  for delete to authenticated using (
+    exists (
+      select 1 from public.insurance_policy p
+      where p.id = insurance_schedule.policy_id and p.user_id = (select auth.uid())
+    )
+  );
+
+create trigger handle_updated_at before update on public.insurance_schedule
+  for each row execute procedure extensions.moddatetime (updated_at);
+
+-- One per-age point in a schedule version. Real printed values only — display carry-forward
+-- ("as of yr N") is computed, never stored.
+create table public.insurance_schedule_point (
+  id                 uuid primary key default gen_random_uuid(),
+  schedule_id        uuid not null references public.insurance_schedule (id) on delete cascade,
+  age                integer not null,
+  policy_year        integer not null,
+  total_premium_paid numeric not null,
+  cash_value         numeric not null,
+  unique (schedule_id, age)
+);
+
+create index on public.insurance_schedule_point (schedule_id);
+
+alter table public.insurance_schedule_point enable row level security;
+
+create policy "select own insurance_schedule_point" on public.insurance_schedule_point
+  for select to authenticated using (
+    exists (
+      select 1
+      from public.insurance_schedule s
+      join public.insurance_policy p on p.id = s.policy_id
+      where s.id = insurance_schedule_point.schedule_id and p.user_id = (select auth.uid())
+    )
+  );
+create policy "insert own insurance_schedule_point" on public.insurance_schedule_point
+  for insert to authenticated with check (
+    exists (
+      select 1
+      from public.insurance_schedule s
+      join public.insurance_policy p on p.id = s.policy_id
+      where s.id = insurance_schedule_point.schedule_id and p.user_id = (select auth.uid())
+    )
+  );
+create policy "update own insurance_schedule_point" on public.insurance_schedule_point
+  for update to authenticated using (
+    exists (
+      select 1
+      from public.insurance_schedule s
+      join public.insurance_policy p on p.id = s.policy_id
+      where s.id = insurance_schedule_point.schedule_id and p.user_id = (select auth.uid())
+    )
+  )
+  with check (
+    exists (
+      select 1
+      from public.insurance_schedule s
+      join public.insurance_policy p on p.id = s.policy_id
+      where s.id = insurance_schedule_point.schedule_id and p.user_id = (select auth.uid())
+    )
+  );
+create policy "delete own insurance_schedule_point" on public.insurance_schedule_point
+  for delete to authenticated using (
+    exists (
+      select 1
+      from public.insurance_schedule s
+      join public.insurance_policy p on p.id = s.policy_id
+      where s.id = insurance_schedule_point.schedule_id and p.user_id = (select auth.uid())
+    )
+  );
+
+-- =====================================================================================
 -- API role grants. init's `alter default privileges` should already cover tables created
 -- by later migrations, but CLAUDE.md requires every migration to grant explicitly (init F1)
 -- — belt-and-braces against "42501 permission denied".
@@ -115,3 +279,6 @@ create view public.networth_monthly_type_total
 grant select, insert, update, delete on public.networth_snapshot to anon, authenticated;
 grant select, insert, update, delete on public.asset_entry to anon, authenticated;
 grant select on public.networth_monthly_type_total to anon, authenticated;
+grant select, insert, update, delete on public.insurance_policy to anon, authenticated;
+grant select, insert, update, delete on public.insurance_schedule to anon, authenticated;
+grant select, insert, update, delete on public.insurance_schedule_point to anon, authenticated;

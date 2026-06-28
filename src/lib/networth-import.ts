@@ -7,9 +7,22 @@
  * Column spec: `asset_type,name,currency,value_native,detail1_key,detail1_value,…` — any number of
  * `detailN_key`/`detailN_value` pairs are accepted and stored as-is in `details`.
  */
-import { ASSET_TYPES, CURRENCIES, type AssetType, type Currency } from './networth'
+import { CURRENCIES, type AssetType, type Currency } from './networth'
 
 const REQUIRED_COLUMNS = ['asset_type', 'name', 'currency', 'value_native']
+
+/**
+ * The manual importer handles only the hand-entered asset types. Fund rows come from the JPM
+ * monthly CSV (Monthly Entry → Fund) and insurance rows are generated from the policy catalogue,
+ * so both are rejected here to keep their dedicated pipelines authoritative.
+ */
+const MANUAL_ASSET_TYPES = [
+  'cash',
+  'time_deposit',
+  'stock',
+  'retirement',
+  'property',
+] as const
 
 export interface ParsedAssetRow {
   asset_type: AssetType
@@ -64,7 +77,7 @@ export function parseNetWorthCsv(rows: string[][]): NetWorthImportResult {
     return idx === -1 ? '' : (cells[idx] ?? '').trim()
   }
 
-  const assetSet = new Set<string>(ASSET_TYPES)
+  const assetSet = new Set<string>(MANUAL_ASSET_TYPES)
   const currencySet = new Set<string>(CURRENCIES)
 
   for (let r = 1; r < rows.length; r++) {
@@ -81,8 +94,12 @@ export function parseNetWorthCsv(rows: string[][]): NetWorthImportResult {
     const assetRaw = col(cells, 'asset_type')
     const assetType = assetRaw.toLowerCase()
     if (!assetSet.has(assetType)) {
+      const hint =
+        assetType === 'fund' || assetType === 'mutual_fund' || assetType === 'insurance'
+          ? ` — ${assetType === 'insurance' ? 'insurance is generated from the policy catalogue' : 'funds import from the JPM monthly CSV'}, not this importer`
+          : ''
       errors.push(
-        `Row ${line} ("${name}"): asset_type "${assetRaw}" is not valid — skipped.`,
+        `Row ${line} ("${name}"): asset_type "${assetRaw}" is not valid${hint} — skipped.`,
       )
       continue
     }

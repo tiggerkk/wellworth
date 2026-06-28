@@ -3,7 +3,5 @@ cash,Example Bank HKD Savings,HKD,"100,000.00",,,,
 cash,Example Bank CNY Savings,CNY,"50,000.00",,,,
 time_deposit,Example Bank 6-Month TD,HKD,"200,000.00",maturity_date,2026-12-01,,
 stock,Example Corp,USD,"12,345.67",ticker,EXMPL,shares,100.00
-mutual_fund,Example Global Bond Fund,HKD,"80,000.00",units,"5,000.00",cost,"75,000.00"
 retirement,Example MPF Scheme,HKD,"300,000.00",,,,
-insurance,Example Whole-Life Policy,USD,"25,000.00",premium,"3,000.00",policy_year,5.00
 property,Example Apartment,HKD,"6,000,000.00",,,,

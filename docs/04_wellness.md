@@ -21,7 +21,7 @@
 
 - **Day header** — left-to-right: a **Daily Report** icon (top-left, `IconReportAnalytics`, opens the
   day's report); the centered `‹ date ›` nav (arrows step one day, tapping the date opens the
-  **Calendar** modal — see `docs/01-design-system.md` → Calendar); and a top-right cluster of
+  **Calendar** modal — see `docs/01_design_system.md` → Calendar); and a top-right cluster of
   **Delete · Copy · Paste** icons that act on the **whole day**. The Calendar injects per-day cue
   dots: one colour if food was logged, another if activity, both if both; a legend explains the dots.
 - **Highlighted Nutrients**: a grid of up to 8 chosen nutrients (a 4×2 grid when 8 are chosen), each
@@ -33,7 +33,7 @@
   `IconClipboard` / green `IconPlus`). **Delete** is a `ConfirmDeleteAction` (inline `Delete? ✓ ✗`,
   no browser dialog) — as is the day-level Delete in the top-right header, whose icon row uses the
   same `gap-2` spacing as the group headers. Category icons use `cat-*` color tokens (see
-  `docs/01-design-system.md` → Icons).
+  `docs/01_design_system.md` → Icons).
 - **Default-expand on entry:** when a day's entries first load (on navigating to the Diary or picking
   another day), every group that **has items** auto-expands; empty groups stay collapsed. This runs
   **once per day** — later same-day refetches (after add/delete) never clobber a manual collapse. A
@@ -224,7 +224,7 @@ Detail is `GET /food/{fdcId}`; amounts are per 100 g.
   `blueberr*` not the raw word) so partial/plural input recalls the same set. Exact + leading-prefix
   matches share the top score tier so the nutrient-count tiebreak surfaces the fuller food.
 - **Plain-block results pane (F6):** the results scroll pane must be a plain block
-  `flex-1 overflow-y-auto`, not a flex-col (which shrinks the results card — see `01-design-system.md`
+  `flex-1 overflow-y-auto`, not a flex-col (which shrinks the results card — see `01_design_system.md`
   → Layout gotchas).
 - Map nutrients on the stable INFOODS **`nutrient.number`** (e.g. 208 energy kcal, 320 vitamin A µg
   RAE, 435 folate µg DFE, 328 vitamin D µg, 312 copper mg). When a USDA food is favorited or logged,
@@ -239,7 +239,7 @@ Detail is `GET /food/{fdcId}`; amounts are per 100 g.
 - All fields optional/sparse. Scanned products save into Custom.
 - Source of truth for nutrient mappings (with per-field scale factor): `src/lib/off-api.ts`.
 
-CJK-aware search (`searchZhVariants`) applies to USDA text search (see `docs/02-tech-spec.md` →
+CJK-aware search (`searchZhVariants`) applies to USDA text search (see `docs/02_tech_spec.md` →
 Shared external APIs).
 
 ---

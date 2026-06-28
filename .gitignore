@@ -26,6 +26,13 @@ coverage
 networth-*.csv
 !templates/networth-seed-template.csv
 
+# Net Worth — real insurance catalogue + JPM fund exports (real financial data) must never be
+# committed. Only the sanitized fund/insurance import guides + templates are tracked.
+Insurance.csv
+Insurance.xlsx
+*Fund list export*.xlsx
+*Fund*export*.xlsx
+
 # Shows — real watch-history import lists must never be committed. Only the
 # sanitized templates/shows-import-template.csv is tracked.
 shows-import*.csv
@@ -55,7 +62,7 @@ travel-expenses*.csv
 
 # Backups — local DB dumps + age keys must never be committed (encrypted dumps live in the separate
 # private backups repo; the age private key stays offline). NB: not a blanket *.sql ignore — that
-# would catch supabase/migrations/. See docs/OWNER-RUNBOOK.md Part Q.
+# would catch supabase/migrations/. See docs/OWNER_RUNBOOK.md Part Q.
 backups/
 *.age
 *.key

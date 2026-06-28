@@ -5,7 +5,7 @@
 ### Dashboard (`/medical`)
 
 No screen-title header. Explicit loading / empty / error states; empty (no reports yet) → the shared
-**EmptyState** (see `docs/01-design-system.md`): "No medical reports yet" · "+ New Medical Report".
+**EmptyState** (see `docs/01_design_system.md`): "No medical reports yet" · "+ New Medical Report".
 
 When there is data, three sections:
 
@@ -29,7 +29,7 @@ Tracked tests are chosen in Medical Settings → Tracked Tests (seeded from `def
 
 - Searchable/filterable/sortable list (no screen-title header), newest report-date first by default.
 - A **Search bar** (placeholder "Search body part, narrative") with an **icon-only Filter button** to
-  its right (see `docs/01-design-system.md` → FilterToggleButton). Empty → shared **EmptyState**;
+  its right (see `docs/01_design_system.md` → FilterToggleButton). Empty → shared **EmptyState**;
   active search/filter with no matches → "No matches."
 - Shared **FilterPanel** (label-free): **Any Type**, **Any Provider** (providers present in your own
   reports), **Any Body Part** — footer carries the **SortControl** next to **Clear Filters**.
@@ -59,7 +59,7 @@ _Search, filter, and sort persist for the **browser-tab session** (`useSessionSt
 ### Add / Edit Report (`/medical/entry`, `/medical/:id/edit`)
 
 - Reached from the **New Medical** tab (new) or Report detail **Edit** button.
-- On the New form, an **Import JSON…** accent link sits in the **header** between the title and action
+- On the New form, an **Import JSON** accent link sits in the **header** between the title and action
   icons (when the importer is enabled).
 - Top-right icon actions (Delete when editing · Reset · Create/Save) via shared **EntryHeaderActions**.
 - Close (✕)/Escape returns without saving.
@@ -82,7 +82,7 @@ _Search, filter, and sort persist for the **browser-tab session** (`useSessionSt
 
 ### Import (sheet, from Medical Settings)
 
-- Reached from **Medical Settings → Import JSON / CSV…** or the **Import** button on the New-Report
+- Reached from **Medical Settings → Import JSON / CSV Medical** or the **Import** button on the New-Report
   form (both gated by the importer toggle). Choose a `.json` (preferred) or `.csv` file produced
   outside the app by an AI vision tool (see `templates/medical-extraction-prompt.md`).
 - The parse applies **tolerant JSON repair** (auto-fixes a stray quote after a number, e.g. `8.6"`);
@@ -111,7 +111,7 @@ Sections in order: **Display**, **Report / Entry Form**, **Import**, **Security*
   `orderResultsForDisplay`); an unset/partial override falls back to the seeded order.
 - **Report / Entry Form → Visible Fields**: shared `VisibleFieldsSheet` over the optional Report
   fields (Provider, Body Part, Narrative, Document Links). Date and Type are always shown.
-- **Import → Enable JSON / CSV Import** (**on by default**): surfaces the **Import JSON / CSV…** launcher.
+- **Import → Enable Medical Import** (**on by default**): surfaces the **Import JSON / CSV Medical** launcher.
 - **Security → Lock** (**last section**): set up / change / turn off the module **PIN**, register an
   optional **Face ID / Touch ID** unlock (hidden where the device has no platform authenticator), and
   choose the **auto-lock** timeout (Immediately / 1 / 5 / 15 min / Only on app restart).
@@ -127,7 +127,7 @@ Sections in order: **Display**, **Report / Entry Form**, **Import**, **Security*
   account via RLS; it is **not** a server-verified boundary.
 - Implementation: `src/lib/medical-lock.ts` (PBKDF2 PIN + timeout/idle), `src/lib/medical-webauthn.ts`
   (platform authenticator).
-- Components: `MedicalLockScreen` / `PinInput` (see `docs/01-design-system.md`).
+- Components: `MedicalLockScreen` / `PinInput` (see `docs/01_design_system.md`).
 
 ---
 
@@ -155,7 +155,7 @@ Sections in order: **Display**, **Report / Entry Form**, **Import**, **Security*
   trend like any measurement.
 - **MEDICAL_LAB_TESTS** in `src/lib/medical.ts` is the **front-end source of truth** for the test
   reference; `src/lib/medical.test.ts` cross-checks it against the DB so they can't drift. Seeded by
-  `supabase/migrations/11_medical_seed_lab_test.sql` (idempotent `ON CONFLICT (key) DO UPDATE`).
+  `supabase/migrations/12_medical_seed_lab_test.sql` (idempotent `ON CONFLICT (key) DO UPDATE`).
 
 ---
 
@@ -207,8 +207,8 @@ imaging | eye | other`
 Standard rules on `medical_report`/`medical_result`: own `user_id` for direct RLS, four owner policies
 using `(select auth.uid()) = user_id`, CHECK on enum columns, `moddatetime` trigger on `updated_at`,
 explicit GRANT to `anon`/`authenticated`. **Hard delete** (deleting a report cascades its results).
-Migration: `supabase/migrations/10_medical_schema.sql`. Profile columns added by
-`supabase/migrations/12_medical_profile_settings.sql`.
+Migration: `supabase/migrations/11_medical_schema.sql`. Profile columns added by
+`supabase/migrations/13_medical_profile_settings.sql`.
 
 ### `medical_latest_result` (view)
 
@@ -228,7 +228,7 @@ Migration: `supabase/migrations/10_medical_schema.sql`. Profile columns added by
 ### Lab test reference seed
 
 The **full source of truth** is `MEDICAL_LAB_TESTS` in `src/lib/medical.ts`; the migration
-`supabase/migrations/11_medical_seed_lab_test.sql` mirrors it. A build-time test asserts they match.
+`supabase/migrations/12_medical_seed_lab_test.sql` mirrors it. A build-time test asserts they match.
 Built from the owner's 2021–2026 reports across three providers (MediFast HK, Mobile Medical HK,
 Global HealthCare Shanghai).
 

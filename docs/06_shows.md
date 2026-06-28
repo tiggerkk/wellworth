@@ -35,9 +35,9 @@ that matters there:
 ### Library
 
 - A **Type** segmented control (All / TV / Movies / Docs) sits in the **sticky header above** the
-  search bar — always visible without opening the filter (see `docs/01-design-system.md` → SegmentedTabs).
+  search bar — always visible without opening the filter (see `docs/01_design_system.md` → SegmentedTabs).
 - **Search bar** (matches Title, Director, and Cast) with an **icon-only Filter button** to the right
-  (see `docs/01-design-system.md` → FilterToggleButton).
+  (see `docs/01_design_system.md` → FilterToggleButton).
 - The shared **FilterPanel** is label-free: **Any Status**, **Any Genre** (genres in your own rows),
   **Any Rating** (minimum: Any / 1★+ … / 5★), **Any LGBT+** (None/Some/Significant), **Any Dynasty**
   (+ `全部` and the 12 dynasties), a **Favorites Only** toggle, and single-line **Started** +
@@ -105,15 +105,15 @@ Reached from the **New Show** bottom-nav tab (`/shows/entry`, new) or by tapping
 
 ### Settings
 
-- **Entry Form → Visible Fields**: shared **VisibleFieldsSheet** (see `docs/01-design-system.md`)
+- **Entry Form → Visible Fields**: shared **VisibleFieldsSheet** (see `docs/01_design_system.md`)
   over the optional Entry/Edit fields in New/Edit form order: Original Title, Year, **TMDB Metadata**,
   Rating, LGBT+, Dynasty, the two dates, Season & Episode counts, **Poster URL**, Notes. Most stored on
   `profile.show_visible_fields` (**NULL = all visible**); **Poster URL** is an `extra` backed by
   `profile.show_poster_url_visible` (**default off**) meaning "force always visible" — stored separately
   because the visible-fields list is default-on. Type, Title, Status, and the favourite heart are always
   shown and not listed.
-- **Import → Enable CSV Import** toggle (`profile.show_importer_enabled`, **on by default**); when on,
-  an **Import CSV…** launcher opens the importer sheet.
+- **Import → Enable Bulk Shows Import** toggle (`profile.show_importer_enabled`, **on by default**); when on,
+  an **Import CSV Shows** launcher opens the importer sheet.
 
 ### Import CSV (sheet, from Shows Settings)
 
@@ -153,7 +153,7 @@ Full guide: `templates/shows-import-guide.md`.
 
 - **CJK-aware**: a query containing CJK is sent with `language=zh-CN` (via `containsCjk` +
   `tmdbLanguage` in `src/lib/tmdb-api.ts`). Both scripts get a query via `searchZhVariants`
-  (see `docs/02-tech-spec.md` → Shared external APIs) and results are merged.
+  (see `docs/02_tech_spec.md` → Shared external APIs) and results are merged.
 - **Documentary → `/tv` endpoint**: `endpointFor` maps `documentary` to `/tv` so multi-part docs
   get seasons/episodes.
 - **Search**: `GET /search/tv` or `/search/movie` by title; returns poster_path, title, year, id.
@@ -204,5 +204,5 @@ Standard rules: own `user_id` for direct RLS, four owner policies using `(select
 CHECK on enum columns, `moddatetime` trigger on `updated_at`, explicit GRANT to `anon`/`authenticated`.
 **Hard delete** (nothing references `show` except `quote.show_id` ON DELETE SET NULL on `quote` — so
 deleting a show nullifies the link on any quoting it, but the quote survives). Migration:
-`supabase/migrations/04_shows_schema.sql`. Profile columns added by
-`supabase/migrations/05_shows_profile_settings.sql`.
+`supabase/migrations/05_shows_schema.sql`. Profile columns added by
+`supabase/migrations/06_shows_profile_settings.sql`.

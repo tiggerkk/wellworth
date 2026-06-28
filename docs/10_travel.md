@@ -29,7 +29,7 @@
 
 - A **Search bar** (placeholder "Search trip name, city, companion" — matches trip name, itinerary
   city, and companions) with an **icon-only Filter button** flush at the right edge (see
-  `docs/01-design-system.md` → FilterToggleButton). Shared **FilterPanel** (label-free): **Any
+  `docs/01_design_system.md` → FilterToggleButton). Shared **FilterPanel** (label-free): **Any
   Country**, **Any Province**, **Any Status**, **Any Rating** (minimum: Any / 1★+ … / 5★), **Any
   Year** — footer: **SortControl** next to **Clear Filters**. Sort over { Date, Country, Province,
   City, Status, Trip Name } with **asc/desc** toggle (country/province/city use the trip's
@@ -114,15 +114,15 @@ literal **"Edit Trip"**.
 
 ### Settings (`/travel/settings`)
 
-- **Entry Form → Visible Fields**: shared **VisibleFieldsSheet** (see `docs/01-design-system.md`) over
+- **Entry Form → Visible Fields**: shared **VisibleFieldsSheet** (see `docs/01_design_system.md`) over
   the optional Trip-form fields in form order: **Rating, Cover Image URL, Companions, Track
   Reimbursement, Notes**. Stored on `profile.travel_visible_fields` (**NULL = all visible**); auto-saves
   per toggle. Trip Name, Base Currency, and Status are always shown.
-- **Expenses → Expense Categories**: shared **ConfigListEditor** (see `docs/01-design-system.md`) to
+- **Expenses → Expense Categories**: shared **ConfigListEditor** (see `docs/01_design_system.md`) to
   add / rename / delete / **drag-reorder** the category list (stored on
   `profile.travel_expense_categories`). Deleting a category still used by expenses prompts a
   **reassignment** first; the last category can't be deleted.
-- **Import → Enable JSON / CSV Import** (`profile.travel_importer_enabled`, **on by default**): a single
+- **Import → Enable Bulk Trips Import** (`profile.travel_importer_enabled`, **on by default**): a single
   toggle that surfaces **both** launchers below (mirrors Medical's importer toggle). When off, a
   secondary note ("Turn this on to bulk-seed your trips from a JSON / CSV.") replaces them.
 - **Import → Import JSON Trips** (listed first): a JSON array of trips → one combined review
@@ -181,7 +181,7 @@ precached, loaded on demand by the lazy map chunk):
 - A build-time test (`travel-geo.test.ts`) asserts the GeoJSON names line up with `CHINA_PROVINCES`
   / `COUNTRY_ALIASES`. Run it if you update either file.
 
-**Frankfurter** (shared with Net Worth, see `docs/02-tech-spec.md` → Shared external APIs):
+**Frankfurter** (shared with Net Worth, see `docs/02_tech_spec.md` → Shared external APIs):
 `fetchRateToHkdOn(currency, date)` fetches the per-trip first-day rates. Helper:
 `src/lib/trip-fx.ts`. Per-trip FX rates are frozen in `trip.fx_rates` on first fetch and are
 overridable per-currency in the Expenses tab.
@@ -247,8 +247,8 @@ Removed fields (simplification pass — folded into `description`): `time`, `cos
 Standard rules on all five tables: own `user_id` for direct RLS, four owner policies using
 `(select auth.uid()) = user_id`, CHECK on enum columns, `moddatetime` trigger on `updated_at`,
 explicit GRANT to `anon`/`authenticated`. **Hard delete** (deleting a trip cascades its days → stops
-and its expenses). Migration: `supabase/migrations/13_travel_schema.sql`. Profile columns added by
-`supabase/migrations/14_travel_profile_settings.sql`.
+and its expenses). Migration: `supabase/migrations/14_travel_schema.sql`. Profile columns added by
+`supabase/migrations/15_travel_profile_settings.sql`.
 
 ---
 
