@@ -65,9 +65,11 @@ _not_ the primary-button color; it's for emphasis, active states, and energy.
   Font is **16px** (not 15px) so a focused field never triggers iOS Safari's auto-zoom — see F21 in
   `02_tech_spec.md`; any new focusable text input must stay ≥16px.
   Use it for **every** `<input>`/`<button>`/`<select>`/`<textarea>` field app-wide (compose with
-  `w-full`/`flex-1`/`w-NN` for width, `text-right`/`text-left` for alignment, `no-spinner`, `block`,
+  `w-full`/`flex-1`/`w-NN` for width, `text-right`/`text-left` for alignment, `block`,
   `resize-none`, `placeholder:*`); per-screen `inputClass`/`inputCls` constants are just
-  `'field-control …'`. The shared field components match the same height: **`SelectMenu`** defaults to
+  `'field-control …'`. **Number inputs hide their up/down spin buttons globally** (a single
+  `input[type='number']` rule in `index.css`) — no per-field class is needed; `.no-spinner` is kept
+  only as a now-redundant alias. The shared field components match the same height: **`SelectMenu`** defaults to
   `size="field"` (pass `size="compact"` only to opt a tight spot back down), **`DateRangeRow`** and
   **`SearchBar`** already render at it, and **`SegmentedTabs`** takes `size="field"`. So a row mixing an
   input, a dropdown, a segmented control and a date button all line up. **Never re-spell the

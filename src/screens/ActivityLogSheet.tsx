@@ -313,7 +313,7 @@ export function ActivityLogSheet() {
                   if (e.target.value.trim() === '')
                     setMinutes(String(activityDefaultDuration))
                 }}
-                className="mt-1 field-control w-full"
+                className="mt-1 field-control no-spinner w-full"
               />
             </label>
 
@@ -362,7 +362,7 @@ export function ActivityLogSheet() {
                           onChange={(e) =>
                             updateSet(exIdx, setIdx, 'reps', e.target.value)
                           }
-                          className="field-control w-16"
+                          className="field-control no-spinner w-16"
                           aria-label="Reps"
                         />
                         <span className="text-xs text-text-tertiary">reps ×</span>
@@ -375,7 +375,7 @@ export function ActivityLogSheet() {
                           onChange={(e) =>
                             updateSet(exIdx, setIdx, 'weight', e.target.value)
                           }
-                          className="field-control w-20"
+                          className="field-control no-spinner w-20"
                           aria-label="Weight"
                         />
                         <span className="text-xs text-text-tertiary">kg</span>

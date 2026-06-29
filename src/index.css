@@ -102,12 +102,17 @@ body {
   @apply rounded-input bg-input px-3 py-2 text-[16px] text-text-primary focus:outline-none;
 }
 
-/* Hide the number-input spin buttons (compact value fields, e.g. Net Worth Monthly Entry). */
+/* Hide the number-input spin buttons app-wide — we never use the up/down steppers, and they crowd
+ * narrow value fields. Applies to every `input[type='number']`, so no per-field class is needed.
+ * `.no-spinner` is kept as a redundant alias so existing usages stay valid. */
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button,
 .no-spinner::-webkit-outer-spin-button,
 .no-spinner::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
+input[type='number'],
 .no-spinner {
   -moz-appearance: textfield;
   appearance: textfield;

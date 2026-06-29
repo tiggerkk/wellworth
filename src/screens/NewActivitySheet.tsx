@@ -225,7 +225,7 @@ function ActivityForm({
             onBlur={(e) => {
               if (e.target.value.trim() === '') setDefaultDuration('30')
             }}
-            className="mt-1 field-control w-full"
+            className="mt-1 field-control no-spinner w-full"
           />
         </label>
 
@@ -262,7 +262,7 @@ function ActivityForm({
                     onChange={(e) =>
                       setMet((prev) => ({ ...prev, [level.key]: e.target.value }))
                     }
-                    className="field-control w-20 text-right"
+                    className="field-control no-spinner w-20 text-right"
                   />
                 </div>
               )

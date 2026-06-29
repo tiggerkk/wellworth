@@ -453,7 +453,7 @@ export function FoodDetailSheet() {
                   onBlur={(e) => {
                     if (e.target.value.trim() === '') setAmount('1')
                   }}
-                  className="mt-1 field-control w-full"
+                  className="mt-1 field-control no-spinner w-full"
                 />
               </label>
               <label className="flex-1 text-xs text-text-secondary">

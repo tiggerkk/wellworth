@@ -197,7 +197,6 @@ Two sub-tabs:
 Wellness-module sub-settings. Auto-save on change.
 
 - **TARGETS**: **Protein Target** is the only manual override field (auto-set from profile via DRI).
-  Plain number entry — the input drops the number-spinner via `.no-spinner`.
 - **DISPLAY**:
   - **Highlighted Nutrients** → choose up to 8 shown on the Diary (the picker caps the selection at 8).
   - **Visible Nutrients** → per-nutrient toggle for what appears on the Dashboard & Daily Report.
