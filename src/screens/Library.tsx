@@ -4,7 +4,7 @@ import { IconPlus } from '@tabler/icons-react'
 import { useAsync } from '../hooks/useAsync'
 import { useSheetNavigate } from '../hooks/useSheetNavigate'
 import { useDiaryVersion, bumpDiary } from '../lib/diary-refresh'
-import { listFoods, softDeleteFood } from '../data/food'
+import { listFoods, deleteFoodSmart } from '../data/food'
 import { listActivities, softDeleteActivity } from '../data/activity'
 import { resolveActivityIcon } from '../constants/activity-icons'
 import { routes } from '../constants/routes'
@@ -52,15 +52,22 @@ export function Library() {
   const { data: activities } = useAsync(activitiesFn)
 
   const q = foldZh(query.trim())
-  const customFoods = (foods ?? []).filter(
-    (f) => f.source === 'custom' && (!q || foldZh(f.name).includes(q)),
-  )
+  // All of the user's foods — custom items plus the USDA/OFF rows cached from a favorite, log, or
+  // custom serving. Surfacing the cached ones here gives them a delete path they otherwise lack.
+  const foodList = (foods ?? []).filter((f) => !q || foldZh(f.name).includes(q))
   const filteredActivities = (activities ?? []).filter(
     (a) => !q || foldZh(a.name).includes(q),
   )
 
+  // Source/type tag shown as the row subtitle.
+  function foodTag(f: { source: string; type: string }): string | undefined {
+    if (f.source === 'usda') return 'USDA'
+    if (f.source === 'off') return 'OFF'
+    return f.type === 'supplement' ? 'Supplement' : undefined
+  }
+
   async function removeFood(id: string) {
-    await softDeleteFood(id)
+    await deleteFoodSmart(id)
     bumpDiary()
   }
   async function removeActivity(id: string) {
@@ -96,26 +103,32 @@ export function Library() {
         </div>
       </div>
 
-      {tab === 'foods' && customFoods.length > 0 && (
-        <ResultCount count={customFoods.length} />
-      )}
+      {tab === 'foods' && foodList.length > 0 && <ResultCount count={foodList.length} />}
       {tab === 'activities' && filteredActivities.length > 0 && (
         <ResultCount count={filteredActivities.length} />
       )}
 
       <div className="overflow-hidden rounded-card border border-border bg-surface">
         {tab === 'foods' &&
-          (customFoods.length === 0 ? (
+          (foodList.length === 0 ? (
             <p className="px-4 py-6 text-center text-sm text-text-tertiary">
-              No custom foods yet.
+              No foods yet.
             </p>
           ) : (
-            customFoods.map((f) => (
+            foodList.map((f) => (
               <SwipeRow key={f.id} onDelete={() => void removeFood(f.id)}>
                 <ListRow
                   title={f.name}
-                  subtitle={f.type === 'supplement' ? 'Supplement' : undefined}
-                  onClick={() => openSheet(routes.wellness.editFood(f.id))}
+                  subtitle={foodTag(f)}
+                  // Custom foods open the editor; cached USDA/OFF foods open Food Detail so their
+                  // servings can be viewed/managed (they aren't editable as custom nutrient rows).
+                  onClick={() =>
+                    openSheet(
+                      f.source === 'custom'
+                        ? routes.wellness.editFood(f.id)
+                        : routes.wellness.food('local', f.id),
+                    )
+                  }
                 />
               </SwipeRow>
             ))

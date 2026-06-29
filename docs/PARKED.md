@@ -149,14 +149,19 @@ coverage proves genuinely insufficient, and only with a CORS-safe path.
 
 ### Diary food-entry serving fidelity on edit · Deferred
 
-**What:** Editing a logged **food** entry restores the exact serving only for custom foods. USDA /
-Open Food Facts entries cache a `food` row with no `serving` rows (synthetic servings aren't
-persisted), so on edit only a 100 g serving is offered and a non-100 g original can't be reproduced —
-Amount is prefilled but recomputed nutrients may differ.
-**Why deferred:** Custom foods (the common case) round-trip correctly; the gap only affects edited
-external-source entries.
-**Decided:** A faithful fix stores the per-unit grams (or `serving_id`) on `diary_entry` at log time
-and restores it on edit — a small additive schema change, not a rebuild.
+**What:** On edit, the original serving is **inferred** by matching the entry's logged energy to a
+serving's scaled energy — not stored. **Partially mitigated (2026-06-29):** USDA/OFF foods can now
+carry persisted `serving` rows + a default (Food Detail → Manage servings), so a customized food's
+non-100 g measures are available on edit; an uncustomized USDA food still only offers its USDA serving
+
+- 100 g. The residual gap is that the **exact** serving used for a given entry isn't recorded, so the
+  energy-match can pick a different same-energy serving.
+  **Why deferred:** Custom + customized foods (the common case) round-trip well enough; the gap is the
+  precise serving identity per entry.
+  **Decided:** A faithful fix stores `serving_id` (or the per-unit grams) on `diary_entry` at log time
+  and restores it on edit — a small additive change. Caveat: `replaceServings` mints new serving ids on
+  every Manage-servings save (F22), so a stored `serving_id` can dangle (ON DELETE SET NULL) — store the
+  per-unit grams alongside, or stop replacing-in-place, if doing this.
 
 ### Activities CSV bulk import · Deferred
 

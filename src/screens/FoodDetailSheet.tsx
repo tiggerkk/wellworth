@@ -1,6 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
-import { IconHeart, IconHeartFilled, IconPlus, IconX } from '@tabler/icons-react'
+import {
+  IconHeart,
+  IconHeartFilled,
+  IconPlus,
+  IconStar,
+  IconStarFilled,
+  IconTrash,
+  IconX,
+} from '@tabler/icons-react'
 import { Sheet } from '../components/Sheet'
 import { NutrientBar } from '../components/NutrientBar'
 import { PrimaryButton } from '../components/PrimaryButton'
@@ -11,8 +19,14 @@ import { useProfile } from '../hooks/useProfile'
 import { useReturnAfterLog } from '../hooks/useReturnAfterLog'
 import { useNutrientReference } from '../hooks/useNutrientReference'
 import { createEntry, deleteEntry, getEntry, updateEntry } from '../data/diary-entry'
-import { createFood, getFood, getFoodByExternal, setFavorite } from '../data/food'
-import { listServings } from '../data/serving'
+import {
+  createFood,
+  getFood,
+  getFoodByExternal,
+  setFavorite,
+  updateFood,
+} from '../data/food'
+import { listServings, replaceServings } from '../data/serving'
 import { getUsdaFood } from '../lib/food-api'
 import { lookupBarcode } from '../lib/off-api'
 import {
@@ -27,6 +41,11 @@ import { draftAmount } from '../lib/quantity'
 import { bumpDiary } from '../lib/diary-refresh'
 import { todayLocal } from '../lib/date'
 
+interface Serving {
+  name: string
+  grams: number
+}
+
 interface DetailFood {
   source: 'usda' | 'off' | 'custom'
   externalId: string | null
@@ -35,14 +54,28 @@ interface DetailFood {
   type: string
   nutrientBasis: string
   nutrients: ReturnType<typeof asNutrientMap>
-  servings: { name: string; grams: number }[]
+  servings: Serving[]
+  /** Index into `servings` of the preselected (default) measure. */
+  defaultIndex: number
   isFavorite: boolean
 }
 
-function withDefaultServing(servings: { name: string; grams: number }[]) {
+/** Always offer a plain "100 g" measure unless the food already has one. */
+function withDefaultServing(servings: Serving[]): Serving[] {
   return servings.some((s) => s.grams === 100)
     ? servings
     : [...servings, { name: '100 g', grams: 100 }]
+}
+
+/** Build the display serving list + the default's index from stored serving rows. */
+function buildServings(
+  rows: { id: string; name: string; grams: number }[],
+  defaultServingId: string | null,
+): { servings: Serving[]; defaultIndex: number } {
+  // withDefaultServing only appends, so the stored rows keep their indices.
+  const servings = withDefaultServing(rows.map((r) => ({ name: r.name, grams: r.grams })))
+  const found = rows.findIndex((r) => r.id === defaultServingId)
+  return { servings, defaultIndex: found >= 0 ? found : 0 }
 }
 
 export function FoodDetailSheet() {
@@ -62,46 +95,55 @@ export function FoodDetailSheet() {
   const { byKey, nutrients: nutrientRows } = useNutrientReference()
 
   const loadFn = useCallback(async (): Promise<DetailFood | null> => {
-    if (source === 'usda') {
-      const f = await getUsdaFood(id)
-      return {
-        source: 'usda',
-        externalId: id,
-        localId: null,
-        name: f.name,
-        type: 'food',
-        nutrientBasis: 'per_100g',
-        nutrients: f.nutrients,
-        servings: withDefaultServing(
-          f.servingGrams
-            ? [{ name: f.servingText ?? '1 serving', grams: f.servingGrams }]
-            : [],
-        ),
-        isFavorite: false,
+    // USDA/OFF foods: prefer a previously-cached `food` row (favorited/logged/customized) so its
+    // stored servings + default + favorite state come back. Only fall back to the live API when
+    // the food was never saved.
+    if (source === 'usda' || source === 'off') {
+      const cached = await getFoodByExternal(source, id)
+      if (cached) {
+        const rows = await listServings(cached.id)
+        const { servings, defaultIndex } = buildServings(
+          rows.map((s) => ({ id: s.id, name: s.name, grams: Number(s.grams) })),
+          cached.default_serving_id,
+        )
+        return {
+          source,
+          externalId: id,
+          localId: cached.id,
+          name: cached.name,
+          type: cached.type,
+          nutrientBasis: cached.nutrient_basis,
+          nutrients: asNutrientMap(cached.nutrients),
+          servings,
+          defaultIndex,
+          isFavorite: cached.is_favorite,
+        }
       }
-    }
-    if (source === 'off') {
-      const f = await lookupBarcode(id)
+      const f = source === 'usda' ? await getUsdaFood(id) : await lookupBarcode(id)
       if (!f) return null
+      const seeded = f.servingGrams
+        ? [{ name: f.servingText ?? '1 serving', grams: f.servingGrams }]
+        : []
       return {
-        source: 'off',
+        source,
         externalId: id,
         localId: null,
         name: f.name,
         type: 'food',
         nutrientBasis: 'per_100g',
         nutrients: f.nutrients,
-        servings: withDefaultServing(
-          f.servingGrams
-            ? [{ name: f.servingText ?? '1 serving', grams: f.servingGrams }]
-            : [],
-        ),
+        servings: withDefaultServing(seeded),
+        defaultIndex: 0,
         isFavorite: false,
       }
     }
     const row = await getFood(id)
     if (!row) return null
-    const servings = await listServings(id)
+    const rows = await listServings(id)
+    const { servings, defaultIndex } = buildServings(
+      rows.map((s) => ({ id: s.id, name: s.name, grams: Number(s.grams) })),
+      row.default_serving_id,
+    )
     return {
       source: row.source as DetailFood['source'],
       externalId: row.external_id,
@@ -110,9 +152,8 @@ export function FoodDetailSheet() {
       type: row.type,
       nutrientBasis: row.nutrient_basis,
       nutrients: asNutrientMap(row.nutrients),
-      servings: withDefaultServing(
-        servings.map((s) => ({ name: s.name, grams: Number(s.grams) })),
-      ),
+      servings,
+      defaultIndex,
       isFavorite: row.is_favorite,
     }
   }, [source, id])
@@ -128,6 +169,16 @@ export function FoodDetailSheet() {
   // Editable draft (string so it can be emptied on focus); resolves to 1 when left blank.
   const [amount, setAmount] = useState('1')
   const [servingIndex, setServingIndex] = useState(0)
+  // Managed serving list (name + grams) + which one is the food's default. Seeded from `food`
+  // once it loads; only an explicit edit here writes back to the DB — see `servingsDirty`.
+  const [servings, setServings] = useState<Serving[]>([])
+  const [defaultIndex, setDefaultIndex] = useState(0)
+  const [manageOpen, setManageOpen] = useState(false)
+  // Snapshot of the loaded servings + default, for dirty-tracking + RESET.
+  const [servingsInitial, setServingsInitial] = useState<{
+    servings: Serving[]
+    defaultIndex: number
+  } | null>(null)
   // null = follow the loaded value; once toggled, this override drives the heart both ways.
   const [favOverride, setFavOverride] = useState<boolean | null>(null)
   const [saving, setSaving] = useState(false)
@@ -137,7 +188,20 @@ export function FoodDetailSheet() {
     servingIndex: number
   } | null>(null)
 
-  const serving = food?.servings[servingIndex] ?? food?.servings[0]
+  // Seed the serving state once `food` resolves (before the snapshot exists, fall back to the
+  // freshly-loaded list so the dropdown/summary render without a blank frame).
+  useEffect(() => {
+    if (!food || servingsInitial) return
+    /* eslint-disable react-hooks/set-state-in-effect */
+    setServings(food.servings)
+    setDefaultIndex(food.defaultIndex)
+    setServingsInitial({ servings: food.servings, defaultIndex: food.defaultIndex })
+    if (!editing) setServingIndex(food.defaultIndex)
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, [food, servingsInitial, editing])
+
+  const effectiveServings = servingsInitial ? servings : (food?.servings ?? [])
+  const serving = effectiveServings[servingIndex] ?? effectiveServings[0]
   const scaled = useMemo(() => {
     if (!food || !serving) return {}
     const basis = food.nutrientBasis === 'per_serving' ? serving.grams : 100
@@ -177,14 +241,41 @@ export function FoodDetailSheet() {
     /* eslint-enable react-hooks/set-state-in-effect */
   }, [editing, food, entry, initial])
 
+  const servingsDirty =
+    servingsInitial != null &&
+    JSON.stringify({ servings, defaultIndex }) !==
+      JSON.stringify({
+        servings: servingsInitial.servings,
+        defaultIndex: servingsInitial.defaultIndex,
+      })
+
   const dirty =
-    initial != null &&
-    (amount !== initial.amount || servingIndex !== initial.servingIndex)
+    (initial != null &&
+      (amount !== initial.amount || servingIndex !== initial.servingIndex)) ||
+    servingsDirty
 
   function reset() {
-    if (!initial) return
-    setAmount(initial.amount)
-    setServingIndex(initial.servingIndex)
+    if (initial) {
+      setAmount(initial.amount)
+      setServingIndex(initial.servingIndex)
+    }
+    if (servingsInitial) {
+      setServings(servingsInitial.servings)
+      setDefaultIndex(servingsInitial.defaultIndex)
+    }
+  }
+
+  function updateServing(i: number, patch: Partial<Serving>) {
+    setServings((prev) => prev.map((s, j) => (j === i ? { ...s, ...patch } : s)))
+  }
+  function addServing() {
+    setManageOpen(true)
+    setServings((prev) => [...prev, { name: '', grams: 0 }])
+  }
+  function deleteServingAt(i: number) {
+    setServings((prev) => prev.filter((_, j) => j !== i))
+    setDefaultIndex((d) => (d === i ? 0 : d > i ? d - 1 : d))
+    setServingIndex((s) => (s === i ? 0 : s > i ? s - 1 : s))
   }
 
   async function removeEntry() {
@@ -221,10 +312,29 @@ export function FoodDetailSheet() {
     return created.id
   }
 
+  // Persist the managed servings + default — only when the user actually changed them. Replacing
+  // mints new serving ids, so we re-point default_serving_id at the saved row by position.
+  async function persistServings(foodId: string) {
+    if (!servingsDirty) return
+    const valid = servings.filter((s) => s.name.trim() && s.grams > 0)
+    const saved = await replaceServings(
+      foodId,
+      valid.map((s) => ({ name: s.name.trim(), grams: s.grams })),
+    )
+    const def = servings[defaultIndex]
+    const pos = def ? valid.indexOf(def) : -1
+    await updateFood(foodId, {
+      default_serving_id: pos >= 0 ? (saved[pos]?.id ?? null) : null,
+    })
+    setServingsInitial({ servings, defaultIndex })
+  }
+
   async function submit() {
     if (!food || !userId || !serving) return
     setSaving(true)
     try {
+      const foodId = await ensureCachedId(food)
+      await persistServings(foodId)
       if (editing && entryId) {
         await updateEntry(entryId, {
           amount: draftAmount(amount, 1),
@@ -232,7 +342,6 @@ export function FoodDetailSheet() {
           nutrients: scaled,
         })
       } else {
-        const foodId = await ensureCachedId(food)
         await createEntry({
           user_id: userId,
           day,
@@ -257,6 +366,7 @@ export function FoodDetailSheet() {
     const next = !favShown
     setFavOverride(next)
     const foodId = await ensureCachedId(food)
+    await persistServings(foodId)
     await setFavorite(foodId, next)
   }
 
@@ -314,7 +424,7 @@ export function FoodDetailSheet() {
 
         {food && serving && (
           <>
-            <div className="mb-4 flex gap-3">
+            <div className="mb-2 flex gap-3">
               <label className="flex-1 text-xs text-text-secondary">
                 Amount
                 <input
@@ -337,14 +447,76 @@ export function FoodDetailSheet() {
                   onChange={(e) => setServingIndex(Number(e.target.value))}
                   className="mt-1 field-control w-full"
                 >
-                  {food.servings.map((s, i) => (
+                  {effectiveServings.map((s, i) => (
                     <option key={i} value={i}>
-                      {s.name} ({s.grams} g)
+                      {s.name} ({s.grams} g){i === defaultIndex ? ' · default' : ''}
                     </option>
                   ))}
                 </select>
               </label>
             </div>
+
+            {/* Manage servings: add/edit/delete custom measures + pick the default. These are the
+                food's reusable measures (persisted on ADD/heart/SAVE); the Amount above is the
+                per-log quantity and never changes them. */}
+            <button
+              onClick={() => setManageOpen((o) => !o)}
+              className="mb-4 text-xs text-positive"
+            >
+              {manageOpen ? 'Hide servings' : 'Manage servings'}
+            </button>
+            {manageOpen && (
+              <div className="mb-4 flex flex-col gap-2 rounded-card border border-border bg-surface p-3">
+                {servings.map((s, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <button
+                      onClick={() => setDefaultIndex(i)}
+                      aria-label={
+                        i === defaultIndex ? 'Default serving' : 'Set as default'
+                      }
+                      title="Set as default"
+                      className="shrink-0"
+                    >
+                      {i === defaultIndex ? (
+                        <IconStarFilled size={18} className="text-favorite" />
+                      ) : (
+                        <IconStar size={18} className="text-text-tertiary" />
+                      )}
+                    </button>
+                    <input
+                      value={s.name}
+                      placeholder="e.g. 1 cup"
+                      onChange={(e) => updateServing(i, { name: e.target.value })}
+                      className="field-control flex-1"
+                    />
+                    <input
+                      type="number"
+                      min={0}
+                      step="any"
+                      value={s.grams || ''}
+                      placeholder="g"
+                      onChange={(e) =>
+                        updateServing(i, { grams: Number(e.target.value) })
+                      }
+                      className="field-control w-20"
+                    />
+                    <button
+                      onClick={() => deleteServingAt(i)}
+                      aria-label="Remove serving"
+                      className="shrink-0 text-text-tertiary"
+                    >
+                      <IconTrash size={18} />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  onClick={addServing}
+                  className="flex items-center gap-1 text-sm text-positive"
+                >
+                  <IconPlus size={16} /> Add serving
+                </button>
+              </div>
+            )}
 
             <h2 className="mb-1 text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
               Complete Nutrient Summary

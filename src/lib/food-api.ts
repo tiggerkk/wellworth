@@ -1,6 +1,7 @@
 import type { NutrientMap } from './nutrients'
 import { toUsdaWildcardQuery } from './food-search'
 import { searchZhVariants } from './zh-query'
+import { GRAMS_PER_OZ, GRAMS_PER_LB } from './units'
 
 /**
  * USDA FoodData Central client + nutrient mapping. Called directly from the browser with
@@ -134,6 +135,33 @@ export function externalFoodServing(f: ExternalFood): string {
   return '100 g'
 }
 
+/**
+ * USDA's serving size in grams. The API reports `servingSize` in `servingSizeUnit`, usually 'g'
+ * but sometimes a weight unit like 'oz'/'lb' (e.g. "2 oz" pasta). We convert weight units to grams
+ * so the serving survives into Food Detail instead of being dropped (which then fell back to 100 g).
+ * Volume units (ml/fl oz) need a density we don't have, so they stay null — the user can add a
+ * custom serving instead. Rounded to 0.1 g (nutrient math is gram-based; the label shows grams).
+ */
+function usdaServingGrams(food: UsdaFood): number | null {
+  const n = food.servingSize
+  if (n == null || !Number.isFinite(n)) return null
+  let grams: number
+  switch ((food.servingSizeUnit ?? '').toLowerCase()) {
+    case 'g':
+      grams = n
+      break
+    case 'oz':
+      grams = n * GRAMS_PER_OZ
+      break
+    case 'lb':
+      grams = n * GRAMS_PER_LB
+      break
+    default:
+      return null
+  }
+  return Math.round(grams * 10) / 10
+}
+
 function toExternalFood(food: UsdaFood): ExternalFood {
   return {
     source: 'usda',
@@ -143,7 +171,7 @@ function toExternalFood(food: UsdaFood): ExternalFood {
     nutrientBasis: 'per_100g',
     nutrients: mapUsdaNutrients(food),
     servingText: food.householdServingFullText ?? null,
-    servingGrams: food.servingSizeUnit === 'g' ? (food.servingSize ?? null) : null,
+    servingGrams: usdaServingGrams(food),
   }
 }
 

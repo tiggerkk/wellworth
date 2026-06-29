@@ -86,6 +86,16 @@ export async function updateEntry(
   return data
 }
 
+/** Whether any diary entry still references this food — gates hard- vs soft-delete of the food. */
+export async function foodHasEntries(foodId: string): Promise<boolean> {
+  const { count, error } = await supabase
+    .from('diary_entry')
+    .select('id', { count: 'exact', head: true })
+    .eq('food_id', foodId)
+  if (error) throw error
+  return (count ?? 0) > 0
+}
+
 /** Hard delete — strength_set rows cascade. The diary log is the user's own data. */
 export async function deleteEntry(id: string): Promise<void> {
   const { error } = await supabase.from('diary_entry').delete().eq('id', id)

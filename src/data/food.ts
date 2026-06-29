@@ -2,6 +2,7 @@ import { supabase } from '../lib/supabase'
 import type { ImportFoodRecord } from '../lib/food-import'
 import type { ExternalFood } from '../lib/food-api'
 import { replaceServings } from './serving'
+import { foodHasEntries } from './diary-entry'
 import type { Tables, TablesInsert, TablesUpdate } from '../types/database'
 
 export interface ListFoodsOptions {
@@ -199,4 +200,24 @@ export async function softDeleteFood(id: string): Promise<void> {
     .update({ deleted_at: new Date().toISOString() })
     .eq('id', id)
   if (error) throw error
+}
+
+/** Hard delete a food and its servings (cascade). Only safe when nothing references it. */
+async function hardDeleteFood(id: string): Promise<void> {
+  const { error } = await supabase.from('food').delete().eq('id', id)
+  if (error) throw error
+}
+
+/**
+ * Delete a food the right way: if any diary entry still references it, **soft-delete** so the
+ * entry's snapshot + FK survive (the spec forbids hard-deleting a referenced food); otherwise
+ * **hard-delete** so an unreferenced "phantom" (a cached USDA/OFF row from a favorite/log, or an
+ * unused custom food) leaves no tombstone behind. Its `serving` rows cascade on hard delete.
+ */
+export async function deleteFoodSmart(id: string): Promise<void> {
+  if (await foodHasEntries(id)) {
+    await softDeleteFood(id)
+  } else {
+    await hardDeleteFood(id)
+  }
 }

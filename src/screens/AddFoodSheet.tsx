@@ -178,17 +178,26 @@ export function AddFoodSheet() {
       toggle: () => void toggleFav(f.id, !f.is_favorite),
     },
   }))
+  // A USDA/OFF food the user already saved (favorited/logged/customized) shows as a local row;
+  // drop its live USDA twin so it doesn't appear twice (the local row carries the custom servings).
+  const cachedExternal = new Set(
+    (userFoods ?? [])
+      .filter((f) => f.external_id)
+      .map((f) => `${f.source}:${f.external_id}`),
+  )
   const usdaDisplay: DisplayFood[] =
     tab === 'all'
-      ? usdaResults.map((f) => ({
-          key: `usda-${f.externalId}`,
-          name: f.name,
-          nutrientCount: Object.keys(f.nutrients).length,
-          serving: externalFoodServing(f),
-          source: SOURCE_TAG[f.source] ?? f.source.toUpperCase(),
-          onOpen: () =>
-            openSheet(`${routes.wellness.food(f.source, f.externalId)}${suffix}`),
-        }))
+      ? usdaResults
+          .filter((f) => !cachedExternal.has(`${f.source}:${f.externalId}`))
+          .map((f) => ({
+            key: `usda-${f.externalId}`,
+            name: f.name,
+            nutrientCount: Object.keys(f.nutrients).length,
+            serving: externalFoodServing(f),
+            source: SOURCE_TAG[f.source] ?? f.source.toUpperCase(),
+            onOpen: () =>
+              openSheet(`${routes.wellness.food(f.source, f.externalId)}${suffix}`),
+          }))
       : []
 
   let results = [...localResults, ...usdaDisplay]

@@ -33,7 +33,7 @@ Each module's former staging spec (`docs/06-books.md`, `07-quotes.md`, `medical.
 
 ## Snapshot
 
-- **Tests:** 575 Vitest tests (pure helpers only).
+- **Tests:** 602 Vitest tests (pure helpers only).
 - **Deploy:** Deployed — GitHub `main` → Vercel auto-deploy; installed + tested on iPhone (PWA).
 - **Stack / scripts / env / gates / conventions:** see `02_tech_spec.md` (the canonical, current reference) — not duplicated here.
 
@@ -2787,3 +2787,33 @@ earlier sessions — the intent was always **Esc**).
 - **`TagInput` left unchanged:** its Backspace removes the last chip when the field is empty (standard
   tag-editor behavior, not a modal close) — unrelated to the close-key typo.
 - Verified by `npm run check`.
+
+## Custom servings for USDA/OFF foods + phantom-food cleanup (2026-06-29)
+
+Let any food carry user-defined servings with a persistent default, and give the silently-created
+USDA/OFF rows a delete path. Durable constraint distilled to **F22** (`02_tech_spec.md`); behavior in
+`04_wellness.md` (Food Detail → Manage servings, Library, data model, USDA serving-grams).
+
+- **Why:** a USDA result like "2 oz" pasta logged as "100 g" because only `servingSizeUnit === 'g'`
+  was honored; and there was no way to log a USDA food as "1 cup"/"2 eggs" or to remove the `food`
+  rows that favoriting/logging mint (Library only listed `source='custom'`, so cached rows were
+  undeletable and lived forever).
+- **Schema:** `food.default_serving_id uuid` (→ `serving`, ON DELETE SET NULL) added in
+  `01_wellness_schema.sql`. **Circular-FK gotcha:** `serving.food_id → food`, so the column is
+  declared inline on `food` but its FK is a separate `alter table … add constraint` **after** the
+  `serving` table. Owner applies via `supabase db reset --linked`; `database.ts` hand-edited to match
+  (regenerated on reset).
+- **`usdaServingGrams`** (`food-api.ts`): converts weight serving units (`g`/`oz`/`lb`, rounded 0.1 g)
+  so an `oz`/`lb` serving survives into Food Detail instead of falling back to 100 g. `ml`/`fl oz`
+  stay null (no density) — the user adds a custom serving instead.
+- **Food Detail** (`FoodDetailSheet`): on open, USDA/OFF resolves to the cached `food` row
+  (`getFoodByExternal`) before the live API. New **Manage servings** editor (add/edit/delete + a
+  default star) seeded from `food`; `servingsDirty`-gated persistence on ADD/heart/SAVE — Amount and
+  per-log serving selection never write back. `replaceServings` now **returns** the inserted rows so
+  `default_serving_id` is re-pointed by position.
+- **Data layer:** `replaceServings` returns rows; `diary-entry.foodHasEntries(foodId)`;
+  `food.deleteFoodSmart` (soft if referenced, else hard — servings cascade).
+- **Add Food / Library:** All-tab dedupes the live twin of a cached external; Library Foods lists all
+  foods (custom + cached USDA/OFF, tagged), swipe-delete via `deleteFoodSmart`, USDA/OFF rows open
+  Food Detail to manage servings.
+- No new pure helpers, so the test count is unchanged (**602**). Verified by `npm run check`.

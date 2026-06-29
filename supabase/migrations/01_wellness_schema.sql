@@ -91,6 +91,11 @@ create table public.food (
   nutrients      jsonb not null default '{}'::jsonb, -- { nutrient_key: amount } relative to basis
   is_favorite    boolean not null default false,
   deleted_at     timestamptz, -- soft delete; null = active
+  -- Preselected measure when logging this food (a serving.id). FK added after `serving` exists
+  -- (circular dependency: serving.food_id -> food). ON DELETE SET NULL so deleting the serving
+  -- just clears the default. A per-log Amount/serving choice never writes this — only the
+  -- Manage-servings editor does.
+  default_serving_id uuid,
   created_at     timestamptz not null default now(),
   updated_at     timestamptz not null default now()
 );
@@ -155,6 +160,12 @@ create policy "delete serving via owned food" on public.serving
     select 1 from public.food f
     where f.id = serving.food_id and f.user_id = (select auth.uid())
   ));
+
+-- food.default_serving_id -> serving.id. Added here (not inline above) because `serving`
+-- references `food`, so the table must exist first. ON DELETE SET NULL.
+alter table public.food
+  add constraint food_default_serving_id_fkey
+  foreign key (default_serving_id) references public.serving (id) on delete set null;
 
 -- =====================================================================================
 -- activity — the user's activity library.

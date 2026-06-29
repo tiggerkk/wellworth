@@ -98,7 +98,7 @@ body {
 .field-control {
   /* 16px (not 15px): iOS Safari auto-zooms a focused input/select/textarea whose font-size is
    * < 16px and never zooms back out. 16px keeps the design effectively identical while letting us
-   * leave browser pinch-zoom enabled in the viewport meta (see index.html / F17). */
+   * leave browser pinch-zoom enabled in the viewport meta (see index.html / F21). */
   @apply rounded-input bg-input px-3 py-2 text-[16px] text-text-primary focus:outline-none;
 }
 

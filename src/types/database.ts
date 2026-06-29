@@ -278,6 +278,7 @@ export type Database = {
       food: {
         Row: {
           created_at: string
+          default_serving_id: string | null
           deleted_at: string | null
           external_id: string | null
           id: string
@@ -292,6 +293,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          default_serving_id?: string | null
           deleted_at?: string | null
           external_id?: string | null
           id?: string
@@ -306,6 +308,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          default_serving_id?: string | null
           deleted_at?: string | null
           external_id?: string | null
           id?: string
@@ -318,7 +321,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "food_default_serving_id_fkey"
+            columns: ["default_serving_id"]
+            isOneToOne: false
+            referencedRelation: "serving"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       insurance_policy: {
         Row: {

@@ -150,6 +150,19 @@ Supabase (Postgres + RLS). Components hold no SQL and never import the Supabase 
   token; that disabled all browser pinch-zoom, so small text couldn't be magnified — reversed in favour
   of the 16px controls, since 15px→16px is visually negligible. **Any new focusable text input must be
   ≥16px** — use `.field-control` or `text-[16px]`.)
+- **F22 — a food's servings vs. a log's amount are separate; persist servings only on a deliberate
+  edit.** A `serving` row (name + grams) is a reusable **measure** that belongs to the food;
+  `diary_entry.amount` is the **per-log quantity**. Food Detail's Manage-servings editor is the
+  **only** thing that writes `serving` rows / `food.default_serving_id`, and it does so **only when
+  that list is dirty** (a name/grams or the default changed) — gated independently of the Amount
+  field and the per-log serving selection. So logging a different amount, or picking another serving
+  for one entry, never mutates the stored default. Because a serving needs a `food.id` (FK), adding
+  a custom serving to a never-saved USDA/OFF food first mints its `food` row (the heart/ADD path).
+  Opening a USDA/OFF result **resolves to the cached `food` row** (`getFoodByExternal`) before the
+  live API, so stored servings/default come back; the **All** list dedupes the live twin of any
+  cached external. `replaceServings` mints new serving ids each call, so re-point `default_serving_id`
+  by position right after. Cached USDA/OFF rows are surfaced + deletable in Library via
+  `deleteFoodSmart` (soft if a diary entry references the food, else hard) — see `docs/04_wellness.md`.
 
 ## Auth & first-run
 

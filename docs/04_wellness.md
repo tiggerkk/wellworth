@@ -77,6 +77,9 @@ that survives sheets but not reloads; strength activities carry their `strength_
   `<n> nutrients · <serving>` and the source tag (USDA / Custom / OFF). Results are ordered by
   name-match relevance then nutrient count. Your saved foods have an interactive heart to toggle
   favorite; raw USDA results show a non-interactive heart and are favorited from **Food Detail**.
+- **Dedupe cached externals:** a USDA/OFF food the user already saved appears as a local row, so its
+  live USDA twin (same `source:external_id`) is filtered out of the **All** results — no double
+  listing, and the local row is the one that carries the custom servings/default.
 - The barcode-scan button opens the camera scanner (lazy-loaded); a decoded EAN/UPC is looked up in
   Open Food Facts and opens **Food Detail**. Logging or favoriting saves the product into `food`
   (`source='off'`).
@@ -90,6 +93,28 @@ that survives sheets but not reloads; strength activities carry their `strength_
 - **ADD** when logging a new item. When opened to **edit a logged entry**, the buttons are **RESET** +
   **SAVE** instead, both enabled only once a value changes; Amount and the serving are prefilled from
   the entry.
+- **Resolve-to-cached-row on open (F22):** opening a USDA/OFF result first looks up the cached `food`
+  row via `getFoodByExternal(source, externalId)` and, if found, loads **that** (its stored servings,
+  default, favorite state, snapshot nutrients) instead of re-fetching the live API. Only a
+  never-saved food falls back to `getUsdaFood`/`lookupBarcode`.
+
+#### Manage servings (Food Detail)
+
+A food's **servings** (reusable measures = name + grams) are distinct from **Amount** (the per-log
+quantity). The **Serving Size** dropdown picks which measure this log uses; **Manage servings** (a
+toggle under the dropdown) is where they're created/edited:
+
+- Each row: a **default star** (`IconStarFilled` = the food's default measure), a name input, a
+  grams input, and a delete (`IconTrash`); **+ Add serving** appends a blank row. The default is
+  marked `· default` in the dropdown and is preselected next time the food is opened
+  (`food.default_serving_id`).
+- **Persistence is deliberate, not incidental (F22):** the managed list is written to the DB **only
+  when it's dirty** (a serving's name/grams or the default changed) — on **ADD**, the **heart**, or
+  **SAVE**. Changing **Amount**, or just picking a different serving in the dropdown for one log,
+  **never** writes back, so a one-off "ate more/less today" doesn't drift the stored default.
+- Persisting replaces the food's `serving` rows (new ids each time) and re-points
+  `default_serving_id` at the chosen row by position. Adding a custom serving to a never-saved USDA
+  food creates its `food` row (the heart/ADD path), so the serving has somewhere to live.
 
 ### Add Activity (modal, from the Activities `+`)
 
@@ -128,9 +153,17 @@ Identical layout to the Dashboard, scoped to a single day instead of an averaged
 
 Two sub-tabs:
 
-- **Foods**: searchable list of your custom foods and supplements; tap to edit, swipe to delete;
-  `+ New Food` opens the form. Supplements show a "supplement" tag. (The bulk CSV importer launcher
+- **Foods**: searchable list of **all** your foods — custom items **plus** the USDA/OFF rows cached
+  from a favorite, log, or custom serving (tagged `USDA`/`OFF`; custom supplements tagged
+  `Supplement`). Tapping a **custom** food opens the editor; tapping a **USDA/OFF** food opens Food
+  Detail (to view/Manage its servings — they aren't editable as custom nutrient rows). **Swipe to
+  delete** any of them (`deleteFoodSmart` — see below); `+ New Food` opens the form. Surfacing the
+  cached USDA/OFF rows here gives them the **only** delete path they have (they're created silently
+  by favoriting/logging/customizing and were previously undeletable). (The bulk CSV importer launcher
   lives in **Wellness Settings → Import**, not here — see Settings + Import CSV below.)
+  - **`deleteFoodSmart`**: if any diary entry still references the food → **soft-delete** (preserve
+    the entry's snapshot + FK, per the rule below); otherwise **hard-delete** so an unreferenced
+    "phantom" leaves no tombstone (its `serving` rows cascade). Applies to custom and cached foods alike.
 - **Activities**: list of your activities; tap to edit template + default effort/MET, swipe to delete;
   `+ New Activity` opens the form.
 
@@ -241,6 +274,13 @@ and the nutrient columns). Flow (mirrors Books/Shows — shared `ImportPreviewLi
 **USDA FoodData Central** (`api.nal.usda.gov/fdc/v1`): free `api.data.gov` key (`VITE_USDA_API_KEY`).
 Detail is `GET /food/{fdcId}`; amounts are per 100 g.
 
+- **Serving size → grams (`usdaServingGrams`):** USDA reports `servingSize` in `servingSizeUnit`,
+  usually `g` but sometimes a weight unit like `oz`/`lb` (e.g. "2 oz" pasta). Convert **weight**
+  units to grams so the serving survives into Food Detail (previously only `g` was kept, so an `oz`
+  serving was dropped and fell back to 100 g). Volume units (`ml`/`fl oz`) need a density we don't
+  have, so they stay `null` — the user adds a custom serving instead. `householdServingFullText`
+  (e.g. "6 slices", "2 oz") is the label; the gram value is the metric weight the nutrient math uses.
+
 - **Search uses POST, not GET (F2):** `searchFoods` POSTs `/foods/search` with a JSON body — a GET
   whose `dataType` includes `"Survey (FNDDS)"` returns HTTP 400 (the space/parens) and yields stale
   `fdcId`s that then 404 on the detail endpoint.
@@ -286,8 +326,14 @@ Shared external APIs).
   `nutrient` reference table at the data-access layer (`filterToKnownKeys`) so adding a tracked
   nutrient never needs a schema change
 - `is_favorite` BOOLEAN DEFAULT false
+- `default_serving_id` UUID NULL → serving (ON DELETE SET NULL) — the preselected measure when
+  logging this food (set via Food Detail → Manage servings). FK added **after** the `serving` table
+  in the migration (circular dependency: `serving.food_id → food`). NULL ⇒ Food Detail defaults to
+  the first serving. A per-log Amount/serving choice never writes this — only the Manage editor does.
 - `deleted_at` TIMESTAMPTZ NULL — **soft delete**; NULL = active. Never hard-delete a food
-  referenced by a diary entry. Library screens and Add sheets always filter `deleted_at IS NULL`.
+  referenced by a diary entry (use `deleteFoodSmart`, which soft-deletes referenced foods and
+  hard-deletes unreferenced "phantoms" — see Library). Library screens and Add sheets always filter
+  `deleted_at IS NULL`.
 - `created_at`, `updated_at`
 
 ### `serving` (a food's measures)
