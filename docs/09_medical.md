@@ -91,7 +91,9 @@ _Search, filter, and sort persist for the **browser-tab session** (`useSessionSt
   Report detail) and are **grouped under collapsible, color-accented category sections** (shared
   **`MedicalSection`**, `variant="bare"` — a colored header **bar** above the existing result-card
   stack, so the per-result cards aren't double-wrapped; `groupResultsByCategory`, like Report detail),
-  so an added test slots into its section/test position, not the end. Each result
+  so an added test slots into its section/test position, not the end. Each result card also carries a
+  **4px left stripe in its category's `MEDICAL_CATEGORY_COLOR`** (same hue as the section header it
+  sits under), so individual cards read as part of their group. Each result
   card edits the value (number and/or text, per the test's `value_kind`), unit, and flag
   (none/high/low/abnormal) on **one line** (Value · Unit · Flag), then reference range (as printed);
   rows can be removed. The category isn't shown per-card for a matched row (the section header carries

@@ -2,6 +2,7 @@ import { IconTrash } from '@tabler/icons-react'
 import {
   labTestByKey,
   MEDICAL_CATEGORIES,
+  MEDICAL_CATEGORY_COLOR,
   MEDICAL_CATEGORY_LABELS,
   MEDICAL_FLAG_LABELS,
   medicalReviewReason,
@@ -63,6 +64,9 @@ export function MedicalResultCard({
 
   return (
     <div
+      // A 4px left stripe in the row's category colour (same hue as the section header it sits
+      // under) ties each card to its group; the inline left border overrides the class border.
+      style={{ borderLeft: `4px solid ${MEDICAL_CATEGORY_COLOR[row.category]}` }}
       className={`flex flex-col gap-2 rounded-card border p-3 ${
         reviewReason ? 'border-accent/40 bg-accent/10' : 'border-border bg-surface'
       }`}

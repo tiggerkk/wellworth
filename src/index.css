@@ -39,25 +39,27 @@
 
   /* Medical category accents — one distinct hue per lab-result section (left stripe + tinted
      header on the Report/Edit/Dashboard sections). Consumed via MEDICAL_CATEGORY_COLOR in
-     src/lib/medical.ts; tints are derived at the boundary with color-mix. */
-  --color-med-general: #7e8aa6;
-  --color-med-vitals: #e2574c;
-  --color-med-lipids: #e2933c;
-  --color-med-glucose: #d8a657;
-  --color-med-liver: #c08457;
-  --color-med-renal: #3fb6a4;
-  --color-med-electrolytes: #4cc3d9;
-  --color-med-cbc: #e0556f;
-  --color-med-thyroid: #a779e0;
-  --color-med-bone: #8f93b8;
-  --color-med-tumour_markers: #d869b0;
-  --color-med-hepatitis: #e8623c;
-  --color-med-inflammation: #6cc24a;
-  --color-med-urine: #c2bd44;
-  --color-med-stool: #a87f57;
-  --color-med-imaging: #5b8def;
-  --color-med-eye: #6fb1f0;
-  --color-med-other: #8a93a8;
+     src/lib/medical.ts; tints are derived at the boundary with color-mix. Hues are ordered so
+     that *consecutive* categories (the sequence in MEDICAL_CATEGORIES) jump far across the colour
+     wheel — no two adjacent sections share a warm/cool band — so neighbours read clearly apart. */
+  --color-med-general: #7e8aa6; /* slate grey-blue */
+  --color-med-vitals: #e2574c; /* red */
+  --color-med-lipids: #e0a83a; /* gold */
+  --color-med-glucose: #2fb0a0; /* teal-green */
+  --color-med-liver: #8a78e0; /* indigo */
+  --color-med-renal: #e87a4a; /* coral */
+  --color-med-electrolytes: #4a86e8; /* blue */
+  --color-med-cbc: #5bbf4a; /* green */
+  --color-med-thyroid: #b06fe0; /* violet */
+  --color-med-bone: #3fb6c4; /* cyan */
+  --color-med-tumour_markers: #d869b0; /* magenta */
+  --color-med-hepatitis: #e2933c; /* orange */
+  --color-med-inflammation: #6cc24a; /* green */
+  --color-med-urine: #5b8def; /* blue */
+  --color-med-stool: #b07a45; /* brown */
+  --color-med-imaging: #2f9fb0; /* blue-teal */
+  --color-med-eye: #9b7de0; /* violet */
+  --color-med-other: #8a93a8; /* grey */
 
   /* Radii */
   --radius-screen: 28px;
