@@ -68,6 +68,9 @@ function bestHit(
 }
 
 async function resolveRow(input: ImportFoodRecord): Promise<ResolvedRow> {
+  // is_custom rows are imported as custom foods straight from the CSV — no USDA/OFF lookup, no
+  // review. (status 'manual' = custom, no external link; ranks with the resolved rows.)
+  if (input.is_custom) return { input, match: null, status: 'manual' }
   // Cache hit → skip USDA entirely (instant re-imports after a DB reset). Status recomputed so it
   // stays consistent with the current CSV name.
   const cached = getCachedFoodMatch(input.name)

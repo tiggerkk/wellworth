@@ -87,10 +87,37 @@ describe('foodMatchScore', () => {
     expect(foodMatchScore('Muffins, blueberry, dry mix', 'blueberry muffin')).toBe(1)
     expect(foodMatchScore('Apple pie', 'blueberry muffin')).toBe(0)
   })
+
+  it('ranks an exact multi-word name above its longer variants', () => {
+    // The exact full name (5) beats a leading-phrase variant (4) and a lead-word match (2), so the
+    // typed "Coffee, Latte" surfaces first instead of behind "Coffee, Iced Latte" etc.
+    expect(foodMatchScore('Coffee, Latte', 'Coffee, Latte')).toBe(5)
+    expect(foodMatchScore('Coffee, Latte, decaffeinated', 'Coffee, Latte')).toBe(4)
+    expect(foodMatchScore('Coffee, Iced Latte', 'Coffee, Latte')).toBe(2)
+    expect(foodMatchScore('Coffee, Iced Latte, nonfat', 'Coffee, Latte')).toBe(2)
+  })
+
+  it('keeps a with/without prefix collision below the exact match', () => {
+    const q = 'Cabbage, chinese (pak-choi), cooked, boiled, drained, with salt'
+    expect(
+      foodMatchScore(
+        'Cabbage, chinese (pak-choi), cooked, boiled, drained, with salt',
+        q,
+      ),
+    ).toBe(5)
+    // "without" prefix-matches "with", so it still passes the token gate — but lands at tier 2.
+    expect(
+      foodMatchScore(
+        'Cabbage, chinese (pak-choi), cooked, boiled, drained, without salt',
+        q,
+      ),
+    ).toBe(2)
+  })
 })
 
 describe('foodMatchStatus', () => {
   it('maps the best hit score to importer status', () => {
+    expect(foodMatchStatus(5)).toBe('ok') // exact multi-word full name
     expect(foodMatchStatus(4)).toBe('ok') // exact / leading-word exact
     expect(foodMatchStatus(3)).toBe('review')
     expect(foodMatchStatus(1)).toBe('review')

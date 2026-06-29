@@ -72,6 +72,27 @@ describe('parseFoodCsv', () => {
     expect(r.warnings).toHaveLength(2)
   })
 
+  it('parses is_custom and defaults it to false', () => {
+    const r = parse('name,is_custom,energy\nLocal Dish,true,200\nOats,,389')
+    expect(r.records[0]).toMatchObject({ name: 'Local Dish', is_custom: true })
+    expect(r.records[1]).toMatchObject({ name: 'Oats', is_custom: false })
+  })
+
+  it('resolves default_serving against a serving name', () => {
+    const csv =
+      'name,serving1_name,serving1_grams,serving2_name,serving2_grams,default_serving\n' +
+      'Latte,1 cup,240,1 mug,350,1 mug'
+    expect(parse(csv).records[0]!.default_serving_name).toBe('1 mug')
+  })
+
+  it('warns and nulls a default_serving that matches no serving', () => {
+    const csv =
+      'name,serving1_name,serving1_grams,default_serving\nLatte,1 cup,240,1 bowl'
+    const r = parse(csv)
+    expect(r.records[0]!.default_serving_name).toBeNull()
+    expect(r.warnings.join(' ')).toMatch(/default_serving/)
+  })
+
   it('skips an incomplete serving with a warning', () => {
     const r = parse('name,serving1_name,serving1_grams\nX,1 cup,')
     expect(r.records[0]!.servings).toEqual([])

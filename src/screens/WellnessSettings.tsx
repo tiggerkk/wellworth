@@ -61,7 +61,7 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
     })
   }
 
-  const inputCls = 'field-control w-24 text-right'
+  const inputCls = 'field-control no-spinner w-24 text-right'
 
   return (
     <>

@@ -7,8 +7,18 @@
     nutrient columns** for these. A weaker match is flagged **review**; no match is flagged **No match**.
   - In the preview, **Change** lets you pick the right USDA food; **Manual** keeps the row as a **custom**
     food (`source = 'custom'`) built from whatever nutrient columns you filled in.
-- So you **don't pre-tag** custom vs USDA: leave nutrient cells blank for foods USDA can find, and fill
-  them only for genuinely custom items (e.g. home-cooked / local dishes USDA doesn't have).
+- **Know it isn't in USDA? Set `is_custom = true`.** The importer then **skips USDA entirely** for that
+  row — no lookup, no review — and saves it straight as a custom food from your CSV nutrients/servings.
+  Use it for home-cooked / local dishes and supplements you've already confirmed USDA doesn't have.
+- So for the rest you **don't pre-tag** custom vs USDA: leave nutrient cells blank for foods USDA can
+  find, and fill them only for genuinely custom items.
+- **Servings work for USDA foods too.** Fill `serving*` to add your own measures (e.g. `1 cup`) on top
+  of USDA's own serving; leave them blank to just use USDA's serving + the automatic `100 g`. Use
+  `default_serving` to pick which measure is preselected when logging.
+- **Re-import overwrites.** Re-importing a food you've already imported updates it **in place** and
+  **replaces** its servings + default from the CSV (the file is the source of truth) — so any servings
+  you added to that food **inside the app** are overwritten. Identity is the USDA food (for matched
+  rows) or the exact `name` (for custom rows); a different name imports as a new food.
 - **Every** imported row is saved as a **favorite** (USDA foods only persist when favorited), so the
   `is_favorite` column is ignored.
 
@@ -21,11 +31,11 @@
 
 ## How a row maps to the database
 
-| CSV columns                                     | Goes to                      | Notes                                                                                                                                                                             |
-| ----------------------------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `name`, `type`, `nutrient_basis`, `is_favorite` | `food` row                   | `name` is matched against USDA; matched rows save as `source='usda'`, the rest as `custom`. Every row is saved as a favorite (`is_favorite` ignored). `user_id` is set at import. |
-| `serving1_*` … `serving3_*`                     | `serving` rows               | Optional. A `100 g` measure is always available automatically, so you don't need to add it.                                                                                       |
-| every nutrient column (`energy`, `protein`, …)  | `food.nutrients` (JSONB map) | Stored as `{ key: amount }`, **relative to the basis** (see below).                                                                                                               |
+| CSV columns                                                  | Goes to                      | Notes                                                                                                                                                                                                                                                                               |
+| ------------------------------------------------------------ | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`, `type`, `is_custom`, `is_favorite`, `nutrient_basis` | `food` row                   | `name` is matched against USDA unless `is_custom=true`; matched rows save as `source='usda'`, the rest as `custom`. Every row is saved as a favorite (`is_favorite` ignored). `nutrient_basis` applies to **custom rows only** (USDA supplies its own). `user_id` is set at import. |
+| `serving1_*` … `serving3_*`, `default_serving`               | `serving` rows + the default | Optional. A `100 g` measure is always available automatically, so you don't need to add it. For a USDA food, your servings are added **on top of** USDA's own serving. `default_serving` is the preselected measure.                                                                |
+| every nutrient column (`energy`, `protein`, …)               | `food.nutrients` (JSONB map) | Stored as `{ key: amount }`, **relative to the basis** (see below). Ignored for USDA-matched rows (USDA supplies the nutrients).                                                                                                                                                    |
 
 `net_carbs` is **not** a column — it's derived automatically as `carbs − fiber` at display time.
 
@@ -33,22 +43,31 @@
 
 ## Core columns
 
-| Column           | Required? | Allowed values / format                   | Default           |
-| ---------------- | --------- | ----------------------------------------- | ----------------- |
-| `name`           | **Yes**   | Any text, e.g. `Homemade Granola`         | —                 |
-| `type`           | No        | `food` or `supplement`                    | `food`            |
-| `nutrient_basis` | No        | `per_100g` or `per_serving`               | `per_100g`        |
-| `is_favorite`    | No        | ignored — every row imports as a favorite | (always favorite) |
+| Column           | Required? | Allowed values / format                                                  | Default           |
+| ---------------- | --------- | ------------------------------------------------------------------------ | ----------------- |
+| `name`           | **Yes**   | Any text, e.g. `Homemade Granola`                                        | —                 |
+| `type`           | No        | `food` or `supplement`                                                   | `food`            |
+| `is_custom`      | No        | `true`/`1`/`yes` ⇒ true (skips USDA, imports as custom)                  | `false`           |
+| `is_favorite`    | No        | ignored — every row imports as a favorite                                | (always favorite) |
+| `nutrient_basis` | No        | `per_100g` or `per_serving` — **custom rows only; leave blank for USDA** | `per_100g`        |
 
-### Servings (`serving1_name`/`serving1_grams`, …`serving3_*`)
+### Servings (`serving1_name`/`serving1_grams`, …`serving3_*`) + `default_serving`
 
 - Optional named measures.
 - `*_name` is free text (`1/2 cup`, `1 capsule`, `1 scoop`); `*_grams` is the weight of that measure in grams (numeric).
 - Add as many of the three pairs as you need; leave the rest blank.
 - For supplements, use the pill/scoop as the serving and put its actual weight (a small number like `0.3`) in grams.
+- **For a USDA-matched food**, these are **extra** measures added on top of USDA's own household
+  serving (e.g. "6 slices") — so add a `serving1_name=1 cup` only if your measure isn't USDA's. Leave
+  them all blank to just get USDA's serving + the automatic `100 g`.
+- **`default_serving`** — the measure preselected when you log this food. Must **exactly match one of
+  your `servingN_name` values** (case-insensitive); anything else is ignored with a warning. Leave it
+  **blank** to default to the USDA serving (matched foods) or the first serving you listed.
 
 ### `nutrient_basis` — what the nutrient numbers mean
 
+- **USDA-matched rows ignore it** — USDA supplies its nutrients per 100 g, so **leave it blank** for any
+  food you expect USDA to find. It only matters for custom rows (`is_custom=true`, Manual, or no match).
 - **`per_100g`** (typical for whole foods): enter every nutrient **per 100 grams**. When you log it,
   the app scales by the serving you pick. Enter the most accurate `serving*` weights so logging "1
   cup" is correct.
@@ -98,9 +117,12 @@ food's calories — enter it directly; it isn't computed from the macros.
 
 ## Examples (already in the template)
 
-1. **Homemade Granola** — a `food`, `per_100g`, with two named servings and macro + a few micro values.
-2. **Vitamin D3 1000 IU** — a `supplement`, `per_serving`, one capsule, `vitamin_d = 25` (µg), favorited.
-3. **Magnesium Glycinate** — a `supplement`, `per_serving`, two-capsule dose, `magnesium = 200` (mg).
+1. **Banana raw** — a USDA-matched `food` (no `is_custom`, blank `nutrient_basis`, no nutrient
+   columns); adds a `1 medium` (118 g) serving on top of USDA's, and sets `default_serving = 1 medium`.
+2. **Homemade Granola** — `is_custom=true`, so it imports as a custom `food` (`per_100g`) straight from
+   the CSV with two named servings (default `1 cup`) — no USDA lookup.
+3. **Vitamin D3 1000 IU** — `is_custom=true` `supplement`, `per_serving`, one capsule, `vitamin_d = 25` (µg).
+4. **Magnesium Glycinate** — `is_custom=true` `supplement`, `per_serving`, two-capsule dose, `magnesium = 200` (mg).
 
 Delete these rows before importing your own data (or keep them — they're valid).
 
@@ -108,12 +130,9 @@ Delete these rows before importing your own data (or keep them — they're valid
 
 ## Importing the file
 
-There is no import button in the app yet — this template defines the format. To actually load the
-CSV you'll need an importer that reads each row, writes the `food` row (with the nutrient columns
-collapsed into the JSONB `nutrients` map) and its `serving` rows. Two options, depending on what you
-prefer; ask and I'll build it:
-
-- **In-app upload** (recommended): a "Import CSV" button in Library that parses the file in the
-  browser and inserts through the normal data layer — runs as you, respects RLS, reusable any time.
-- **One-off local script**: a Node script (`scripts/import-foods.ts`) run from your machine. Simple
-  for a single big load, but needs Supabase credentials in your local `.env`.
+Import it in-app: **Wellness → Settings → Import → Import CSV Food** (enable **Bulk Food Import** first).
+The sheet parses the file in the browser, matches each row against USDA (except `is_custom` rows),
+shows a preview where you can **Change**/**Manual** any flagged row, then writes the `food` rows (with
+the nutrient columns collapsed into the JSONB `nutrients` map), their `serving` rows, and the default
+serving — all through the normal data layer, so it runs as you and respects RLS. Re-importing the same
+file updates in place (see "Re-import overwrites" above).

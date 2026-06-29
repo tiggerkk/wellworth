@@ -163,6 +163,11 @@ Supabase (Postgres + RLS). Components hold no SQL and never import the Supabase 
   cached external. `replaceServings` mints new serving ids each call, so re-point `default_serving_id`
   by position right after. Cached USDA/OFF rows are surfaced + deletable in Library via
   `deleteFoodSmart` (soft if a diary entry references the food, else hard) — see `docs/04_wellness.md`.
+  **Seed on first save:** the food's servings (incl. its USDA/OFF household serving) are written when
+  it's first cached — both interactively (`ensureCachedId` → `writeServings`) and on import — so a
+  resolved-to-cached food shows more than just "100 g". The **CSV importer** mirrors this — a USDA
+  food's servings become its USDA serving plus the CSV `serving*` measures, with a `default_serving`;
+  **re-import overwrites** servings/default (file wins), and `is_custom=true` skips USDA matching entirely.
 
 ## Auth & first-run
 

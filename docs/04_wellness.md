@@ -197,6 +197,7 @@ Two sub-tabs:
 Wellness-module sub-settings. Auto-save on change.
 
 - **TARGETS**: **Protein Target** is the only manual override field (auto-set from profile via DRI).
+  Plain number entry — the input drops the number-spinner via `.no-spinner`.
 - **DISPLAY**:
   - **Highlighted Nutrients** → choose up to 8 shown on the Diary (the picker caps the selection at 8).
   - **Visible Nutrients** → per-nutrient toggle for what appears on the Dashboard & Daily Report.
@@ -208,12 +209,16 @@ Wellness-module sub-settings. Auto-save on change.
 #### Import CSV (sheet, from Wellness Settings)
 
 Reused CSV format: `templates/wellness-foods-template.csv` (guide: `templates/wellness-foods-import-guide.md`).
-Columns are all optional except `name` (`type` food|supplement, `nutrient_basis`, three `serving*` pairs,
+Columns are all optional except `name` (`type` food|supplement, `is_custom`, `is_favorite`,
+`nutrient_basis` (custom rows only — blank/ignored for USDA), three `serving*` pairs, `default_serving`,
 and the nutrient columns). Flow (mirrors Books/Shows — shared `ImportPreviewList`):
 
 - Each row is **matched against USDA** using the **same logic as Diary Add Food → All** (`searchFoods` +
   `foodMatchScore`); the best hit's score → status via `foodMatchStatus`: exact/leading-exact → **ok**,
   weaker → **review**, none → **No match**. Matched rows fetch full nutrients via `getUsdaFood`.
+- **`is_custom=true` short-circuits matching** (`resolveRow`): the row skips USDA/OFF entirely (no
+  request, no cache), resolves straight to a **custom** food (`status='manual'`), and needs no review —
+  for foods the owner already knows USDA doesn't have.
 - Preview rows show the USDA **name + "{N} nutrients · {serving}"** (like the live USDA list); \*\*No-match
   - review sort to the top** (danger/accent). **Change** opens the `FoodSearchSheet` USDA overlay;
     **Manual\*\* keeps the row as a custom food. Concurrency `POOL` ≈ 6 (USDA ~1,000 req/hr).
@@ -222,9 +227,16 @@ and the nutrient columns). Flow (mirrors Books/Shows — shared `ImportPreviewLi
   skips USDA entirely. **Change** overwrites, **Manual** removes; cleared via Settings → **Clear import
   match cache** (`OWNER_RUNBOOK.md` Part R).
 - **Import** (`saveImportedFoods`): **every** row saved as a **favorite** (`is_favorite=true`, so USDA
-  foods persist). Matched → `source='usda'` (per-100g, USDA nutrients); unmatched/Manual →
+  foods persist). Matched → `source='usda'` (per-100g, USDA nutrients); unmatched/Manual/`is_custom` →
   `source='custom'` from the CSV's nutrients/servings. **Idempotent** — USDA dedupe on
   (source, external_id), custom on `lower(name)`; re-running updates in place.
+- **Servings + default (F22):** each food's `serving` rows = the USDA household serving (for matched
+  rows, from `match.servingText/servingGrams`) **+** the CSV `serving*` measures; `default_serving_id`
+  is set from the CSV `default_serving` (by name) → else the USDA serving → else the first serving. New
+  rows resolve their default by position after the bulk serving insert, then set it in **one** bulk
+  `food` upsert (full rows, so NOT NULL columns hold). **Re-import overwrites** an existing food's
+  servings + default from the CSV (`applyImportServings`) — including USDA rows (previously their
+  servings were untouched) — so in-app serving edits are replaced.
 
 #### Visible Nutrients sub-screen
 
@@ -290,8 +302,14 @@ Detail is `GET /food/{fdcId}`; amounts are per 100 g.
   varied whole-food entry. Branded duplicates (same name + brand) are collapsed and capped.
 - **Stem-wildcard the last word (F6):** USDA matches **whole tokens**, so a partial word returns
   nothing — `searchFoods` wildcards the last word at a STEM (`food-search.ts#toUsdaWildcardQuery`,
-  `blueberr*` not the raw word) so partial/plural input recalls the same set. Exact + leading-prefix
-  matches share the top score tier so the nutrient-count tiebreak surfaces the fuller food.
+  `blueberr*` not the raw word) so partial/plural input recalls the same set.
+- **Result ranking — single-word vs multi-word (`foodMatchScore`):** for a **one-word** query, exact +
+  leading-prefix matches share the top tier (4) so the nutrient-count tiebreak surfaces the fuller food
+  (a bare "BLUEBERRIES" can't outrank "Blueberries, raw"). For a **multi-word** query — which usually
+  names the whole food (Add Food typed name, or a CSV import row) — an **exact full name scores 5** and a
+  **leading phrase 4**, both above the coarse "contains all tokens" tier (2). Without this, "Coffee,
+  Latte" tied "Coffee, Iced Latte"/"…nonfat" (and "…with salt" tied "…without salt", since `with`
+  prefix-matches `without`) at tier 2 and lost the nutrient/alphabetical tiebreak, burying the exact hit.
 - **Plain-block results pane (F6):** the results scroll pane must be a plain block
   `flex-1 overflow-y-auto`, not a flex-col (which shrinks the results card — see `01_design_system.md`
   → Layout gotchas).

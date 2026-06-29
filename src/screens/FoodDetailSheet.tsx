@@ -78,6 +78,28 @@ function buildServings(
   return { servings, defaultIndex: found >= 0 ? found : 0 }
 }
 
+/**
+ * Persist a food's servings + default. Replacing mints new serving ids, so the default is re-pointed
+ * at the saved row by position. Shared by the Manage-servings save and the seed-on-first-cache path
+ * (so a freshly favorited/logged USDA food keeps its household serving, not just "100 g").
+ */
+async function writeServings(
+  foodId: string,
+  list: Serving[],
+  defIndex: number,
+): Promise<void> {
+  const valid = list.filter((s) => s.name.trim() && s.grams > 0)
+  const saved = await replaceServings(
+    foodId,
+    valid.map((s) => ({ name: s.name.trim(), grams: s.grams })),
+  )
+  const def = list[defIndex]
+  const pos = def ? valid.indexOf(def) : -1
+  await updateFood(foodId, {
+    default_serving_id: pos >= 0 ? (saved[pos]?.id ?? null) : null,
+  })
+}
+
 export function FoodDetailSheet() {
   const navigate = useNavigate()
   const returnAfterLog = useReturnAfterLog()
@@ -309,23 +331,17 @@ export function FoodDetailSheet() {
       nutrients: f.nutrients,
       is_favorite: favShown,
     })
+    // Seed the food's servings (incl. its USDA/OFF household serving) on first cache, so reopening it
+    // shows more than "100 g". Skip when the Manage list is dirty — persistServings writes the edited
+    // list right after, which would otherwise double-write.
+    if (!servingsDirty) await writeServings(created.id, f.servings, f.defaultIndex)
     return created.id
   }
 
-  // Persist the managed servings + default — only when the user actually changed them. Replacing
-  // mints new serving ids, so we re-point default_serving_id at the saved row by position.
+  // Persist the managed servings + default — only when the user actually changed them.
   async function persistServings(foodId: string) {
     if (!servingsDirty) return
-    const valid = servings.filter((s) => s.name.trim() && s.grams > 0)
-    const saved = await replaceServings(
-      foodId,
-      valid.map((s) => ({ name: s.name.trim(), grams: s.grams })),
-    )
-    const def = servings[defaultIndex]
-    const pos = def ? valid.indexOf(def) : -1
-    await updateFood(foodId, {
-      default_serving_id: pos >= 0 ? (saved[pos]?.id ?? null) : null,
-    })
+    await writeServings(foodId, servings, defaultIndex)
     setServingsInitial({ servings, defaultIndex })
   }
 

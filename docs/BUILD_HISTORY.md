@@ -33,7 +33,7 @@ Each module's former staging spec (`docs/06-books.md`, `07-quotes.md`, `medical.
 
 ## Snapshot
 
-- **Tests:** 602 Vitest tests (pure helpers only).
+- **Tests:** 607 Vitest tests (pure helpers only).
 - **Deploy:** Deployed — GitHub `main` → Vercel auto-deploy; installed + tested on iPhone (PWA).
 - **Stack / scripts / env / gates / conventions:** see `02_tech_spec.md` (the canonical, current reference) — not duplicated here.
 
@@ -2817,3 +2817,46 @@ USDA/OFF rows a delete path. Durable constraint distilled to **F22** (`02_tech_s
   foods (custom + cached USDA/OFF, tagged), swipe-delete via `deleteFoodSmart`, USDA/OFF rows open
   Food Detail to manage servings.
 - No new pure helpers, so the test count is unchanged (**602**). Verified by `npm run check`.
+
+## Food CSV import aligned to the serving model + `is_custom` fast-path (2026-06-29)
+
+Follow-up to the custom-servings work: the bulk importer predated the new serving model. Behavior in
+`04_wellness.md` (Import CSV); constraint extends **F22** (`02_tech_spec.md`).
+
+- **Template** (`wellness-foods-template.csv`) — columns now ordered
+  `name,type,is_custom,is_favorite,nutrient_basis,serving*…,default_serving,<nutrients>` (flags up
+  front; `nutrient_basis` sits just before the servings/nutrients block and is **custom-rows-only** —
+  blank/ignored for USDA). `is_custom` + `default_serving` are the new columns. Examples reworked (a
+  USDA-matched Banana with a custom `1 medium` default + blank basis; `is_custom` granola/supplements).
+- **`food-import.ts`** — `ImportFoodRecord` gains `is_custom` + `default_serving_name`; `default_serving`
+  validated against the row's servings (else warn + null). `parseBool` is now the **lenient**
+  `true/1/yes/y ⇒ true` (else false) shared with Books/Shows — no more "not true/false" warnings. New tests.
+- **`ImportFoodsSheet`** — `resolveRow` short-circuits `is_custom` rows to a custom result (`manual`)
+  with **no USDA/OFF call and no review**.
+- **`saveImportedFoods`** — was discarding `serving*` for USDA rows; now `importServings` builds
+  `[USDA serving] + [CSV servings]` and sets `default_serving_id` (CSV default → USDA serving →
+  first). New rows resolve the default by walking the bulk-inserted servings by position, then set it
+  in **one** bulk `food` upsert (full rows so NOT NULL holds; a partial upsert would null
+  user_id/source/name on the INSERT attempt — F16a-safe). Existing rows overwrite via
+  `applyImportServings` (USDA rows included now). `ImportFoodResolved.match` widened to carry
+  `servingText`/`servingGrams`.
+- **Regression fixed:** `FoodDetailSheet.ensureCachedId` now seeds a food's servings on first cache
+  (shared `writeServings` helper with `persistServings`), so favoriting/logging a USDA food keeps its
+  household serving instead of collapsing to "100 g" on reopen (Food Detail reads the cached row, not
+  the API).
+- Test count **605** (3 new `food-import` tests). Verified by `npm run check`.
+
+## USDA multi-word match ranking — exact name first (2026-06-29)
+
+`foodMatchScore` (the ranker shared by Add Food's list and the importer's `bestHit`) put an exact
+multi-word name in the **same** tier as every longer variant, so the nutrient/alphabetical tiebreak
+buried it: searching "Coffee, Latte" surfaced "Coffee, Iced Latte"/"…nonfat" above the exact hit, and
+"…with salt" lost to "…without salt" (`with` prefix-matches `without`). Behavior in `04_wellness.md`
+(Add Food ranking note).
+
+- **Multi-word branch only** (single-word tiers untouched — the deliberate "bare BLUEBERRIES can't beat
+  Blueberries, raw, nutrient count decides" design stays): exact full name → **5**, leading phrase → **4**,
+  lead-word match → 2, tokens-present → 1. `foodMatchStatus` unchanged (≥4 ⇒ ok), so a multi-word exact
+  import row is now **ok** instead of always **review**.
+- 2 new `food-search` tests (Coffee/Latte ordering; with/without collision). Test count **607**.
+  Verified by `npm run check`.

@@ -11,6 +11,7 @@ const CORE_COLUMNS = new Set([
   'name',
   'type',
   'nutrient_basis',
+  'is_custom',
   'is_favorite',
   'serving1_name',
   'serving1_grams',
@@ -18,6 +19,7 @@ const CORE_COLUMNS = new Set([
   'serving2_grams',
   'serving3_name',
   'serving3_grams',
+  'default_serving',
 ])
 
 // Present in the nutrient reference but derived at display time (carbs − fiber), so ignored on import.
@@ -27,9 +29,14 @@ export interface ImportFoodRecord {
   name: string
   type: 'food' | 'supplement'
   nutrient_basis: 'per_100g' | 'per_serving'
+  // true ⇒ import directly as a custom food (the importer skips USDA/OFF matching entirely).
+  is_custom: boolean
   is_favorite: boolean
   nutrients: NutrientMap
   servings: { name: string; grams: number }[]
+  // The serving (by name) to preselect when logging; must match one of `servings`. null ⇒ the
+  // importer falls back to the USDA serving (if any) or the first serving.
+  default_serving_name: string | null
 }
 
 export interface ImportParseResult {
@@ -38,12 +45,9 @@ export interface ImportParseResult {
   warnings: string[]
 }
 
-function parseBool(raw: string): boolean | null {
-  const v = raw.trim().toLowerCase()
-  if (v === '') return false
-  if (['true', '1', 'yes', 'y'].includes(v)) return true
-  if (['false', '0', 'no', 'n'].includes(v)) return false
-  return null
+/** Lenient truthy parse for a CSV boolean cell: `true/1/yes/y` (case-insensitive) ⇒ true (mirrors Books/Shows). */
+function parseBool(raw: string): boolean {
+  return ['true', '1', 'yes', 'y'].includes(raw.trim().toLowerCase())
 }
 
 /**
@@ -117,12 +121,8 @@ export function parseFoodCsv(
       continue
     }
 
+    const custom = parseBool(col(cells, 'is_custom'))
     const fav = parseBool(col(cells, 'is_favorite'))
-    if (fav === null) {
-      warnings.push(
-        `Row ${line} ("${name}"): is_favorite not true/false — treated as false.`,
-      )
-    }
 
     const servings: { name: string; grams: number }[] = []
     for (let s = 1; s <= 3; s++) {
@@ -143,6 +143,23 @@ export function parseFoodCsv(
         continue
       }
       servings.push({ name: sName, grams })
+    }
+
+    // Default serving: must name one of this row's servings (case-insensitive). Blank ⇒ null (the
+    // importer then defaults to the USDA serving or the first serving).
+    const defaultRaw = col(cells, 'default_serving')
+    let defaultServingName: string | null = null
+    if (defaultRaw !== '') {
+      const hit = servings.find(
+        (s) => s.name.trim().toLowerCase() === defaultRaw.toLowerCase(),
+      )
+      if (hit) {
+        defaultServingName = hit.name
+      } else {
+        warnings.push(
+          `Row ${line} ("${name}"): default_serving "${defaultRaw}" doesn't match any serving — ignored.`,
+        )
+      }
     }
 
     const nutrients: NutrientMap = {}
@@ -167,9 +184,11 @@ export function parseFoodCsv(
       name,
       type: typeRaw,
       nutrient_basis: basisRaw,
-      is_favorite: fav === true,
+      is_custom: custom,
+      is_favorite: fav,
       nutrients,
       servings,
+      default_serving_name: defaultServingName,
     })
   }
 

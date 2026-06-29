@@ -35,7 +35,7 @@ export function toUsdaWildcardQuery(term: string): string {
 
 /**
  * The food importer's status for a row from its best USDA hit's `foodMatchScore`:
- *   ok      — exact / leading-word-exact name (score 4): confident, auto-accept
+ *   ok      — exact / leading-word-exact name (score ≥ 4): confident, auto-accept
  *   review  — weaker partial match (score 1–3): needs a glance
  *   nomatch — no usable hit (score 0): import as custom (or fix via Change)
  * Mirrors the Books/Shows ok/review/nomatch split (which use title tiers). Pure.
@@ -70,14 +70,26 @@ function wordMatchLevel(w: string, q: string): number {
 
 /**
  * How well `name` matches `query` (higher = better; 0 = no match, drop it).
+ *
+ * Single-word query:
  *   4  leading word equals the query      ("Blueberries, raw" / "BLUEBERRIES" for "blueberry")
  *   3  leading word starts with the query ("Blueberry juice" for "blueberr")
  *   2  a later word matches the query      ("Muffins, blueberry")
- *   1  the query is inside a word, or every word of a multi-word query matches
+ *   1  the query is inside a word
+ *   Exact and leading-prefix deliberately share tier 4 so a bare, nutrient-poor "BLUEBERRIES"
+ *   can't outrank the rich "Blueberries, raw" — the caller breaks ties by nutrient count, so
+ *   within a tier the more complete food wins.
  *
- * Exact and leading-prefix matches deliberately share the top tiers so a bare, nutrient-poor
- * "BLUEBERRIES" can't outrank the rich "Blueberries, raw" — the caller breaks ties by nutrient
- * count, so within a tier the more complete food wins.
+ * Multi-word query (every typed word must match some name word, else 0):
+ *   5  exact full name      — same words, same order & count ("Coffee, Latte" for "coffee latte")
+ *   4  leading phrase        — name begins with the typed phrase, then has extra words
+ *   2  leading word matches  — the first typed word is the name's lead word (tokens scattered after)
+ *   1  tokens present but the lead word doesn't match
+ *   Unlike the single-word case, an exact full name is rewarded ABOVE longer variants: a multi-word
+ *   query that names the whole food (e.g. a CSV import row, or "Coffee, Latte") should pick that
+ *   food, not "Coffee, Iced Latte" or "…without salt" — which otherwise tie at the coarse lead-word
+ *   tier and get reordered by nutrient count. ("without" prefix-matches "with", so it still passes
+ *   the token gate, but lands at tier 2 below the exact match.)
  */
 export function foodMatchScore(name: string, query: string): number {
   const qWords = toWords(query)
@@ -95,8 +107,14 @@ export function foodMatchScore(name: string, query: string): number {
     return 0
   }
 
-  // Multi-word query: every token must match some name word; lead-word match ranks higher.
+  // Multi-word query: every token must match some name word.
   if (!qWords.every((qw) => nameWords.some((w) => wordMatchLevel(w, qw) > 0))) return 0
+  // Do the name's leading words equal the typed phrase, in order? Exact (same length) beats a
+  // longer "leading phrase" variant; both beat a mere contains-all-tokens match.
+  const leadingExact = qWords.every(
+    (qw, i) => wordMatchLevel(nameWords[i] ?? '', qw) === 2,
+  )
+  if (leadingExact) return qWords.length === nameWords.length ? 5 : 4
   const [firstQ = ''] = qWords
   return wordMatchLevel(lead, firstQ) > 0 ? 2 : 1
 }
