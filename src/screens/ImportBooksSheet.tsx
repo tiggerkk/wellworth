@@ -26,11 +26,20 @@ import {
   type BookMetadata,
   type BookSearchResult,
 } from '../lib/books-api'
+import {
+  getCachedBookMatch,
+  removeCachedBookMatch,
+  setCachedBookMatch,
+} from '../lib/book-match-cache'
 import { saveImportedBooks } from '../data/book'
 import { bumpBooks } from '../lib/books-refresh'
 import { errorMessage } from '../lib/errors'
 
 const MAX_MESSAGES = 20
+// Shown when the project's per-day Google Books quota is exhausted (won't recover until midnight
+// Pacific). Unmatched rows still import as-is or can be fixed later via Change.
+const DAILY_QUOTA_MESSAGE =
+  'Google Books daily quota reached — it resets at midnight US-Pacific. Unmatched rows can still be imported as-is (or fixed later with Change).'
 // Concurrent match workers. The keyless Google Books quota is tiny (429s quickly), so stay low
 // without a key; a configured key has the higher project quota, so raise the pool. The 429 backoff
 // (RATE_RETRIES) stays as a safety net either way.
@@ -72,7 +81,21 @@ async function withTimeout<T>(run: (signal: AbortSignal) => Promise<T>): Promise
   }
 }
 
+/** ok/review status for a (cached or freshly-fetched) match against the CSV row. */
+function matchStatus(match: BookMetadata, input: ParsedBookRow): 'ok' | 'review' {
+  return isConfidentMatch(
+    { title: match.title, authors: match.authors },
+    { title: input.title, author: input.author },
+  )
+    ? 'ok'
+    : 'review'
+}
+
 async function resolveRow(input: ParsedBookRow): Promise<ResolvedRow> {
+  // Cache hit → skip the network entirely (the big quota saving when re-importing the same file
+  // after a DB truncate/reset). Status is recomputed so it stays consistent with the current CSV row.
+  const cached = getCachedBookMatch(input.title, input.author)
+  if (cached) return { input, match: cached, status: matchStatus(cached, input) }
   for (let attempt = 0; ; attempt++) {
     try {
       // Query Google with title + author for recall, but rank against the title + author (not the
@@ -86,21 +109,18 @@ async function resolveRow(input: ParsedBookRow): Promise<ResolvedRow> {
       })[0]
       if (!top) return { input, match: null, status: 'nomatch' }
       const match = await withTimeout((signal) => getBookDetails(top, { signal }))
-      return {
-        input,
-        match,
-        status: isConfidentMatch(
-          { title: match.title, authors: match.authors },
-          { title: input.title, author: input.author },
-        )
-          ? 'ok'
-          : 'review',
-      }
+      setCachedBookMatch(input.title, input.author, match) // cache positive matches only
+      return { input, match, status: matchStatus(match, input) }
     } catch (e) {
-      // On a 429, back off and retry — the keyless quota recovers within a second or two.
-      if (e instanceof BookSearchRateLimitError && attempt < RATE_RETRIES) {
-        await sleep(1000 * (attempt + 1))
-        continue
+      if (e instanceof BookSearchRateLimitError) {
+        // A *per-day* quota won't recover by retrying (it resets at midnight Pacific) — rethrow so
+        // the batch stops hammering an exhausted quota. A transient/per-minute 429 backs off and
+        // retries; the keyless burst limit recovers within a second or two.
+        if (e.daily) throw e
+        if (attempt < RATE_RETRIES) {
+          await sleep(1000 * (attempt + 1))
+          continue
+        }
       }
       return { input, match: null, status: 'nomatch' }
     }
@@ -141,17 +161,37 @@ export function ImportBooksSheet() {
     const out = new Array<ResolvedRow>(rows.length)
     let nextIdx = 0
     let completed = 0
+    // Once the per-day quota is hit, every further request just 429s and burns more of an exhausted
+    // quota — so workers stop pulling rows. The unmatched rows are filled in as `nomatch` below.
+    let quotaHit = false
     setProgress({ done: 0, total: rows.length })
     async function worker() {
       for (;;) {
+        if (quotaHit) return
         const i = nextIdx++
         if (i >= rows.length) return
-        out[i] = await resolveRow(rows[i]!)
+        try {
+          out[i] = await resolveRow(rows[i]!)
+        } catch (e) {
+          if (e instanceof BookSearchRateLimitError && e.daily) {
+            quotaHit = true
+            return
+          }
+          out[i] = { input: rows[i]!, match: null, status: 'nomatch' }
+        }
         completed += 1
         setProgress({ done: completed, total: rows.length })
       }
     }
     await Promise.all(Array.from({ length: Math.min(POOL, rows.length) }, worker))
+    if (quotaHit) {
+      // Rows left unresolved by the early abort become `nomatch` so the preview is complete and
+      // importable (with the CSV title/author and no Google Books link).
+      for (let i = 0; i < rows.length; i++) {
+        out[i] ??= { input: rows[i]!, match: null, status: 'nomatch' }
+      }
+      setImportError(DAILY_QUOTA_MESSAGE)
+    }
     out.sort((a, b) => STATUS_RANK[a.status] - STATUS_RANK[b.status])
     setProgress(null)
     setResolved(out)
@@ -160,6 +200,9 @@ export function ImportBooksSheet() {
   // Accept the CSV row as-is — clear any (wrong) match so the book imports with the owner's title/
   // author and no Google Books link. For rows where none of the search hits is the right book.
   function acceptManual(i: number) {
+    // Forget any cached match so a row the owner rejected isn't re-applied on the next import.
+    const input = resolved?.[i]?.input
+    if (input) removeCachedBookMatch(input.title, input.author)
     setResolved(
       (prev) =>
         prev?.map((row, j) =>
@@ -171,8 +214,11 @@ export function ImportBooksSheet() {
   async function applyFix(i: number, r: BookSearchResult) {
     setFixIndex(null)
     setImportError(null)
+    const input = resolved?.[i]?.input
     try {
       const match = await getBookDetails(r)
+      // Persist the correction so the same CSV resolves to the owner's pick on re-import.
+      if (input) setCachedBookMatch(input.title, input.author, match)
       setResolved(
         (prev) =>
           prev?.map((row, j) => (j === i ? { ...row, match, status: 'ok' } : row)) ??
@@ -182,7 +228,9 @@ export function ImportBooksSheet() {
       // Don't silently leave the wrong match — tell the owner the fix didn't take (e.g. a 429).
       setImportError(
         e instanceof BookSearchRateLimitError
-          ? 'Rate-limited by Google Books — pause a moment, then try Change again.'
+          ? e.daily
+            ? DAILY_QUOTA_MESSAGE
+            : 'Rate-limited by Google Books — pause a moment, then try Change again.'
           : 'Could not load that title — please try Change again.',
       )
     }

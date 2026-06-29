@@ -113,7 +113,9 @@ Reached from the **New Show** bottom-nav tab (`/shows/entry`, new) or by tapping
   because the visible-fields list is default-on. Type, Title, Status, and the favourite heart are always
   shown and not listed.
 - **Import → Enable Bulk Shows Import** toggle (`profile.show_importer_enabled`, **on by default**); when on,
-  an **Import CSV Shows** launcher opens the importer sheet.
+  an **Import CSV Shows** launcher opens the importer sheet, plus a **Clear Import Match Cache (N)**
+  button (`clearShowMatchCache`; `N` = `showMatchCacheSize`) — see Import CSV → match cache, and
+  `OWNER_RUNBOOK.md` Part R.
 
 ### Import CSV (sheet, from Shows Settings)
 
@@ -128,10 +130,19 @@ Columns: `title,type,status,rating,lgbtq_rep,dynasty,watched_seasons,watched_epi
   `watched_seasons`), resolved to that season's TMDB episode count at import (left blank if TMDB has
   no count); used elsewhere, the row is skipped.
 
+**Match cache (`src/lib/show-match-cache.ts`, a `match-cache.ts` instance shared with Books):**
+resolved matches are cached in **`localStorage`** (one key, `wellworth:show-match-cache`) keyed on
+`type|normMatch(title)|year`, so re-importing the **same** file (e.g. after `supabase db reset
+--linked` while testing) **skips TMDB entirely** on a hit and resolves instantly. Unlike Books this is
+a **performance** aid, not a quota guard (TMDB has no per-day cap). Only **positive** matches are
+cached; **Change** overwrites with the owner's pick, **Manual** removes it. It's **independent of the
+database** — cleared only via Shows Settings → **Clear Import Match Cache**, deleting that one
+localStorage key, or "Delete data" (`OWNER_RUNBOOK.md` Part R).
+
 Steps:
 
 1. **Choose CSV** → rows parsed/validated (bad rows listed as skipped) and each **matched against TMDB**
-   (CJK-aware) with a progress count. A trailing **`(YYYY)`** on the title (e.g. `Beyond (2017)`) is
+   (cache first, CJK-aware) with a progress count. A trailing **`(YYYY)`** on the title (e.g. `Beyond (2017)`) is
    split off before searching — TMDB returns nothing for that literal — and the year is then used to
    **rank** + confirm. Hits are ranked by the shared author-/year-aware ranker (`rankTitleResults` —
    title tier, then closeness to the hinted year, then year descending) rather than the raw top hit, so

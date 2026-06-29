@@ -4,6 +4,7 @@ import {
   capGenres,
   httpsCover,
   isConfidentMatch,
+  isDailyQuotaBody,
   mapGoogleSearchItems,
   mapGoogleVolume,
   mapOpenLibrarySearchDocs,
@@ -396,5 +397,30 @@ describe('isConfidentMatch', () => {
         { title: '某书', author: '张三, 李四' },
       ),
     ).toBe(true)
+  })
+})
+
+describe('isDailyQuotaBody', () => {
+  it('detects the per-day quota message', () => {
+    expect(
+      isDailyQuotaBody({
+        error: {
+          message:
+            "Quota exceeded for quota metric 'Queries' and limit 'Queries per day' of service 'books.googleapis.com'.",
+        },
+      }),
+    ).toBe(true)
+  })
+  it('treats a per-minute/burst 429 as transient (not daily)', () => {
+    expect(
+      isDailyQuotaBody({
+        error: { message: "Quota exceeded ... limit 'Queries per minute'." },
+      }),
+    ).toBe(false)
+  })
+  it('returns false for an unrecognised or empty body', () => {
+    expect(isDailyQuotaBody(null)).toBe(false)
+    expect(isDailyQuotaBody({})).toBe(false)
+    expect(isDailyQuotaBody({ error: {} })).toBe(false)
   })
 })

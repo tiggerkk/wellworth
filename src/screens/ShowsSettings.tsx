@@ -1,10 +1,17 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router'
-import { IconChevronLeft, IconChevronRight, IconUpload } from '@tabler/icons-react'
+import {
+  IconChevronLeft,
+  IconChevronRight,
+  IconTrash,
+  IconUpload,
+} from '@tabler/icons-react'
 import { useProfileEditor } from '../hooks/useProfileEditor'
 import { useSheetNavigate } from '../hooks/useSheetNavigate'
 import { SectionCard } from '../components/SectionCard'
 import { FieldRow } from '../components/FieldRow'
 import { Toggle } from '../components/Toggle'
+import { clearShowMatchCache, showMatchCacheSize } from '../lib/show-match-cache'
 import { routes } from '../constants/routes'
 import type { Tables, TablesUpdate } from '../types/database'
 
@@ -42,6 +49,7 @@ export function ShowsSettings() {
 
 function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
   const openSheet = useSheetNavigate()
+  const [cacheCount, setCacheCount] = useState(() => showMatchCacheSize())
 
   return (
     <>
@@ -65,12 +73,30 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
           />
         </FieldRow>
         {profile.show_importer_enabled ? (
-          <button
-            onClick={() => openSheet(routes.shows.import)}
-            className="flex w-full items-center gap-2 border-b border-border px-4 py-3 text-[15px] text-accent last:border-b-0 active:bg-input/40"
-          >
-            <IconUpload size={18} /> Import CSV Shows
-          </button>
+          <>
+            <button
+              onClick={() => openSheet(routes.shows.import)}
+              className="flex w-full items-center gap-2 border-b border-border px-4 py-3 text-[15px] text-accent active:bg-input/40"
+            >
+              <IconUpload size={18} /> Import CSV Shows
+            </button>
+            <button
+              onClick={() => {
+                clearShowMatchCache()
+                setCacheCount(0)
+              }}
+              disabled={cacheCount === 0}
+              className="flex w-full items-center gap-2 border-b border-border px-4 py-3 text-[15px] text-text-secondary last:border-b-0 active:bg-input/40 disabled:opacity-40"
+            >
+              <IconTrash size={18} />
+              Clear Import Match Cache{cacheCount ? ` (${cacheCount})` : ''}
+            </button>
+            <p className="px-4 py-2 text-xs text-text-tertiary">
+              The importer remembers each title’s TMDB match in this browser so
+              re-importing the same CSV resolves instantly. Clearing it forces a fresh
+              lookup next import. It’s not affected by a database reset.
+            </p>
+          </>
         ) : (
           <div className="px-4 py-2 text-xs text-text-tertiary">
             Turn this on to bulk-seed your library from a CSV.

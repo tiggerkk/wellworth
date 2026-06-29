@@ -297,15 +297,47 @@ export function isConfidentMatch(
 }
 
 /**
- * Thrown when Google Books returns **429** (rate limit). The keyless quota is low; the fix is to set
- * `VITE_GOOGLE_BOOKS_API_KEY` (or search less aggressively). We surface this distinctly rather than
- * falling back to Open Library, because a 429 means "too many requests" — piling on another request
- * (especially to a possibly-unreachable host) makes it worse.
+ * Thrown when Google Books returns **429** (rate limit). Two distinct flavours, told apart by
+ * `daily`:
+ * - **transient** (`daily=false`) — a per-minute/burst limit (or the tiny keyless per-IP quota); it
+ *   recovers in a second or two, so a short backoff + retry is worthwhile.
+ * - **daily** (`daily=true`) — the project's "Queries per day" quota is exhausted; it does **not**
+ *   recover until midnight US-Pacific, so retrying only wastes more of it. Callers must stop, not retry.
+ * We surface this distinctly rather than falling back to Open Library, because a 429 means "too many
+ * requests" — piling on another request (especially to a possibly-unreachable host) makes it worse.
  */
 export class BookSearchRateLimitError extends Error {
-  constructor() {
-    super('Google Books rate limit — add VITE_GOOGLE_BOOKS_API_KEY or slow down.')
+  readonly daily: boolean
+  constructor(daily = false) {
+    super(
+      daily
+        ? 'Google Books daily quota exhausted — resets at midnight US-Pacific.'
+        : 'Google Books rate limit — add VITE_GOOGLE_BOOKS_API_KEY or slow down.',
+    )
     this.name = 'BookSearchRateLimitError'
+    this.daily = daily
+  }
+}
+
+/**
+ * Whether a Google Books 429 body reports the **per-day** quota (`limit 'Queries per day'`) rather
+ * than a transient per-minute/burst limit. Pure (the network 429 path hands it the parsed JSON) so
+ * it's unit-tested. Google's message reads e.g. "Quota exceeded for quota metric 'Queries' and limit
+ * 'Queries per day' of service 'books.googleapis.com'".
+ */
+export function isDailyQuotaBody(body: unknown): boolean {
+  const msg = (body as { error?: { message?: unknown } } | null | undefined)?.error
+    ?.message
+  return typeof msg === 'string' && /per day/i.test(msg)
+}
+
+/** Build the right rate-limit error from a 429 response — reads the body once to classify daily vs
+ * transient (an unreadable body falls back to transient, the safer "retry" assumption). */
+async function rateLimitError(res: Response): Promise<BookSearchRateLimitError> {
+  try {
+    return new BookSearchRateLimitError(isDailyQuotaBody(await res.json()))
+  } catch {
+    return new BookSearchRateLimitError(false)
   }
 }
 
@@ -329,7 +361,7 @@ async function searchGoogle(
 ): Promise<BookSearchResult[]> {
   const url = `${GOOGLE_BOOKS_BASE}/volumes?q=${encodeURIComponent(query)}&maxResults=20${googleKeyParam()}`
   const res = await fetch(url, { signal })
-  if (res.status === 429) throw new BookSearchRateLimitError()
+  if (res.status === 429) throw await rateLimitError(res)
   if (!res.ok) throw new Error(`Google Books search failed (${res.status})`)
   const json = (await res.json()) as { items?: GoogleVolume[] }
   return mapGoogleSearchItems(json)
@@ -390,7 +422,7 @@ export async function getBookDetails(
   if (result.source === 'google') {
     const url = `${GOOGLE_BOOKS_BASE}/volumes/${encodeURIComponent(result.sourceId)}?${googleKeyParam().slice(1)}`
     const res = await fetch(url, { signal })
-    if (res.status === 429) throw new BookSearchRateLimitError()
+    if (res.status === 429) throw await rateLimitError(res)
     if (!res.ok) throw new Error(`Google Books details failed (${res.status})`)
     const json = (await res.json()) as GoogleVolume
     const meta = mapGoogleVolume(json)

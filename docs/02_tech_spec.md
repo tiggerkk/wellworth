@@ -46,8 +46,9 @@ src/
   lib/               # supabase client, units, dri, energy, met, nutrients, targets, report,
                      # date, food-api, off-api, food-search, diary-refresh, diary-clipboard, toast, csv,
                      # networth, fx, networth-refresh, networth-import, fund-import, insurance-import,
-                     # insurance-view, shows, shows-refresh, tmdb-api, shows-import,
-                     # books, books-refresh, books-api, books-import, quotes, quotes-refresh,
+                     # insurance-view, shows, shows-refresh, tmdb-api, shows-import, show-match-cache,
+                     # books, books-refresh, books-api, books-import, book-match-cache,
+                     # match-cache (shared importer match-cache factory), quotes, quotes-refresh,
                      # quotes-import, travel, travel-config, travel-refresh, travel-stats,
                      # travel-geo, places, trip-fx, expenses, reimburse, travel-expense-import,
                      # itinerary-import, last-module helpers

@@ -86,7 +86,10 @@ edit).
   Metadata**, Rating, LGBT+, Dynasty, the two dates, Notes. Stored on `profile.book_visible_fields`
   (**NULL = all visible**). Title, Status, and the Search button are always shown and not listed.
 - **Import → Enable Bulk Books Import** toggle (`profile.book_importer_enabled`, **on by default**); when on,
-  an **Import CSV Books** launcher opens the importer sheet.
+  an **Import CSV Books** launcher opens the importer sheet, plus a **Clear Import Match Cache (N)**
+  button — clears the localStorage match cache (`clearBookMatchCache`; `N` = `bookMatchCacheSize`), so
+  the next import does a fresh lookup. The cache is **not** affected by a DB reset (see Import CSV →
+  match cache, and `OWNER_RUNBOOK.md` Part R).
 
 ### Import CSV (sheet, from Books Settings)
 
@@ -98,17 +101,32 @@ Columns: `title,author,status,rating,lgbtq_rep,dynasty,is_favorite,start_date,en
   never errors, so it can't skip a row.
 - `created_at` frozen to `start_date`, or — when a `want` omits it — defaults to import time.
 
+**Match cache (`src/lib/book-match-cache.ts`, a `match-cache.ts` instance shared with Shows):**
+resolved matches are cached in **`localStorage`** (one key, `wellworth:book-match-cache`) keyed on
+`normMatch(title)|normMatch(author)`, so re-importing
+the **same** file (the common case when truncating `book` / `supabase db reset --linked` to re-test)
+**skips the network entirely** on a hit — the big saving against the per-day Google Books quota. Only
+**positive** matches are cached; no-match / timed-out / quota-aborted rows re-query next run. **Change**
+overwrites the entry with the owner's pick (so the correction persists across re-imports); **Manual**
+removes it (a rejected match is never re-served). The cache is **independent of the database** (it's in
+the browser), so a DB reset never clears it — only Books Settings → **Clear Import Match Cache**,
+deleting that one localStorage key, or a full "Delete data" does (`OWNER_RUNBOOK.md` Part R).
+
 Steps:
 
 1. **Choose CSV** → rows parsed/validated (bad rows listed as skipped) and each **matched against
-   Google Books** (searching `title author`, Open Library fallback) with a progress count. The hits are
+   Google Books** (cache first, then searching `title author`, Open Library fallback) with a progress count. The hits are
    **ranked** with the shared author-aware `rankSearchResults({ title, author })` (not the raw top hit)
    and the best is taken — the same ranking the search box uses (see Matching above). Concurrency
    (`POOL`) scales with the API key: **3** keyless (the tiny per-IP quota 429s quickly) or **10** when
-   `VITE_GOOGLE_BOOKS_API_KEY` is set (higher project quota) — see `hasGoogleBooksApiKey`; the 429
-   backoff + retry stays as a safety net either way. Each request also has a `REQUEST_TIMEOUT_MS`
-   ceiling so a slow Open Library fallback can't stall the batch on its last row — a timed-out row
-   becomes a `No match` to fix.
+   `VITE_GOOGLE_BOOKS_API_KEY` is set (higher project quota) — see `hasGoogleBooksApiKey`. A 429 is
+   classified by its body (`isDailyQuotaBody`, the `daily` flag on `BookSearchRateLimitError`):
+   a **transient/per-minute** burst backs off + retries (`RATE_RETRIES`); a **per-day** quota
+   (`limit 'Queries per day'`, resets midnight US-Pacific) does **not** — retrying can't recover it,
+   so the matcher **aborts the whole batch** (remaining rows become `No match`, importable as-is) and
+   shows the distinct `DAILY_QUOTA_MESSAGE`. Each request also has a `REQUEST_TIMEOUT_MS` ceiling so a
+   slow Open Library fallback can't stall the batch on its last row — a timed-out row becomes a `No
+match` to fix.
 2. **Preview list** — rows needing attention sort to the **top** (No-match first, then review; resolved
    rows follow, CSV order kept within each group; frozen at resolve time so rows don't jump as you fix
    them). Each row: cover + matched title/year + author(s) + its status chip + parsed
@@ -134,7 +152,13 @@ Full guide: `templates/books-import-guide.md`.
 **Google Books** (`www.googleapis.com/books/v1/volumes`):
 
 - **optional** `VITE_GOOGLE_BOOKS_API_KEY` (raises quota; search works keyless without it — never
-  throws when unset).
+  throws when unset). The key is browser-injected, so a Cloud-Console **HTTP-referrer restriction**
+  must allowlist the dev origin(s) (`http://localhost:5173/*`, LAN IPs) **and** the prod domain
+  (`https://<app>.vercel.app/*`); otherwise keyed requests 403 (silent Open Library fallback → "No
+  match"). The default project quota is **1,000 `Queries per day`** — each CJK title costs **2**
+  queries (`searchZhVariants` runs Simplified + HK-Traditional), so a repeated full re-import can
+  exhaust it; raise it under Books API → Quotas. A `429` carries `daily` (`isDailyQuotaBody`):
+  per-day exhaustion is surfaced distinctly (`'quota'`) and **not** retried (see Import CSV above).
 - The search query is the **plain combined string** (`title author` from the importer; the typed term
   from the search box) — **no** `intitle:`/`inauthor:` qualifiers (Google's whole-word AND semantics
   over-narrow CJK, which has no word boundaries). Title/author discrimination is **client-side** (see

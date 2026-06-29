@@ -2616,3 +2616,67 @@ Reworked the shared `Calendar` (used by every module's date fields/filters). Beh
   of bumping every focusable control to 16px). Documented as **F17** in `02_tech_spec.md`. Trade-off:
   browser pinch-zoom is disabled (the Travel/Leaflet map has its own zoom controls).
 - Config-only; no test impact (**575 tests**). Takes effect after a redeploy + reload of the PWA.
+
+## Books import — distinguish Google Books per-day quota from a burst 429 (2026-06-29)
+
+- **Symptom:** a 32-book CSV that imported fine for days suddenly returned **"No match" for every row**
+  with **"Rate-limited by Google Books"** — despite `VITE_GOOGLE_BOOKS_API_KEY` set locally + on Vercel
+  and the key's referrer/API restrictions unchanged for weeks.
+- **Diagnosis (curl against the live API with the real key + an allowlisted `Referer`):** a genuine
+  `429` — `Quota exceeded ... limit 'Queries per day'` attributed to the owner's own project. **Not** a
+  config issue: the key works; the project's **default 1,000 `Queries per day`** was exhausted. Cause:
+  the importer re-matches **all** rows on every upload (no cache) and **each CJK title costs 2 queries**
+  (`searchZhVariants` = Simplified + HK-Traditional), so repeated re-imports (the owner was truncating
+  `book` / `supabase db reset --linked` to re-test) crossed the daily cap. The old code's 429 backoff
+  **retried** — its comment assumed "recovers in a second or two," true for a per-minute burst but
+  **false for a per-day quota**, so it burned more of an already-exhausted quota.
+- **Fix:** `BookSearchRateLimitError` now carries a **`daily`** flag, classified from the 429 body by
+  the pure, unit-tested **`isDailyQuotaBody`** (`limit 'Queries per day'`). The importer **does not
+  retry** a daily 429 — it **aborts the whole batch** (remaining rows → `No match`, still importable
+  as-is) and shows `DAILY_QUOTA_MESSAGE`; a transient/per-minute 429 still backs off + retries. The
+  Entry-form search + importer "Change" surface a distinct **`'quota'`** message ("resets at midnight
+  US-Pacific; raise the project quota"). Docs: `07_books.md` (import + External APIs), `OWNER_RUNBOOK.md`
+  Part C3 (the per-day-quota note).
+- Verified by `npm run check` (**578 tests** — +3 for `isDailyQuotaBody`).
+
+## Books import — persistent match cache (localStorage) + "Clear match cache" (2026-06-29)
+
+- **Why:** the importer re-matched **every** row against Google Books on every upload, so the owner's
+  test loop (truncate `book` / `supabase db reset --linked`, re-import the same 32-book CSV) re-spent
+  ~64 queries each run and kept exhausting the per-day quota (see the prior entry).
+- **What:** `src/lib/book-match-cache.ts` — a `localStorage` cache (one key,
+  `wellworth:book-match-cache`, versioned) of resolved `BookMetadata`, keyed on
+  `normMatch(title)|normMatch(author)` (Trad→Simp + case/space fold, so script/case variants share an
+  entry). `resolveRow` checks it **before** the network (a hit skips search **and** details); positive
+  matches are written back. **Change** overwrites the entry (correction persists across re-imports);
+  **Manual** removes it (a rejected match is never re-served). Only positives are cached —
+  no-match/timeout/quota-abort rows re-query next run. Writes are synchronous read-merge-write so the
+  parallel workers can't clobber each other; a quota-exceeded write resets the cache to the one entry.
+- **Crucially independent of the DB** — it's in the browser, so a truncate/`db reset` never clears it.
+  Cleared via **Books Settings → Clear Import Match Cache (N)** (`clearBookMatchCache`), deleting the
+  single localStorage key in DevTools, or a full "Delete data".
+- **Docs:** `07_books.md` (Settings + Import match-cache), `02_tech_spec.md` (lib list), and a new
+  **`OWNER_RUNBOOK.md` Part R** — a full browser-storage explainer (the three storage layers; the two
+  "Delete data" paths; a wiped-by-Delete-data table; what "cached assets" really are vs DB data; when to
+  clear; and per-key deletion to avoid logging out).
+- Verified by `npm run check` (**587 tests** — +9 for `book-match-cache`).
+
+## Importers — generalize the match cache + add it to Shows/TMDB (2026-06-29)
+
+- **Why:** the Books match cache proved its worth; Shows re-imports (same `db reset` test loop) had the
+  same wasteful re-resolve. TMDB has no per-day quota, so for Shows it's a **performance** win (instant
+  re-imports), not a quota guard — still worth it for the test loop + UX consistency.
+- **Refactor (DRY):** extracted the cache core into **`src/lib/match-cache.ts`** —
+  `createMatchCache({ storageKey, version, keyFn })` → `{ key, get, set, remove, size, clear }` with the
+  shared semantics (one versioned `localStorage` blob, synchronous read-merge-write so parallel workers
+  don't clobber, quota-exceeded reset, tolerant reads). `book-match-cache.ts` is now a thin instance
+  (public API unchanged — no call-site churn).
+- **New:** `src/lib/show-match-cache.ts` — instance keyed on `type|normMatch(title)|year` (type
+  distinguishes a movie vs TV show of the same name; year disambiguates remakes; the trailing `(YYYY)`
+  is parsed off via `parseTitleYear` first). `ImportShowsSheet` checks it before TMDB, caches positives,
+  **Change** overwrites, **Manual** removes. **Shows Settings** gets the same "Clear Import Match Cache
+  (N)" button as Books.
+- **Docs:** `06_shows.md` (Settings + Import match-cache), `07_books.md` (now an instance of the shared
+  factory), `02_tech_spec.md` (lib list), `OWNER_RUNBOOK.md` Part R (both cache keys), and `PARKED.md`
+  (removed the now-built deferral).
+- Verified by `npm run check` (**596 tests** — +5 `match-cache`, +4 `show-match-cache`).

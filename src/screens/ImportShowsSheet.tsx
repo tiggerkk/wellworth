@@ -26,6 +26,11 @@ import {
   type ShowMetadata,
   type TmdbSearchResult,
 } from '../lib/tmdb-api'
+import {
+  getCachedShowMatch,
+  removeCachedShowMatch,
+  setCachedShowMatch,
+} from '../lib/show-match-cache'
 import { saveImportedShows } from '../data/show'
 import { bumpShows } from '../lib/shows-refresh'
 import { errorMessage } from '../lib/errors'
@@ -53,25 +58,32 @@ const STATUS_RANK: Record<ResolvedRow['status'], number> = {
   manual: 2,
 }
 
+/** ok/review status for a (cached or freshly-fetched) match against the parsed CSV title+year. */
+function matchStatus(
+  match: ShowMetadata,
+  target: { title: string; year: number | null },
+): 'ok' | 'review' {
+  return isConfidentTitleMatch({ title: match.title, year: match.year }, target)
+    ? 'ok'
+    : 'review'
+}
+
 async function resolveRow(input: ParsedShowRow): Promise<ResolvedRow> {
+  // A CSV title may carry a trailing "(YYYY)" to disambiguate (e.g. "Beyond (2017)"); TMDB
+  // returns nothing for that literal, so search the clean title and rank/confirm with the year.
+  const { title, year } = parseTitleYear(input.title)
+  // Cache hit → skip TMDB entirely (instant re-imports of the same file after a DB reset). Status is
+  // recomputed so it stays consistent with the current CSV row.
+  const cached = getCachedShowMatch(input.type, title, year)
+  if (cached)
+    return { input, match: cached, status: matchStatus(cached, { title, year }) }
   try {
-    // A CSV title may carry a trailing "(YYYY)" to disambiguate (e.g. "Beyond (2017)"); TMDB
-    // returns nothing for that literal, so search the clean title and rank/confirm with the year.
-    const { title, year } = parseTitleYear(input.title)
     const results = await searchTitles(input.type, title)
     const top = rankTitleResults(results, { title, year })[0]
     if (!top) return { input, match: null, status: 'nomatch' }
     const match = await getTitleDetails(input.type, top.tmdbId, tmdbLanguage(title))
-    return {
-      input,
-      match,
-      status: isConfidentTitleMatch(
-        { title: match.title, year: match.year },
-        { title, year },
-      )
-        ? 'ok'
-        : 'review',
-    }
+    setCachedShowMatch(input.type, title, year, match) // cache positive matches only
+    return { input, match, status: matchStatus(match, { title, year }) }
   } catch {
     return { input, match: null, status: 'nomatch' }
   }
@@ -130,6 +142,12 @@ export function ImportShowsSheet() {
   // Accept the CSV row as-is — clear any (wrong) match so the title imports with the owner's
   // title/metadata and no TMDB link. For rows where none of the search hits is the right title.
   function acceptManual(i: number) {
+    // Forget any cached match so a row the owner rejected isn't re-applied on the next import.
+    const input = resolved?.[i]?.input
+    if (input) {
+      const { title, year } = parseTitleYear(input.title)
+      removeCachedShowMatch(input.type, title, year)
+    }
     setResolved(
       (prev) =>
         prev?.map((row, j) =>
@@ -140,8 +158,14 @@ export function ImportShowsSheet() {
 
   async function applyFix(i: number, r: TmdbSearchResult) {
     setFixIndex(null)
+    const input = resolved?.[i]?.input
     try {
       const match = await getTitleDetails(r.type, r.tmdbId, tmdbLanguage(r.title))
+      // Persist the correction so the same CSV resolves to the owner's pick on re-import.
+      if (input) {
+        const { title, year } = parseTitleYear(input.title)
+        setCachedShowMatch(input.type, title, year, match)
+      }
       setResolved(
         (prev) =>
           prev?.map((row, j) => (j === i ? { ...row, match, status: 'ok' } : row)) ??

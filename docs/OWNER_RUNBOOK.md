@@ -111,6 +111,15 @@ in practice, so a key is recommended.
 
 - ✅ Check: Books title search works, and with the key set you won't hit 429s on normal use.
 
+> **Per-day quota (the other 429).** Even a correctly-configured key has a default **1,000
+> `Queries per day`** on the project. A bulk CSV import is expensive: **each Chinese title costs 2
+> queries** (the search runs Simplified + HK-Traditional), so a 32-book import ≈ 64 queries, and re-running the
+> same file repeatedly (e.g. after `supabase db reset --linked` while testing) can exhaust the day's
+> quota — you'll see a **429 that says `Queries per day`**. This is _not_ a config problem; it resets
+> at **midnight US-Pacific**. To raise it: **APIs & Services → Books API → Quotas & System Limits**,
+> filter "Queries per day", and request an increase. (The importer detects this flavour of 429,
+> **stops** instead of retrying, and says so; unmatched rows still import as-is.)
+
 ---
 
 ## Part D — Create the `.env` file (your secrets, kept off the internet)
@@ -938,6 +947,95 @@ A **paused** project you can un-pause from the dashboard in seconds; a **deleted
 **encrypted backup is the real insurance** and the keep-alive is just convenience. Even total loss is
 recoverable: new project → migrations → restore. The one thing you must never lose is the **age private
 key** — guard it like the DB password.
+
+---
+
+## Part R — Browser storage & when to clear it ("Delete data")
+
+When a code change tells you to **"Delete data"** / **"Clear site data,"** it's almost always to drop
+**stale cached app code** (see "cached assets" below) — _not_ to wipe your real data. Knowing the
+difference saves you from needless logouts.
+
+### R0 — Three separate places your stuff lives
+
+| Layer                      | Holds                                                                                        | Lives                        | Cleared by `supabase db reset` / truncate? | Cleared by "Delete data"?    |
+| -------------------------- | -------------------------------------------------------------------------------------------- | ---------------------------- | ------------------------------------------ | ---------------------------- |
+| **Supabase database**      | Your actual data — every show, book, diary entry, trip, medical result                       | Supabase's servers (cloud)   | **Yes** (that's what those commands do)    | No (it's not in the browser) |
+| **Browser `localStorage`** | Small client state: login token, last-opened module, the **book + show import match caches** | This browser, on this device | **No** — survives every DB reset           | Yes                          |
+| **Browser PWA cache**      | "Cached assets" — copies of the **app's own files** for offline use (see R3)                 | This browser, on this device | No                                         | Yes                          |
+
+**`localStorage`** is a tiny key→value store built into every browser, kept on disk per **origin**
+(`http://localhost:5173` and `https://<your-app>.vercel.app` each get a _separate_ one) and per
+browser/device. It is **completely independent of the database**: truncating `book` or running
+`supabase db reset --linked` (Part M) never touches it — which is exactly why the import match cache
+keeps working across your test resets.
+
+### R1 — The two ways to clear it (both are the "nuclear" option)
+
+Both wipe **all** browser storage for that origin (everything in the two browser rows above):
+
+1. **Info icon** (the tune/🔒 icon just left of the address bar) → **Site settings** → under **Usage**,
+   **Delete data**.
+2. **F12** (DevTools) → **Application** tab → **Storage** (left sidebar) → **Clear site data**.
+
+They're equivalent. Do this on the right origin — localhost vs your Vercel URL are independent.
+
+### R2 — What "Delete data" wipes, and the effect on the app
+
+| Gets wiped                                           | Effect                                                                                     |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Supabase auth token (`localStorage`)                 | **You're logged out** → sign in with Google again                                          |
+| Last-opened module (`localStorage`)                  | App reopens at the Home hub instead of your last module                                    |
+| **Book + show import match caches** (`localStorage`) | Next CSV import re-queries Google Books / TMDB (book cache also re-spends the daily quota) |
+| Search / filter / sort state (`sessionStorage`)      | List screens reset to defaults                                                             |
+| **Cached assets** + service worker (PWA cache)       | App re-downloads its files on next load (a beat slower once)                               |
+| Cookies                                              | Any other site cookies for the origin are cleared                                          |
+
+Your **shows, books, entries, etc. are untouched** — they're in the database, not the browser.
+
+### R3 — What "cached assets" actually are
+
+The app is a PWA: a **service worker** precaches the app's **own static files** so it loads offline and
+fast. These are the "cached assets":
+
+- The app's compiled **code + styles** (JS bundles, CSS) and **`index.html`**.
+- **App icons / fonts** and the offline shell.
+- The **Travel map's base data** — the bundled `world-countries.geojson` / `china-provinces.geojson`
+  (Leaflet tiles themselves come from the network, not this cache).
+
+They are **not** your data. In particular, **matched shows and matched books are _data_**, stored as
+rows in the **Supabase database** — they're not "cached assets." The only match data kept in the
+browser is the **import match caches** in `localStorage` (R5) — `wellworth:book-match-cache` and
+`wellworth:show-match-cache` — which exist purely to speed up re-imports (and, for books, save the
+daily Google Books quota).
+
+### R4 — When you actually need to "Delete data"
+
+- **After a deploy/code change, the app looks stale or broken on a device** (old screen, a fixed bug
+  still showing, a white screen) — the service worker is serving the **old cached assets**. This is the
+  main legitimate reason. _Tip:_ a hard reload or closing all tabs often suffices; "Delete data" is the
+  sure fix. (For the installed iPhone PWA, see Part L / the deploy notes.)
+- **A migration changed the shape of stored client state** and the app misbehaves on old values.
+- You're **deliberately testing first-run / logged-out** behavior.
+
+You do **not** need it for ordinary data changes, after a DB reset, or just to clear the import cache —
+use R5 for the cache, and re-login is never required for those.
+
+### R5 — Clearing one thing instead of everything
+
+To drop just an **import match cache** without logging out:
+
+- **In the app:** **Books → Settings → Import → "Clear Import Match Cache"** (Google Books matches), or
+  **Shows → Settings → Import → "Clear Import Match Cache"** (TMDB matches). (Recommended — one tap,
+  stays logged in.)
+- **In DevTools, per-key:** F12 → **Application** → **Storage → Local Storage** → click your origin →
+  you'll see individual rows (`wellworth:book-match-cache`, `wellworth:show-match-cache`,
+  `wellworth:last-module`, the `sb-…-auth-token`). Select a single row and press **Delete** (or
+  right-click → Delete). Deleting only a `…-match-cache` row clears that import cache and leaves your
+  login intact.
+- **In the Console:** `localStorage.removeItem('wellworth:book-match-cache')` (or
+  `'wellworth:show-match-cache'`). (Avoid `localStorage.clear()` — it also removes the auth token and
+  logs you out.)
 
 ---
 

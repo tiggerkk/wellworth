@@ -10,7 +10,7 @@ import {
   type BookSearchResult,
 } from '../lib/books-api'
 
-type SearchError = 'rate' | 'failed' | null
+type SearchError = 'rate' | 'quota' | 'failed' | null
 
 interface BookSearchSheetProps {
   onSelect: (result: BookSearchResult) => void
@@ -66,7 +66,9 @@ export function BookSearchSheet({
       })
       .catch((e) => {
         if (cancelled || controller.signal.aborted) return
-        setError(e instanceof BookSearchRateLimitError ? 'rate' : 'failed')
+        setError(
+          e instanceof BookSearchRateLimitError ? (e.daily ? 'quota' : 'rate') : 'failed',
+        )
       })
       .finally(() => {
         if (!cancelled) setLoading(false)
@@ -134,9 +136,11 @@ export function BookSearchSheet({
                     ? 'Searching…'
                     : error === 'rate'
                       ? 'Too many searches — pause a moment.'
-                      : error === 'failed'
-                        ? 'Search failed.'
-                        : 'No matches.'}
+                      : error === 'quota'
+                        ? 'Daily Google Books quota reached.'
+                        : error === 'failed'
+                          ? 'Search failed.'
+                          : 'No matches.'}
               </p>
             )}
           </div>
@@ -145,6 +149,12 @@ export function BookSearchSheet({
             <p className="mt-3 text-xs text-danger">
               Rate-limited by Google Books — pause a moment, or add a (free) Google Books
               API key for higher limits.
+            </p>
+          )}
+          {error === 'quota' && (
+            <p className="mt-3 text-xs text-danger">
+              Daily Google Books quota exhausted — it resets at midnight US-Pacific. Raise
+              the project’s “Queries per day” limit in Google Cloud for more.
             </p>
           )}
           {error === 'failed' && (
