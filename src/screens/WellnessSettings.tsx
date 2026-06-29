@@ -126,7 +126,7 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
               className="flex w-full items-center gap-2 border-b border-border px-4 py-3 text-[15px] text-text-secondary last:border-b-0 active:bg-input/40 disabled:opacity-40"
             >
               <IconTrash size={18} />
-              Clear import match cache{cacheCount ? ` (${cacheCount})` : ''}
+              Clear Import Match Cache{cacheCount ? ` (${cacheCount})` : ''}
             </button>
             <p className="px-4 py-2 text-xs text-text-tertiary">
               Bulk-seed your foods from a CSV — each row is matched against USDA (custom

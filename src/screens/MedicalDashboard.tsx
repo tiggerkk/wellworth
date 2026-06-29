@@ -4,6 +4,7 @@ import {
   IconChevronDown,
   IconChevronRight,
   IconHeartbeat,
+  IconReportMedical,
   IconX,
 } from '@tabler/icons-react'
 import { lazyWithReload } from '../lib/lazy-with-reload'
@@ -20,7 +21,6 @@ import { asFlag, latestPoint, type TrackedTrend } from '../lib/medical-trends'
 import {
   formatRefRange,
   formatResultValue,
-  MEDICAL_CATEGORY_LABELS,
   MEDICAL_FLAG_COLOR,
   MEDICAL_FLAG_CLASS,
   REPORT_TYPE_LABELS,
@@ -31,6 +31,7 @@ import type { ResultWithReportMeta } from '../data/medical'
 import { formatFullDate, todayLocal } from '../lib/date'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 import { MedicalValueRow } from '../components/MedicalValueRow'
+import { MedicalSection } from '../components/MedicalSection'
 import { routes } from '../constants/routes'
 
 // Lazy so recharts is fetched only when a sparkline is expanded (its own chunk). The grid itself
@@ -89,16 +90,23 @@ export function MedicalDashboard() {
             </section>
           )}
 
+          {/* Latest report — jump straight to the newest report (reports are newest-first) */}
+          {recentReports.length > 0 && (
+            <Link
+              to={routes.medical.detail(recentReports[0]!.id)}
+              className="flex items-center justify-center gap-2 rounded-card border border-accent/40 bg-accent/10 px-4 py-2.5 text-[15px] font-medium text-accent active:bg-accent/20"
+            >
+              <IconReportMedical size={18} /> Latest Report
+            </Link>
+          )}
+
           {/* Latest values per test, grouped by category */}
           {latestByCategory.map((group) => (
-            <SectionCard
-              key={group.category}
-              title={MEDICAL_CATEGORY_LABELS[group.category]}
-            >
+            <MedicalSection key={group.category} category={group.category}>
               {group.rows.map((row) => (
                 <LatestRow key={row.id} row={row} />
               ))}
-            </SectionCard>
+            </MedicalSection>
           ))}
 
           {/* Recent reports timeline */}

@@ -19,7 +19,6 @@ import {
   EYE_REFRACTION_KEYS,
   isMedicalFieldVisible,
   labTestByKey,
-  MEDICAL_CATEGORY_LABELS,
   orderResultsForDisplay,
   REPORT_TYPE_LABELS,
   REPORT_TYPES,
@@ -33,6 +32,7 @@ import { Calendar } from '../components/Calendar'
 import { EntryHeaderActions } from '../components/EntryHeaderActions'
 import { SelectMenu } from '../components/SelectMenu'
 import { MedicalResultCard } from '../components/MedicalResultCard'
+import { MedicalSection } from '../components/MedicalSection'
 import { MedicalTestPickerSheet } from '../components/MedicalTestPickerSheet'
 import { EyeRefractionFields } from '../components/EyeRefractionFields'
 
@@ -343,21 +343,16 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
           ) : (
             <div className="flex flex-col gap-5">
               {groupResultsByCategory(listResults).map((g) => (
-                <div key={g.category} className="flex flex-col gap-2">
-                  <p className="px-1 text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
-                    {MEDICAL_CATEGORY_LABELS[g.category]}
-                  </p>
-                  <div className="flex flex-col gap-3">
-                    {g.rows.map((r) => (
-                      <MedicalResultCard
-                        key={r.clientId}
-                        row={r}
-                        onChange={(patch) => updateResult(r.clientId, patch)}
-                        onRemove={() => removeResult(r.clientId)}
-                      />
-                    ))}
-                  </div>
-                </div>
+                <MedicalSection key={g.category} category={g.category} variant="bare">
+                  {g.rows.map((r) => (
+                    <MedicalResultCard
+                      key={r.clientId}
+                      row={r}
+                      onChange={(patch) => updateResult(r.clientId, patch)}
+                      onRemove={() => removeResult(r.clientId)}
+                    />
+                  ))}
+                </MedicalSection>
               ))}
             </div>
           )}

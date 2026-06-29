@@ -1,6 +1,6 @@
 # Bulk-import template — foods & supplements
 
-- Fill in **`custom-foods-template.csv`** (one row per item) and import it from **Wellness → Settings →
+- Fill in **`wellness-foods-template.csv`** (one row per item) and import it from **Wellness → Settings →
   Import → Import CSV Food** (turn on **Enable Bulk Food Import** first).
 - Each row is **matched against USDA** by `name` (the same search the Diary "Add Food → All" tab uses):
   - A confident match imports as a **USDA** food with USDA's full nutrients — **you don't fill any

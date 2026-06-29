@@ -2719,11 +2719,54 @@ Reworked the shared `Calendar` (used by every module's date fields/filters). Beh
   from the CSV. **Idempotent** (USDA dedupe on external_id, custom on lower(name); bulk insert new + update
   existing). Servings via `replaceServings` for custom updates.
 - **Match cache:** `src/lib/food-match-cache.ts` (a `createMatchCache` instance, key `normMatch(name)`,
-  value = resolved `ExternalFood`) — re-imports skip USDA. "Clear import match cache" button added to
+  value = resolved `ExternalFood`) — re-imports skip USDA. "Clear Import Match Cache" button added to
   **Wellness Settings → Import**; the importer launcher **moved from Library to Settings** (behind the
   toggle), mirroring Books/Shows.
 - **Reuse/DRY:** shared `externalFoodServing` extracted to `food-api.ts` (used by Add-Food, the importer,
   and `FoodSearchSheet`); `ImportPreviewList` gained optional `media`/`year` for the image-less food rows.
 - **Docs:** `04_wellness.md` (Settings + Import CSV), `01_design_system.md` (FoodSearchSheet; ImportPreviewList
-  ×3), `02_tech_spec.md` (lib list), `OWNER_RUNBOOK.md` Part R (food cache key), `templates/custom-foods-*`.
+  ×3), `02_tech_spec.md` (lib list), `OWNER_RUNBOOK.md` Part R (food cache key), `templates/wellness-foods-*`.
 - Verified by `npm run check` (**602 tests** — +4 `food-match-cache`, +2 `foodMatchStatus`).
+
+## Medical — collapsible, color-accented sections + Latest Report button (2026-06-29)
+
+The Report detail, Edit Report, and Dashboard latest-values were long, grey, monotone walls of
+category cards. Made every lab-result section **collapsible and color-coded**. Behavior in
+`09_medical.md`; component + palette in `01_design_system.md`.
+
+- **New shared `MedicalSection`** (`src/components/MedicalSection.tsx`): a collapsible section with a
+  **left** chevron (mirrors the Diary `GroupHeader`), a **per-category colored left stripe** + a
+  **tinted header** (tint via `color-mix` at the boundary), default **expanded**, self-contained
+  `useState`. `variant="card"` wraps the body in a `surface` card (Report detail rows, Dashboard
+  latest-values); `variant="bare"` is the header bar only (Edit Report, whose `MedicalResultCard`s are
+  already cards — avoids double-wrapping).
+- **18-hue category palette** added to `index.css` `@theme` (`--color-med-general` … `--color-med-other`),
+  surfaced as `MEDICAL_CATEGORY_COLOR` in `src/lib/medical.ts` (mirrors the existing `MEDICAL_FLAG_COLOR`
+  raw-CSS-var pattern). One distinct hue per category so adjacent sections read apart.
+- **Wired in:** `MedicalReportDetail` (`Body`), `MedicalEntry` (results grouping), and
+  `MedicalDashboard` (latest-values) now render groups via `MedicalSection`; the dead
+  `MEDICAL_CATEGORY_LABELS` imports were dropped from those screens. The Dashboard's **Recent reports**
+  list stays on the plain `SectionCard` (not category-colored).
+- **Latest Report button:** the Dashboard gained an accent-styled `Link` (`IconReportMedical`) directly
+  under the Trends grid → the newest report's detail (`recentReports[0]`, newest-first), a shortcut the
+  cross-report Latest-values list doesn't provide.
+- Presentational only — no schema/type/data changes; reuses `groupResultsByCategory` /
+  `orderResultsForDisplay`. Verified by `npm run check`.
+
+## Close-control standardization — Report detail X/Esc + Backspace→Esc fix (2026-06-29)
+
+Standardized drill-in close controls and **retired Backspace-to-close** (it was a mis-instruction in
+earlier sessions — the intent was always **Esc**).
+
+- **`MedicalReportDetail`** was the lone screen using a **back-arrow** (`IconChevronLeft`) hard-wired
+  to `navigate(routes.medical.reports)`. Switched to the app convention: a top-left **X** (`IconX`,
+  `aria-label="Close"`) + `navigate(-1)` + `useEscapeKey(() => navigate(-1))` — matching the read-only
+  `PolicyDetailSheet` and the Add/Edit screens. `navigate(-1)` also **fixes the round-trip**: opening a
+  report from the **Dashboard** (Recent reports / the new Latest Report button) now closes back to the
+  Dashboard instead of always dumping onto the Reports list.
+- **Backspace-as-close removed** from the two places that had it — the `Calendar` picker and the Net
+  Worth Monthly-Entry fund modal — leaving the existing `useEscapeKey` (Esc) as the keyboard close.
+  Comments + spec docs (`01_design_system.md` Calendar, `05_networth.md` fund modal) updated.
+- **`TagInput` left unchanged:** its Backspace removes the last chip when the field is empty (standard
+  tag-editor behavior, not a modal close) — unrelated to the close-key typo.
+- Verified by `npm run check`.

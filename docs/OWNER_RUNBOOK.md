@@ -1025,7 +1025,7 @@ use R5 for the cache, and re-login is never required for those.
 
 To drop just an **import match cache** without logging out:
 
-- **In the app:** the module's **Settings → Import → "Clear import match cache"** — **Books** (Google
+- **In the app:** the module's **Settings → Import → "Clear Import Match Cache"** — **Books** (Google
   Books matches), **Shows** (TMDB), or **Wellness** (USDA food matches). (Recommended — one tap, stays
   logged in.)
 - **In DevTools, per-key:** F12 → **Application** → **Storage → Local Storage** → click your origin →

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import {
   IconChevronDown,
@@ -338,20 +338,8 @@ function EntryForm({
   const [fundModal, setFundModal] = useState<EntryDraft | null>(null)
 
   // The Dashboard's fund detail is a routed `Sheet` (closes on Esc + browser-back for free); this
-  // local modal isn't a route, so wire the same dismissal — Esc (shared LIFO handler) + Backspace
-  // (the laptop "back" key; safe to capture since the read-only modal has no text inputs).
+  // local modal isn't a route, so wire the same Esc dismissal (shared LIFO handler).
   useEscapeKey(() => setFundModal(null), fundModal != null)
-  useEffect(() => {
-    if (!fundModal) return
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Backspace') {
-        e.preventDefault()
-        setFundModal(null)
-      }
-    }
-    document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
-  }, [fundModal])
 
   const dirty = serialize(rows, fxRates) !== serialize(baseline.rows, baseline.fxRates)
 

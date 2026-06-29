@@ -19,15 +19,21 @@ When there is data, three sections:
   (`MEDICAL_RANGES` + `MEDICAL_RANGE_DEFAULT`) — **pure UI constants**, not persisted, so editing them
   takes effect on reload with **no DB change and no other code change** (the default lives beside the list
   so the screen never hardcodes a key).
+- **Latest Report** button — directly under the Trends grid (only when ≥1 report): an accent-styled
+  button (`IconReportMedical`) linking straight to the **newest** report's detail (`recentReports[0]`,
+  reports are newest-first). A shortcut to the most-recent report even though Latest-values mixes tests
+  across reports.
 - **Latest values by category** — for **every** test recorded, its **most recent** value across all
   reports (not just the newest report — a heterogeneous history means the latest report may omit most
-  tests), grouped under uppercase category headers in the user's display order. Each row is the shared
-  **`MedicalValueRow`** (also used by the View Report `ResultRow`): test name + the (often long,
-  wrapping) printed reference range in the **flexible left column**, value (+ unit, **coloured by
-  flag**) in a `shrink-0` right column with `items-start` — so a long range wraps under the name
-  instead of squeezing the name or pushing the value off the right edge.
+  tests), grouped under **collapsible, color-accented category sections** (shared **`MedicalSection`** —
+  left chevron, per-category colored left stripe + tinted header; default **expanded**) in the user's
+  display order. Each row is the shared **`MedicalValueRow`** (also used by the View Report `ResultRow`):
+  test name + the (often long, wrapping) printed reference range in the **flexible left column**, value
+  (+ unit, **coloured by flag**) in a `shrink-0` right column with `items-start` — so a long range wraps
+  under the name instead of squeezing the name or pushing the value off the right edge.
 - **Recent reports** — up to five newest reports (date · type · provider · body part) linking to
-  Report detail, with a **View all reports** row when there are more.
+  Report detail, with a **View all reports** row when there are more. (Plain `SectionCard` — **not**
+  category-colored, unlike Latest values.)
 
 Tracked tests are chosen in Medical Settings → Tracked Tests (seeded from `default_tracked`).
 
@@ -53,11 +59,15 @@ _Search, filter, and sort persist for the **browser-tab session** (`useSessionSt
 
 ### Report detail (`/medical/:id`)
 
-- Read-only. Header: **Date - Type** (e.g. `May 4, 2026 - Health Screening`, with `· body part` when
+- Read-only. Header: a top-left **X** (`navigate(-1)` + **Esc** — closes back to wherever it was opened
+  from, Reports list **or** Dashboard; same convention as `PolicyDetailSheet`/the Add-Edit screens, not
+  a back-arrow); **Date - Type** (e.g. `May 4, 2026 - Health Screening`, with `· body part` when
   relevant) on line 1; **Provider** as secondary text on line 2; an **Edit** (pencil icon) action.
 - Below: **Open original** link(s) for each Google Drive URL (`target="_blank" rel="noreferrer"`); a
-  **Narrative** block when present; then **results grouped under uppercase category headers** in the
-  seeded section + sort order (filtered to the tests this report contains).
+  **Narrative** block when present; then **results grouped under collapsible, color-accented category
+  sections** (shared **`MedicalSection`**, `variant="card"` — left chevron, per-category colored left
+  stripe + tinted header; default **expanded**, tap header to collapse) in the seeded section + sort
+  order (filtered to the tests this report contains).
 - Each result row: `test name · reference range` on the left, `value (+ unit)` on the right — value
   **coloured by flag** (high/abnormal = `danger` red, low = `info` blue).
 - A "normalized from …" note when the value was unit-converted on import; a still-flagged row is
@@ -78,8 +88,10 @@ _Search, filter, and sort persist for the **browser-tab session** (`useSessionSt
 - **Results:** an **Add result** button opens a searchable **test picker** (the seeded reference
   grouped by category) or **Add custom test** (an ad-hoc row with editable name + category). Result
   cards render in the owner's **Tests Display Order** (same `orderResultsForDisplay` as Dashboard +
-  Report detail) and are **grouped under uppercase category headers** (shared `groupResultsByCategory`,
-  like Report detail), so an added test slots into its section/test position, not the end. Each result
+  Report detail) and are **grouped under collapsible, color-accented category sections** (shared
+  **`MedicalSection`**, `variant="bare"` — a colored header **bar** above the existing result-card
+  stack, so the per-result cards aren't double-wrapped; `groupResultsByCategory`, like Report detail),
+  so an added test slots into its section/test position, not the end. Each result
   card edits the value (number and/or text, per the test's `value_kind`), unit, and flag
   (none/high/low/abnormal) on **one line** (Value · Unit · Flag), then reference range (as printed);
   rows can be removed. The category isn't shown per-card for a matched row (the section header carries

@@ -244,9 +244,9 @@ export function ImportFoodsSheet() {
           <>
             <p className="text-sm text-text-secondary">
               Upload a CSV in the{' '}
-              <code className="text-text-primary">custom-foods-template.csv</code> format
-              (see <code className="text-text-primary">templates/</code>). Each row is
-              matched against USDA; rows USDA can’t find import as custom foods. All
+              <code className="text-text-primary">wellness-foods-template.csv</code>{' '}
+              format (see <code className="text-text-primary">templates/</code>). Each row
+              is matched against USDA; rows USDA can’t find import as custom foods. All
               import as favorites.
             </p>
 

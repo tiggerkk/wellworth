@@ -1,6 +1,6 @@
 /**
  * Pure mapping + validation for the bulk food/supplement CSV import (see
- * `templates/custom-foods-import-guide.md`). Turns parsed CSV rows into food records the importer then
+ * `templates/wellness-foods-import-guide.md`). Turns parsed CSV rows into food records the importer then
  * matches against USDA (`ImportFoodsSheet` → `saveImportedFoods`), collecting blocking errors and
  * non-blocking warnings for a preview. No I/O. NB: `is_favorite` is parsed but the importer saves
  * **every** row as a favorite (USDA foods only persist when favorited), so the column is informational.

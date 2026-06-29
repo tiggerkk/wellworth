@@ -1,14 +1,14 @@
 import { useCallback } from 'react'
 import { useNavigate, useParams } from 'react-router'
-import { IconChevronLeft, IconExternalLink, IconPencil } from '@tabler/icons-react'
+import { IconExternalLink, IconPencil, IconX } from '@tabler/icons-react'
 import { useAsync } from '../hooks/useAsync'
+import { useEscapeKey } from '../hooks/useEscapeKey'
 import { useProfile } from '../hooks/useProfile'
 import { getReportWithResults, type ReportWithResults } from '../data/medical'
 import { useMedicalVersion } from '../lib/medical-refresh'
 import {
   formatRefRange,
   formatResultValue,
-  MEDICAL_CATEGORY_LABELS,
   MEDICAL_FLAG_LABELS,
   medicalReviewReason,
   orderResultsForDisplay,
@@ -23,6 +23,7 @@ import { formatFullDate } from '../lib/date'
 import { routes } from '../constants/routes'
 import { PrimaryButton } from '../components/PrimaryButton'
 import { MedicalValueRow } from '../components/MedicalValueRow'
+import { MedicalSection } from '../components/MedicalSection'
 
 /**
  * Medical Report detail — read-only view of a report's parent fields, Drive link(s), narrative, and
@@ -33,6 +34,9 @@ export function MedicalReportDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const version = useMedicalVersion()
+  // Drill-in detail closes back to wherever it was opened from (Reports list or Dashboard) — same
+  // X + Esc + browser-back convention as PolicyDetailSheet and the Add/Edit screens.
+  useEscapeKey(() => navigate(-1))
 
   const loadFn = useCallback((): Promise<ReportWithResults | null> => {
     if (!id) return Promise.resolve(null)
@@ -45,11 +49,11 @@ export function MedicalReportDetail() {
     <div className="flex h-full min-h-0 flex-col">
       <header className="flex items-center gap-3 border-b border-border px-4 py-3">
         <button
-          onClick={() => navigate(routes.medical.reports)}
-          aria-label="Back"
+          onClick={() => navigate(-1)}
+          aria-label="Close"
           className="-ml-1 p-1 text-text-secondary"
         >
-          <IconChevronLeft size={22} />
+          <IconX size={22} />
         </button>
         <div className="min-w-0 flex-1">
           {data ? (
@@ -135,16 +139,13 @@ function Body({ data }: { data: ReportWithResults }) {
       )}
 
       {groups.map((g) => (
-        <div key={g.category}>
-          <h2 className="mb-1 px-1 text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
-            {MEDICAL_CATEGORY_LABELS[g.category]}
-          </h2>
-          <div className="divide-y divide-border overflow-hidden rounded-card border border-border bg-surface">
+        <MedicalSection key={g.category} category={g.category}>
+          <div className="divide-y divide-border">
             {g.rows.map((r) => (
               <ResultRow key={r.id} r={r} />
             ))}
           </div>
-        </div>
+        </MedicalSection>
       ))}
 
       {results.length === 0 && (

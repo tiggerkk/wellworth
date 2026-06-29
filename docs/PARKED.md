@@ -161,7 +161,7 @@ and restores it on edit — a small additive schema change, not a rebuild.
 ### Activities CSV bulk import · Deferred
 
 **What:** A CSV import for the activity library, mirroring the foods/supplements importer.
-**Why deferred:** Foods/supplements import was built (`templates/custom-foods-template.csv`, Library →
+**Why deferred:** Foods/supplements import was built (`templates/wellness-foods-template.csv`, Library →
 **Import CSV**); an activities import was explicitly declined for now.
 **Decided:** Mirror the foods path — an activities template (name, template, default_effort,
 default_duration_min, met_by_effort, icon) parsed in-browser and inserted via the data layer.

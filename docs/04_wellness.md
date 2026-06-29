@@ -169,12 +169,12 @@ Wellness-module sub-settings. Auto-save on change.
   - **Visible Nutrients** → per-nutrient toggle for what appears on the Dashboard & Daily Report.
 - **IMPORT**: **Enable Bulk Food Import** toggle (`profile.food_importer_enabled`, **on by default**;
   column added to the `profile` table in `01_wellness_schema.sql`). When on: an **Import CSV Food**
-  launcher opens the importer sheet, plus a **Clear import match cache (N)** button
+  launcher opens the importer sheet, plus a **Clear Import Match Cache (N)** button
   (`clearFoodMatchCache` / `foodMatchCacheSize`). Mirrors Books/Shows Settings → Import.
 
 #### Import CSV (sheet, from Wellness Settings)
 
-Reused CSV format: `templates/custom-foods-template.csv` (guide: `templates/custom-foods-import-guide.md`).
+Reused CSV format: `templates/wellness-foods-template.csv` (guide: `templates/wellness-foods-import-guide.md`).
 Columns are all optional except `name` (`type` food|supplement, `nutrient_basis`, three `serving*` pairs,
 and the nutrient columns). Flow (mirrors Books/Shows — shared `ImportPreviewList`):
 

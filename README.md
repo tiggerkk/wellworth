@@ -13,7 +13,7 @@ Hand-off package for building **WellWorth** (a wellness + net-worth tracker PWA)
   - `04_wellness.md` … `10_travel.md` — one spec per module (screens, calculations, external APIs, data model, seed data): Wellness, Net Worth, Shows, Books, Quotes, Medical, Travel.
   - `wireframes/` — drop screen screenshots here (optional).
 - **templates/** — sanitized example import files + guides (your real balances / watch + reading history / quote collection / **lab results + report PDFs** / **trip + expense files** stay gitignored):
-  - **Wellness** — `custom-foods-template.csv` + an import guide for bulk-adding custom foods/supplements (Library → **Import CSV**).
+  - **Wellness** — `wellness-foods-template.csv` + an import guide for bulk-adding foods/supplements (Wellness → **Settings → Import CSV Food**).
   - **Net Worth** — `networth-seed-template.csv` + `networth-import-guide.md` (manual assets);
     `fund-import-guide.md` (JPM monthly fund CSV); `insurance-import-guide.md` (bulk-seed + single-policy
     insurance CSV). Real fund/insurance exports stay gitignored.

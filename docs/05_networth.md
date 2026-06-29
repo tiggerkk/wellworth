@@ -186,9 +186,8 @@ All values are entered manually. `details` are preserved for reference only; the
   routed drill-in) shows Total Value as **`HKD 1,234`** (space, via the `money` helper, not
   `formatHkd`'s `HK$…`) and the priced-as-of date as **`YYYY-MM-DD`** (the importer stores
   `YYYY/MM/DD`). The local modal reserves `pt-[env(safe-area-inset-top)]` so its header clears the
-  iOS status bar, and closes on **Esc + Backspace** (`useEscapeKey` + a Backspace listener) to mirror
-  the routed `Sheet`, which closes on Esc + browser-back for free (only the read-only body is shared
-  via `FundDetail`; the wrappers differ).
+  iOS status bar, and closes on **Esc** (`useEscapeKey`) to mirror the routed `Sheet`, which closes on
+  Esc + browser-back for free (only the read-only body is shared via `FundDetail`; the wrappers differ).
 - **Insurance section**: auto-populated, grouped by the owner's configured provider order (orphan
   providers last), ordered by policy number within a provider;
   surrendered policies excluded from their surrender month onward; rows `Number · Name (truncated) ·

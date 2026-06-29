@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { IconChevronLeft, IconChevronRight, IconX } from '@tabler/icons-react'
 import { useAsync } from '../hooks/useAsync'
 import { useEscapeKey } from '../hooks/useEscapeKey'
@@ -56,19 +56,8 @@ export function Calendar({ day, onSelect, onClose, loadCues }: CalendarProps) {
   // Top-left year of the current year-grid page (only meaningful in 'years' mode).
   const [yearBase, setYearBase] = useState(() => pickYear - Math.floor(YEAR_PAGE / 2))
   const today = todayLocal()
-  // Esc + Backspace both cancel (close without committing) — Backspace mirrors the laptop "back" key
-  // (safe to capture: the picker has no text inputs).
+  // Esc cancels (close without committing).
   useEscapeKey(onClose)
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Backspace') {
-        e.preventDefault()
-        onClose()
-      }
-    }
-    document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
-  }, [onClose])
 
   const monthStart = fromIsoDate(viewMonth)
   const year = monthStart.getFullYear()
@@ -268,7 +257,7 @@ export function Calendar({ day, onSelect, onClose, loadCues }: CalendarProps) {
         )}
 
         {/* "Today" just navigates the view to the current month's day grid (tapping a day commits +
-            closes; X / Esc / Backspace cancel — so no Cancel/OK buttons). */}
+            closes; X / Esc cancel — so no Cancel/OK buttons). */}
         <div className="mt-4 flex justify-center">
           <button
             onClick={() => {

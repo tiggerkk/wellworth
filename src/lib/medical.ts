@@ -219,6 +219,32 @@ export const MEDICAL_FLAG_COLOR: Record<MedicalFlag, string> = {
   abnormal: 'var(--color-danger)',
 }
 
+/**
+ * Category → a raw CSS colour var (the `--color-med-*` palette in index.css). Drives the colored
+ * left stripe + tinted header of each collapsible section (Report detail, Edit Report, Dashboard
+ * latest-values) via `MedicalSection`. One distinct hue per category so adjacent sections read apart.
+ */
+export const MEDICAL_CATEGORY_COLOR: Record<MedicalCategory, string> = {
+  general: 'var(--color-med-general)',
+  vitals: 'var(--color-med-vitals)',
+  lipids: 'var(--color-med-lipids)',
+  glucose: 'var(--color-med-glucose)',
+  liver: 'var(--color-med-liver)',
+  renal: 'var(--color-med-renal)',
+  electrolytes: 'var(--color-med-electrolytes)',
+  cbc: 'var(--color-med-cbc)',
+  thyroid: 'var(--color-med-thyroid)',
+  bone: 'var(--color-med-bone)',
+  tumour_markers: 'var(--color-med-tumour_markers)',
+  hepatitis: 'var(--color-med-hepatitis)',
+  inflammation: 'var(--color-med-inflammation)',
+  urine: 'var(--color-med-urine)',
+  stool: 'var(--color-med-stool)',
+  imaging: 'var(--color-med-imaging)',
+  eye: 'var(--color-med-eye)',
+  other: 'var(--color-med-other)',
+}
+
 /** Whether a test records numbers, free text, or either depending on the lab/method. */
 export const VALUE_KINDS = ['numeric', 'qualitative', 'either'] as const
 export type ValueKind = (typeof VALUE_KINDS)[number]

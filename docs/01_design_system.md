@@ -4,32 +4,33 @@ Dark, calm. These tokens are taken directly from the approved wireframes — mat
 
 ## Color tokens
 
-| Token              | Hex                      | Use                                                               |
-| ------------------ | ------------------------ | ----------------------------------------------------------------- |
-| `bg`               | `#161b28`                | App / screen background                                           |
-| `surface`          | `#232a3a`                | Cards, group headers, list groups                                 |
-| `surface-alt`      | `#1b2130`                | Nested/expanded rows, summary panels                              |
-| `input`            | `#2a3142`                | Input boxes, segmented-control track, pills                       |
-| `border`           | `rgba(255,255,255,0.08)` | Card borders, dividers (use 0.06–0.07 for inner rows)             |
-| `text-primary`     | `#e8eaf0`                | Primary text                                                      |
-| `text-secondary`   | `#9aa3b5`                | Labels, captions, inactive                                        |
-| `text-muted`       | `#c2c7d4`                | Secondary values                                                  |
-| `text-tertiary`    | `#5b6172`                | Disabled / future dates                                           |
-| `accent` (blue)    | `#5ba3f5`                | Brand, active tab, links, energy-negative                         |
-| `favorite` (rose)  | `#e06aa0`                | Filled favorite heart (decoupled from `accent`)                   |
-| `positive` (teal)  | `#5dcaa5`                | Add `+`, activity/supplement accents, "food logged" dot           |
-| `info` (blue)      | `#5b8def`                | (legacy; no longer used for status chips)                         |
-| `plan` (purple)    | `#a779e0`                | "Want" status chip (planned) on Shows/Books/Travel                |
-| `warning` (orange) | `#e8623c`                | In-progress status chip (Watching·Reading·Planning); import notes |
-| `danger`           | `#e2574c`                | Over-limit bars and % text, destructive text                      |
-| `delete`           | `#e24b4a`                | Swipe-to-delete background                                        |
-| `track`            | `#3a4253`                | Progress-bar track, off-toggle                                    |
-| `fill`             | `#eef1f7`                | Progress-bar fill; primary-button background                      |
-| `dynasty`          | `#d8a657`                | Gold dynasty badge (Shows/Books Chinese titles)                   |
-| `cat-meal`         | `#e2574c`                | Diary category icon — Breakfast/Lunch/Dinner (red apple)          |
-| `cat-snack`        | `#e2933c`                | Diary category icon — Snacks (orange cookie)                      |
-| `cat-supplement`   | `#a779e0`                | Diary category icon — Supplements (purple pill)                   |
-| `cat-activity`     | `#5b8def`                | Diary category icon — Activities (blue runner)                    |
+| Token              | Hex                      | Use                                                                                                                                                                                                       |
+| ------------------ | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bg`               | `#161b28`                | App / screen background                                                                                                                                                                                   |
+| `surface`          | `#232a3a`                | Cards, group headers, list groups                                                                                                                                                                         |
+| `surface-alt`      | `#1b2130`                | Nested/expanded rows, summary panels                                                                                                                                                                      |
+| `input`            | `#2a3142`                | Input boxes, segmented-control track, pills                                                                                                                                                               |
+| `border`           | `rgba(255,255,255,0.08)` | Card borders, dividers (use 0.06–0.07 for inner rows)                                                                                                                                                     |
+| `text-primary`     | `#e8eaf0`                | Primary text                                                                                                                                                                                              |
+| `text-secondary`   | `#9aa3b5`                | Labels, captions, inactive                                                                                                                                                                                |
+| `text-muted`       | `#c2c7d4`                | Secondary values                                                                                                                                                                                          |
+| `text-tertiary`    | `#5b6172`                | Disabled / future dates                                                                                                                                                                                   |
+| `accent` (blue)    | `#5ba3f5`                | Brand, active tab, links, energy-negative                                                                                                                                                                 |
+| `favorite` (rose)  | `#e06aa0`                | Filled favorite heart (decoupled from `accent`)                                                                                                                                                           |
+| `positive` (teal)  | `#5dcaa5`                | Add `+`, activity/supplement accents, "food logged" dot                                                                                                                                                   |
+| `info` (blue)      | `#5b8def`                | (legacy; no longer used for status chips)                                                                                                                                                                 |
+| `plan` (purple)    | `#a779e0`                | "Want" status chip (planned) on Shows/Books/Travel                                                                                                                                                        |
+| `warning` (orange) | `#e8623c`                | In-progress status chip (Watching·Reading·Planning); import notes                                                                                                                                         |
+| `danger`           | `#e2574c`                | Over-limit bars and % text, destructive text                                                                                                                                                              |
+| `delete`           | `#e24b4a`                | Swipe-to-delete background                                                                                                                                                                                |
+| `track`            | `#3a4253`                | Progress-bar track, off-toggle                                                                                                                                                                            |
+| `fill`             | `#eef1f7`                | Progress-bar fill; primary-button background                                                                                                                                                              |
+| `dynasty`          | `#d8a657`                | Gold dynasty badge (Shows/Books Chinese titles)                                                                                                                                                           |
+| `cat-meal`         | `#e2574c`                | Diary category icon — Breakfast/Lunch/Dinner (red apple)                                                                                                                                                  |
+| `cat-snack`        | `#e2933c`                | Diary category icon — Snacks (orange cookie)                                                                                                                                                              |
+| `cat-supplement`   | `#a779e0`                | Diary category icon — Supplements (purple pill)                                                                                                                                                           |
+| `cat-activity`     | `#5b8def`                | Diary category icon — Activities (blue runner)                                                                                                                                                            |
+| `med-*` (18)       | per category             | Medical lab-result section accents (`--color-med-general` … `--color-med-other`); one distinct hue per category, consumed via `MEDICAL_CATEGORY_COLOR` for `MedicalSection`'s left stripe + tinted header |
 
 Primary button = `fill` background with `#161b28` text (a light pill on dark). The accent blue is
 _not_ the primary-button color; it's for emphasis, active states, and energy.
@@ -141,7 +142,7 @@ _not_ the primary-button color; it's for emphasis, active states, and energy.
   page) so distant years like a birthday are a few taps, not dozens. Picking a year returns to the month
   grid, a month returns to that month's day grid. **Tapping a day commits immediately and closes**
   (calls `onSelect`, which every caller treats as "date chosen" + closes) — so there are **no Cancel/OK
-  buttons**; **X / scrim / Esc / Backspace** all cancel (`onClose`). Day styling: **today = white ring,
+  buttons**; **X / scrim / Esc** all cancel (`onClose`). Day styling: **today = white ring,
   no fill**; the **previously-selected date (the `day` prop) = accent-filled** (both can apply at once).
   A single **Today** button is **centered at the bottom** and just navigates the view to the current
   month's day grid (it no longer pre-selects/confirms).
@@ -203,6 +204,11 @@ flex flex-col`, or `h-full` for Zen) so the `flex-1` fills the real content area
 - **EnergyBalanceCard** — Consumed / BMR / Activity / bold Net.
 - **NutrientReport** — shared body of Dashboard + Daily Report (energy card + visible-nutrient sections).
 - **CollapsibleSection** — collapsible card for the New Food nutrient-entry groups.
+- **MedicalSection** — collapsible, color-accented lab-result section (`src/components/MedicalSection.tsx`):
+  a left chevron (mirrors `GroupHeader`) + per-category colored **left stripe** and **tinted header**
+  (`MEDICAL_CATEGORY_COLOR` → `--color-med-*`, tint via `color-mix`); default **expanded**. `variant="card"`
+  wraps the body in a `surface` card (Report detail, Dashboard latest-values); `variant="bare"` is the
+  header bar only (Edit Report, whose children are already `MedicalResultCard`s).
 - **BarcodeScanner** — ZXing camera scanner (lazy-loaded).
 - **MedicalLockScreen / PinInput** — the Medical lock gate (`src/components/MedicalLockScreen.tsx`): a
   full-shell overlay (lock glyph, masked numeric `PinInput`, Unlock, an auto-tried Face ID / Touch ID
