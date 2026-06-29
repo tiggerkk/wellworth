@@ -163,7 +163,7 @@ export function ConfigListEditor<T extends { key: string; label: string }>({
                 }
               }}
               aria-label={`Rename ${labelFor(key)}`}
-              className="w-full rounded-input bg-input px-2 py-1 text-[15px] text-text-primary focus:outline-none"
+              className="field-control w-full"
             />
           ) : (
             <span className="flex items-baseline gap-2">
@@ -223,7 +223,7 @@ export function ConfigListEditor<T extends { key: string; label: string }>({
             if (e.key === 'Enter') commitAdd()
           }}
           placeholder={`Add a ${noun}…`}
-          className="flex-1 rounded-input bg-input px-3 py-2 text-[15px] text-text-primary placeholder:text-text-tertiary focus:outline-none"
+          className="field-control flex-1 placeholder:text-text-tertiary"
         />
         <button
           onClick={commitAdd}

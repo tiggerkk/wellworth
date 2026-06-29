@@ -188,7 +188,7 @@ function ActivityForm({
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="mt-1 w-full rounded-input bg-input px-3 py-2 text-[15px] text-text-primary focus:outline-none"
+            className="mt-1 field-control w-full"
           />
         </label>
 
@@ -197,7 +197,7 @@ function ActivityForm({
           <input
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="mt-1 w-full rounded-input bg-input px-3 py-2 text-[15px] text-text-primary focus:outline-none"
+            className="mt-1 field-control w-full"
           />
         </label>
 
@@ -225,7 +225,7 @@ function ActivityForm({
             onBlur={(e) => {
               if (e.target.value.trim() === '') setDefaultDuration('30')
             }}
-            className="mt-1 w-full rounded-input bg-input px-3 py-2 text-[15px] text-text-primary focus:outline-none"
+            className="mt-1 field-control w-full"
           />
         </label>
 
@@ -262,7 +262,7 @@ function ActivityForm({
                     onChange={(e) =>
                       setMet((prev) => ({ ...prev, [level.key]: e.target.value }))
                     }
-                    className="w-20 rounded-input bg-input px-2 py-2 text-right text-[15px] text-text-primary focus:outline-none"
+                    className="field-control w-20 text-right"
                   />
                 </div>
               )

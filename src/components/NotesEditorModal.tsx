@@ -125,7 +125,7 @@ export function NotesEditorModal({
             ref={taRef}
             value={buffer}
             onChange={(e) => setBuffer(e.target.value)}
-            className="mt-1 w-full flex-1 resize-none overflow-y-auto rounded-input bg-input px-3 py-2 text-[15px] text-text-primary focus:outline-none"
+            className="field-control mt-1 w-full flex-1 resize-none overflow-y-auto"
           />
         </div>
       </div>

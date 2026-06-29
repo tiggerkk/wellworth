@@ -101,7 +101,7 @@ function Picker({
                                 protein.trim() === '' || !Number.isFinite(v) ? null : v,
                             })
                           }}
-                          className="mt-1 w-48 rounded-input bg-input px-2 py-1 text-[13px] text-text-primary focus:outline-none"
+                          className="mt-1 field-control w-48"
                         />
                       )}
                     </div>

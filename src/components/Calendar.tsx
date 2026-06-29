@@ -1,5 +1,5 @@
-import { useCallback, useState } from 'react'
-import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react'
+import { useCallback, useEffect, useState } from 'react'
+import { IconChevronLeft, IconChevronRight, IconX } from '@tabler/icons-react'
 import { useAsync } from '../hooks/useAsync'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 import {
@@ -49,7 +49,6 @@ const YEAR_PAGE = 12
 /** Month-grid date picker. Presentational + optional injected cue dots. Local overlay (not a route). */
 export function Calendar({ day, onSelect, onClose, loadCues }: CalendarProps) {
   const [viewMonth, setViewMonth] = useState<IsoDate>(startOfMonth(day))
-  const [selected, setSelected] = useState<IsoDate>(day)
   // Tapping the month-year header opens the month grid; tapping its year opens a paged year grid —
   // so jumping to a distant year (e.g. a birthday) is a few page taps, not dozens of single steps.
   const [mode, setMode] = useState<'days' | 'months' | 'years'>('days')
@@ -57,7 +56,19 @@ export function Calendar({ day, onSelect, onClose, loadCues }: CalendarProps) {
   // Top-left year of the current year-grid page (only meaningful in 'years' mode).
   const [yearBase, setYearBase] = useState(() => pickYear - Math.floor(YEAR_PAGE / 2))
   const today = todayLocal()
+  // Esc + Backspace both cancel (close without committing) — Backspace mirrors the laptop "back" key
+  // (safe to capture: the picker has no text inputs).
   useEscapeKey(onClose)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Backspace') {
+        e.preventDefault()
+        onClose()
+      }
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [onClose])
 
   const monthStart = fromIsoDate(viewMonth)
   const year = monthStart.getFullYear()
@@ -86,73 +97,84 @@ export function Calendar({ day, onSelect, onClose, loadCues }: CalendarProps) {
         aria-label="Choose a date"
         className="absolute inset-x-0 bottom-0 mx-auto max-w-md rounded-t-card bg-surface p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]"
       >
-        <div className="mb-3 flex items-center justify-between">
+        {/* X (cancel) hugs the top-left; the ‹ label › cluster is centered with the arrows pulled in
+            tight against the label. */}
+        <div className="relative mb-3 flex items-center justify-center">
           <button
-            onClick={() =>
-              mode === 'days'
-                ? setViewMonth(addMonths(viewMonth, -1))
-                : mode === 'months'
-                  ? setPickYear((y) => y - 1)
-                  : setYearBase((b) => b - YEAR_PAGE)
-            }
-            aria-label={
-              mode === 'days'
-                ? 'Previous month'
-                : mode === 'months'
-                  ? 'Previous year'
-                  : 'Previous years'
-            }
-            className="p-1 text-text-secondary"
+            onClick={onClose}
+            aria-label="Close"
+            className="absolute left-0 p-1 text-text-secondary"
           >
-            <IconChevronLeft size={20} />
+            <IconX size={22} />
           </button>
-          {mode === 'days' && (
+          <div className="flex items-center gap-1">
             <button
-              onClick={() => {
-                setPickYear(year)
-                setMode('months')
-              }}
-              className="rounded-input px-2 py-0.5 text-[15px] font-medium text-text-primary active:bg-input/40"
+              onClick={() =>
+                mode === 'days'
+                  ? setViewMonth(addMonths(viewMonth, -1))
+                  : mode === 'months'
+                    ? setPickYear((y) => y - 1)
+                    : setYearBase((b) => b - YEAR_PAGE)
+              }
+              aria-label={
+                mode === 'days'
+                  ? 'Previous month'
+                  : mode === 'months'
+                    ? 'Previous year'
+                    : 'Previous years'
+              }
+              className="p-1 text-text-secondary"
             >
-              {monthLabel}
+              <IconChevronLeft size={20} />
             </button>
-          )}
-          {mode === 'months' && (
+            {mode === 'days' && (
+              <button
+                onClick={() => {
+                  setPickYear(year)
+                  setMode('months')
+                }}
+                className="rounded-input px-2 py-0.5 text-[15px] font-medium text-text-primary active:bg-input/40"
+              >
+                {monthLabel}
+              </button>
+            )}
+            {mode === 'months' && (
+              <button
+                onClick={() => {
+                  setYearBase(pickYear - Math.floor(YEAR_PAGE / 2))
+                  setMode('years')
+                }}
+                aria-label="Choose year"
+                className="rounded-input px-2 py-0.5 text-[15px] font-medium text-text-primary active:bg-input/40"
+              >
+                {pickYear}
+              </button>
+            )}
+            {mode === 'years' && (
+              <span className="px-2 text-[15px] font-medium text-text-primary">
+                {yearBase}–{yearBase + YEAR_PAGE - 1}
+              </span>
+            )}
             <button
-              onClick={() => {
-                setYearBase(pickYear - Math.floor(YEAR_PAGE / 2))
-                setMode('years')
-              }}
-              aria-label="Choose year"
-              className="rounded-input px-2 py-0.5 text-[15px] font-medium text-text-primary active:bg-input/40"
+              onClick={() =>
+                mode === 'days'
+                  ? setViewMonth(addMonths(viewMonth, 1))
+                  : mode === 'months'
+                    ? setPickYear((y) => y + 1)
+                    : setYearBase((b) => b + YEAR_PAGE)
+              }
+              aria-label={
+                mode === 'days'
+                  ? 'Next month'
+                  : mode === 'months'
+                    ? 'Next year'
+                    : 'Next years'
+              }
+              className="p-1 text-text-secondary"
             >
-              {pickYear}
+              <IconChevronRight size={20} />
             </button>
-          )}
-          {mode === 'years' && (
-            <span className="text-[15px] font-medium text-text-primary">
-              {yearBase}–{yearBase + YEAR_PAGE - 1}
-            </span>
-          )}
-          <button
-            onClick={() =>
-              mode === 'days'
-                ? setViewMonth(addMonths(viewMonth, 1))
-                : mode === 'months'
-                  ? setPickYear((y) => y + 1)
-                  : setYearBase((b) => b + YEAR_PAGE)
-            }
-            aria-label={
-              mode === 'days'
-                ? 'Next month'
-                : mode === 'months'
-                  ? 'Next year'
-                  : 'Next years'
-            }
-            className="p-1 text-text-secondary"
-          >
-            <IconChevronRight size={20} />
-          </button>
+          </div>
         </div>
 
         {mode === 'years' ? (
@@ -207,18 +229,16 @@ export function Calendar({ day, onSelect, onClose, loadCues }: CalendarProps) {
                 const d = `${viewMonth.slice(0, 8)}${String(i + 1).padStart(2, '0')}`
                 const cue = cues?.get(d)
                 const isToday = d === today
-                const isSelected = d === selected
+                // The date that was set before opening (the `day` prop) reads as the current
+                // selection — accent-filled; today gets a white ring (both can apply at once).
+                const isSelected = d === day
                 return (
                   <button
                     key={d}
-                    onClick={() => setSelected(d)}
+                    onClick={() => onSelect(d)}
                     className={`relative flex aspect-square items-center justify-center rounded-full text-[13px] ${
-                      isSelected
-                        ? 'bg-fill text-bg'
-                        : isToday
-                          ? 'text-accent ring-1 ring-accent'
-                          : 'text-text-primary'
-                    }`}
+                      isSelected ? 'bg-accent text-white' : 'text-text-primary'
+                    } ${isToday ? 'ring-1 ring-white' : ''}`}
                   >
                     {i + 1}
                     {cue && (
@@ -247,31 +267,18 @@ export function Calendar({ day, onSelect, onClose, loadCues }: CalendarProps) {
           </div>
         )}
 
-        <div className="mt-4 flex gap-2">
+        {/* "Today" just navigates the view to the current month's day grid (tapping a day commits +
+            closes; X / Esc / Backspace cancel — so no Cancel/OK buttons). */}
+        <div className="mt-4 flex justify-center">
           <button
             onClick={() => {
-              // Jump back to today: show the current month's day grid with today selected
-              // (the user still confirms with OK), the common "Today" shortcut on date pickers.
               setViewMonth(startOfMonth(today))
-              setSelected(today)
               setPickYear(fromIsoDate(today).getFullYear())
               setMode('days')
             }}
-            className="flex-1 rounded-pill bg-input py-2.5 text-sm text-text-primary"
+            className="rounded-pill bg-input px-8 py-2.5 text-sm text-text-primary"
           >
             Today
-          </button>
-          <button
-            onClick={onClose}
-            className="flex-1 rounded-pill bg-input py-2.5 text-sm text-text-primary"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={() => onSelect(selected)}
-            className="flex-1 rounded-pill bg-fill py-2.5 text-sm font-medium text-bg"
-          >
-            OK
           </button>
         </div>
       </div>

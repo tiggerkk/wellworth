@@ -93,6 +93,13 @@ export function formatHkd(n: number): string {
   return `HK$${Math.round(n).toLocaleString('en-US')}`
 }
 
+/** Tailwind text-color class for a gain/loss figure: teal when positive, red when negative,
+ *  muted at zero. Shared by every Net Worth percentage (returns, surrender gain) so gains read
+ *  green and losses red consistently. */
+export function gainLossClass(n: number): string {
+  return n > 0 ? 'text-positive' : n < 0 ? 'text-danger' : 'text-text-secondary'
+}
+
 /** Compact HKD for chart axes/ticks, e.g. `HK$1.2M` / `HK$450K`. */
 export function formatHkdCompact(n: number): string {
   const abs = Math.abs(n)
@@ -363,6 +370,14 @@ export function breakEven(schedules: ScheduleVersion[]): BreakEven | null {
   const idx = series.findIndex((p) => p.cashValue >= p.premium)
   if (idx === -1) return null
   return { age: series[idx]!.age, atOrBeforeFirst: idx === 0 }
+}
+
+/** True when the policy has ALREADY reached break-even by `age` (its break-even age ≤ age). The
+ *  bare `breakEven` returns the first qualifying age across the WHOLE resolved series (incl. future
+ *  ages), so it answers "will it ever?" — this answers "has it yet?" for the current age. */
+export function hasBrokenEven(schedules: ScheduleVersion[], age: number): boolean {
+  const be = breakEven(schedules)
+  return be != null && be.age <= age
 }
 
 /** Surrender gain %/yr = (cash − premium) / premium / policyYear × 100 (0 when undefined). */

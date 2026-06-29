@@ -55,7 +55,7 @@ function DateButton({
     <div className="flex items-center gap-1">
       <button
         onClick={onPick}
-        className="min-w-0 flex-1 truncate rounded-input bg-input px-2 py-1.5 text-left text-text-primary"
+        className="field-control min-w-0 flex-1 truncate text-left"
       >
         {value ? (
           formatDayLabel(value)

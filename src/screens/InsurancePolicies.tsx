@@ -13,9 +13,10 @@ import {
   type InsuranceCriteria,
   type InsuranceSortField,
 } from '../lib/insurance-view'
-import { breakEven } from '../lib/networth'
+import { ageForYear, DEFAULT_BIRTH_YEAR, hasBrokenEven } from '../lib/networth'
 import { effectiveProviders, providerLabel } from '../lib/insurance-config'
 import { formatFullDate, todayLocal } from '../lib/date'
+import { StatusChip } from '../components/StatusChip'
 import { routes } from '../constants/routes'
 import { SearchBar } from '../components/SearchBar'
 import { SelectMenu } from '../components/SelectMenu'
@@ -64,13 +65,17 @@ export function InsurancePolicies() {
   const { data, loading, error } = useAsync(loadFn)
 
   const items = data ?? []
+  const birthYear = profile?.birthday
+    ? Number(profile.birthday.slice(0, 4))
+    : DEFAULT_BIRTH_YEAR
+  const currentAge = ageForYear(Number(todayLocal().slice(0, 4)), birthYear)
   const providerOptions = [
     { value: 'all', label: 'Any Provider' },
     ...providers
       .filter((p) => items.some((i) => i.policy.provider === p.key))
       .map((p) => ({ value: p.key, label: p.label })),
   ]
-  const view = applyInsuranceView(items, criteria)
+  const view = applyInsuranceView(items, criteria, currentAge)
 
   function clearFilters() {
     setCriteria((c) => ({
@@ -115,11 +120,11 @@ export function InsurancePolicies() {
               />
             </label>
             <label className="flex items-center justify-between self-end py-1.5">
-              <span className="text-text-secondary">Past Break-even Only</span>
+              <span className="text-text-secondary">Past Break-Even Only</span>
               <Toggle
                 checked={criteria.brokeEvenOnly}
                 onChange={(v) => setCrit({ brokeEvenOnly: v })}
-                label="Past Break-even Only"
+                label="Past Break-Even Only"
               />
             </label>
           </div>
@@ -170,12 +175,7 @@ export function InsurancePolicies() {
             </p>
           ) : (
             view.map(({ policy, schedules }) => {
-              const be = breakEven(schedules)
-              const tags = [
-                providerLabel(providers, policy.provider),
-                policy.surrendered_from_month ? 'Surrendered' : null,
-                be ? 'Past break-even' : null,
-              ].filter(Boolean)
+              const brokeEven = hasBrokenEven(schedules, currentAge)
               return (
                 <button
                   key={policy.id}
@@ -190,8 +190,20 @@ export function InsurancePolicies() {
                       {policy.policy_number}
                       {policy.start_date ? ` · ${formatFullDate(policy.start_date)}` : ''}
                     </span>
-                    <span className="mt-0.5 block truncate text-xs text-text-tertiary">
-                      {tags.join(' · ')}
+                    <span className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-text-tertiary">
+                      <span>{providerLabel(providers, policy.provider)}</span>
+                      {policy.surrendered_from_month && (
+                        <StatusChip
+                          label="Surrendered"
+                          className="bg-track text-text-secondary"
+                        />
+                      )}
+                      {brokeEven && (
+                        <StatusChip
+                          label="Past Break-Even"
+                          className="bg-positive text-bg"
+                        />
+                      )}
                     </span>
                   </span>
                 </button>

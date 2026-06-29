@@ -57,7 +57,22 @@ _not_ the primary-button color; it's for emphasis, active states, and energy.
 - **SegmentedTabs** — `input` track, active segment = `fill` pill with dark text. Generic over N
   options — used for multi-way controls (Type selectors, Status/LGBT+ filters, Food/Supplement toggle).
   The Library Type control sits in the **sticky header above the `SearchBar`** (always visible, not
-  inside the filter panel).
+  inside the filter panel). A `size` prop (`compact` default / `field`) sizes it to the
+  **`.field-control`** height so it aligns with form inputs on an entry screen.
+- **`.field-control`** (CSS class in `src/index.css`) — the **single source of truth for a single-line
+  form/filter field's chrome + height** (`rounded-input bg-input px-3 py-2 text-[15px]` via `@apply`).
+  Use it for **every** `<input>`/`<button>`/`<select>`/`<textarea>` field app-wide (compose with
+  `w-full`/`flex-1`/`w-NN` for width, `text-right`/`text-left` for alignment, `no-spinner`, `block`,
+  `resize-none`, `placeholder:*`); per-screen `inputClass`/`inputCls` constants are just
+  `'field-control …'`. The shared field components match the same height: **`SelectMenu`** defaults to
+  `size="field"` (pass `size="compact"` only to opt a tight spot back down), **`DateRangeRow`** and
+  **`SearchBar`** already render at it, and **`SegmentedTabs`** takes `size="field"`. So a row mixing an
+  input, a dropdown, a segmented control and a date button all line up. **Never re-spell the
+  px/py/text/bg of a field in a screen** — change the height in one place here.
+- **Field labels** are uniformly **`text-xs text-text-secondary`** (12px) — the small caption above an
+  input (`mb-1 …`) or the wrapping `<label>`. Distinct from **section labels** (11px UPPERCASE
+  `tracking-[0.08em]`) and muted captions (`text-text-tertiary`). Don't use `text-[11px]`/`text-sm` for
+  a field label.
 - **GroupHeader** — collapsible diary-group header: expand chevron · category icon · title · kcal
   subtotal (kcal next to the title) · ⟨spacer⟩ · **Delete · Copy · Paste · Add** action icons. Delete
   is a **`ConfirmDeleteAction`** (inline `Delete? ✓ ✗`); Delete/Copy disable on an empty group; Paste
@@ -120,12 +135,16 @@ _not_ the primary-button color; it's for emphasis, active states, and energy.
 - **Splash** — full-screen loading state while the auth session resolves.
 - **Calendar** — month-grid date picker (a local overlay, not a route). Presentational: per-day cue
   dots + legend are drawn only when a caller passes an optional `loadCues(monthStart, monthEnd)` loader.
-  **Tapping the month-year header** switches to a **month grid**; **tapping the year there** opens a
-  **paged year grid** (12 years; the ◀/▶ arrows jump a whole page) so distant years like a birthday are
-  a few taps, not dozens. Picking a year returns to the month grid, and a month returns to that month's
-  day grid (the bottom Cancel/OK still commit the day). A **Today** button sits left of Cancel/OK and
-  jumps back to the current month's day grid with today selected (still confirmed via OK) — the common
-  date-picker "jump to today" shortcut.
+  Header: an **X (top-left)** cancels, and a **centered `‹ month ›` cluster** (arrows pulled in tight
+  against the label) frees up the top-left corner. **Tapping the month label** switches to a **month
+  grid**; **tapping the year there** opens a **paged year grid** (12 years; the ◀/▶ arrows jump a whole
+  page) so distant years like a birthday are a few taps, not dozens. Picking a year returns to the month
+  grid, a month returns to that month's day grid. **Tapping a day commits immediately and closes**
+  (calls `onSelect`, which every caller treats as "date chosen" + closes) — so there are **no Cancel/OK
+  buttons**; **X / scrim / Esc / Backspace** all cancel (`onClose`). Day styling: **today = white ring,
+  no fill**; the **previously-selected date (the `day` prop) = accent-filled** (both can apply at once).
+  A single **Today** button is **centered at the bottom** and just navigates the view to the current
+  month's day grid (it no longer pre-selects/confirms).
 - **EntryHeaderActions** — the shared top-right action cluster for every New/Edit form
   (`src/components/EntryHeaderActions.tsx`): compact `sm` **icon** buttons in order **Delete · Reset ·
   Submit**. **Reset** = `IconArrowBackUp` (undo), **Submit** = `IconPlus` (new) /
@@ -170,7 +189,9 @@ flex flex-col`, or `h-full` for Zen) so the `flex-1` fills the real content area
 - **SelectMenu** — a compact dropdown (button + label + chevron → scrim + absolute menu of
   `{value,label}` options); generic over string options. Used by Library filters/sort and the Entry
   forms' Status / LGBT+ / Language / Type controls. **Esc** collapses an open menu (via
-  `useEscapeKey`). The menu **flips upward** when there isn't room below.
+  `useEscapeKey`). The menu **flips upward** when there isn't room below. A `size` prop
+  (**`field` default** / `compact`) keeps the trigger at the **`.field-control`** height across forms +
+  filters; pass `size="compact"` to opt a tight spot back down.
 - **useEscapeKey(handler, enabled?)** (`src/hooks/useEscapeKey.ts`) — shared **Escape-to-dismiss**.
   One document listener drives a LIFO stack so the **innermost** overlay handles Esc: route `Sheet`s
   and local search sheets close themselves, the `Calendar` closes, an open `SelectMenu` collapses, and
@@ -186,6 +207,12 @@ flex flex-col`, or `h-full` for Zen) so the `flex-1` fills the real content area
   button when a credential is registered, and a "Sign out" escape). `PinInput` is a shared masked
   numeric field (digits only, Enter submits) reused by the lock settings. Lock colours reuse `danger`
   for errors; the screen sits at `z-50`, above sheets.
+- **MedicalValueRow** — the shared Medical result row (`src/components/MedicalValueRow.tsx`): name + the
+  (long, wrapping) printed reference range in a `min-w-0 flex-1` left column, value (+ unit,
+  flag-coloured) in a `shrink-0` right column, `items-start` — so a long ref wraps under the name rather
+  than squeezing it or pushing the value off the edge. Callers pass row chrome via `className` and
+  optional `leftExtra`/`rightExtra` slots. Used by the Medical Dashboard latest-values list and the
+  View Report `ResultRow`.
 - **ReorderList** — a pointer-drag reorderable list (`src/components/ReorderList.tsx`): a grip handle
   per row (`IconGripVertical`); drag it to move the row (Pointer Events, no dnd dependency), rows shift
   to open a gap, commit on release. Uniform row height (rows truncate to one line). `touch-action:none`

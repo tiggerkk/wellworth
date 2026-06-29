@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { IconCheck, IconUpload, IconX } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
@@ -18,7 +18,13 @@ import { bumpNetWorth } from '../lib/networth-refresh'
 import { errorMessage } from '../lib/errors'
 import { parseCsv } from '../lib/csv'
 import { parseInsuranceSingleCsv, type ParsedSinglePolicy } from '../lib/insurance-import'
-import { CURRENCIES, type Currency, type ScheduleVersion } from '../lib/networth'
+import {
+  CURRENCIES,
+  gainLossClass,
+  surrenderGainPctPerYear,
+  type Currency,
+  type ScheduleVersion,
+} from '../lib/networth'
 import { effectiveProviders, type InsuranceProviderConfig } from '../lib/insurance-config'
 import { formatDayLabel, formatFullDate, todayLocal } from '../lib/date'
 import { routes } from '../constants/routes'
@@ -57,8 +63,11 @@ function blankDraft(providers: InsuranceProviderConfig[]): PolicyDraft {
   }
 }
 
-const inputClass =
-  'w-full rounded-input bg-input px-3 py-2 text-[15px] text-text-primary focus:outline-none'
+// The shared single-line field standard (see `.field-control` in index.css) + full width.
+const inputClass = 'field-control w-full'
+
+const surrenderBtnClass =
+  'rounded-pill border border-border bg-input px-3 py-1.5 text-xs font-medium text-accent'
 
 const CCY_OPTIONS = CURRENCIES.map((c) => ({ value: c, label: c }))
 
@@ -67,7 +76,13 @@ export function InsuranceEntry() {
   const { session } = useAuth()
   const userId = session?.user.id
   const { data: profile } = useProfile()
-  const providers = effectiveProviders(profile?.insurance_providers)
+  // Memoize so `providers` keeps a stable identity across renders — it feeds `loadFn`'s deps, and a
+  // fresh array each render would make `loadFn` change every render and spin `useAsync` into an
+  // infinite re-fetch/re-render loop (same guard NetWorthEntry uses).
+  const providers = useMemo(
+    () => effectiveProviders(profile?.insurance_providers),
+    [profile?.insurance_providers],
+  )
 
   const loadFn = useCallback(async () => {
     if (!id || !userId)
@@ -170,7 +185,7 @@ function PolicyForm({
         draft.surrender_proceeds.trim()
       )
     ) {
-      showToast('Surrender needs month, date, and proceeds')
+      showToast('Surrender needs a date, effective-from, and proceeds')
       return false
     }
     return true
@@ -291,7 +306,10 @@ function PolicyForm({
   async function onPickCalendar(d: string) {
     if (cal === 'start') update({ start_date: d })
     else if (cal === 'surrenderMonth') update({ surrendered_from_month: d })
-    else if (cal === 'surrenderDate') update({ surrender_date: d })
+    // Setting/changing the Surrender Date re-syncs "Effective From" to match; the user can then
+    // override it independently via its own field.
+    else if (cal === 'surrenderDate')
+      update({ surrender_date: d, surrendered_from_month: d })
     else if (cal === 'eff' && selected && id) {
       await updateScheduleEffectiveDate(selected.id, d)
       bumpNetWorth()
@@ -317,7 +335,7 @@ function PolicyForm({
           onClick={() => setImportOpen(true)}
           className="flex shrink-0 items-center gap-1.5 pl-2 text-sm text-accent"
         >
-          <IconUpload size={16} /> Import Policy Schedule
+          <IconUpload size={16} /> Schedule
         </button>
         <EntryHeaderActions
           editing={!!id}
@@ -331,33 +349,48 @@ function PolicyForm({
 
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
         <div className="flex gap-3">
-          <div className="flex-1">
+          <div className="min-w-0 flex-1">
             <p className="mb-1 text-xs text-text-secondary">Provider</p>
             <SelectMenu
               value={draft.provider}
               options={providerOptions}
               onChange={(v) => update({ provider: v })}
               ariaLabel="Provider"
+              className="w-full"
+              size="field"
             />
           </div>
-          <div className="w-32">
+          <div className="shrink-0">
             <p className="mb-1 text-xs text-text-secondary">Currency</p>
             <SegmentedTabs
               value={draft.currency}
               options={CCY_OPTIONS}
               onChange={(v) => update({ currency: v as Currency })}
+              size="field"
             />
           </div>
         </div>
 
-        <label className="text-xs text-text-secondary">
-          Policy Number
-          <input
-            value={draft.policy_number}
-            onChange={(e) => update({ policy_number: e.target.value })}
-            className={`mt-1 ${inputClass}`}
-          />
-        </label>
+        <div className="flex gap-3">
+          <label className="flex-1 text-xs text-text-secondary">
+            Policy Number
+            <input
+              value={draft.policy_number}
+              onChange={(e) => update({ policy_number: e.target.value })}
+              className={`mt-1 ${inputClass}`}
+            />
+          </label>
+          <div className="flex-1">
+            <p className="mb-1 text-xs text-text-secondary">Start Date</p>
+            <button onClick={() => setCal('start')} className={`text-left ${inputClass}`}>
+              {draft.start_date ? (
+                formatDayLabel(draft.start_date)
+              ) : (
+                <span className="text-text-tertiary">Set date</span>
+              )}
+            </button>
+          </div>
+        </div>
 
         <label className="text-xs text-text-secondary">
           Policy Name
@@ -368,19 +401,12 @@ function PolicyForm({
           />
         </label>
 
-        <div>
-          <p className="mb-1 text-xs text-text-secondary">Start Date</p>
-          <button onClick={() => setCal('start')} className={`text-left ${inputClass}`}>
-            {draft.start_date ? formatDayLabel(draft.start_date) : 'Pick a date'}
-          </button>
-        </div>
-
         <label className="text-xs text-text-secondary">
           Notes
           <textarea
             value={draft.notes}
             onChange={(e) => update({ notes: e.target.value })}
-            rows={3}
+            rows={2}
             className={`mt-1 ${inputClass} resize-none`}
           />
         </label>
@@ -416,7 +442,7 @@ function PolicyForm({
               ) : (
                 <button
                   onClick={() => setConfirmUnsurr(true)}
-                  className="text-sm text-accent"
+                  className={surrenderBtnClass}
                 >
                   Un-Surrender
                 </button>
@@ -424,47 +450,53 @@ function PolicyForm({
             ) : (
               <button
                 onClick={() => setSurrenderingOpen((o) => !o)}
-                className="text-sm text-accent"
+                className={surrenderBtnClass}
               >
-                {surrenderingOpen ? 'Cancel' : 'Surrendered'}
+                {surrenderingOpen ? 'Cancel' : 'Mark Surrendered'}
               </button>
             )}
           </div>
           {(isSurrendered || surrenderingOpen) && (
             <div className="flex flex-col gap-3 rounded-card border border-border bg-surface p-3">
-              <div>
-                <p className="mb-1 text-xs text-text-secondary">
-                  Surrender Month (excluded from this month on)
-                </p>
-                <button
-                  onClick={() => setCal('surrenderMonth')}
-                  className={`text-left ${inputClass}`}
-                >
-                  {draft.surrendered_from_month
-                    ? formatDayLabel(draft.surrendered_from_month)
-                    : 'Pick a month'}
-                </button>
-              </div>
-              <div>
-                <p className="mb-1 text-xs text-text-secondary">Surrender Date</p>
-                <button
-                  onClick={() => setCal('surrenderDate')}
-                  className={`text-left ${inputClass}`}
-                >
-                  {draft.surrender_date
-                    ? formatDayLabel(draft.surrender_date)
-                    : 'Pick a date'}
-                </button>
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <p className="mb-1 text-xs text-text-secondary">Surrender Date</p>
+                  <button
+                    onClick={() => setCal('surrenderDate')}
+                    className={`text-left ${inputClass}`}
+                  >
+                    {draft.surrender_date ? (
+                      formatDayLabel(draft.surrender_date)
+                    ) : (
+                      <span className="text-text-tertiary">Set date</span>
+                    )}
+                  </button>
+                </div>
+                <div className="flex-1">
+                  <p className="mb-1 text-xs text-text-secondary">
+                    Surrender Effective From
+                  </p>
+                  <button
+                    onClick={() => setCal('surrenderMonth')}
+                    className={`text-left ${inputClass}`}
+                  >
+                    {draft.surrendered_from_month ? (
+                      formatDayLabel(draft.surrendered_from_month)
+                    ) : (
+                      <span className="text-text-tertiary">Set date</span>
+                    )}
+                  </button>
+                </div>
               </div>
               <label className="text-xs text-text-secondary">
-                Actual Proceeds ({draft.currency})
+                Actual Proceeds
                 <input
                   type="number"
                   inputMode="decimal"
                   step="any"
                   value={draft.surrender_proceeds}
                   onChange={(e) => update({ surrender_proceeds: e.target.value })}
-                  className={`mt-1 ${inputClass}`}
+                  className={`no-spinner mt-1 ${inputClass}`}
                 />
               </label>
               <p className="text-xs text-text-tertiary">
@@ -481,16 +513,29 @@ function PolicyForm({
           </p>
           {!id ? (
             <p className="rounded-card border border-dashed border-border px-4 py-6 text-center text-sm text-text-tertiary">
-              Save the policy, then import a schedule — or use Import Policy Schedule to
-              create it from a file.
+              Save the policy, then import a schedule — or use the Schedule button above
+              to create it from a file.
             </p>
           ) : schedules.length === 0 ? (
             <p className="rounded-card border border-dashed border-border px-4 py-6 text-center text-sm text-text-tertiary">
-              No schedule versions yet. Use Import Policy Schedule.
+              No schedule versions yet. Use the Import Schedule button above.
             </p>
           ) : (
             <div className="flex flex-col gap-3">
               <div className="flex items-center gap-2">
+                {selected && (
+                  <button
+                    onClick={() => setCal('eff')}
+                    aria-label="Effective date"
+                    className="field-control flex-1 text-left"
+                  >
+                    {selected.effective_date ? (
+                      formatDayLabel(selected.effective_date)
+                    ) : (
+                      <span className="text-text-tertiary">Set date</span>
+                    )}
+                  </button>
+                )}
                 <SelectMenu
                   value={selectedSchedule}
                   options={schedules.map((v) => ({
@@ -499,6 +544,8 @@ function PolicyForm({
                   }))}
                   onChange={setSelectedSchedule}
                   ariaLabel="Schedule version"
+                  className="flex-1"
+                  size="field"
                 />
                 {selected && (
                   <ConfirmDeleteAction
@@ -513,41 +560,39 @@ function PolicyForm({
                 )}
               </div>
               {selected && (
-                <div>
-                  <p className="mb-1 text-xs text-text-secondary">Effective Date</p>
-                  <button
-                    onClick={() => setCal('eff')}
-                    className={`text-left ${inputClass}`}
-                  >
-                    {selected.effective_date
-                      ? formatDayLabel(selected.effective_date)
-                      : 'Pick a date'}
-                  </button>
-                </div>
-              )}
-              {selected && (
                 <div className="overflow-hidden rounded-card border border-border bg-surface">
-                  <div className="grid grid-cols-4 gap-2 border-b border-border px-3 py-2 text-[11px] uppercase tracking-wide text-text-secondary">
+                  <div className="grid grid-cols-5 gap-2 border-b border-border px-3 py-2 text-[11px] uppercase tracking-wide text-text-secondary">
                     <span>Age</span>
                     <span>Yr</span>
                     <span className="text-right">Premium</span>
                     <span className="text-right">Cash</span>
+                    <span className="text-right">Gain %/Yr</span>
                   </div>
-                  {selected.points.map((p) => (
-                    <div
-                      key={p.age}
-                      className="grid grid-cols-4 gap-2 border-b border-border px-3 py-1.5 text-[13px] text-text-primary last:border-b-0"
-                    >
-                      <span>{p.age}</span>
-                      <span className="text-text-secondary">{p.policy_year}</span>
-                      <span className="text-right">
-                        {Math.round(p.total_premium_paid).toLocaleString('en-US')}
-                      </span>
-                      <span className="text-right">
-                        {Math.round(p.cash_value).toLocaleString('en-US')}
-                      </span>
-                    </div>
-                  ))}
+                  {selected.points.map((p) => {
+                    const gain = surrenderGainPctPerYear(
+                      p.cash_value,
+                      p.total_premium_paid,
+                      p.policy_year,
+                    )
+                    return (
+                      <div
+                        key={p.age}
+                        className="grid grid-cols-5 gap-2 border-b border-border px-3 py-1.5 text-[13px] text-text-primary last:border-b-0"
+                      >
+                        <span>{p.age}</span>
+                        <span className="text-text-secondary">{p.policy_year}</span>
+                        <span className="text-right">
+                          {Math.round(p.total_premium_paid).toLocaleString('en-US')}
+                        </span>
+                        <span className="text-right">
+                          {Math.round(p.cash_value).toLocaleString('en-US')}
+                        </span>
+                        <span className={`text-right ${gainLossClass(gain)}`}>
+                          {gain.toFixed(2)}%
+                        </span>
+                      </div>
+                    )
+                  })}
                 </div>
               )}
             </div>

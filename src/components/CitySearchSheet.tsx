@@ -242,7 +242,7 @@ export function CitySearchSheet({
                   <input
                     value={country}
                     onChange={(e) => setCountry(e.target.value)}
-                    className="mt-1 w-full rounded-input bg-input px-3 py-2 text-[15px] text-text-primary focus:outline-none"
+                    className="mt-1 field-control w-full"
                   />
                 </label>
                 <div className="text-xs text-text-secondary">
@@ -264,7 +264,7 @@ export function CitySearchSheet({
                     <input
                       value={province}
                       onChange={(e) => setProvince(e.target.value)}
-                      className="mt-1 w-full rounded-input bg-input px-3 py-2 text-[15px] text-text-primary focus:outline-none"
+                      className="mt-1 field-control w-full"
                     />
                   )}
                 </div>

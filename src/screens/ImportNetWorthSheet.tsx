@@ -152,7 +152,7 @@ export function ImportNetWorthSheet() {
                 type="month"
                 value={monthInput}
                 onChange={(e) => setMonthInput(e.target.value)}
-                className="mt-1 block w-full rounded-input bg-input px-3 py-2 text-[15px] text-text-primary focus:outline-none"
+                className="mt-1 field-control block w-full"
               />
             </label>
 

@@ -17,10 +17,11 @@ import {
   ASSET_TYPES,
   ASSET_TYPE_COLORS,
   ASSET_TYPE_LABELS,
-  breakEven,
   DEFAULT_BIRTH_YEAR,
   foldMonthlyTotals,
   formatHkd,
+  gainLossClass,
+  hasBrokenEven,
   resolvePolicyAtAge,
   sumTotals,
   typeBreakdownFromTotals,
@@ -103,7 +104,9 @@ function buildInsuranceAgg(
     currentCash += r.cashValue * rate
     currentPremium += r.premium * rate
   }
-  const pastBreakEven = catalogue.filter((c) => breakEven(c.schedules) !== null).length
+  const pastBreakEven = catalogue.filter((c) =>
+    hasBrokenEven(c.schedules, currentAge),
+  ).length
   return {
     series,
     breakEvenAge: beIdx === -1 ? null : series[beIdx]!.age,
@@ -193,7 +196,7 @@ export function NetWorthDashboard() {
       : null
 
   return (
-    <div className="pb-4">
+    <div className="flex min-h-full flex-col pb-4">
       {loading && <p className="px-4 pt-6 pb-6 text-sm text-text-secondary">Loading…</p>}
       {error && (
         <p className="px-4 pt-6 pb-6 text-sm text-danger">
@@ -332,7 +335,7 @@ export function NetWorthDashboard() {
                   </span>
                   {f.returnRate != null && (
                     <span
-                      className={`w-16 shrink-0 text-right text-xs ${f.returnRate < 0 ? 'text-danger' : 'text-positive'}`}
+                      className={`w-16 shrink-0 text-right text-xs ${gainLossClass(f.returnRate)}`}
                     >
                       {f.returnRate > 0 ? '+' : ''}
                       {f.returnRate.toFixed(1)}%

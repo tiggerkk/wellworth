@@ -9,7 +9,6 @@ import {
   formatRefRange,
   formatResultValue,
   MEDICAL_CATEGORY_LABELS,
-  MEDICAL_FLAG_CLASS,
   MEDICAL_FLAG_LABELS,
   medicalReviewReason,
   orderResultsForDisplay,
@@ -23,6 +22,7 @@ import { groupResultsByCategory } from '../lib/medical-order'
 import { formatFullDate } from '../lib/date'
 import { routes } from '../constants/routes'
 import { PrimaryButton } from '../components/PrimaryButton'
+import { MedicalValueRow } from '../components/MedicalValueRow'
 
 /**
  * Medical Report detail — read-only view of a report's parent fields, Drive link(s), narrative, and
@@ -165,33 +165,30 @@ function ResultRow({ r }: { r: MedicalResultRow }) {
     hasNumericValue: r.value_num != null,
   })
   return (
-    <div
-      className={`flex items-start justify-between gap-3 px-3 py-2.5 ${
-        reviewReason ? 'bg-accent/10' : ''
-      }`}
-    >
-      <div className="min-w-0 flex-1">
-        <p className="text-[15px] text-text-primary">{r.test_name}</p>
-        {ref && <p className="text-xs text-text-tertiary">Ref: {ref}</p>}
-        {r.normalized && r.value_num_original != null && (
-          <p className="text-xs text-text-tertiary">
-            normalized from {r.value_num_original}
-            {r.unit_original ? ` ${r.unit_original}` : ''}
-          </p>
-        )}
-        {reviewReason && (
-          <p className="text-xs font-medium text-accent">Review – {reviewReason}</p>
-        )}
-      </div>
-      <div className="shrink-0 text-right">
-        <p className={flag ? MEDICAL_FLAG_CLASS[flag] : 'text-text-primary'}>
-          {formatResultValue(r)}
-          {r.unit ? ` ${r.unit}` : ''}
-        </p>
-        {flag && (
+    <MedicalValueRow
+      name={r.test_name}
+      refRange={ref}
+      value={`${formatResultValue(r)}${r.unit ? ` ${r.unit}` : ''}`}
+      flag={flag}
+      className={`px-3 py-2.5 ${reviewReason ? 'bg-accent/10' : ''}`}
+      leftExtra={
+        <>
+          {r.normalized && r.value_num_original != null && (
+            <p className="text-xs text-text-tertiary">
+              normalized from {r.value_num_original}
+              {r.unit_original ? ` ${r.unit_original}` : ''}
+            </p>
+          )}
+          {reviewReason && (
+            <p className="text-xs font-medium text-accent">Review – {reviewReason}</p>
+          )}
+        </>
+      }
+      rightExtra={
+        flag && (
           <p className="text-[11px] text-text-tertiary">{MEDICAL_FLAG_LABELS[flag]}</p>
-        )}
-      </div>
-    </div>
+        )
+      }
+    />
   )
 }

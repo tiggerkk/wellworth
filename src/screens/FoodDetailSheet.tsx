@@ -327,7 +327,7 @@ export function FoodDetailSheet() {
                   onBlur={(e) => {
                     if (e.target.value.trim() === '') setAmount('1')
                   }}
-                  className="mt-1 w-full rounded-input bg-input px-3 py-2 text-[15px] text-text-primary focus:outline-none"
+                  className="mt-1 field-control w-full"
                 />
               </label>
               <label className="flex-1 text-xs text-text-secondary">
@@ -335,7 +335,7 @@ export function FoodDetailSheet() {
                 <select
                   value={servingIndex}
                   onChange={(e) => setServingIndex(Number(e.target.value))}
-                  className="mt-1 w-full rounded-input bg-input px-3 py-2 text-[15px] text-text-primary focus:outline-none"
+                  className="mt-1 field-control w-full"
                 >
                   {food.servings.map((s, i) => (
                     <option key={i} value={i}>

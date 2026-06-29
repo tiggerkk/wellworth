@@ -17,8 +17,7 @@ export interface ProfileMetrics {
   weight_kg: number | null
 }
 
-const inputCls =
-  'w-24 rounded-input bg-input px-2 py-1 text-right text-[15px] text-text-primary focus:outline-none'
+const inputCls = 'field-control w-24 text-right'
 
 /**
  * A number input that edits a metric-stored value in the user's display units. Holds a transient
@@ -90,7 +89,7 @@ export function ProfileMetricsFields({
           <button
             type="button"
             onClick={() => setCalOpen(true)}
-            className="rounded-input bg-input px-3 py-1 text-[15px] text-text-primary focus:outline-none"
+            className="field-control"
           >
             {value.birthday ? (
               formatDayLabel(value.birthday as IsoDate)

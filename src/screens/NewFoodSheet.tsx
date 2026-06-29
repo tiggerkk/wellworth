@@ -192,7 +192,7 @@ function FoodForm({ id, initial }: { id: string | undefined; initial: FoodInitia
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="mt-1 w-full rounded-input bg-input px-3 py-2 text-[15px] text-text-primary focus:outline-none"
+            className="mt-1 field-control w-full"
           />
         </label>
 
@@ -210,7 +210,7 @@ function FoodForm({ id, initial }: { id: string | undefined; initial: FoodInitia
                       prev.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)),
                     )
                   }
-                  className="flex-1 rounded-input bg-input px-3 py-2 text-[15px] text-text-primary focus:outline-none"
+                  className="field-control flex-1"
                 />
                 <input
                   type="number"
@@ -223,7 +223,7 @@ function FoodForm({ id, initial }: { id: string | undefined; initial: FoodInitia
                       prev.map((x, j) => (j === i ? { ...x, grams: e.target.value } : x)),
                     )
                   }
-                  className="w-20 rounded-input bg-input px-3 py-2 text-[15px] text-text-primary focus:outline-none"
+                  className="field-control w-20"
                 />
                 <button
                   onClick={() => setServings((prev) => prev.filter((_, j) => j !== i))}
@@ -288,7 +288,7 @@ function FoodForm({ id, initial }: { id: string | undefined; initial: FoodInitia
                           onChange={(e) =>
                             setValues((prev) => ({ ...prev, [n.key]: e.target.value }))
                           }
-                          className="w-20 rounded-input bg-input px-2 py-1.5 text-right text-[15px] text-text-primary focus:outline-none"
+                          className="field-control w-20 text-right"
                         />
                         <span className="w-7 text-xs text-text-secondary">{n.unit}</span>
                       </span>

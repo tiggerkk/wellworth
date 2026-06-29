@@ -53,8 +53,7 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
     })
   }
 
-  const inputCls =
-    'w-24 rounded-input bg-input px-2 py-1 text-right text-[15px] text-text-primary focus:outline-none'
+  const inputCls = 'field-control w-24 text-right'
 
   return (
     <>

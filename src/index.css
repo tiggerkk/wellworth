@@ -65,6 +65,16 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Canonical single-line form field — ONE source of truth for field chrome + height so raw
+ * <input>/<button>/<select> AND the shared SelectMenu / SegmentedTabs (size="field") all render at
+ * the SAME height and align on any form. Compose with `w-full`/`flex-1` (width) and `text-left`
+ * (buttons) at the call site; never re-declare the px/py/text/bg here in screens. Documented in
+ * docs/01_design_system.md. (SegmentedTabs' field size uses py-1 inside its p-1 track so the track's
+ * total height matches this padding+font — see SegmentedTabs.) */
+.field-control {
+  @apply rounded-input bg-input px-3 py-2 text-[15px] text-text-primary focus:outline-none;
+}
+
 /* Hide the number-input spin buttons (compact value fields, e.g. Net Worth Monthly Entry). */
 .no-spinner::-webkit-outer-spin-button,
 .no-spinner::-webkit-inner-spin-button {

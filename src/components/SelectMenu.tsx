@@ -11,6 +11,9 @@ interface SelectMenuProps<T extends string> {
   /** When disabled the button can't be opened and is greyed; `placeholder` shows in place of a value. */
   disabled?: boolean
   placeholder?: string
+  /** 'field' (default) — matches the `.field-control` height so dropdowns line up with form inputs
+   *  and filter rows app-wide; 'compact' opts a tight spot back down to the smaller chrome. */
+  size?: 'compact' | 'field'
 }
 
 /**
@@ -25,6 +28,7 @@ export function SelectMenu<T extends string>({
   className = '',
   disabled = false,
   placeholder,
+  size = 'field',
 }: SelectMenuProps<T>) {
   const [open, setOpen] = useState(false)
   // Open upward when there isn't room below the trigger (e.g. a short form clipped by overflow).
@@ -50,9 +54,9 @@ export function SelectMenu<T extends string>({
         onClick={toggle}
         aria-label={ariaLabel}
         disabled={disabled}
-        className={`flex w-full items-center justify-between gap-1 rounded-input bg-input px-2.5 py-1.5 text-sm ${
-          disabled ? 'text-text-tertiary' : 'text-text-primary'
-        }`}
+        className={`flex w-full items-center justify-between gap-1 rounded-input bg-input ${
+          size === 'field' ? 'px-3 py-2 text-[15px]' : 'px-2.5 py-1.5 text-sm'
+        } ${disabled ? 'text-text-tertiary' : 'text-text-primary'}`}
       >
         <span className="truncate">{current?.label ?? placeholder ?? value}</span>
         <IconChevronDown size={15} className="shrink-0 text-text-secondary" />

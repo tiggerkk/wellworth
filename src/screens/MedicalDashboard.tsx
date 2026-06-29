@@ -30,6 +30,7 @@ import {
 import type { ResultWithReportMeta } from '../data/medical'
 import { formatFullDate, todayLocal } from '../lib/date'
 import { useEscapeKey } from '../hooks/useEscapeKey'
+import { MedicalValueRow } from '../components/MedicalValueRow'
 import { routes } from '../constants/routes'
 
 // Lazy so recharts is fetched only when a sparkline is expanded (its own chunk). The grid itself
@@ -148,25 +149,17 @@ function SparkCard({ trend, onOpen }: { trend: TrackedTrend; onOpen: () => void 
   )
 }
 
-/** A latest-value row in the by-category list: test name · value (flag-coloured) · printed range. */
+/** A latest-value row in the by-category list: test name · value (flag-coloured) · printed range.
+ *  Layout is the shared `MedicalValueRow` (also used by the View Report detail). */
 function LatestRow({ row }: { row: ResultWithReportMeta }) {
-  const flag = asFlag(row.flag)
-  const ref = formatRefRange(row)
   return (
-    <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-2.5 last:border-b-0">
-      <span className="min-w-0 flex-1 truncate text-[15px] text-text-primary">
-        {row.test_name}
-      </span>
-      <div className="shrink-0 text-right">
-        <div
-          className={`text-[15px] ${flag ? MEDICAL_FLAG_CLASS[flag] : 'text-text-primary'}`}
-        >
-          {formatResultValue(row)}
-          {row.unit ? ` ${row.unit}` : ''}
-        </div>
-        {ref && <div className="text-[11px] text-text-tertiary">Ref {ref}</div>}
-      </div>
-    </div>
+    <MedicalValueRow
+      name={row.test_name}
+      refRange={formatRefRange(row)}
+      value={`${formatResultValue(row)}${row.unit ? ` ${row.unit}` : ''}`}
+      flag={asFlag(row.flag)}
+      className="border-b border-border px-4 py-2.5 last:border-b-0"
+    />
   )
 }
 

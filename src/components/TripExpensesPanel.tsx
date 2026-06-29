@@ -202,7 +202,7 @@ export function TripExpensesPanel({ trip, userId }: Props) {
                       defaultValue={r ?? ''}
                       placeholder="rate"
                       onBlur={(e) => saveRate(c, e.target.value)}
-                      className="w-28 rounded-input bg-input px-2 py-1 text-right text-sm text-text-primary focus:outline-none"
+                      className="field-control w-28 text-right"
                     />
                   </div>
                 )

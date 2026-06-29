@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import {
   IconChevronDown,
@@ -23,11 +23,13 @@ import { deleteSnapshot, getLatestSnapshotBefore } from '../data/networth-snapsh
 import { listCatalogue, type PolicyWithSchedules } from '../data/insurance'
 import {
   ageForYear,
+  ASSET_TYPE_COLORS,
   ASSET_TYPE_LABELS,
   CURRENCIES,
   DEFAULT_BIRTH_YEAR,
   DETAIL_FIELDS,
   formatHkd,
+  gainLossClass,
   originalCashValueAtAge,
   resolvePolicyAtAge,
   surrenderGainPctPerYear,
@@ -48,6 +50,7 @@ import { fetchRateToHkd, fetchRatesToHkd, type FetchableCurrency } from '../lib/
 import { addMonths, formatMonthLabel, startOfMonth, todayLocal } from '../lib/date'
 import { draftAmount } from '../lib/quantity'
 import { routes } from '../constants/routes'
+import { useEscapeKey } from '../hooks/useEscapeKey'
 import { FundDetail } from '../components/FundDetail'
 import { EntryHeaderActions } from '../components/EntryHeaderActions'
 import { ConfirmDeleteAction } from '../components/ConfirmDeleteAction'
@@ -334,6 +337,22 @@ function EntryForm({
   )
   const [fundModal, setFundModal] = useState<EntryDraft | null>(null)
 
+  // The Dashboard's fund detail is a routed `Sheet` (closes on Esc + browser-back for free); this
+  // local modal isn't a route, so wire the same dismissal — Esc (shared LIFO handler) + Backspace
+  // (the laptop "back" key; safe to capture since the read-only modal has no text inputs).
+  useEscapeKey(() => setFundModal(null), fundModal != null)
+  useEffect(() => {
+    if (!fundModal) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Backspace') {
+        e.preventDefault()
+        setFundModal(null)
+      }
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [fundModal])
+
   const dirty = serialize(rows, fxRates) !== serialize(baseline.rows, baseline.fxRates)
 
   async function refreshRate(ccy: FetchableCurrency) {
@@ -447,8 +466,8 @@ function EntryForm({
     }
   }
 
-  const inputCls =
-    'rounded-input bg-input px-2 py-1.5 text-[15px] text-text-primary focus:outline-none'
+  // Shared single-line field standard — see `.field-control` in index.css.
+  const inputCls = 'field-control'
 
   return (
     <>
@@ -498,7 +517,7 @@ function EntryForm({
           </div>
           <button
             onClick={() => openSheet(`${routes.networth.import}?month=${month}`)}
-            className="flex items-center gap-1 text-sm text-positive"
+            className="flex items-center gap-1 text-sm text-accent"
           >
             <IconUpload size={16} /> Import CSV
           </button>
@@ -573,7 +592,8 @@ function EntryForm({
           return (
             <div
               key={type}
-              className="shrink-0 overflow-hidden rounded-card border border-border bg-surface"
+              className="shrink-0 overflow-hidden rounded-card border bg-surface"
+              style={{ borderColor: ASSET_TYPE_COLORS[type] }}
             >
               <div className="flex items-center gap-2 px-3 py-2.5">
                 <button
@@ -610,56 +630,67 @@ function EntryForm({
                       openSheet(`${routes.networth.importFund}?month=${month}`)
                     }
                     aria-label="Import funds CSV"
-                    className="shrink-0 text-positive"
+                    className="shrink-0 text-accent"
                   >
                     <IconUpload size={18} />
                   </button>
                 )}
               </div>
 
-              {isOpen && entries.length > 0 && (
-                <div className="border-t border-border">
-                  {isManual &&
-                    entries.map((r) => (
-                      <ManualRow
-                        key={r.clientId}
-                        row={r}
-                        inputCls={inputCls}
-                        rowBaseHkd={rowBase(r)}
-                        onChange={(patch) => updateRow(r.clientId, patch)}
-                        onDetail={(k, v) => updateDetail(r.clientId, k, v)}
-                        onRemove={() => removeRow(r.clientId)}
+              {isOpen &&
+                (entries.length === 0 ? (
+                  <p className="border-t border-border px-4 py-3 text-xs text-text-tertiary">
+                    Nothing logged.
+                  </p>
+                ) : (
+                  <div className="border-t border-border">
+                    {isManual &&
+                      entries.map((r) => (
+                        <ManualRow
+                          key={r.clientId}
+                          row={r}
+                          inputCls={inputCls}
+                          rowBaseHkd={rowBase(r)}
+                          onChange={(patch) => updateRow(r.clientId, patch)}
+                          onDetail={(k, v) => updateDetail(r.clientId, k, v)}
+                          onRemove={() => removeRow(r.clientId)}
+                        />
+                      ))}
+                    {isFund &&
+                      entries.map((r) => (
+                        <button
+                          key={r.clientId}
+                          onClick={() => setFundModal(r)}
+                          className="flex w-full items-center gap-2 border-b border-border px-3 py-2.5 text-left last:border-b-0 active:bg-input/40"
+                        >
+                          <span className="min-w-0 flex-1 truncate text-[15px] text-text-primary">
+                            {r.name}
+                          </span>
+                          <span className="shrink-0 text-sm text-text-secondary">
+                            {formatHkd(rowBase(r))}
+                          </span>
+                          <span
+                            className={`w-16 shrink-0 text-right text-xs ${
+                              r.details.return_rate
+                                ? gainLossClass(Number(r.details.return_rate))
+                                : 'text-text-tertiary'
+                            }`}
+                          >
+                            {r.details.return_rate ? `${r.details.return_rate}%` : ''}
+                          </span>
+                        </button>
+                      ))}
+                    {isInsurance && (
+                      <InsuranceRows
+                        rows={entries}
+                        month={month}
+                        providers={providers}
+                        rowBase={rowBase}
+                        navigate={navigate}
                       />
-                    ))}
-                  {isFund &&
-                    entries.map((r) => (
-                      <button
-                        key={r.clientId}
-                        onClick={() => setFundModal(r)}
-                        className="flex w-full items-center gap-2 border-b border-border px-3 py-2.5 text-left last:border-b-0 active:bg-input/40"
-                      >
-                        <span className="min-w-0 flex-1 truncate text-[15px] text-text-primary">
-                          {r.name}
-                        </span>
-                        <span className="shrink-0 text-sm text-text-secondary">
-                          {formatHkd(rowBase(r))}
-                        </span>
-                        <span className="w-16 shrink-0 text-right text-xs text-text-tertiary">
-                          {r.details.return_rate ? `${r.details.return_rate}%` : ''}
-                        </span>
-                      </button>
-                    ))}
-                  {isInsurance && (
-                    <InsuranceRows
-                      rows={entries}
-                      month={month}
-                      providers={providers}
-                      rowBase={rowBase}
-                      navigate={navigate}
-                    />
-                  )}
-                </div>
-              )}
+                    )}
+                  </div>
+                ))}
             </div>
           )
         })}
@@ -674,7 +705,7 @@ function EntryForm({
       )}
 
       {fundModal && (
-        <div className="fixed inset-0 z-50 flex flex-col bg-bg">
+        <div className="fixed inset-0 z-50 flex flex-col bg-bg pt-[env(safe-area-inset-top)]">
           <header className="flex items-center gap-3 border-b border-border px-4 py-3">
             <button onClick={() => setFundModal(null)} aria-label="Close">
               <IconX size={22} className="text-text-secondary" />

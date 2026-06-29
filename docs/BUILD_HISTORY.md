@@ -33,7 +33,7 @@ Each module's former staging spec (`docs/06-books.md`, `07-quotes.md`, `medical.
 
 ## Snapshot
 
-- **Tests:** 566 Vitest tests (pure helpers only).
+- **Tests:** 575 Vitest tests (pure helpers only).
 - **Deploy:** Deployed — GitHub `main` → Vercel auto-deploy; installed + tested on iPhone (PWA).
 - **Stack / scripts / env / gates / conventions:** see `02_tech_spec.md` (the canonical, current reference) — not duplicated here.
 
@@ -2498,3 +2498,110 @@ profile column is in `03_global.md`.
   `fetchRatesToHkd`, which already returns both) instead of a single USD rate. Funds (`fund-import.ts`)
   accept a CNY base currency (still FX-free — Total Value is already HKD).
 - Verified by `npm run check` (**575 tests** — +9 for `insurance-config` + CNY import/fund cases).
+
+## Net Worth — insurance/fund UI polish + break-even fix + gain/loss colors (2026-06-29)
+
+UI/correctness pass across the insurance + fund + dashboard surfaces. Behavior is in `05_networth.md`.
+
+- **Break-even bug fix (durable):** "Past break even" read true for _every_ policy that would ever
+  break even, because `breakEven` scans the whole resolved series (incl. future ages). New
+  **`hasBrokenEven(schedules, age)`** (`networth.ts`) gates on `breakEven.age ≤ age`; the Policies
+  badge/filter and the Dashboard count now use the **current age**. `applyInsuranceView` takes a
+  `currentAge` arg.
+- **Policies row badges:** Surrendered → grey `StatusChip` (`bg-track`), **Past Break Even** → teal
+  (`bg-positive`), mirroring Shows Library Dropped/Watched (provider stays a plain text tag).
+- **Gain/loss color (`gainLossClass`)**: teal positive / red negative / muted zero, applied to fund
+  Return Rate (Monthly Entry, Fund detail, Dashboard) and Surrender Gain %/Yr (Policy detail + both
+  schedule tables). Allocation %s (By-asset-type share) stay neutral.
+- **New/Edit Insurance**: header import action renamed **Schedule**; Provider+Currency aligned
+  (equal-height control wrappers); Policy Number + Start Date share a line; Notes → 2 rows;
+  **Mark Surrendered / Un-Surrender** are now pill buttons; SURRENDER fields reordered to **Surrender
+  Date** + **Surrender Effective From** (renamed from "Surrender Month", parens dropped) on one line,
+  with the date auto-syncing Effective From (overridable); **Actual Proceeds** drops the currency
+  suffix; the SCHEDULE row leads with the editable effective-date, then version dropdown, then delete;
+  unset dates read "Set date" (muted). SCHEDULE tables (Entry + Policy detail) add a **GAIN %/Yr**
+  column; PolicyDetail's "Resolved schedule" → **SCHEDULE** and break-even "age N" → "Age N".
+- **Monthly Entry**: each asset-type card gets a colored border (`ASSET_TYPE_COLORS`, same palette as
+  the Dashboard dots); **Import CSV** + the Fund import icon are now **accent**; the local Fund modal
+  reserves the top safe-area inset (was overlapping the status bar). Fund detail Total Value shows
+  `HKD 1,234` (space) and priced-as-of as `YYYY-MM-DD`.
+- **Dashboard**: root is `min-h-full flex flex-col` so the "No entries yet" empty state centers.
+- Verified by `npm run check` (**575 tests**, no count change — UI/logic-only).
+
+## Net Worth — insurance follow-up fixes (render loop, fund modal, small tweaks) (2026-06-29)
+
+Follow-up review passes on the insurance/fund surfaces. Behavior is in `05_networth.md`; the durable
+deps-stability lesson is in `02_tech_spec.md` (F4).
+
+- **Infinite render loop fix (durable, F4):** New/Edit Insurance threw "Maximum update depth
+  exceeded" (and `ERR_INSUFFICIENT_RESOURCES` on Edit — the loop fired unbounded fetches and exhausted
+  the browser's per-host connection pool). Cause: `providers = effectiveProviders(profile?…)` builds a
+  **fresh array every render**, and it was in `loadFn`'s `useCallback` deps → `loadFn` changed every
+  render → `useAsync`'s effect re-ran + `setState`'d every render. Fixed by **`useMemo`**-ing
+  `providers` (the guard `NetWorthEntry` already had). Pre-existing since the configurable-providers
+  commit; not introduced by this session's UI work.
+- **"Slow Insurance Policies load" investigated → no code change:** `listCatalogue` is a single nested
+  query with the right indexes + stable `useAsync` deps; the slowness was the connection-pool
+  exhaustion above, gone once the loop was fixed.
+- **Fund detail modal parity:** the Monthly Entry local modal now closes on **Esc + Backspace**
+  (`useEscapeKey` + a Backspace listener) like the routed `Sheet` (Esc + browser-back); shares only
+  the `FundDetail` body. **Profit / Loss** now uses `gainLossClass` (green/red).
+- **Monthly Entry:** an expanded **empty** asset-type section shows **"Nothing logged."** (Diary
+  group pattern).
+- **New/Edit Insurance tweaks:** Provider dropdown narrowed so the 3-option Currency toggle stops
+  overflowing the right edge; **Mark Surrendered / Un-Surrender** pills → **accent** text; **Actual
+  Proceeds** input gained `.no-spinner`; SCHEDULE Effective Date button height matched its dropdown
+  (later subsumed by the field-control standardization below).
+
+## App-wide form-field standardization (2026-06-29)
+
+Made `.field-control` the single source of truth for field height/chrome and rolled it out across
+**every** module so inputs, dropdowns, segmented controls, date buttons and filter fields share one
+height. Behavior/tokens in `01_design_system.md`.
+
+- **`.field-control`** (index.css, `@apply`) now backs all `inputClass`/`inputCls` constants and the
+  inline field strings in: Wellness (NewFood, NewActivity, ActivityLog, FoodDetail, VisibleNutrients,
+  WellnessSettings/ProfileMetrics), Net Worth (Monthly Entry — **de-compacted** from `px-2 py-1.5`,
+  Insurance, ImportFund, ImportNetWorth), Travel (TripBuilder, TripExpensesPanel, ExpenseEditor,
+  StopEditor, CitySearch), Shows/Books/Quotes entries, Medical (Entry, ImportMedical, MedicalResultCard),
+  and shared `ConfigListEditor` (Settings lists) + `NotesEditorModal`.
+- **Shared field components aligned to it:** `SelectMenu` **default → `size="field"`** (one change
+  standardizes every form/filter/sort dropdown; `size="compact"` is the new opt-out), `DateRangeRow`
+  buttons → `.field-control`, `SearchBar` already matched. `SegmentedTabs` keeps a `size` prop (field
+  used by Insurance Currency).
+- **Field labels** unified to **`text-xs` (12px)**: fixed `MedicalResultCard`'s `text-[11px]`
+  Value/Unit/Flag/Result text/Reference Range labels (the reported "smaller than the rest" case).
+  Section labels (11px UPPERCASE) and `text-tertiary` captions intentionally unchanged.
+- Left as-is (already field-height or non-field): Search/refresh **action buttons** (Shows/Books/Quotes
+  entry, ConfigListEditor Add), dashboard range pickers, `PinInput`, `TagInput` chip well, `SearchBar`.
+  The owner will flag any screen that should be re-compacted.
+- Verified by `npm run build` (CSS `@apply` compiles) + `npm run check` (**575 tests**).
+
+## Medical Dashboard — latest-values row layout fix (2026-06-29)
+
+- **Bug:** in the Dashboard's "Latest values by category" rows, a long printed reference range
+  (e.g. the Total/LDL-Cholesterol ranges) **hid/3-char-truncated the test name and pushed the value
+  off the right edge**. The View Report's rows were fine.
+- **Cause:** `LatestRow` put the value **and** the ref together in the `shrink-0` right column, so the
+  un-wrapping ref forced that column wide. Fix: name + wrapping ref in the `min-w-0 flex-1` left column,
+  value-only in `shrink-0`, `items-start`.
+- **Extracted to a shared `MedicalValueRow`** (`src/components/MedicalValueRow.tsx`) so the Dashboard
+  `LatestRow` and the View Report `ResultRow` share one layout (the report passes `leftExtra` for the
+  "normalized from…"/Review lines and `rightExtra` for the flag label; ref prefix unified to `Ref:`).
+- Pure layout/refactor; no test impact (**575 tests**).
+
+## Calendar date picker — streamlined interaction (2026-06-29)
+
+Reworked the shared `Calendar` (used by every module's date fields/filters). Behavior in
+`01_design_system.md`.
+
+- **Header:** an **X (top-left)** cancels (frees the corner); the `‹ month ›` cluster is **centered**
+  with the arrows pulled in tight against the label.
+- **Tap-to-commit:** tapping a day fires `onSelect` and closes (every caller already treated `onSelect`
+  as "date chosen" + close), so the **Cancel and OK buttons are gone**. **X / scrim / Esc / Backspace**
+  all cancel (Backspace via a keydown listener, mirroring the fund modal).
+- **Today** button is now **centered** at the bottom and only navigates the view to the current month's
+  day grid (no pre-select/confirm step).
+- **Day cues:** today = **white ring, no fill**; the previously-selected date (`day` prop) =
+  **accent-filled** (both can apply). Dropped the internal `selected` state (selection is now the tap).
+- Pure presentational change; no test impact (**575 tests**).

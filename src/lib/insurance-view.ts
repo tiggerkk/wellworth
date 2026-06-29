@@ -2,7 +2,7 @@
  * Pure search / filter / sort for the Insurance Policies list (mirrors `lib/medical` list helpers).
  * Operates on the catalogue shape `{ policy, schedules }` so it stays free of any data-layer import.
  */
-import { breakEven, type ScheduleVersion } from './networth'
+import { hasBrokenEven, type ScheduleVersion } from './networth'
 
 export interface InsuranceListItem {
   policy: {
@@ -47,6 +47,8 @@ function cmp(a: string, b: string): number {
 export function applyInsuranceView(
   items: InsuranceListItem[],
   c: InsuranceCriteria,
+  /** Current insurance age — break-even is "past" only relative to it. */
+  currentAge: number,
 ): InsuranceListItem[] {
   const q = c.query.trim().toLowerCase()
   const filtered = items.filter(({ policy, schedules }) => {
@@ -54,7 +56,7 @@ export function applyInsuranceView(
       return false
     if (c.provider !== 'all' && policy.provider !== c.provider) return false
     if (c.surrenderedOnly && !policy.surrendered_from_month) return false
-    if (c.brokeEvenOnly && breakEven(schedules) === null) return false
+    if (c.brokeEvenOnly && !hasBrokenEven(schedules, currentAge)) return false
     if (c.startFrom && (policy.start_date ?? '') < c.startFrom) return false
     if (c.startTo && (policy.start_date ?? '') > c.startTo) return false
     return true

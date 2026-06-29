@@ -21,8 +21,11 @@ When there is data, three sections:
   so the screen never hardcodes a key).
 - **Latest values by category** — for **every** test recorded, its **most recent** value across all
   reports (not just the newest report — a heterogeneous history means the latest report may omit most
-  tests), grouped under uppercase category headers in the user's display order. Each row: test name +
-  value (+ unit) + printed reference range, value **coloured by flag**.
+  tests), grouped under uppercase category headers in the user's display order. Each row is the shared
+  **`MedicalValueRow`** (also used by the View Report `ResultRow`): test name + the (often long,
+  wrapping) printed reference range in the **flexible left column**, value (+ unit, **coloured by
+  flag**) in a `shrink-0` right column with `items-start` — so a long range wraps under the name
+  instead of squeezing the name or pushing the value off the right edge.
 - **Recent reports** — up to five newest reports (date · type · provider · body part) linking to
   Report detail, with a **View all reports** row when there are more.
 

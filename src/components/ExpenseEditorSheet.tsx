@@ -24,8 +24,8 @@ interface ExpenseEditorSheetProps {
   onDelete?: () => void
 }
 
-const inputClass =
-  'w-full rounded-input bg-input px-3 py-2 text-[15px] text-text-primary focus:outline-none'
+// Shared single-line field standard — see `.field-control` in index.css.
+const inputClass = 'field-control w-full'
 
 /** A **local** overlay editing one expense (not a route sheet, so the Builder draft survives). */
 export function ExpenseEditorSheet({
@@ -128,7 +128,7 @@ export function ExpenseEditorSheet({
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
           <button
             onClick={() => setDatePickerOpen(true)}
-            className="flex items-center justify-between rounded-input bg-input px-3 py-2 text-left"
+            className="field-control flex items-center justify-between text-left"
           >
             <span className="text-xs text-text-secondary">
               Date

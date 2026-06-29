@@ -54,8 +54,8 @@ import { useProfile } from '../hooks/useProfile'
 import { routes } from '../constants/routes'
 import { addDays, formatFullDate, todayLocal } from '../lib/date'
 
-const inputClass =
-  'w-full rounded-input bg-input px-3 py-2 text-[15px] text-text-primary focus:outline-none'
+// Shared single-line field standard — see `.field-control` in index.css.
+const inputClass = 'field-control w-full'
 
 export function TripBuilder() {
   const { id } = useParams()

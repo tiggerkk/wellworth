@@ -10,8 +10,8 @@ import {
 import type { ResultDraft } from '../lib/medical-draft'
 import { SelectMenu } from './SelectMenu'
 
-const inputClass =
-  'w-full rounded-input bg-input px-3 py-2 text-[15px] text-text-primary focus:outline-none'
+// Shared single-line field standard — see `.field-control` in index.css.
+const inputClass = 'field-control w-full'
 
 const FLAG_OPTIONS: { value: '' | MedicalFlag; label: string }[] = [
   { value: '', label: 'No flag' },
@@ -104,7 +104,7 @@ export function MedicalResultCard({
       <div className="flex gap-2">
         {showNumber && (
           <div className="flex-1">
-            <p className="mb-1 text-[11px] text-text-secondary">Value</p>
+            <p className="mb-1 text-xs text-text-secondary">Value</p>
             <input
               inputMode="decimal"
               value={row.value_num}
@@ -114,7 +114,7 @@ export function MedicalResultCard({
           </div>
         )}
         <div className="w-20">
-          <p className="mb-1 text-[11px] text-text-secondary">Unit</p>
+          <p className="mb-1 text-xs text-text-secondary">Unit</p>
           <input
             value={row.unit}
             onChange={(e) => edit({ unit: e.target.value })}
@@ -122,7 +122,7 @@ export function MedicalResultCard({
           />
         </div>
         <div className="w-28">
-          <p className="mb-1 text-[11px] text-text-secondary">Flag</p>
+          <p className="mb-1 text-xs text-text-secondary">Flag</p>
           <SelectMenu
             value={row.flag}
             onChange={(flag) => edit({ flag })}
@@ -133,7 +133,7 @@ export function MedicalResultCard({
       </div>
 
       {showText && (
-        <label className="text-[11px] text-text-secondary">
+        <label className="text-xs text-text-secondary">
           Result text
           <input
             value={row.value_text}
@@ -144,8 +144,8 @@ export function MedicalResultCard({
         </label>
       )}
 
-      <label className="text-[11px] text-text-secondary">
-        Reference range
+      <label className="text-xs text-text-secondary">
+        Reference Range
         <input
           value={row.ref_text}
           onChange={(e) => edit({ ref_text: e.target.value })}

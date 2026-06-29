@@ -236,7 +236,7 @@ export function QuotesLibrary() {
                 onChange={(e) => setTagQuery(e.target.value)}
                 placeholder="Filter tags…"
                 aria-label="Filter tags"
-                className="w-full self-center rounded-input bg-input px-3 py-1.5 text-xs text-text-primary placeholder:text-text-tertiary focus:outline-none"
+                className="field-control w-full self-center placeholder:text-text-tertiary"
               />
             )}
           </div>

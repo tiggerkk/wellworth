@@ -313,7 +313,7 @@ export function ActivityLogSheet() {
                   if (e.target.value.trim() === '')
                     setMinutes(String(activityDefaultDuration))
                 }}
-                className="mt-1 w-full rounded-input bg-input px-3 py-2 text-[15px] text-text-primary focus:outline-none"
+                className="mt-1 field-control w-full"
               />
             </label>
 
@@ -347,7 +347,7 @@ export function ActivityLogSheet() {
                           ),
                         )
                       }
-                      className="mb-2 w-full rounded-input bg-input px-3 py-2 text-[15px] text-text-primary focus:outline-none"
+                      className="mb-2 field-control w-full"
                     />
                     {ex.sets.map((s, setIdx) => (
                       <div key={setIdx} className="mb-2 flex items-center gap-2">
@@ -362,7 +362,7 @@ export function ActivityLogSheet() {
                           onChange={(e) =>
                             updateSet(exIdx, setIdx, 'reps', e.target.value)
                           }
-                          className="w-16 rounded-input bg-input px-2 py-1.5 text-[13px] text-text-primary focus:outline-none"
+                          className="field-control w-16"
                           aria-label="Reps"
                         />
                         <span className="text-xs text-text-tertiary">reps ×</span>
@@ -375,7 +375,7 @@ export function ActivityLogSheet() {
                           onChange={(e) =>
                             updateSet(exIdx, setIdx, 'weight', e.target.value)
                           }
-                          className="w-20 rounded-input bg-input px-2 py-1.5 text-[13px] text-text-primary focus:outline-none"
+                          className="field-control w-20"
                           aria-label="Weight"
                         />
                         <span className="text-xs text-text-tertiary">kg</span>

@@ -38,8 +38,8 @@ import { EyeRefractionFields } from '../components/EyeRefractionFields'
 
 const EYE_KEY_SET = new Set(EYE_REFRACTION_KEYS)
 
-const inputClass =
-  'w-full rounded-input bg-input px-3 py-2 text-[15px] text-text-primary focus:outline-none'
+// Shared single-line field standard — see `.field-control` in index.css.
+const inputClass = 'field-control w-full'
 
 /**
  * Add / Edit Medical Report — the report parent plus its result rows (the structured import is a

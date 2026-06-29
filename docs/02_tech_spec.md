@@ -107,6 +107,10 @@ Supabase (Postgres + RLS). Components hold no SQL and never import the Supabase 
 
 - **F4** — `useAsync(fn)` takes a single `useCallback`-stable `fn` and exposes `refetch` — NOT a `deps`
   array (the react-hooks lint rule rejects a variable deps array). Memoize `fn` at the call site.
+  **Every value in that `fn`'s `useCallback` deps must itself be stable** — a helper that returns a
+  fresh array/object each render (e.g. `effectiveProviders(profile?.…)`) must be wrapped in `useMemo`
+  first, or `fn` changes every render and `useAsync` spins into an infinite re-fetch/re-render loop
+  ("Maximum update depth exceeded", and `ERR_INSUFFICIENT_RESOURCES` from the unbounded fetches).
 - **F8 + F13** — `useAsync` keeps the PREVIOUS `data` while a refetch is in flight (it flips
   `loading=true` but retains the old `data`). Therefore:
   - Gate a view on `!loading` ONLY when the loaded subject's IDENTITY changes (and key the component by
