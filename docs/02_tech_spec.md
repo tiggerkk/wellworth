@@ -138,6 +138,12 @@ Supabase (Postgres + RLS). Components hold no SQL and never import the Supabase 
     `setState`-in-effect (the `react-hooks/set-state-in-effect` lint rule). The whole Travel Edit-Trip
     itinerary **and** Expenses tab work this way; editor sheets return the saved row so the parent merges
     it without a refetch.
+- **F17 — iOS input-focus zoom.** iOS Safari auto-zooms when a focused `<input>/<select>/<textarea>`
+  has font-size **< 16px** (our fields are 15px) and **never zooms back out** — so closing a sheet left
+  the parent screen stuck zoomed/clipped. Fixed at the **viewport** in `index.html`
+  (`maximum-scale=1, user-scalable=no`), which the **standalone PWA honors** — preserving the 15px field
+  design without bumping every input to 16px. (Trade-off: no browser pinch-zoom; the Leaflet map has its
+  own zoom controls. The alternative — 16px focusable controls — was rejected to keep the design token.)
 
 ## Auth & first-run
 

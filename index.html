@@ -4,9 +4,12 @@
     <meta charset="UTF-8" />
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <!-- maximum-scale=1 + user-scalable=no stop iOS Safari's auto-zoom when a sub-16px input gains
+         focus (it never zooms back out) — honored in the standalone PWA. Keeps the 15px field design;
+         the Travel/Leaflet map has its own zoom controls, so losing browser pinch-zoom is moot. -->
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
     <meta name="theme-color" content="#161b28" />
     <meta name="apple-mobile-web-app-capable" content="yes" />

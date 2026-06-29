@@ -2605,3 +2605,14 @@ Reworked the shared `Calendar` (used by every module's date fields/filters). Beh
 - **Day cues:** today = **white ring, no fill**; the previously-selected date (`day` prop) =
   **accent-filled** (both can apply). Dropped the internal `selected` state (selection is now the tap).
 - Pure presentational change; no test impact (**575 tests**).
+
+## iOS input-focus zoom fix (viewport lock) (2026-06-29)
+
+- **Annoyance:** on iPhone, focusing a textbox (e.g. Travel Add Expense) made iOS Safari **zoom in**
+  (sub-16px field font), and it **stayed zoomed** after saving / closing back to Edit Trip — the right
+  edge clipped until a manual pinch-out.
+- **Fix:** added `maximum-scale=1, user-scalable=no` to the `index.html` viewport meta. The standalone
+  PWA honors it, so focus never triggers the zoom — **keeping the 15px field design** (vs the alternative
+  of bumping every focusable control to 16px). Documented as **F17** in `02_tech_spec.md`. Trade-off:
+  browser pinch-zoom is disabled (the Travel/Leaflet map has its own zoom controls).
+- Config-only; no test impact (**575 tests**). Takes effect after a redeploy + reload of the PWA.
