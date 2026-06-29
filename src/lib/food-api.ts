@@ -126,6 +126,14 @@ export function mapUsdaNutrients(food: UsdaFood): NutrientMap {
   return out
 }
 
+/** Serving label shown on a result's second line — USDA whole foods are stored per 100 g. Shared by
+ * the Add-Food list, the importer preview, and the food search overlay. */
+export function externalFoodServing(f: ExternalFood): string {
+  if (f.servingText) return f.servingText
+  if (f.servingGrams) return `${f.servingGrams} g`
+  return '100 g'
+}
+
 function toExternalFood(food: UsdaFood): ExternalFood {
   return {
     source: 'usda',

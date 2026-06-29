@@ -33,6 +33,19 @@ export function toUsdaWildcardQuery(term: string): string {
   return tokens.join(' ')
 }
 
+/**
+ * The food importer's status for a row from its best USDA hit's `foodMatchScore`:
+ *   ok      — exact / leading-word-exact name (score 4): confident, auto-accept
+ *   review  — weaker partial match (score 1–3): needs a glance
+ *   nomatch — no usable hit (score 0): import as custom (or fix via Change)
+ * Mirrors the Books/Shows ok/review/nomatch split (which use title tiers). Pure.
+ */
+export function foodMatchStatus(topScore: number): 'ok' | 'review' | 'nomatch' {
+  if (topScore >= 4) return 'ok'
+  if (topScore >= 1) return 'review'
+  return 'nomatch'
+}
+
 /** Lowercase, strip punctuation, split into words (no singularizing — matching handles that). */
 function toWords(text: string): string[] {
   return text

@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { foodMatchScore, singularize, toUsdaWildcardQuery } from './food-search'
+import {
+  foodMatchScore,
+  foodMatchStatus,
+  singularize,
+  toUsdaWildcardQuery,
+} from './food-search'
 
 describe('singularize', () => {
   it('handles -ies, -es, and -s plurals', () => {
@@ -81,5 +86,21 @@ describe('foodMatchScore', () => {
   it('matches multi-word queries when all words match a name word', () => {
     expect(foodMatchScore('Muffins, blueberry, dry mix', 'blueberry muffin')).toBe(1)
     expect(foodMatchScore('Apple pie', 'blueberry muffin')).toBe(0)
+  })
+})
+
+describe('foodMatchStatus', () => {
+  it('maps the best hit score to importer status', () => {
+    expect(foodMatchStatus(4)).toBe('ok') // exact / leading-word exact
+    expect(foodMatchStatus(3)).toBe('review')
+    expect(foodMatchStatus(1)).toBe('review')
+    expect(foodMatchStatus(0)).toBe('nomatch')
+  })
+  it('lines up with foodMatchScore for real names', () => {
+    expect(foodMatchStatus(foodMatchScore('Blueberries, raw', 'blueberries'))).toBe('ok')
+    expect(foodMatchStatus(foodMatchScore('Muffins, blueberry', 'blueberry'))).toBe(
+      'review',
+    )
+    expect(foodMatchStatus(foodMatchScore('Rice, white', 'sushi'))).toBe('nomatch')
   })
 })

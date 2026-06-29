@@ -666,6 +666,7 @@ export type Database = {
           book_importer_enabled: boolean
           book_visible_fields: string[] | null
           created_at: string
+          food_importer_enabled: boolean
           height_cm: number | null
           highlighted_nutrients: string[]
           insurance_providers: Json | null
@@ -708,6 +709,7 @@ export type Database = {
           book_importer_enabled?: boolean
           book_visible_fields?: string[] | null
           created_at?: string
+          food_importer_enabled?: boolean
           height_cm?: number | null
           highlighted_nutrients?: string[]
           insurance_providers?: Json | null
@@ -750,6 +752,7 @@ export type Database = {
           book_importer_enabled?: boolean
           book_visible_fields?: string[] | null
           created_at?: string
+          food_importer_enabled?: boolean
           height_cm?: number | null
           highlighted_nutrients?: string[]
           insurance_providers?: Json | null

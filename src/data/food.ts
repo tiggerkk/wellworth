@@ -1,5 +1,7 @@
 import { supabase } from '../lib/supabase'
 import type { ImportFoodRecord } from '../lib/food-import'
+import type { ExternalFood } from '../lib/food-api'
+import { replaceServings } from './serving'
 import type { Tables, TablesInsert, TablesUpdate } from '../types/database'
 
 export interface ListFoodsOptions {
@@ -26,46 +28,114 @@ export async function listFoods(
 }
 
 /**
- * Bulk-insert custom foods (and their servings) for the current user — the CSV importer.
- * Foods are inserted in one statement; the returned rows preserve input order, so each item's
- * servings are linked by position. Returns the number of foods created.
+ * A resolved food-import row: the parsed CSV record plus its USDA match (or null = save as custom).
+ * `match` present → cache a USDA-backed favorite (per-100g, USDA nutrients); `match` null → a custom
+ * food from the CSV's own nutrients/servings.
  */
-export async function importCustomFoods(
+export interface ImportFoodResolved {
+  input: ImportFoodRecord
+  match: Pick<ExternalFood, 'externalId' | 'name' | 'nutrients'> | null
+}
+
+/**
+ * Save the resolved food-import rows for the current user as **favorites** (so USDA foods persist).
+ * Idempotent — re-running the same file updates in place, never duplicates: USDA rows dedupe on
+ * (source, external_id); custom rows on lower(name) among the user's custom foods. New rows are
+ * bulk-inserted (one statement) with their servings linked by position; existing rows are updated
+ * (and custom servings replaced). Returns created/updated counts. Mirrors `saveImportedShows`/Books.
+ */
+export async function saveImportedFoods(
   userId: string,
-  items: ImportFoodRecord[],
-): Promise<number> {
-  if (items.length === 0) return 0
+  items: ImportFoodResolved[],
+): Promise<{ created: number; updated: number }> {
+  if (items.length === 0) return { created: 0, updated: 0 }
 
-  const foodRows: TablesInsert<'food'>[] = items.map((it) => ({
-    user_id: userId,
-    source: 'custom',
-    external_id: null,
-    name: it.name,
-    type: it.type,
-    nutrient_basis: it.nutrient_basis,
-    nutrients: it.nutrients,
-    is_favorite: it.is_favorite,
-  }))
-
-  const { data: inserted, error } = await supabase
-    .from('food')
-    .insert(foodRows)
-    .select('id')
-  if (error) throw error
-
-  const servingRows = (inserted ?? []).flatMap((row, i) =>
-    (items[i]?.servings ?? []).map((s) => ({
-      food_id: row.id,
-      name: s.name,
-      grams: s.grams,
-    })),
-  )
-  if (servingRows.length > 0) {
-    const { error: servingError } = await supabase.from('serving').insert(servingRows)
-    if (servingError) throw servingError
+  const existing = await listFoods()
+  const usdaByExt = new Map<string, Tables<'food'>>()
+  const customByName = new Map<string, Tables<'food'>>()
+  for (const f of existing) {
+    if (f.source === 'usda' && f.external_id) usdaByExt.set(f.external_id, f)
+    else if (f.source === 'custom') customByName.set(f.name.trim().toLowerCase(), f)
   }
 
-  return inserted?.length ?? 0
+  const newRows: TablesInsert<'food'>[] = []
+  const newServings: { name: string; grams: number }[][] = [] // parallel to newRows
+  let created = 0
+  let updated = 0
+
+  for (const it of items) {
+    if (it.match) {
+      const found = usdaByExt.get(it.match.externalId)
+      const fields = {
+        name: it.match.name,
+        type: it.input.type,
+        nutrient_basis: 'per_100g' as const,
+        nutrients: it.match.nutrients,
+        is_favorite: true,
+        deleted_at: null,
+      }
+      if (found) {
+        await updateFood(found.id, fields)
+        updated++
+      } else {
+        newRows.push({
+          user_id: userId,
+          source: 'usda',
+          external_id: it.match.externalId,
+          ...fields,
+        })
+        newServings.push([]) // USDA foods are per-100g; the default 100 g serving is implicit
+        created++
+      }
+    } else {
+      const found = customByName.get(it.input.name.trim().toLowerCase())
+      if (found) {
+        await updateFood(found.id, {
+          type: it.input.type,
+          nutrient_basis: it.input.nutrient_basis,
+          nutrients: it.input.nutrients,
+          is_favorite: true,
+          deleted_at: null,
+        })
+        await replaceServings(found.id, it.input.servings)
+        updated++
+      } else {
+        newRows.push({
+          user_id: userId,
+          source: 'custom',
+          external_id: null,
+          name: it.input.name,
+          type: it.input.type,
+          nutrient_basis: it.input.nutrient_basis,
+          nutrients: it.input.nutrients,
+          is_favorite: true,
+        })
+        newServings.push(it.input.servings)
+        created++
+      }
+    }
+  }
+
+  if (newRows.length > 0) {
+    const { data: inserted, error } = await supabase
+      .from('food')
+      .insert(newRows)
+      .select('id')
+    if (error) throw error
+    const servingRows = (inserted ?? []).flatMap((row, i) =>
+      (newServings[i] ?? []).map((s) => ({
+        food_id: row.id,
+        name: s.name,
+        grams: s.grams,
+      })),
+    )
+    if (servingRows.length > 0) {
+      const { error: servingError } = await supabase.from('serving').insert(servingRows)
+      if (servingError) throw servingError
+    }
+  }
+
+  return { created, updated }
 }
 
 export async function getFood(id: string): Promise<Tables<'food'> | null> {

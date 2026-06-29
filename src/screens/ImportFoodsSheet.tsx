@@ -3,29 +3,109 @@ import { useNavigate } from 'react-router'
 import { IconUpload, IconX } from '@tabler/icons-react'
 import { Sheet } from '../components/Sheet'
 import { PrimaryButton } from '../components/PrimaryButton'
+import { ImportPreviewList } from '../components/ImportPreviewList'
+import { FoodSearchSheet } from '../components/FoodSearchSheet'
 import { useAuth } from '../auth/AuthProvider'
 import { useNutrientReference } from '../hooks/useNutrientReference'
 import { parseCsv } from '../lib/csv'
-import { parseFoodCsv, type ImportParseResult } from '../lib/food-import'
-import { importCustomFoods } from '../data/food'
+import {
+  parseFoodCsv,
+  type ImportFoodRecord,
+  type ImportParseResult,
+} from '../lib/food-import'
+import {
+  externalFoodServing,
+  getUsdaFood,
+  searchFoods,
+  type ExternalFood,
+} from '../lib/food-api'
+import { foodMatchScore, foodMatchStatus } from '../lib/food-search'
+import {
+  getCachedFoodMatch,
+  removeCachedFoodMatch,
+  setCachedFoodMatch,
+} from '../lib/food-match-cache'
+import { saveImportedFoods } from '../data/food'
 import { bumpDiary } from '../lib/diary-refresh'
 import { errorMessage } from '../lib/errors'
 
 const MAX_MESSAGES = 20
+// USDA matching workers. USDA's free key allows ~1,000 req/hr and each `searchFoods` fires 2–4 calls,
+// so keep the pool modest; the localStorage match cache covers re-imports of the same file.
+const POOL = 6
 
-function MessageList({ items, tone }: { items: string[]; tone: 'danger' | 'secondary' }) {
-  if (items.length === 0) return null
-  const shown = items.slice(0, MAX_MESSAGES)
-  const cls = tone === 'danger' ? 'text-danger' : 'text-text-secondary'
-  return (
-    <ul className={`flex flex-col gap-1 text-xs ${cls}`}>
-      {shown.map((m, i) => (
-        <li key={i}>{m}</li>
-      ))}
-      {items.length > shown.length && <li>…and {items.length - shown.length} more.</li>}
-    </ul>
-  )
+interface ResolvedRow {
+  input: ImportFoodRecord
+  /** The resolved USDA food, or null → import as a custom food from the CSV. */
+  match: ExternalFood | null
+  // `manual` = the owner chose to import the CSV row as a custom food (no USDA link).
+  status: 'ok' | 'review' | 'nomatch' | 'manual'
 }
+
+// Rows needing attention sort to the top of the preview (no-match first, then review); resolved rows
+// (ok/manual) follow. Stable within a group. Frozen at resolve time so rows don't jump as they're fixed.
+const STATUS_RANK: Record<ResolvedRow['status'], number> = {
+  nomatch: 0,
+  review: 1,
+  ok: 2,
+  manual: 2,
+}
+
+/** Best USDA hit for a CSV name: rank like the Add-Food list (name match, then richer food). */
+function bestHit(
+  results: ExternalFood[],
+  name: string,
+): { food: ExternalFood; score: number } | null {
+  const ranked = results
+    .map((food) => ({ food, score: foodMatchScore(food.name, name) }))
+    .filter((x) => x.score > 0)
+    .sort(
+      (a, b) =>
+        b.score - a.score ||
+        Object.keys(b.food.nutrients).length - Object.keys(a.food.nutrients).length,
+    )
+  return ranked[0] ?? null
+}
+
+async function resolveRow(input: ImportFoodRecord): Promise<ResolvedRow> {
+  // Cache hit → skip USDA entirely (instant re-imports after a DB reset). Status recomputed so it
+  // stays consistent with the current CSV name.
+  const cached = getCachedFoodMatch(input.name)
+  if (cached) {
+    return {
+      input,
+      match: cached,
+      status: foodMatchStatus(foodMatchScore(cached.name, input.name)),
+    }
+  }
+  try {
+    const top = bestHit(await searchFoods(input.name), input.name)
+    if (!top) return { input, match: null, status: 'nomatch' }
+    // Fetch the full nutrient profile (search results are abbreviated) and cache it.
+    const detail = await getUsdaFood(top.food.externalId)
+    setCachedFoodMatch(input.name, detail)
+    return { input, match: detail, status: foodMatchStatus(top.score) }
+  } catch {
+    return { input, match: null, status: 'nomatch' }
+  }
+}
+
+/** Display info for a row's meta line — `{N} nutrients · {serving}` (USDA match or CSV custom). */
+function rowMeta(r: ResolvedRow): { count: number; serving: string } {
+  if (r.match) {
+    return {
+      count: Object.keys(r.match.nutrients).length,
+      serving: externalFoodServing(r.match),
+    }
+  }
+  return {
+    count: Object.keys(r.input.nutrients).length,
+    serving: r.input.nutrient_basis === 'per_serving' ? '1 serving' : '100 g',
+  }
+}
+
+const sameName = (a: string, b: string) =>
+  a.trim().toLowerCase() === b.trim().toLowerCase()
 
 export function ImportFoodsSheet() {
   const navigate = useNavigate()
@@ -39,32 +119,92 @@ export function ImportFoodsSheet() {
 
   const inputRef = useRef<HTMLInputElement>(null)
   const [fileName, setFileName] = useState<string | null>(null)
-  const [result, setResult] = useState<ImportParseResult | null>(null)
+  const [parsed, setParsed] = useState<ImportParseResult | null>(null)
+  const [resolved, setResolved] = useState<ResolvedRow[] | null>(null)
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null)
+  const [fixIndex, setFixIndex] = useState<number | null>(null)
   const [importing, setImporting] = useState(false)
   const [importError, setImportError] = useState<string | null>(null)
-  const [doneCount, setDoneCount] = useState<number | null>(null)
+  const [done, setDone] = useState<{ created: number; updated: number } | null>(null)
 
   async function onFile(file: File) {
     setImportError(null)
-    setDoneCount(null)
+    setDone(null)
+    setResolved(null)
     try {
-      const text = await file.text()
-      setResult(parseFoodCsv(parseCsv(text), knownKeys))
+      const result = parseFoodCsv(parseCsv(await file.text()), knownKeys)
       setFileName(file.name)
+      setParsed(result)
+      if (result.records.length > 0) void resolveAll(result.records)
     } catch (e) {
-      setResult(null)
+      setParsed(null)
       setImportError(errorMessage(e, 'Could not read the file.'))
     }
   }
 
+  async function resolveAll(rows: ImportFoodRecord[]) {
+    const out = new Array<ResolvedRow>(rows.length)
+    let nextIdx = 0
+    let completed = 0
+    setProgress({ done: 0, total: rows.length })
+    async function worker() {
+      for (;;) {
+        const i = nextIdx++
+        if (i >= rows.length) return
+        out[i] = await resolveRow(rows[i]!)
+        completed += 1
+        setProgress({ done: completed, total: rows.length })
+      }
+    }
+    await Promise.all(Array.from({ length: Math.min(POOL, rows.length) }, worker))
+    out.sort((a, b) => STATUS_RANK[a.status] - STATUS_RANK[b.status])
+    setProgress(null)
+    setResolved(out)
+  }
+
+  function acceptManual(i: number) {
+    // Import the CSV row as a custom food — drop any (wrong) USDA match so it isn't reused next time.
+    const input = resolved?.[i]?.input
+    if (input) removeCachedFoodMatch(input.name)
+    setResolved(
+      (prev) =>
+        prev?.map((row, j) =>
+          j === i ? { ...row, match: null, status: 'manual' } : row,
+        ) ?? prev,
+    )
+  }
+
+  async function applyFix(i: number, food: ExternalFood) {
+    setFixIndex(null)
+    setImportError(null)
+    const input = resolved?.[i]?.input
+    try {
+      const detail = await getUsdaFood(food.externalId)
+      if (input) setCachedFoodMatch(input.name, detail) // persist the correction across re-imports
+      setResolved(
+        (prev) =>
+          prev?.map((row, j) =>
+            j === i ? { ...row, match: detail, status: 'ok' } : row,
+          ) ?? prev,
+      )
+    } catch (e) {
+      setImportError(
+        errorMessage(e, 'Could not load that food — please try Change again.'),
+      )
+    }
+  }
+
   async function runImport() {
-    if (!result || !userId) return
+    if (!userId || !resolved || resolved.length === 0) return
     setImporting(true)
     setImportError(null)
     try {
-      const n = await importCustomFoods(userId, result.records)
+      const counts = await saveImportedFoods(
+        userId,
+        resolved.map((r) => ({ input: r.input, match: r.match })),
+      )
       bumpDiary()
-      setDoneCount(n)
+      setDone(counts)
     } catch (e) {
       setImportError(errorMessage(e, 'Import failed.'))
     } finally {
@@ -72,11 +212,10 @@ export function ImportFoodsSheet() {
     }
   }
 
-  const counts = useMemo(() => {
-    const recs = result?.records ?? []
-    const supplements = recs.filter((r) => r.type === 'supplement').length
-    return { total: recs.length, foods: recs.length - supplements, supplements }
-  }, [result])
+  const skipped = parsed?.errors ?? []
+  const rowCount = resolved?.length ?? 0
+  const noMatch = resolved?.filter((r) => r.status === 'nomatch').length ?? 0
+  const review = resolved?.filter((r) => r.status === 'review').length ?? 0
 
   return (
     <Sheet variant="full" label="Import foods">
@@ -90,13 +229,15 @@ export function ImportFoodsSheet() {
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
         {refLoading ? (
           <p className="text-sm text-text-secondary">Loading…</p>
-        ) : doneCount !== null ? (
+        ) : done !== null ? (
           <div className="flex flex-col gap-2">
             <p className="text-[15px] font-medium text-text-primary">
-              Imported {doneCount} item{doneCount === 1 ? '' : 's'}.
+              Imported {done.created + done.updated} food
+              {done.created + done.updated === 1 ? '' : 's'} — {done.created} new,{' '}
+              {done.updated} updated.
             </p>
             <p className="text-sm text-text-secondary">
-              They’re in your Custom tab now (and Favorites, where you marked them).
+              They’re in your Favorites (and Custom, where USDA had no match).
             </p>
           </div>
         ) : (
@@ -104,8 +245,9 @@ export function ImportFoodsSheet() {
             <p className="text-sm text-text-secondary">
               Upload a CSV in the{' '}
               <code className="text-text-primary">custom-foods-template.csv</code> format
-              (see <code className="text-text-primary">templates/</code>). Blank cells are
-              skipped; everything imports as a custom food.
+              (see <code className="text-text-primary">templates/</code>). Each row is
+              matched against USDA; rows USDA can’t find import as custom foods. All
+              import as favorites.
             </p>
 
             <input
@@ -132,37 +274,86 @@ export function ImportFoodsSheet() {
               </p>
             )}
 
-            {result && (
-              <div className="flex flex-col gap-3">
+            {skipped.length > 0 && (
+              <div className="flex flex-col gap-1">
+                <p className="text-xs font-medium text-danger">
+                  {skipped.length} row{skipped.length === 1 ? '' : 's'} skipped:
+                </p>
+                <ul className="flex flex-col gap-1 text-xs text-danger">
+                  {skipped.slice(0, MAX_MESSAGES).map((m, i) => (
+                    <li key={i}>{m}</li>
+                  ))}
+                  {skipped.length > MAX_MESSAGES && (
+                    <li>…and {skipped.length - MAX_MESSAGES} more.</li>
+                  )}
+                </ul>
+              </div>
+            )}
+
+            {progress && (
+              <p className="text-sm text-text-secondary">
+                Matching foods… {progress.done}/{progress.total}
+              </p>
+            )}
+
+            {resolved && rowCount > 0 && (
+              <>
                 <div className="rounded-card border border-border bg-surface px-4 py-3 text-sm text-text-primary">
-                  {counts.total === 0 ? (
-                    'No valid rows found to import.'
-                  ) : (
-                    <>
-                      Ready to import <strong>{counts.total}</strong> item
-                      {counts.total === 1 ? '' : 's'} — {counts.foods} food
-                      {counts.foods === 1 ? '' : 's'}, {counts.supplements} supplement
-                      {counts.supplements === 1 ? '' : 's'}.
-                    </>
+                  Ready to import <strong>{rowCount}</strong> food
+                  {rowCount === 1 ? '' : 's'}.
+                  {(noMatch > 0 || review > 0) && (
+                    <span className="text-text-secondary">
+                      {' '}
+                      {noMatch > 0 && `${noMatch} no-match`}
+                      {noMatch > 0 && review > 0 && ', '}
+                      {review > 0 && `${review} to review`} — tap <strong>Change</strong>{' '}
+                      to fix, or <strong>Manual</strong> to keep as a custom food.
+                    </span>
                   )}
                 </div>
 
-                {result.errors.length > 0 && (
-                  <div className="flex flex-col gap-1">
-                    <p className="text-xs font-medium text-danger">
-                      {result.errors.length} row
-                      {result.errors.length === 1 ? '' : 's'} skipped:
-                    </p>
-                    <MessageList items={result.errors} tone="danger" />
-                  </div>
-                )}
+                <ImportPreviewList
+                  items={resolved.map((r) => {
+                    const { count, serving } = rowMeta(r)
+                    return {
+                      title: r.match?.name ?? r.input.name,
+                      subtitle:
+                        r.match && !sameName(r.match.name, r.input.name)
+                          ? `from “${r.input.name}”`
+                          : undefined,
+                      meta: (
+                        <>
+                          {r.input.type === 'supplement' && (
+                            <span className="rounded-pill bg-input px-1.5 py-0.5 text-text-tertiary">
+                              Supplement
+                            </span>
+                          )}
+                          <span>
+                            {count} nutrient{count === 1 ? '' : 's'} · {serving}
+                          </span>
+                        </>
+                      ),
+                      status: r.status,
+                      reviewLabel: r.input.name,
+                    }
+                  })}
+                  onChange={(i) => setFixIndex(i)}
+                  onManual={(i) => acceptManual(i)}
+                />
+              </>
+            )}
 
-                {result.warnings.length > 0 && (
-                  <div className="flex flex-col gap-1">
-                    <p className="text-xs font-medium text-text-secondary">Warnings:</p>
-                    <MessageList items={result.warnings} tone="secondary" />
-                  </div>
-                )}
+            {parsed && parsed.warnings.length > 0 && (
+              <div className="flex flex-col gap-1">
+                <p className="text-xs font-medium text-text-secondary">Warnings:</p>
+                <ul className="flex flex-col gap-1 text-xs text-text-secondary">
+                  {parsed.warnings.slice(0, MAX_MESSAGES).map((m, i) => (
+                    <li key={i}>{m}</li>
+                  ))}
+                  {parsed.warnings.length > MAX_MESSAGES && (
+                    <li>…and {parsed.warnings.length - MAX_MESSAGES} more.</li>
+                  )}
+                </ul>
               </div>
             )}
 
@@ -172,24 +363,32 @@ export function ImportFoodsSheet() {
       </div>
 
       <div className="border-t border-border p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
-        {doneCount !== null ? (
+        {done !== null ? (
           <PrimaryButton onClick={() => navigate(-1)} className="w-full">
             DONE
           </PrimaryButton>
         ) : (
           <PrimaryButton
             onClick={() => void runImport()}
-            disabled={importing || !result || result.records.length === 0}
+            disabled={importing || !resolved || rowCount === 0 || progress !== null}
             className="w-full"
           >
             {importing
               ? 'Importing…'
-              : result
-                ? `IMPORT ${result.records.length} ITEM${result.records.length === 1 ? '' : 'S'}`
+              : rowCount > 0
+                ? `IMPORT ${rowCount} FOOD${rowCount === 1 ? '' : 'S'}`
                 : 'IMPORT'}
           </PrimaryButton>
         )}
       </div>
+
+      {fixIndex !== null && resolved && (
+        <FoodSearchSheet
+          initialQuery={resolved[fixIndex]!.input.name}
+          onSelect={(food) => void applyFix(fixIndex, food)}
+          onClose={() => setFixIndex(null)}
+        />
+      )}
     </Sheet>
   )
 }

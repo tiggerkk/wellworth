@@ -52,6 +52,7 @@ create table public.profile (
   units                 text not null default 'metric' check (units in ('metric', 'imperial')),
   highlighted_nutrients text[] not null default '{}', -- 8 keys for the Diary grid
   visible_nutrients     text[] not null default '{}', -- keys shown on Dashboard/Daily Report
+  food_importer_enabled boolean not null default true, -- surfaces the Wellness CSV food importer in Settings
   module_order          text[], -- Home-hub module order + seen-set (keys); null = canonical MODULES order
   visible_modules       text[], -- modules shown on the Home hub (keys); null = all visible; a module not
                                  -- in module_order (newly shipped) defaults visible even if absent here

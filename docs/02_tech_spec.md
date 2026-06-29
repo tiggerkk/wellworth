@@ -44,7 +44,8 @@ src/
   screens/           # one folder per screen/tab
   data/              # typed data-access layer (wraps supabase-js) — the ONLY db access
   lib/               # supabase client, units, dri, energy, met, nutrients, targets, report,
-                     # date, food-api, off-api, food-search, diary-refresh, diary-clipboard, toast, csv,
+                     # date, food-api, off-api, food-search, food-import, food-match-cache,
+                     # diary-refresh, diary-clipboard, toast, csv,
                      # networth, fx, networth-refresh, networth-import, fund-import, insurance-import,
                      # insurance-view, shows, shows-refresh, tmdb-api, shows-import, show-match-cache,
                      # books, books-refresh, books-api, books-import, book-match-cache,

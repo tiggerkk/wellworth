@@ -7,7 +7,7 @@ import { SearchBar } from '../components/SearchBar'
 import { SegmentedTabs } from '../components/SegmentedTabs'
 import { useSheetNavigate } from '../hooks/useSheetNavigate'
 import { listFoods, setFavorite } from '../data/food'
-import { searchFoods, type ExternalFood } from '../lib/food-api'
+import { externalFoodServing, searchFoods, type ExternalFood } from '../lib/food-api'
 import { foodMatchScore } from '../lib/food-search'
 import { asNutrientMap } from '../lib/nutrients'
 import { todayLocal } from '../lib/date'
@@ -31,13 +31,6 @@ interface DisplayFood {
   onOpen: () => void
   /** Present only for local foods, which are the only ones that can be (un)favorited. */
   favorite?: { isFavorite: boolean; toggle: () => void }
-}
-
-/** Serving shown on a result's second line — USDA whole foods are stored per 100 g. */
-function externalServing(f: ExternalFood): string {
-  if (f.servingText) return f.servingText
-  if (f.servingGrams) return `${f.servingGrams} g`
-  return '100 g'
 }
 
 function localServing(nutrientBasis: string): string {
@@ -191,7 +184,7 @@ export function AddFoodSheet() {
           key: `usda-${f.externalId}`,
           name: f.name,
           nutrientCount: Object.keys(f.nutrients).length,
-          serving: externalServing(f),
+          serving: externalFoodServing(f),
           source: SOURCE_TAG[f.source] ?? f.source.toUpperCase(),
           onOpen: () =>
             openSheet(`${routes.wellness.food(f.source, f.externalId)}${suffix}`),

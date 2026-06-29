@@ -129,9 +129,8 @@ Identical layout to the Dashboard, scoped to a single day instead of an averaged
 Two sub-tabs:
 
 - **Foods**: searchable list of your custom foods and supplements; tap to edit, swipe to delete;
-  `+ New Food` opens the form. Supplements show a "supplement" tag. An accent-coloured `Import CSV…`
-  link opens the bulk importer (parses a CSV in-browser; format in `templates/custom-foods-template.csv`,
-  documented in `templates/custom-foods-import-guide.md`).
+  `+ New Food` opens the form. Supplements show a "supplement" tag. (The bulk CSV importer launcher
+  lives in **Wellness Settings → Import**, not here — see Settings + Import CSV below.)
 - **Activities**: list of your activities; tap to edit template + default effort/MET, swipe to delete;
   `+ New Activity` opens the form.
 
@@ -168,6 +167,31 @@ Wellness-module sub-settings. Auto-save on change.
 - **DISPLAY**:
   - **Highlighted Nutrients** → choose up to 8 shown on the Diary (the picker caps the selection at 8).
   - **Visible Nutrients** → per-nutrient toggle for what appears on the Dashboard & Daily Report.
+- **IMPORT**: **Enable Bulk Food Import** toggle (`profile.food_importer_enabled`, **on by default**;
+  column added to the `profile` table in `01_wellness_schema.sql`). When on: an **Import CSV Food**
+  launcher opens the importer sheet, plus a **Clear import match cache (N)** button
+  (`clearFoodMatchCache` / `foodMatchCacheSize`). Mirrors Books/Shows Settings → Import.
+
+#### Import CSV (sheet, from Wellness Settings)
+
+Reused CSV format: `templates/custom-foods-template.csv` (guide: `templates/custom-foods-import-guide.md`).
+Columns are all optional except `name` (`type` food|supplement, `nutrient_basis`, three `serving*` pairs,
+and the nutrient columns). Flow (mirrors Books/Shows — shared `ImportPreviewList`):
+
+- Each row is **matched against USDA** using the **same logic as Diary Add Food → All** (`searchFoods` +
+  `foodMatchScore`); the best hit's score → status via `foodMatchStatus`: exact/leading-exact → **ok**,
+  weaker → **review**, none → **No match**. Matched rows fetch full nutrients via `getUsdaFood`.
+- Preview rows show the USDA **name + "{N} nutrients · {serving}"** (like the live USDA list); \*\*No-match
+  - review sort to the top** (danger/accent). **Change** opens the `FoodSearchSheet` USDA overlay;
+    **Manual\*\* keeps the row as a custom food. Concurrency `POOL` ≈ 6 (USDA ~1,000 req/hr).
+- **Match cache** (`src/lib/food-match-cache.ts`, a `match-cache.ts` instance; key `normMatch(name)`,
+  value = the resolved `ExternalFood`): re-importing the same file (after `supabase db reset --linked`)
+  skips USDA entirely. **Change** overwrites, **Manual** removes; cleared via Settings → **Clear import
+  match cache** (`OWNER_RUNBOOK.md` Part R).
+- **Import** (`saveImportedFoods`): **every** row saved as a **favorite** (`is_favorite=true`, so USDA
+  foods persist). Matched → `source='usda'` (per-100g, USDA nutrients); unmatched/Manual →
+  `source='custom'` from the CSV's nutrients/servings. **Idempotent** — USDA dedupe on
+  (source, external_id), custom on `lower(name)`; re-running updates in place.
 
 #### Visible Nutrients sub-screen
 

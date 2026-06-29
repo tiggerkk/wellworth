@@ -1,11 +1,18 @@
-# Bulk-import template — custom foods & supplements
+# Bulk-import template — foods & supplements
 
-- Fill in **`custom-foods-template.csv`** (one row per item) and it becomes rows in the `food` table (plus the `serving` table).
-- Everything you upload this way is stored as a **custom** food (`source = 'custom'`), so it shows under the **Custom** tab and — if you tick `is_favorite` — the **Favorites** tab, while the USDA search / **All** tab keeps working unchanged.
+- Fill in **`custom-foods-template.csv`** (one row per item) and import it from **Wellness → Settings →
+  Import → Import CSV Food** (turn on **Enable Bulk Food Import** first).
+- Each row is **matched against USDA** by `name` (the same search the Diary "Add Food → All" tab uses):
+  - A confident match imports as a **USDA** food with USDA's full nutrients — **you don't fill any
+    nutrient columns** for these. A weaker match is flagged **review**; no match is flagged **No match**.
+  - In the preview, **Change** lets you pick the right USDA food; **Manual** keeps the row as a **custom**
+    food (`source = 'custom'`) built from whatever nutrient columns you filled in.
+- So you **don't pre-tag** custom vs USDA: leave nutrient cells blank for foods USDA can find, and fill
+  them only for genuinely custom items (e.g. home-cooked / local dishes USDA doesn't have).
+- **Every** imported row is saved as a **favorite** (USDA foods only persist when favorited), so the
+  `is_favorite` column is ignored.
 
-- You only fill the columns you have data for.
-- **Blank cells are ignored** (the nutrient is simply not stored for that item).
-- The only truly required column is `name`.
+- You only fill the columns you have data for. **Blank cells are ignored.** The only required column is `name`.
 
 > Tip: open the CSV in Excel / Google Sheets, delete any nutrient columns you'll never use, fill
 > the rest, then export back to CSV (UTF-8). Keep the header row exactly as the column keys below.
@@ -14,11 +21,11 @@
 
 ## How a row maps to the database
 
-| CSV columns                                     | Goes to                      | Notes                                                                                       |
-| ----------------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------- |
-| `name`, `type`, `nutrient_basis`, `is_favorite` | `food` row                   | `source` is set to `custom` for you; `user_id` is set to your account at import.            |
-| `serving1_*` … `serving3_*`                     | `serving` rows               | Optional. A `100 g` measure is always available automatically, so you don't need to add it. |
-| every nutrient column (`energy`, `protein`, …)  | `food.nutrients` (JSONB map) | Stored as `{ key: amount }`, **relative to the basis** (see below).                         |
+| CSV columns                                     | Goes to                      | Notes                                                                                                                                                                             |
+| ----------------------------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`, `type`, `nutrient_basis`, `is_favorite` | `food` row                   | `name` is matched against USDA; matched rows save as `source='usda'`, the rest as `custom`. Every row is saved as a favorite (`is_favorite` ignored). `user_id` is set at import. |
+| `serving1_*` … `serving3_*`                     | `serving` rows               | Optional. A `100 g` measure is always available automatically, so you don't need to add it.                                                                                       |
+| every nutrient column (`energy`, `protein`, …)  | `food.nutrients` (JSONB map) | Stored as `{ key: amount }`, **relative to the basis** (see below).                                                                                                               |
 
 `net_carbs` is **not** a column — it's derived automatically as `carbs − fiber` at display time.
 
@@ -26,12 +33,12 @@
 
 ## Core columns
 
-| Column           | Required? | Allowed values / format           | Default    |
-| ---------------- | --------- | --------------------------------- | ---------- |
-| `name`           | **Yes**   | Any text, e.g. `Homemade Granola` | —          |
-| `type`           | No        | `food` or `supplement`            | `food`     |
-| `nutrient_basis` | No        | `per_100g` or `per_serving`       | `per_100g` |
-| `is_favorite`    | No        | `true` or `false`                 | `false`    |
+| Column           | Required? | Allowed values / format                   | Default           |
+| ---------------- | --------- | ----------------------------------------- | ----------------- |
+| `name`           | **Yes**   | Any text, e.g. `Homemade Granola`         | —                 |
+| `type`           | No        | `food` or `supplement`                    | `food`            |
+| `nutrient_basis` | No        | `per_100g` or `per_serving`               | `per_100g`        |
+| `is_favorite`    | No        | ignored — every row imports as a favorite | (always favorite) |
 
 ### Servings (`serving1_name`/`serving1_grams`, …`serving3_*`)
 

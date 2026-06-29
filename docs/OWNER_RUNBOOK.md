@@ -958,11 +958,11 @@ difference saves you from needless logouts.
 
 ### R0 — Three separate places your stuff lives
 
-| Layer                      | Holds                                                                                        | Lives                        | Cleared by `supabase db reset` / truncate? | Cleared by "Delete data"?    |
-| -------------------------- | -------------------------------------------------------------------------------------------- | ---------------------------- | ------------------------------------------ | ---------------------------- |
-| **Supabase database**      | Your actual data — every show, book, diary entry, trip, medical result                       | Supabase's servers (cloud)   | **Yes** (that's what those commands do)    | No (it's not in the browser) |
-| **Browser `localStorage`** | Small client state: login token, last-opened module, the **book + show import match caches** | This browser, on this device | **No** — survives every DB reset           | Yes                          |
-| **Browser PWA cache**      | "Cached assets" — copies of the **app's own files** for offline use (see R3)                 | This browser, on this device | No                                         | Yes                          |
+| Layer                      | Holds                                                                                               | Lives                        | Cleared by `supabase db reset` / truncate? | Cleared by "Delete data"?    |
+| -------------------------- | --------------------------------------------------------------------------------------------------- | ---------------------------- | ------------------------------------------ | ---------------------------- |
+| **Supabase database**      | Your actual data — every show, book, diary entry, trip, medical result                              | Supabase's servers (cloud)   | **Yes** (that's what those commands do)    | No (it's not in the browser) |
+| **Browser `localStorage`** | Small client state: login token, last-opened module, the **book / show / food import match caches** | This browser, on this device | **No** — survives every DB reset           | Yes                          |
+| **Browser PWA cache**      | "Cached assets" — copies of the **app's own files** for offline use (see R3)                        | This browser, on this device | No                                         | Yes                          |
 
 **`localStorage`** is a tiny key→value store built into every browser, kept on disk per **origin**
 (`http://localhost:5173` and `https://<your-app>.vercel.app` each get a _separate_ one) and per
@@ -982,14 +982,14 @@ They're equivalent. Do this on the right origin — localhost vs your Vercel URL
 
 ### R2 — What "Delete data" wipes, and the effect on the app
 
-| Gets wiped                                           | Effect                                                                                     |
-| ---------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| Supabase auth token (`localStorage`)                 | **You're logged out** → sign in with Google again                                          |
-| Last-opened module (`localStorage`)                  | App reopens at the Home hub instead of your last module                                    |
-| **Book + show import match caches** (`localStorage`) | Next CSV import re-queries Google Books / TMDB (book cache also re-spends the daily quota) |
-| Search / filter / sort state (`sessionStorage`)      | List screens reset to defaults                                                             |
-| **Cached assets** + service worker (PWA cache)       | App re-downloads its files on next load (a beat slower once)                               |
-| Cookies                                              | Any other site cookies for the origin are cleared                                          |
+| Gets wiped                                                  | Effect                                                                                            |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Supabase auth token (`localStorage`)                        | **You're logged out** → sign in with Google again                                                 |
+| Last-opened module (`localStorage`)                         | App reopens at the Home hub instead of your last module                                           |
+| **Book / show / food import match caches** (`localStorage`) | Next CSV import re-queries Google Books / TMDB / USDA (book cache also re-spends the daily quota) |
+| Search / filter / sort state (`sessionStorage`)             | List screens reset to defaults                                                                    |
+| **Cached assets** + service worker (PWA cache)              | App re-downloads its files on next load (a beat slower once)                                      |
+| Cookies                                                     | Any other site cookies for the origin are cleared                                                 |
 
 Your **shows, books, entries, etc. are untouched** — they're in the database, not the browser.
 
@@ -1005,9 +1005,9 @@ fast. These are the "cached assets":
 
 They are **not** your data. In particular, **matched shows and matched books are _data_**, stored as
 rows in the **Supabase database** — they're not "cached assets." The only match data kept in the
-browser is the **import match caches** in `localStorage` (R5) — `wellworth:book-match-cache` and
-`wellworth:show-match-cache` — which exist purely to speed up re-imports (and, for books, save the
-daily Google Books quota).
+browser is the **import match caches** in `localStorage` (R5) — `wellworth:book-match-cache`,
+`wellworth:show-match-cache`, and `wellworth:food-match-cache` — which exist purely to speed up
+re-imports (and, for books, save the daily Google Books quota).
 
 ### R4 — When you actually need to "Delete data"
 
@@ -1025,14 +1025,14 @@ use R5 for the cache, and re-login is never required for those.
 
 To drop just an **import match cache** without logging out:
 
-- **In the app:** **Books → Settings → Import → "Clear Import Match Cache"** (Google Books matches), or
-  **Shows → Settings → Import → "Clear Import Match Cache"** (TMDB matches). (Recommended — one tap,
-  stays logged in.)
+- **In the app:** the module's **Settings → Import → "Clear import match cache"** — **Books** (Google
+  Books matches), **Shows** (TMDB), or **Wellness** (USDA food matches). (Recommended — one tap, stays
+  logged in.)
 - **In DevTools, per-key:** F12 → **Application** → **Storage → Local Storage** → click your origin →
   you'll see individual rows (`wellworth:book-match-cache`, `wellworth:show-match-cache`,
-  `wellworth:last-module`, the `sb-…-auth-token`). Select a single row and press **Delete** (or
-  right-click → Delete). Deleting only a `…-match-cache` row clears that import cache and leaves your
-  login intact.
+  `wellworth:food-match-cache`, `wellworth:last-module`, the `sb-…-auth-token`). Select a single row and
+  press **Delete** (or right-click → Delete). Deleting only a `…-match-cache` row clears that import
+  cache and leaves your login intact.
 - **In the Console:** `localStorage.removeItem('wellworth:book-match-cache')` (or
   `'wellworth:show-match-cache'`). (Avoid `localStorage.clear()` — it also removes the auth token and
   logs you out.)

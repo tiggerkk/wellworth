@@ -180,9 +180,11 @@ flex flex-col`, or `h-full` for Zen) so the `flex-1` fills the real content area
   it, resolving `posterUrl` (`w92` list / `w185` detail) — which passes a full pasted image URL
   through as-is and only prefixes the CDN base for a TMDB path; **CoverThumb** (Books) wraps it with
   the full `cover_url` (no CDN base). Used by search sheets, Dashboard rows, and Library rows.
-- **TitleSearchSheet** / **BookSearchSheet** / **QuoteSourceLinkSheet** — title/source search, a
-  **local** full-screen overlay inside Entry (not the routing `Sheet`, which would remount Entry and
-  lose the draft): search bar + thumb result rows; selecting a row populates the live form.
+- **TitleSearchSheet** / **BookSearchSheet** / **FoodSearchSheet** / **QuoteSourceLinkSheet** —
+  title/food/source search, a **local** full-screen overlay (not the routing `Sheet`, which would
+  remount the host and lose its draft/preview): search bar + result rows; selecting a row hands the
+  result back. `FoodSearchSheet` (USDA, `searchFoods` + `foodMatchScore`, rows show
+  `{N} nutrients · {serving}`) backs the food importer's **Change** action.
 - **TagInput** — a free-form tag editor (`src/components/TagInput.tsx`): committed tags as removable
   `rounded-pill` chips + a text input that commits on **Enter/comma**, removes the last on Backspace,
   and offers an autocomplete dropdown over passed suggestions (case-insensitive dedupe).
@@ -230,8 +232,9 @@ flex flex-col`, or `h-full` for Zen) so the `flex-1` fills the real content area
 - **ImportPreviewList** — the shared CSV-importer result list (`src/components/ImportPreviewList.tsx`):
   a bordered card of rows, each `{ media, title, year, subtitle?, meta?, status, reviewLabel }` plus the
   standard **No-match / review / manual** flag and **Change / Manual** actions; callers pass the
-  module-specific thumbnail + chips. Used by the Books + Shows importers (`ImportBooksSheet`,
-  `ImportShowsSheet`). Carries **`shrink-0`** so the `overflow-hidden` card isn't squished + clipped by
+  module-specific thumbnail + chips (`media` + `year` are optional — the Food importer omits them).
+  Used by the Books, Shows, and Food importers (`ImportBooksSheet`, `ImportShowsSheet`,
+  `ImportFoodsSheet`). Carries **`shrink-0`** so the `overflow-hidden` card isn't squished + clipped by
   the sheet's flex-col body — the **Layout gotchas → flex scroll** rule below; its absence was why long
   (e.g. 432-row) imports wouldn't scroll.
 - **Sparkline** — a tiny dependency-free **inline-SVG** trend line (`src/components/Sparkline.tsx`):

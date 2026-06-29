@@ -2698,3 +2698,32 @@ Reworked the shared `Calendar` (used by every module's date fields/filters). Beh
   any future importer.
 - **Docs:** `01_design_system.md` (new component + the scroll-rule cross-link).
 - UI/refactor only — no test-count change (**596 tests**).
+
+## Wellness — bulk Food importer with USDA matching (2026-06-29)
+
+- **Why:** the owner re-seeds foods after every `supabase db reset --linked`, but the old Wellness
+  Library importer only created **custom** foods (no USDA). They wanted one CSV (USDA-findable + truly
+  custom, not pre-tagged) matched against USDA like the Diary "Add Food → All" tab, flagged Books/Shows
+  style, seeded as favorites.
+- **Schema:** `food_importer_enabled boolean not null default true` added to the `profile` table
+  **in `01_wellness_schema.sql`** (where the other wellness profile columns live — no separate settings
+  migration; edit-in-place per the reset workflow). `database.ts` updated (owner re-runs `gen:types`
+  after `db reset`).
+- **Importer (`ImportFoodsSheet` reworked):** parse (existing `parseFoodCsv`, hybrid CSV, all-optional
+  but `name`) → per-row `resolveRow` (cache → `searchFoods` + `foodMatchScore` → `getUsdaFood` detail) →
+  `ImportPreviewList` preview (No-match/review sorted top; rows show **name + "{N} nutrients · {serving}"**
+  like the live USDA list) → **Change** (`FoodSearchSheet` USDA overlay) / **Manual** (keep as custom) →
+  `saveImportedFoods`. New `foodMatchStatus` (pure, tested): score 4 → ok, 1–3 → review, 0 → nomatch.
+- **Save (`saveImportedFoods`, new in `data/food.ts`, replaces `importCustomFoods`):** every row a
+  **favorite**; matched → `source='usda'` (per-100g USDA nutrients), unmatched/Manual → `source='custom'`
+  from the CSV. **Idempotent** (USDA dedupe on external_id, custom on lower(name); bulk insert new + update
+  existing). Servings via `replaceServings` for custom updates.
+- **Match cache:** `src/lib/food-match-cache.ts` (a `createMatchCache` instance, key `normMatch(name)`,
+  value = resolved `ExternalFood`) — re-imports skip USDA. "Clear import match cache" button added to
+  **Wellness Settings → Import**; the importer launcher **moved from Library to Settings** (behind the
+  toggle), mirroring Books/Shows.
+- **Reuse/DRY:** shared `externalFoodServing` extracted to `food-api.ts` (used by Add-Food, the importer,
+  and `FoodSearchSheet`); `ImportPreviewList` gained optional `media`/`year` for the image-less food rows.
+- **Docs:** `04_wellness.md` (Settings + Import CSV), `01_design_system.md` (FoodSearchSheet; ImportPreviewList
+  ×3), `02_tech_spec.md` (lib list), `OWNER_RUNBOOK.md` Part R (food cache key), `templates/custom-foods-*`.
+- Verified by `npm run check` (**602 tests** — +4 `food-match-cache`, +2 `foodMatchStatus`).

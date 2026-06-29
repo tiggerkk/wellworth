@@ -3,10 +3,11 @@ import { type ReactNode } from 'react'
 export type ImportRowStatus = 'ok' | 'review' | 'nomatch' | 'manual'
 
 export interface ImportPreviewItem {
-  /** Thumbnail (cover/poster) — the caller supplies the right component sized `h-14 w-10`. */
-  media: ReactNode
+  /** Thumbnail (cover/poster) sized `h-14 w-10` — omit for modules with no image (e.g. foods). */
+  media?: ReactNode
   title: string
-  year: number | null
+  /** Appended as ` (year)` when set — omit for modules without a year (e.g. foods). */
+  year?: number | null
   /** Optional second line (e.g. author(s)); omitted when a module has none. */
   subtitle?: ReactNode
   /** Leading chips/badges on the meta line (status chip, rating, dates, type badge, …). */
