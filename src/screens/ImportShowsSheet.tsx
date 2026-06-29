@@ -6,6 +6,7 @@ import { PrimaryButton } from '../components/PrimaryButton'
 import { PosterThumb } from '../components/PosterThumb'
 import { ShowTypeBadge } from '../components/ShowTypeBadge'
 import { StatusChip } from '../components/StatusChip'
+import { ImportPreviewList } from '../components/ImportPreviewList'
 import { TitleSearchSheet } from '../components/TitleSearchSheet'
 import { useAuth } from '../auth/AuthProvider'
 import { parseCsv } from '../lib/csv'
@@ -287,63 +288,38 @@ export function ImportShowsSheet() {
                   )}
                 </div>
 
-                <div className="overflow-hidden rounded-card border border-border bg-surface">
-                  {resolved.map((r, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center gap-3 border-b border-border px-3 py-2.5 last:border-b-0"
-                    >
+                <ImportPreviewList
+                  items={resolved.map((r) => ({
+                    media: (
                       <PosterThumb
                         path={r.match?.poster_path ?? null}
                         size="w92"
                         className="h-14 w-10"
                       />
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-[15px] text-text-primary">
-                          {r.match?.title ?? r.input.title}
-                          {r.match?.year ? ` (${r.match.year})` : ''}
-                        </p>
-                        <p className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-text-secondary">
-                          <ShowTypeBadge type={r.input.type} />
-                          <StatusChip
-                            label={SHOW_STATUS_LABELS[r.input.status]}
-                            className={SHOW_STATUS_CHIP[r.input.status]}
-                          />
-                          {usesEpisodes(r.input.type) && r.match && (
-                            <span>
-                              {r.match.total_seasons ?? '?'}S ·{' '}
-                              {r.match.total_episodes ?? '?'}E
-                            </span>
-                          )}
-                          {r.status === 'nomatch' && (
-                            <span className="text-danger">No match</span>
-                          )}
-                          {r.status === 'review' && (
-                            <span className="text-accent">review “{r.input.title}”</span>
-                          )}
-                          {r.status === 'manual' && (
-                            <span className="text-text-tertiary">manual entry</span>
-                          )}
-                        </p>
-                      </div>
-                      <div className="flex shrink-0 items-center gap-1.5">
-                        <button
-                          onClick={() => setFixIndex(i)}
-                          className="rounded-pill bg-input px-2.5 py-1 text-xs font-medium text-accent"
-                        >
-                          Change
-                        </button>
-                        <button
-                          onClick={() => acceptManual(i)}
-                          disabled={r.status === 'manual'}
-                          className="rounded-pill bg-input px-2.5 py-1 text-xs font-medium text-text-secondary disabled:opacity-40"
-                        >
-                          Manual
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ),
+                    title: r.match?.title ?? r.input.title,
+                    year: r.match?.year ?? null,
+                    meta: (
+                      <>
+                        <ShowTypeBadge type={r.input.type} />
+                        <StatusChip
+                          label={SHOW_STATUS_LABELS[r.input.status]}
+                          className={SHOW_STATUS_CHIP[r.input.status]}
+                        />
+                        {usesEpisodes(r.input.type) && r.match && (
+                          <span>
+                            {r.match.total_seasons ?? '?'}S ·{' '}
+                            {r.match.total_episodes ?? '?'}E
+                          </span>
+                        )}
+                      </>
+                    ),
+                    status: r.status,
+                    reviewLabel: r.input.title,
+                  }))}
+                  onChange={(i) => setFixIndex(i)}
+                  onManual={(i) => acceptManual(i)}
+                />
               </>
             )}
 

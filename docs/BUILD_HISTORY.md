@@ -2680,3 +2680,21 @@ Reworked the shared `Calendar` (used by every module's date fields/filters). Beh
   factory), `02_tech_spec.md` (lib list), `OWNER_RUNBOOK.md` Part R (both cache keys), and `PARKED.md`
   (removed the now-built deferral).
 - Verified by `npm run check` (**596 tests** — +5 `match-cache`, +4 `show-match-cache`).
+
+## Importers — shared preview list + fix the long-list scroll bug (2026-06-29)
+
+- **Bug:** the Books/Shows import **preview wouldn't scroll** (couldn't reach matched/unmatched rows in a
+  432-title import); Medical's scrolled fine.
+- **Root cause:** Books/Shows wrapped their rows in an **`overflow-hidden` rounded card** that lacked
+  **`shrink-0`**. `overflow:hidden` resets a flex item's `min-height:auto` to 0, so in the sheet's
+  `flex-col` body flexbox **shrank the list to fit and clipped it** — the body never overflowed, so its
+  `overflow-y-auto` never engaged. Medical's result rows are overflow-visible (`min-height:auto`), so
+  they refuse to shrink, the body overflows, and it scrolls. This is the documented **F6c/F9** flex-scroll
+  rule (design-system → Layout gotchas).
+- **Fix + DRY:** the bug lived in copy-pasted markup, so extracted **`src/components/ImportPreviewList.tsx`**
+  — the scroll-safe card (`shrink-0`) + the shared row (thumbnail · title/subtitle/meta · No-match/review/
+  manual flag · Change/Manual). `ImportBooksSheet` and `ImportShowsSheet` now pass module-specific
+  `media`/`subtitle`/`meta` and drop ~55 lines of duplicated row JSX each. One place to fix, and ready for
+  any future importer.
+- **Docs:** `01_design_system.md` (new component + the scroll-rule cross-link).
+- UI/refactor only — no test-count change (**596 tests**).

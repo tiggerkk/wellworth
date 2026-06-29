@@ -227,6 +227,13 @@ flex flex-col`, or `h-full` for Zen) so the `flex-1` fills the real content area
   value still used by records opens a `SelectMenu` reassignment picker, refuses the last value, and
   honours delete-protected keys. Used by Quotes source-type/category lists and the Travel expense
   categories.
+- **ImportPreviewList** — the shared CSV-importer result list (`src/components/ImportPreviewList.tsx`):
+  a bordered card of rows, each `{ media, title, year, subtitle?, meta?, status, reviewLabel }` plus the
+  standard **No-match / review / manual** flag and **Change / Manual** actions; callers pass the
+  module-specific thumbnail + chips. Used by the Books + Shows importers (`ImportBooksSheet`,
+  `ImportShowsSheet`). Carries **`shrink-0`** so the `overflow-hidden` card isn't squished + clipped by
+  the sheet's flex-col body — the **Layout gotchas → flex scroll** rule below; its absence was why long
+  (e.g. 432-row) imports wouldn't scroll.
 - **Sparkline** — a tiny dependency-free **inline-SVG** trend line (`src/components/Sparkline.tsx`):
   min–max normalized values, an end dot tintable by a flag colour. Used by the Medical Dashboard's
   tracked-test grid so many render cheaply without a chart library. The full trend chart
