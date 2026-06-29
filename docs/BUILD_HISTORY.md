@@ -2613,9 +2613,26 @@ Reworked the shared `Calendar` (used by every module's date fields/filters). Beh
   edge clipped until a manual pinch-out.
 - **Fix:** added `maximum-scale=1, user-scalable=no` to the `index.html` viewport meta. The standalone
   PWA honors it, so focus never triggers the zoom — **keeping the 15px field design** (vs the alternative
-  of bumping every focusable control to 16px). Documented as **F17** in `02_tech_spec.md`. Trade-off:
+  of bumping every focusable control to 16px). Documented as **F21** in `02_tech_spec.md`. Trade-off:
   browser pinch-zoom is disabled (the Travel/Leaflet map has its own zoom controls).
 - Config-only; no test impact (**575 tests**). Takes effect after a redeploy + reload of the PWA.
+- _Superseded 2026-06-29 (see below) — the viewport lock disabled all pinch-zoom, so small text on a
+  screen couldn't be magnified; reversed in favour of 16px focusable controls._
+
+## iOS input-focus zoom — reverse the viewport lock, use 16px controls (2026-06-29)
+
+- **Why:** the viewport lock (`maximum-scale=1, user-scalable=no`) above stopped the auto-zoom but
+  also disabled **all** browser pinch-zoom — small text on some screens became impossible to magnify.
+- **Fix:** prevent the auto-zoom at the **control** instead of the viewport. iOS only auto-zooms a
+  focused field below 16px, so:
+  - `.field-control` (`src/index.css`) → `text-[16px]` (was 15px) — the shared field that nearly every
+    input/select/textarea flows through.
+  - The two inputs that bypass it (their chrome is on a wrapper) set `text-[16px]` directly —
+    `SearchBar`, `TagInput` (found via a full scan of focusable text controls).
+  - `index.html` viewport: dropped `maximum-scale` / `user-scalable=no` → **pinch-zoom re-enabled**.
+- 15px→16px is visually negligible; the F21 note + design-system doc now require **≥16px** for any new
+  focusable text input. Renumbered the iOS-zoom note **F17 → F21** (it collided with the `errorMessage`
+  F17). No test impact (**602 tests**). Takes effect after a redeploy + reload of the PWA.
 
 ## Books import — distinguish Google Books per-day quota from a burst 429 (2026-06-29)
 

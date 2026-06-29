@@ -81,7 +81,7 @@ export function TagInput({
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           placeholder={value.length === 0 ? placeholder : ''}
-          className="min-w-24 flex-1 bg-transparent px-1 py-0.5 text-[15px] text-text-primary placeholder:text-text-tertiary focus:outline-none"
+          className="min-w-24 flex-1 bg-transparent px-1 py-0.5 text-[16px] text-text-primary placeholder:text-text-tertiary focus:outline-none"
         />
       </div>
 

@@ -140,12 +140,16 @@ Supabase (Postgres + RLS). Components hold no SQL and never import the Supabase 
     `setState`-in-effect (the `react-hooks/set-state-in-effect` lint rule). The whole Travel Edit-Trip
     itinerary **and** Expenses tab work this way; editor sheets return the saved row so the parent merges
     it without a refetch.
-- **F17 — iOS input-focus zoom.** iOS Safari auto-zooms when a focused `<input>/<select>/<textarea>`
-  has font-size **< 16px** (our fields are 15px) and **never zooms back out** — so closing a sheet left
-  the parent screen stuck zoomed/clipped. Fixed at the **viewport** in `index.html`
-  (`maximum-scale=1, user-scalable=no`), which the **standalone PWA honors** — preserving the 15px field
-  design without bumping every input to 16px. (Trade-off: no browser pinch-zoom; the Leaflet map has its
-  own zoom controls. The alternative — 16px focusable controls — was rejected to keep the design token.)
+- **F21 — iOS input-focus zoom.** iOS Safari auto-zooms when a focused `<input>/<select>/<textarea>`
+  has font-size **< 16px** and **never zooms back out** — so closing a sheet left the parent screen
+  stuck zoomed/clipped. Fixed by rendering **focusable text controls at 16px**, not by locking the
+  viewport: the shared `.field-control` (`src/index.css`) is `text-[16px]`, and the two inputs that
+  don't use it (`SearchBar`, `TagInput` — their chrome is on a wrapper) set `text-[16px]` directly.
+  The `index.html` viewport keeps **pinch-zoom enabled** (no `maximum-scale` / `user-scalable=no`) so
+  small text on any screen stays zoomable. (Earlier we instead locked the viewport to keep a 15px
+  token; that disabled all browser pinch-zoom, so small text couldn't be magnified — reversed in favour
+  of the 16px controls, since 15px→16px is visually negligible. **Any new focusable text input must be
+  ≥16px** — use `.field-control` or `text-[16px]`.)
 
 ## Auth & first-run
 

@@ -94,7 +94,10 @@ body {
  * docs/01_design_system.md. (SegmentedTabs' field size uses py-1 inside its p-1 track so the track's
  * total height matches this padding+font — see SegmentedTabs.) */
 .field-control {
-  @apply rounded-input bg-input px-3 py-2 text-[15px] text-text-primary focus:outline-none;
+  /* 16px (not 15px): iOS Safari auto-zooms a focused input/select/textarea whose font-size is
+   * < 16px and never zooms back out. 16px keeps the design effectively identical while letting us
+   * leave browser pinch-zoom enabled in the viewport meta (see index.html / F17). */
+  @apply rounded-input bg-input px-3 py-2 text-[16px] text-text-primary focus:outline-none;
 }
 
 /* Hide the number-input spin buttons (compact value fields, e.g. Net Worth Monthly Entry). */

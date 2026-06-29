@@ -28,7 +28,7 @@ export function SearchBar({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className="min-w-0 flex-1 bg-transparent text-[15px] text-text-primary placeholder:text-text-tertiary focus:outline-none"
+          className="min-w-0 flex-1 bg-transparent text-[16px] text-text-primary placeholder:text-text-tertiary focus:outline-none"
         />
       </div>
       {onScan && (

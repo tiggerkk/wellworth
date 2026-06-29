@@ -61,7 +61,9 @@ _not_ the primary-button color; it's for emphasis, active states, and energy.
   inside the filter panel). A `size` prop (`compact` default / `field`) sizes it to the
   **`.field-control`** height so it aligns with form inputs on an entry screen.
 - **`.field-control`** (CSS class in `src/index.css`) — the **single source of truth for a single-line
-  form/filter field's chrome + height** (`rounded-input bg-input px-3 py-2 text-[15px]` via `@apply`).
+  form/filter field's chrome + height** (`rounded-input bg-input px-3 py-2 text-[16px]` via `@apply`).
+  Font is **16px** (not 15px) so a focused field never triggers iOS Safari's auto-zoom — see F21 in
+  `02_tech_spec.md`; any new focusable text input must stay ≥16px.
   Use it for **every** `<input>`/`<button>`/`<select>`/`<textarea>` field app-wide (compose with
   `w-full`/`flex-1`/`w-NN` for width, `text-right`/`text-left` for alignment, `no-spinner`, `block`,
   `resize-none`, `placeholder:*`); per-screen `inputClass`/`inputCls` constants are just
