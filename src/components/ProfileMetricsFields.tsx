@@ -4,7 +4,7 @@ import { FieldRow } from './FieldRow'
 import { SegmentedTabs } from './SegmentedTabs'
 import { Calendar } from './Calendar'
 import { cmToInches, inchesToCm, kgToPounds, poundsToKg } from '../lib/units'
-import { formatDayLabel, todayLocal, type IsoDate } from '../lib/date'
+import { formatFullDate, todayLocal, type IsoDate } from '../lib/date'
 
 const round1 = (n: number) => Math.round(n * 10) / 10
 
@@ -92,7 +92,7 @@ export function ProfileMetricsFields({
             className="field-control"
           >
             {value.birthday ? (
-              formatDayLabel(value.birthday as IsoDate)
+              formatFullDate(value.birthday as IsoDate)
             ) : (
               <span className="text-text-tertiary">Set date</span>
             )}

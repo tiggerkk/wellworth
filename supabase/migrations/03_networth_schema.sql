@@ -130,12 +130,18 @@ create table public.insurance_policy (
   start_date             date,
   currency               text not null check (currency in ('HKD', 'CNY', 'USD')),
   notes                  text,
-  surrendered_from_month date, -- 1st-of-month; policy is excluded from this month forward
-  surrender_date         date,
-  surrender_proceeds     numeric,
+  -- Termination = surrender OR maturity (mutually exclusive). A policy is terminated iff
+  -- termination_effective_date is set; termination_kind says which. From that date's month the
+  -- policy is excluded from net-worth totals.
+  termination_kind           text check (termination_kind in ('surrendered', 'matured')),
+  termination_date           date,    -- the surrender / maturity transaction date
+  termination_effective_date date,    -- policy excluded from this date's month forward
+  termination_proceeds       numeric, -- cash received on surrender / maturity
   created_at             timestamptz not null default now(),
   updated_at             timestamptz not null default now(),
-  unique (user_id, policy_number) -- policy_number is the import / update key
+  unique (user_id, policy_number), -- policy_number is the import / update key
+  -- kind and effective date are set/cleared together
+  check ((termination_effective_date is null) = (termination_kind is null))
 );
 
 create index on public.insurance_policy (user_id);

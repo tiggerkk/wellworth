@@ -157,9 +157,10 @@ export function buildResolvedInsuranceEntries(
   const out: AssetEntryInput[] = []
   let i = 0
   for (const { policy, schedules } of catalogue) {
+    // Terminated (surrendered OR matured) policies drop out of the total from their effective month.
     if (
-      policy.surrendered_from_month &&
-      month >= startOfMonth(policy.surrendered_from_month)
+      policy.termination_effective_date &&
+      month >= startOfMonth(policy.termination_effective_date)
     )
       continue
     const r = resolvePolicyAtAge(schedules, age)

@@ -4,6 +4,7 @@ import {
   addMonths,
   fromIsoDate,
   formatDayLabel,
+  formatFullDate,
   formatMonthDay,
   startOfMonth,
   toIsoDate,
@@ -33,14 +34,19 @@ describe('addDays', () => {
   })
 })
 
+describe('formatFullDate', () => {
+  it('shows month, day, and year (MMM DD, YYYY)', () => {
+    expect(formatFullDate('2026-06-13')).toBe('Jun 13, 2026')
+    expect(formatFullDate('2026-12-01')).toBe('Dec 1, 2026')
+  })
+})
+
 describe('formatDayLabel', () => {
-  it('uses relative labels around today', () => {
+  it('uses relative labels around today, else MMM DD, YYYY', () => {
     expect(formatDayLabel('2026-06-13', '2026-06-13')).toBe('Today')
     expect(formatDayLabel('2026-06-12', '2026-06-13')).toBe('Yesterday')
     expect(formatDayLabel('2026-06-14', '2026-06-13')).toBe('Tomorrow')
-  })
-  it('formats other days as weekday, month day', () => {
-    expect(formatDayLabel('2026-06-20', '2026-06-13')).toBe('Sat, Jun 20')
+    expect(formatDayLabel('2026-06-20', '2026-06-13')).toBe('Jun 20, 2026')
   })
 })
 

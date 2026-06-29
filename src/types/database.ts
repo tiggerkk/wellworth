@@ -341,9 +341,10 @@ export type Database = {
           policy_number: string
           provider: string
           start_date: string | null
-          surrender_date: string | null
-          surrender_proceeds: number | null
-          surrendered_from_month: string | null
+          termination_date: string | null
+          termination_effective_date: string | null
+          termination_kind: string | null
+          termination_proceeds: number | null
           updated_at: string
           user_id: string
         }
@@ -356,9 +357,10 @@ export type Database = {
           policy_number: string
           provider: string
           start_date?: string | null
-          surrender_date?: string | null
-          surrender_proceeds?: number | null
-          surrendered_from_month?: string | null
+          termination_date?: string | null
+          termination_effective_date?: string | null
+          termination_kind?: string | null
+          termination_proceeds?: number | null
           updated_at?: string
           user_id: string
         }
@@ -371,9 +373,10 @@ export type Database = {
           policy_number?: string
           provider?: string
           start_date?: string | null
-          surrender_date?: string | null
-          surrender_proceeds?: number | null
-          surrendered_from_month?: string | null
+          termination_date?: string | null
+          termination_effective_date?: string | null
+          termination_kind?: string | null
+          termination_proceeds?: number | null
           updated_at?: string
           user_id?: string
         }

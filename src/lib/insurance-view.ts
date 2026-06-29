@@ -10,18 +10,22 @@ export interface InsuranceListItem {
     provider: string
     policy_number: string
     policy_name: string
+    notes: string | null
     start_date: string | null
-    surrendered_from_month: string | null
+    termination_kind: string | null // null | 'surrendered' | 'matured'
   }
   schedules: ScheduleVersion[]
 }
 
 export type InsuranceSortField = 'startDate' | 'policyNumber' | 'policyName' | 'provider'
 
+/** Status filter: all policies, or only matured / only surrendered. */
+export type InsuranceStatusFilter = 'all' | 'matured' | 'surrendered'
+
 export interface InsuranceCriteria {
   query: string
   provider: string // 'all' | provider key
-  surrenderedOnly: boolean
+  status: InsuranceStatusFilter
   brokeEvenOnly: boolean
   startFrom: string | null
   startTo: string | null
@@ -32,7 +36,7 @@ export interface InsuranceCriteria {
 export const DEFAULT_INSURANCE_CRITERIA: InsuranceCriteria = {
   query: '',
   provider: 'all',
-  surrenderedOnly: false,
+  status: 'all',
   brokeEvenOnly: false,
   startFrom: null,
   startTo: null,
@@ -52,10 +56,15 @@ export function applyInsuranceView(
 ): InsuranceListItem[] {
   const q = c.query.trim().toLowerCase()
   const filtered = items.filter(({ policy, schedules }) => {
-    if (q && !`${policy.policy_number} ${policy.policy_name}`.toLowerCase().includes(q))
+    if (
+      q &&
+      !`${policy.policy_number} ${policy.policy_name} ${policy.notes ?? ''}`
+        .toLowerCase()
+        .includes(q)
+    )
       return false
     if (c.provider !== 'all' && policy.provider !== c.provider) return false
-    if (c.surrenderedOnly && !policy.surrendered_from_month) return false
+    if (c.status !== 'all' && policy.termination_kind !== c.status) return false
     if (c.brokeEvenOnly && !hasBrokenEven(schedules, currentAge)) return false
     if (c.startFrom && (policy.start_date ?? '') < c.startFrom) return false
     if (c.startTo && (policy.start_date ?? '') > c.startTo) return false

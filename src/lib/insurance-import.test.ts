@@ -28,6 +28,7 @@ describe('parseInsuranceBulkCsv', () => {
     `,CHUBB,,,,,,,,Manulife,,,,Total Cash Values,`,
     `,Forever Diamond,,,,Elapsed Policy,,,,MyLegacy,,,,,`,
     `,"2150202771: Oct 7, 2015",,,,,,,,"28-9340140-4: Aug 8, 2003",,,,,`,
+    `,Paid up,,,,,,,,,,,,,`, // notes row (per-policy, in the block's first column)
     `Age,${SUB},${SUB},${SUB},HKD`,
     `45,4,"60,000","37,276",-9.5,2,"50,000","31,559",-18.4,16,"304,188","386,448",1.7,"2,314,343"`,
     `46,5,"75,000","52,248",-6.1,3,"50,000","42,431",-5.0,17,"304,188","403,518",1.9,"2,400,000"`,
@@ -70,11 +71,35 @@ describe('parseInsuranceBulkCsv', () => {
     ).toBe('CNY')
   })
 
+  it('reads the per-policy notes row', () => {
+    const { policies } = parseInsuranceBulkCsv(parseCsv(csv), PROVIDERS)
+    expect(policies[0]?.notes).toBe('Paid up')
+    expect(policies[1]?.notes).toBeNull()
+  })
+
+  it('auto-marks maturity when a schedule ends before the current age', () => {
+    // currentAge 52: both blocks' last rows (age 46 / 17) are below it → matured.
+    const { policies } = parseInsuranceBulkCsv(parseCsv(csv), PROVIDERS, {}, 52)
+    expect(policies[0]).toMatchObject({
+      termination_kind: 'matured',
+      termination_date: '2020-10-07', // start 2015 + last policy year 5
+      termination_effective_date: '2020-10-07',
+      termination_proceeds: 52248, // last (age 46) cash value
+    })
+  })
+
+  it('leaves an in-force policy un-terminated', () => {
+    // currentAge 46 = the schedule's last age → still in force.
+    const { policies } = parseInsuranceBulkCsv(parseCsv(csv), PROVIDERS, {}, 46)
+    expect(policies[0]?.termination_kind).toBeNull()
+  })
+
   it('only emits points with both premium and cash present', () => {
     const sparse = [
       `,CHUBB,,,`,
       `,P,,,`,
       `,"123: Jan 1, 2020",,,`,
+      `,,,,`, // notes row (empty)
       `Age,Policy Year,Total Premium Paid,Cash Value,Surrender Gain %/Yr`,
       `45,4,"60,000","37,276",-9.5`,
       `46,5,,,`, // blank premium/cash → no point
@@ -107,6 +132,26 @@ describe('parseInsuranceSingleCsv', () => {
       first_year: 45,
     })
     expect(policy?.points).toHaveLength(2)
+  })
+
+  it('parses a Notes row and auto-marks maturity', () => {
+    const matured = [
+      'Provider,CHUBB',
+      'Policy Number,2150202771',
+      'Policy Name,Forever Diamond (FDR05)',
+      '"Start Date","Oct 7, 2015"',
+      'Notes,Paid up',
+      'Age,Policy Year,Total Premium Paid,Cash Value,Surrender Gain %/Yr',
+      '45,4,"60,000","37,276",-9.5',
+      '46,5,"75,000","52,248",-6.1',
+    ].join('\n')
+    const { policy } = parseInsuranceSingleCsv(parseCsv(matured), PROVIDERS, 52)
+    expect(policy).toMatchObject({
+      notes: 'Paid up',
+      termination_kind: 'matured',
+      termination_date: '2020-10-07',
+      termination_proceeds: 52248,
+    })
   })
 
   it('errors when the policy number or table is missing', () => {

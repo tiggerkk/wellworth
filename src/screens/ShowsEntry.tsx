@@ -40,7 +40,7 @@ import { DEFAULT_DYNASTY, DYNASTIES, type Dynasty } from '../constants/dynasty'
 import { useProfile } from '../hooks/useProfile'
 import { bumpShows } from '../lib/shows-refresh'
 import { NotesEditorModal } from '../components/NotesEditorModal'
-import { formatDayLabel, todayLocal, type IsoDate } from '../lib/date'
+import { formatFullDate, todayLocal, type IsoDate } from '../lib/date'
 import { Calendar } from '../components/Calendar'
 import { EntryHeaderActions } from '../components/EntryHeaderActions'
 import { SegmentedTabs } from '../components/SegmentedTabs'
@@ -793,7 +793,7 @@ function DateField({
       <div className="flex items-center gap-2">
         <button onClick={onPick} className={`flex-1 text-left ${inputClass}`}>
           {value ? (
-            formatDayLabel(value)
+            formatFullDate(value)
           ) : (
             <span className="text-text-tertiary">Set date</span>
           )}

@@ -28,7 +28,7 @@ import { containsCjk } from '../lib/cjk'
 import { DEFAULT_DYNASTY, DYNASTIES, type Dynasty } from '../constants/dynasty'
 import { useProfile } from '../hooks/useProfile'
 import { bumpBooks } from '../lib/books-refresh'
-import { formatDayLabel, todayLocal, type IsoDate } from '../lib/date'
+import { formatFullDate, todayLocal, type IsoDate } from '../lib/date'
 import { Calendar } from '../components/Calendar'
 import { BookSearchSheet } from '../components/BookSearchSheet'
 import { CoverThumb } from '../components/CoverThumb'
@@ -554,7 +554,7 @@ function DateField({
       <div className="flex items-center gap-2">
         <button onClick={onPick} className={`flex-1 text-left ${inputClass}`}>
           {value ? (
-            formatDayLabel(value)
+            formatFullDate(value)
           ) : (
             <span className="text-text-tertiary">Set date</span>
           )}

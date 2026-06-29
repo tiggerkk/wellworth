@@ -26,7 +26,7 @@ import {
   type MedicalLabTestSeed,
 } from '../lib/medical'
 import { groupResultsByCategory } from '../lib/medical-order'
-import { formatDayLabel } from '../lib/date'
+import { formatFullDate } from '../lib/date'
 import { routes } from '../constants/routes'
 import { Calendar } from '../components/Calendar'
 import { EntryHeaderActions } from '../components/EntryHeaderActions'
@@ -234,7 +234,7 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
               onClick={() => setDatePicker(true)}
               className={`text-left ${inputClass}`}
             >
-              {formatDayLabel(draft.report_date)}
+              {formatFullDate(draft.report_date)}
             </button>
           </div>
           <div className="flex-1">

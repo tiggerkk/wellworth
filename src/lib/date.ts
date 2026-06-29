@@ -34,18 +34,6 @@ export function addDays(iso: IsoDate, n: number): IsoDate {
 
 export const isSameDay = (a: IsoDate, b: IsoDate): boolean => a === b
 
-/** 'Today' / 'Yesterday' / 'Tomorrow', else e.g. 'Fri, Jun 13'. */
-export function formatDayLabel(iso: IsoDate, today: IsoDate = todayLocal()): string {
-  if (iso === today) return 'Today'
-  if (iso === addDays(today, -1)) return 'Yesterday'
-  if (iso === addDays(today, 1)) return 'Tomorrow'
-  return new Intl.DateTimeFormat('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-  }).format(fromIsoDate(iso))
-}
-
 /** Month + day only, e.g. 'Jun 13' (no weekday, no Today/Yesterday) — Shows/Books recent + library rows. */
 export function formatMonthDay(iso: IsoDate): string {
   return new Intl.DateTimeFormat('en-US', {
@@ -61,6 +49,14 @@ export function formatFullDate(iso: IsoDate): string {
     month: 'short',
     day: 'numeric',
   }).format(fromIsoDate(iso))
+}
+
+/** 'Today' / 'Yesterday' / 'Tomorrow', else the canonical `MMM DD, YYYY` — Wellness Diary nav only. */
+export function formatDayLabel(iso: IsoDate, today: IsoDate = todayLocal()): string {
+  if (iso === today) return 'Today'
+  if (iso === addDays(today, -1)) return 'Yesterday'
+  if (iso === addDays(today, 1)) return 'Tomorrow'
+  return formatFullDate(iso)
 }
 
 /** First day of the month containing `iso`, as a civil date. */

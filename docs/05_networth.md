@@ -25,7 +25,11 @@ entries yet" · "+ Monthly Entry").
   The `‹ month ›` cluster is **centered in the header** (mirrors the Wellness Diary day nav), with
   the form actions to its right. The arrows step one month; **tapping the month label opens a
   month/year picker** (year stepper over a month grid, OK/Cancel — see
-  `docs/01_design_system.md` → MonthPicker).
+  `docs/01_design_system.md` → MonthPicker). The selected month **persists for the browser-tab
+  session** (`useSessionState`, key `networth-entry-month`) so it survives the unmount when an Import
+  sheet opens over the entry and closes — the entry stays on the imported month instead of snapping
+  back to the current one. (The background-location tab is re-rendered from a static element map, so
+  plain `useState` would reset; a fresh tab still defaults to the current month.)
 - On a new month, **pre-fill every entry from the most recent prior snapshot** (copy-forward), then
   re-fetch that month's FX rates and recompute `value_base`. The user edits `value_native` (and
   adds/removes entries) from there.
@@ -35,10 +39,11 @@ entries yet" · "+ Monthly Entry").
   the body below — mirroring the Wellness Diary's persistent day-nav header.
 - Entries **grouped by asset type**; each row editable: name, currency, `value_native`, and the
   type-specific `details`. The row is **compact** — **Name · currency · value · delete on one
-  line**; the value box is **narrow** (drops the number-spinner via `.no-spinner`) and the trash
-  **hugs the right edge**. Any `details` fields flow **inline and wrap** on a second line, sharing
-  it with the HKD conversion (`= HK$…`, right-aligned) — so a Stock's **Ticker (narrow, ~3 chars) ·
-  Shares · `= HK$…` all share one line**. **Add entry** (pick type) / edit / **delete** (a
+  line**; the value box (`w-24`, drops the number-spinner via `.no-spinner`) fits a 7-figure amount,
+  and the trash **hugs the right edge** (`pr-1`). Any `details` fields flow **inline and wrap** on a
+  second line, sharing it with the HKD conversion (`= HK$…`, right-aligned) — so a Stock's **Ticker
+  (narrow `w-16`, ~3 chars) · Shares · `= HK$…` all share one line**; the Time Deposit **Maturity
+  Date** field is **wider (`w-40`)** to show a full date. **Add entry** (pick type) / edit / **delete** (a
   `ConfirmDeleteAction` at the end of the row — inline `Delete? ✓ ✗`; omits the entry from this
   month onward — each month is self-contained).
 - **Exchange rates** panel: title `EXCHANGE RATES (HKD 1.0000)`, **CNY and USD rates on one line**,
@@ -179,24 +184,36 @@ All values are entered manually. `details` are preserved for reference only; the
 - **Copy-forward**: manual types cloned; **fund** cloned as a placeholder (overwritten by import);
   **insurance** is NOT cloned — it is **re-resolved from the catalogue** at the month's age and
   **frozen into the snapshot on SAVE**.
+- **SAVE enablement (`needsFreeze`)**: SAVE is normally gated on the form being **dirty**, but the
+  loader also enables it when the displayed rows differ from what's **persisted** — i.e. live insurance
+  was injected into a saved snapshot that had **none frozen** (e.g. created by the manual CSV import,
+  which never freezes insurance), or it's a brand-new (copy-forward) month with no snapshot yet. Without
+  this, the live total (incl. resolved insurance) reads **higher** than the saved snapshot the Dashboard
+  shows, yet SAVE stays disabled so the gap can't be reconciled. Pressing SAVE freezes the rows and the
+  Dashboard then matches. Cleared once SAVE persists the new baseline.
 - **Fund section**: read-only rows `Name (truncated) · Total Value (HKD) · Return Rate %`; header
   import icon (**accent**) → Fund CSV importer (overwrites the month's fund rows only); tap a row →
   Fund detail modal (Units · Avg Unit Cost · NAV/Unit · priced-as-of · Total Cost · P/L · Asset
   Class · Currency). The Fund detail body (shared `FundDetail`, used by both the local modal and the
-  routed drill-in) shows Total Value as **`HKD 1,234`** (space, via the `money` helper, not
-  `formatHkd`'s `HK$…`) and the priced-as-of date as **`YYYY-MM-DD`** (the importer stores
-  `YYYY/MM/DD`). The local modal reserves `pt-[env(safe-area-inset-top)]` so its header clears the
-  iOS status bar, and closes on **Esc** (`useEscapeKey`) to mirror the routed `Sheet`, which closes on
-  Esc + browser-back for free (only the read-only body is shared via `FundDetail`; the wrappers differ).
+  routed drill-in) carries a **4px left stripe in `ASSET_TYPE_COLORS.fund`** (same hue as the Fund
+  dot/section), shows **HKD amounts as `HK$1,234`** (`formatHkd`, matching the Dashboard / Monthly
+  Entry) — a non-HKD base currency (USD/CNY unit cost + NAV) keeps its `CODE 1,234` prefix + decimals —
+  and the priced-as-of date via the global **`formatFullDate`** (**`Jun 25, 2026`** — MMM DD, YYYY; the
+  importer stores `YYYY/MM/DD`). The local modal reserves `pt-[env(safe-area-inset-top)]` so its header
+  clears the iOS status bar, and closes on **Esc** (`useEscapeKey`) to mirror the routed `Sheet`, which
+  closes on Esc + browser-back for free (only the read-only body is shared via `FundDetail`; the wrappers differ).
 - **Insurance section**: auto-populated, grouped by the owner's configured provider order (orphan
   providers last), ordered by policy number within a provider;
-  surrendered policies excluded from their surrender month onward; rows `Number · Name (truncated) ·
+  terminated (surrendered **or** matured) policies excluded from their effective month onward; rows `Number · Name (truncated) ·
 Policy Year · Premium · Cash Value (native→HKD)` with an "as of yr N" tag when carried; tap → Policy
   detail (read-only, resolved at the month's age). The Policy detail's schedule table (shared
   `PolicyDetail`, titled **SCHEDULE**) adds a right-most **GAIN %/Yr** column.
-- **Each asset-type card has a colored border** keyed to `ASSET_TYPE_COLORS` (the same per-type
-  palette as the Dashboard "By asset type" dots — defined in `src/lib/networth.ts`), and the
-  **Import CSV** action is **accent**.
+- **Each asset-type section has a colored left stripe + tinted header** (the `MedicalSection`
+  pattern: 4px left stripe + `color-mix … 14%` header tint) keyed to `ASSET_TYPE_COLORS` (the same
+  per-type palette as the Dashboard "By asset type" dots — defined in `src/lib/networth.ts`), and the
+  **Import CSV** action is **accent**. `ASSET_TYPE_COLORS` hues are ordered so **consecutive** asset
+  types contrast (green → blue → gold → purple → orange → rose → grey) — no two adjacent sections share
+  a warm/cool band.
 - **Gain/loss percentages read green/red across Net Worth** via `gainLossClass(n)`
   (`src/lib/networth.ts`): teal positive, red negative, muted zero. Applied to fund Return Rate
   (Monthly Entry rows, Fund detail, Dashboard Fund performance), fund Profit / Loss (Fund detail), and
@@ -205,11 +222,13 @@ Policy Year · Premium · Cash Value (native→HKD)` with an "as of yr N" tag wh
 
 ### Insurance Policies (browse) + New/Edit Insurance
 
-- **Insurance Policies** (`IconLibrary` tab): search (number/name), filters (Provider, Surrendered
-  only, Past break-even only, Started date range), sort (Start Date / Policy Number / Policy Name /
-  Provider, descending default). Tap → New/Edit Insurance. Mirrors Medical Reports. Each row shows
-  the provider plus status **badges** (`StatusChip`): **Surrendered** = grey (`bg-track`),
-  **Past Break Even** = teal (`bg-positive`), matching the Shows Library Dropped/Watched chips.
+- **Insurance Policies** (`IconLibrary` tab): search (number/name/**notes**), filters — line 1
+  Provider + **Past Break-Even Only**, line 2 an **All / Matured / Surrendered** `SegmentedTabs`
+  status toggle (`criteria.status`), line 3 Started date range, line 4 sort + Clear Filters. Sort
+  (Start Date / Policy Number / Policy Name / Provider, descending default). Tap → New/Edit Insurance.
+  Mirrors Medical Reports. Each row shows the provider plus status **badges** (`StatusChip`):
+  **Surrendered** = grey (`bg-track`), **Matured** = blue (`bg-accent`), **Past Break Even** =
+  teal (`bg-positive`). (Both filter + badges read `policy.termination_kind`.)
   - **"Past break-even" is relative to the current age**, not "ever breaks even": `breakEven` returns
     the first qualifying age across the WHOLE resolved series (incl. future ages), so the
     badge/filter/dashboard-count use **`hasBrokenEven(schedules, currentAge)`** (its break-even age ≤
@@ -219,23 +238,34 @@ Policy Year · Premium · Cash Value (native→HKD)` with an "as of yr N" tag wh
   Delete/Reset/Create/Save. Body: Provider (picked from the configured list — manage it in Settings →
   Manage Providers) + Currency (**mandatory**; HKD/CNY/USD) on one line (equal-height controls so the
   dropdown and segmented toggle align); Policy Number + Start Date on one line; Policy Name;
-  **Notes** (2-row textarea); an inline **SURRENDER** section opened by a **Mark Surrendered** accent
-  pill button (**Un-Surrender** is the matching accent pill when surrendered) — **Surrender Date** +
-  **Surrender Effective From** on one line (setting/changing the date auto-syncs Effective From, still
-  overridable) + **Actual Proceeds** (policy currency, no label suffix, `.no-spinner` — no number
-  steppers), all mandatory; a **SCHEDULE**
+  **Notes** (2-row textarea); a **TERMINATION** area (surrender **or** maturity — mutually exclusive).
+  When active, two pill buttons: **Mark Surrendered** (grey text) and **Mark Matured** (blue text);
+  choosing one opens its section (titled **Surrender** / **Maturity**) — **{kind} Date** +
+  **{kind} Effective From** on one line (setting/changing the Date auto-syncs Effective From, still
+  overridable) + **Actual Proceeds**, all mandatory; helper "Enter the cash received {into|as} Cash
+  in Monthly Entry." When terminated, the section shows with an **Un-Surrender / Un-Mature** pill
+  (clears all four `termination_*` fields). A policy can't be both at once (single `termination_kind`).
+  Then a **SCHEDULE**
   section listing versions (the selected version's editable `effective_date` is the first field, the
   version dropdown to its right, then a hard-delete that promotes the earliest remaining to Original).
   Unset date fields read **"Set date"** in muted `text-tertiary` (the Shows Entry pattern). The
   SCHEDULE table adds a right-most **GAIN %/Yr** column (Surrender Gain %/Yr per point).
 - **Single-policy import** (local overlay): file must match Provider + Policy Number; Policy Name /
-  Start Date may be overridden; currency + effective date are NOT in the file. Choose **Add new
-  version** or **Replace existing version**; a brand-new policy's first import creates the **Original**.
+  Start Date / **Notes** may be overridden; **maturity is auto-detected** (same rule as the bulk
+  seed); currency + effective date are NOT in the file. Choose **Add new version** or **Replace
+  existing version**; a brand-new policy's first import creates the **Original**.
 
 ### Insurance model + resolution (pure helpers in `src/lib/networth.ts`)
 
 - New tables (in `03_networth_schema.sql`): `insurance_policy`, `insurance_schedule` (kind
   `original|update`, `first_year`, `effective_date`), `insurance_schedule_point` (real values only).
+- **Termination** (surrender or maturity, mutually exclusive) on `insurance_policy`:
+  `termination_kind` (`surrendered|matured`, CHECK), `termination_date`, `termination_effective_date`,
+  `termination_proceeds` — a policy is terminated iff `termination_effective_date` is set (CHECK ties
+  it to `termination_kind`), and it is **excluded from the monthly total from that date's month**
+  (`buildResolvedInsuranceEntries` in `asset-entry.ts` + the Monthly Entry copy in `NetWorthEntry.tsx`).
+  Set/cleared via `setTermination` / `clearTermination`, or written directly by `savePolicyFields`
+  from the Edit screen. Imports auto-detect maturity (`detectMaturity` in `insurance-import.ts`).
 - **Version identity = the schedule row's id** (not the date); `effective_date` is editable and drives
   recency. **Resolved** at an age = newest-effective version with `first_year ≤ age`, value at the age
   or nearest earlier real point ("as of yr N"). **Original** (`kind: original`) is the variance
@@ -271,10 +301,13 @@ Policy Year · Premium · Cash Value (native→HKD)` with an "as of yr N" tag wh
   carried forward (label matched to the configured provider list — an **unknown provider skips its
   block** with an error until you add it in Settings), blocks without a policy number skipped, trailing
   total columns dropped; confirms per-provider currency (seeded from each provider's `defaultCurrency`;
-  HKD/CNY/USD).
+  HKD/CNY/USD). **Header rows are now provider · name · number:date · notes · sub-header** (a
+  per-policy **Notes** row before the sub-header). **Maturity auto-detected** (`detectMaturity`): a
+  block whose schedule ends before the owner's current age (from `profile.birthday`) → Matured,
+  proceeds = last cash value, date = start month/day + year `start_year + last policy_year`.
 - **Insurance single**: narrow key/value header (Provider, Policy Number, optional Policy Name / Start
-  Date) + the `Age, Policy Year, Total Premium Paid, Cash Value, Surrender Gain %/Yr` table (Surrender
-  Gain ignored).
+  Date / **Notes**) + the `Age, Policy Year, Total Premium Paid, Cash Value, Surrender Gain %/Yr` table
+  (Surrender Gain ignored); maturity auto-detected the same way.
 
 ### Dashboards
 

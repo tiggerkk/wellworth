@@ -12,6 +12,7 @@ import {
   DEFAULT_INSURANCE_CRITERIA,
   type InsuranceCriteria,
   type InsuranceSortField,
+  type InsuranceStatusFilter,
 } from '../lib/insurance-view'
 import { ageForYear, DEFAULT_BIRTH_YEAR, hasBrokenEven } from '../lib/networth'
 import { effectiveProviders, providerLabel } from '../lib/insurance-config'
@@ -20,6 +21,7 @@ import { StatusChip } from '../components/StatusChip'
 import { routes } from '../constants/routes'
 import { SearchBar } from '../components/SearchBar'
 import { SelectMenu } from '../components/SelectMenu'
+import { SegmentedTabs } from '../components/SegmentedTabs'
 import { Toggle } from '../components/Toggle'
 import { Calendar } from '../components/Calendar'
 import { FilterToggleButton } from '../components/FilterToggleButton'
@@ -34,6 +36,12 @@ const SORT_OPTIONS: { value: InsuranceSortField; label: string }[] = [
   { value: 'policyNumber', label: 'Policy Number' },
   { value: 'policyName', label: 'Policy Name' },
   { value: 'provider', label: 'Provider' },
+]
+
+const STATUS_OPTIONS: { value: InsuranceStatusFilter; label: string }[] = [
+  { value: 'all', label: 'All' },
+  { value: 'matured', label: 'Matured' },
+  { value: 'surrendered', label: 'Surrendered' },
 ]
 
 /**
@@ -93,7 +101,7 @@ export function InsurancePolicies() {
           <SearchBar
             value={criteria.query}
             onChange={(q) => setCrit({ query: q })}
-            placeholder="Search policy number, policy name"
+            placeholder="Search policy number, policy name, notes"
             className="min-w-0 flex-1"
           />
           <FilterToggleButton
@@ -112,14 +120,6 @@ export function InsurancePolicies() {
               onChange={(v) => setCrit({ provider: v })}
             />
             <label className="flex items-center justify-between self-end py-1.5">
-              <span className="text-text-secondary">Surrendered Only</span>
-              <Toggle
-                checked={criteria.surrenderedOnly}
-                onChange={(v) => setCrit({ surrenderedOnly: v })}
-                label="Surrendered Only"
-              />
-            </label>
-            <label className="flex items-center justify-between self-end py-1.5">
               <span className="text-text-secondary">Past Break-Even Only</span>
               <Toggle
                 checked={criteria.brokeEvenOnly}
@@ -128,6 +128,11 @@ export function InsurancePolicies() {
               />
             </label>
           </div>
+          <SegmentedTabs
+            value={criteria.status}
+            options={STATUS_OPTIONS}
+            onChange={(v) => setCrit({ status: v })}
+          />
           <DateRangeRow
             label="Started"
             from={criteria.startFrom}
@@ -192,11 +197,14 @@ export function InsurancePolicies() {
                     </span>
                     <span className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-text-tertiary">
                       <span>{providerLabel(providers, policy.provider)}</span>
-                      {policy.surrendered_from_month && (
+                      {policy.termination_kind === 'surrendered' && (
                         <StatusChip
                           label="Surrendered"
                           className="bg-track text-text-secondary"
                         />
+                      )}
+                      {policy.termination_kind === 'matured' && (
+                        <StatusChip label="Matured" className="bg-accent text-bg" />
                       )}
                       {brokeEven && (
                         <StatusChip

@@ -1,5 +1,5 @@
 import { IconX } from '@tabler/icons-react'
-import { formatDayLabel, type IsoDate } from '../lib/date'
+import { formatFullDate, type IsoDate } from '../lib/date'
 
 interface DateRangeRowProps {
   label: string
@@ -58,7 +58,7 @@ function DateButton({
         className="field-control min-w-0 flex-1 truncate text-left"
       >
         {value ? (
-          formatDayLabel(value)
+          formatFullDate(value)
         ) : (
           <span className="text-text-tertiary">{placeholder}</span>
         )}

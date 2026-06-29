@@ -156,22 +156,30 @@ export async function reassignProvider(
   if (error) throw error
 }
 
-export async function setSurrender(
+/** Mark a policy terminated — surrendered OR matured (mutually exclusive). */
+export async function setTermination(
   policyId: string,
-  s: { month: string; date: string; proceeds: number },
+  t: {
+    kind: 'surrendered' | 'matured'
+    date: string
+    effectiveDate: string
+    proceeds: number
+  },
 ): Promise<Policy> {
   return savePolicyFields(policyId, {
-    surrendered_from_month: s.month,
-    surrender_date: s.date,
-    surrender_proceeds: s.proceeds,
+    termination_kind: t.kind,
+    termination_date: t.date,
+    termination_effective_date: t.effectiveDate,
+    termination_proceeds: t.proceeds,
   })
 }
 
-export async function clearSurrender(policyId: string): Promise<Policy> {
+export async function clearTermination(policyId: string): Promise<Policy> {
   return savePolicyFields(policyId, {
-    surrendered_from_month: null,
-    surrender_date: null,
-    surrender_proceeds: null,
+    termination_kind: null,
+    termination_date: null,
+    termination_effective_date: null,
+    termination_proceeds: null,
   })
 }
 
@@ -302,6 +310,11 @@ export async function upsertBulkPolicies(
         policy_name: p.policy_name,
         start_date: p.start_date,
         currency: p.currency,
+        notes: p.notes,
+        termination_kind: p.termination_kind,
+        termination_date: p.termination_date,
+        termination_effective_date: p.termination_effective_date,
+        termination_proceeds: p.termination_proceeds,
       })),
       { onConflict: 'user_id,policy_number' },
     )

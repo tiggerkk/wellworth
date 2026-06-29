@@ -13,6 +13,7 @@ import { bumpNetWorth } from '../lib/networth-refresh'
 import { errorMessage } from '../lib/errors'
 import { CURRENCIES, type Currency } from '../lib/networth'
 import { effectiveProviders } from '../lib/insurance-config'
+import { todayLocal } from '../lib/date'
 
 const MAX_MESSAGES = 20
 const CCY_OPTIONS = CURRENCIES.map((c) => ({ value: c, label: c }))
@@ -38,9 +39,16 @@ export function ImportInsuranceBulkSheet() {
   const [importError, setImportError] = useState<string | null>(null)
   const [doneCount, setDoneCount] = useState<number | null>(null)
 
+  // Owner's current insurance age drives maturity auto-detection (a schedule ending before it =
+  // matured). Skipped (NaN) when no birthday is set.
+  const birthYear = profile?.birthday ? Number(profile.birthday.slice(0, 4)) : NaN
+  const currentAge = Number.isFinite(birthYear)
+    ? Number(todayLocal().slice(0, 4)) - birthYear
+    : NaN
+
   // Re-parse whenever the file or a currency choice changes (currency flows into each policy).
   const result: InsuranceBulkResult | null = raw
-    ? parseInsuranceBulkCsv(raw, providers, currencies)
+    ? parseInsuranceBulkCsv(raw, providers, currencies, currentAge)
     : null
 
   async function onFile(file: File) {

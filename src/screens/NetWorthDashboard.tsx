@@ -335,7 +335,7 @@ export function NetWorthDashboard() {
                   </span>
                   {f.returnRate != null && (
                     <span
-                      className={`w-16 shrink-0 text-right text-xs ${gainLossClass(f.returnRate)}`}
+                      className={`w-12 shrink-0 text-right text-xs ${gainLossClass(f.returnRate)}`}
                     >
                       {f.returnRate > 0 ? '+' : ''}
                       {f.returnRate.toFixed(1)}%

@@ -26,15 +26,18 @@ import {
   type ScheduleVersion,
 } from '../lib/networth'
 import { effectiveProviders, type InsuranceProviderConfig } from '../lib/insurance-config'
-import { formatDayLabel, formatFullDate, todayLocal } from '../lib/date'
+import { formatFullDate, todayLocal } from '../lib/date'
 import { routes } from '../constants/routes'
 import { showToast } from '../lib/toast'
+import type { TablesUpdate } from '../types/database'
 import { Calendar } from '../components/Calendar'
 import { SelectMenu } from '../components/SelectMenu'
 import { SegmentedTabs } from '../components/SegmentedTabs'
 import { EntryHeaderActions } from '../components/EntryHeaderActions'
 import { ConfirmDeleteAction } from '../components/ConfirmDeleteAction'
 import { PrimaryButton } from '../components/PrimaryButton'
+
+type TerminationKind = 'surrendered' | 'matured'
 
 interface PolicyDraft {
   provider: string // configured provider key
@@ -43,9 +46,11 @@ interface PolicyDraft {
   start_date: string | null
   currency: Currency
   notes: string
-  surrendered_from_month: string | null
-  surrender_date: string | null
-  surrender_proceeds: string // editable numeric
+  // Termination = surrender OR maturity (mutually exclusive). null kind = active policy.
+  termination_kind: TerminationKind | null
+  termination_date: string | null
+  termination_effective_date: string | null
+  termination_proceeds: string // editable numeric
 }
 
 function blankDraft(providers: InsuranceProviderConfig[]): PolicyDraft {
@@ -57,17 +62,20 @@ function blankDraft(providers: InsuranceProviderConfig[]): PolicyDraft {
     start_date: null,
     currency: first?.defaultCurrency ?? 'HKD',
     notes: '',
-    surrendered_from_month: null,
-    surrender_date: null,
-    surrender_proceeds: '',
+    termination_kind: null,
+    termination_date: null,
+    termination_effective_date: null,
+    termination_proceeds: '',
   }
 }
 
 // The shared single-line field standard (see `.field-control` in index.css) + full width.
 const inputClass = 'field-control w-full'
 
-const surrenderBtnClass =
-  'rounded-pill border border-border bg-input px-3 py-1.5 text-xs font-medium text-accent'
+const pillBtn =
+  'rounded-pill border border-border bg-input px-3 py-1.5 text-xs font-medium'
+const greyPill = `${pillBtn} text-text-secondary` // Mark Surrendered · Cancel · Un-mark
+const bluePill = `${pillBtn} text-accent` // Mark Matured
 
 const CCY_OPTIONS = CURRENCIES.map((c) => ({ value: c, label: c }))
 
@@ -83,6 +91,11 @@ export function InsuranceEntry() {
     () => effectiveProviders(profile?.insurance_providers),
     [profile?.insurance_providers],
   )
+  // Owner's current insurance age (drives single-import maturity auto-detect); NaN if no birthday.
+  const birthYear = profile?.birthday ? Number(profile.birthday.slice(0, 4)) : NaN
+  const currentAge = Number.isFinite(birthYear)
+    ? Number(todayLocal().slice(0, 4)) - birthYear
+    : NaN
 
   const loadFn = useCallback(async () => {
     if (!id || !userId)
@@ -98,10 +111,11 @@ export function InsuranceEntry() {
         start_date: p.start_date,
         currency: (p.currency as Currency) ?? 'USD',
         notes: p.notes ?? '',
-        surrendered_from_month: p.surrendered_from_month,
-        surrender_date: p.surrender_date,
-        surrender_proceeds:
-          p.surrender_proceeds == null ? '' : String(p.surrender_proceeds),
+        termination_kind: (p.termination_kind as TerminationKind | null) ?? null,
+        termination_date: p.termination_date,
+        termination_effective_date: p.termination_effective_date,
+        termination_proceeds:
+          p.termination_proceeds == null ? '' : String(p.termination_proceeds),
       },
       schedules: data.schedules,
     }
@@ -123,6 +137,7 @@ export function InsuranceEntry() {
           initialDraft={initial.draft}
           initialSchedules={initial.schedules}
           providers={providers}
+          currentAge={currentAge}
         />
       )}
     </div>
@@ -135,31 +150,37 @@ function PolicyForm({
   initialDraft,
   initialSchedules,
   providers,
+  currentAge,
 }: {
   id: string | undefined
   userId: string
   initialDraft: PolicyDraft
   initialSchedules: ScheduleVersion[]
   providers: InsuranceProviderConfig[]
+  currentAge: number
 }) {
   const navigate = useNavigate()
   const providerOptions = providers.map((p) => ({ value: p.key, label: p.label }))
   const [draft, setDraft] = useState<PolicyDraft>(initialDraft)
+  // Baseline for dirty / RESET; re-seeded after a schedule import changes policy fields.
+  const [baseline, setBaseline] = useState<PolicyDraft>(initialDraft)
   const [schedules, setSchedules] = useState<ScheduleVersion[]>(initialSchedules)
   const [selectedSchedule, setSelectedSchedule] = useState<string>(
     initialSchedules[0]?.id ?? '',
   )
   const [saving, setSaving] = useState(false)
-  const [surrenderingOpen, setSurrenderingOpen] = useState(false)
-  const [confirmUnsurr, setConfirmUnsurr] = useState(false)
-  const [cal, setCal] = useState<
-    'start' | 'surrenderMonth' | 'surrenderDate' | 'eff' | null
-  >(null)
+  // Which kind's section is being opened on a not-yet-terminated policy (null = neither).
+  const [markingKind, setMarkingKind] = useState<TerminationKind | null>(null)
+  const [confirmUnmark, setConfirmUnmark] = useState(false)
+  const [cal, setCal] = useState<'start' | 'termDate' | 'termEff' | 'eff' | null>(null)
   const [importOpen, setImportOpen] = useState(false)
 
   const update = (patch: Partial<PolicyDraft>) => setDraft((d) => ({ ...d, ...patch }))
-  const dirty = JSON.stringify(draft) !== JSON.stringify(initialDraft)
-  const isSurrendered = !!draft.surrendered_from_month
+  const dirty = JSON.stringify(draft) !== JSON.stringify(baseline)
+  const isTerminated = !!draft.termination_effective_date
+  // The kind whose section is shown: the persisted kind, else the one being opened.
+  const activeKind: TerminationKind | null = draft.termination_kind ?? markingKind
+  const isMaturity = activeKind === 'matured'
 
   async function reload() {
     if (!id) return
@@ -178,14 +199,16 @@ function PolicyForm({
       return false
     }
     if (
-      (surrenderingOpen || isSurrendered) &&
+      (markingKind || isTerminated) &&
       !(
-        draft.surrendered_from_month &&
-        draft.surrender_date &&
-        draft.surrender_proceeds.trim()
+        draft.termination_date &&
+        draft.termination_effective_date &&
+        draft.termination_proceeds.trim()
       )
     ) {
-      showToast('Surrender needs a date, effective-from, and proceeds')
+      showToast(
+        `${isMaturity ? 'Maturity' : 'Surrender'} needs a date, effective-from, and proceeds`,
+      )
       return false
     }
     return true
@@ -199,10 +222,11 @@ function PolicyForm({
       start_date: draft.start_date,
       currency: draft.currency,
       notes: draft.notes.trim() || null,
-      surrendered_from_month: draft.surrendered_from_month,
-      surrender_date: draft.surrender_date,
-      surrender_proceeds: draft.surrender_proceeds.trim()
-        ? Number(draft.surrender_proceeds)
+      termination_kind: draft.termination_kind,
+      termination_date: draft.termination_date,
+      termination_effective_date: draft.termination_effective_date,
+      termination_proceeds: draft.termination_proceeds.trim()
+        ? Number(draft.termination_proceeds)
         : null,
     }
   }
@@ -237,12 +261,28 @@ function PolicyForm({
     }
   }
 
-  function unsurrender() {
-    setSurrenderingOpen(false)
+  // Start marking a not-yet-terminated policy (mutually exclusive — only one section opens).
+  function startMarking(kind: TerminationKind) {
+    setMarkingKind(kind)
+  }
+  // Cancel before the date is set (no fields persisted yet); clear any stray draft values.
+  function cancelMarking() {
+    setMarkingKind(null)
     update({
-      surrendered_from_month: null,
-      surrender_date: null,
-      surrender_proceeds: '',
+      termination_kind: null,
+      termination_date: null,
+      termination_effective_date: null,
+      termination_proceeds: '',
+    })
+  }
+  function unmark() {
+    setConfirmUnmark(false)
+    setMarkingKind(null)
+    update({
+      termination_kind: null,
+      termination_date: null,
+      termination_effective_date: null,
+      termination_proceeds: '',
     })
   }
 
@@ -258,10 +298,17 @@ function PolicyForm({
         const created = await createPolicy(userId, policyPatch())
         policyId = created.id
       }
-      // The file may override name / start date.
-      const overridePatch: Record<string, string> = {}
+      // The file may override name / start date / notes, and auto-detected maturity.
+      const overridePatch: TablesUpdate<'insurance_policy'> = {}
       if (parsed.policy_name) overridePatch.policy_name = parsed.policy_name
       if (parsed.start_date) overridePatch.start_date = parsed.start_date
+      if (parsed.notes) overridePatch.notes = parsed.notes
+      if (parsed.termination_kind) {
+        overridePatch.termination_kind = parsed.termination_kind
+        overridePatch.termination_date = parsed.termination_date
+        overridePatch.termination_effective_date = parsed.termination_effective_date
+        overridePatch.termination_proceeds = parsed.termination_proceeds
+      }
       if (Object.keys(overridePatch).length > 0) {
         await savePolicyFields(policyId, overridePatch)
       }
@@ -292,6 +339,7 @@ function PolicyForm({
       if (!id) {
         navigate(routes.networth.insuranceEdit(policyId), { replace: true })
       } else {
+        applyImportOverrides(parsed)
         await reload()
       }
     } catch (e) {
@@ -301,15 +349,40 @@ function PolicyForm({
     }
   }
 
+  // Reflect the file's policy-field overrides into the on-screen draft + baseline (so the section
+  // shows and the form isn't falsely "dirty") after they've been persisted.
+  function applyImportOverrides(parsed: ParsedSinglePolicy) {
+    const o: Partial<PolicyDraft> = {}
+    if (parsed.policy_name) o.policy_name = parsed.policy_name
+    if (parsed.start_date) o.start_date = parsed.start_date
+    if (parsed.notes) o.notes = parsed.notes
+    if (parsed.termination_kind) {
+      o.termination_kind = parsed.termination_kind
+      o.termination_date = parsed.termination_date
+      o.termination_effective_date = parsed.termination_effective_date
+      o.termination_proceeds =
+        parsed.termination_proceeds == null ? '' : String(parsed.termination_proceeds)
+    }
+    if (Object.keys(o).length > 0) {
+      setDraft((d) => ({ ...d, ...o }))
+      setBaseline((b) => ({ ...b, ...o }))
+    }
+  }
+
   const selected = schedules.find((v) => v.id === selectedSchedule) ?? null
 
   async function onPickCalendar(d: string) {
     if (cal === 'start') update({ start_date: d })
-    else if (cal === 'surrenderMonth') update({ surrendered_from_month: d })
-    // Setting/changing the Surrender Date re-syncs "Effective From" to match; the user can then
-    // override it independently via its own field.
-    else if (cal === 'surrenderDate')
-      update({ surrender_date: d, surrendered_from_month: d })
+    // Setting/changing the termination Date re-syncs "Effective From" to match; the user can then
+    // override it independently. Both set the kind from the section being marked.
+    else if (cal === 'termDate')
+      update({
+        termination_date: d,
+        termination_effective_date: d,
+        termination_kind: activeKind,
+      })
+    else if (cal === 'termEff')
+      update({ termination_effective_date: d, termination_kind: activeKind })
     else if (cal === 'eff' && selected && id) {
       await updateScheduleEffectiveDate(selected.id, d)
       bumpNetWorth()
@@ -341,7 +414,7 @@ function PolicyForm({
           editing={!!id}
           dirty={dirty}
           saving={saving}
-          onReset={() => setDraft(initialDraft)}
+          onReset={() => setDraft(baseline)}
           onSubmit={() => void save()}
           onDelete={id ? () => void remove() : undefined}
         />
@@ -384,7 +457,7 @@ function PolicyForm({
             <p className="mb-1 text-xs text-text-secondary">Start Date</p>
             <button onClick={() => setCal('start')} className={`text-left ${inputClass}`}>
               {draft.start_date ? (
-                formatDayLabel(draft.start_date)
+                formatFullDate(draft.start_date)
               ) : (
                 <span className="text-text-tertiary">Set date</span>
               )}
@@ -411,97 +484,111 @@ function PolicyForm({
           />
         </label>
 
-        {/* SURRENDER */}
+        {/* TERMINATION — surrender OR maturity (mutually exclusive) */}
         <div>
-          <div className="mb-2 flex items-center justify-between">
-            <p className="text-[11px] uppercase tracking-[0.08em] text-text-secondary">
-              Surrender
-            </p>
-            {isSurrendered ? (
-              confirmUnsurr ? (
-                <div className="flex items-center gap-1">
-                  <span className="text-xs text-text-secondary">Un-surrender?</span>
-                  <button
-                    onClick={() => {
-                      setConfirmUnsurr(false)
-                      unsurrender()
-                    }}
-                    aria-label="Confirm un-surrender"
-                    className="p-1 text-danger"
-                  >
-                    <IconCheck size={18} />
+          {activeKind ? (
+            <>
+              <div className="mb-2 flex items-center justify-between">
+                <p className="text-[11px] uppercase tracking-[0.08em] text-text-secondary">
+                  {isMaturity ? 'Maturity' : 'Surrender'}
+                </p>
+                {isTerminated ? (
+                  confirmUnmark ? (
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs text-text-secondary">
+                        {isMaturity ? 'Un-mature?' : 'Un-surrender?'}
+                      </span>
+                      <button
+                        onClick={unmark}
+                        aria-label="Confirm un-mark"
+                        className="p-1 text-danger"
+                      >
+                        <IconCheck size={18} />
+                      </button>
+                      <button
+                        onClick={() => setConfirmUnmark(false)}
+                        aria-label="Cancel un-mark"
+                        className="p-1 text-text-secondary"
+                      >
+                        <IconX size={18} />
+                      </button>
+                    </div>
+                  ) : (
+                    <button onClick={() => setConfirmUnmark(true)} className={greyPill}>
+                      {isMaturity ? 'Un-Mature' : 'Un-Surrender'}
+                    </button>
+                  )
+                ) : (
+                  <button onClick={cancelMarking} className={greyPill}>
+                    Cancel
                   </button>
-                  <button
-                    onClick={() => setConfirmUnsurr(false)}
-                    aria-label="Cancel un-surrender"
-                    className="p-1 text-text-secondary"
-                  >
-                    <IconX size={18} />
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => setConfirmUnsurr(true)}
-                  className={surrenderBtnClass}
-                >
-                  Un-Surrender
-                </button>
-              )
-            ) : (
-              <button
-                onClick={() => setSurrenderingOpen((o) => !o)}
-                className={surrenderBtnClass}
-              >
-                {surrenderingOpen ? 'Cancel' : 'Mark Surrendered'}
-              </button>
-            )}
-          </div>
-          {(isSurrendered || surrenderingOpen) && (
-            <div className="flex flex-col gap-3 rounded-card border border-border bg-surface p-3">
-              <div className="flex gap-3">
-                <div className="flex-1">
-                  <p className="mb-1 text-xs text-text-secondary">Surrender Date</p>
-                  <button
-                    onClick={() => setCal('surrenderDate')}
-                    className={`text-left ${inputClass}`}
-                  >
-                    {draft.surrender_date ? (
-                      formatDayLabel(draft.surrender_date)
-                    ) : (
-                      <span className="text-text-tertiary">Set date</span>
-                    )}
-                  </button>
-                </div>
-                <div className="flex-1">
-                  <p className="mb-1 text-xs text-text-secondary">
-                    Surrender Effective From
-                  </p>
-                  <button
-                    onClick={() => setCal('surrenderMonth')}
-                    className={`text-left ${inputClass}`}
-                  >
-                    {draft.surrendered_from_month ? (
-                      formatDayLabel(draft.surrendered_from_month)
-                    ) : (
-                      <span className="text-text-tertiary">Set date</span>
-                    )}
-                  </button>
-                </div>
+                )}
               </div>
-              <label className="text-xs text-text-secondary">
-                Actual Proceeds
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  step="any"
-                  value={draft.surrender_proceeds}
-                  onChange={(e) => update({ surrender_proceeds: e.target.value })}
-                  className={`no-spinner mt-1 ${inputClass}`}
-                />
-              </label>
-              <p className="text-xs text-text-tertiary">
-                Enter the cash received as a Cash entry in Monthly Entry.
+              <div className="flex flex-col gap-3 rounded-card border border-border bg-surface p-3">
+                <div className="flex gap-3">
+                  <div className="flex-1">
+                    <p className="mb-1 text-xs text-text-secondary">
+                      {isMaturity ? 'Maturity Date' : 'Surrender Date'}
+                    </p>
+                    <button
+                      onClick={() => setCal('termDate')}
+                      className={`text-left ${inputClass}`}
+                    >
+                      {draft.termination_date ? (
+                        formatFullDate(draft.termination_date)
+                      ) : (
+                        <span className="text-text-tertiary">Set date</span>
+                      )}
+                    </button>
+                  </div>
+                  <div className="flex-1">
+                    <p className="mb-1 text-xs text-text-secondary">
+                      {isMaturity
+                        ? 'Maturity Effective From'
+                        : 'Surrender Effective From'}
+                    </p>
+                    <button
+                      onClick={() => setCal('termEff')}
+                      className={`text-left ${inputClass}`}
+                    >
+                      {draft.termination_effective_date ? (
+                        formatFullDate(draft.termination_effective_date)
+                      ) : (
+                        <span className="text-text-tertiary">Set date</span>
+                      )}
+                    </button>
+                  </div>
+                </div>
+                <label className="text-xs text-text-secondary">
+                  Actual Proceeds
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    step="any"
+                    value={draft.termination_proceeds}
+                    onChange={(e) => update({ termination_proceeds: e.target.value })}
+                    className={`no-spinner mt-1 ${inputClass}`}
+                  />
+                </label>
+                <p className="text-xs text-text-tertiary">
+                  Enter the cash received {isMaturity ? 'into' : 'as'} Cash in Monthly
+                  Entry.
+                </p>
+              </div>
+            </>
+          ) : (
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] uppercase tracking-[0.08em] text-text-secondary">
+                Termination
               </p>
+              <div className="flex items-center gap-2">
+                <button onClick={() => startMarking('surrendered')} className={greyPill}>
+                  Mark Surrendered
+                </button>
+                <button onClick={() => startMarking('matured')} className={bluePill}>
+                  Mark Matured
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -530,7 +617,7 @@ function PolicyForm({
                     className="field-control flex-1 text-left"
                   >
                     {selected.effective_date ? (
-                      formatDayLabel(selected.effective_date)
+                      formatFullDate(selected.effective_date)
                     ) : (
                       <span className="text-text-tertiary">Set date</span>
                     )}
@@ -605,10 +692,10 @@ function PolicyForm({
           day={
             (cal === 'start'
               ? draft.start_date
-              : cal === 'surrenderMonth'
-                ? draft.surrendered_from_month
-                : cal === 'surrenderDate'
-                  ? draft.surrender_date
+              : cal === 'termEff'
+                ? draft.termination_effective_date
+                : cal === 'termDate'
+                  ? draft.termination_date
                   : selected?.effective_date) ?? todayLocal()
           }
           onSelect={(d) => void onPickCalendar(d)}
@@ -622,6 +709,7 @@ function PolicyForm({
           providers={providers}
           policyNumber={draft.policy_number.trim()}
           schedules={schedules}
+          currentAge={currentAge}
           busy={saving}
           onApply={applyImport}
           onClose={() => setImportOpen(false)}
@@ -638,6 +726,7 @@ function ImportScheduleOverlay({
   providers,
   policyNumber,
   schedules,
+  currentAge,
   busy,
   onApply,
   onClose,
@@ -646,6 +735,7 @@ function ImportScheduleOverlay({
   providers: InsuranceProviderConfig[]
   policyNumber: string
   schedules: ScheduleVersion[]
+  currentAge: number
   busy: boolean
   onApply: (
     parsed: ParsedSinglePolicy,
@@ -663,7 +753,7 @@ function ImportScheduleOverlay({
     setParseErrors([])
     try {
       const text = await file.text()
-      const res = parseInsuranceSingleCsv(parseCsv(text), providers)
+      const res = parseInsuranceSingleCsv(parseCsv(text), providers, currentAge)
       setParsed(res.policy)
       setParseErrors(res.errors)
       setFileName(file.name)
@@ -729,6 +819,7 @@ function ImportScheduleOverlay({
             <div className="rounded-card border border-border bg-surface px-4 py-3 text-sm text-text-primary">
               {parsed.policy_number} · {parsed.points.length} schedule point
               {parsed.points.length === 1 ? '' : 's'}
+              {parsed.termination_kind === 'matured' && ' · auto-detected Matured'}
             </div>
             {mismatch && (
               <p className="text-xs text-danger">

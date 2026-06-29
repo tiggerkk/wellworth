@@ -6,7 +6,7 @@ import { NutrientReport } from '../components/NutrientReport'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { listEntriesByDay } from '../data/diary-entry'
-import { formatDayLabel, todayLocal } from '../lib/date'
+import { formatFullDate, todayLocal } from '../lib/date'
 
 export function DailyReportSheet() {
   const navigate = useNavigate()
@@ -27,7 +27,7 @@ export function DailyReportSheet() {
           <IconX size={22} className="text-text-secondary" />
         </button>
         <h1 className="text-[17px] font-medium text-text-primary">
-          Daily Report · {formatDayLabel(day)}
+          Daily Report · {formatFullDate(day)}
         </h1>
       </header>
       <div className="flex-1 overflow-y-auto py-2">

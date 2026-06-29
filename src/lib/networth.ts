@@ -201,15 +201,21 @@ export function visibleAssetTypes(
   return ordered.filter((k) => visible.includes(k) || !seen.has(k))
 }
 
-/** Chart/legend/summary color per asset type — CSS vars from the @theme palette (index.css). */
+/**
+ * Chart/legend/summary + section-accent color per asset type — CSS vars from the @theme palette
+ * (index.css). Shared by the Dashboard "By asset type" dots, the Monthly-Entry section stripes/tints,
+ * and the trend chart, so every surface reads the same hue per type. Hues are picked so that
+ * *consecutive* types in `ASSET_TYPES` jump across the colour wheel (green → blue → gold → purple →
+ * orange → rose → grey) — no two adjacent sections share a warm/cool band, so they read clearly apart.
+ */
 export const ASSET_TYPE_COLORS: Record<AssetType, string> = {
-  cash: 'var(--color-positive)',
-  time_deposit: 'var(--color-cat-activity)',
-  stock: 'var(--color-accent)',
-  fund: 'var(--color-cat-supplement)',
-  retirement: 'var(--color-cat-snack)',
-  insurance: 'var(--color-cat-meal)',
-  property: 'var(--color-text-muted)',
+  cash: 'var(--color-positive)', // teal-green
+  time_deposit: 'var(--color-cat-activity)', // blue
+  stock: 'var(--color-dynasty)', // gold (was a 2nd blue, too close to time_deposit)
+  fund: 'var(--color-cat-supplement)', // purple
+  retirement: 'var(--color-cat-snack)', // orange
+  insurance: 'var(--color-favorite)', // rose (was red, too close to retirement orange)
+  property: 'var(--color-text-muted)', // grey
 }
 
 // =====================================================================================

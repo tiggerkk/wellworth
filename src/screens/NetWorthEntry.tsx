@@ -51,6 +51,7 @@ import { addMonths, formatMonthLabel, startOfMonth, todayLocal } from '../lib/da
 import { draftAmount } from '../lib/quantity'
 import { routes } from '../constants/routes'
 import { useEscapeKey } from '../hooks/useEscapeKey'
+import { useSessionState } from '../hooks/useSessionState'
 import { FundDetail } from '../components/FundDetail'
 import { EntryHeaderActions } from '../components/EntryHeaderActions'
 import { ConfirmDeleteAction } from '../components/ConfirmDeleteAction'
@@ -119,9 +120,10 @@ function resolveInsuranceRows(
   const age = ageForYear(Number(month.slice(0, 4)), birthYear)
   const rows: EntryDraft[] = []
   for (const { policy, schedules } of catalogue) {
+    // Terminated (surrendered OR matured) policies drop out from their effective month.
     if (
-      policy.surrendered_from_month &&
-      month >= startOfMonth(policy.surrendered_from_month)
+      policy.termination_effective_date &&
+      month >= startOfMonth(policy.termination_effective_date)
     )
       continue
     const r = resolvePolicyAtAge(schedules, age)
@@ -185,7 +187,13 @@ export function NetWorthEntry() {
   const userId = session?.user.id
   const { data: profile } = useProfile()
   const version = useNetWorthVersion()
-  const [month, setMonth] = useState(() => startOfMonth(todayLocal()))
+  // Persist the selected month in sessionStorage so it survives the unmount when an Import sheet opens
+  // over the entry and closes (the background tab is re-rendered from a static element map, which would
+  // otherwise reset local state to the current month). Defaults to the current month on a fresh tab.
+  const [month, setMonth] = useSessionState(
+    'networth-entry-month',
+    startOfMonth(todayLocal()),
+  )
 
   const birthYear = profile?.birthday
     ? Number(profile.birthday.slice(0, 4))
@@ -200,24 +208,31 @@ export function NetWorthEntry() {
   )
 
   const loadFn = useCallback(async (): Promise<
-    MonthDraft & { snapshotId: string | null }
+    MonthDraft & { snapshotId: string | null; needsFreeze: boolean }
   > => {
     void version
-    if (!userId) return { rows: [], fxRates: blankRates(), snapshotId: null }
+    if (!userId)
+      return { rows: [], fxRates: blankRates(), snapshotId: null, needsFreeze: false }
     const existing = await getSnapshotWithEntries(userId, month)
     // A saved month shows its FROZEN rows (manual + fund + insurance). If it has no frozen insurance
     // yet (e.g. the snapshot was created by the manual CSV import, which never freezes insurance),
     // live-resolve insurance from the catalogue so it still appears — a Monthly Entry SAVE freezes it.
     if (existing) {
       const base = draftFromEntries(existing.entries)
+      // When live insurance is injected into a snapshot that has none persisted, the displayed total
+      // is higher than what's saved (and the Dashboard, which reads the saved snapshot, won't match).
+      // Flag `needsFreeze` so SAVE is enabled even without a manual edit — pressing it freezes the
+      // insurance into the snapshot and reconciles the Dashboard.
+      let needsFreeze = false
       if (!base.rows.some((r) => r.asset_type === 'insurance')) {
         const catalogue = await listCatalogue(userId)
-        base.rows = [
-          ...base.rows,
-          ...resolveInsuranceRows(catalogue, month, birthYear, providers),
-        ]
+        const insurance = resolveInsuranceRows(catalogue, month, birthYear, providers)
+        if (insurance.length > 0) {
+          base.rows = [...base.rows, ...insurance]
+          needsFreeze = true
+        }
       }
-      return { ...base, snapshotId: existing.snapshot.id }
+      return { ...base, snapshotId: existing.snapshot.id, needsFreeze }
     }
 
     // New month: copy manual + fund forward; insurance is re-resolved from the catalogue. The prior
@@ -232,14 +247,18 @@ export function NetWorthEntry() {
       : null
     const carried = (priorRows?.rows ?? []).filter((r) => r.asset_type !== 'insurance')
     const insurance = resolveInsuranceRows(catalogue, month, birthYear, providers)
+    const newRows = [...carried, ...insurance]
     return {
-      rows: [...carried, ...insurance],
+      rows: newRows,
       fxRates: {
         HKD: '1',
         CNY: fetched.CNY != null ? String(fetched.CNY) : (priorRows?.fxRates.CNY ?? ''),
         USD: fetched.USD != null ? String(fetched.USD) : (priorRows?.fxRates.USD ?? ''),
       },
       snapshotId: null,
+      // A brand-new month is entirely unpersisted — enable SAVE so the copied-forward snapshot can be
+      // created without first editing a value.
+      needsFreeze: newRows.length > 0,
     }
   }, [userId, month, version, birthYear, providers])
   const { data: initial, loading, error } = useAsync(loadFn)
@@ -291,6 +310,7 @@ export function NetWorthEntry() {
           setMonth={setMonth}
           initial={initial}
           initialSnapshotId={initial.snapshotId}
+          initialNeedsFreeze={initial.needsFreeze}
           visibleTypes={visibleTypes}
           providers={providers}
         />
@@ -307,6 +327,7 @@ function EntryForm({
   setMonth,
   initial,
   initialSnapshotId,
+  initialNeedsFreeze,
   visibleTypes,
   providers,
 }: {
@@ -315,6 +336,7 @@ function EntryForm({
   setMonth: (m: string) => void
   initial: MonthDraft
   initialSnapshotId: string | null
+  initialNeedsFreeze: boolean
   visibleTypes: AssetType[]
   providers: InsuranceProviderConfig[]
 }) {
@@ -336,12 +358,17 @@ function EntryForm({
     ),
   )
   const [fundModal, setFundModal] = useState<EntryDraft | null>(null)
+  // True when the loaded rows differ from what's persisted (live insurance injected into a snapshot
+  // with none frozen, or a brand-new month) — SAVE must be enabled even before any manual edit so the
+  // snapshot can be frozen/created. Cleared once SAVE persists the current rows as the new baseline.
+  const [needsFreeze, setNeedsFreeze] = useState(initialNeedsFreeze)
 
   // The Dashboard's fund detail is a routed `Sheet` (closes on Esc + browser-back for free); this
   // local modal isn't a route, so wire the same Esc dismissal (shared LIFO handler).
   useEscapeKey(() => setFundModal(null), fundModal != null)
 
   const dirty = serialize(rows, fxRates) !== serialize(baseline.rows, baseline.fxRates)
+  const canSave = dirty || needsFreeze
 
   async function refreshRate(ccy: FetchableCurrency) {
     setFetching(ccy)
@@ -436,6 +463,7 @@ function EntryForm({
       await saveSnapshotEntries(userId, month, payload)
       bumpNetWorth()
       setBaseline({ rows: cloneRows(rows), fxRates: { ...fxRates } })
+      setNeedsFreeze(false) // rows are now persisted — no pending freeze
     } finally {
       setSaving(false)
     }
@@ -449,6 +477,7 @@ function EntryForm({
       bumpNetWorth()
       setRows([])
       setBaseline({ rows: [], fxRates: { ...fxRates } })
+      setNeedsFreeze(false)
     } finally {
       setSaving(false)
     }
@@ -487,7 +516,7 @@ function EntryForm({
           </div>
           <EntryHeaderActions
             editing
-            dirty={dirty}
+            dirty={canSave}
             saving={saving}
             onReset={reset}
             onSubmit={() => void save()}
@@ -580,10 +609,15 @@ function EntryForm({
           return (
             <div
               key={type}
-              className="shrink-0 overflow-hidden rounded-card border bg-surface"
-              style={{ borderColor: ASSET_TYPE_COLORS[type] }}
+              className="shrink-0 overflow-hidden rounded-card border border-border bg-surface"
+              style={{ borderLeft: `4px solid ${ASSET_TYPE_COLORS[type]}` }}
             >
-              <div className="flex items-center gap-2 px-3 py-2.5">
+              <div
+                className="flex items-center gap-2 px-3 py-2.5"
+                style={{
+                  backgroundColor: `color-mix(in srgb, ${ASSET_TYPE_COLORS[type]} 14%, transparent)`,
+                }}
+              >
                 <button
                   onClick={() => setExpanded((e) => ({ ...e, [type]: !isOpen }))}
                   aria-label={isOpen ? 'Collapse' : 'Expand'}
@@ -737,7 +771,7 @@ function ManualRow({
   const details = DETAIL_FIELDS[row.asset_type]
   const showConversion = row.currency !== 'HKD'
   return (
-    <div className="border-b border-border py-3 pl-3 pr-2 last:border-b-0">
+    <div className="border-b border-border py-3 pr-1 pl-3 last:border-b-0">
       {/* Name · CCY · Value · Delete on one line; the trash hugs the right edge */}
       <div className="flex items-center gap-2">
         <input
@@ -765,7 +799,7 @@ function ManualRow({
           placeholder="Value"
           value={row.valueNative}
           onChange={(e) => onChange({ valueNative: e.target.value })}
-          className={`no-spinner w-20 shrink-0 text-right ${inputCls}`}
+          className={`no-spinner w-24 shrink-0 text-right ${inputCls}`}
         />
         <ConfirmDeleteAction label="Remove entry" onDelete={onRemove} />
       </div>
@@ -779,7 +813,15 @@ function ManualRow({
               <input
                 value={row.details[f.key] ?? ''}
                 onChange={(e) => onDetail(f.key, e.target.value)}
-                className={`${f.key === 'ticker' ? 'w-16' : 'w-24'} ${inputCls}`}
+                // Maturity Date holds a full date (e.g. 2027-06-15) — wide enough to show it all;
+                // ticker is ~3 chars; other details default to a medium box.
+                className={`${
+                  f.key === 'ticker'
+                    ? 'w-16'
+                    : f.key === 'maturity_date'
+                      ? 'w-40'
+                      : 'w-24'
+                } ${inputCls}`}
               />
             </label>
           ))}

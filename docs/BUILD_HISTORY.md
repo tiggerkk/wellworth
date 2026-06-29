@@ -33,7 +33,7 @@ Each module's former staging spec (`docs/06-books.md`, `07-quotes.md`, `medical.
 
 ## Snapshot
 
-- **Tests:** 607 Vitest tests (pure helpers only).
+- **Tests:** 611 Vitest tests (pure helpers only).
 - **Deploy:** Deployed — GitHub `main` → Vercel auto-deploy; installed + tested on iPhone (PWA).
 - **Stack / scripts / env / gates / conventions:** see `02_tech_spec.md` (the canonical, current reference) — not duplicated here.
 
@@ -2860,3 +2860,91 @@ buried it: searching "Coffee, Latte" surfaced "Coffee, Iced Latte"/"…nonfat" a
   import row is now **ok** instead of always **review**.
 - 2 new `food-search` tests (Coffee/Latte ordering; with/without collision). Test count **607**.
   Verified by `npm run check`.
+
+## Date format — one canonical `MMM DD, YYYY` everywhere (2026-06-30)
+
+Date values displayed inconsistently — many screens showed a weekday + `Today/Yesterday`
+(`formatDayLabel`, e.g. `Tue, Jun 30`). Standardized on **`formatFullDate`** (`MMM DD, YYYY`) for every
+date value, with the lone exception of Shows/Books/Quotes **Dashboard + Library** rows (and the Shows
+Dashboard "Started" line), which stay **`formatMonthDay`** (`MMM DD`, no year). Convention in
+`01_design_system.md`.
+
+- **`formatDayLabel`** kept but **de-weekday'd**: now `Today`/`Yesterday`/`Tomorrow` else
+  `formatFullDate` (`MMM DD, YYYY`) — used **only** for the Wellness Diary nav/header + its copy toast
+  (the one place relative day labels make sense). Its old weekday fallback (`Tue, Jun 30`) is gone.
+- Repointed every other former `formatDayLabel` call site to `formatFullDate`: Edit Insurance dates,
+  all filters (`DateRangeRow`), Daily Report, profile birthday, Shows/Books/Medical entry date pickers,
+  and the Medical-import preview; the Shows Dashboard "Started" line → `formatMonthDay`.
+- The Calendar's own month-grid header (`June 2026`) is unaffected. Test count 611. Verified by
+  `npm run check`.
+
+## Net Worth — Matured vs Surrendered insurance policies (2026-06-30)
+
+Insurance policies could only be **surrendered**; policies that **mature** (reach term, pay out, stop
+counting) were indistinguishable. Generalized surrender into **termination** with a kind discriminator,
+auto-detected maturity on import, and surfaced a Matured filter/badge + Mark Matured flow. Behavior in
+`05_networth.md`; format in `templates/insurance-import-guide.md`.
+
+- **Schema** (`03_networth_schema.sql`, edit-in-place): renamed `surrender_*` → **`termination_kind`**
+  (`surrendered|matured`, CHECK) · **`termination_date`** · **`termination_effective_date`** (renamed
+  from `surrendered_from_month` — it stores a full date) · **`termination_proceeds`**, in that order,
+  - a CHECK tying `termination_effective_date` and `termination_kind` (set/cleared together).
+    `database.ts` hand-edited; owner regenerates on `db reset`.
+- **Exclusion** (`asset-entry.ts` + `NetWorthEntry.tsx`): a policy drops out of the monthly total from
+  `termination_effective_date`'s month — kind-agnostic, so matured policies exclude exactly like
+  surrendered ones.
+- **Import** (`insurance-import.ts`): pure **`detectMaturity`** (schedule ends before the owner's
+  current age ⇒ Matured; proceeds = last cash value; date = start month/day + `start_year + last
+policy_year`). Bulk format gained a **notes row** (provider · name · number:date · **notes** ·
+  sub-header · data); single format gained a `Notes,` line. Both take `currentAge` (from
+  `profile.birthday`); `ImportInsuranceBulkSheet`/`InsuranceEntry` pass it. `upsertBulkPolicies` now
+  stores notes + termination.
+- **Data layer:** `setSurrender`/`clearSurrender` → `setTermination`/`clearTermination`.
+- **Policies screen:** search adds **notes**; the standalone "Surrendered Only" toggle replaced by an
+  **All/Matured/Surrendered** `SegmentedTabs` (`criteria.status`, schema-drift-merged); blue **Matured**
+  badge (`bg-accent`). `insurance-view` filters on `termination_kind`.
+- **Edit screen:** grey **Mark Surrendered** + blue **Mark Matured** open a shared **Surrender/Maturity**
+  section (auto-synced effective date, proceeds, kind-specific helper); mutually exclusive; Un-mark
+  clears all four fields. Single-import auto-maturity reflected into the draft + persisted.
+- 4 new `insurance-import` tests (notes row, bulk maturity, in-force, single notes+maturity). Verified
+  by `npm run check`.
+
+## Net Worth section colours + Fund detail formatting (2026-06-29)
+
+Cosmetic/UX pass; no schema. Behaviour in `05_networth.md`; date helpers in `01_design_system.md`.
+
+- **`ASSET_TYPE_COLORS`** (`networth.ts`) re-hued so **consecutive** asset types contrast (green →
+  blue → gold → purple → orange → rose → grey): `stock` blue → **gold** (was a 2nd blue next to
+  `time_deposit`), `insurance` red → **rose** (was next to `retirement` orange). One map drives the
+  Dashboard dots, Monthly-Entry sections, and the trend chart, so all surfaces stay in sync.
+- **Monthly Entry asset-type sections** switched from a full colored border to the `MedicalSection`
+  pattern — **4px left stripe + `color-mix … 14%` tinted header**.
+- **`FundDetail`** — fund-coloured 4px left stripe; HKD amounts now `HK$1,234` via `formatHkd`
+  (matching Dashboard / Monthly Entry; non-HKD base ccy keeps `CODE 1,234` + decimals); priced-as-of
+  date now `Jun 25, 2026` via the global **`formatFullDate`** (was `YYYY-MM-DD`).
+- **Date helpers documented** as the one source of truth in `01_design_system.md` (use `formatFullDate`
+  for MMM DD, YYYY everywhere with a year; `formatMonthDay` stays year-less for Shows/Books/Quotes).
+- **Dashboard** "By asset type" + "Fund performance" % columns set to a shared **`w-12`** (down from
+  `w-16`) — aligned across both cards and narrower so the **name** column gets more room and the HKD
+  value column shifts right.
+- **SAVE-enablement fix (`needsFreeze`)** — a saved month with **live-injected insurance** (snapshot
+  had none frozen, e.g. from the manual CSV import) left the form not-`dirty`, so SAVE was disabled and
+  the live total (incl. insurance) could never be frozen — the Dashboard (saved snapshot) read lower
+  and couldn't be reconciled. The loader now flags `needsFreeze` when displayed rows differ from
+  persisted (injected insurance, or a brand-new copy-forward month); `canSave = dirty || needsFreeze`,
+  cleared after SAVE. This was the root of the earlier "June Dashboard ≠ Monthly Entry total" gap.
+- No test changes (cosmetic + UI-state). Verified by `npm run check` (607 tests).
+
+## Monthly Entry — month persistence + row layout tweaks (2026-06-29)
+
+Small UX fixes; no schema. Behaviour in `05_networth.md`.
+
+- **Import no longer resets the month** — the entry's `month` moved from `useState` to
+  **`useSessionState`** (key `networth-entry-month`). The background-location tab is re-rendered from
+  `AppShell`'s static `TAB_FOR_PATH` element map, so opening an Import sheet (manual or fund) over the
+  entry **remounted** `NetWorthEntry` and reset month to the current one; sessionStorage survives that.
+  A fresh tab still defaults to the current month.
+- **ManualRow** (Cash / Time Deposit / Stock / Retirement / Property) — **Value** box `w-20 → w-24`
+  (fits a 7-figure amount); row right padding `pr-2 → pr-1` so the trash sits closer to the edge; the
+  Time Deposit **Maturity Date** detail field `w-24 → w-40` so a full date (`2027-06-15`) isn't clipped.
+- No test changes (UI-state + layout). Verified by `npm run check` (607 tests).

@@ -22,7 +22,7 @@ import {
   type ShowType,
   type ShowUpdate,
 } from '../lib/shows'
-import { formatDayLabel, formatMonthDay, todayLocal } from '../lib/date'
+import { formatMonthDay, todayLocal } from '../lib/date'
 import { DYNASTY_CHIP } from '../constants/dynasty'
 import { routes } from '../constants/routes'
 import { SectionCard } from '../components/SectionCard'
@@ -307,7 +307,7 @@ function WatchingSecondary({ show }: { show: ShowRow }) {
       {hasProgress ? (
         <span>{progressLabel(show)}</span>
       ) : show.start_date ? (
-        <span>Started {formatDayLabel(show.start_date)}</span>
+        <span>Started {formatMonthDay(show.start_date)}</span>
       ) : null}
     </>
   )

@@ -29,7 +29,7 @@ import {
 } from '../lib/medical'
 import { groupResultsByCategory } from '../lib/medical-order'
 import { useProfile } from '../hooks/useProfile'
-import { formatDayLabel } from '../lib/date'
+import { formatFullDate } from '../lib/date'
 import { routes } from '../constants/routes'
 
 // Shared single-line field standard — see `.field-control` in index.css.
@@ -241,7 +241,7 @@ export function ImportMedicalSheet() {
                 onClick={() => setDatePicker(true)}
                 className={`text-left ${inputClass}`}
               >
-                {formatDayLabel(draft.report_date)}
+                {formatFullDate(draft.report_date)}
               </button>
             </div>
 

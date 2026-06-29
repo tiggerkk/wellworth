@@ -46,6 +46,24 @@ _not_ the primary-button color; it's for emphasis, active states, and energy.
 - Screen title 18 / 500. Modal title 17 / 500. Body 15. Secondary 12–13.
 - Section labels: 11px, UPPERCASE, letter-spacing 0.08em, color `text-secondary`.
 
+## Date formatting (one source of truth — `src/lib/date.ts`)
+
+Always format dates through these shared helpers — never inline a `new Intl.DateTimeFormat` or
+hand-built string in a screen, so the formats can't drift apart:
+
+- **`formatFullDate`** → `Jun 25, 2026` (**MMM DD, YYYY**) — **the canonical date format used
+  everywhere** a date value is shown: entry/edit screens (incl. Wellness Diary header + Daily Report),
+  all module filters (`DateRangeRow`), profile birthday, Medical reports, Net Worth Fund "priced as of".
+- **`formatMonthDay`** → `Jun 13` (MMM DD, **no year**) — **the only exception**: deliberately
+  year-less to stay short in Shows / Books / Quotes **Dashboard + Library** rows (and the Shows
+  Dashboard "Started" line); also the short end of a Travel trip date range.
+- **`formatDayLabel`** → `Today` / `Yesterday` / `Tomorrow`, else `formatFullDate` (`MMM DD, YYYY`) —
+  **Wellness Diary nav/header + its copy toast only** (the one place relative day labels make sense).
+- **`formatMonthLabel`** → `June 2026`; **`formatMonthShort`** → `Jun ’26` (chart ticks).
+
+Every other date value reads as `MMM DD, YYYY` (`formatFullDate`), or `MMM DD` (`formatMonthDay`) in
+the Shows/Books exception above — no weekday is ever shown.
+
 ## Core components (build once in `src/components`)
 
 - **BottomNav** — leading **Home** item + module tabs; active item tints `accent`. The **Home**

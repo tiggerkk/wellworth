@@ -3,15 +3,18 @@
  *
  *  1. BULK SEED — the wide spreadsheet (`templates/Insurance.xlsx` saved as CSV). One 4-column
  *     block per policy (`Policy Year, Total Premium Paid, Cash Value, Surrender Gain %/Yr`) with
- *     a shared `Age` in column A. Four header rows: provider (merged → carried forward across
- *     blank cells), policy name, `number: start_date`, and the repeating sub-header. Blocks with
- *     no policy number are skipped; trailing total columns (sub-header USD/HKD) are dropped.
+ *     a shared `Age` in column A. Five header rows: provider (merged → carried forward across
+ *     blank cells), policy name, `number: start_date`, **notes** (per-policy, in the block's first
+ *     column), and the repeating sub-header. Blocks with no policy number are skipped; trailing
+ *     total columns (sub-header USD/HKD) are dropped.
  *
  *  2. SINGLE POLICY — a narrow one-policy file: a tiny key/value header (Provider, Policy Number,
- *     optional Policy Name + Start Date), then the `Age, Policy Year, Total Premium Paid,
+ *     optional Policy Name, Start Date, Notes), then the `Age, Policy Year, Total Premium Paid,
  *     Cash Value, Surrender Gain %/Yr` table. Surrender Gain is ignored (the app recomputes it);
  *     currency + effective date are NOT in the file (set on the New/Edit Insurance screen).
  *
+ * Both imports auto-detect **maturity** (`detectMaturity`): a schedule that ends before the owner's
+ * current age is a matured policy (proceeds = last cash value; date from start + last policy year).
  * No I/O. Only real (printed) premium+cash points are emitted — carry-forward is a display rule.
  */
 import { type Currency, type SchedulePoint } from './networth'
@@ -21,7 +24,22 @@ import {
   type InsuranceProviderConfig,
 } from './insurance-config'
 
-export interface ParsedPolicy {
+/** The four termination columns a parsed policy may carry (auto-detected maturity). */
+export interface TerminationFields {
+  termination_kind: 'surrendered' | 'matured' | null
+  termination_date: string | null
+  termination_effective_date: string | null
+  termination_proceeds: number | null
+}
+
+const NO_TERMINATION: TerminationFields = {
+  termination_kind: null,
+  termination_date: null,
+  termination_effective_date: null,
+  termination_proceeds: null,
+}
+
+export interface ParsedPolicy extends TerminationFields {
   provider: string // configured provider key
   policy_number: string
   policy_name: string
@@ -29,6 +47,34 @@ export interface ParsedPolicy {
   currency: Currency
   first_year: number
   points: SchedulePoint[]
+  notes: string | null
+}
+
+/**
+ * Auto-detect maturity from a policy's schedule: if the schedule ENDS before the current age (no
+ * point at/after `currentAge`) and we know the start date, the policy has matured. Proceeds = the
+ * last (highest-age) point's cash value; date = the start date's month+day with year =
+ * `start_year + that point's policy_year` (per the owner's convention). Returns `NO_TERMINATION`
+ * when still in force / indeterminable. Pure.
+ */
+export function detectMaturity(
+  points: SchedulePoint[],
+  startDate: string | null,
+  currentAge: number,
+): TerminationFields {
+  if (points.length === 0 || !startDate || !Number.isFinite(currentAge)) {
+    return NO_TERMINATION
+  }
+  const last = points.reduce((a, b) => (b.age > a.age ? b : a))
+  if (last.age >= currentAge) return NO_TERMINATION // a point at/after current age ⇒ in force
+  const maturityYear = Number(startDate.slice(0, 4)) + last.policy_year
+  const date = `${maturityYear}${startDate.slice(4)}` // reuse the start date's -MM-DD
+  return {
+    termination_kind: 'matured',
+    termination_date: date,
+    termination_effective_date: date,
+    termination_proceeds: last.cash_value,
+  }
 }
 
 export interface InsuranceBulkResult {
@@ -91,12 +137,13 @@ export function parseInsuranceBulkCsv(
   rows: string[][],
   providers: InsuranceProviderConfig[],
   currencyByProvider: Record<string, Currency> = {},
+  currentAge: number = NaN,
 ): InsuranceBulkResult {
   const errors: string[] = []
   const warnings: string[] = []
   const policies: ParsedPolicy[] = []
 
-  if (rows.length < 5) {
+  if (rows.length < 6) {
     return {
       policies,
       errors: ['The file does not have the expected header rows.'],
@@ -104,16 +151,19 @@ export function parseInsuranceBulkCsv(
     }
   }
 
+  // Row order: provider · name · number:date · notes · sub-header · data…
   const providerRow = rows[0]!
   const nameRow = rows[1]!
   const numberRow = rows[2]!
-  const subHeaderRow = rows[3]!
-  const dataRows = rows.slice(4)
+  const notesRow = rows[3]!
+  const subHeaderRow = rows[4]!
+  const dataRows = rows.slice(5)
 
   const colCount = Math.max(
     providerRow.length,
     nameRow.length,
     numberRow.length,
+    notesRow.length,
     subHeaderRow.length,
   )
 
@@ -173,6 +223,8 @@ export function parseInsuranceBulkCsv(
         defaultCurrencyFor(providers, carriedProvider),
       first_year: Math.min(...points.map((p) => p.age)),
       points,
+      notes: (notesRow[c] ?? '').trim() || null,
+      ...detectMaturity(points, startDate, currentAge),
     })
   }
 
@@ -182,13 +234,14 @@ export function parseInsuranceBulkCsv(
   return { policies, errors, warnings }
 }
 
-export interface ParsedSinglePolicy {
+export interface ParsedSinglePolicy extends TerminationFields {
   provider: string | null // matched configured provider key, or null if absent/unknown
   policy_number: string
   policy_name: string | null
   start_date: string | null
   first_year: number
   points: SchedulePoint[]
+  notes: string | null
 }
 
 export interface InsuranceSingleResult {
@@ -200,6 +253,7 @@ export interface InsuranceSingleResult {
 export function parseInsuranceSingleCsv(
   rows: string[][],
   providers: InsuranceProviderConfig[],
+  currentAge: number = NaN,
 ): InsuranceSingleResult {
   const errors: string[] = []
   if (rows.length === 0) return { policy: null, errors: ['The file is empty.'] }
@@ -248,14 +302,17 @@ export function parseInsuranceSingleCsv(
 
   if (errors.length > 0) return { policy: null, errors }
 
+  const startDate = header['start date'] ? parseLooseDate(header['start date']!) : null
   return {
     policy: {
       provider,
       policy_number: policyNumber,
       policy_name: header['policy name'] ? header['policy name']! : null,
-      start_date: header['start date'] ? parseLooseDate(header['start date']!) : null,
+      start_date: startDate,
       first_year: Math.min(...points.map((p) => p.age)),
       points,
+      notes: header['notes'] ? header['notes']! : null,
+      ...detectMaturity(points, startDate, currentAge),
     },
     errors,
   }
