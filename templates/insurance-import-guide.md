@@ -38,8 +38,11 @@ surrenders on the **Edit Insurance** screen so you can set the exact date.
 
 ## 2. Single policy add / update — narrow CSV
 
-Open from **New / Edit Insurance → Import Policy Schedule**. A tiny key/value header, then the data
-table. Currency and effective date are **set on the screen**, not in the file.
+Open from **New / Edit Insurance → Import Policy Schedule**. A tiny header, then the data table.
+Currency and effective date are **set on the screen**, not in the file. **Two header layouts are
+accepted** (auto-detected):
+
+**Key/value** — a label in column A, its value in column B:
 
 ```
 Provider,CHUBB
@@ -47,6 +50,20 @@ Policy Number,2150202771
 Policy Name,Example Whole Life
 Start Date,"Oct 7, 2015"
 Notes,Paid up
+Age,Policy Year,Total Premium Paid,Cash Value,Surrender Gain %/Yr
+45,4,"60,000","37,276",-9.5
+46,5,"75,000","52,248",-6.1
+```
+
+**Stacked block** — what the wide spreadsheet (§1) exports for a single policy: column A blank, with
+provider / policy name / `Policy Number: Start Date` / notes stacked in column B (the notes row may be
+omitted). The data table is identical.
+
+```
+,CHUBB,,,
+,Example Whole Life,,,
+,"2150202771: Oct 7, 2015",,,
+,,,,
 Age,Policy Year,Total Premium Paid,Cash Value,Surrender Gain %/Yr
 45,4,"60,000","37,276",-9.5
 46,5,"75,000","52,248",-6.1

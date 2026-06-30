@@ -30,6 +30,7 @@ networth-*.csv
 # committed. Only the sanitized fund/insurance import guides + templates are tracked.
 Insurance.csv
 Insurance.xlsx
+templates/insurance-*.csv
 *Fund list export*.xlsx
 *Fund*export*.xlsx
 

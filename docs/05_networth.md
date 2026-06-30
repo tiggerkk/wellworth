@@ -253,7 +253,9 @@ Policy Year · Premium · Cash Value (native→HKD)` with an "as of yr N" tag wh
     current age). `applyInsuranceView` takes `currentAge` for the same reason. (Past bug: every policy
     that would _eventually_ break even read "Past break even".)
 - **New/Edit Insurance** (`IconFileCertificate` tab): header X · title · **Schedule** (import) ·
-  Delete/Reset/Create/Save. Body: Provider (picked from the configured list — manage it in Settings →
+  Delete/Reset/Create/Save. It's a plain route screen (not a `Sheet`), so it registers
+  **`useEscapeKey(() => navigate(-1))`** itself for laptop Esc-to-close (an open Calendar / SelectMenu /
+  import overlay sits above it on the shared LIFO stack and consumes Esc first). Body: Provider (picked from the configured list — manage it in Settings →
   Manage Providers) + Currency (**mandatory**; HKD/CNY/USD) on one line (equal-height controls so the
   dropdown and segmented toggle align); Policy Number + Start Date on one line; Policy Name;
   **Notes** (2-row textarea); a **TERMINATION** area (surrender **or** maturity — mutually exclusive).
@@ -271,7 +273,8 @@ Policy Year · Premium · Cash Value (native→HKD)` with an "as of yr N" tag wh
 - **Single-policy import** (local overlay): file must match Provider + Policy Number; Policy Name /
   Start Date / **Notes** may be overridden; **maturity is auto-detected** (same rule as the bulk
   seed); currency + effective date are NOT in the file. Choose **Add new version** or **Replace
-  existing version**; a brand-new policy's first import creates the **Original**.
+  existing version**; a brand-new policy's first import creates the **Original**. Closes on its X /
+  **Esc** (`useEscapeKey(onClose)`) — the innermost overlay, so Esc closes it before the form.
 
 ### Insurance model + resolution (pure helpers in `src/lib/networth.ts`)
 
@@ -326,9 +329,13 @@ Policy Year · Premium · Cash Value (native→HKD)` with an "as of yr N" tag wh
   per-policy **Notes** row before the sub-header). **Maturity auto-detected** (`detectMaturity`): a
   block whose schedule ends before the owner's current age (from `profile.birthday`) → Matured,
   proceeds = last cash value, date = start month/day + year `start_year + last policy_year`.
-- **Insurance single**: narrow key/value header (Provider, Policy Number, optional Policy Name / Start
-  Date / **Notes**) + the `Age, Policy Year, Total Premium Paid, Cash Value, Surrender Gain %/Yr` table
-  (Surrender Gain ignored); maturity auto-detected the same way.
+- **Insurance single**: header (Provider, Policy Number, optional Policy Name / Start Date / **Notes**)
+  - the `Age, Policy Year, Total Premium Paid, Cash Value, Surrender Gain %/Yr` table (Surrender Gain
+    ignored); maturity auto-detected the same way. **Two header layouts are accepted** (auto-detected by
+    whether col A holds labels): the documented **key/value** header, and the **stacked block** layout the
+    wide spreadsheet exports for one policy (col A blank; provider / name / `number: date` / notes in col
+    B). Block fields are identified by content (the `number: date` row, the provider-matching cell), so
+    the optional notes row may be absent.
 
 ### Dashboards
 

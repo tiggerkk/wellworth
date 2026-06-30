@@ -249,7 +249,95 @@ export interface InsuranceSingleResult {
   errors: string[]
 }
 
-/** Parse the narrow single-policy CSV (key/value header + data table). */
+interface SinglePolicyHeader {
+  provider: string | null
+  policyNumber: string
+  policyName: string | null
+  startDate: string | null
+  notes: string | null
+}
+
+/**
+ * Read the single-policy header in either accepted layout (errors are pushed onto `errors`):
+ *  • KEY/VALUE — col A is a label (`Provider`, `Policy Number`, `Policy Name`, `Start Date`,
+ *    `Notes`), col B its value (the documented narrow format).
+ *  • BLOCK — col A blank, with provider / policy name / `number: date` / notes stacked in col B.
+ *    This is what the owner's wide spreadsheet exports for a single policy (one bulk block on its
+ *    own), so the importer accepts it without manual reformatting.
+ * The layout is detected by whether any header row has a col-A label.
+ */
+function readSinglePolicyHeader(
+  headerRows: string[][],
+  providers: InsuranceProviderConfig[],
+  errors: string[],
+): SinglePolicyHeader {
+  const isBlock = headerRows.length > 0 && headerRows.every((r) => isBlank(r[0]))
+
+  if (!isBlock) {
+    const header: Record<string, string> = {}
+    for (const r of headerRows) {
+      const key = (r[0] ?? '').trim().toLowerCase()
+      const val = (r[1] ?? '').trim()
+      if (key !== '') header[key] = val
+    }
+    const policyNumber = header['policy number'] ?? ''
+    if (policyNumber === '') errors.push('Missing "Policy Number" in the header.')
+    const provider = matchKeyOrLabel(providers, header['provider'] ?? '')
+    if (header['provider'] && !provider)
+      errors.push(`Unknown provider "${header['provider']}".`)
+    return {
+      provider,
+      policyNumber,
+      policyName: header['policy name'] || null,
+      startDate: header['start date'] ? parseLooseDate(header['start date']!) : null,
+      notes: header['notes'] || null,
+    }
+  }
+
+  // Block layout: the stacked values live in col B. Identify rows by content (robust to the
+  // optional notes row being absent), matching the bulk block's order: provider · name ·
+  // `number: date` · notes.
+  const cells = headerRows.map((r) => (r[1] ?? '').trim())
+  // `number: date` row — its colon-tail parses as a date; fall back to the first colon-bearing cell.
+  let numIdx = cells.findIndex((c) => {
+    const i = c.indexOf(':')
+    return i > 0 && parseLooseDate(c.slice(i + 1)) != null
+  })
+  if (numIdx === -1) numIdx = cells.findIndex((c) => c.includes(':'))
+  let policyNumber = ''
+  let startDate: string | null = null
+  if (numIdx !== -1) {
+    const split = splitNumberDate(cells[numIdx]!)
+    policyNumber = split.number
+    startDate = split.startDate
+  }
+  if (policyNumber === '') errors.push('Missing policy number in the file header.')
+
+  const provIdx = cells.findIndex(
+    (c) => c !== '' && matchKeyOrLabel(providers, c) != null,
+  )
+  const provider = provIdx !== -1 ? matchKeyOrLabel(providers, cells[provIdx]!) : null
+
+  // Of the remaining non-blank cells, the one before the number row is the policy name; one
+  // after it is the notes.
+  const rest = cells
+    .map((c, i) => ({ c, i }))
+    .filter(({ c, i }) => c !== '' && i !== numIdx && i !== provIdx)
+  const nameCell = rest.find(({ i }) => numIdx === -1 || i < numIdx)
+  const notesCell = rest.find(({ i }) => numIdx !== -1 && i > numIdx)
+  return {
+    provider,
+    policyNumber,
+    policyName: nameCell?.c || null,
+    startDate,
+    notes: notesCell?.c || null,
+  }
+}
+
+/**
+ * Parse the single-policy CSV (header + data table). Two header layouts are accepted — the
+ * documented key/value header and the owner's stacked block export — see `readSinglePolicyHeader`.
+ */
 export function parseInsuranceSingleCsv(
   rows: string[][],
   providers: InsuranceProviderConfig[],
@@ -271,18 +359,11 @@ export function parseInsuranceSingleCsv(
     }
   }
 
-  const header: Record<string, string> = {}
-  for (let i = 0; i < tableHeaderIdx; i++) {
-    const key = (rows[i]![0] ?? '').trim().toLowerCase()
-    const val = (rows[i]![1] ?? '').trim()
-    if (key !== '') header[key] = val
-  }
-
-  const policyNumber = header['policy number'] ?? ''
-  if (policyNumber === '') errors.push('Missing "Policy Number" in the header.')
-  const provider = matchKeyOrLabel(providers, header['provider'] ?? '')
-  if (header['provider'] && !provider)
-    errors.push(`Unknown provider "${header['provider']}".`)
+  const { provider, policyNumber, policyName, startDate, notes } = readSinglePolicyHeader(
+    rows.slice(0, tableHeaderIdx),
+    providers,
+    errors,
+  )
 
   const points: SchedulePoint[] = []
   for (let r = tableHeaderIdx + 1; r < rows.length; r++) {
@@ -302,16 +383,15 @@ export function parseInsuranceSingleCsv(
 
   if (errors.length > 0) return { policy: null, errors }
 
-  const startDate = header['start date'] ? parseLooseDate(header['start date']!) : null
   return {
     policy: {
       provider,
       policy_number: policyNumber,
-      policy_name: header['policy name'] ? header['policy name']! : null,
+      policy_name: policyName,
       start_date: startDate,
       first_year: Math.min(...points.map((p) => p.age)),
       points,
-      notes: header['notes'] ? header['notes']! : null,
+      notes,
       ...detectMaturity(points, startDate, currentAge),
     },
     errors,

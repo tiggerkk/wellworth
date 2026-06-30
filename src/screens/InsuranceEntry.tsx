@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router'
 import { IconCheck, IconUpload, IconX } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
+import { useEscapeKey } from '../hooks/useEscapeKey'
 import { useProfile } from '../hooks/useProfile'
 import {
   addScheduleVersion,
@@ -160,6 +161,9 @@ function PolicyForm({
   currentAge: number
 }) {
   const navigate = useNavigate()
+  // Laptop Esc closes the form; an open Calendar / SelectMenu / import overlay sits above it on the
+  // shared LIFO stack and consumes Esc first (per the dismiss convention in 01_design_system.md).
+  useEscapeKey(() => navigate(-1))
   const providerOptions = providers.map((p) => ({ value: p.key, label: p.label }))
   const [draft, setDraft] = useState<PolicyDraft>(initialDraft)
   // Baseline for dirty / RESET; re-seeded after a schedule import changes policy fields.
@@ -748,6 +752,8 @@ function ImportScheduleOverlay({
   const [parsed, setParsed] = useState<ParsedSinglePolicy | null>(null)
   const [parseErrors, setParseErrors] = useState<string[]>([])
   const [mode, setMode] = useState<'new' | string>('new') // 'new' | scheduleId
+  // Innermost overlay over the form — Esc closes it first (an open SelectMenu layers above this).
+  useEscapeKey(onClose)
 
   async function onFile(file: File) {
     setParseErrors([])

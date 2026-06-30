@@ -154,6 +154,30 @@ describe('parseInsuranceSingleCsv', () => {
     })
   })
 
+  it('also accepts the stacked block layout (provider / name / number:date in col B)', () => {
+    // What the owner's wide spreadsheet exports for a single policy: col A blank, values in col B.
+    const block = [
+      ',CHUBB,,,',
+      ',Critical Illness (CIA12),,,',
+      ',"2140144838: Aug 6, 2026",,,',
+      ',,,,', // empty notes row
+      'Age,Policy Year,Total Premium Paid,Cash Value,Surrender Gain %/Yr',
+      '45,5,"89,934","61,064",-6.4',
+      '46,6,"97,921","65,139",-5.6',
+    ].join('\n')
+    const { policy, errors } = parseInsuranceSingleCsv(parseCsv(block), PROVIDERS)
+    expect(errors).toEqual([])
+    expect(policy).toMatchObject({
+      provider: 'chubb',
+      policy_number: '2140144838',
+      policy_name: 'Critical Illness (CIA12)',
+      start_date: '2026-08-06',
+      notes: null,
+      first_year: 45,
+    })
+    expect(policy?.points).toHaveLength(2)
+  })
+
   it('errors when the policy number or table is missing', () => {
     expect(
       parseInsuranceSingleCsv(parseCsv('Provider,CHUBB'), PROVIDERS).errors[0],
