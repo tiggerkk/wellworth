@@ -218,14 +218,18 @@ Supabase (Postgres + RLS). Components hold no SQL and never import the Supabase 
   bumps the shared refresh tick so the onboarding gate re-reads it.
 - **Multi-member onboarding gate (`OnboardingGate` in `AppShell`).** A new member's null
   `onboarded_at` (`needsOnboarding` in `access.ts`) forces a full-screen `Onboarding` wizard to
-  collect their own birthday/sex/height/weight/units before the app — never inheriting the owner's
-  metrics. The gate shows a splash while the profile is loading/being created (it keys off the
+  collect their own birthday/sex/height/weight (+ Display prefs) before the app — never inheriting the
+  owner's metrics. The gate shows a splash while the profile is loading/being created (it keys off the
   resolved `data`, not `loading`, so background refetches don't flash it) and passes the owner /
   already-onboarded members straight through. Completing the wizard stamps `onboarded_at`, which
-  dismisses the gate. The wizard and Settings share `ProfileMetricsFields` (one home for the
-  metric↔imperial conversion + the shared `Calendar` birthday picker). Owner detection:
-  `VITE_OWNER_EMAIL`, falling back to a single-entry `VITE_ALLOWED_EMAILS` so a lone-user build needs
-  no extra config.
+  dismisses the gate. The wizard renders the **same two cards as Global Settings** — the shared
+  `DisplaySettingsCard` (Font Size, Visible Modules, Units) and `ProfileMetricsFields` (one home for
+  the metric↔imperial conversion + the shared `Calendar` birthday picker) — so the screens can't
+  drift. The wizard overlay is `z-20` (below the `z-30` route-sheet layer) so its Visible Modules sheet
+  - Calendar paint above the gate while it still covers the app (F-onboard-z, see `docs/03_global.md`).
+    Owner detection:
+    `VITE_OWNER_EMAIL`, falling back to a single-entry `VITE_ALLOWED_EMAILS` so a lone-user build needs
+    no extra config.
 - **Access control + error surfacing (`src/lib/access.ts`, enforced in `AuthProvider`).** An optional
   build-time email allowlist (`VITE_ALLOWED_EMAILS`, parsed by `parseAllowlist`/`isEmailAllowed`) signs
   out any account whose email isn't listed (empty ⇒ no restriction) — a convenience layer over RLS +

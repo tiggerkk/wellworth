@@ -3102,3 +3102,24 @@ Behaviour/data are in `docs/11_literature.md`; the static-corpus pattern + read-
   type tag, and aliasing reaches ~95% of those — pushing higher would mis-file. Both lists are the
   source of truth in `scripts/build-literature-data.mjs`; the build prints `coverage: N/10000`. See
   `docs/11_literature.md` + `PARKED.md`.
+
+### Follow-up — Onboarding ⇄ Global Settings made identical (shared DISPLAY card) — 2026-06-29
+
+- **Goal:** the first-run "Welcome to WellWorth" wizard and Global Settings should look the same —
+  **DISPLAY** (Font Size, Visible Modules, Units) then **PROFILE** (Birthday, Sex, Height, Weight) —
+  with no separate Preferences group.
+- **New shared `src/components/DisplaySettingsCard.tsx`** — the DISPLAY section (Font Size + Visible
+  Modules + Units) extracted from `Settings` so both screens render one source. Fully controlled
+  (parent owns values + persistence); it applies the Font Size preset instantly via `applyFontSize`.
+  `Settings` and `Onboarding` both render it above `ProfileMetricsFields`.
+- **`ProfileMetricsFields` slimmed:** dropped the `showUnits` prop + its "Preferences → Units" group;
+  it's now purely the PROFILE card (Birthday/Sex/Height/Weight) and reads `value.units` only to
+  label/convert height & weight. Units always lives in `DisplaySettingsCard`.
+- **Onboarding persistence:** Display prefs apply live but write once on "Get started" (`font_size`
+  added to the submit `save`); **Visible Modules** still auto-saves via its route sheet.
+- **Gate stacking fix (F-onboard-z):** the Onboarding overlay dropped `z-50` → **`z-20`** so it sits
+  below the `z-30` route-sheet layer — letting the Visible Modules sheet (and the birthday `Calendar`)
+  paint **above** the gate. It still covers the app (content/nav are `z-10`); the `Toaster` (`z-50`)
+  stays topmost so the "at least one module visible" toast shows. Documented in `03_global.md` /
+  `02_tech_spec.md` / `01_design_system.md`.
+- No schema/test change; typecheck + ESLint green (snapshot **620** tests unchanged).

@@ -2,10 +2,12 @@ import { useRef, useState } from 'react'
 import { useProfileEditor } from '../hooks/useProfileEditor'
 import { PrimaryButton } from '../components/PrimaryButton'
 import { RingMark } from '../components/RingMark'
+import { DisplaySettingsCard } from '../components/DisplaySettingsCard'
 import {
   ProfileMetricsFields,
   type ProfileMetrics,
 } from '../components/ProfileMetricsFields'
+import { type FontSize } from '../lib/font-scale'
 import { supabase } from '../lib/supabase'
 
 /**
@@ -25,6 +27,9 @@ export function Onboarding() {
     height_cm: null,
     weight_kg: null,
   })
+  // Font size is a Display preference, not a body metric, so it lives outside `ProfileMetrics`.
+  // `DisplaySettingsCard` applies the preset instantly; we persist it with the rest on submit.
+  const [fontSize, setFontSize] = useState<FontSize>('default')
   // Mirror the latest value so submit reads fresh data even when a height/weight blur commits in the
   // same tap as the button click (blur fires before the click, but its setState hasn't re-rendered).
   const valueRef = useRef(value)
@@ -53,6 +58,7 @@ export function Onboarding() {
         birthday: v.birthday,
         sex: v.sex,
         units: v.units,
+        font_size: fontSize,
         height_cm: v.height_cm,
         weight_kg: v.weight_kg,
         onboarded_at: new Date().toISOString(),
@@ -64,7 +70,10 @@ export function Onboarding() {
   }
 
   return (
-    <div className="fixed inset-0 z-50 mx-auto flex max-w-md flex-col overflow-y-auto bg-bg pt-[env(safe-area-inset-top)]">
+    // z-20 (not the usual top-layer z-50): the gate must sit *below* the z-30 route-sheet layer so
+    // the DISPLAY → Visible Modules sheet (and the birthday Calendar) paint above it. It still covers
+    // the app behind it (content + bottom nav are z-10); the Toaster (z-50) stays on top.
+    <div className="fixed inset-0 z-20 mx-auto flex max-w-md flex-col overflow-y-auto bg-bg pt-[env(safe-area-inset-top)]">
       <div className="flex flex-col gap-5 px-4 py-8">
         <header className="flex flex-col items-center gap-3 text-center">
           {/* Same brand mark as the Login screen (RingMark, inline SVG via currentColor) so the
@@ -80,6 +89,13 @@ export function Onboarding() {
             </p>
           </div>
         </header>
+
+        <DisplaySettingsCard
+          fontSize={fontSize}
+          onFontSizeChange={setFontSize}
+          units={value.units}
+          onUnitsChange={(units) => update({ units })}
+        />
 
         <ProfileMetricsFields value={value} onChange={update} />
 

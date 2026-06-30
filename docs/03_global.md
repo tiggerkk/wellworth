@@ -51,10 +51,18 @@ the owner) immediately after their first login — it covers the whole shell, so
 and no way past it except finishing or signing out. Its header shows the WellWorth ring mark
 (the shared `RingMark` component — same as the Login screen).
 
-- **Fields:** Units (Metric/Imperial), Birthday, Sex, Height, Weight — the same inputs as Global
-  Settings (shared `ProfileMetricsFields`; **Birthday opens the shared `Calendar`**; height/weight
-  follow the chosen units). Protein target is **not** asked (it defaults to the DRI; editable later
-  in Wellness Settings).
+- **Sections (identical to Global Settings, same order):** **DISPLAY** (Font Size, Visible Modules,
+  Units — shared `DisplaySettingsCard`) then **PROFILE** (Birthday, Sex, Height, Weight — shared
+  `ProfileMetricsFields`; **Birthday opens the shared `Calendar`**; height/weight follow the chosen
+  units). One source per section means the wizard and Settings can't drift. Protein target is **not**
+  asked (it defaults to the DRI; editable later in Wellness Settings).
+- DISPLAY changes apply instantly but are **not** persisted until "Get started" (Font Size applies via
+  `applyFontSize` for live feedback; Units re-keys the height/weight inputs). The exception is **Visible
+  Modules**, which opens the route-based `VisibleModulesSheet` and auto-saves there like in Settings.
+- **Gate stacking (F-onboard-z):** the wizard overlay is `z-20` (not the top-layer `z-50`) so it sits
+  **below** the `z-30` route-sheet layer — that lets the Visible Modules sheet and the birthday
+  `Calendar` paint **above** the gate. It still covers the app behind it (content + bottom nav are
+  `z-10`); the `Toaster` (`z-50`) stays on top so the "at least one module visible" toast shows.
 - **"Get started"** validates that birthday/height/weight are filled, saves them in one write, and
   stamps `onboarded_at` — which dismisses the gate and drops the member into the app (their
   last-module default is the Home hub). A small **Sign out** link is the only escape.
@@ -75,11 +83,13 @@ and no way past it except finishing or signing out. Its header shows the WellWor
 App-wide; shared across all modules. Auto-save on change. A back chevron returns to the hub.
 
 Section order: **DISPLAY** (first), **PROFILE**, **ACCOUNT**. (There is no separate Preferences
-section — Units sits under Display.)
+section — Units sits under Display.) The DISPLAY card (Font Size, Visible Modules, Units) is the
+shared `DisplaySettingsCard` and PROFILE is the shared `ProfileMetricsFields` — the **same two
+components Onboarding renders**, so the screens stay identical.
 
 - **DISPLAY → Font Size** (Default / Large / Larger): the app-wide Dynamic Type preset — scales all
-  text **and** icons (tech-spec F23). Applies instantly (whole UI) and saves to `profile.font_size`
-  (cross-device); persisted via `applyFontSize` (`src/lib/font-scale.ts`) + reconciled by
+  text **and** icons (tech-spec F23). Applies instantly (whole UI, via `applyFontSize` inside
+  `DisplaySettingsCard`) and saves to `profile.font_size` (cross-device); reconciled by
   `useFontSizeSync`. A larger preset is the accessibility lever for small text/icons.
 - **DISPLAY → Visible Modules** (secondary text "(Home)"): opens a full sheet listing every module in a
   single **combined** list (shared `ReorderList`) — **drag the grip to reorder** the Home hub and
@@ -89,10 +99,11 @@ section — Units sits under Display.)
   Home card — a module's routes stay reachable by direct URL and the "reopen last-used module" launch
   default is unaffected.
 - **DISPLAY → Units** (Metric / Imperial — editable; display-only, DB stays metric). Third item under
-  Display. (Onboarding still shows Units in its own Preferences group via `ProfileMetricsFields`'s
-  `showUnits`; Settings passes `showUnits={false}` and renders Units here instead.)
+  Display, in the shared `DisplaySettingsCard` (Onboarding renders the same card, so Units is under
+  Display there too — there is no longer a separate Preferences group).
 - **PROFILE**: Birthday, Sex, Height, Weight (all editable; shared `ProfileMetricsFields`, so
-  **Birthday opens the shared `Calendar`** picker — same as Onboarding).
+  **Birthday opens the shared `Calendar`** picker — same as Onboarding). `ProfileMetricsFields` no
+  longer renders Units (it reads `value.units` only to label/convert height & weight).
 - **ACCOUNT**: Google account + **Sign out**. This card is driven by the **session, not the profile**,
   so it renders even when the profile fails to load (e.g. after a DB reset deletes the user). Sign
   out clears the session **locally** (`scope: 'local'`) and, as a guaranteed fallback, removes the

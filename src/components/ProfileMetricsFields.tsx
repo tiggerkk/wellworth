@@ -62,22 +62,23 @@ function MetricInput({
 }
 
 /**
- * Birthday / sex / height / weight (+ optional Units) inputs, shared by global Settings and the
- * first-run Onboarding wizard so the metric↔imperial conversion lives in exactly one place.
+ * The PROFILE section — Birthday / Sex / Height / Weight inputs — shared by global Settings and the
+ * first-run Onboarding wizard so the metric↔imperial conversion lives in exactly one place. Units
+ * itself is no longer here: it moved to the shared `DisplaySettingsCard` (the DISPLAY section), which
+ * both screens render above this one. This component still reads `value.units` to label/convert the
+ * height & weight inputs.
  *
  * Fully controlled on the **canonical** value (height_cm/weight_kg in metric). `onChange(patch)`
- * fires per field as it commits (birthday/sex/units immediately, height/weight on blur) — the parent
+ * fires per field as it commits (birthday/sex immediately, height/weight on blur) — the parent
  * decides whether that means auto-save (Settings) or just updating local state to submit later
  * (Onboarding).
  */
 export function ProfileMetricsFields({
   value,
   onChange,
-  showUnits = true,
 }: {
   value: ProfileMetrics
   onChange: (patch: Partial<ProfileMetrics>) => void
-  showUnits?: boolean
 }) {
   const imperial = value.units === 'imperial'
   const [calOpen, setCalOpen] = useState(false)
@@ -133,23 +134,6 @@ export function ProfileMetricsFields({
           />
         </FieldRow>
       </SectionCard>
-
-      {showUnits && (
-        <SectionCard title="Preferences">
-          <FieldRow label="Units">
-            <div className="w-40">
-              <SegmentedTabs
-                value={value.units}
-                onChange={(v) => onChange({ units: v })}
-                options={[
-                  { value: 'metric', label: 'Metric' },
-                  { value: 'imperial', label: 'Imperial' },
-                ]}
-              />
-            </div>
-          </FieldRow>
-        </SectionCard>
-      )}
 
       {calOpen && (
         <Calendar

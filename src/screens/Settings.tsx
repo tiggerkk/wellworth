@@ -1,25 +1,17 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
-import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react'
+import { IconChevronLeft } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { supabase } from '../lib/supabase'
 import { useProfileEditor } from '../hooks/useProfileEditor'
-import { useSheetNavigate } from '../hooks/useSheetNavigate'
 import { SectionCard } from '../components/SectionCard'
 import { FieldRow } from '../components/FieldRow'
-import { SegmentedTabs } from '../components/SegmentedTabs'
+import { DisplaySettingsCard } from '../components/DisplaySettingsCard'
 import {
   ProfileMetricsFields,
   type ProfileMetrics,
 } from '../components/ProfileMetricsFields'
-import {
-  applyFontSize,
-  FONT_SIZE_LABELS,
-  FONT_SIZES,
-  isFontSize,
-  type FontSize,
-} from '../lib/font-scale'
-import { routes } from '../constants/routes'
+import { isFontSize, type FontSize } from '../lib/font-scale'
 import type { Tables, TablesUpdate } from '../types/database'
 
 type SaveFn = (patch: TablesUpdate<'profile'>) => Promise<void>
@@ -114,16 +106,13 @@ function SettingsBody({ profile, save }: { profile: Tables<'profile'>; save: Sav
     weight_kg: profile.weight_kg,
   })
 
-  const openSheet = useSheetNavigate()
-
-  // Font-size preset. Apply immediately (instant whole-UI feedback) and persist for other devices;
-  // useFontSizeSync reconciles a fresh device from the profile on load.
+  // Font-size preset. `DisplaySettingsCard` applies it instantly (whole-UI feedback); we just
+  // persist it for other devices (`useFontSizeSync` reconciles a fresh device from the profile).
   const [fontSize, setFontSize] = useState<FontSize>(
     isFontSize(profile.font_size) ? profile.font_size : 'default',
   )
   function changeFontSize(size: FontSize) {
     setFontSize(size)
-    applyFontSize(size)
     void save({ font_size: size })
   }
 
@@ -134,42 +123,14 @@ function SettingsBody({ profile, save }: { profile: Tables<'profile'>; save: Sav
 
   return (
     <>
-      <SectionCard title="Display">
-        <FieldRow label="Font Size">
-          <div className="w-56">
-            <SegmentedTabs
-              value={fontSize}
-              onChange={changeFontSize}
-              options={FONT_SIZES.map((s) => ({
-                value: s,
-                label: FONT_SIZE_LABELS[s],
-              }))}
-            />
-          </div>
-        </FieldRow>
-        <button
-          onClick={() => openSheet(routes.settingsVisibleModules)}
-          className="w-full border-b border-border last:border-b-0"
-        >
-          <FieldRow label="Visible Modules" hint="(Home)">
-            <IconChevronRight size={18} className="text-text-tertiary" />
-          </FieldRow>
-        </button>
-        <FieldRow label="Units">
-          <div className="w-40">
-            <SegmentedTabs
-              value={value.units}
-              onChange={(v) => update({ units: v })}
-              options={[
-                { value: 'metric', label: 'Metric' },
-                { value: 'imperial', label: 'Imperial' },
-              ]}
-            />
-          </div>
-        </FieldRow>
-      </SectionCard>
+      <DisplaySettingsCard
+        fontSize={fontSize}
+        onFontSizeChange={changeFontSize}
+        units={value.units}
+        onUnitsChange={(units) => update({ units })}
+      />
       {/* Units lives under Display (above); Profile shows body metrics only. */}
-      <ProfileMetricsFields value={value} onChange={update} showUnits={false} />
+      <ProfileMetricsFields value={value} onChange={update} />
     </>
   )
 }

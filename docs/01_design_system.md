@@ -173,6 +173,13 @@ the Shows/Books exception above — no weekday is ever shown.
   (a long value or a larger Dynamic Type preset, F23). **Divider gotcha:** a `FieldRow` wrapped in a
   `<button>` (the Settings nav rows) has its own `last:border-b-0` scope to that button, so it never
   draws a divider — put `border-b border-border last:border-b-0` on the **wrapper button** instead.
+- **DisplaySettingsCard** — the shared **DISPLAY** section (`src/components/DisplaySettingsCard.tsx`):
+  Font Size + Visible Modules + Units in one `SectionCard`. Fully controlled (parent owns values +
+  persistence); changing Font Size applies the preset instantly via `applyFontSize`. Rendered by both
+  **Global Settings** and the first-run **Onboarding** wizard above `ProfileMetricsFields`, so the two
+  screens stay identical. Pairs with **ProfileMetricsFields** (`src/components/ProfileMetricsFields.tsx`)
+  — the shared **PROFILE** section (Birthday / Sex / Height / Weight; metric↔imperial conversion in one
+  place; Units is _not_ here, it lives in `DisplaySettingsCard`).
 - **VisibleFieldsSheet** — the shared "Visible Fields" sheet used by every module's Settings
   (`src/components/VisibleFieldsSheet.tsx`): a `full` `Sheet` + header + intro + auto-saving toggle list.
   Each module passes its `*_ENTRY_FIELDS` list (in New/Edit form order), the `profile` `text[]` column

@@ -187,7 +187,7 @@ export function ImportQuotesSheet() {
             )}
 
             {preview && newCount > 0 && (
-              <div className="overflow-hidden rounded-card border border-border bg-surface">
+              <div className="shrink-0 overflow-hidden rounded-card border border-border bg-surface">
                 {preview.newRows.slice(0, MAX_SAMPLE).map((r, i) => {
                   const linked =
                     !!preview.payloads[i]?.show_id || !!preview.payloads[i]?.book_id
