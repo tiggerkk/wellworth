@@ -3361,9 +3361,9 @@ warning until the user hunted for a "Fetch missing rates" button.
 
 ## Medical — Eye Refraction grid: fit all 3 columns + RE/LE labels — 2026-06-30
 
-Cosmetic/UX fix on the Add/Edit Report eye grid (no schema change, no migration). On a phone only the
-first ~1.5 columns showed (Cylinder clipped, Addition off-screen), and the row labels were the cryptic
-optometry **OD/OS**.
+Cosmetic/UX fix on the Add/Edit Report eye grid plus an eye-defaults pass (no schema change; one
+seed-value + default-section-order edit). On a phone only the first ~1.5 columns showed (Cylinder
+clipped, Addition off-screen), and the row labels were the cryptic optometry **OD/OS**.
 
 - **Overflow root cause + fix** (`EyeRefractionFields`): the grid used `grid-cols-[3.5rem_1fr_1fr_1fr]`
   with bare `<input>` cells. A `1fr` track is `minmax(auto,1fr)`, and an input's `auto` min is its
@@ -3371,8 +3371,20 @@ optometry **OD/OS**.
   `overflow-hidden` (the documented _ExpenseRowsEditor_ layout gotcha). Switched the value tracks to
   `minmax(0,1fr)` and gave each input `w-full min-w-0` — all three columns now fit and stay editable at
   the Large/Larger Dynamic Type presets (`rem` tracks + role-token text scale together).
+- **Grid-line stripes fix:** the grid draws its dividers via `gap-px bg-border` (the gaps reveal the
+  `border` background). With the container's `items-center`, any cell shorter than its row left the
+  `bg-border` showing as grey stripes above/below it — visible on the empty top-left corner and the
+  short **RE/LE** label cells. Fixed by `self-stretch` on those cells (+ `flex items-center` on the
+  labels so the text stays vertically centered with the input values). Gotcha: in a `gap-px` "grid
+  lines" layout, every cell must fill its row height or the gap background bleeds through.
 - **RE/LE labels (grid only):** `EYE_REFRACTION_ROWS.eye` now displays **RE** (right) / **LE** (left);
   the helper caption defines them. The DB keys (`*_od`/`*_os`), seed `display_name`s, migration 12, and
   the JSON import matcher are intentionally **unchanged** — real optometry reports print OD/OS and the
   importer keys off `display_name`, so this stays display-only.
-- **Snapshot:** **632** tests pass (UI-only change, label not asserted); `npm run check` green.
+- **Defaults pass:** the six refraction tests are now `default_tracked = true` (so they trend on the
+  Dashboard out of the box), set in both `MEDICAL_LAB_TESTS` and migration 12; and `eye` moved to the
+  **front** of `MEDICAL_CATEGORIES` (above `general`) so it's the first display-order section. Both are
+  defaults only — `medical_tracked_tests` seeds from `defaultTrackedTestKeys()` and
+  `medical_section_order` stays NULL → `effectiveSectionOrder` falls back to the new order; an existing
+  saved override is unaffected.
+- **Snapshot:** **632** tests pass (UI-only change, label/defaults not asserted); `npm run check` green.

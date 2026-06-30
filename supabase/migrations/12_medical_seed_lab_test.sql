@@ -175,12 +175,12 @@ values
   ('ecg_finding', 'ECG Finding', null, 'imaging', 90, false, 'qualitative'),
 
   -- eye
-  ('sphere_od', 'Sphere (OD)', 'D', 'eye', 10, false, 'numeric'),
-  ('cylinder_od', 'Cylinder (OD)', 'D', 'eye', 20, false, 'numeric'),
-  ('addition_od', 'Addition (OD)', 'D', 'eye', 30, false, 'numeric'),
-  ('sphere_os', 'Sphere (OS)', 'D', 'eye', 40, false, 'numeric'),
-  ('cylinder_os', 'Cylinder (OS)', 'D', 'eye', 50, false, 'numeric'),
-  ('addition_os', 'Addition (OS)', 'D', 'eye', 60, false, 'numeric'),
+  ('sphere_od', 'Sphere (OD)', 'D', 'eye', 10, true, 'numeric'),
+  ('cylinder_od', 'Cylinder (OD)', 'D', 'eye', 20, true, 'numeric'),
+  ('addition_od', 'Addition (OD)', 'D', 'eye', 30, true, 'numeric'),
+  ('sphere_os', 'Sphere (OS)', 'D', 'eye', 40, true, 'numeric'),
+  ('cylinder_os', 'Cylinder (OS)', 'D', 'eye', 50, true, 'numeric'),
+  ('addition_os', 'Addition (OS)', 'D', 'eye', 60, true, 'numeric'),
   ('iop', 'Intraocular Pressure (IOP)', 'mmHg', 'eye', 70, false, 'numeric'),
 
   -- other

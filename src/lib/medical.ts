@@ -27,6 +27,7 @@ export type MedicalResultInput = Omit<MedicalResultInsert, 'report_id' | 'user_i
 
 /** Result categories in section display order (also the default Dashboard/Report section order). */
 export const MEDICAL_CATEGORIES = [
+  'eye',
   'general',
   'vitals',
   'lipids',
@@ -43,7 +44,6 @@ export const MEDICAL_CATEGORIES = [
   'urine',
   'stool',
   'imaging',
-  'eye',
   'other',
 ] as const
 export type MedicalCategory = (typeof MEDICAL_CATEGORIES)[number]
@@ -550,12 +550,12 @@ export const MEDICAL_LAB_TESTS: MedicalLabTestSeed[] = [
   t('ecg_finding', 'ECG Finding', 'imaging', null, 'qualitative', false, 90),
 
   // ── eye: structured refraction (Sphere/Cylinder/Addition × OD/OS) + IOP ────────────────
-  t('sphere_od', 'Sphere (OD)', 'eye', 'D', 'numeric', false, 10),
-  t('cylinder_od', 'Cylinder (OD)', 'eye', 'D', 'numeric', false, 20),
-  t('addition_od', 'Addition (OD)', 'eye', 'D', 'numeric', false, 30),
-  t('sphere_os', 'Sphere (OS)', 'eye', 'D', 'numeric', false, 40),
-  t('cylinder_os', 'Cylinder (OS)', 'eye', 'D', 'numeric', false, 50),
-  t('addition_os', 'Addition (OS)', 'eye', 'D', 'numeric', false, 60),
+  t('sphere_od', 'Sphere (OD)', 'eye', 'D', 'numeric', true, 10),
+  t('cylinder_od', 'Cylinder (OD)', 'eye', 'D', 'numeric', true, 20),
+  t('addition_od', 'Addition (OD)', 'eye', 'D', 'numeric', true, 30),
+  t('sphere_os', 'Sphere (OS)', 'eye', 'D', 'numeric', true, 40),
+  t('cylinder_os', 'Cylinder (OS)', 'eye', 'D', 'numeric', true, 50),
+  t('addition_os', 'Addition (OS)', 'eye', 'D', 'numeric', true, 60),
   t('iop', 'Intraocular Pressure (IOP)', 'eye', 'mmHg', 'numeric', false, 70),
 
   // ── other: catch-all biochem / cardiac / markers / device output ───────────────────────

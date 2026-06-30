@@ -278,12 +278,14 @@ The **full source of truth** is `MEDICAL_LAB_TESTS` in `src/lib/medical.ts`; the
 Built from the owner's 2021–2026 reports across three providers (MediFast HK, Mobile Medical HK,
 Global HealthCare Shanghai).
 
-**Section order** (categories in display order):
-`general, vitals, lipids, glucose, liver, renal, electrolytes, cbc, thyroid, bone, tumour_markers,
-hepatitis, inflammation, urine, stool, imaging, eye, other`
+**Section order** (categories in display order — **eye first**, so a refraction report's grid trends
+lead the Dashboard):
+`eye, general, vitals, lipids, glucose, liver, renal, electrolytes, cbc, thyroid, bone, tumour_markers,
+hepatitis, inflammation, urine, stool, imaging, other`
 
 **`default_tracked`** (Dashboard starter set, seeds `profile.medical_tracked_tests` on first run):
-`bmi, blood_pressure_systolic, blood_pressure_diastolic, total_cholesterol, ldl_cholesterol,
+`sphere_od, cylinder_od, addition_od, sphere_os, cylinder_os, addition_os, bmi,
+blood_pressure_systolic, blood_pressure_diastolic, total_cholesterol, ldl_cholesterol,
 hdl_cholesterol, triglycerides, fasting_glucose, hba1c, alt_sgpt, ast_sgot, creatinine, urea,
 uric_acid, haemoglobin, wbc, platelet, tsh, bone_t_score, vitamin_d_25oh`
 

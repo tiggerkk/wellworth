@@ -27,8 +27,9 @@ export function EyeRefractionFields({ results, onSet }: EyeRefractionFieldsProps
       </p>
       <div className="overflow-hidden rounded-card border border-border bg-surface">
         <div className="grid grid-cols-[3.5rem_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)] items-center gap-px bg-border">
-          {/* header row */}
-          <div className="bg-surface px-2 py-2" />
+          {/* header row — the empty corner cell stretches so it fills the row (otherwise the
+              `gap-px bg-border` grid lines show through above/below it as grey stripes) */}
+          <div className="self-stretch bg-surface px-2 py-2" />
           {EYE_REFRACTION_COLUMNS.map((col) => (
             <div
               key={col}
@@ -69,7 +70,7 @@ function Row({
 }) {
   return (
     <>
-      <div className="bg-surface px-2 py-2 text-label font-medium text-text-primary">
+      <div className="flex items-center self-stretch bg-surface px-2 py-2 text-label font-medium text-text-primary">
         {eye}
       </div>
       {keys.map((key) => (
