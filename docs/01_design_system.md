@@ -149,7 +149,7 @@ the Shows/Books exception above — no weekday is ever shown.
   a bare `IconFilter` that tints **accent** while its panel is open, else `text-secondary`. Sits flush at
   the right edge of the row, after a `min-w-0 flex-1` `SearchBar` (every list module).
 - **FilterPanel** — the collapsible filter-panel "pane" (`src/components/FilterPanel.tsx`): a
-  `rounded-card border bg-surface p-3 text-xs` surface that wraps a module's dropdowns/date rows + the
+  `rounded-card border bg-surface p-3 text-caption` surface that wraps a module's dropdowns/date rows + the
   Sort/Clear-Filters footer. Used by every Library/Reports/Trips filter. Each list screen's criteria
   object (search + filters + sort) is held in **`useSessionState`** (`src/hooks/useSessionState.ts`) so
   it persists for the browser-tab session and survives the navigate-into-an-item-and-back remount; the
@@ -167,8 +167,12 @@ the Shows/Books exception above — no weekday is ever shown.
   `default` (full, e.g. sign-in) vs `sm` (compact header actions). PrimaryButton's `tone` prop is
   `fill` (neutral, default) or `positive` (teal) — Create / Add / Save actions use `positive` so the
   `+` / floppy / Save matches the teal `+` elsewhere.
-- **FieldRow** — label + value/input + chevron, for forms and Settings. An optional `hint` adds a small
-  muted note inline after the label.
+- **FieldRow** — label + value/input + chevron, for forms and Settings (compact `py-2` rows; hairline
+  `border-b` divider, suppressed on the section's last row). An optional `hint` adds a small muted note
+  inline after the label. It `flex-wrap`s — the value drops to its own line when it can't share the row
+  (a long value or a larger Dynamic Type preset, F23). **Divider gotcha:** a `FieldRow` wrapped in a
+  `<button>` (the Settings nav rows) has its own `last:border-b-0` scope to that button, so it never
+  draws a divider — put `border-b border-border last:border-b-0` on the **wrapper button** instead.
 - **VisibleFieldsSheet** — the shared "Visible Fields" sheet used by every module's Settings
   (`src/components/VisibleFieldsSheet.tsx`): a `full` `Sheet` + header + intro + auto-saving toggle list.
   Each module passes its `*_ENTRY_FIELDS` list (in New/Edit form order), the `profile` `text[]` column
@@ -304,10 +308,11 @@ flex flex-col`, or `h-full` for Zen) so the `flex-1` fills the real content area
 ## List-screen states
 
 - On every search/filter list screen (Wellness Libraries, Shows/Books/Quotes Libraries, Medical
-  Reports, Net Worth Insurance Policies, Travel Trips), the **`SearchBar` + Filter row stays
-  rendered during `loading`** so the `Loading…` line sits **below** it (not alone at the top). The
-  row hides only on the real **empty** result (`!loading && items.length === 0`), where the
-  `EmptyState` takes over. Condition: `!error && (loading || items.length > 0)`.
+  Reports, Net Worth Insurance Policies, Travel Trips), the **`SearchBar` + Filter row stays rendered**
+  — during `loading` (so `Loading…` sits **below** it) **and on the empty result** (so the centered
+  `EmptyState` sits **below** the bar, never alone at the top). This is uniform: the Libraries/Trips
+  render it unconditionally; Insurance Policies + Medical Reports gate only on `!error` (so it's still
+  present when empty — they were updated to match the Libraries). Only a hard load **error** drops it.
 
 ## Layout gotchas
 

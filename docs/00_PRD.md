@@ -42,7 +42,11 @@
 
 ## Global
 
-- **Settings (global, at Home level):** profile; units; account — shared across modules.
+- **Settings (global, at Home level):** Display (Font Size, Visible Modules, Units), Profile, Account —
+  shared across modules.
+- **Dynamic Type (accessibility):** a **Font Size** preset (Default / Large / Larger) scales all text
+  **and** icons app-wide for aging eyes (stored per-profile, cross-device). Pinch-zoom also stays
+  enabled everywhere.
 - Cross-device sync via Supabase.
 
 ## Wellness
@@ -111,6 +115,9 @@
 
 - The hub is built to accept further modules as drop-in cards + routes.
 - No social features, no ads, no third-party tracking.
+- **No UI-language toggle yet** — the interface is English-only. An English / 繁體中文 (HK Traditional)
+  toggle for UI chrome is **scoped but deferred** (see `PARKED.md`); the existing `opencc-js` plumbing is
+  for user-data search only, not UI translation.
 
 ### Wellness
 

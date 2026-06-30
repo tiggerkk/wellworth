@@ -30,7 +30,9 @@
   **Delete · Copy · Paste** icons that act on the **whole day**. The Calendar injects per-day cue
   dots: one colour if food was logged, another if activity, both if both; a legend explains the dots.
 - **Highlighted Nutrients**: a grid of up to 8 chosen nutrients (a 4×2 grid when 8 are chosen), each
-  a name, % of target, and a thin progress bar. Chosen in Settings → Highlighted Nutrients (max 8).
+  a name, % of target, and a thin progress bar (via `NutrientBar`'s **`compact`** variant — name + %
+  only, so the % isn't crowded out by the full nutrient name in the narrow 2-col grid). Chosen in
+  Settings → Highlighted Nutrients (max 8).
 - **Diary groups, in order:** Breakfast, Lunch, Dinner, Snacks, Supplements, Activities.
   Each header reads, left-to-right: **expand chevron · category icon · group name · kcal subtotal**
   (kcal sits right next to the name; activities show negative kcal coral) · ⟨spacer⟩ · **Delete ·
@@ -242,8 +244,9 @@ and the nutrient columns). Flow (mirrors Books/Shows — shared `ImportPreviewLi
 
 - All nutrients grouped (General & Protein, Vitamins, Minerals, Carbohydrates, Lipids), each a
   Visible toggle. Defaults on for the Phase-1 list (see Nutrient reference below), off for the rest.
-- Protein also shows its editable Daily Target here. Items with sparse source data show a small
-  "limited data" note.
+- Protein also shows its editable Daily Target **inline beside the "Protein" label** (a `field-control`
+  input, blank = DRI), not on a separate line. Items with sparse source data show a small "limited
+  data" note.
 
 ---
 

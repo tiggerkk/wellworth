@@ -2975,6 +2975,21 @@ i18n (English / 繁體中文) was scoped and **deferred** — see `PARKED.md`.
 - No new tests (CSS/DOM plumbing); pure-helper count unchanged at **611**. Verified by `npm run check`
   - a production build (asserted the scale-lever and icon-transform CSS emit).
 
+## Small UI fixes — Diary % + Travel stop icons/fonts (2026-06-30)
+
+Two quick enhancements; no schema, no tests. Behaviour in `04_wellness.md` + `10_travel.md`.
+
+- **Diary highlighted nutrients show the %:** added a **`compact`** prop to `NutrientBar` that drops
+  the "value / target unit" text (name + % only); the Diary's 2-col highlighted-nutrients grid passes
+  it so the % is no longer crowded out by the full nutrient name. Matches the long-standing spec wording
+  ("name, % of target, bar"); the other `NutrientBar` consumers (`FoodDetailSheet`, `NutrientReport`)
+  are unaffected.
+- **Travel Edit-Trip readability + stop-type icons:** the day **date chip** and **city sub-headers**
+  bumped from caption size to **`text-body`**; each itinerary stop row now leads with a Tabler
+  **stop-type icon** via the new shared **`StopTypeIcon`** (Travel=train, Visit=camera,
+  Eat=bowl-chopsticks, Shop=brand-shopee, Stay=bed, Other=category) replacing the type **text** — the
+  type is preserved in the row's `aria-label`. (Both later rode the Dynamic Type role-token migration.)
+
 ## Travel expenses redesign — day-level entry + inline ledger (2026-06-30)
 
 Log expenses **as incurred per day**, review/edit the whole trip's expenses **grouped by date**, and

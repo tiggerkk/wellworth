@@ -69,8 +69,8 @@ literal **"Edit Trip"**.
   rows **prefill that date** (editable). It's the same shared inline editor (`ExpenseRowsEditor`) and the
   same lifted expense state the Expenses tab uses, so the two views stay in sync. Expenses are **never
   linked to stops** — the day match is a screen convenience only.
-  The day's **date chip** and the city sub-headers render at a slightly larger font (`text-sm` /
-  `text-[15px]`) for readability.
+  The day's **date chip** and the city sub-headers render at **`text-body`** (a step up from the
+  original caption size) for readability.
   When expanded, stops are grouped under **city-only sub-headers** for consecutive same-city stops;
   each run is a drag-reorder list (swipe-left on a stop reveals a Delete action that deletes on tap).
   Each stop row leads with the **stop-type icon** (`StopTypeIcon`, replacing the type text) then the
