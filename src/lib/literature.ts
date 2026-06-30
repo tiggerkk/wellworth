@@ -101,6 +101,31 @@ export const DEFAULT_HOME_CRITERIA: HomeCriteria = {
 /** Gold dynasty badge, shared with Shows/Books (design-system `--color-dynasty`). */
 export { DYNASTY_CHIP } from '../constants/dynasty'
 
+// --- per-field visibility (Settings → 顯示) -----------------------------------------------------
+
+/**
+ * Toggleable poem-detail sections, stored on `profile.literature_poem_visible_fields` (NULL = all
+ * visible). 原文 (the poem body) is always shown and is not listed here.
+ */
+export const POEM_VISIBLE_FIELDS: { key: string; label: string }[] = [
+  { key: 'translation', label: '譯文' },
+  { key: 'remark', label: '註釋' },
+  { key: 'shangxi', label: '賞析' },
+]
+
+/**
+ * Toggleable poet-detail sections, stored on `profile.literature_writer_visible_fields` (NULL = all
+ * visible). 作品 (the works list) is always shown and is not listed here.
+ */
+export const WRITER_VISIBLE_FIELDS: { key: string; label: string }[] = [
+  { key: 'bio', label: '作者簡介' },
+]
+
+/** NULL prefs ⇒ every field visible (default-on); otherwise an explicit allow-list. */
+export function isFieldVisible(visibleFields: string[] | null, key: string): boolean {
+  return visibleFields == null || visibleFields.includes(key)
+}
+
 // --- filtering ---------------------------------------------------------------------------------
 
 /**

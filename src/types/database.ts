@@ -703,8 +703,10 @@ export type Database = {
           height_cm: number | null
           highlighted_nutrients: string[]
           insurance_providers: Json | null
+          literature_poem_visible_fields: string[] | null
           literature_tts_autoloop: boolean
           literature_tts_lang: string
+          literature_writer_visible_fields: string[] | null
           medical_importer_enabled: boolean
           medical_lock_enabled: boolean
           medical_lock_pin_hash: string | null
@@ -749,8 +751,10 @@ export type Database = {
           height_cm?: number | null
           highlighted_nutrients?: string[]
           insurance_providers?: Json | null
+          literature_poem_visible_fields?: string[] | null
           literature_tts_autoloop?: boolean
           literature_tts_lang?: string
+          literature_writer_visible_fields?: string[] | null
           medical_importer_enabled?: boolean
           medical_lock_enabled?: boolean
           medical_lock_pin_hash?: string | null
@@ -795,8 +799,10 @@ export type Database = {
           height_cm?: number | null
           highlighted_nutrients?: string[]
           insurance_providers?: Json | null
+          literature_poem_visible_fields?: string[] | null
           literature_tts_autoloop?: boolean
           literature_tts_lang?: string
+          literature_writer_visible_fields?: string[] | null
           medical_importer_enabled?: boolean
           medical_lock_enabled?: boolean
           medical_lock_pin_hash?: string | null

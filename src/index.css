@@ -61,6 +61,17 @@
   --color-med-eye: #9b7de0; /* violet */
   --color-med-other: #8a93a8; /* grey */
 
+  /* Literature section accents — colored left stripe + tinted header on the Poem/Poet detail
+     collapsible sections (the Net Worth Monthly Entry pattern). Consumed via
+     LITERATURE_SECTION_COLOR in src/constants/literature-sections.ts. Hues are spaced so that
+     *consecutive* sections (原文→譯文→註釋→賞析, 作者簡介→作品) sit far apart on the wheel. */
+  --color-lit-original: #5b8def; /* blue — 原文 */
+  --color-lit-translation: #2fb0a0; /* teal-green — 譯文 */
+  --color-lit-remark: #e0a83a; /* gold — 註釋 */
+  --color-lit-shangxi: #b06fe0; /* violet — 賞析 */
+  --color-lit-bio: #e87a4a; /* coral — 作者簡介 */
+  --color-lit-works: #5bbf4a; /* green — 作品 */
+
   /* Radii */
   --radius-screen: 28px;
   --radius-card: 14px;

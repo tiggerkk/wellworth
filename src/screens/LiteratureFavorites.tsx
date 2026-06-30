@@ -25,10 +25,6 @@ export function LiteratureFavorites() {
 
   return (
     <div className="flex min-h-full flex-col gap-3 px-4 py-4">
-      <header className="sticky top-0 z-10 -mx-4 flex items-center bg-bg/90 px-4 py-3 backdrop-blur">
-        <h1 className="text-title font-medium text-text-primary">收藏</h1>
-      </header>
-
       {loading && <p className="text-body text-text-secondary">載入中…</p>}
       {error && <p className="text-body text-danger">無法載入詩詞庫。</p>}
       {!loading && !error && favorites.length === 0 && (

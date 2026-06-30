@@ -66,29 +66,47 @@ Settings**. Poem/Poet detail are drill-ins (not tabs).
 - **`FilterPanel`**: 朝代 (dynasty, **single-select** pills, options from `meta.dynasties`) · 主題 / 時令 /
   選集 / 風格 (**multi-select** pills, from `meta.types` by `kind`) · **只看收藏** toggle · 清除篩選.
   Filter semantics: **OR within a kind-group, AND across groups** (e.g. (春天 OR 秋天) AND 唐詩三百首).
+  Pills use the shared **`FilterPill`** (`text-body`, `bg-input text-text-primary` inactive / accent-filled
+  selected) — the same chip the Quotes Library tag facet, the Poets list, and a poem's tag list use.
 - **`ResultCount`** + a list of **`PoemCard`**s (title · writer · gold dynasty badge · excerpt + heart).
   Tapping a card opens the poem; the heart toggles a favourite (optimistic). Initial paint capped
   (`PAGE = 60`) with a "載入更多" button. Criteria persist via `useSessionState('wellworth:literature-home')`.
 
 ### Poem detail (`/literature/poem/:id`)
 
-- Header: back + favourite heart. **`PoemReader`** (read-aloud) then the poem body (centred, rem-based
-  display sizes), then **譯文** / **註釋** / **賞析** (`SectionCard`, only when present).
-- Body loaded lazily via `getPoem(id)` (runtime-cached). Keyed by route id, so the reader resets per
-  poem. The writer name links to the poet.
+- Header: **X** (close, left) · the **poem title** (`text-title`, **truncates** with `…` when long) ·
+  the linked **writer** + gold **dynasty** chip (`text-caption`/`text-section`, `shrink-0` so they
+  survive a long title) · favourite heart (right). Body: **`PoemReader`** (read-aloud), the poem's tags
+  as `FilterPill`s (resolved id→name from `meta.types`), then the collapsible color-accented sections via
+  **`CollapsibleColorSection`**: **原文** (always) · **譯文** / **註釋** / **賞析** (each only when
+  present **and** visible per the Settings → 顯示 prefs). 原文 opens by default; the prose sections start
+  collapsed. Section accent colours come from `LITERATURE_SECTION_COLOR` (constants → `--color-lit-*`).
+- Body loaded lazily via `getPoem(id)` (runtime-cached); `meta` (precached) resolves tag names. Keyed by
+  route id, so the reader resets per poem. The writer link opens the poet; **Esc** (or X) closes.
 
 ### Poets (`/literature/poets`) + Poet detail (`/literature/poet/:id`)
 
-- **Poets**: writers grouped by dynasty (corpus order) as tappable chips (`groupWritersByDynasty`).
-- **Poet detail**: name · dynasty · portrait (graceful fallback when `headImageUrl` is dead) · **作者簡介**
-  bio · **作品** works list (links to each poem).
+- **Poets**: writers grouped by dynasty (corpus order) as tappable **`FilterPill`**s
+  (`groupWritersByDynasty`). **No screen title** (the old 名家 header was removed) — the panel sits at the
+  standard top inset like the other tabs.
+- **Poet detail**: header = **X** (close) · poet **name** · gold dynasty chip. Body = portrait (graceful
+  fallback when `headImageUrl` is dead), then collapsible color-accented **作者簡介** bio (gated by the
+  Settings → 顯示 prefs, starts collapsed) · **作品** works list (always shown, links to each poem) via
+  `CollapsibleColorSection`.
 
 ### Favorites (`/literature/favorites`)
 
-- The user's favourited poems (index filtered by the favourite-id set), same `PoemCard`.
+- The user's favourited poems (index filtered by the favourite-id set), same `PoemCard`. **No screen
+  title** (the old 收藏 header was removed) — bumped up to the standard top inset.
 
 ### Settings (`/literature/settings`)
 
+- Header: **X** (close) · **萬卷詩書 Settings**.
+- **顯示** (display, first): **可見詩書欄位** → poem-detail field visibility (譯文/註釋/賞析;
+  `profile.literature_poem_visible_fields`, NULL = all; 原文 always shown) · **可見名家欄位** →
+  poet-detail field visibility (作者簡介 only; `profile.literature_writer_visible_fields`; 作品 always
+  shown). Both open the shared **`VisibleFieldsSheet`** (thin wrappers `LiteraturePoem/WriterFieldsSheet`,
+  given a Chinese `title`).
 - **朗讀** (read-aloud): **自動循環** toggle (`profile.literature_tts_autoloop`) + **預設語言** 粵/國
   `SegmentedTabs` (`profile.literature_tts_lang`). Auto-saves on change.
 
@@ -98,9 +116,13 @@ Settings**. Poem/Poet detail are drill-ins (not tabs).
   (國) voice (voices load async via `voiceschanged`), drives `progress` from `onboundary`, seeks by
   re-speaking from a char offset, optional auto-loop, always cancels on unmount/stop.
 - **`src/components/PoemReader.tsx`**: 粵/國 `SegmentedTabs`, play/stop, a 0–100% slider that doubles as
-  seek. When no matching voice exists (`!voiceAvailable`) it shows a quiet note instead of failing.
-- **iOS caveat (PARKED):** a zh-HK Cantonese voice is device-dependent and often absent; Mandarin is
-  broadly available.
+  seek. When no matching voice exists (`!voiceAvailable`) it shows a quiet note instead of failing. An
+  **info icon** (right of play) toggles an inline note explaining that iPhone exposes only the iOS
+  default Chinese voice and how to change it (Settings → Accessibility → Read & Speak → Voices →
+  Chinese); tap the icon again (or the note) to dismiss.
+- **iOS caveat (PARKED):** iOS Safari's Web Speech API exposes only the **one** Chinese voice set as the
+  iOS system default, so the 粵/國 toggle is inert on iPhone (both follow that default) — the info note
+  above guides the user to switch it. Desktop browsers expose both voices, so the toggle works there.
 
 ## Data model (Supabase)
 
@@ -115,14 +137,20 @@ Settings**. Poem/Poet detail are drill-ins (not tabs).
 
 - `literature_tts_lang` TEXT default `'zh-HK'` CHECK in (`'zh-HK'`,`'zh-CN'`) · `literature_tts_autoloop`
   BOOLEAN default false.
+- `literature_poem_visible_fields` TEXT[] (NULL = all visible) — Poem-detail 譯文/註釋/賞析 toggles ·
+  `literature_writer_visible_fields` TEXT[] (NULL = all) — Poet-detail 作者簡介 toggle. 原文 / 作品 are
+  always shown and never stored. Both follow the shared `VisibleFieldsColumn` / `isFieldVisible` pattern.
 
 ## Code map
 
 - Data: `src/data/literature.ts` (static-asset fetch + memoized index/meta + Supabase favourites +
   `cachePoemOffline`). Logic/types: `src/lib/literature.ts` (+ `.test.ts`), `src/lib/literature-refresh.ts`.
 - Hooks: `src/hooks/useSpeech.ts`, `src/hooks/useLiteratureFavorites.ts`.
-- Components: `src/components/PoemReader.tsx`, `src/components/PoemCard.tsx`.
-- Screens: `src/screens/Literature{Home,PoemDetail,Poets,PoetDetail,Favorites,Settings}.tsx`.
+- Components: `src/components/PoemReader.tsx`, `src/components/PoemCard.tsx`. Shared (cross-module):
+  `FilterPill.tsx`, `CollapsibleColorSection.tsx`, `VisibleFieldsSheet.tsx`. Section colours:
+  `src/constants/literature-sections.ts` (`LITERATURE_SECTION_COLOR`) → `--color-lit-*` (`index.css`).
+- Screens: `src/screens/Literature{Home,PoemDetail,Poets,PoetDetail,Favorites,Settings}.tsx` +
+  `Literature{Poem,Writer}FieldsSheet.tsx`.
 - Build: `scripts/build-literature-data.mjs` (`npm run build:literature`).
 
 ## Deferred (see `docs/PARKED.md`)

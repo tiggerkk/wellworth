@@ -70,10 +70,15 @@ favourites + read-aloud settings are in Supabase. **Shipped** (see `docs/11_lite
   screens. Additive later: a `poem_sentence` static file + a Poem-detail section.
 - **`audioUrl` unused** — the source's per-poem audio URLs are dropped; read-aloud uses the Web Speech
   API (`useSpeech`) instead, which gives 粵/國 + seek with no hosted audio.
-- **iOS Cantonese (粵 / zh-HK) voice** — **Out of scope (hard PWA limit).** Voice availability is
-  device-dependent; a zh-HK voice is often absent on iOS, so 粵 may fall back to the platform default.
-  `PoemReader` surfaces a quiet "voice unavailable" note (`voiceAvailable=false`); Mandarin is broadly
-  available. Parallels the Medical WebAuthn framing.
+- **iOS single Chinese voice (粵/國 toggle inert on iPhone)** — **Out of scope (hard Safari limit).**
+  iOS Safari's Web Speech API exposes only the **one** Chinese voice set as the iOS system default
+  (Settings → Accessibility → Read & Speak → Voices → Chinese), so the in-app 粵/國 toggle can't switch
+  between Cantonese and Mandarin on iPhone — both follow whatever the iOS default is. Confirmed by Apple
+  (downloadable voices aren't returned to the Web Speech API). `PoemReader` surfaces a quiet "voice
+  unavailable" note (`voiceAvailable=false`) **and** an info icon → inline note telling the user how to
+  change the iOS default voice. Desktop Chrome/Edge expose all voices, so the toggle works there. The
+  only way to get both voices on one iPhone is a cloud TTS (`yue-HK`/`zh-CN`) via an Edge-Function
+  proxy — not built (online-first + cost). Parallels the Medical WebAuthn framing.
 - **Same-URL corpus corrections need a cache-name bump** — poem/writer bodies are CacheFirst
   (`literature-bodies-v1`); a corrected poem at the same URL won't refresh until the cache name is
   bumped on regeneration. Acceptable for an essentially-static corpus.

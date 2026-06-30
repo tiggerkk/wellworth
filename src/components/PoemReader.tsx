@@ -1,5 +1,9 @@
 import { useState } from 'react'
-import { IconPlayerPlayFilled, IconPlayerStopFilled } from '@tabler/icons-react'
+import {
+  IconInfoCircle,
+  IconPlayerPlayFilled,
+  IconPlayerStopFilled,
+} from '@tabler/icons-react'
 import { useSpeech } from '../hooks/useSpeech'
 import { SegmentedTabs } from './SegmentedTabs'
 import { SPEECH_LANG_OPTIONS, type SpeechLang } from '../lib/literature'
@@ -20,6 +24,7 @@ interface PoemReaderProps {
  */
 export function PoemReader({ text, defaultLang, autoLoop }: PoemReaderProps) {
   const [lang, setLang] = useState<SpeechLang>(defaultLang)
+  const [showInfo, setShowInfo] = useState(false)
   const { supported, voiceAvailable, speaking, progress, play, stop, seek } = useSpeech({
     text,
     lang,
@@ -63,6 +68,14 @@ export function PoemReader({ text, defaultLang, autoLoop }: PoemReaderProps) {
             <IconPlayerPlayFilled size={18} />
           )}
         </button>
+        <button
+          onClick={() => setShowInfo((v) => !v)}
+          aria-label="朗讀說明"
+          aria-expanded={showInfo}
+          className="flex size-10 shrink-0 items-center justify-center text-text-tertiary"
+        >
+          <IconInfoCircle size={18} />
+        </button>
       </div>
       <div className="flex items-center gap-2">
         <input
@@ -78,6 +91,15 @@ export function PoemReader({ text, defaultLang, autoLoop }: PoemReaderProps) {
           {pct}%
         </span>
       </div>
+      {showInfo && (
+        <p
+          onClick={() => setShowInfo(false)}
+          className="text-caption leading-relaxed text-text-tertiary"
+        >
+          iPhone 只提供系統預設語音；如需切換粵/國，請到Settings → Accessibility → Read
+          &amp; Speak → Voices → Chinese → Select Cantonese or Mandarin as the default
+        </p>
+      )}
     </div>
   )
 }

@@ -13,6 +13,8 @@ export type VisibleFieldsColumn =
   | 'quote_visible_fields'
   | 'medical_visible_fields'
   | 'travel_visible_fields'
+  | 'literature_poem_visible_fields'
+  | 'literature_writer_visible_fields'
 
 /** A boolean `profile` column rendered as an extra toggle interleaved into the list (Shows Poster URL). */
 type BooleanColumn = 'show_poster_url_visible'
@@ -35,6 +37,8 @@ interface VisibleFieldsSheetProps {
   fields: FieldDef[]
   column: VisibleFieldsColumn
   extras?: ExtraToggle[]
+  /** Sheet header title; defaults to "Visible Fields" (CJK modules pass their own). */
+  title?: string
 }
 
 /**
@@ -48,6 +52,7 @@ export function VisibleFieldsSheet({
   fields,
   column,
   extras = [],
+  title = 'Visible Fields',
 }: VisibleFieldsSheetProps) {
   const navigate = useNavigate()
   const { profile, loading, save } = useProfileEditor()
@@ -58,7 +63,7 @@ export function VisibleFieldsSheet({
         <button onClick={() => navigate(-1)} aria-label="Close">
           <IconX size={22} className="text-text-secondary" />
         </button>
-        <h1 className="text-heading font-medium text-text-primary">Visible Fields</h1>
+        <h1 className="text-heading font-medium text-text-primary">{title}</h1>
       </header>
       {loading && <p className="p-4 text-body text-text-secondary">Loading…</p>}
       {profile && (

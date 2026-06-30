@@ -209,6 +209,18 @@ the Shows/Books exception above — no weekday is ever shown.
   `IconDeviceFloppy` (editing). **Delete** (`IconTrash`, `danger`) shows **only when editing** and flips
   to a two-step inline confirm before firing. Reset needs a change to enable; Submit needs dirty /
   required fields.
+- **FilterPill** — the shared filter/tag chip (`src/components/FilterPill.tsx`): a `rounded-pill px-3 py-1
+text-body` pill, **`bg-input text-text-primary`** inactive (deliberately whiter + larger than a caption
+  for readability), **accent-filled** (`bg-accent text-bg`) when `selected`. With `onClick` it's a
+  toggle/nav `<button>` (`aria-pressed` only when `selected` is set); without one it's a display-only
+  `<span>`. Used by the Quotes Library tag facet, the Literature poem filters (朝代/主題/…), the Poets
+  list (nav), and a poem's tag list (display).
+- **CollapsibleColorSection** — the generic collapsible **color-accented** card
+  (`src/components/CollapsibleColorSection.tsx`): a left chevron + per-section **colored left stripe**
+  (`borderLeft: 4px`) and **tinted header** (`color-mix … 14%`), the same pattern as the Net Worth
+  Monthly Entry asset sections / `MedicalSection`, but module-agnostic (takes a `color` + `title`). The
+  header label is `text-body font-medium` (not the 11px section caption) so CJK titles read clearly. Used
+  by the Literature Poem/Poet detail sections (colours from `LITERATURE_SECTION_COLOR`).
 - **EmptyState** — vertically-centered **module icon** over a "No X yet" line over a **+ New X** action
   pill (`src/components/EmptyState.tsx`). Internally `flex-1 justify-center`. Takes an optional `Icon`
   (a Tabler `Icon`, shown muted at size 40). Used by every module's Dashboards/Libraries and the
@@ -361,3 +373,10 @@ icon↔group mapping lives in `constants/groups.ts`.
 - No bottom action bar.
 - The header title sits left of the actions and **clamps to 2 lines with an ellipsis** when long.
 - **Settings sub-screens auto-save on change.**
+- **Back / close is a top-left `IconX`** (`size 22`, `text-text-secondary`), never a `‹` chevron — the
+  uniform dismiss affordance on entry forms, detail drill-ins, sheets, and module sub-settings (e.g. all
+  Literature screens: Poem/Poet detail + Settings). It `navigate(-1)`s, and the screen also registers
+  **`useEscapeKey(() => navigate(-1))`** so the laptop **Esc** key closes it too (route `Sheet`s already
+  do this internally — the shared LIFO stack means an overlay layered above consumes Esc first). (A
+  `‹ month ›` cluster is a distinct _navigation_ control, not a dismiss — see the Net Worth month nav /
+  `Calendar`.)

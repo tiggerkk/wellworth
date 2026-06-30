@@ -20,6 +20,7 @@ import { Toggle } from '../components/Toggle'
 import { EmptyState } from '../components/EmptyState'
 import { ResultCount } from '../components/ResultCount'
 import { PoemCard } from '../components/PoemCard'
+import { FilterPill } from '../components/FilterPill'
 
 const KIND_LABEL: Record<Exclude<TypeKind, 'other'>, string> = {
   theme: '主題',
@@ -35,28 +36,6 @@ const FILTER_KINDS: Exclude<TypeKind, 'other'>[] = [
 ]
 // Cap the initial paint so a multi-thousand-poem result doesn't render all at once.
 const PAGE = 60
-
-function Pill({
-  label,
-  active,
-  onClick,
-}: {
-  label: string
-  active: boolean
-  onClick: () => void
-}) {
-  return (
-    <button
-      onClick={onClick}
-      aria-pressed={active}
-      className={`rounded-pill px-2.5 py-1 text-label ${
-        active ? 'bg-accent text-bg' : 'bg-input text-text-secondary'
-      }`}
-    >
-      {label}
-    </button>
-  )
-}
 
 /**
  * Literature — Home (poem list). Client-side search (Traditional⇄Simplified via `foldZh`) + a
@@ -125,7 +104,7 @@ export function LiteratureHome() {
           <SearchBar
             value={criteria.query}
             onChange={(q) => setCrit({ query: q })}
-            placeholder="搜尋詩詞、作者…"
+            placeholder="搜尋詩詞、作者"
             className="min-w-0 flex-1"
           />
           <FilterToggleButton
@@ -142,10 +121,10 @@ export function LiteratureHome() {
               <span className="text-caption text-text-secondary">朝代</span>
               <div className="flex flex-wrap gap-1.5">
                 {meta.dynasties.map((d) => (
-                  <Pill
+                  <FilterPill
                     key={d}
                     label={d}
-                    active={criteria.dynasty === d}
+                    selected={criteria.dynasty === d}
                     onClick={() =>
                       setCrit({ dynasty: criteria.dynasty === d ? null : d })
                     }
@@ -165,10 +144,10 @@ export function LiteratureHome() {
                 </span>
                 <div className="flex flex-wrap gap-1.5">
                   {list.map((t) => (
-                    <Pill
+                    <FilterPill
                       key={t.id}
                       label={t.name}
-                      active={criteria.typeIds.includes(t.id)}
+                      selected={criteria.typeIds.includes(t.id)}
                       onClick={() => toggleType(t.id)}
                     />
                   ))}

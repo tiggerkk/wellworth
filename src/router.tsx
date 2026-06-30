@@ -30,6 +30,8 @@ import {
   LiteraturePoetDetail,
   LiteratureFavorites,
   LiteratureSettings,
+  LiteraturePoemFieldsSheet,
+  LiteratureWriterFieldsSheet,
   Login,
   ImportMedicalSheet,
   MedicalDashboard,
@@ -174,6 +176,14 @@ export const router = createBrowserRouter([
           { path: 'literature/poets', element: <LiteraturePoets /> },
           { path: 'literature/favorites', element: <LiteratureFavorites /> },
           { path: 'literature/settings', element: <LiteratureSettings /> },
+          {
+            path: 'literature/settings/visible-poem',
+            element: <LiteraturePoemFieldsSheet />,
+          },
+          {
+            path: 'literature/settings/visible-writer',
+            element: <LiteratureWriterFieldsSheet />,
+          },
           { path: 'literature/poet/:id', element: <LiteraturePoetDetail /> },
           { path: 'literature/poem/:id', element: <LiteraturePoemDetail /> },
 

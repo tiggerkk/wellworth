@@ -31,6 +31,7 @@ import { Toggle } from '../components/Toggle'
 import { StatusChip } from '../components/StatusChip'
 import { FilterToggleButton } from '../components/FilterToggleButton'
 import { FilterPanel } from '../components/FilterPanel'
+import { FilterPill } from '../components/FilterPill'
 import { SortControl } from '../components/SortControl'
 import { ResultCount } from '../components/ResultCount'
 
@@ -243,20 +244,14 @@ export function QuotesLibrary() {
 
           {ranked.length > 0 && (
             <div className="flex max-h-32 flex-wrap items-center gap-1.5 overflow-y-auto">
-              {displayTags.map((tag) => {
-                const on = criteria.tags.includes(tag)
-                return (
-                  <button
-                    key={tag}
-                    onClick={() => toggleTag(tag)}
-                    className={`rounded-pill px-2 py-0.5 text-caption ${
-                      on ? 'bg-accent text-bg' : 'bg-input text-text-secondary'
-                    }`}
-                  >
-                    {tag}
-                  </button>
-                )
-              })}
+              {displayTags.map((tag) => (
+                <FilterPill
+                  key={tag}
+                  label={tag}
+                  selected={criteria.tags.includes(tag)}
+                  onClick={() => toggleTag(tag)}
+                />
+              ))}
               {displayTags.length === 0 && (
                 <span className="text-text-tertiary">No tags match.</span>
               )}
