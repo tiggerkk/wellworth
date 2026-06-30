@@ -166,7 +166,9 @@ All values are entered manually. `details` are preserved for reference only; the
 
 ### Bottom-nav tabs
 
-`Dashboard · Monthly Entry · Insurance Policies · New Insurance · Settings` (plus Home).
+`Dashboard · Monthly Entry · Insurance Policies · Settings` (plus Home). New Insurance is **not** a
+tab — it's the teal **+ New Insurance** action on the Insurance Policies result-count row (and the
+empty-state action).
 
 ### Asset types
 
@@ -226,6 +228,8 @@ Policy Year · Premium · Cash Value (native→HKD)` with an "as of yr N" tag wh
   Provider + **Past Break-Even Only**, line 2 an **All / Matured / Surrendered** `SegmentedTabs`
   status toggle (`criteria.status`), line 3 Started date range, line 4 sort + Clear Filters. Sort
   (Start Date / Policy Number / Policy Name / Provider, descending default). Tap → New/Edit Insurance.
+  A teal **`+ New Insurance`** action sits at the right edge of the `ResultCount` row (and is the
+  `EmptyState` action) — the sole entry point for a new policy now the bottom-nav tab is gone.
   Mirrors Medical Reports. Each row shows the provider plus status **badges** (`StatusChip`):
   **Surrendered** = grey (`bg-track`), **Matured** = blue (`bg-accent`), **Past Break Even** =
   teal (`bg-positive`). (Both filter + badges read `policy.termination_kind`.)

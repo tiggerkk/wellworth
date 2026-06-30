@@ -154,6 +154,10 @@ Identical layout to the Dashboard, scoped to a single day instead of an averaged
 
 ### Library (tab)
 
+The pinned top pane holds the sub-tab control + `SearchBar` only; the teal **`+ New Food`** /
+**`+ New Activity`** action sits at the **right edge of the "XX results" row** (below the pane),
+opposite the `ResultCount` — so it scrolls with the list rather than staying pinned.
+
 Two sub-tabs:
 
 - **Foods**: searchable list of **all** your foods — custom items **plus** the USDA/OFF rows cached

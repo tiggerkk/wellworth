@@ -5,7 +5,6 @@ import {
   IconChartBar,
   IconDeviceTv,
   IconFeather,
-  IconFileCertificate,
   IconHeart,
   IconHeartbeat,
   IconLibrary,
@@ -59,7 +58,7 @@ export const MODULES: ModuleDef[] = [
     label: 'Wellness',
     Icon: IconApple,
     base: routes.wellness.base,
-    description: 'Food, supplements & activity',
+    description: 'Food & activities',
     tabs: [
       { to: routes.wellness.dashboard, label: 'Dashboard', Icon: IconChartBar },
       { to: routes.wellness.diary, label: 'Diary', Icon: IconNotebook, end: true },
@@ -72,7 +71,7 @@ export const MODULES: ModuleDef[] = [
     label: 'Net Worth',
     Icon: IconWallet,
     base: routes.networth.base,
-    description: 'Assets over time, in HKD',
+    description: 'Assets over time',
     tabs: [
       {
         to: routes.networth.dashboard,
@@ -86,11 +85,6 @@ export const MODULES: ModuleDef[] = [
         label: 'Insurance Policies',
         Icon: IconLibrary,
       },
-      {
-        to: routes.networth.insuranceEntry,
-        label: 'New Insurance',
-        Icon: IconFileCertificate,
-      },
       { to: routes.networth.settings, label: 'Settings', Icon: IconSettings },
     ],
   },
@@ -99,7 +93,7 @@ export const MODULES: ModuleDef[] = [
     label: 'Quotes',
     Icon: IconQuote,
     base: routes.quotes.base,
-    description: 'Favourite quotes — daily Zen',
+    description: 'Daily Zen',
     tabs: [
       { to: routes.quotes.zen, label: 'Zen', Icon: IconSparkles, end: true },
       { to: routes.quotes.library, label: 'Library', Icon: IconList },
@@ -112,7 +106,7 @@ export const MODULES: ModuleDef[] = [
     label: 'Literature',
     Icon: IconFeather,
     base: routes.literature.base,
-    description: 'Chinese poems & prose (粵/國)',
+    description: '萬卷詩書 (粵/國)',
     tabs: [
       { to: routes.literature.home, label: 'Poems', Icon: IconList, end: true },
       { to: routes.literature.poets, label: 'Poets', Icon: IconUsers },

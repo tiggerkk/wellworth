@@ -64,14 +64,14 @@ export function ImportPreviewList({ items, onChange, onManual }: ImportPreviewLi
           <div className="flex shrink-0 items-center gap-1.5">
             <button
               onClick={() => onChange(i)}
-              className="rounded-pill bg-input px-2.5 py-1 text-caption font-medium text-accent"
+              className="rounded-pill bg-danger px-3 py-1 text-caption font-medium text-white"
             >
               Change
             </button>
             <button
               onClick={() => onManual(i)}
               disabled={item.status === 'manual'}
-              className="rounded-pill bg-input px-2.5 py-1 text-caption font-medium text-text-secondary disabled:opacity-40"
+              className="rounded-pill bg-accent px-3 py-1 text-caption font-medium text-white disabled:opacity-40"
             >
               Manual
             </button>

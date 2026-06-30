@@ -3144,3 +3144,25 @@ Behaviour/data are in `docs/11_literature.md`; the static-corpus pattern + read-
   same sheet via `DisplaySettingsCard`, so no change there.
 - **No schema/data-model change** — order is still the flat `module_order` array; the grid fills
   row-by-row so linear index = grid position. No new pure helper, so the snapshot stays **620** tests.
+
+## Cross-module cosmetic pass (filters, importer pills, in-list "+ New") — 2026-06-29
+
+- **Goal:** a batch of look-and-feel fixes across modules; no schema/data-model change.
+- **`SelectMenu.tsx`** — the open menu was clipped to a fixed `max-h-64`/264px even with screen room
+  to spare (long lists: Dynasty, Quotes Category/Source). Now the menu's max-height = the space
+  actually available on the chosen side (below, or above when it flips), minus an 8px margin, capped at
+  the list's own height — fixes every module's filter dropdowns at once.
+- **`ImportPreviewList.tsx`** (Shows/Books/Food importers) — Change / Manual pills were faint
+  `bg-input` text-only; now solid like Medical's **Mark Reviewed**: **Change** = `bg-danger` red,
+  **Manual** = `bg-accent` blue, white text (disabled dims). Shared component, so the Food importer
+  matches too.
+- **`MedicalReportDetail.tsx`** — the read-only report's `Review – <reason>` marker was `text-caption
+text-accent`; aligned to the editor's `text-label font-medium text-warning` so read-only / import /
+  Edit Report all read identically.
+- **`Library.tsx`** (Wellness) — moved the teal `+ New Food` / `+ New Activity` out of the pinned pane
+  to the right edge of the `ResultCount` row (`ml-auto`).
+- **`InsurancePolicies.tsx` + `constants/modules.ts`** — dropped the **New Insurance** bottom-nav tab
+  (and its `IconFileCertificate` import); the new entry point is a teal `+ New Insurance` on the
+  `ResultCount` row (plus the existing empty-state action).
+- Docs synced (`01_design_system.md`, `03_global.md`, `04_wellness.md`, `05_networth.md`,
+  `09_medical.md`). Typecheck + ESLint green; no test change.

@@ -261,7 +261,10 @@ flex flex-col`, or `h-full` for Zen) so the `flex-1` fills the real content area
 - **SelectMenu** — a compact dropdown (button + label + chevron → scrim + absolute menu of
   `{value,label}` options); generic over string options. Used by Library filters/sort and the Entry
   forms' Status / LGBT+ / Language / Type controls. **Esc** collapses an open menu (via
-  `useEscapeKey`). The menu **flips upward** when there isn't room below. A `size` prop
+  `useEscapeKey`). The menu **flips upward** when there isn't room below, and its **max-height is the
+  space actually available** on the chosen side (minus an 8px margin), capped at the list's own height
+  — so a long list (Dynasty, Quotes Category/Source, …) fills the screen's spare vertical room instead
+  of being clipped to a fixed few rows. A `size` prop
   (**`field` default** / `compact`) keeps the trigger at the **`.field-control`** height across forms +
   filters; pass `size="compact"` to opt a tight spot back down.
 - **useEscapeKey(handler, enabled?)** (`src/hooks/useEscapeKey.ts`) — shared **Escape-to-dismiss**.
@@ -319,7 +322,9 @@ flex flex-col`, or `h-full` for Zen) so the `flex-1` fills the real content area
   (`DayExpensesSheet`) and the trip-level `TripExpensesPanel` ledger (the latter with `groupByDate`).
 - **ImportPreviewList** — the shared CSV-importer result list (`src/components/ImportPreviewList.tsx`):
   a bordered card of rows, each `{ media, title, year, subtitle?, meta?, status, reviewLabel }` plus the
-  standard **No-match / review / manual** flag and **Change / Manual** actions; callers pass the
+  standard **No-match / review / manual** flag and **Change / Manual** actions (solid pills, white
+  text, matching Medical's **Mark Reviewed**: **Change** = `bg-danger` red, **Manual** = `bg-accent`
+  blue, dimmed when disabled); callers pass the
   module-specific thumbnail + chips (`media` + `year` are optional — the Food importer omits them).
   Used by the Books, Shows, and Food importers (`ImportBooksSheet`, `ImportShowsSheet`,
   `ImportFoodsSheet`). Carries **`shrink-0`** so the `overflow-hidden` card isn't squished + clipped by

@@ -181,9 +181,7 @@ function ResultRow({ r }: { r: MedicalResultRow }) {
             </p>
           )}
           {reviewReason && (
-            <p className="text-caption font-medium text-accent">
-              Review – {reviewReason}
-            </p>
+            <p className="text-label font-medium text-warning">Review – {reviewReason}</p>
           )}
         </>
       }

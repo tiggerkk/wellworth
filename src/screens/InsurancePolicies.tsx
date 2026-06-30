@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { IconFileCertificate } from '@tabler/icons-react'
+import { IconFileCertificate, IconPlus } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useProfile } from '../hooks/useProfile'
@@ -46,8 +46,9 @@ const STATUS_OPTIONS: { value: InsuranceStatusFilter; label: string }[] = [
 
 /**
  * Insurance Policies — searchable/filterable/sortable policy list (mirrors Medical Reports). Tap a
- * row → New/Edit Insurance. New policies come from the "New Insurance" bottom-nav tab. Break-even /
- * surrendered filters are computed from the bounded catalogue client-side.
+ * row → New/Edit Insurance. New policies come from the teal "+ New Insurance" action on the result-
+ * count row (and the empty-state action) — the entry point that replaced the old bottom-nav tab.
+ * Break-even / surrendered filters are computed from the bounded catalogue client-side.
  */
 export function InsurancePolicies() {
   const navigate = useNavigate()
@@ -169,8 +170,18 @@ export function InsurancePolicies() {
           Icon={IconFileCertificate}
         />
       )}
-      {!loading && !error && items.length > 0 && view.length > 0 && (
-        <ResultCount count={view.length} />
+      {/* "XX results" on the left; "+ New Insurance" is the entry point at the right edge (the
+          bottom-nav tab was removed, so this — and the empty-state action — replace it). */}
+      {!loading && !error && items.length > 0 && (
+        <div className="flex items-center">
+          {view.length > 0 && <ResultCount count={view.length} />}
+          <button
+            onClick={() => navigate(routes.networth.insuranceEntry)}
+            className="ml-auto flex items-center gap-1 px-1 text-body text-positive"
+          >
+            <IconPlus size={16} /> New Insurance
+          </button>
+        </div>
       )}
       {!loading && !error && items.length > 0 && (
         <div className="divide-y divide-border overflow-hidden rounded-card border border-border bg-surface">

@@ -71,8 +71,9 @@ _Search, filter, and sort persist for the **browser-tab session** (`useSessionSt
 - Each result row: `test name · reference range` on the left, `value (+ unit)` on the right — value
   **coloured by flag** (high/abnormal = `danger` red, low = `info` blue).
 - A "normalized from …" note when the value was unit-converted on import; a still-flagged row is
-  **accent-tinted** with a **`Review – <reason>`** marker (accent, read-only — no button here); see the
-  review lifecycle under Add / Edit Report.
+  **accent-tinted** with a **`Review – <reason>`** marker (`text-label font-medium text-warning`, the
+  **same size + colour as the editor's marker**, read-only — no button here); see the review lifecycle
+  under Add / Edit Report.
 
 ### Add / Edit Report (`/medical/entry`, `/medical/:id/edit`)
 
@@ -101,9 +102,11 @@ _Search, filter, and sort persist for the **browser-tab session** (`useSessionSt
   normalization — that's the importer's job).
 - **Review ("uncertain") lifecycle:** there is **no manual uncertain toggle** — the owner never sets it
   by hand. A row is flagged for review when the **importer** raises `uncertain` (see Import); a flagged
-  card is **accent-tinted** (`bg-accent/10`, accent border) and shows **`Review – <reason>`** (accent)
-  as its **last row** with a **Mark Reviewed** pill button (`bg-input` accent, like the Shows importer's
-  controls). The flag clears on **Mark Reviewed** _or_ on **editing any field** of the row (so reviewing it
+  card is **accent-tinted** (`bg-accent/10`, accent border) and shows **`Review – <reason>`**
+  (`text-label font-medium text-warning`) as its **last row** with a **Mark Reviewed** pill button
+  (`bg-accent`, white text). The Shows/Books importer's own Change / Manual pills are now solid too
+  (Change = `bg-danger` red, Manual = `bg-accent` blue, white text — see `ImportPreviewList`). The flag
+  clears on **Mark Reviewed** _or_ on **editing any field** of the row (so reviewing it
   — here or back in Edit Report after an unreviewed import — resolves it). The `<reason>` is derived
   from row state (`medicalReviewReason`): `no numeric value` (numeric test, no number), `unmatched test`
   (name matched no reference test), else `check value` (the AI's low-confidence flag). Same editor + flag

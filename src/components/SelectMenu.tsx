@@ -33,6 +33,10 @@ export function SelectMenu<T extends string>({
   const [open, setOpen] = useState(false)
   // Open upward when there isn't room below the trigger (e.g. a short form clipped by overflow).
   const [flipUp, setFlipUp] = useState(false)
+  // Cap the menu to the space actually available on the chosen side (minus an 8px margin) rather
+  // than a fixed height — so a long list (Dynasty, Category, Source…) fills the screen's spare
+  // vertical room instead of being clipped to a few rows.
+  const [maxH, setMaxH] = useState(264)
   const btnRef = useRef<HTMLButtonElement>(null)
   const current = options.find((o) => o.value === value)
   useEscapeKey(() => setOpen(false), open)
@@ -41,8 +45,13 @@ export function SelectMenu<T extends string>({
     if (disabled) return
     if (!open && btnRef.current) {
       const rect = btnRef.current.getBoundingClientRect()
-      const menuH = Math.min(options.length * 40 + 8, 264)
-      setFlipUp(window.innerHeight - rect.bottom < menuH && rect.top > menuH)
+      const fullH = options.length * 40 + 8
+      const spaceBelow = window.innerHeight - rect.bottom - 8
+      const spaceAbove = rect.top - 8
+      // Flip up only when below can't fit the list and above has more room; size to that side.
+      const up = spaceBelow < fullH && spaceAbove > spaceBelow
+      setFlipUp(up)
+      setMaxH(Math.min(fullH, up ? spaceAbove : spaceBelow))
     }
     setOpen((o) => !o)
   }
@@ -69,7 +78,8 @@ export function SelectMenu<T extends string>({
             aria-hidden
           />
           <div
-            className={`absolute left-0 z-20 max-h-64 w-full min-w-36 overflow-y-auto rounded-card border border-border bg-surface text-body shadow-lg ${
+            style={{ maxHeight: maxH }}
+            className={`absolute left-0 z-20 w-full min-w-36 overflow-y-auto rounded-card border border-border bg-surface text-body shadow-lg ${
               flipUp ? 'bottom-full mb-1' : 'mt-1'
             }`}
           >

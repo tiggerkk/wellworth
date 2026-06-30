@@ -77,7 +77,7 @@ export function Library() {
 
   return (
     <div className="flex flex-col gap-3 px-4 py-4">
-      {/* Pinned top pane: tabs, search, and the New action stay visible while the list scrolls. */}
+      {/* Pinned top pane: tabs + search stay visible while the list scrolls. */}
       <div className="sticky top-0 z-10 -mx-4 flex flex-col gap-3 bg-bg/90 px-4 py-3 backdrop-blur">
         <SegmentedTabs
           value={tab}
@@ -88,25 +88,27 @@ export function Library() {
           ]}
         />
         <SearchBar value={query} onChange={setQuery} placeholder={`Search ${tab}`} />
-
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() =>
-              openSheet(
-                tab === 'foods' ? routes.wellness.newFood : routes.wellness.newActivity,
-              )
-            }
-            className="flex items-center gap-1 text-body text-positive"
-          >
-            <IconPlus size={16} /> New {tab === 'foods' ? 'Food' : 'Activity'}
-          </button>
-        </div>
       </div>
 
-      {tab === 'foods' && foodList.length > 0 && <ResultCount count={foodList.length} />}
-      {tab === 'activities' && filteredActivities.length > 0 && (
-        <ResultCount count={filteredActivities.length} />
-      )}
+      {/* "XX results" on the left; the New entry point sits at the right edge of the same row. */}
+      <div className="flex items-center">
+        {tab === 'foods' && foodList.length > 0 && (
+          <ResultCount count={foodList.length} />
+        )}
+        {tab === 'activities' && filteredActivities.length > 0 && (
+          <ResultCount count={filteredActivities.length} />
+        )}
+        <button
+          onClick={() =>
+            openSheet(
+              tab === 'foods' ? routes.wellness.newFood : routes.wellness.newActivity,
+            )
+          }
+          className="ml-auto flex items-center gap-1 px-1 text-body text-positive"
+        >
+          <IconPlus size={16} /> New {tab === 'foods' ? 'Food' : 'Activity'}
+        </button>
+      </div>
 
       <div className="overflow-hidden rounded-card border border-border bg-surface">
         {tab === 'foods' &&
