@@ -477,9 +477,9 @@ export function FoodDetailSheet() {
                 per-log quantity and never changes them. */}
             <button
               onClick={() => setManageOpen((o) => !o)}
-              className="mb-4 text-caption text-positive"
+              className="mb-4 text-body text-accent"
             >
-              {manageOpen ? 'Hide servings' : 'Manage servings'}
+              {manageOpen ? 'Hide Servings' : 'Manage Servings'}
             </button>
             {manageOpen && (
               <div className="mb-4 flex flex-col gap-2 rounded-card border border-border bg-surface p-3">
@@ -529,7 +529,7 @@ export function FoodDetailSheet() {
                   onClick={addServing}
                   className="flex items-center gap-1 text-body text-positive"
                 >
-                  <IconPlus size={16} /> Add serving
+                  <IconPlus size={16} /> Add Serving
                 </button>
               </div>
             )}

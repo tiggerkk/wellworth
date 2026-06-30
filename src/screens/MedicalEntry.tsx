@@ -314,7 +314,7 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
                 onClick={addUrl}
                 className="flex items-center gap-1.5 self-start text-body text-positive"
               >
-                <IconPlus size={16} /> Add link
+                <IconPlus size={16} /> Add Link
               </button>
             </div>
           </div>
@@ -331,14 +331,14 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
               onClick={() => setPickerOpen(true)}
               className="flex items-center gap-1.5 text-body text-positive"
             >
-              <IconPlus size={16} /> Add result
+              <IconPlus size={16} /> Add Result
             </button>
           </div>
           {listResults.length === 0 ? (
             <p className="rounded-card border border-dashed border-border px-4 py-6 text-center text-body text-text-tertiary">
               {isEye
-                ? 'No other results. Tap “Add result”.'
-                : 'No results yet. Tap “Add result”.'}
+                ? 'No other results. Tap “Add Result”.'
+                : 'No results yet. Tap “Add Result”.'}
             </p>
           ) : (
             <div className="flex flex-col gap-5">

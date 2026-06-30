@@ -21,7 +21,7 @@ export function EffortPicker({ value, onChange, available }: EffortPickerProps) 
             onClick={() => onChange(level.key)}
             className={`flex items-center justify-between rounded-input border px-4 py-3 text-left ${
               active ? 'border-accent bg-input' : 'border-border bg-surface-alt'
-            } ${disabled ? 'opacity-40' : ''}`}
+            } ${disabled ? 'opacity-60' : ''}`}
           >
             <span className="text-body text-text-primary">{level.label}</span>
             <span className="text-caption text-text-secondary">{level.range}</span>

@@ -82,7 +82,7 @@ export function BooksDashboard() {
   const editBook = (id: string) => navigate(routes.books.edit(id))
 
   return (
-    <div className="flex min-h-full flex-col pb-4">
+    <div className="flex min-h-full flex-col py-4">
       {loading && <p className="px-4 py-6 text-body text-text-secondary">Loading…</p>}
       {error && (
         <p className="px-4 py-6 text-body text-danger">Couldn’t load your books.</p>

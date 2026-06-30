@@ -175,9 +175,9 @@ export function ImportMedicalSheet() {
         </h1>
       </header>
 
-      <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
+      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
         <p className="text-body text-text-secondary">
-          Choose a <code className="text-text-primary">.json</code> (preferred) or{' '}
+          Upload a <code className="text-text-primary">.json</code> (preferred) or{' '}
           <code className="text-text-primary">.csv</code> file produced from a report by
           an AI tool (see{' '}
           <code className="text-text-primary">
@@ -231,7 +231,7 @@ export function ImportMedicalSheet() {
                 ))}
               </div>
               <p className="mt-2 text-section text-text-tertiary">
-                A missing section? Check the counts against the report, then “Add result”.
+                A missing section? Check the counts against the report, then “Add Result”.
               </p>
             </div>
 
@@ -318,7 +318,7 @@ export function ImportMedicalSheet() {
                   onClick={() => update({ document_urls: [...draft.document_urls, ''] })}
                   className="flex items-center gap-1.5 self-start text-body text-positive"
                 >
-                  <IconPlus size={16} /> Add link
+                  <IconPlus size={16} /> Add Link
                 </button>
               </div>
             </div>
@@ -332,7 +332,7 @@ export function ImportMedicalSheet() {
                   onClick={() => setPickerOpen(true)}
                   className="flex items-center gap-1.5 text-body text-positive"
                 >
-                  <IconPlus size={16} /> Add result
+                  <IconPlus size={16} /> Add Result
                 </button>
               </div>
               <div className="flex flex-col gap-5">

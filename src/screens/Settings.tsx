@@ -91,7 +91,7 @@ function AccountCard() {
   return (
     <SectionCard title="Account">
       <FieldRow label="Google Account">{session?.user.email ?? '—'}</FieldRow>
-      <div className="px-4 py-3">
+      <div className="px-4 py-2">
         <button
           onClick={signOut}
           disabled={signingOut}
@@ -149,7 +149,7 @@ function SettingsBody({ profile, save }: { profile: Tables<'profile'>; save: Sav
         </FieldRow>
         <button
           onClick={() => openSheet(routes.settingsVisibleModules)}
-          className="w-full"
+          className="w-full border-b border-border last:border-b-0"
         >
           <FieldRow label="Visible Modules" hint="(Home)">
             <IconChevronRight size={18} className="text-text-tertiary" />

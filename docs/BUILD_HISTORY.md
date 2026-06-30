@@ -3005,3 +3005,32 @@ enter several at once spreadsheet-style — replacing the one-at-a-time modal. B
   Itinerary | Expenses toggle stays.
 - **+2 pure-helper tests** (`groupExpensesByDate`). Lint + Prettier + the expenses suite pass;
   `typecheck` passes except the expected `sort_order` lines (green after the owner regenerates types).
+
+## Cross-module UI polish pass (2026-06-30)
+
+Tester-reported consistency/readability fixes from a Default-font-size pass; no schema. Pure cosmetic
+
+- a couple of layout-resilience fixes.
+
+* **Settings (all modules):** button-wrapped `FieldRow` nav rows never drew a divider (their
+  `last:border-b-0` scoped to the wrapping `<button>`, not the section) — the wrapper buttons now carry
+  `border-b border-border last:border-b-0` so rows divide consistently. **`FieldRow` padding `py-3 → py-2`**
+  (with the standalone action/sign-out rows matched to `py-2`) for a more compact, ACCOUNT-like density.
+  Durable rule: a `FieldRow` wrapped in a button must put the divider on the **button**.
+* **Wellness:** Food Detail servings → **Manage/Hide/Add Servings** (title case); Manage/Hide is now an
+  accent toggle at `text-body` (was teal `text-caption`). `EffortPicker` disabled rows `opacity-40 → 60`
+  (the "× MET" hint was unreadable). Visible Nutrients: the Protein target input sits **inline beside the
+  label** (was stacked below).
+* **Shows/Books/Quotes entry:** field-adjacent action buttons (TMDB / Google Books / link) were
+  `text-body` (15px) beside a `text-field` (16px) input → heights mismatched; unified to `text-field`.
+* **Net Worth / Medical:** Insurance Policies & Medical Reports keep the **search bar visible when empty**
+  (mirror Shows/Books Library). Medical New/Edit + Import: **Add Link / Add Result** (title case). Import
+  review card: **Mark Reviewed** is now a solid accent button (was low-contrast on the tinted card) and the
+  **Review – reason** marker is `text-warning` (was hard-to-read `text-accent` on an accent tint).
+* **Net Worth import:** the per-provider currency `SegmentedTabs` was clipped (`w-36` too narrow for
+  HKD/CNY/USD) → `w-44`.
+* **Top-edge spacing:** Shows Library matched to Shows Dashboard (drop the extra top pad); Books Dashboard
+  gained top padding so "Recently Read" isn't jammed against the edge.
+* **Import sheets:** added `min-h-0` to every `Import*Sheet` scroll body (the search-sheet convention) so
+  a long preview/result scrolls (Quotes import was stuck).
+* Pure-helper test count unchanged (**613**). Verified by `npm run check` + a production build.

@@ -98,14 +98,15 @@ that survives sheets but not reloads; strength activities carry their `strength_
   default, favorite state, snapshot nutrients) instead of re-fetching the live API. Only a
   never-saved food falls back to `getUsdaFood`/`lookupBarcode`.
 
-#### Manage servings (Food Detail)
+#### Manage Servings (Food Detail)
 
 A food's **servings** (reusable measures = name + grams) are distinct from **Amount** (the per-log
-quantity). The **Serving Size** dropdown picks which measure this log uses; **Manage servings** (a
-toggle under the dropdown) is where they're created/edited:
+quantity). The **Serving Size** dropdown picks which measure this log uses; **Manage Servings** (an
+accent-coloured toggle under the dropdown; reads **Hide Servings** when open) is where they're
+created/edited:
 
 - Each row: a **default star** (`IconStarFilled` = the food's default measure), a name input, a
-  grams input, and a delete (`IconTrash`); **+ Add serving** appends a blank row. The default is
+  grams input, and a delete (`IconTrash`); **+ Add Serving** appends a blank row. The default is
   marked `· default` in the dropdown and is preselected next time the food is opened
   (`food.default_serving_id`).
 - **Persistence is deliberate, not incidental (F22):** the managed list is written to the DB **only
@@ -344,7 +345,7 @@ Shared external APIs).
   nutrient never needs a schema change
 - `is_favorite` BOOLEAN DEFAULT false
 - `default_serving_id` UUID NULL → serving (ON DELETE SET NULL) — the preselected measure when
-  logging this food (set via Food Detail → Manage servings). FK added **after** the `serving` table
+  logging this food (set via Food Detail → Manage Servings). FK added **after** the `serving` table
   in the migration (circular dependency: `serving.food_id → food`). NULL ⇒ Food Detail defaults to
   the first serving. A per-log Amount/serving choice never writes this — only the Manage editor does.
 - `deleted_at` TIMESTAMPTZ NULL — **soft delete**; NULL = active. Never hard-delete a food

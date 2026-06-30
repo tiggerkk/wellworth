@@ -96,7 +96,7 @@ export function InsurancePolicies() {
 
   return (
     <div className="flex min-h-full flex-col gap-3 px-4 py-4">
-      {!error && (loading || items.length > 0) && (
+      {!error && (
         <div className="flex items-center gap-2">
           <SearchBar
             value={criteria.query}

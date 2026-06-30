@@ -161,7 +161,7 @@ export function ShowsLibrary() {
   }
 
   return (
-    <div className="flex min-h-full flex-col gap-3 px-4 py-4">
+    <div className="flex min-h-full flex-col gap-3 px-4 pb-4">
       <div className="sticky top-0 z-10 -mx-4 flex flex-col gap-3 bg-bg/90 px-4 py-3 backdrop-blur">
         <SegmentedTabs
           value={criteria.type}

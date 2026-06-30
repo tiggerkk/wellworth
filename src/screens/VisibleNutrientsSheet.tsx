@@ -80,18 +80,16 @@ function Picker({
                     key={n.key}
                     className="flex items-center justify-between gap-3 border-b border-border px-4 py-2.5 last:border-b-0"
                   >
-                    <div className="min-w-0">
-                      <p className="truncate text-body text-text-primary">
-                        {n.display_name}
-                      </p>
-                      {isLimitedData(n) && (
-                        <p className="text-caption text-text-tertiary">limited data</p>
-                      )}
-                      {n.key === 'protein' && (
+                    {n.key === 'protein' ? (
+                      // Protein keeps its target input inline beside the label (not stacked below).
+                      <div className="flex min-w-0 flex-1 items-center gap-2">
+                        <p className="shrink-0 text-body text-text-primary">
+                          {n.display_name}
+                        </p>
                         <input
                           type="number"
                           step="any"
-                          placeholder="Daily target (g) — DRI if blank"
+                          placeholder="Target g — DRI if blank"
                           value={protein}
                           onChange={(e) => setProtein(e.target.value)}
                           onBlur={() => {
@@ -101,10 +99,19 @@ function Picker({
                                 protein.trim() === '' || !Number.isFinite(v) ? null : v,
                             })
                           }}
-                          className="mt-1 field-control w-48"
+                          className="field-control min-w-0 flex-1"
                         />
-                      )}
-                    </div>
+                      </div>
+                    ) : (
+                      <div className="min-w-0">
+                        <p className="truncate text-body text-text-primary">
+                          {n.display_name}
+                        </p>
+                        {isLimitedData(n) && (
+                          <p className="text-caption text-text-tertiary">limited data</p>
+                        )}
+                      </div>
+                    )}
                     <Toggle
                       checked={visible.includes(n.key)}
                       onChange={(on) => toggle(n.key, on)}

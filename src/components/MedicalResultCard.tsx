@@ -167,12 +167,12 @@ export function MedicalResultCard({
 
       {reviewReason && (
         <div className="flex items-center justify-between gap-3 border-t border-accent/20 pt-2">
-          <span className="text-label font-medium text-accent">
+          <span className="text-label font-medium text-warning">
             Review – {reviewReason}
           </span>
           <button
             onClick={() => onChange({ uncertain: false })}
-            className="shrink-0 rounded-pill bg-input px-2.5 py-1 text-caption font-medium text-accent"
+            className="shrink-0 rounded-pill bg-accent px-3 py-1 text-caption font-medium text-white"
           >
             Mark Reviewed
           </button>

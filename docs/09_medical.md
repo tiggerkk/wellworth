@@ -85,7 +85,7 @@ _Search, filter, and sort persist for the **browser-tab session** (`useSessionSt
   **Provider** below; then **Body Part** (shown for mri/ultrasound/mammogram/other), **Narrative**, and
   **Document Links** (repeatable Google Drive URL rows). Optional fields hidden when trimmed in Medical
   Settings → Visible Fields; Date/Type/Results are always shown.
-- **Results:** an **Add result** button opens a searchable **test picker** (the seeded reference
+- **Results:** an **Add Result** button opens a searchable **test picker** (the seeded reference
   grouped by category) or **Add custom test** (an ad-hoc row with editable name + category). Result
   cards render in the owner's **Tests Display Order** (same `orderResultsForDisplay` as Dashboard +
   Report detail) and are **grouped under collapsible, color-accented category sections** (shared
@@ -118,7 +118,7 @@ _Search, filter, and sort persist for the **browser-tab session** (`useSessionSt
 ### Import (sheet, from Medical Settings)
 
 - Reached from **Medical Settings → Import JSON / CSV Medical** or the **Import** button on the New-Report
-  form (both gated by the importer toggle). Choose a `.json` (preferred) or `.csv` file produced
+  form (both gated by the importer toggle). Upload a `.json` (preferred) or `.csv` file produced
   outside the app by an AI vision tool (see `templates/medical-extraction-prompt.md`).
 - The parse applies **tolerant JSON repair** (auto-fixes a stray quote after a number, e.g. `8.6"`);
   an unparseable file shows a specific error (line/column).

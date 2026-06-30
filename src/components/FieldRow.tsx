@@ -16,7 +16,7 @@ interface FieldRowProps {
  */
 export function FieldRow({ label, hint, children }: FieldRowProps) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5 border-b border-border px-4 py-3 last:border-b-0">
+    <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5 border-b border-border px-4 py-2 last:border-b-0">
       <span className="flex min-w-0 items-baseline gap-1.5 text-body text-text-primary">
         {label}
         {hint && <span className="text-caption text-text-tertiary">{hint}</span>}

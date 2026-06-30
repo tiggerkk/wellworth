@@ -48,7 +48,7 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
       <SectionCard title="Display">
         <button
           onClick={() => openSheet(routes.medical.settingsTracked)}
-          className="w-full"
+          className="w-full border-b border-border last:border-b-0"
         >
           <FieldRow label="Tracked Tests" hint="(Dashboard)">
             <IconChevronRight size={18} className="text-text-tertiary" />
@@ -56,7 +56,7 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
         </button>
         <button
           onClick={() => openSheet(routes.medical.settingsOrder)}
-          className="w-full"
+          className="w-full border-b border-border last:border-b-0"
         >
           <FieldRow label="Tests Display Order" hint="(Dashboard, Report & Entry)">
             <IconChevronRight size={18} className="text-text-tertiary" />
@@ -67,7 +67,7 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
       <SectionCard title="Report / Entry Form">
         <button
           onClick={() => openSheet(routes.medical.settingsVisible)}
-          className="w-full"
+          className="w-full border-b border-border last:border-b-0"
         >
           <FieldRow label="Visible Fields">
             <IconChevronRight size={18} className="text-text-tertiary" />
@@ -86,7 +86,7 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
         {profile.medical_importer_enabled ? (
           <button
             onClick={() => openSheet(routes.medical.import)}
-            className="flex w-full items-center gap-2 border-b border-border px-4 py-3 text-body text-accent last:border-b-0 active:bg-input/40"
+            className="flex w-full items-center gap-2 border-b border-border px-4 py-2 text-body text-accent last:border-b-0 active:bg-input/40"
           >
             <IconUpload size={18} /> Import JSON / CSV Medical
           </button>
@@ -99,7 +99,10 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
       </SectionCard>
 
       <SectionCard title="Security">
-        <button onClick={() => openSheet(routes.medical.settingsLock)} className="w-full">
+        <button
+          onClick={() => openSheet(routes.medical.settingsLock)}
+          className="w-full border-b border-border last:border-b-0"
+        >
           <FieldRow label="Lock">
             <span className="flex items-center gap-1">
               {profile.medical_lock_enabled ? 'On' : 'Off'}

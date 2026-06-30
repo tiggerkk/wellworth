@@ -56,7 +56,7 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
       <SectionCard title="Entry Form">
         <button
           onClick={() => openSheet(routes.books.settingsVisible)}
-          className="w-full"
+          className="w-full border-b border-border last:border-b-0"
         >
           <FieldRow label="Visible Fields">
             <IconChevronRight size={18} className="text-text-tertiary" />
@@ -76,7 +76,7 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
           <>
             <button
               onClick={() => openSheet(routes.books.import)}
-              className="flex w-full items-center gap-2 border-b border-border px-4 py-3 text-body text-accent active:bg-input/40"
+              className="flex w-full items-center gap-2 border-b border-border px-4 py-2 text-body text-accent active:bg-input/40"
             >
               <IconUpload size={18} /> Import CSV Books
             </button>
@@ -86,7 +86,7 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
                 setCacheCount(0)
               }}
               disabled={cacheCount === 0}
-              className="flex w-full items-center gap-2 border-b border-border px-4 py-3 text-body text-text-secondary last:border-b-0 active:bg-input/40 disabled:opacity-40"
+              className="flex w-full items-center gap-2 border-b border-border px-4 py-2 text-body text-text-secondary last:border-b-0 active:bg-input/40 disabled:opacity-40"
             >
               <IconTrash size={18} />
               Clear Import Match Cache{cacheCount ? ` (${cacheCount})` : ''}

@@ -229,7 +229,7 @@ export function ImportFoodsSheet() {
         <h1 className="text-heading font-medium text-text-primary">Import Foods</h1>
       </header>
 
-      <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
+      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
         {refLoading ? (
           <p className="text-body text-text-secondary">Loading…</p>
         ) : done !== null ? (

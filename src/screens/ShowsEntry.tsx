@@ -462,7 +462,7 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
             </label>
             <button
               onClick={() => setSearchOpen(true)}
-              className="flex shrink-0 items-center justify-center gap-1.5 rounded-input bg-input px-3 py-2 text-body text-accent"
+              className="flex shrink-0 items-center justify-center gap-1.5 rounded-input bg-input px-3 py-2 text-field text-accent"
             >
               <IconWorldSearch size={16} /> TMDB
             </button>

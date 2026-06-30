@@ -367,14 +367,14 @@ function QuoteForm({
                   onClick={unlink}
                   aria-label="Unlink source"
                   title={`Linked · ${sourceTypeLabel(sourceTypes, draft.source_type)}`}
-                  className="flex shrink-0 items-center gap-1.5 rounded-input bg-input px-3 py-2 text-body text-accent"
+                  className="flex shrink-0 items-center gap-1.5 rounded-input bg-input px-3 py-2 text-field text-accent"
                 >
                   <IconLink size={16} /> Linked <IconX size={14} />
                 </button>
               ) : (
                 <button
                   onClick={() => setLinkOpen(true)}
-                  className="flex shrink-0 items-center justify-center gap-1.5 rounded-input bg-input px-3 py-2 text-body text-accent"
+                  className="flex shrink-0 items-center justify-center gap-1.5 rounded-input bg-input px-3 py-2 text-field text-accent"
                 >
                   <IconLink size={16} /> Show or Book
                 </button>
