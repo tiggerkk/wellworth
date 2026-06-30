@@ -17,8 +17,12 @@ to _build_ the app — running it is free.
 
 ## Part A — One-time tools on your computer
 
-1. **Node.js** (the JavaScript runtime). Download the **LTS** installer from <https://nodejs.org> and
-   run it with default options.
+> **Opening PowerShell** (you'll use it throughout): click the Start menu, type `PowerShell`, and click
+> **Windows PowerShell**. A blue/black window opens with a `>` prompt — that's where the commands below
+> go. "Open a new PowerShell window" just means doing this again so it picks up newly-installed tools.
+
+1. **Node.js** (the JavaScript runtime). Go to <https://nodejs.org> and click the big green button
+   labelled **LTS** (Long Term Support) — **not** "Current". Run the installer with default options.
    - ✅ Check: open a **new** PowerShell window and run:
      ```
      > node -v
@@ -44,9 +48,11 @@ to _build_ the app — running it is free.
 
 1. Go to <https://supabase.com>, sign up (the "Sign in with GitHub" option is easiest), and click
    **New project**.
-2. Fill in: **Name** = `wellworth`; **Database Password** = generate a strong one and **save it in a
-   password manager** — you'll need it to run migrations; **Region** = the one closest to you; Plan =
-   Free. Click **Create new project** and wait ~2 minutes for it to provision.
+2. Fill in: **Name** = `wellworth`; **Database Password** = generate a strong one and **save it
+   somewhere you won't lose it** — a password manager is best; if you don't have one, Windows
+   **Credential Manager** or even writing it on paper kept somewhere safe is fine. You'll need this
+   password to run migrations, and there's no easy recovery if it's lost. **Region** = the one closest
+   to you; Plan = Free. Click **Create new project** and wait ~2 minutes for it to provision.
 3. In the project, open **Project Settings** (gear icon) → **API**. You need three values from here:
    - **Project URL** — looks like `https://abcd1234.supabase.co`.
    - **`anon` `public` key** — a long string under "Project API keys". This is safe to ship in the
@@ -497,8 +503,13 @@ and run the two commands again. Once the commit succeeds:
 - ✅ Check: open the Vercel URL in a normal browser → Sign in with Google works → you reach the Diary.
 
 > Future updates: because GitHub is connected, every `git push` to `main` auto-deploys. If you change
-> `.env` values, also update them in Vercel → Project → Settings → Environment Variables, then
-> redeploy.
+> `.env` values, also update them in Vercel → Project → **Settings → Environment Variables**, then
+> **redeploy** so the new values get baked in:
+>
+> - In Vercel, open the project → **Deployments** tab → on the latest deployment click the **⋯** menu →
+>   **Redeploy** → in the dialog **uncheck "Use existing Build Cache"** → **Redeploy**.
+> - (A plain `git push` also triggers a fresh build, but after an env-var change the explicit redeploy
+>   above is the reliable way to pick it up.)
 
 ---
 
@@ -547,12 +558,11 @@ From the project folder (the database password must be available — see Part F)
 > supabase db reset --linked
 ```
 
-Confirm at the prompt. The CLI re-runs **every** file in `supabase/migrations/` — currently
-`01_wellness_schema.sql`, `02_wellness_seed_nutrient.sql`, `03_networth_schema.sql`,
-`04_networth_profile_settings.sql`, `05_shows_schema.sql`,
-`06_shows_profile_settings.sql`, `07_books_schema.sql`, `08_books_profile_settings.sql`,
-`09_quotes_schema.sql`, and `10_quotes_profile_settings.sql` — against the remote, leaving a clean schema +
-the 80 nutrient rows and a migration-ledger that matches the files.
+Confirm at the prompt. The CLI re-runs **every** file in `supabase/migrations/` — currently the 17
+files from `01_wellness_schema.sql` through `17_literature_profile_settings.sql` (Wellness, Net Worth,
+Shows, Books, Quotes, Medical, Travel, and Literature schema + settings + seed migrations) — against the
+remote, leaving a clean schema + the 80 nutrient rows + the seeded `medical_lab_test` reference, and a
+migration-ledger that matches the files.
 (You never list them yourself; the CLI applies whatever is in the folder, so new migrations are picked
 up automatically.)
 
@@ -569,6 +579,13 @@ up automatically.)
 > login screen. Then sign in with Google — a fresh profile + activities are created on first login. (If
 > you ever need to clear it by hand: DevTools → Application → Local Storage → delete the
 > `sb-…-auth-token` key, then reload.)
+>
+> ⚠️ **If you locked down sign-ups (Part H3), re-enable them before signing back in.** The reset
+> deletes your own `auth.users` account, so your next Google sign-in is treated as a **new signup** — and
+> if **"Allow new users to sign up" is OFF** it's **blocked** (the app loops back to login with
+> `?error=access_denied&error_code=signup_disabled`). Fix: Supabase → **Authentication → Sign In /
+> Providers → enable "Allow new users to sign up"**, sign in once to recreate your account, then turn it
+> **off** again. (`VITE_ALLOWED_EMAILS` still gates who's admitted.)
 
 ### M2 — Re-seed activities after changing `seed-activities.ts`
 
@@ -865,6 +882,12 @@ What's protected, and what isn't:
   again would mint a _new_ UUID and your restored rows would be invisible (RLS). Backing up the auth
   identity lets a fresh project re-link your Google login to the **same** UUID. See Q4.
 
+> 🐚 **Shell note for this Part:** the local backup/restore commands below run in **Git Bash** (they use
+> Unix `export VAR='…'` syntax), **not** PowerShell. Throughout this runbook a `$` prompt = Git Bash and
+> a `>` prompt = PowerShell. Git Bash was installed with Git in Part A — open it from the Start menu
+> ("Git Bash") or right-click the project folder → "Git Bash Here". The one-time setup steps below are
+> all in the GitHub/Supabase web UI, so they're shell-independent.
+
 ### Q1 — One-time setup
 
 1. **Create a private backups repo** on GitHub, e.g. `wellworth-backups` (Private). Nothing else goes
@@ -1045,7 +1068,8 @@ To drop just an **import match cache** without logging out:
 The **Literature** module's poems/writers are an immutable **static asset**, not database rows. They
 ship as generated JSON under `public/literature/**` (committed to the repo), so a normal clone + deploy
 already has them — **you only do this when you want to add/refresh the corpus**. The two Supabase pieces
-(your favourites + read-aloud settings) come from migrations `16`/`17`, applied like any other (Part F).
+(your favourites + read-aloud settings) come from migrations `16_literature_schema.sql` /
+`17_literature_profile_settings.sql`, applied like any other (Part F).
 
 **To (re)generate the corpus from the source database:**
 
@@ -1054,7 +1078,11 @@ already has them — **you only do this when you want to add/refresh the corpus*
    only the generated JSON is).
 2. Install dependencies once (`npm install`) — this pulls in `better-sqlite3`, a build-time-only tool.
    On Windows it needs the native build chain; if `npm install` fails on it, install the
-   **"Desktop development with C++"** workload (Visual Studio Build Tools) and re-run.
+   **"Desktop development with C++"** workload (Visual Studio Build Tools,
+   <https://visualstudio.microsoft.com/downloads/> → "Build Tools for Visual Studio") and re-run.
+   > 💡 This step is **optional** — it's only for regenerating the corpus. If the C++ build is more
+   > trouble than it's worth, **skip Part S entirely**: the corpus JSON under `public/literature/**` is
+   > already committed, so the Literature module works in a normal clone/deploy without it.
 3. Run **`npm run build:literature`**. It prints the poem/writer/type counts and writes
    `public/literature/{meta,index}.json` + `poem/<id>.json` + `writer/<id>.json`.
 4. **Commit** the changed `public/literature/**` (that tree is the deployable source of truth — the

@@ -81,7 +81,8 @@ docs/                # the spec bundle
 ## Navigation & routing
 
 - The app is **multi-module behind a Home hub**. Routes are **URL-namespaced per module**
-  (`/wellness/*`, `/networth/*`, `/shows/*`, `/books/*`, `/quotes/*`, `/medical/*`, `/travel/*`) and
+  (`/wellness/*`, `/networth/*`, `/quotes/*`, `/literature/*`, `/shows/*`, `/books/*`, `/travel/*`,
+  `/medical/*`) and
   declared as flat children of a single `<AppShell/>` layout in `src/router.tsx`. Path strings live in
   `src/constants/routes.ts` (one source of truth) and the hub/bottom-nav are derived from
   `src/constants/modules.ts` (`MODULES` + `moduleForPath`). Adding a module = a `ModuleDef` + its
@@ -363,6 +364,9 @@ VITE_SUPABASE_ANON_KEY=...     # public, RLS-respecting — safe in the client
 VITE_USDA_API_KEY=...          # data.gov key
 VITE_TMDB_API_KEY=...          # themoviedb.org v3 key (public, client-side) — Shows
 VITE_GOOGLE_BOOKS_API_KEY=...  # optional, raises Google Books quota — Books
+VITE_ALLOWED_EMAILS=...        # optional, comma/space-separated email allowlist; empty/unset ⇒ any signed-in account
+VITE_OWNER_EMAIL=...           # optional, the owner's email (keeps seeded owner profile, skips onboarding); unset ⇒ a single-email allowlist is treated as the owner
+# all VITE_* are build-time — adding/removing a member needs a redeploy
 # service-role key is NEVER placed here or anywhere in the client
 ```
 

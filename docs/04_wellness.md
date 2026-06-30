@@ -262,7 +262,9 @@ and the nutrient columns). Flow (mirrors Books/Shows — shared `ImportPreviewLi
 - **Activity energy (duration):** `kcal = MET × kg × hours`. Logged as a negative diary entry.
 - **Activity energy (strength):** same formula `kcal = MET × kg × hours`, where MET is resolved from
   `activity.met_by_effort[session_effort]`. No hardcoded MET for strength activities.
-- **Net energy:** `Net = Consumed − BMR − Activity`.
+- **Net energy:** `Net = Consumed − BMR − Activity`. Activity rows are **stored** with a negative
+  `diary_entry.energy_kcal` (see Data model), so a day's net is computed as a single signed sum of all
+  entries' `energy_kcal` minus BMR — the formula above is the conceptual view of that signed sum.
 - **Nutrient scaling:** for a logged entry, `value = nutrientPerBasis × (amount × servingGrams) / basisGrams`,
   where basis is 100 g (`basisGrams = 100`) or one serving (`basisGrams = the selected serving's grams`).
   Supplements typically use the per-serving basis; for a per-serving food the first/selected serving's

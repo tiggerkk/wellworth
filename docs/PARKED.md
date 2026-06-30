@@ -321,7 +321,7 @@ search first also validates the `opencc-js` engine choice before the display wor
 ### Automated tests beyond pure helpers · Deferred
 
 **What:** Component/integration tests; tests for `src/data/*` repositories.
-**Why deferred:** The suite unit-tests the pure calc/mapping helpers (the spec's named targets, plus the CSV-parse, food/shows/books/quotes-import, quantity, and search helpers — 230+ tests). Repos are thin wrappers verified manually + by `tsc` against the generated schema.
+**Why deferred:** The suite unit-tests the pure calc/mapping helpers (the spec's named targets, plus the CSV-parse, food/shows/books/quotes-import, quantity, and search helpers — 600+ tests). Repos are thin wrappers verified manually + by `tsc` against the generated schema.
 
 ### Initial JS bundle size · Deferred
 
