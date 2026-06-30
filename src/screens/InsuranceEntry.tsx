@@ -3,8 +3,10 @@ import { useNavigate, useParams } from 'react-router'
 import { IconCheck, IconUpload, IconX } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
+import { useDirty } from '../hooks/useDirty'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 import { useProfile } from '../hooks/useProfile'
+import { EntryLoader } from '../components/EntryLoader'
 import {
   addScheduleVersion,
   createPolicy,
@@ -15,6 +17,7 @@ import {
   savePolicyFields,
   updateScheduleEffectiveDate,
 } from '../data/insurance'
+import { FIELD_CLASS as inputClass } from '../constants/forms'
 import { bumpNetWorth } from '../lib/networth-refresh'
 import { errorMessage } from '../lib/errors'
 import { parseCsv } from '../lib/csv'
@@ -70,9 +73,6 @@ function blankDraft(providers: InsuranceProviderConfig[]): PolicyDraft {
   }
 }
 
-// The shared single-line field standard (see `.field-control` in index.css) + full width.
-const inputClass = 'field-control w-full'
-
 const pillBtn =
   'rounded-pill border border-border bg-input px-3 py-1.5 text-caption font-medium'
 const greyPill = `${pillBtn} text-text-secondary` // Mark Surrendered · Cancel · Un-mark
@@ -125,23 +125,24 @@ export function InsuranceEntry() {
   const { data: initial, loading, error } = useAsync(loadFn)
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      {loading && <p className="p-4 text-body text-text-secondary">Loading…</p>}
-      {(error || (!loading && !initial)) && (
-        <p className="p-4 text-body text-danger">Couldn’t load this policy.</p>
-      )}
-      {!loading && initial && (
+    <EntryLoader
+      loading={loading}
+      error={error}
+      data={initial}
+      errorText="Couldn’t load this policy."
+    >
+      {(d) => (
         <PolicyForm
           key={id ?? 'new'}
           id={id}
           userId={userId ?? ''}
-          initialDraft={initial.draft}
-          initialSchedules={initial.schedules}
+          initialDraft={d.draft}
+          initialSchedules={d.schedules}
           providers={providers}
           currentAge={currentAge}
         />
       )}
-    </div>
+    </EntryLoader>
   )
 }
 
@@ -180,7 +181,7 @@ function PolicyForm({
   const [importOpen, setImportOpen] = useState(false)
 
   const update = (patch: Partial<PolicyDraft>) => setDraft((d) => ({ ...d, ...patch }))
-  const dirty = JSON.stringify(draft) !== JSON.stringify(baseline)
+  const dirty = useDirty(draft, baseline)
   const isTerminated = !!draft.termination_effective_date
   // The kind whose section is shown: the persisted kind, else the one being opened.
   const activeKind: TerminationKind | null = draft.termination_kind ?? markingKind

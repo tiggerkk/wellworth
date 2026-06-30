@@ -24,7 +24,6 @@ export type StopRow = Tables<'stop'>
 export type StopInsert = TablesInsert<'stop'>
 export type StopUpdate = TablesUpdate<'stop'>
 export type RememberedCityRow = Tables<'remembered_city'>
-export type RememberedCityInsert = TablesInsert<'remembered_city'>
 
 /** Trip + its ordered days + all stops + all expenses. Returned by `getTripBundle`.
  *  Expenses are decoupled from the itinerary (no stop/day FK); they relate to a Day only by a matching

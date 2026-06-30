@@ -104,6 +104,13 @@ docs/                # the spec bundle
   - sort) in it, so a list's view survives the full-route-swap remount when the user opens an item
     and returns. Keys: `wellworth:{shows,books,quotes}-library`, `wellworth:medical-reports`,
     `wellworth:travel-trips`.
+- **Draft dirty-check** — `useDirty(current, initial)` (`src/hooks/useDirty.ts`) is the one place the
+  entry forms compute "has the draft changed" (deep `JSON.stringify` compare, memoized on the two
+  references). It drives Reset/Save enablement; call it unconditionally (it's a hook) and AND any extra
+  guard outside it. Shared by the Shows/Books/Quotes/Medical/Insurance entry screens + ActivityLogSheet.
+- **Entry/Settings shells** — two shared chrome wrappers keep New/Edit and Settings screens uniform:
+  `EntryLoader` (the `useAsync` outer loader → inner form render-prop) and `SettingsLayout` (sticky
+  header + the standard `IconX` dismiss). See `01_design_system.md` for both.
 
 ## Data flow
 

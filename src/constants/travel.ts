@@ -31,11 +31,6 @@ export const STOP_TYPE_LABELS: Record<StopType, string> = {
 export const COMPLETIONS = ['done', 'skipped'] as const
 export type Completion = (typeof COMPLETIONS)[number]
 
-export const COMPLETION_LABELS: Record<Completion, string> = {
-  done: 'Done',
-  skipped: 'Skipped',
-}
-
 /**
  * The default expense categories + their initial display order. These are only the **seed defaults**:
  * the owner can add/rename/delete/reorder them in Travel Settings (stored on

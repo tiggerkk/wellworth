@@ -116,9 +116,13 @@ ledger — replaces the old one-at-a-time `ExpenseEditorSheet`):
   variant was dropped — the editor no longer takes a `font_size` prop. (Each field input that sits in
   a fixed-width `shrink-0` wrapper must be `w-full`: a bare `<input>` keeps its intrinsic ~20-char
   width and spills past the wrapper — see the Cost input.)
-- A trailing **add row** commits new expenses without a modal (spreadsheet-style); in the trip ledger
-  it carries a **date chip** (target any, incl. new, date), in the day modal the date is fixed to the
-  day. **Only a description is required** — a blank cost commits as **0** (editable inline afterward),
+- A trailing **add row** commits new expenses without a modal (spreadsheet-style). It's visually marked
+  as an entry affordance, not a saved expense: a **dashed** card border, and its default
+  category/currency/cost (+ date chip) line is **dimmed until you start typing** a description/cost.
+  In the trip ledger it carries a **date chip** — the date the new expense is filed under (defaults to
+  the trip's start date / today; tap to pick any date, **including a new one**); in the day modal the
+  date is fixed to the day and the chip is hidden. **Only a description is required** — a blank cost
+  commits as **0** (editable inline afterward),
   so an item can be jotted down by name and priced later. A complete draft commits on **`+` / Enter**
   (Enter in either the description or cost field) **and auto-commits when the editor is closed/unmounts**
   (closing the day modal, leaving the Expenses tab) so a typed-but-uncommitted row is no longer silently

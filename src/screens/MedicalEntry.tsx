@@ -3,9 +3,12 @@ import { useNavigate, useParams } from 'react-router'
 import { IconPlus, IconUpload, IconX } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
+import { useDirty } from '../hooks/useDirty'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 import { useProfile } from '../hooks/useProfile'
 import { useSheetNavigate } from '../hooks/useSheetNavigate'
+import { EntryLoader } from '../components/EntryLoader'
+import { FIELD_CLASS as inputClass } from '../constants/forms'
 import { deleteReport, getReportWithResults, saveReport } from '../data/medical'
 import { bumpMedical } from '../lib/medical-refresh'
 import {
@@ -38,9 +41,6 @@ import { EyeRefractionFields } from '../components/EyeRefractionFields'
 
 const EYE_KEY_SET = new Set(EYE_REFRACTION_KEYS)
 
-// Shared single-line field standard — see `.field-control` in index.css.
-const inputClass = 'field-control w-full'
-
 /**
  * Add / Edit Medical Report — the report parent plus its result rows (the structured import is a
  * separate sheet, M3). Mirrors `ShowsEntry`'s outer loader + inner form keyed by id, and the Net
@@ -57,13 +57,14 @@ export function MedicalEntry() {
   const { data: initial, loading, error } = useAsync(loadFn)
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      {loading && <p className="p-4 text-body text-text-secondary">Loading…</p>}
-      {(error || (!loading && !initial)) && (
-        <p className="p-4 text-body text-danger">Couldn’t load this report.</p>
-      )}
-      {!loading && initial && <ReportForm key={id ?? 'new'} id={id} initial={initial} />}
-    </div>
+    <EntryLoader
+      loading={loading}
+      error={error}
+      data={initial}
+      errorText="Couldn’t load this report."
+    >
+      {(d) => <ReportForm key={id ?? 'new'} id={id} initial={d} />}
+    </EntryLoader>
   )
 }
 
@@ -84,7 +85,7 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
   useEscapeKey(() => navigate(-1))
 
   const update = (patch: Partial<ReportDraft>) => setDraft((d) => ({ ...d, ...patch }))
-  const dirty = JSON.stringify(draft) !== JSON.stringify(initial)
+  const dirty = useDirty(draft, initial)
 
   // Eye reports surface the six refraction values in a dedicated grid; hide those rows from the
   // generic results list so they aren't edited twice.

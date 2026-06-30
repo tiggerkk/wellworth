@@ -15,7 +15,7 @@ Dark, calm. These tokens are taken directly from the approved wireframes — mat
 | `text-secondary`   | `#9aa3b5`                | Labels, captions, inactive                                                                                                                                                                                |
 | `text-muted`       | `#c2c7d4`                | Secondary values                                                                                                                                                                                          |
 | `text-tertiary`    | `#7a8294`                | Hints / disabled / future dates (lightened from `#5b6172` for readability — still below `secondary`)                                                                                                      |
-| `accent` (blue)    | `#5ba3f5`                | Brand, active tab, links, energy-negative                                                                                                                                                                 |
+| `accent` (blue)    | `#3874f6`                | Brand, active tab, links, energy-negative                                                                                                                                                                 |
 | `favorite` (rose)  | `#e06aa0`                | Filled favorite heart (decoupled from `accent`)                                                                                                                                                           |
 | `positive` (teal)  | `#5dcaa5`                | Add `+`, activity/supplement accents, "food logged" dot                                                                                                                                                   |
 | `info` (blue)      | `#5b8def`                | (legacy; no longer used for status chips)                                                                                                                                                                 |
@@ -114,7 +114,10 @@ the Shows/Books exception above — no weekday is ever shown.
   `size="field"` (pass `size="compact"` only to opt a tight spot back down), **`DateRangeRow`** and
   **`SearchBar`** already render at it, and **`SegmentedTabs`** takes `size="field"`. So a row mixing an
   input, a dropdown, a segmented control and a date button all line up. **Never re-spell the
-  px/py/text/bg of a field in a screen** — change the height in one place here.
+  px/py/text/bg of a field in a screen** — change the height in one place here. The ubiquitous
+  full-width composition `'field-control w-full'` is exported once as **`FIELD_CLASS`**
+  (`src/constants/forms.ts`); form screens import it (usually `as inputClass`) rather than
+  re-declaring the string per file.
 - **Field labels** are uniformly **`text-caption text-text-secondary`** (12px) — the small caption above
   an input (`mb-1 …`) or the wrapping `<label>`. Distinct from **section labels** (`text-section`, 11px
   UPPERCASE `tracking-[0.08em]`) and muted captions (`text-text-tertiary`). Don't use
@@ -191,6 +194,19 @@ the Shows/Books exception above — no weekday is ever shown.
   Esc/scrim/back close); the app shell renders sheets over the active tab via React Router's
   background-location pattern.
 - **Splash** — full-screen loading state while the auth session resolves.
+- **EntryLoader** — the shared outer wrapper for every New/Edit entry screen
+  (`src/components/EntryLoader.tsx`): a full-height `flex h-full min-h-0 flex-col` column that shows
+  `Loading…`, an error/not-found line (`errorText`), or — once the async `data` resolves — the inner
+  form via a **render prop** `(data) => …` (so `data` is narrowed non-null). Generic over the draft
+  type; the caller still keys the form by id so a stale `useAsync` result never mounts under the wrong
+  item. Used by the Shows/Books/Quotes/Medical/Insurance entry screens.
+- **SettingsLayout** — the shared shell for a global/module **Settings** screen
+  (`src/components/SettingsLayout.tsx`): a `flex flex-col gap-5 px-4 py-4` column + sticky header with
+  the uniform top-left **`IconX`** dismiss (`navigate(-1)`, also Esc-closable via `useEscapeKey`) and a
+  `text-title`. Takes `{ title, closeLabel?, children }` (`closeLabel` overrides the button's
+  accessible name — the Literature module passes 關閉); the caller supplies its own loading/error/section
+  body. Used by global Settings + every module Settings (Wellness/Net Worth/Shows/Books/Quotes/Medical/
+  Travel/Literature), so they share one dismiss affordance per the Button convention below.
 - **Calendar** — month-grid date picker (a local overlay, not a route). Presentational: per-day cue
   dots + legend are drawn only when a caller passes an optional `loadCues(monthStart, monthEnd)` loader.
   Header: an **X (top-left)** cancels, and a **centered `‹ month ›` cluster** (arrows pulled in tight
@@ -322,8 +338,11 @@ flex flex-col`, or `h-full` for Zen) so the `flex-1` fills the real content area
   longer takes a `font_size` prop. **Layout gotcha:** each field input in a fixed-width `shrink-0`
   wrapper is `w-full` (a bare `<input>` keeps its intrinsic ~20-char width and spills past the wrapper —
   the Cost field was the overflow culprit). Ordering/grouping is driven by the parent (the component is
-  `sort_order`-free; reorder is positional). Used by the Travel per-day expense modal
-  (`DayExpensesSheet`) and the trip-level `TripExpensesPanel` ledger (the latter with `groupByDate`).
+  `sort_order`-free; reorder is positional). The **add row** is visually distinct from saved rows — a
+  **dashed** card border, with its default category/currency/cost (+ date chip) line **dimmed
+  (`opacity-55`) until the user starts typing** — so it reads as an entry affordance, not a blank
+  persisted expense. Used by the Travel per-day expense modal (`DayExpensesSheet`) and the trip-level
+  `TripExpensesPanel` ledger (the latter with `groupByDate`).
 - **ImportPreviewList** — the shared CSV-importer result list (`src/components/ImportPreviewList.tsx`):
   a bordered card of rows, each `{ media, title, year, subtitle?, meta?, status, reviewLabel }` plus the
   standard **No-match / review / manual** flag and **Change / Manual** actions (solid pills, white

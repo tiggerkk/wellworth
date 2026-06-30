@@ -41,7 +41,7 @@ export const DETAIL_FIELDS: Record<AssetType, DetailField[]> = {
     { key: 'shares', label: 'Shares' },
   ],
   // Fund rows are populated by the JPM CSV importer (not the generic detail editor); their
-  // detail fields are surfaced read-only in the Fund detail modal (FUND_DETAIL_FIELDS below).
+  // detail fields are surfaced read-only in the Fund detail modal.
   fund: [],
   retirement: [],
   // Insurance rows are auto-generated from the policy catalogue (no manual detail editing);
@@ -49,17 +49,6 @@ export const DETAIL_FIELDS: Record<AssetType, DetailField[]> = {
   insurance: [],
   property: [],
 }
-
-/** Read-only fields shown in the Fund detail modal, sourced from the importer's `details`. */
-export const FUND_DETAIL_FIELDS: DetailField[] = [
-  { key: 'units', label: 'Units (Total Holdings)' },
-  { key: 'avg_cost', label: 'Avg Unit Cost' },
-  { key: 'nav', label: 'NAV per Unit' },
-  { key: 'nav_as_of', label: 'Priced as of' },
-  { key: 'total_cost', label: 'Total Cost' },
-  { key: 'pnl', label: 'Profit / Loss' },
-  { key: 'asset_class', label: 'Asset Class' },
-]
 
 /** value in base currency (HKD) = native value × native→HKD rate (1 for HKD). */
 export function valueBase(valueNative: number, fxRate: number): number {

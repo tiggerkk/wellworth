@@ -1,12 +1,11 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router'
-import { IconChevronLeft } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { supabase } from '../lib/supabase'
 import { useProfileEditor } from '../hooks/useProfileEditor'
 import { SectionCard } from '../components/SectionCard'
 import { FieldRow } from '../components/FieldRow'
 import { DisplaySettingsCard } from '../components/DisplaySettingsCard'
+import { SettingsLayout } from '../components/SettingsLayout'
 import {
   ProfileMetricsFields,
   type ProfileMetrics,
@@ -23,20 +22,9 @@ type SaveFn = (patch: TablesUpdate<'profile'>) => Promise<void>
  */
 export function Settings() {
   const { profile, loading, save } = useProfileEditor()
-  const navigate = useNavigate()
 
   return (
-    <div className="flex flex-col gap-5 px-4 py-4">
-      <header className="sticky top-0 z-10 -mx-4 flex items-center gap-2 bg-bg/90 px-4 py-3 backdrop-blur">
-        <button
-          onClick={() => navigate(-1)}
-          aria-label="Back"
-          className="-ml-1 p-1 text-text-secondary"
-        >
-          <IconChevronLeft size={22} />
-        </button>
-        <h1 className="text-title font-medium text-text-primary">Settings</h1>
-      </header>
+    <SettingsLayout title="Settings">
       {loading && <p className="text-body text-text-secondary">Loading…</p>}
       {!loading && !profile && (
         <p className="text-body text-danger">
@@ -48,7 +36,7 @@ export function Settings() {
       {/* Account/sign-out is driven by the session, not the profile, so it stays usable
           even when the profile fails to load (e.g. after a DB reset deletes the user). */}
       {!loading && <AccountCard />}
-    </div>
+    </SettingsLayout>
   )
 }
 

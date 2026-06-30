@@ -12,8 +12,12 @@ import {
 import { routes } from '../constants/routes'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
+import { useDirty } from '../hooks/useDirty'
 import { useEscapeKey } from '../hooks/useEscapeKey'
+import { EntryLoader } from '../components/EntryLoader'
 import { createShow, deleteShow, getShow, updateShow } from '../data/show'
+import { numStr } from '../lib/quantity'
+import { FIELD_CLASS as inputClass } from '../constants/forms'
 import {
   buildRefreshPatch,
   isAbsoluteUrl,
@@ -76,8 +80,6 @@ interface ShowDraft {
   tmdb_id: number | null
   imdb_id: string | null
 }
-
-const numStr = (n: number | null): string => (n != null ? String(n) : '')
 
 /** A new show, optionally prefilled from `?title=&poster=&overview=&type=`. */
 interface ShowPrefill {
@@ -173,18 +175,16 @@ export function ShowsEntry() {
   const { data: initial, loading, error } = useAsync(loadFn)
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      {loading && <p className="p-4 text-body text-text-secondary">Loading…</p>}
-      {(error || (!loading && !initial)) && (
-        <p className="p-4 text-body text-danger">Couldn’t load this show.</p>
-      )}
-      {!loading && initial && <ShowForm key={id ?? 'new'} id={id} initial={initial} />}
-    </div>
+    <EntryLoader
+      loading={loading}
+      error={error}
+      data={initial}
+      errorText="Couldn’t load this show."
+    >
+      {(d) => <ShowForm key={id ?? 'new'} id={id} initial={d} />}
+    </EntryLoader>
   )
 }
-
-// Shared single-line field standard — see `.field-control` in index.css.
-const inputClass = 'field-control w-full'
 
 function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft }) {
   const navigate = useNavigate()
@@ -209,7 +209,7 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
   useEscapeKey(() => navigate(-1))
 
   const update = (patch: Partial<ShowDraft>) => setDraft((d) => ({ ...d, ...patch }))
-  const dirty = JSON.stringify(draft) !== JSON.stringify(initial)
+  const dirty = useDirty(draft, initial)
   const episodic = usesEpisodes(draft.type)
   // Dynasty is editable only for a Chinese title; the dropdown shows the default until chosen.
   const isChinese = containsCjk(draft.title)

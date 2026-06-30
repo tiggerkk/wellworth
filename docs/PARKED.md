@@ -400,3 +400,23 @@ search first also validates the `opencc-js` engine choice before the display wor
 ## Code TODO/FIXME scan
 
 A scan of `src/**` for `TODO` / `FIXME` / `HACK` / `XXX` / `WIP` markers found **none** — there are no unfinished-work comments in the source. (The only `placeholder` occurrences are HTML input `placeholder` attributes; "later" appears only in explanatory doc-comments.) The one genuine placeholder artifact is the generated icon set under `public/` (see "Designed app icons" above).
+
+---
+
+## Code-quality / refactor backlog
+
+Larger DRY extractions identified in the 2026-06-30 code-quality pass but **deliberately deferred** as
+higher-risk (they touch search/list/import behaviour, not just chrome). The low-risk extractions from
+that pass — `FIELD_CLASS`, `numStr`, `useDirty`, `EntryLoader`, `SettingsLayout` — were done; these
+remain:
+
+- **`SearchSheetBase`** — `TitleSearchSheet` / `BookSearchSheet` / `FoodSearchSheet` share the same
+  local-overlay scaffold (query + debounce + cancel flag + scrim/header/result-row layout, differing
+  only in debounce timing, search fn, and row renderer). A generic base with those as params would save
+  ~400 lines. Deferred: each has subtly different debounce/error handling, so extraction needs care.
+- **`useLibraryList`** — Shows + Books Libraries duplicate `setBound`/`clearFilters` and the
+  override+synced optimistic-delete state. A shared hook returning `{ criteria, setBound, clearFilters,
+remove, … }` would cover both (and future Libraries). Deferred: optimistic-delete state is fiddly.
+- **`useImportResolver`** — Shows + Books importers share the worker-pool + progress + match-cache
+  resolve loop (`ResolvedRow`, `STATUS_RANK`, `resolveRow`/`resolveAll`). Extracting just the worker
+  pool + progress state would halve each. Deferred: search API + caching differ per module.

@@ -110,8 +110,9 @@ export function ExpenseRowsEditor({
         )
       })}
 
-      {/* One add row. Trip ledger: a date chip targets any (incl. new) date. Day modal: date fixed. */}
-      <div className="rounded-card border border-border bg-surface">
+      {/* One add row. A dashed border marks it as the entry affordance (not a saved expense); the
+          trip ledger's date chip targets any (incl. new) date, the day modal fixes the date. */}
+      <div className="rounded-card border border-dashed border-border bg-surface">
         <AddRow
           categories={categories}
           currencies={currencies}
@@ -340,6 +341,9 @@ function AddRow({
   // and priced later (the cost field stays editable inline). Only a description is required.
   const costNum = cost.trim() === '' ? 0 : Number(cost)
   const canAdd = description.trim() !== '' && Number.isFinite(costNum)
+  // Until the user starts entering a row, dim the default category/currency/cost (+ date) line so the
+  // add row reads as an entry affordance, not a saved expense.
+  const active = description.trim() !== '' || cost.trim() !== ''
 
   /** Persist the draft if it's complete (description filled, cost valid-or-blank). Returns whether it
    *  committed — `commit` uses that to clear + refocus; the unmount flush ignores it. */
@@ -446,12 +450,18 @@ function AddRow({
           {descInput}
           {addBtn}
         </div>
-        <div className="flex items-center gap-2">
+        <div
+          className={`flex items-center gap-2 transition-opacity ${active ? '' : 'opacity-55'}`}
+        >
           <div className="min-w-0 flex-1">{categorySelect}</div>
           <div className="w-20 shrink-0">{currencySelect}</div>
           <div className="w-24 shrink-0">{costInput}</div>
         </div>
-        {dateChip && <div className="flex">{dateChip}</div>}
+        {dateChip && (
+          <div className={`flex transition-opacity ${active ? '' : 'opacity-55'}`}>
+            {dateChip}
+          </div>
+        )}
       </div>
 
       {pickDate && (

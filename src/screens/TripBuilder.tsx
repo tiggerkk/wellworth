@@ -18,6 +18,7 @@ import { Toggle } from '../components/Toggle'
 import { Thumb } from '../components/Thumb'
 import { Calendar } from '../components/Calendar'
 import { ReorderList } from '../components/ReorderList'
+import { FIELD_CLASS as inputClass } from '../constants/forms'
 import { SecondaryButton } from '../components/SecondaryButton'
 import { EntryHeaderActions } from '../components/EntryHeaderActions'
 import { ConfirmDeleteAction } from '../components/ConfirmDeleteAction'
@@ -63,9 +64,6 @@ import { effectiveCategories } from '../lib/travel-config'
 import { useProfile } from '../hooks/useProfile'
 import { routes } from '../constants/routes'
 import { addDays, formatFullDate, todayLocal } from '../lib/date'
-
-// Shared single-line field standard — see `.field-control` in index.css.
-const inputClass = 'field-control w-full'
 
 export function TripBuilder() {
   const { id } = useParams()

@@ -1,6 +1,6 @@
-import { useNavigate } from 'react-router'
-import { IconChevronLeft, IconChevronRight, IconUpload } from '@tabler/icons-react'
+import { IconChevronRight, IconUpload } from '@tabler/icons-react'
 import { SectionCard } from '../components/SectionCard'
+import { SettingsLayout } from '../components/SettingsLayout'
 import { FieldRow } from '../components/FieldRow'
 import { Toggle } from '../components/Toggle'
 import { useProfileEditor } from '../hooks/useProfileEditor'
@@ -17,23 +17,11 @@ type SaveFn = (patch: TablesUpdate<'profile'>) => Promise<void>
  * not here.
  */
 export function TravelSettings() {
-  const navigate = useNavigate()
   const openSheet = useSheetNavigate()
   const { profile, loading, save } = useProfileEditor()
 
   return (
-    <div className="flex flex-col gap-5 px-4 py-4">
-      <header className="flex items-center gap-2">
-        <button
-          onClick={() => navigate(-1)}
-          aria-label="Back"
-          className="text-text-secondary"
-        >
-          <IconChevronLeft size={22} />
-        </button>
-        <h1 className="text-title font-medium text-text-primary">Travel Settings</h1>
-      </header>
-
+    <SettingsLayout title="Travel Settings">
       <SectionCard title="Entry Form">
         <button
           onClick={() => openSheet(routes.travel.settingsVisible)}
@@ -60,7 +48,7 @@ export function TravelSettings() {
         <p className="text-body text-danger">Couldn’t load your profile.</p>
       )}
       {profile && <ImportSection profile={profile} save={save} openSheet={openSheet} />}
-    </div>
+    </SettingsLayout>
   )
 }
 

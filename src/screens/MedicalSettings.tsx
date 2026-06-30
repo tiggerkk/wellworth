@@ -1,5 +1,5 @@
-import { useNavigate } from 'react-router'
-import { IconChevronLeft, IconChevronRight, IconUpload } from '@tabler/icons-react'
+import { IconChevronRight, IconUpload } from '@tabler/icons-react'
+import { SettingsLayout } from '../components/SettingsLayout'
 import { useProfileEditor } from '../hooks/useProfileEditor'
 import { useSheetNavigate } from '../hooks/useSheetNavigate'
 import { SectionCard } from '../components/SectionCard'
@@ -17,26 +17,15 @@ type SaveFn = (patch: TablesUpdate<'profile'>) => Promise<void>
  */
 export function MedicalSettings() {
   const { profile, loading, save } = useProfileEditor()
-  const navigate = useNavigate()
 
   return (
-    <div className="flex flex-col gap-5 px-4 py-4">
-      <header className="sticky top-0 z-10 -mx-4 flex items-center gap-2 bg-bg/90 px-4 py-3 backdrop-blur">
-        <button
-          onClick={() => navigate(-1)}
-          aria-label="Back"
-          className="-ml-1 p-1 text-text-secondary"
-        >
-          <IconChevronLeft size={22} />
-        </button>
-        <h1 className="text-title font-medium text-text-primary">Medical Settings</h1>
-      </header>
+    <SettingsLayout title="Medical Settings">
       {loading && <p className="text-body text-text-secondary">Loading…</p>}
       {!loading && !profile && (
         <p className="text-body text-danger">Couldn’t load your profile.</p>
       )}
       {profile && <Body profile={profile} save={save} />}
-    </div>
+    </SettingsLayout>
   )
 }
 

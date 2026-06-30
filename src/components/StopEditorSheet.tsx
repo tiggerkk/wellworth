@@ -8,6 +8,7 @@ import { useEscapeKey } from '../hooks/useEscapeKey'
 import { createStop, nextStopSortOrder, updateStop } from '../data/travel'
 import { type ResolvedCity, type StopRow } from '../lib/travel'
 import { STOP_TYPES, STOP_TYPE_LABELS, type StopType } from '../constants/travel'
+import { FIELD_CLASS as inputClass } from '../constants/forms'
 
 interface StopEditorSheetProps {
   userId: string
@@ -29,9 +30,6 @@ interface StopEditorSheetProps {
   /** Delete this stop (shown only when editing an existing stop). */
   onDelete?: () => void
 }
-
-// Shared single-line field standard — see `.field-control` in index.css.
-const inputClass = 'field-control w-full'
 
 type CompletionValue = '' | 'done' | 'skipped'
 

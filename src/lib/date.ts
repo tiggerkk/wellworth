@@ -32,8 +32,6 @@ export function addDays(iso: IsoDate, n: number): IsoDate {
   return toIsoDate(d)
 }
 
-export const isSameDay = (a: IsoDate, b: IsoDate): boolean => a === b
-
 /** Month + day only, e.g. 'Jun 13' (no weekday, no Today/Yesterday) — Shows/Books recent + library rows. */
 export function formatMonthDay(iso: IsoDate): string {
   return new Intl.DateTimeFormat('en-US', {

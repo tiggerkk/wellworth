@@ -9,10 +9,8 @@ import {
   type MedicalFlag,
 } from '../lib/medical'
 import type { ResultDraft } from '../lib/medical-draft'
+import { FIELD_CLASS as inputClass } from '../constants/forms'
 import { SelectMenu } from './SelectMenu'
-
-// Shared single-line field standard — see `.field-control` in index.css.
-const inputClass = 'field-control w-full'
 
 const FLAG_OPTIONS: { value: '' | MedicalFlag; label: string }[] = [
   { value: '', label: 'No flag' },

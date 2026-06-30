@@ -11,6 +11,9 @@ import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useProfile } from '../hooks/useProfile'
 import { useEscapeKey } from '../hooks/useEscapeKey'
+import { useDirty } from '../hooks/useDirty'
+import { EntryLoader } from '../components/EntryLoader'
+import { FIELD_CLASS as inputClass } from '../constants/forms'
 import {
   createQuote,
   deleteQuote,
@@ -129,30 +132,27 @@ export function QuotesEntry() {
   }, [id, row, text, author, title, sourceTypes, categories])
 
   const loading = profileLoading || rowLoading
-  const notFound = !!id && !rowLoading && !row
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      {loading && <p className="p-4 text-body text-text-secondary">Loading…</p>}
-      {(error || (!loading && notFound)) && (
-        <p className="p-4 text-body text-danger">Couldn’t load this quote.</p>
-      )}
-      {!loading && initial && (
+    <EntryLoader
+      loading={loading}
+      error={error}
+      data={initial}
+      errorText="Couldn’t load this quote."
+    >
+      {(d) => (
         <QuoteForm
           key={id ?? 'new'}
           id={id}
-          initial={initial}
+          initial={d}
           profile={profile ?? null}
           sourceTypes={sourceTypes}
           categories={categories}
         />
       )}
-    </div>
+    </EntryLoader>
   )
 }
-
-// Shared single-line field standard — see `.field-control` in index.css.
-const inputClass = 'field-control w-full'
 
 const canPaste = typeof navigator !== 'undefined' && !!navigator.clipboard
 
@@ -191,7 +191,7 @@ function QuoteForm({
   useEscapeKey(() => navigate(-1))
 
   const update = (patch: Partial<QuoteDraft>) => setDraft((d) => ({ ...d, ...patch }))
-  const dirty = JSON.stringify(draft) !== JSON.stringify(initial)
+  const dirty = useDirty(draft, initial)
   // Category now defaults to the first value, so it's always set — only the text is required.
   const canSave = !!draft.text.trim()
   const linked = !!draft.show_id || !!draft.book_id

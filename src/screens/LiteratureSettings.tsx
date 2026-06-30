@@ -1,9 +1,8 @@
-import { useNavigate } from 'react-router'
-import { IconChevronRight, IconX } from '@tabler/icons-react'
+import { IconChevronRight } from '@tabler/icons-react'
 import { useProfileEditor } from '../hooks/useProfileEditor'
 import { useSheetNavigate } from '../hooks/useSheetNavigate'
-import { useEscapeKey } from '../hooks/useEscapeKey'
 import { SectionCard } from '../components/SectionCard'
+import { SettingsLayout } from '../components/SettingsLayout'
 import { FieldRow } from '../components/FieldRow'
 import { Toggle } from '../components/Toggle'
 import { SegmentedTabs } from '../components/SegmentedTabs'
@@ -20,25 +19,13 @@ type SaveFn = (patch: TablesUpdate<'profile'>) => Promise<void>
  */
 export function LiteratureSettings() {
   const { profile, loading, save } = useProfileEditor()
-  const navigate = useNavigate()
-  useEscapeKey(() => navigate(-1))
 
   return (
-    <div className="flex flex-col gap-5 px-4 py-4">
-      <header className="sticky top-0 z-10 -mx-4 flex items-center gap-2 bg-bg/90 px-4 py-3 backdrop-blur">
-        <button
-          onClick={() => navigate(-1)}
-          aria-label="關閉"
-          className="-ml-1 p-1 text-text-secondary"
-        >
-          <IconX size={22} />
-        </button>
-        <h1 className="text-title font-medium text-text-primary">萬卷詩書 Settings</h1>
-      </header>
+    <SettingsLayout title="萬卷詩書 Settings" closeLabel="關閉">
       {loading && <p className="text-body text-text-secondary">載入中…</p>}
       {!loading && !profile && <p className="text-body text-danger">無法載入設定。</p>}
       {profile && <Body profile={profile} save={save} />}
-    </div>
+    </SettingsLayout>
   )
 }
 

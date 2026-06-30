@@ -31,9 +31,7 @@ import { groupResultsByCategory } from '../lib/medical-order'
 import { useProfile } from '../hooks/useProfile'
 import { formatFullDate } from '../lib/date'
 import { routes } from '../constants/routes'
-
-// Shared single-line field standard — see `.field-control` in index.css.
-const inputClass = 'field-control w-full'
+import { FIELD_CLASS as inputClass } from '../constants/forms'
 
 /**
  * Import a structured JSON/CSV report → review → save. The parse (tolerant JSON repair, fuzzy

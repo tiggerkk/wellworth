@@ -25,7 +25,7 @@ export function Home() {
   return (
     <div className="flex flex-col gap-5 px-4 py-4">
       <header className="flex items-center justify-between">
-        <h1 className="text-xl font-medium text-text-primary">WellWorth</h1>
+        <h1 className="text-title font-medium text-text-primary">WellWorth</h1>
         <Link
           to={routes.settings}
           aria-label="Settings"

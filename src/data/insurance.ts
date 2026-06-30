@@ -36,17 +36,6 @@ function toVersion(
   }
 }
 
-export async function listPolicies(userId: string): Promise<Policy[]> {
-  const { data, error } = await supabase
-    .from('insurance_policy')
-    .select('*')
-    .eq('user_id', userId)
-    .order('provider', { ascending: true })
-    .order('policy_number', { ascending: true })
-  if (error) throw error
-  return data
-}
-
 // Nested embed: pull each policy with its schedules + points in ONE round-trip (PostgREST resource
 // embedding) instead of three sequential queries — a big latency win on the free tier.
 const CATALOGUE_SELECT = '*, insurance_schedule(*, insurance_schedule_point(*))'
@@ -154,33 +143,6 @@ export async function reassignProvider(
     .eq('user_id', userId)
     .eq('provider', fromKey)
   if (error) throw error
-}
-
-/** Mark a policy terminated — surrendered OR matured (mutually exclusive). */
-export async function setTermination(
-  policyId: string,
-  t: {
-    kind: 'surrendered' | 'matured'
-    date: string
-    effectiveDate: string
-    proceeds: number
-  },
-): Promise<Policy> {
-  return savePolicyFields(policyId, {
-    termination_kind: t.kind,
-    termination_date: t.date,
-    termination_effective_date: t.effectiveDate,
-    termination_proceeds: t.proceeds,
-  })
-}
-
-export async function clearTermination(policyId: string): Promise<Policy> {
-  return savePolicyFields(policyId, {
-    termination_kind: null,
-    termination_date: null,
-    termination_effective_date: null,
-    termination_proceeds: null,
-  })
 }
 
 async function insertPoints(scheduleId: string, points: SchedulePoint[]): Promise<void> {

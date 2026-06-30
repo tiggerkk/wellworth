@@ -6,6 +6,7 @@ import { EntryHeaderActions } from '../components/EntryHeaderActions'
 import { EffortPicker } from '../components/EffortPicker'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
+import { useDirty } from '../hooks/useDirty'
 import { useProfile } from '../hooks/useProfile'
 import { useReturnAfterLog } from '../hooks/useReturnAfterLog'
 import { getActivity } from '../data/activity'
@@ -123,9 +124,8 @@ export function ActivityLogSheet() {
   }, [activity, entry, sets, editing, initial])
 
   const minutesValue = draftAmount(minutes, activityDefaultDuration)
-  const dirty =
-    initial != null &&
-    JSON.stringify({ minutes, effort, exercises }) !== JSON.stringify(initial)
+  const changed = useDirty({ minutes, effort, exercises }, initial)
+  const dirty = initial != null && changed
 
   // Effort defaults to the activity's, but is fully editable per session (e.g. an easier day).
   const defaultEffort = (activity?.default_effort as Effort) ?? 'moderate'

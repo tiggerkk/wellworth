@@ -15,6 +15,7 @@ import {
   usesBodyPart,
 } from './medical'
 import { todayLocal, type IsoDate } from './date'
+import { numStr } from './quantity'
 import type { ParsedReport } from './medical-import'
 
 export interface ResultDraft {
@@ -49,7 +50,6 @@ export interface ReportDraft {
 let seq = 0
 export const nextClientId = (): string => `r${++seq}`
 
-const numStr = (n: number | null): string => (n != null ? String(n) : '')
 const numOrNull = (s: string): number | null => {
   const n = Number(s)
   return s.trim() !== '' && Number.isFinite(n) ? n : null

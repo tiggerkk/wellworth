@@ -3265,6 +3265,12 @@ text-accent`; aligned to the editor's `text-label font-medium text-warning` so r
   (closing the day modal / leaving the Expenses tab) via a latest-draft `useRef` flushed in an unmount
   `useEffect` — it no-ops on an empty/incomplete row, so no blank rows and no double-save (incl. dev
   StrictMode's mount→cleanup).
+- **Add-row "looks like a blank saved row" follow-up:** after the 2-line change, the always-present add
+  row rendered its default category/currency/cost (+ date chip) looking like a persisted blank expense.
+  Now it's visually marked as an entry affordance — a **dashed** card border + the
+  category/currency/cost/date line **dimmed (`opacity-55`) until the user types** (`active` flag). The
+  trip-ledger **date chip** is the target date for the new expense (defaults to trip start / today; tap
+  for any/new date); it stays hidden in the day modal (date fixed).
 - No schema or test change (pure layout/markup + doc sync).
 
 ## Literature — 名家 tab uses the source app's curated famous-poet list — 2026-06-30
@@ -3286,3 +3292,33 @@ text-accent`; aligned to the editor's `text-label font-medium text-warning` so r
   `console.warn`s any name with no matching writer to catch future spelling drift.
 - Regenerated + committed `public/literature/meta.json` (writers 802 → 50; poem/writer/index files
   byte-identical). No schema change.
+
+## Code-quality pass — dead code, DRY shells, doc reconciliation — 2026-06-30
+
+A maintenance pass (no schema, no behaviour change beyond the back-button affordance below). Findings
+came from `knip` + `ts-prune` + ESLint, cross-verified by grep.
+
+- **Dead code removed** (all zero-reference, verified): `COMPLETION_LABELS` (`constants/travel.ts`),
+  `replaceManualAssetEntries` + its now-orphaned `MANUAL_ASSET_TYPES` (`data/asset-entry.ts`),
+  `listPolicies` / `setTermination` / `clearTermination` (`data/insurance.ts`), `createServing` /
+  `deleteServing` (`data/serving.ts`), `FUND_DETAIL_FIELDS` (`lib/networth.ts`), `RememberedCityInsert`
+  (`lib/travel.ts`), `isSameDay` (`lib/date.ts`). Kept on purpose: the symmetric `units.ts` converters
+  and `scripts/gen-zh-fold-map.mjs` (one-off generator). No unused deps; ESLint clean.
+- **Low-risk DRY extractions:** `FIELD_CLASS` (`constants/forms.ts`) replaces 9 per-file
+  `const inputClass = 'field-control w-full'`; `numStr` moved to `lib/quantity.ts` (3 copies);
+  `useDirty(current, initial)` hook (`hooks/useDirty.ts`) replaces the inline `JSON.stringify` dirty
+  check in 5 entry screens + ActivityLogSheet; `EntryLoader` (`components/EntryLoader.tsx`, a generic
+  render-prop) replaces the duplicated outer loader in the 5 entry screens; `SettingsLayout`
+  (`components/SettingsLayout.tsx`) replaces the duplicated Settings header shell across all 9 Settings
+  screens. Larger refactors (`SearchSheetBase`, `useLibraryList`, `useImportResolver`) deferred — see
+  `PARKED.md` → Code-quality / refactor backlog.
+- **Back-button migration:** the 8 chevron-as-back Settings screens (global Settings + each module
+  Settings) now use the documented top-left **`IconX`** dismiss (Esc-closable) via `SettingsLayout`,
+  matching the Literature screens. Diary / NetWorthEntry chevrons are date/month **navigation**, not a
+  dismiss, and were left unchanged. Home's `<h1>` wordmark moved off `text-xl` to the `text-title` role
+  token (Login's splash wordmark stays as an intentional brand lockup).
+- **Doc reconciliation:** `01_design_system.md` accent token corrected `#5ba3f5` → **`#3874f6`** to
+  match the shipped `--color-accent` (docs follow code; no visual change). Added `EntryLoader`,
+  `SettingsLayout`, `FIELD_CLASS` to `01`, and `useDirty` + the shells to `02_tech_spec.md`.
+- **Snapshot:** **632** tests pass (+19 since the prior 613 snapshot, from the intervening passes);
+  `npm run check` (format + lint + typecheck + test) green.

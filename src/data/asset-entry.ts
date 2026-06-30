@@ -120,32 +120,6 @@ export async function replaceAssetTypeEntries(
   await saveSnapshotEntries(userId, month, [...kept, ...rows])
 }
 
-/** The hand-entered asset types — fund/insurance are managed by their own pipelines. */
-export const MANUAL_ASSET_TYPES = new Set<string>([
-  'cash',
-  'time_deposit',
-  'stock',
-  'retirement',
-  'property',
-])
-
-/**
- * Replace a month's **manual** asset rows, preserving any `fund` and `insurance` rows already frozen
- * into the snapshot. Used by the manual CSV importer so importing manual assets never wipes funds or
- * resolved insurance.
- */
-export async function replaceManualAssetEntries(
-  userId: string,
-  month: string,
-  rows: AssetEntryInput[],
-): Promise<void> {
-  const existing = await getSnapshotWithEntries(userId, month)
-  const kept = (existing?.entries ?? [])
-    .filter((e) => !MANUAL_ASSET_TYPES.has(e.asset_type))
-    .map(entryToInput)
-  await saveSnapshotEntries(userId, month, [...kept, ...rows])
-}
-
 /** Resolve the catalogue into frozen `insurance` rows for a month (mirrors Monthly Entry's SAVE). */
 export function buildResolvedInsuranceEntries(
   catalogue: PolicyWithSchedules[],

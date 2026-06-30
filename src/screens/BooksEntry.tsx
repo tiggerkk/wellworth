@@ -11,8 +11,12 @@ import {
 import { routes } from '../constants/routes'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
+import { useDirty } from '../hooks/useDirty'
 import { useEscapeKey } from '../hooks/useEscapeKey'
+import { EntryLoader } from '../components/EntryLoader'
 import { createBook, deleteBook, getBook, updateBook } from '../data/book'
+import { numStr } from '../lib/quantity'
+import { FIELD_CLASS as inputClass } from '../constants/forms'
 import {
   BOOK_STATUS_LABELS,
   BOOK_STATUSES,
@@ -59,8 +63,6 @@ interface BookDraft {
   open_library_id: string | null
   isbn: string | null
 }
-
-const numStr = (n: number | null): string => (n != null ? String(n) : '')
 
 function blankDraft(): BookDraft {
   const today = todayLocal()
@@ -127,18 +129,16 @@ export function BooksEntry() {
   const { data: initial, loading, error } = useAsync(loadFn)
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      {loading && <p className="p-4 text-body text-text-secondary">Loading…</p>}
-      {(error || (!loading && !initial)) && (
-        <p className="p-4 text-body text-danger">Couldn’t load this book.</p>
-      )}
-      {!loading && initial && <BookForm key={id ?? 'new'} id={id} initial={initial} />}
-    </div>
+    <EntryLoader
+      loading={loading}
+      error={error}
+      data={initial}
+      errorText="Couldn’t load this book."
+    >
+      {(d) => <BookForm key={id ?? 'new'} id={id} initial={d} />}
+    </EntryLoader>
   )
 }
-
-// Shared single-line field standard — see `.field-control` in index.css.
-const inputClass = 'field-control w-full'
 
 function BookForm({ id, initial }: { id: string | undefined; initial: BookDraft }) {
   const navigate = useNavigate()
@@ -158,7 +158,7 @@ function BookForm({ id, initial }: { id: string | undefined; initial: BookDraft 
   useEscapeKey(() => navigate(-1))
 
   const update = (patch: Partial<BookDraft>) => setDraft((d) => ({ ...d, ...patch }))
-  const dirty = JSON.stringify(draft) !== JSON.stringify(initial)
+  const dirty = useDirty(draft, initial)
   // Dynasty is editable only for a Chinese title; the dropdown shows the default until chosen.
   const isChinese = containsCjk(draft.title)
   const hasMeta =
