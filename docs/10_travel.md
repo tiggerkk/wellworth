@@ -62,7 +62,13 @@ literal **"Edit Trip"**.
   chevron** at the left (all days expanded by default). Header row: chevron · `Day N` · tappable
   **Calendar date chip** (the date or "Add date" — writes `trip_day.day_date` and re-caches the
   trip's start/end) · spacer · **Delete** (a `ConfirmDeleteAction` — inline `Delete? ✓ ✗`, no browser
-  dialog) · **Duplicate** (copy) · **Add Stop** (green `+`).
+  dialog) · **Duplicate** (copy) · **Expenses** (`IconReceipt2` — opens the day's expense modal) ·
+  **Add Stop** (green `+`).
+- **Per-day Expenses modal** (`DayExpensesSheet`, a local overlay so the builder draft survives): logs
+  the day's spend as it's incurred. Shows only the expenses whose `expense_date` matches the day; new
+  rows **prefill that date** (editable). It's the same shared inline editor (`ExpenseRowsEditor`) and the
+  same lifted expense state the Expenses tab uses, so the two views stay in sync. Expenses are **never
+  linked to stops** — the day match is a screen convenience only.
   The day's **date chip** and the city sub-headers render at a slightly larger font (`text-sm` /
   `text-[15px]`) for readability.
   When expanded, stops are grouped under **city-only sub-headers** for consecutive same-city stops;
@@ -75,9 +81,11 @@ literal **"Edit Trip"**.
   mutates that state instantly and persists in the background **without** `bumpTravel()`, so none of
   them pay the full trip-bundle refetch. A write only bumps **on error**, which refetches and re-seeds
   local state from server truth. Copying a day bulk-inserts its stops in one round-trip (`createStops`).
-  The **Expenses tab** is optimistic the same way (local override of the expense list + FX rates).
-  Trade-off: other Travel screens (Map/Dashboard/Trips list) update on their next mount, not live —
-  acceptable since they remount + refetch on navigation.
+  **Expenses are lifted into the same `EditTripBody` local state** (seeded from the bundle) and edited
+  optimistically the same way — so the per-day modal and the Expenses tab share one source of truth;
+  FX rates stay an optimistic override inside the panel. Trade-off: other Travel screens
+  (Map/Dashboard/Trips list) update on their next mount, not live — acceptable since they remount +
+  refetch on navigation.
 
 **Stop editor** (local overlay, not a route sheet — so the builder draft survives):
 
@@ -88,19 +96,31 @@ literal **"Edit Trip"**.
   the previous stop (same day → else the most recent prior day's last stop). Top-right icon actions
   (Delete [editing only, inline confirm] · Reset · Create/Save) via shared **EntryHeaderActions**.
 
-**Expenses sub-tab:**
+**Expenses sub-tab** (the trip-level expenses hub):
 
-- **Add Expense**; a **Totals** card (per-currency cost/net, then the **HKD total**); a **Conversion
-  to HKD** card (per non-HKD currency: an editable rate + a **Fetch missing rates** button —
-  Frankfurter at the trip's first day; missing currencies flagged and excluded until priced); a **By
-  Category (HKD)** Recharts donut; and the expense rows (date · description · category · cost; net
-  when tracked; swipe-delete, tap-to-edit).
+- A **Totals** card (per-currency cost/net, then the **HKD total**); a **Conversion to HKD** card (per
+  non-HKD currency: an editable rate + a **Fetch missing rates** button — Frankfurter at the trip's
+  first day; missing currencies flagged and excluded until priced); a **By Category (HKD)** Recharts
+  donut (split by **category** — the totals card is the per-currency view); and the **full ledger**
+  rendered by the shared `ExpenseRowsEditor` (below), **grouped by `expense_date` ascending** (undated
+  last) with inline add/edit/reorder. Base Currency + Track Reimburse live in the card under the tab
+  strip (above).
 
-**Expense editor** (local overlay):
+**Inline expense editor** (`ExpenseRowsEditor`, shared by the per-day modal and the Expenses-tab
+ledger — replaces the old one-at-a-time `ExpenseEditorSheet`):
 
-- Date (Calendar), Description, **Category** (configured list dropdown), Cost + currency, and — when
-  Track Reimbursement is on — a **Reimbursed** field accepting a number or a formula on `amount`
-  (presets ½ / ⅖ / Full), with the computed reimbursed + net shown live.
+- Each row is the four core fields in this order: **Description · Category · Currency · Cost**.
+  Layout is **adaptive to Dynamic Type** (tech-spec F23): a **single-line** spreadsheet row at
+  `profile.font_size === 'default'`, **stacked 2-line** rows (Description; then Category · Currency ·
+  Cost) at `large` / `larger` — read via `useProfile`.
+- A trailing **add row** commits new expenses without a modal (spreadsheet-style); in the trip ledger
+  it carries a **date chip** (target any, incl. new, date), in the day modal the date is fixed to the
+  day.
+- **Tap a row to expand** a panel with: an editable **Date** (Calendar; re-dating moves the row to the
+  end of its new date group), **reorder** up/down within the date group, the **Reimbursed** field
+  (number or formula on `amount`; presets ½ / ⅖ / Full; live net) **only when Track Reimburse is on**,
+  and **Delete**. (Reorder uses up/down controls, not the truncating `ReorderList`, since rows are
+  inline-editable and expandable.)
 
 ### City Picker (modal, from a Stop's City Lookup)
 
@@ -237,7 +257,10 @@ Removed fields (simplification pass — folded into `description`): `time`, `cos
 - `cost` NUMERIC NOT NULL · `currency` TEXT NOT NULL (set from the trip's base currency)
 - `reimbursed_formula` TEXT NULL — a number or arithmetic expr on `amount` (safe mini-parser via
   `src/lib/reimburse.ts`, **never `eval`**) · `reimbursed_amount` NUMERIC NULL (the evaluated value)
-- `created_at`, `updated_at` · Index on (`trip_id`, `expense_date`), (`trip_id`, `category`)
+- `sort_order` INT NOT NULL DEFAULT 0 — manual order **within a (`trip_id`, `expense_date`) group**
+  (the inline editor's up/down reorder); a new/re-dated row lands at the end of its date group
+- `created_at`, `updated_at` · Index on (`trip_id`, `expense_date`, `sort_order`) (a left-prefix of the
+  old `(trip_id, expense_date)` lookup), (`trip_id`, `category`)
 
 ### `remembered_city`
 

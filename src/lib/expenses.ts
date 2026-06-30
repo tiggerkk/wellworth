@@ -112,3 +112,28 @@ export function formatMoney(amount: number, currency: string): string {
 }
 
 export const formatHkd = (amount: number): string => formatMoney(amount, 'HKD')
+
+export interface ExpenseDateGroup {
+  /** The shared `expense_date` (ISO) of the group, or `null` for undated expenses. */
+  date: string | null
+  expenses: ExpenseRow[]
+}
+
+/**
+ * Group expenses by `expense_date`, **ascending** (chronological, matching itinerary day order);
+ * undated expenses fall into a single `null` group sorted **last**. Encounter order within each group
+ * is preserved — pass a list already ordered by `sort_order` (as `getTripBundle` returns) and each
+ * group stays in its manual order.
+ */
+export function groupExpensesByDate(expenses: ExpenseRow[]): ExpenseDateGroup[] {
+  const map = new Map<string | null, ExpenseRow[]>()
+  for (const e of expenses) {
+    const key = e.expense_date ?? null
+    const arr = map.get(key)
+    if (arr) arr.push(e)
+    else map.set(key, [e])
+  }
+  return [...map.keys()]
+    .sort((a, b) => (a === null ? 1 : b === null ? -1 : a.localeCompare(b)))
+    .map((date) => ({ date, expenses: map.get(date)! }))
+}

@@ -2974,3 +2974,34 @@ i18n (English / 繁體中文) was scoped and **deferred** — see `PARKED.md`.
   `FieldRow` now `flex-wrap`s so values drop to their own line at a larger preset.
 - No new tests (CSS/DOM plumbing); pure-helper count unchanged at **611**. Verified by `npm run check`
   - a production build (asserted the scale-lever and icon-transform CSS emit).
+
+## Travel expenses redesign — day-level entry + inline ledger (2026-06-30)
+
+Log expenses **as incurred per day**, review/edit the whole trip's expenses **grouped by date**, and
+enter several at once spreadsheet-style — replacing the one-at-a-time modal. Behaviour in
+`10_travel.md`; the shared editor in `01_design_system.md`; lifted-state note in `02_tech_spec.md` (F16b).
+
+- **One schema change** (`14_travel_schema.sql`, edited in place per the owner reset workflow):
+  `trip_expense.sort_order INT NOT NULL DEFAULT 0` (manual order within a `(trip_id, expense_date)`
+  group) + the `(trip_id, expense_date)` index widened to `(trip_id, expense_date, sort_order)`.
+  **Apply with `supabase db reset --linked` then `npm run gen:types`** — until the types regenerate, the
+  handful of `sort_order` references (the migration-dependent lines in `data/travel.ts`, the
+  `EditTripBody` expense helpers, and the test factory) are the only typecheck errors.
+- **Decoupled, date-matched:** expenses already had no stop/day FK — they relate to a Day only by a
+  matching `expense_date`. `getTripBundle` now also returns `expenses` (ordered by `expense_date`,
+  `sort_order`); `EditTripBody` lifts them into the same optimistic local state as days/stops, so the
+  per-day modal and the Expenses tab share one source of truth (F16b).
+- **Per-day entry:** a new **Expenses** icon (`IconReceipt2`) in each Day header (between Duplicate and
+  Add Stop) opens **`DayExpensesSheet`** — the day's date-matched expenses with new rows prefilling that
+  date.
+- **Shared inline editor `ExpenseRowsEditor`** (replaces `ExpenseEditorSheet`, now deleted): rows of
+  **Description · Category · Currency · Cost** + a trailing add row + tap-to-expand (Date · up/down
+  reorder · Reimbursed when tracked · Delete). **Adaptive to Dynamic Type (F23):** single-line at
+  `font_size` `default`, stacked 2-line at `large`/`larger`. It's `sort_order`-free (parent passes
+  ordered rows; reorder is positional) — so the editor, the day sheet, and the panel rework all
+  typecheck pre-regen.
+- **Expenses tab = trip-level hub:** keeps Base Currency / Track Reimburse / Totals (per-currency) /
+  FX rates / the By-**Category** donut; the flat list became the date-grouped inline ledger. The
+  Itinerary | Expenses toggle stays.
+- **+2 pure-helper tests** (`groupExpensesByDate`). Lint + Prettier + the expenses suite pass;
+  `typecheck` passes except the expected `sort_order` lines (green after the owner regenerates types).

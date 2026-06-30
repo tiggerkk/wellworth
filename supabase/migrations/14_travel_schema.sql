@@ -154,11 +154,13 @@ create table public.trip_expense (
   currency           text not null,
   reimbursed_formula text,                          -- a number or an arithmetic expr in `amount`
   reimbursed_amount  numeric,
+  sort_order         int not null default 0,        -- manual order within a (trip, expense_date) group
   created_at         timestamptz not null default now(),
   updated_at         timestamptz not null default now()
 );
 
-create index on public.trip_expense (trip_id, expense_date);
+-- Ordering index doubles as the (trip_id, expense_date) lookup (it's a left-prefix).
+create index on public.trip_expense (trip_id, expense_date, sort_order);
 create index on public.trip_expense (trip_id, category);
 
 alter table public.trip_expense enable row level security;

@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router'
 import {
   IconBan,
@@ -8,6 +8,7 @@ import {
   IconChevronRight,
   IconCopy,
   IconPlus,
+  IconReceipt2,
   IconX,
 } from '@tabler/icons-react'
 import { SegmentedTabs } from '../components/SegmentedTabs'
@@ -23,21 +24,27 @@ import { ConfirmDeleteAction } from '../components/ConfirmDeleteAction'
 import { StopEditorSheet } from '../components/StopEditorSheet'
 import { StopTypeIcon } from '../components/StopTypeIcon'
 import { TripExpensesPanel } from '../components/TripExpensesPanel'
+import { DayExpensesSheet } from '../components/DayExpensesSheet'
+import type { ExpenseDraft } from '../components/ExpenseRowsEditor'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 import {
   createDay,
+  createExpense,
   createStops,
   createTrip,
   deleteDay,
+  deleteExpense,
   deleteStop,
   deleteTrip,
   getTripBundle,
   recomputeTripDates,
   reorderDays,
+  reorderExpenses,
   reorderStops,
   updateDay,
+  updateExpense,
   updateStop,
   updateTrip,
 } from '../data/travel'
@@ -51,6 +58,9 @@ import {
   type TripBundle,
   type TripDayRow,
 } from '../lib/travel'
+import type { ExpenseRow, ExpenseUpdate } from '../lib/expenses'
+import { effectiveCategories } from '../lib/travel-config'
+import { isFontSize, type FontSize } from '../lib/font-scale'
 import { useProfile } from '../hooks/useProfile'
 import { routes } from '../constants/routes'
 import { addDays, formatFullDate, todayLocal } from '../lib/date'
@@ -217,6 +227,9 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
   // never bump for itinerary, so `bundle` is stable and the effect doesn't clobber optimistic edits.
   const [days, setDays] = useState<TripDayRow[]>(bundle.days)
   const [stops, setStops] = useState<StopRow[]>(bundle.stops)
+  // Expenses share the same optimistic local-state model as days/stops (the day modal and the Expenses
+  // tab edit the one list). Held ordered by (expense_date, sort_order); see the helpers below.
+  const [expenses, setExpenses] = useState<ExpenseRow[]>(bundle.expenses)
   // Re-seed when a fetch replaces the bundle — only on an error-triggered bump, since itinerary edits
   // don't bump. React's "adjust state during render" pattern (not an effect), so no cascading render.
   const [syncedBundle, setSyncedBundle] = useState(bundle)
@@ -224,8 +237,18 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
     setSyncedBundle(bundle)
     setDays(bundle.days)
     setStops(bundle.stops)
+    setExpenses(bundle.expenses)
   }
   const [tab, setTab] = useState<'itinerary' | 'expenses'>('itinerary')
+  const [dayExpensesFor, setDayExpensesFor] = useState<TripDayRow | null>(null)
+
+  const categories = useMemo(
+    () => effectiveCategories(profile?.travel_expense_categories ?? null),
+    [profile],
+  )
+  const fontSize: FontSize = isFontSize(profile?.font_size)
+    ? profile.font_size
+    : 'default'
 
   // Close → back if we came from within the app, else fall back to the Trips list.
   const close = () =>
@@ -440,6 +463,75 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
     setStops((st) => st.filter((x) => x.id !== stopId))
     try {
       await deleteStop(stopId)
+    } catch {
+      bumpTravel()
+    }
+  }
+
+  // --- Expense handlers (same optimistic shape as stops). `sort_order` orders a row within its
+  // (trip, expense_date) group; a new/re-dated row lands at the end of its date group. ---
+  const nextExpenseSort = (date: string | null, excludeId?: string) =>
+    expenses.filter((e) => e.id !== excludeId && (e.expense_date ?? null) === date).length
+
+  async function addExpense(draft: ExpenseDraft) {
+    if (!userId) return
+    try {
+      const saved = await createExpense({
+        user_id: userId,
+        trip_id: trip.id,
+        expense_date: draft.expense_date,
+        description: draft.description,
+        category: draft.category,
+        cost: draft.cost,
+        currency: draft.currency,
+        sort_order: nextExpenseSort(draft.expense_date),
+      })
+      setExpenses((prev) => [...prev, saved])
+    } catch {
+      bumpTravel()
+    }
+  }
+
+  async function editExpense(id: string, patch: ExpenseUpdate) {
+    // Re-dating moves the row to the end of its new date group (fresh sort_order there).
+    const finalPatch: ExpenseUpdate =
+      patch.expense_date !== undefined
+        ? { ...patch, sort_order: nextExpenseSort(patch.expense_date ?? null, id) }
+        : patch
+    setExpenses((prev) => {
+      const next = prev.map((e) => (e.id === id ? { ...e, ...finalPatch } : e))
+      if (patch.expense_date === undefined) return next
+      // Keep the re-dated row last in array order so it groups at the end of its new date.
+      const moved = next.find((e) => e.id === id)!
+      return [...next.filter((e) => e.id !== id), moved]
+    })
+    try {
+      await updateExpense(id, finalPatch)
+    } catch {
+      bumpTravel()
+    }
+  }
+
+  async function removeExpense(id: string) {
+    setExpenses((prev) => prev.filter((e) => e.id !== id))
+    try {
+      await deleteExpense(id)
+    } catch {
+      bumpTravel()
+    }
+  }
+
+  async function reorderExpensesInGroup(orderedIds: string[]) {
+    const pos = new Map(orderedIds.map((id, i) => [id, i]))
+    setExpenses((prev) => {
+      const ordered = prev
+        .filter((e) => pos.has(e.id))
+        .sort((a, b) => pos.get(a.id)! - pos.get(b.id)!)
+      let k = 0
+      return prev.map((e) => (pos.has(e.id) ? ordered[k++]! : e))
+    })
+    try {
+      await reorderExpenses(orderedIds)
     } catch {
       bumpTravel()
     }
@@ -660,6 +752,13 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
                       <IconCopy size={18} />
                     </button>
                     <button
+                      onClick={() => setDayExpensesFor(day)}
+                      aria-label={`Expenses for Day ${i + 1}`}
+                      className="p-1 text-text-secondary"
+                    >
+                      <IconReceipt2 size={18} />
+                    </button>
+                    <button
                       onClick={() => setStopEditor({ dayId: day.id })}
                       aria-label="Add stop"
                       className="p-1 text-positive"
@@ -772,7 +871,17 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
             })}
           </section>
         ) : userId ? (
-          <TripExpensesPanel trip={trip} userId={userId} />
+          <TripExpensesPanel
+            trip={trip}
+            expenses={expenses}
+            categories={categories}
+            defaultCurrency={baseCurrency}
+            fontSize={fontSize}
+            onAdd={(d) => void addExpense(d)}
+            onUpdate={(id, patch) => void editExpense(id, patch)}
+            onDelete={(id) => void removeExpense(id)}
+            onReorder={(ids) => void reorderExpensesInGroup(ids)}
+          />
         ) : null}
       </div>
 
@@ -833,6 +942,27 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
                 }
               : undefined
           }
+        />
+      )}
+
+      {dayExpensesFor && (
+        <DayExpensesSheet
+          dayLabel={`Day ${days.findIndex((d) => d.id === dayExpensesFor.id) + 1}`}
+          date={dayExpensesFor.day_date}
+          defaultDate={dayExpensesFor.day_date ?? trip.start_date ?? todayLocal()}
+          expenses={expenses.filter(
+            (e) => (e.expense_date ?? null) === (dayExpensesFor.day_date ?? null),
+          )}
+          categories={categories}
+          currencies={CURRENCIES}
+          defaultCurrency={baseCurrency}
+          trackReimbursement={trip.track_reimbursement}
+          fontSize={fontSize}
+          onAdd={(d) => void addExpense(d)}
+          onUpdate={(id, patch) => void editExpense(id, patch)}
+          onDelete={(id) => void removeExpense(id)}
+          onReorder={(ids) => void reorderExpensesInGroup(ids)}
+          onClose={() => setDayExpensesFor(null)}
         />
       )}
     </>

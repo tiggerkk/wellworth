@@ -138,8 +138,11 @@ Supabase (Postgres + RLS). Components hold no SQL and never import the Supabase 
   - refetch on navigation. When a fetch DOES replace the source and you must re-seed local state, use
     the **adjust-state-during-render** pattern (track the previous value, `setState` in render), NOT a
     `setState`-in-effect (the `react-hooks/set-state-in-effect` lint rule). The whole Travel Edit-Trip
-    itinerary **and** Expenses tab work this way; editor sheets return the saved row so the parent merges
-    it without a refetch.
+    itinerary **and** expenses work this way: `getTripBundle` returns `days` + `stops` + **`expenses`**
+    (ordered by `expense_date`, `sort_order`) in one read, and `EditTripBody` holds all three in local
+    state. The **per-day expense modal** and the **Expenses tab** edit that one lifted expense list (+
+    add/edit/delete/reorder helpers), so they stay in sync without a refetch; FX rates stay an optimistic
+    override inside `TripExpensesPanel`. Stop editor sheets still return the saved row to merge.
 - **F21 — iOS input-focus zoom.** iOS Safari auto-zooms when a focused `<input>/<select>/<textarea>`
   has font-size **< 16px** and **never zooms back out** — so closing a sheet left the parent screen
   stuck zoomed/clipped. Fixed by rendering **focusable text controls at 16px**, not by locking the

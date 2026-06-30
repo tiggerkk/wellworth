@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   categoryTotalsHkd,
   currenciesUsed,
+  groupExpensesByDate,
   hkdTotals,
   perCurrencyTotals,
   rateFor,
@@ -20,6 +21,7 @@ function exp(p: Partial<ExpenseRow>): ExpenseRow {
     currency: 'CNY',
     reimbursed_formula: null,
     reimbursed_amount: null,
+    sort_order: 0,
     created_at: '2026-01-01T00:00:00Z',
     updated_at: '2026-01-01T00:00:00Z',
     ...p,
@@ -91,5 +93,24 @@ describe('currenciesUsed', () => {
         exp({ currency: 'USD' }),
       ]),
     ).toEqual(['CNY', 'USD'])
+  })
+})
+
+describe('groupExpensesByDate', () => {
+  it('groups by date ascending, undated last, preserves within-group order', () => {
+    const groups = groupExpensesByDate([
+      exp({ id: 'b', expense_date: '2026-03-29' }),
+      exp({ id: 'a1', expense_date: '2026-03-28' }),
+      exp({ id: 'u1', expense_date: null }),
+      exp({ id: 'a2', expense_date: '2026-03-28' }),
+    ])
+    expect(groups.map((g) => g.date)).toEqual(['2026-03-28', '2026-03-29', null])
+    // within-group encounter order is preserved (a1 before a2)
+    expect(groups[0]!.expenses.map((e) => e.id)).toEqual(['a1', 'a2'])
+    expect(groups[2]!.expenses.map((e) => e.id)).toEqual(['u1'])
+  })
+
+  it('returns [] for no expenses', () => {
+    expect(groupExpensesByDate([])).toEqual([])
   })
 })

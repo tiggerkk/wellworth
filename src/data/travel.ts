@@ -153,7 +153,14 @@ export async function getTripBundle(tripId: string): Promise<TripBundle | null> 
     if (stopsErr) throw stopsErr
     stops = stopRows ?? []
   }
-  return { trip, days: days ?? [], stops }
+  const { data: expenses, error: expErr } = await supabase
+    .from('trip_expense')
+    .select('*')
+    .eq('trip_id', tripId)
+    .order('expense_date', { ascending: true, nullsFirst: false })
+    .order('sort_order', { ascending: true })
+  if (expErr) throw expErr
+  return { trip, days: days ?? [], stops, expenses: expenses ?? [] }
 }
 
 /** Load every trip's stops (city/country/province only) to build the Trips-list filter facets. */
@@ -205,17 +212,6 @@ export async function recomputeTripDates(tripId: string): Promise<void> {
 
 // --- Expenses ---
 
-export async function listExpenses(tripId: string): Promise<ExpenseRow[]> {
-  const { data, error } = await supabase
-    .from('trip_expense')
-    .select('*')
-    .eq('trip_id', tripId)
-    .order('expense_date', { ascending: false, nullsFirst: false })
-    .order('created_at', { ascending: false })
-  if (error) throw error
-  return data
-}
-
 export async function createExpense(input: ExpenseInsert): Promise<ExpenseRow> {
   const { data, error } = await supabase
     .from('trip_expense')
@@ -234,6 +230,11 @@ export async function updateExpense(id: string, patch: ExpenseUpdate): Promise<v
 export async function deleteExpense(id: string): Promise<void> {
   const { error } = await supabase.from('trip_expense').delete().eq('id', id)
   if (error) throw error
+}
+
+/** Persist a new expense order within one (trip, expense_date) group (sort_order = array index). */
+export async function reorderExpenses(ids: string[]): Promise<void> {
+  await Promise.all(ids.map((id, i) => updateExpense(id, { sort_order: i })))
 }
 
 /** Delete all of a trip's expenses (the importer's "replace existing expenses for this trip" option). */

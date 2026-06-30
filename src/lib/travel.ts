@@ -12,6 +12,7 @@ import {
   type TripStatus,
 } from '../constants/travel'
 import { foldZh } from './zh-fold'
+import type { ExpenseRow } from './expenses'
 
 export type TripRow = Tables<'trip'>
 export type TripInsert = TablesInsert<'trip'>
@@ -25,11 +26,14 @@ export type StopUpdate = TablesUpdate<'stop'>
 export type RememberedCityRow = Tables<'remembered_city'>
 export type RememberedCityInsert = TablesInsert<'remembered_city'>
 
-/** Trip + its ordered days + all stops (grouped by day in the UI). Returned by `getTripBundle`. */
+/** Trip + its ordered days + all stops + all expenses. Returned by `getTripBundle`.
+ *  Expenses are decoupled from the itinerary (no stop/day FK); they relate to a Day only by a matching
+ *  `expense_date` (a screen convenience). Ordered by `expense_date` then `sort_order`. */
 export interface TripBundle {
   trip: TripRow
   days: TripDayRow[]
   stops: StopRow[]
+  expenses: ExpenseRow[]
 }
 
 /** A city resolved by the picker (manual, cache, or geocode assist) — handed back to a stop. */

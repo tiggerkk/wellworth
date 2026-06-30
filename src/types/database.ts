@@ -1241,6 +1241,7 @@ export type Database = {
           id: string
           reimbursed_amount: number | null
           reimbursed_formula: string | null
+          sort_order: number
           trip_id: string
           updated_at: string
           user_id: string
@@ -1255,6 +1256,7 @@ export type Database = {
           id?: string
           reimbursed_amount?: number | null
           reimbursed_formula?: string | null
+          sort_order?: number
           trip_id: string
           updated_at?: string
           user_id: string
@@ -1269,6 +1271,7 @@ export type Database = {
           id?: string
           reimbursed_amount?: number | null
           reimbursed_formula?: string | null
+          sort_order?: number
           trip_id?: string
           updated_at?: string
           user_id?: string
