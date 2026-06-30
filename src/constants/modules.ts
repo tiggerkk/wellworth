@@ -48,13 +48,18 @@ export interface ModuleDef {
   tabs: NavItem[]
 }
 
+// Hub order is the linear reading order of the 2-column Home grid (left→right, top→down):
+// row 1 = Wellness | Net Worth, row 2 = Quotes | Literature, row 3 = Shows | Books,
+// row 4 = Travel | Medical. This is only the default — users reorder via Visible Modules
+// (`profile.module_order`). `description` is kept short so it fits one truncated line in a
+// half-width hub card.
 export const MODULES: ModuleDef[] = [
   {
     key: 'wellness',
     label: 'Wellness',
     Icon: IconApple,
     base: routes.wellness.base,
-    description: 'Food, supplements & activity with full nutrient reporting.',
+    description: 'Food, supplements & activity',
     tabs: [
       { to: routes.wellness.dashboard, label: 'Dashboard', Icon: IconChartBar },
       { to: routes.wellness.diary, label: 'Diary', Icon: IconNotebook, end: true },
@@ -67,7 +72,7 @@ export const MODULES: ModuleDef[] = [
     label: 'Net Worth',
     Icon: IconWallet,
     base: routes.networth.base,
-    description: 'Assets and net worth over time, in HKD.',
+    description: 'Assets over time, in HKD',
     tabs: [
       {
         to: routes.networth.dashboard,
@@ -90,37 +95,11 @@ export const MODULES: ModuleDef[] = [
     ],
   },
   {
-    key: 'shows',
-    label: 'Shows',
-    Icon: IconDeviceTv,
-    base: routes.shows.base,
-    description: 'TV shows & movies watched or to watch, with TMDB metadata.',
-    tabs: [
-      { to: routes.shows.dashboard, label: 'Dashboard', Icon: IconChartBar, end: true },
-      { to: routes.shows.library, label: 'Library', Icon: IconList },
-      { to: routes.shows.entry, label: 'New Show', Icon: IconDeviceTv },
-      { to: routes.shows.settings, label: 'Settings', Icon: IconSettings },
-    ],
-  },
-  {
-    key: 'books',
-    label: 'Books',
-    Icon: IconBook,
-    base: routes.books.base,
-    description: 'Books read or to read, with Google Books metadata.',
-    tabs: [
-      { to: routes.books.dashboard, label: 'Dashboard', Icon: IconChartBar, end: true },
-      { to: routes.books.library, label: 'Library', Icon: IconList },
-      { to: routes.books.entry, label: 'New Book', Icon: IconBook },
-      { to: routes.books.settings, label: 'Settings', Icon: IconSettings },
-    ],
-  },
-  {
     key: 'quotes',
     label: 'Quotes',
     Icon: IconQuote,
     base: routes.quotes.base,
-    description: 'Favourite quotes from screen, page & sound — a daily Moment of Zen.',
+    description: 'Favourite quotes — daily Zen',
     tabs: [
       { to: routes.quotes.zen, label: 'Zen', Icon: IconSparkles, end: true },
       { to: routes.quotes.library, label: 'Library', Icon: IconList },
@@ -133,7 +112,7 @@ export const MODULES: ModuleDef[] = [
     label: 'Literature',
     Icon: IconFeather,
     base: routes.literature.base,
-    description: 'Classical Chinese poems & prose, read aloud (粵 / 國).',
+    description: 'Chinese poems & prose (粵/國)',
     tabs: [
       { to: routes.literature.home, label: 'Poems', Icon: IconList, end: true },
       { to: routes.literature.poets, label: 'Poets', Icon: IconUsers },
@@ -142,16 +121,29 @@ export const MODULES: ModuleDef[] = [
     ],
   },
   {
-    key: 'medical',
-    label: 'Medical',
-    Icon: IconHeartbeat,
-    base: routes.medical.base,
-    description: 'Lab results & narrative reports over time, with trend charts.',
+    key: 'shows',
+    label: 'Shows',
+    Icon: IconDeviceTv,
+    base: routes.shows.base,
+    description: 'TV shows & movies',
     tabs: [
-      { to: routes.medical.dashboard, label: 'Dashboard', Icon: IconChartBar, end: true },
-      { to: routes.medical.reports, label: 'Reports', Icon: IconReportMedical },
-      { to: routes.medical.entry, label: 'New Medical', Icon: IconHeartbeat },
-      { to: routes.medical.settings, label: 'Settings', Icon: IconSettings },
+      { to: routes.shows.dashboard, label: 'Dashboard', Icon: IconChartBar, end: true },
+      { to: routes.shows.library, label: 'Library', Icon: IconList },
+      { to: routes.shows.entry, label: 'New Show', Icon: IconDeviceTv },
+      { to: routes.shows.settings, label: 'Settings', Icon: IconSettings },
+    ],
+  },
+  {
+    key: 'books',
+    label: 'Books',
+    Icon: IconBook,
+    base: routes.books.base,
+    description: 'Books read & to read',
+    tabs: [
+      { to: routes.books.dashboard, label: 'Dashboard', Icon: IconChartBar, end: true },
+      { to: routes.books.library, label: 'Library', Icon: IconList },
+      { to: routes.books.entry, label: 'New Book', Icon: IconBook },
+      { to: routes.books.settings, label: 'Settings', Icon: IconSettings },
     ],
   },
   {
@@ -159,13 +151,26 @@ export const MODULES: ModuleDef[] = [
     label: 'Travel',
     Icon: IconWorld,
     base: routes.travel.base,
-    description: 'Trips as day-by-day itineraries, places visited & per-trip spend.',
+    description: 'Trips, places & spend',
     tabs: [
       { to: routes.travel.dashboard, label: 'Dashboard', Icon: IconChartBar, end: true },
       { to: routes.travel.map, label: 'Map', Icon: IconMap },
       { to: routes.travel.trips, label: 'Trips', Icon: IconList },
       { to: routes.travel.entry, label: 'New Trip', Icon: IconWorld },
       { to: routes.travel.settings, label: 'Settings', Icon: IconSettings },
+    ],
+  },
+  {
+    key: 'medical',
+    label: 'Medical',
+    Icon: IconHeartbeat,
+    base: routes.medical.base,
+    description: 'Lab results & reports',
+    tabs: [
+      { to: routes.medical.dashboard, label: 'Dashboard', Icon: IconChartBar, end: true },
+      { to: routes.medical.reports, label: 'Reports', Icon: IconReportMedical },
+      { to: routes.medical.entry, label: 'New Medical', Icon: IconHeartbeat },
+      { to: routes.medical.settings, label: 'Settings', Icon: IconSettings },
     ],
   },
 ]

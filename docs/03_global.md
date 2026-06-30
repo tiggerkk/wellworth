@@ -2,8 +2,10 @@
 
 ## Navigation
 
-- The app opens to a **Home hub** — a launcher of module cards (Wellness, Net Worth, Shows, Books,
-  Quotes, Medical, Travel; more later).
+- The app opens to a **Home hub** — a launcher of module cards in a **2-column grid** that fills
+  left→right, top→bottom (default order: Wellness | Net Worth, Quotes | Literature, Shows | Books,
+  Travel | Medical; more later). Cards are **button-style** (icon + label + short description, **no
+  chevron**), each label/description truncated to one line for uniform card heights.
 - Selecting a module enters it and the **bottom tab bar becomes that module's tabs**, with a
   **Home** item to return to the hub.
 - The Home item's icon sits in a subtle chip so it reads as the hub anchor, distinct from the module
@@ -92,8 +94,10 @@ components Onboarding renders**, so the screens stay identical.
   `DisplaySettingsCard`) and saves to `profile.font_size` (cross-device); reconciled by
   `useFontSizeSync`. A larger preset is the accessibility lever for small text/icons.
 - **DISPLAY → Visible Modules** (secondary text "(Home)"): opens a full sheet listing every module in a
-  single **combined** list (shared `ReorderList`) — **drag the grip to reorder** the Home hub and
-  **toggle** each module to show/hide. Saved per profile to `module_order` / `visible_modules`; the Home
+  **2-up combined grid** (`ReorderGrid`, mirroring the hub's 2-column layout) — **drag the grip to
+  reorder** the Home hub and **toggle** each module to show/hide. Each cell shows a **position number**
+  (1,2,3…) = its hub slot, filling left→right then top→down. Saved per profile to `module_order` /
+  `visible_modules`; the Home
   hub reads them via `homeModules` (`src/lib/modules-display.ts`). **At least one module must stay
   visible** (the last toggle refuses to turn off, mirroring `ConfigListEditor`). Hiding only removes the
   Home card — a module's routes stay reachable by direct URL and the "reopen last-used module" launch

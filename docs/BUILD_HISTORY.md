@@ -3123,3 +3123,24 @@ Behaviour/data are in `docs/11_literature.md`; the static-corpus pattern + read-
   stays topmost so the "at least one module visible" toast shows. Documented in `03_global.md` /
   `02_tech_spec.md` / `01_design_system.md`.
 - No schema/test change; typecheck + ESLint green (snapshot **620** tests unchanged).
+
+## Home hub 2-column grid + grid-aware Visible Modules reorder — 2026-06-29
+
+- **Goal:** the Home hub couldn't show all 8 modules without scrolling. Lay cards out in a **2-column
+  grid** and make the Visible Modules reorder UI mirror that layout.
+- **`Home.tsx`** — container `flex flex-col` → **`grid grid-cols-2 gap-3`**; cards are now compact
+  **button-style** links (smaller `h-9 w-9` icon tile, tighter padding, **no chevron**), label +
+  description `truncate` to one line so paired cards stay equal-height.
+- **`constants/modules.ts`** — `MODULES` reordered to the hub's linear reading order (Wellness, Net
+  Worth, Quotes, Literature, Shows, Books, Travel, Medical) and every `description` shortened to one
+  short clause. Order is only the default; users still reorder via `module_order`.
+- **New `src/components/ReorderGrid.tsx`** — a 2-up (grid-cols-2) sibling of `ReorderList` (which is
+  1-D and shared by 5+ other sheets, so left untouched). Same in-house Pointer-Events drag, but the
+  dragged cell **floats under the finger** and the destination slot is **outlined** (target = nearest
+  cell center from rects cached at drag start) instead of a 1-D row-shift animation — robust on touch.
+  Each cell carries a **position-number badge** (linear index = hub reading order).
+- **`VisibleModulesSheet.tsx`** — swapped `ReorderList` → `ReorderGrid` (state/handlers and the
+  "≥1 must stay visible" guard unchanged). Both the Onboarding wizard and Global Settings reach this
+  same sheet via `DisplaySettingsCard`, so no change there.
+- **No schema/data-model change** — order is still the flat `module_order` array; the grid fills
+  row-by-row so linear index = grid position. No new pure helper, so the snapshot stays **620** tests.

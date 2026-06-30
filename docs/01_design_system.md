@@ -298,6 +298,12 @@ flex flex-col`, or `h-full` for Zen) so the `flex-1` fills the real content area
   inside an existing card (the Diary groups pass `border-t border-border divide-y divide-border`). Used
   by the Medical Display-Order sheet, the configurable-list editors, and the Diary groups (drag to
   reorder logged items).
+- **ReorderGrid** — the 2-column (2-up) sibling of `ReorderList` (`src/components/ReorderGrid.tsx`),
+  for reordering items shown in a `grid-cols-2` layout. Same in-house Pointer-Events drag, but the
+  dragged cell **floats under the finger** and the destination slot is **outlined** (target = nearest
+  cell center, from rects cached at drag start) rather than a 1-D row-shift. Each cell shows a
+  **position-number badge** (linear order = reading order) plus an optional `renderTrailing(id)`
+  control. Used only by the **Visible Modules** sheet, whose grid mirrors the 2-column Home hub.
 - **ConfigListEditor** — the shared add / rename (inline) / delete / drag-reorder editor for a
   configurable list, generic over `{key,label}` entries (`src/components/ConfigListEditor.tsx`).
   Wraps `ReorderList` (rename + delete in the trailing slot) and auto-saves each change; deleting a

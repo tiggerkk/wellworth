@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router'
 import { IconX } from '@tabler/icons-react'
 import { Sheet } from '../components/Sheet'
 import { Toggle } from '../components/Toggle'
-import { ReorderList } from '../components/ReorderList'
+import { ReorderGrid } from '../components/ReorderGrid'
 import { useProfileEditor } from '../hooks/useProfileEditor'
 import { MODULES } from '../constants/modules'
 import { homeModules, orderedModuleKeys } from '../lib/modules-display'
@@ -11,11 +11,12 @@ import { showToast } from '../lib/toast'
 import type { Tables, TablesUpdate } from '../types/database'
 
 /**
- * Global Settings → DISPLAY → Visible Modules: a single combined list (shared `ReorderList`) where
- * each module row has a visibility `Toggle` in its trailing slot — drag the grip to reorder the Home
- * hub, toggle to show/hide. Saved per-profile to `module_order` / `visible_modules` and consumed by
- * the Home hub (`homeModules`). At least one module must stay visible (mirrors `ConfigListEditor`
- * refusing to delete the last value). Mirrors the Medical settings sheets.
+ * Global Settings → DISPLAY → Visible Modules: a 2-up combined grid (`ReorderGrid`, mirroring the
+ * Home hub's 2-column layout) where each module cell has a visibility `Toggle` in its trailing slot —
+ * drag the grip to reorder the hub, toggle to show/hide. The numbered badges (1,2,3…) are each card's
+ * hub position, filling left→right then top→down. Saved per-profile to `module_order` /
+ * `visible_modules` and consumed by the Home hub (`homeModules`). At least one module must stay visible
+ * (mirrors `ConfigListEditor` refusing to delete the last value).
  */
 export function VisibleModulesSheet() {
   const navigate = useNavigate()
@@ -75,8 +76,9 @@ function Editor({
     <div className="flex-1 overflow-y-auto p-4">
       <p className="mb-2 px-1 text-caption text-text-secondary">
         Choose which modules appear on the Home hub, and drag the grip to reorder them.
+        Numbers are each card's position, filling left→right then top to bottom.
       </p>
-      <ReorderList
+      <ReorderGrid
         ids={order}
         onReorder={reorder}
         renderLabel={(k) => MODULE_LABEL[k]}
