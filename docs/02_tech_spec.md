@@ -149,7 +149,13 @@ Supabase (Postgres + RLS). Components hold no SQL and never import the Supabase 
   small text on any screen stays zoomable. (Earlier we instead locked the viewport to keep a 15px
   token; that disabled all browser pinch-zoom, so small text couldn't be magnified — reversed in favour
   of the 16px controls, since 15px→16px is visually negligible. **Any new focusable text input must be
-  ≥16px** — use `.field-control` or `text-[16px]`.)
+  ≥16px** — use `.field-control` or `text-[16px]`.) **`touch-action` also gates pinch-zoom:** an
+  element that captures a custom pointer gesture must list `pinch-zoom` (e.g. `pan-y pinch-zoom`, not
+  bare `pan-y`), or the browser silently disables zoom over that whole subtree. This bit the
+  `SwipeRow` rows (every list/library/reports/trips row) and `QuotesZen`'s scroll area — both now use
+  `pan-y pinch-zoom`. The lone exception is `ReorderList`'s grip handle (`touch-action:none`, needed to
+  capture a vertical drag); it's an ~18px target, and a two-finger pinch lands on the surrounding row
+  (default `touch-action`) where zoom still works.
 - **F22 — a food's servings vs. a log's amount are separate; persist servings only on a deliberate
   edit.** A `serving` row (name + grams) is a reusable **measure** that belongs to the food;
   `diary_entry.amount` is the **per-log quantity**. Food Detail's Manage-servings editor is the

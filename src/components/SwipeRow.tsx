@@ -10,7 +10,9 @@ interface SwipeRowProps {
 /**
  * Swipe-left to reveal a Delete action (mouse + touch + pen via Pointer Events). The
  * revealed control is a real focusable button, so it (and a parent ⋯ menu) keep the action
- * operable without the gesture. `touch-action: pan-y` keeps vertical scrolling with the page.
+ * operable without the gesture. `touch-action: pan-y pinch-zoom` keeps vertical scrolling and
+ * pinch-zoom with the page (the swipe is horizontal, so the browser still hands it to JS); omitting
+ * `pinch-zoom` would silently disable zoom over every row (see F21 in docs/02_tech_spec.md).
  */
 export function SwipeRow({ children, onDelete }: SwipeRowProps) {
   const [offset, setOffset] = useState(0) // ≤ 0
@@ -42,7 +44,7 @@ export function SwipeRow({ children, onDelete }: SwipeRowProps) {
   }
 
   return (
-    <div className="relative overflow-hidden" style={{ touchAction: 'pan-y' }}>
+    <div className="relative overflow-hidden" style={{ touchAction: 'pan-y pinch-zoom' }}>
       <button
         type="button"
         onClick={onDelete}

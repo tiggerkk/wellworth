@@ -307,6 +307,7 @@ export function Diary() {
                     target={dri?.target ?? null}
                     unit={ref?.unit ?? ''}
                     over={dri ? isOverUpperLimit(value, dri) : false}
+                    compact
                   />
                 )
               })}

@@ -72,6 +72,7 @@ the Shows/Books exception above — no weekday is ever shown.
 - **SectionCard** — `surface` rounded container wrapping rows with hairline dividers.
 - **ListRow** — leading icon, two-line name/subtitle, trailing value or chevron.
 - **NutrientBar** — name + "value / target" (muted) + %; thin track+fill; **red variant** when over UL.
+  `compact` prop drops the "value / target unit" text (name + % only) for narrow columns — used by the Diary highlighted-nutrients 2-col grid so the % is never crowded out by the full name.
 - **Toggle** — pill switch; on = `accent` with knob right, off = `track` with grey knob left.
 - **SegmentedTabs** — `input` track, active segment = `fill` pill with dark text. Generic over N
   options — used for multi-way controls (Type selectors, Status/LGBT+ filters, Food/Supplement toggle).
@@ -117,7 +118,8 @@ the Shows/Books exception above — no weekday is ever shown.
   ~2s. Used for in-app cues like "Copied Breakfast · 3 items".
 - **SwipeRow** — swipe-left reveals a `delete` Delete action; tapping it deletes **immediately**
   (the swipe + tap is the confirmation — no browser dialog). Used by every list/library/reports/trips
-  row and `ReorderList`'s `onDelete`.
+  row and `ReorderList`'s `onDelete`. Its wrapper sets `touch-action: pan-y pinch-zoom` so the rows
+  stay pinch-zoomable (a bare `pan-y` would disable zoom over the whole list — see F21 in `02_tech_spec.md`).
 - **SearchBar** — magnifier + input (+ barcode icon on Add Food). Takes an optional `className` so it
   can fill a flex row beside a Filter icon (the list screens pass `min-w-0 flex-1`), and an optional
   `icon` to swap the leading glyph (online-search sheets pass `IconWorldSearch`; default is `IconSearch`).

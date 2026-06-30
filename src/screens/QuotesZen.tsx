@@ -152,7 +152,9 @@ export function QuotesZen() {
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerUp}
           className="relative flex-1 overflow-y-auto"
-          style={{ touchAction: 'pan-y' }}
+          // pan-y pinch-zoom: keep vertical scroll + the pull-to-shuffle gesture, but leave
+          // pinch-zoom enabled (omitting pinch-zoom would disable it over the quote — see F21).
+          style={{ touchAction: 'pan-y pinch-zoom' }}
         >
           <div
             className="pointer-events-none absolute inset-x-0 top-2 flex justify-center"
