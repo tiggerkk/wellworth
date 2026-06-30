@@ -54,6 +54,7 @@ src/
   screens/           # one folder per screen/tab
   data/              # typed data-access layer (wraps supabase-js) — the ONLY db access
   lib/               # supabase client, units, dri, energy, met, nutrients, targets, report,
+                     # brand-mark (shared brand-mark geometry — also read by scripts/gen-icons.mjs),
                      # date, food-api, off-api, food-search, food-import, food-match-cache,
                      # diary-refresh, diary-clipboard, toast, csv,
                      # networth, fx, networth-refresh, networth-import, fund-import, insurance-import,

@@ -1,11 +1,13 @@
-// Generate the WellWorth app icon set from an SVG built here in code.
+// Generate the WellWorth app icon set from the shared brand-mark geometry.
 //
-// This is the single source of truth for the app/PWA icon. To redesign the icon, edit the
-// colors/geometry below and re-run `npm run gen:icons`. Outputs overwrite the committed files in
-// public/ at the exact paths/sizes the manifest (vite.config.ts) and index.html reference.
+// The seal's geometry lives in src/lib/brand-mark.js — the SAME source the on-screen BrandMark
+// component uses, so the icons and the in-app logo can't drift. To redesign the mark, edit that
+// file (and the ACCENT/BG colours below if needed), then re-run `npm run gen:icons`. Outputs
+// overwrite the committed files in public/ at the exact paths/sizes the manifest (vite.config.ts)
+// and index.html reference.
 //
 //   pwa-192x192.png, pwa-512x512.png  — standard PWA icons (also reused by the onboarding header)
-//   pwa-maskable-512.png              — maskable variant, ring kept inside the ~80% safe zone
+//   pwa-maskable-512.png              — maskable variant, seal kept inside the ~80% safe zone
 //   apple-touch-icon.png (180x180)    — iOS home-screen icon
 //   favicon.ico (16/32/48)            — browser tab
 //
@@ -16,24 +18,39 @@ import { dirname, join } from 'node:path'
 import { writeFile } from 'node:fs/promises'
 import sharp from 'sharp'
 import pngToIco from 'png-to-ico'
+import {
+  BRAND_MARK_VIEWBOX,
+  BRAND_MARK_BORDER,
+  BRAND_MARK_FIGURE,
+  BRAND_MARK_DOT,
+} from '../src/lib/brand-mark.js'
 
-const ACCENT = '#5ba3f5' // ring colour — matches --color-accent in src/index.css
+const ACCENT = '#5ba3f5' // mark colour — matches --color-accent in src/index.css
 const BG = '#161b28' // canvas — matches --color-bg / manifest background_color
 
 const publicDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'public')
 
-// A thick ring on the dark canvas, drawn in a 100x100 viewBox. `inset` shrinks the ring for the
-// maskable safe zone (larger inset = more padding). Geometry mirrors src/components/RingMark.tsx.
+// Render the shared brand-mark geometry (src/lib/brand-mark.js — same source the on-screen
+// BrandMark uses) as a standalone SVG string. `inset` shrinks the artwork toward the centre for the
+// maskable safe zone (larger inset = more padding). Colours are the literal ACCENT/BG since a
+// standalone SVG has no `currentColor` to inherit.
 function ringSvg(inset = 0) {
-  const r = 30 - inset
-  const strokeWidth = 16 - inset * 0.4
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <rect width="100" height="100" fill="${BG}"/>
-  <circle cx="50" cy="50" r="${r}" fill="none" stroke="${ACCENT}" stroke-width="${strokeWidth}"/>
-</svg>`
+  const scale = (100 - inset * 2) / 100 // inset=10 -> 0.8, centred about (50,50)
+  const b = BRAND_MARK_BORDER
+  const d = BRAND_MARK_DOT
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${BRAND_MARK_VIEWBOX}" fill="none" aria-hidden="true">
+      <g transform="translate(50 50) scale(${scale}) translate(-50 -50)" fill="${ACCENT}" stroke="${ACCENT}">
+        <rect x="${b.x}" y="${b.y}" width="${b.width}" height="${b.height}" rx="${b.rx}" fill="none" stroke-width="${b.strokeWidth}" />
+        <path d="${BRAND_MARK_FIGURE}" />
+        <circle cx="${d.cx}" cy="${d.cy}" r="${d.r}" />
+      </g>
+    </svg>`
 }
 
-const png = (svg, size) => sharp(Buffer.from(svg)).resize(size, size).png().toBuffer()
+// Flatten onto the dark canvas so there's no transparency — important for the maskable icon, which
+// Android crops into arbitrary shapes (circle/squircle) and expects a solid full-bleed background.
+const png = (svg, size) =>
+  sharp(Buffer.from(svg)).resize(size, size).flatten({ background: BG }).png().toBuffer()
 
 async function main() {
   const standard = ringSvg(0)

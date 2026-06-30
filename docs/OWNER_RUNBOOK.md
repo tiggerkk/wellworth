@@ -1098,6 +1098,42 @@ favourite) is cached for offline reading.
 
 ---
 
+## Part T — Changing the app logo / icons
+
+The WellWorth logo appears in **two** forms — the same chop-seal "W" mark, rendered two ways:
+
+1. **On-screen logo** (Login + Onboarding headers) — drawn live as an inline SVG tinted with the
+   accent colour. This is what you see _inside_ the running app.
+2. **Installed-app icons** (iPhone/iPad home screen, browser tab, PWA) — five raster files in
+   `public/` (`pwa-192x192.png`, `pwa-512x512.png`, `pwa-maskable-512.png`, `apple-touch-icon.png`,
+   `favicon.ico`). iOS and the browser can't use SVG, so these are **generated** PNGs/ICO.
+
+Both forms read their shape from **one** file — `src/lib/brand-mark.js` (the seal's coordinates and
+path). So you **edit the geometry in one place**; the on-screen mark updates automatically and the
+icons update when you re-run the generator. They can't drift.
+
+### To change the logo
+
+1. **Edit the artwork** in **`src/lib/brand-mark.js`** — the rounded-square border, the `W` path,
+   and the dot. Keep the `0 0 100 100` viewBox so both renderers stay aligned. (Colours aren't here:
+   on screen the mark inherits the accent colour; the icons use the `ACCENT`/`BG` constants at the
+   top of `scripts/gen-icons.mjs`.)
+2. **Regenerate the icons:** `npm run gen:icons`. This overwrites all five files in `public/`.
+   - You normally don't touch `gen-icons.mjs` itself — it already imports the shared geometry. The
+     one thing it adds is a scaled group that gives the **maskable** icon its padding, so Android can
+     crop it to a circle/squircle without clipping the mark; leave that in place.
+3. **Check the result** — open `public/pwa-512x512.png` and `public/pwa-maskable-512.png` and confirm
+   the mark looks right on the dark background and isn't clipped on the maskable one.
+4. **Commit** the changed `src/lib/brand-mark.js` **and** the regenerated `public/*.png` /
+   `favicon.ico` together, then push (auto-deploys).
+5. **On your phone**, after the deploy, **remove and re-add** the home-screen icon — iOS caches the
+   old icon and won't refresh it on its own.
+
+> Don't hand-edit the PNGs in an image editor: the next `npm run gen:icons` would overwrite them.
+> The geometry in `src/lib/brand-mark.js` (rasterized by `gen-icons.mjs`) is the source of truth.
+
+---
+
 ## Quick reference
 
 | Value                     | Where it comes from            | Where it goes                                      |

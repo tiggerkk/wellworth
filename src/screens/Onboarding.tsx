@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { useProfileEditor } from '../hooks/useProfileEditor'
 import { PrimaryButton } from '../components/PrimaryButton'
-import { RingMark } from '../components/RingMark'
+import { BrandMark } from '../components/BrandMark'
 import { DisplaySettingsCard } from '../components/DisplaySettingsCard'
 import {
   ProfileMetricsFields,
@@ -76,10 +76,10 @@ export function Onboarding() {
     <div className="fixed inset-0 z-20 mx-auto flex max-w-md flex-col overflow-y-auto bg-bg pt-[env(safe-area-inset-top)]">
       <div className="flex flex-col gap-5 px-4 py-8">
         <header className="flex flex-col items-center gap-3 text-center">
-          {/* Same brand mark as the Login screen (RingMark, inline SVG via currentColor) so the
+          {/* Same brand mark as the Login screen (BrandMark, inline SVG via currentColor) so the
               two on-screen logos share one source and can't drift. The installed-app/home-screen
               icon is necessarily a separate raster (public/*.png, see scripts/gen-icons.mjs). */}
-          <RingMark className="size-16 text-accent" />
+          <BrandMark className="size-16 text-accent" />
           <div>
             <h1 className="text-title font-medium text-text-primary">
               Welcome to WellWorth
