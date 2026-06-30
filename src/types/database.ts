@@ -719,6 +719,7 @@ export type Database = {
           module_order: string[] | null
           networth_asset_type_order: string[] | null
           networth_bulk_insurance_import_enabled: boolean
+          networth_liquid_asset_types: string[] | null
           networth_visible_asset_types: string[] | null
           onboarded_at: string | null
           protein_target_g: number | null
@@ -767,6 +768,7 @@ export type Database = {
           module_order?: string[] | null
           networth_asset_type_order?: string[] | null
           networth_bulk_insurance_import_enabled?: boolean
+          networth_liquid_asset_types?: string[] | null
           networth_visible_asset_types?: string[] | null
           onboarded_at?: string | null
           protein_target_g?: number | null
@@ -815,6 +817,7 @@ export type Database = {
           module_order?: string[] | null
           networth_asset_type_order?: string[] | null
           networth_bulk_insurance_import_enabled?: boolean
+          networth_liquid_asset_types?: string[] | null
           networth_visible_asset_types?: string[] | null
           onboarded_at?: string | null
           protein_target_g?: number | null

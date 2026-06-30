@@ -189,6 +189,35 @@ export function orderedAssetTypes(order: string[] | null | undefined): AssetType
   return [...known, ...missing]
 }
 
+/** Asset types treated as liquid by default — cash, time deposit, stock, fund (the owner can
+ *  re-classify in Net Worth Settings → Liquid Assets, stored on `networth_liquid_asset_types`). */
+export const DEFAULT_LIQUID_ASSET_TYPES: AssetType[] = [
+  'cash',
+  'time_deposit',
+  'stock',
+  'fund',
+]
+
+/** The owner's liquid asset-type set — NULL = the defaults above; otherwise the stored keys
+ *  filtered to known types, returned in canonical order. Drives the "Liquid Only" view toggle. */
+export function liquidAssetTypes(value: string[] | null | undefined): AssetType[] {
+  if (value == null) return [...DEFAULT_LIQUID_ASSET_TYPES]
+  return ASSET_TYPES.filter((t) => value.includes(t))
+}
+
+/** A copy of a totals record with every type outside `types` zeroed (keeps all 7 keys). Used by
+ *  the Dashboard's "Liquid Only" filter so `sumTotals`/`typeBreakdownFromTotals` recompute against
+ *  the liquid subset (non-liquid rows fall to 0 and drop out of the breakdown). */
+export function restrictTotals(
+  totals: Record<AssetType, number>,
+  types: AssetType[],
+): Record<AssetType, number> {
+  const allow = new Set(types)
+  return Object.fromEntries(
+    ASSET_TYPES.map((t) => [t, allow.has(t) ? totals[t] : 0]),
+  ) as Record<AssetType, number>
+}
+
 /** Visible asset types in display order — NULL visible = all; a type absent from `order` (newer
  *  than the saved customization) defaults visible (mirrors the Home-hub module rule). */
 export function visibleAssetTypes(

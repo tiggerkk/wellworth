@@ -3166,3 +3166,38 @@ text-accent`; aligned to the editor's `text-label font-medium text-warning` so r
   `ResultCount` row (plus the existing empty-state action).
 - Docs synced (`01_design_system.md`, `03_global.md`, `04_wellness.md`, `05_networth.md`,
   `09_medical.md`). Typecheck + ESLint green; no test change.
+
+## Net Worth — liquid vs non-liquid assets + "Liquid Only" view — 2026-06-30
+
+- **Goal:** distinguish liquid from non-liquid assets and let the Dashboard + Monthly Entry show
+  net worth using only liquid types, via a top-right **Liquid Only** toggle.
+- **Classification** is an owner setting on `profile.networth_liquid_asset_types` (NULL = code
+  defaults `cash, time_deposit, stock, fund`; non-liquid = `retirement, insurance, property`).
+  Editable in **Settings → Liquid Assets** (`NetWorthLiquidAssetTypesSheet`, per-type toggles).
+  Column added to the existing `04_networth_profile_settings.sql` (owner reconciles via `db reset`).
+- **Toggle state** is ephemeral, not a DB pref: persisted in `localStorage`
+  (`wellworth:networth-liquid-only`) via `src/lib/networth-liquid-filter.ts` + `useLiquidOnly`,
+  so it's shared across both screens and survives reloads until site data is cleared.
+- **New pure helpers** in `src/lib/networth.ts`: `DEFAULT_LIQUID_ASSET_TYPES`, `liquidAssetTypes()`
+  (NULL → defaults), `restrictTotals()` (zero out non-liquid types so `sumTotals` /
+  `typeBreakdownFromTotals` recompute against the liquid subset).
+- **Dashboard** — when ON, current total, trend, and By-type breakdown are computed over the liquid
+  subset (percentages recompute). **Monthly Entry** — non-liquid sections stay visible/editable but
+  are excluded from the header total and marked with an "Excluded" pill; SAVE is unaffected.
+- **No data-model change** beyond the one profile column; the aggregation view and `asset_entry`
+  are untouched — this is a display/calculation filter. Docs synced (`05_networth.md`).
+
+## Literature — dynasty-filter ordering fix — 2026-06-30
+
+- **Symptom:** the Poems 朝代 filter pills bunched `隋代 / 金朝 / 當代 / 未知` at the end, out of order.
+- **Cause:** the pills come from `meta.dynasties` (distinct corpus dynasty values), sorted by
+  `DYNASTY_ORDER` in `scripts/build-literature-data.mjs`. That array only listed the **bare** forms
+  `隋`/`金` (not `隋代`/`金朝`) and omitted `當代`/`未知`, so those four fell into the unranked tail
+  (rank = `length`, then `localeCompare`).
+- **Fix:** extended `DYNASTY_ORDER` to include every value the corpus emits in chronological slots
+  (`隋代` after `南北朝`, `金朝` after `宋代`, `當代` after `現代`, `未知` last). Build still only sorts,
+  never drops. Re-applied the same deterministic order to the committed `public/literature/meta.json`
+  so it ships without a corpus rebuild (next `npm run build:literature` reproduces it byte-identical).
+- Decision: kept Literature's own corpus-derived list rather than the shared `dynasty.ts` `DYNASTIES`
+  — the corpus legitimately has `現代`/`金朝`/`當代` that the shared list lacks. Docs synced
+  (`11_literature.md`).

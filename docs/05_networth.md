@@ -18,6 +18,10 @@ entries yet" · "+ Monthly Entry").
   A view toggle: **Total** ⇄ **By asset type** (one line per asset type, each the monthly sum of
   that type's `value_base`).
 - A **per-asset-type summary** for the latest month: type, total HKD, % of net worth.
+- **Liquid Only toggle** (top-right of the current-total card): when ON, the current total, the trend
+  graph, and the By-type summary are computed over the **liquid** asset types only (non-liquid types
+  zeroed via `restrictTotals`, so percentages recompute against the liquid total). State is shared with
+  Monthly Entry and persisted in `localStorage` (`wellworth:networth-liquid-only`, via `useLiquidOnly`).
 
 ### Monthly Entry
 
@@ -50,6 +54,10 @@ entries yet" · "+ Monthly Entry").
   each auto-fetched (with ↻ refetch) and overridable. Native → HKD as of the 1st of the month, via
   Frankfurter (see `docs/02_tech_spec.md` → Shared external APIs).
 - **Running total in HKD** updates live as you edit.
+- **Liquid Only toggle** (header, beside Import CSV): when ON, non-liquid sections **stay visible and
+  editable** but are **excluded from the header total** and marked with an **"Excluded"** pill;
+  saving is unaffected (the toggle only changes the displayed total, never what's persisted). State
+  is shared with the Dashboard (`useLiquidOnly`, `localStorage`).
 - **RESET** and **SAVE** buttons (icon style — see `docs/01_design_system.md` → EntryHeaderActions).
 
 ---
@@ -141,6 +149,12 @@ entries yet" · "+ Monthly Entry").
 | property     | address / label | —                                       | market value         |
 
 All values are entered manually. `details` are preserved for reference only; they do **not** drive the net-worth math.
+
+**Liquid vs non-liquid** — for the "Liquid Only" view toggle (Dashboard + Monthly Entry). Defaults
+(`DEFAULT_LIQUID_ASSET_TYPES` in `src/lib/networth.ts`): liquid = `cash, time_deposit, stock, fund`;
+non-liquid = `retirement, insurance, property`. Owner-reclassifiable in Settings → Liquid Assets
+(`profile.networth_liquid_asset_types`; NULL = the defaults). Classification is independent of
+manual-vs-auto editability — `fund` is liquid though auto-managed.
 
 ### In-app CSV importer
 
@@ -280,6 +294,9 @@ Policy Year · Premium · Cash Value (native→HKD)` with an "as of yr N" tag wh
 ### Settings (`IconSettings` tab)
 
 - **DISPLAY → Visible Asset Types** → reorder/visibility sheet (mirrors Visible Modules; ≥1 visible).
+- **DISPLAY → Liquid Assets** → per-asset-type liquid/non-liquid toggles
+  (`NetWorthLiquidAssetTypesSheet`). Drives the "Liquid Only" view toggle; saved to
+  `profile.networth_liquid_asset_types` (NULL = defaults: cash/time_deposit/stock/fund).
 - **DISPLAY → Manage Providers** → add/rename/delete/reorder the insurance-provider list + each
   provider's **default import currency** (the Quotes/Travel configurable-list pattern; shared
   `ConfigListEditor` with a per-row currency control). Stored on `profile.insurance_providers` (JSONB
@@ -323,4 +340,5 @@ Policy Year · Premium · Cash Value (native→HKD)` with an "as of yr N" tag wh
 ### New `profile` columns (`04_networth_profile_settings.sql`)
 
 `networth_visible_asset_types text[]` (NULL = all) · `networth_asset_type_order text[]` (NULL =
-canonical) · `networth_bulk_insurance_import_enabled boolean NOT NULL DEFAULT true`.
+canonical) · `networth_liquid_asset_types text[]` (NULL = code defaults cash/time_deposit/stock/fund) ·
+`networth_bulk_insurance_import_enabled boolean NOT NULL DEFAULT true`.

@@ -52,6 +52,7 @@ import {
   NetWorthEntry,
   NetWorthSettings,
   NetWorthVisibleAssetTypesSheet,
+  NetWorthLiquidAssetTypesSheet,
   InsuranceProvidersSheet,
   PolicyDetailSheet,
   NewActivitySheet,
@@ -136,6 +137,10 @@ export const router = createBrowserRouter([
           {
             path: 'networth/settings/asset-types',
             element: <NetWorthVisibleAssetTypesSheet />,
+          },
+          {
+            path: 'networth/settings/liquid-types',
+            element: <NetWorthLiquidAssetTypesSheet />,
           },
           {
             path: 'networth/settings/providers',

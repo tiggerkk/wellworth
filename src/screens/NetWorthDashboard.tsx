@@ -22,7 +22,9 @@ import {
   formatHkd,
   gainLossClass,
   hasBrokenEven,
+  liquidAssetTypes,
   resolvePolicyAtAge,
+  restrictTotals,
   sumTotals,
   typeBreakdownFromTotals,
   type AssetType,
@@ -35,6 +37,8 @@ import {
 import { formatMonthLabel, startOfMonth, todayLocal } from '../lib/date'
 import { SectionCard } from '../components/SectionCard'
 import { SegmentedTabs } from '../components/SegmentedTabs'
+import { Toggle } from '../components/Toggle'
+import { useLiquidOnly } from '../hooks/useLiquidOnly'
 import type { TrendRow } from '../components/NetWorthTrendChart'
 import type { InsuranceAggPoint } from '../components/InsuranceTrendChart'
 
@@ -126,6 +130,7 @@ export function NetWorthDashboard() {
   const [mode, setMode] = useState<'total' | 'type'>('total')
   const [rangeKey, setRangeKey] = useState(NETWORTH_RANGE_DEFAULT)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [liquidOnly, setLiquidOnly] = useLiquidOnly()
 
   const fn = useCallback(() => {
     void version // refetch after an entry SAVE (bumpNetWorth)
@@ -166,12 +171,19 @@ export function NetWorthDashboard() {
 
   // Fold the flat per-(month, type) view rows into one totals record per month (oldest first).
   const all = foldMonthlyTotals(rows ?? [])
-  const latest = all[all.length - 1]
+  // "Liquid Only" view: zero out non-liquid types so every figure below (current total, trend, the
+  // By-Type breakdown + its percentages) recomputes against the liquid subset. `all` stays raw for
+  // the empty-state check. The liquid classification is the owner's profile setting.
+  const liquid = liquidAssetTypes(profile?.networth_liquid_asset_types)
+  const months = liquidOnly
+    ? all.map((s) => ({ month: s.month, totals: restrictTotals(s.totals, liquid) }))
+    : all
+  const latest = months[months.length - 1]
   const currentTotal = latest ? sumTotals(latest.totals) : 0
 
   const range = NETWORTH_RANGES.find((r) => r.key === rangeKey) ?? NETWORTH_RANGES[0]!
   const cutoff = rangeCutoff(range.months, startOfMonth(todayLocal()))
-  const windowed = cutoff ? all.filter((s) => s.month >= cutoff) : all
+  const windowed = cutoff ? months.filter((s) => s.month >= cutoff) : months
 
   const presentTypes: AssetType[] = ASSET_TYPES.filter((t) =>
     windowed.some((s) => s.totals[t] !== 0),
@@ -219,13 +231,23 @@ export function NetWorthDashboard() {
         <div className="flex flex-col gap-3 px-4 pt-3">
           {/* Current total */}
           <SectionCard>
-            <div className="px-4 py-4">
-              <span className="block text-section uppercase tracking-wide text-text-secondary">
-                Net worth · {latest ? formatMonthLabel(latest.month) : ''}
-              </span>
-              <span className="mt-0.5 block text-3xl font-semibold text-text-primary">
-                {formatHkd(currentTotal)}
-              </span>
+            <div className="flex items-start justify-between gap-3 px-4 py-4">
+              <div>
+                <span className="block text-section uppercase tracking-wide text-text-secondary">
+                  Net worth · {latest ? formatMonthLabel(latest.month) : ''}
+                </span>
+                <span className="mt-0.5 block text-3xl font-semibold text-text-primary">
+                  {formatHkd(currentTotal)}
+                </span>
+              </div>
+              <label className="flex shrink-0 items-center gap-2">
+                <span className="text-label text-text-secondary">Liquid Only</span>
+                <Toggle
+                  checked={liquidOnly}
+                  onChange={setLiquidOnly}
+                  label="Liquid only"
+                />
+              </label>
             </div>
           </SectionCard>
 

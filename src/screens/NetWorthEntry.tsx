@@ -30,6 +30,7 @@ import {
   DETAIL_FIELDS,
   formatHkd,
   gainLossClass,
+  liquidAssetTypes,
   originalCashValueAtAge,
   resolvePolicyAtAge,
   surrenderGainPctPerYear,
@@ -52,6 +53,8 @@ import { draftAmount } from '../lib/quantity'
 import { routes } from '../constants/routes'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 import { useSessionState } from '../hooks/useSessionState'
+import { useLiquidOnly } from '../hooks/useLiquidOnly'
+import { Toggle } from '../components/Toggle'
 import { FundDetail } from '../components/FundDetail'
 import { EntryHeaderActions } from '../components/EntryHeaderActions'
 import { ConfirmDeleteAction } from '../components/ConfirmDeleteAction'
@@ -206,6 +209,7 @@ export function NetWorthEntry() {
     profile?.networth_asset_type_order,
     profile?.networth_visible_asset_types,
   )
+  const liquidTypes = liquidAssetTypes(profile?.networth_liquid_asset_types)
 
   const loadFn = useCallback(async (): Promise<
     MonthDraft & { snapshotId: string | null; needsFreeze: boolean }
@@ -312,6 +316,7 @@ export function NetWorthEntry() {
           initialSnapshotId={initial.snapshotId}
           initialNeedsFreeze={initial.needsFreeze}
           visibleTypes={visibleTypes}
+          liquidTypes={liquidTypes}
           providers={providers}
         />
       )}
@@ -329,6 +334,7 @@ function EntryForm({
   initialSnapshotId,
   initialNeedsFreeze,
   visibleTypes,
+  liquidTypes,
   providers,
 }: {
   userId: string
@@ -338,10 +344,12 @@ function EntryForm({
   initialSnapshotId: string | null
   initialNeedsFreeze: boolean
   visibleTypes: AssetType[]
+  liquidTypes: AssetType[]
   providers: InsuranceProviderConfig[]
 }) {
   const navigate = useNavigate()
   const openSheet = useSheetNavigate()
+  const [liquidOnly, setLiquidOnly] = useLiquidOnly()
   const [rows, setRows] = useState<EntryDraft[]>(() => cloneRows(initial.rows))
   const [fxRates, setFxRates] = useState<RateDraft>(() => ({ ...initial.fxRates }))
   const [baseline, setBaseline] = useState<MonthDraft>(() => ({
@@ -387,7 +395,14 @@ function EntryForm({
     currency === 'HKD' ? 1 : draftAmount(fxRates[currency], 0)
   const rowBase = (r: EntryDraft) =>
     valueBase(draftAmount(r.valueNative, 0), rateOf(r.currency))
-  const total = totalBase(rows.map((r) => ({ value_base: rowBase(r) })))
+  // "Liquid Only" view excludes non-liquid types from the displayed total (their sections stay
+  // visible/editable below and are marked "Excluded"). SAVE is unaffected — this only changes what
+  // the header total reflects, never what's persisted.
+  const total = totalBase(
+    rows
+      .filter((r) => !liquidOnly || liquidTypes.includes(r.asset_type))
+      .map((r) => ({ value_base: rowBase(r) })),
+  )
 
   function reset() {
     setRows(cloneRows(baseline.rows))
@@ -532,12 +547,18 @@ function EntryForm({
               {formatHkd(total)}
             </span>
           </div>
-          <button
-            onClick={() => openSheet(`${routes.networth.import}?month=${month}`)}
-            className="flex items-center gap-1 text-body text-accent"
-          >
-            <IconUpload size={16} /> Import CSV
-          </button>
+          <div className="flex items-center gap-3">
+            <label className="flex items-center gap-1.5">
+              <span className="text-label text-text-secondary">Liquid Only</span>
+              <Toggle checked={liquidOnly} onChange={setLiquidOnly} label="Liquid only" />
+            </label>
+            <button
+              onClick={() => openSheet(`${routes.networth.import}?month=${month}`)}
+              className="flex items-center gap-1 text-body text-accent"
+            >
+              <IconUpload size={16} /> Import CSV
+            </button>
+          </div>
         </div>
       </header>
 
@@ -606,6 +627,9 @@ function EntryForm({
           const isFund = type === 'fund'
           const isInsurance = type === 'insurance'
           const isManual = !READONLY_TYPES.has(type)
+          // In the "Liquid Only" view, non-liquid sections stay visible/editable but don't count
+          // toward the header total — flag them so the header can mark them "Excluded".
+          const excluded = liquidOnly && !liquidTypes.includes(type)
           return (
             <div
               key={type}
@@ -632,6 +656,11 @@ function EntryForm({
                 <span className="min-w-0 flex-1 truncate text-body font-medium text-text-primary">
                   {ASSET_TYPE_LABELS[type]}
                 </span>
+                {excluded && (
+                  <span className="shrink-0 rounded-pill bg-input px-2 py-0.5 text-caption text-text-tertiary">
+                    Excluded
+                  </span>
+                )}
                 {entries.length > 0 && (
                   <span className="shrink-0 text-body text-text-secondary">
                     {formatHkd(subtotal)}

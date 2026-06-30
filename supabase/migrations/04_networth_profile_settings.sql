@@ -12,6 +12,11 @@
 --   * networth_bulk_insurance_import_enabled — surfaces the ONE-TIME bulk insurance seed importer
 --     in Net Worth Settings. ON by default; toggleable. Gates ONLY the bulk seed — the manual,
 --     fund-monthly, and single-policy importers are always enabled.
+--   * networth_liquid_asset_types — which asset types count as LIQUID for the "Liquid Only" view
+--     toggle on the Dashboard + Monthly Entry (which excludes the non-liquid types from the net-worth
+--     total). NULL = the code defaults (DEFAULT_LIQUID_ASSET_TYPES in src/lib/networth.ts: cash,
+--     time_deposit, stock, fund); an explicit array once the owner customizes in Net Worth Settings →
+--     Liquid Assets. The toggle's on/off state itself is ephemeral (localStorage), not stored here.
 --   * insurance_providers — the owner's configurable insurance-provider list (add/rename/delete/
 --     reorder in Net Worth Settings → Manage Providers), the Quotes pattern. A JSONB array of
 --     {key,label,defaultCurrency} objects in display order; defaultCurrency (HKD/CNY/USD) seeds the
@@ -23,5 +28,6 @@
 alter table public.profile
   add column networth_visible_asset_types          text[],
   add column networth_asset_type_order             text[],
+  add column networth_liquid_asset_types           text[],
   add column networth_bulk_insurance_import_enabled boolean not null default true,
   add column insurance_providers                   jsonb;

@@ -123,7 +123,8 @@ const TYPE_ALIAS_GROUPS = {
 }
 
 // Canonical dynasty order (oldest→newest) for sorting the distinct poem dynasties into filter order.
-// Tolerant of both '唐' and '唐代' style values; an unrecognized dynasty sorts last (stable).
+// Tolerant of both '唐' and '唐代' style values; lists every dynasty value this corpus actually emits
+// (incl. '隋代'/'金朝'/'當代' and the catch-all '未知', sorted last). A value not listed sorts last (stable).
 const DYNASTY_ORDER = [
   '先秦',
   '秦',
@@ -132,6 +133,7 @@ const DYNASTY_ORDER = [
   '魏晉',
   '南北朝',
   '隋',
+  '隋代',
   '唐',
   '唐代',
   '五代',
@@ -139,6 +141,7 @@ const DYNASTY_ORDER = [
   '宋代',
   '遼',
   '金',
+  '金朝',
   '元',
   '元代',
   '明',
@@ -147,6 +150,8 @@ const DYNASTY_ORDER = [
   '清代',
   '近代',
   '現代',
+  '當代',
+  '未知',
 ]
 
 /** Strip HTML tags + collapse whitespace (poem content can carry markup). */

@@ -22,6 +22,10 @@ the **corpus data** were carried over.
 
 - `meta.json` — `{ version, types[{id,name,kind,sortOrder}], writers[{id,name,dynasty}], dynasties[] }`.
   `kind ∈ theme|season|anthology|style|other`; the first four are shown as filters. **Precached.**
+  `dynasties[]` is the **distinct corpus dynasty values** (not the shared `src/constants/dynasty.ts`
+  list), sorted oldest→newest by `DYNASTY_ORDER` in the build script — which lists **every** value the
+  corpus emits (incl. `隋代`/`金朝`/`當代` and the catch-all `未知`, last) so the 朝代 pills render in
+  chronological order. `DYNASTY_ORDER` only sorts; it never drops a value.
   The curated filter vocabulary (in `scripts/build-literature-data.mjs` `TYPE_GROUPS`) matches this
   corpus's tag spelling — 主題: 愛國/邊塞/懷古/羈旅/貶謫/哲理/景物/友情/愛情/孤獨/抒情/思念 · 時令:
   春天/夏天/秋天/冬天/節日 · 選集: 唐詩三百首/宋詞三百首/古詩三百首/古詩十九首/詩經/楚辭/古文觀止 +

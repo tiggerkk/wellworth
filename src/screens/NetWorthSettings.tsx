@@ -54,6 +54,14 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
           </FieldRow>
         </button>
         <button
+          onClick={() => openSheet(routes.networth.settingsLiquidAssetTypes)}
+          className="w-full border-b border-border last:border-b-0"
+        >
+          <FieldRow label="Liquid Assets">
+            <IconChevronRight size={18} className="text-text-tertiary" />
+          </FieldRow>
+        </button>
+        <button
           onClick={() => openSheet(routes.networth.settingsProviders)}
           className="w-full border-b border-border last:border-b-0"
         >
