@@ -7,6 +7,7 @@ supabase/migrations
 package-lock.json
 docs/wireframes
 public/geo
+public/literature
 *.png
 *.ico
 *.geojson

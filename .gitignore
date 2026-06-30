@@ -60,6 +60,11 @@ templates/*.pdf
 travel-expenses*.csv
 !templates/travel-expenses-template.csv
 
+# Literature — the source poems.db is a large build-time input (the standalone chinese-literature
+# app's SQLite). It is NOT committed; the owner drops it here to regenerate the static corpus, and
+# only the generated public/literature/** tree is tracked. See docs/OWNER_RUNBOOK.md.
+scripts/literature/*.db
+
 # Backups — local DB dumps + age keys must never be committed (encrypted dumps live in the separate
 # private backups repo; the age private key stays offline). NB: not a blanket *.sql ignore — that
 # would catch supabase/migrations/. See docs/OWNER_RUNBOOK.md Part Q.

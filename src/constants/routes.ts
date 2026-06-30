@@ -79,6 +79,15 @@ export const routes = {
     settingsCategories: '/quotes/settings/categories', // manage Category list (sheet)
     import: '/quotes/import', // CSV importer (sheet)
   },
+  literature: {
+    base: '/literature',
+    home: '/literature', // poem list (module index): search + filter
+    poets: '/literature/poets', // writers grouped by dynasty
+    poet: (id: string) => `/literature/poet/${id}`, // poet detail (bio + works) — drill-in
+    poem: (id: string) => `/literature/poem/${id}`, // poem detail (reader + 譯文/註釋/賞析) — drill-in
+    favorites: '/literature/favorites',
+    settings: '/literature/settings', // read-aloud prefs (auto-loop, default language)
+  },
   medical: {
     base: '/medical',
     dashboard: '/medical', // trends + latest values + reports timeline

@@ -24,6 +24,12 @@ import {
   ImportNetWorthSheet,
   ImportQuotesSheet,
   Library,
+  LiteratureHome,
+  LiteraturePoemDetail,
+  LiteraturePoets,
+  LiteraturePoetDetail,
+  LiteratureFavorites,
+  LiteratureSettings,
   Login,
   ImportMedicalSheet,
   MedicalDashboard,
@@ -162,6 +168,14 @@ export const router = createBrowserRouter([
           { path: 'quotes/settings/categories', element: <QuoteCategoriesSheet /> },
           { path: 'quotes/import', element: <ImportQuotesSheet /> },
           { path: 'quotes/:id', element: <QuotesEntry /> },
+
+          // Literature module — tabs + drill-in detail screens (corpus is a static asset)
+          { path: 'literature', element: <LiteratureHome /> },
+          { path: 'literature/poets', element: <LiteraturePoets /> },
+          { path: 'literature/favorites', element: <LiteratureFavorites /> },
+          { path: 'literature/settings', element: <LiteratureSettings /> },
+          { path: 'literature/poet/:id', element: <LiteraturePoetDetail /> },
+          { path: 'literature/poem/:id', element: <LiteraturePoemDetail /> },
 
           // Medical module (Dashboard M4, tracked/reorder/lock M4–M6)
           { path: 'medical', element: <MedicalDashboard /> },

@@ -1040,6 +1040,36 @@ To drop just an **import match cache** without logging out:
 
 ---
 
+## Part S — Loading the Literature corpus (诗书)
+
+The **Literature** module's poems/writers are an immutable **static asset**, not database rows. They
+ship as generated JSON under `public/literature/**` (committed to the repo), so a normal clone + deploy
+already has them — **you only do this when you want to add/refresh the corpus**. The two Supabase pieces
+(your favourites + read-aloud settings) come from migrations `16`/`17`, applied like any other (Part F).
+
+**To (re)generate the corpus from the source database:**
+
+1. Get the source `poems.db` (the SQLite from the standalone `chinese-literature` app) and put it at
+   **`scripts/literature/poems.db`** (this path is **gitignored** — the 19.5 MB DB is never committed;
+   only the generated JSON is).
+2. Install dependencies once (`npm install`) — this pulls in `better-sqlite3`, a build-time-only tool.
+   On Windows it needs the native build chain; if `npm install` fails on it, install the
+   **"Desktop development with C++"** workload (Visual Studio Build Tools) and re-run.
+3. Run **`npm run build:literature`**. It prints the poem/writer/type counts and writes
+   `public/literature/{meta,index}.json` + `poem/<id>.json` + `writer/<id>.json`.
+4. **Commit** the changed `public/literature/**` (that tree is the deployable source of truth — the
+   deploy/CI build never needs `poems.db` or `better-sqlite3`).
+
+The corpus is **not** affected by `supabase db reset` (it isn't in the database). Reading works fully
+offline once the app is installed: browse/search/favourites are precached; a poem you open (or
+favourite) is cached for offline reading.
+
+> If you correct an existing poem's text (same id/URL), bump the runtime cache name
+> (`literature-bodies-v1` in `vite.config.ts` **and** `BODY_CACHE` in `src/data/literature.ts`) so
+> installed clients refetch it instead of serving the cached old copy.
+
+---
+
 ## Quick reference
 
 | Value                     | Where it comes from            | Where it goes                                      |

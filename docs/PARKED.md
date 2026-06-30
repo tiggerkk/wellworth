@@ -59,6 +59,35 @@ lock. **Shipped** end-to-end (see BUILD-HISTORY → "Medical Build Sequence"; be
 
 ---
 
+## Literature (built)
+
+**What:** Classical Chinese poems & prose with search, filter, read-aloud (粵/國), and favourites. The
+corpus is an immutable **static asset** (`public/literature/**`, generated from a gitignored `poems.db`);
+favourites + read-aloud settings are in Supabase. **Shipped** (see `docs/11_literature.md`). Decided
+**Literature** non-goals / deferrals so they aren't re-litigated:
+
+- **`sentences` / 名句 not imported** — the source DB's notable-passages table isn't in the 6 shipped
+  screens. Additive later: a `poem_sentence` static file + a Poem-detail section.
+- **`audioUrl` unused** — the source's per-poem audio URLs are dropped; read-aloud uses the Web Speech
+  API (`useSpeech`) instead, which gives 粵/國 + seek with no hosted audio.
+- **iOS Cantonese (粵 / zh-HK) voice** — **Out of scope (hard PWA limit).** Voice availability is
+  device-dependent; a zh-HK voice is often absent on iOS, so 粵 may fall back to the platform default.
+  `PoemReader` surfaces a quiet "voice unavailable" note (`voiceAvailable=false`); Mandarin is broadly
+  available. Parallels the Medical WebAuthn framing.
+- **Same-URL corpus corrections need a cache-name bump** — poem/writer bodies are CacheFirst
+  (`literature-bodies-v1`); a corrected poem at the same URL won't refresh until the cache name is
+  bumped on regeneration. Acceptable for an essentially-static corpus.
+- **Filter-tag coverage is source-limited (~20%)** — **Decided, don't re-chase.** Only ≈2,037 / 10,000
+  poems carry **any** type tag in the source `poems.db`; the rest were never tagged. The curated 主題/時令/
+  選集/風格 pills + a ~85-tag alias map (`scripts/build-literature-data.mjs` `TYPE_GROUPS` /
+  `TYPE_ALIAS_GROUPS`) already reach **≈95% of the taggable poems** — the ceiling. Untagged poems stay
+  reachable via search / dynasty / unfiltered browse. Pushing overall coverage higher would mean
+  mis-filing poems under themes the data never assigned, so it's intentionally not done.
+- **Server-side search / pagination** — **Decided-against.** The corpus is static + bundled (a small
+  in-memory index), so search/filter is client-side via `foldZh`; no DB query layer is needed.
+
+---
+
 ## Deferred
 
 ### English / 繁體中文 (HK Traditional) UI language toggle · Deferred (scoped 2026-06-30)

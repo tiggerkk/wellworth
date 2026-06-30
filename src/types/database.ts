@@ -673,6 +673,24 @@ export type Database = {
           },
         ]
       }
+      poem_favorite: {
+        Row: {
+          created_at: string
+          poem_id: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          poem_id: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          poem_id?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       profile: {
         Row: {
           activity_factor: number
@@ -685,6 +703,8 @@ export type Database = {
           height_cm: number | null
           highlighted_nutrients: string[]
           insurance_providers: Json | null
+          literature_tts_autoloop: boolean
+          literature_tts_lang: string
           medical_importer_enabled: boolean
           medical_lock_enabled: boolean
           medical_lock_pin_hash: string | null
@@ -729,6 +749,8 @@ export type Database = {
           height_cm?: number | null
           highlighted_nutrients?: string[]
           insurance_providers?: Json | null
+          literature_tts_autoloop?: boolean
+          literature_tts_lang?: string
           medical_importer_enabled?: boolean
           medical_lock_enabled?: boolean
           medical_lock_pin_hash?: string | null
@@ -773,6 +795,8 @@ export type Database = {
           height_cm?: number | null
           highlighted_nutrients?: string[]
           insurance_providers?: Json | null
+          literature_tts_autoloop?: boolean
+          literature_tts_lang?: string
           medical_importer_enabled?: boolean
           medical_lock_enabled?: boolean
           medical_lock_pin_hash?: string | null

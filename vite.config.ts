@@ -10,7 +10,14 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
+      // The Literature search index + meta are precached (small) so browse/search/filter/favourites
+      // work fully offline; the per-poem/writer bodies are runtime-cached on demand (workbox below).
+      includeAssets: [
+        'favicon.ico',
+        'apple-touch-icon.png',
+        'literature/index.json',
+        'literature/meta.json',
+      ],
       manifest: {
         name: 'WellWorth',
         short_name: 'WellWorth',
@@ -42,6 +49,22 @@ export default defineConfig({
         // Don't let the precached index.html shadow the OAuth return (?code=) once the
         // service worker is live in production.
         navigateFallbackDenylist: [/^\/auth/, /\?code=/],
+        // Literature poem/writer bodies are immutable static JSON fetched on demand — CacheFirst so a
+        // poem reads offline once opened (and favouriting pre-adds to this same cache; see
+        // src/data/literature.ts BODY_CACHE). The cacheName MUST stay in sync with that constant.
+        runtimeCaching: [
+          {
+            urlPattern: ({ url }) =>
+              url.pathname.startsWith('/literature/poem/') ||
+              url.pathname.startsWith('/literature/writer/'),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'literature-bodies-v1',
+              expiration: { maxEntries: 5000 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+        ],
       },
       // Keep the service worker off during `vite dev` to avoid stale-cache confusion.
       devOptions: { enabled: false },

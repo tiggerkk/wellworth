@@ -11,7 +11,7 @@ in the build log).
   (architecture, routing, DB patterns, gotchas), and `docs/03_global.md` (navigation, onboarding,
   global Settings, the `profile` table + seeds). These four cover normal work, **including changing
   existing code**.
-- **Read on demand:** a module spec (`docs/04_wellness.md` … `10_travel.md`) only when a bug or
+- **Read on demand:** a module spec (`docs/04_wellness.md` … `11_literature.md`) only when a bug or
   enhancement touches that module — see the [Modules](#modules) table below.
 - **`docs/BUILD_HISTORY.md`** — non-spec chronological engineering history (build sequence + dated
   enhancement passes). **Read only when explicitly asked** to do a major refactor or regression
@@ -25,7 +25,7 @@ Documentation updates are part of "done," not a follow-up. Whenever a change aff
 not wait to be reminded:
 
 - **Spec docs** (`/docs/00_PRD.md`, `01_design_system.md`, `02_tech_spec.md`, `03_global.md`,
-  `04_wellness.md` … `10_travel.md`) — the behavior/data source of truth. Update when a screen's
+  `04_wellness.md` … `11_literature.md`) — the behavior/data source of truth. Update when a screen's
   behavior, the data model, seed data, or the design system changes.
 - **`docs/BUILD_HISTORY.md`** — append the milestone/enhancement narrative + rationale for notable
   changes (schema changes, migrations, new patterns), and keep its Snapshot (test count, deploy status)
@@ -44,15 +44,16 @@ Then run `npm run format` so the docs pass Prettier.
 All modules are feature-complete. Adding a module = append a `ModuleDef` to
 `src/constants/modules.ts` + its routes. **Before working on a module, read its spec:**
 
-| Module    | Routes       | Spec                |
-| --------- | ------------ | ------------------- |
-| Wellness  | /wellness/\* | docs/04_wellness.md |
-| Net Worth | /networth/\* | docs/05_networth.md |
-| Shows     | /shows/\*    | docs/06_shows.md    |
-| Books     | /books/\*    | docs/07_books.md    |
-| Quotes    | /quotes/\*   | docs/08_quotes.md   |
-| Medical   | /medical/\*  | docs/09_medical.md  |
-| Travel    | /travel/\*   | docs/10_travel.md   |
+| Module     | Routes         | Spec                  |
+| ---------- | -------------- | --------------------- |
+| Wellness   | /wellness/\*   | docs/04_wellness.md   |
+| Net Worth  | /networth/\*   | docs/05_networth.md   |
+| Shows      | /shows/\*      | docs/06_shows.md      |
+| Books      | /books/\*      | docs/07_books.md      |
+| Quotes     | /quotes/\*     | docs/08_quotes.md     |
+| Medical    | /medical/\*    | docs/09_medical.md    |
+| Travel     | /travel/\*     | docs/10_travel.md     |
+| Literature | /literature/\* | docs/11_literature.md |
 
 Global screens (Home hub, Onboarding, Settings): `docs/03_global.md`
 Shared UI components & design tokens: `docs/01_design_system.md`
