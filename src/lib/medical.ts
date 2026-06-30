@@ -599,13 +599,22 @@ export function defaultTrackedTestKeys(): string[] {
 
 /**
  * The six structured eye-refraction result keys (M7), laid out as the Add/Edit form grid renders them:
- * a row per eye (OD/OS) × Sphere / Cylinder / Addition. They are ordinary `eye`-category numeric
+ * a row per eye — displayed RE (right) / LE (left), keyed `*_od` / `*_os` — × Sphere / Cylinder /
+ * Addition. They are ordinary `eye`-category numeric
  * `medical_result` rows (so they trend like any measurement); the form just gives them a dedicated grid
  * instead of the generic test picker.
  */
 export const EYE_REFRACTION_ROWS: { eye: string; label: string; keys: string[] }[] = [
-  { eye: 'OD', label: 'Right (OD)', keys: ['sphere_od', 'cylinder_od', 'addition_od'] },
-  { eye: 'OS', label: 'Left (OS)', keys: ['sphere_os', 'cylinder_os', 'addition_os'] },
+  {
+    eye: 'RE',
+    label: 'Right eye (RE)',
+    keys: ['sphere_od', 'cylinder_od', 'addition_od'],
+  },
+  {
+    eye: 'LE',
+    label: 'Left eye (LE)',
+    keys: ['sphere_os', 'cylinder_os', 'addition_os'],
+  },
 ]
 
 /** Column headers for the refraction grid (one numeric value per eye). */

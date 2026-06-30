@@ -3358,3 +3358,21 @@ warning until the user hunted for a "Fetch missing rates" button.
 - Lesson (durable, → `docs/10_travel.md`): the first FX fetch is **automatic** (gap-only, deduped by an
   in-flight ref); the manual control is now a force **Refresh**, not the primary path.
 - **Snapshot:** **632** tests pass (UI-only change, no new tests); `npm run check` green.
+
+## Medical — Eye Refraction grid: fit all 3 columns + RE/LE labels — 2026-06-30
+
+Cosmetic/UX fix on the Add/Edit Report eye grid (no schema change, no migration). On a phone only the
+first ~1.5 columns showed (Cylinder clipped, Addition off-screen), and the row labels were the cryptic
+optometry **OD/OS**.
+
+- **Overflow root cause + fix** (`EyeRefractionFields`): the grid used `grid-cols-[3.5rem_1fr_1fr_1fr]`
+  with bare `<input>` cells. A `1fr` track is `minmax(auto,1fr)`, and an input's `auto` min is its
+  intrinsic ~20-char width, so the three value columns refused to shrink and overflowed the card's
+  `overflow-hidden` (the documented _ExpenseRowsEditor_ layout gotcha). Switched the value tracks to
+  `minmax(0,1fr)` and gave each input `w-full min-w-0` — all three columns now fit and stay editable at
+  the Large/Larger Dynamic Type presets (`rem` tracks + role-token text scale together).
+- **RE/LE labels (grid only):** `EYE_REFRACTION_ROWS.eye` now displays **RE** (right) / **LE** (left);
+  the helper caption defines them. The DB keys (`*_od`/`*_os`), seed `display_name`s, migration 12, and
+  the JSON import matcher are intentionally **unchanged** — real optometry reports print OD/OS and the
+  importer keys off `display_name`, so this stays display-only.
+- **Snapshot:** **632** tests pass (UI-only change, label not asserted); `npm run check` green.

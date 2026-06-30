@@ -10,7 +10,8 @@ interface EyeRefractionFieldsProps {
 
 /**
  * The structured eye-refraction grid (M7), shown on the Add/Edit form when the report type is **eye**:
- * a row per eye (OD / OS) × Sphere / Cylinder / Addition. Each cell edits the `value_num` of the
+ * a row per eye — displayed RE (right) / LE (left), keyed `*_od` / `*_os` — × Sphere / Cylinder /
+ * Addition. Each cell edits the `value_num` of the
  * matching `eye`-category `medical_result` row (created on first input, removed when cleared), so the
  * values store + trend exactly like any other measurement — they just get a dedicated grid instead of
  * the generic test picker. The unit (dioptres) comes from the seed.
@@ -25,7 +26,7 @@ export function EyeRefractionFields({ results, onSet }: EyeRefractionFieldsProps
         Eye Refraction
       </p>
       <div className="overflow-hidden rounded-card border border-border bg-surface">
-        <div className="grid grid-cols-[3.5rem_1fr_1fr_1fr] items-center gap-px bg-border">
+        <div className="grid grid-cols-[3.5rem_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)] items-center gap-px bg-border">
           {/* header row */}
           <div className="bg-surface px-2 py-2" />
           {EYE_REFRACTION_COLUMNS.map((col) => (
@@ -49,7 +50,7 @@ export function EyeRefractionFields({ results, onSet }: EyeRefractionFieldsProps
         </div>
       </div>
       <p className="mt-1 px-1 text-section text-text-tertiary">
-        Dioptres (D). Leave a cell blank if not measured.
+        RE = right eye, LE = left eye. Dioptres (D); leave a cell blank if not measured.
       </p>
     </div>
   )
@@ -80,7 +81,7 @@ function Row({
           aria-label={labTestByKey.get(key)?.display_name ?? key}
           value={valueOf(key)}
           onChange={(e) => onSet(key, e.target.value)}
-          className="bg-surface px-2 py-2 text-center text-body text-text-primary focus:bg-input focus:outline-none"
+          className="w-full min-w-0 bg-surface px-2 py-2 text-center text-body text-text-primary focus:bg-input focus:outline-none"
         />
       ))}
     </>

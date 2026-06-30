@@ -113,7 +113,10 @@ _Search, filter, and sort persist for the **browser-tab session** (`useSessionSt
   behaviour on the Import review screen.
 - Deleting a report here returns to the **Reports list** (not the now-deleted read-only detail).
 - **Eye reports** (type = eye) surface a dedicated **Eye Refraction** grid above the results: a row
-  per eye (OD / OS) × **Sphere / Cylinder / Addition** (dioptres). Each cell edits the `value_num`
+  per eye — labelled **RE** (right) / **LE** (left) for clarity, keyed `*_od` / `*_os` underneath —
+  × **Sphere / Cylinder / Addition** (dioptres). The three value columns are `minmax(0,1fr)` tracks
+  with `w-full min-w-0` inputs so all three fit (and stay editable at the Large/Larger Dynamic Type
+  presets) instead of overflowing the card. Each cell edits the `value_num`
   of the matching `eye`-category `medical_result` row (created on first input, removed when cleared),
   so the six values store + trend like any measurement. IOP / other eye findings go through the generic
   results list as usual.
