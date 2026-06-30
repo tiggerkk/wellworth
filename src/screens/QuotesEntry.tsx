@@ -133,9 +133,9 @@ export function QuotesEntry() {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      {loading && <p className="p-4 text-sm text-text-secondary">Loading…</p>}
+      {loading && <p className="p-4 text-body text-text-secondary">Loading…</p>}
       {(error || (!loading && notFound)) && (
-        <p className="p-4 text-sm text-danger">Couldn’t load this quote.</p>
+        <p className="p-4 text-body text-danger">Couldn’t load this quote.</p>
       )}
       {!loading && initial && (
         <QuoteForm
@@ -302,7 +302,7 @@ function QuoteForm({
         >
           <IconX size={22} />
         </button>
-        <h1 className="flex-1 truncate text-[17px] font-medium text-text-primary">
+        <h1 className="flex-1 truncate text-heading font-medium text-text-primary">
           {id ? 'Edit Quote' : 'New Quote'}
         </h1>
         <button
@@ -329,11 +329,11 @@ function QuoteForm({
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
         <div>
           <div className="flex items-center justify-between">
-            <span className="text-xs text-text-secondary">Quote</span>
+            <span className="text-caption text-text-secondary">Quote</span>
             {canPaste && (
               <button
                 onClick={() => void pasteFromClipboard()}
-                className="flex items-center gap-1 text-xs text-accent"
+                className="flex items-center gap-1 text-caption text-accent"
               >
                 <IconClipboard size={14} /> Paste
               </button>
@@ -344,20 +344,20 @@ function QuoteForm({
             onChange={(e) => changeText(e.target.value)}
             rows={6}
             placeholder="The quote itself…"
-            className={`mt-1 ${inputClass} resize-none placeholder:text-text-tertiary`}
+            className={`mt-1 ${inputClass} resize-none`}
           />
         </div>
 
         {(show('title') || show('source_link')) && (
           <div className="flex items-end gap-2">
             {show('title') && (
-              <label className="flex-1 text-xs text-text-secondary">
+              <label className="flex-1 text-caption text-text-secondary">
                 Title
                 <input
                   value={draft.title}
                   onChange={(e) => update({ title: e.target.value })}
                   placeholder="Show, film, book, podcast…"
-                  className={`mt-1 ${inputClass} placeholder:text-text-tertiary`}
+                  className={`mt-1 ${inputClass}`}
                 />
               </label>
             )}
@@ -367,14 +367,14 @@ function QuoteForm({
                   onClick={unlink}
                   aria-label="Unlink source"
                   title={`Linked · ${sourceTypeLabel(sourceTypes, draft.source_type)}`}
-                  className="flex shrink-0 items-center gap-1.5 rounded-input bg-input px-3 py-2 text-sm text-accent"
+                  className="flex shrink-0 items-center gap-1.5 rounded-input bg-input px-3 py-2 text-body text-accent"
                 >
                   <IconLink size={16} /> Linked <IconX size={14} />
                 </button>
               ) : (
                 <button
                   onClick={() => setLinkOpen(true)}
-                  className="flex shrink-0 items-center justify-center gap-1.5 rounded-input bg-input px-3 py-2 text-sm text-accent"
+                  className="flex shrink-0 items-center justify-center gap-1.5 rounded-input bg-input px-3 py-2 text-body text-accent"
                 >
                   <IconLink size={16} /> Show or Book
                 </button>
@@ -385,19 +385,19 @@ function QuoteForm({
         {(show('author') || show('source_type')) && (
           <div className="flex gap-3">
             {show('author') && (
-              <label className="flex-1 text-xs text-text-secondary">
+              <label className="flex-1 text-caption text-text-secondary">
                 Author
                 <input
                   value={draft.author}
                   onChange={(e) => update({ author: e.target.value })}
                   placeholder="Who said or wrote it"
-                  className={`mt-1 ${inputClass} placeholder:text-text-tertiary`}
+                  className={`mt-1 ${inputClass}`}
                 />
               </label>
             )}
             {show('source_type') && (
               <div className="w-32">
-                <p className="mb-1 text-xs text-text-secondary">Source Type</p>
+                <p className="mb-1 text-caption text-text-secondary">Source Type</p>
                 <SelectMenu
                   value={draft.source_type}
                   options={sourceTypes.map((s) => ({ value: s.key, label: s.label }))}
@@ -411,7 +411,7 @@ function QuoteForm({
 
         <div className="flex gap-3">
           <div className="w-40">
-            <p className="mb-1 text-xs text-text-secondary">Category</p>
+            <p className="mb-1 text-caption text-text-secondary">Category</p>
             <SelectMenu
               value={draft.category}
               options={categories.map((c) => ({ value: c.key, label: c.label }))}
@@ -421,7 +421,7 @@ function QuoteForm({
           </div>
           {show('language') && (
             <div className="flex-1">
-              <p className="mb-1 text-xs text-text-secondary">Language</p>
+              <p className="mb-1 text-caption text-text-secondary">Language</p>
               <SegmentedTabs
                 value={draft.language}
                 onChange={changeLanguage}
@@ -436,7 +436,7 @@ function QuoteForm({
 
         {show('tags') && (
           <div>
-            <p className="mb-1 text-xs text-text-secondary">Tags</p>
+            <p className="mb-1 text-caption text-text-secondary">Tags</p>
             <TagInput
               value={draft.tags}
               onChange={(tags) => update({ tags })}
@@ -445,7 +445,7 @@ function QuoteForm({
           </div>
         )}
 
-        {saveError && <p className="text-sm text-danger">{saveError}</p>}
+        {saveError && <p className="text-body text-danger">{saveError}</p>}
       </div>
 
       {linkOpen && (

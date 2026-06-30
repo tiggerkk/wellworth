@@ -41,10 +41,12 @@ export function Home() {
               <m.Icon size={24} stroke={1.75} />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block text-[15px] font-medium text-text-primary">
+              <span className="block text-body font-medium text-text-primary">
                 {m.label}
               </span>
-              <span className="block text-xs text-text-secondary">{m.description}</span>
+              <span className="block text-caption text-text-secondary">
+                {m.description}
+              </span>
             </span>
             <IconChevronRight size={18} className="shrink-0 text-text-tertiary" />
           </Link>

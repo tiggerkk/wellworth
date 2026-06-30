@@ -33,9 +33,9 @@ export function VisibleNutrientsSheet() {
         <button onClick={() => navigate(-1)} aria-label="Close">
           <IconX size={22} className="text-text-secondary" />
         </button>
-        <h1 className="text-[17px] font-medium text-text-primary">Visible Nutrients</h1>
+        <h1 className="text-heading font-medium text-text-primary">Visible Nutrients</h1>
       </header>
-      {loading && <p className="p-4 text-sm text-text-secondary">Loading…</p>}
+      {loading && <p className="p-4 text-body text-text-secondary">Loading…</p>}
       {profile && nutrients && (
         <Picker profile={profile} nutrients={nutrients} save={save} />
       )}
@@ -71,7 +71,7 @@ function Picker({
           if (rows.length === 0) return null
           return (
             <div key={group.label}>
-              <h2 className="mb-1 px-1 text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
+              <h2 className="mb-1 px-1 text-section font-medium uppercase tracking-[0.08em] text-text-secondary">
                 {group.label}
               </h2>
               <div className="overflow-hidden rounded-card border border-border bg-surface">
@@ -81,11 +81,11 @@ function Picker({
                     className="flex items-center justify-between gap-3 border-b border-border px-4 py-2.5 last:border-b-0"
                   >
                     <div className="min-w-0">
-                      <p className="truncate text-[15px] text-text-primary">
+                      <p className="truncate text-body text-text-primary">
                         {n.display_name}
                       </p>
                       {isLimitedData(n) && (
-                        <p className="text-xs text-text-tertiary">limited data</p>
+                        <p className="text-caption text-text-tertiary">limited data</p>
                       )}
                       {n.key === 'protein' && (
                         <input

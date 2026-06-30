@@ -21,6 +21,16 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- Apply the cached Dynamic Type preset before first paint so larger text doesn't flash in at
+         the default size. Mirrors src/lib/font-scale.ts (key + values); the profile re-syncs it on
+         load (useFontSizeSync). 'default' carries no attribute. -->
+    <script>
+      try {
+        var s = localStorage.getItem('wellworth:font-size')
+        if (s === 'large' || s === 'larger')
+          document.documentElement.dataset.fontScale = s
+      } catch (e) {}
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

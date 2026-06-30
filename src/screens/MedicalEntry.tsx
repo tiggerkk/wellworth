@@ -58,9 +58,9 @@ export function MedicalEntry() {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      {loading && <p className="p-4 text-sm text-text-secondary">Loading…</p>}
+      {loading && <p className="p-4 text-body text-text-secondary">Loading…</p>}
       {(error || (!loading && !initial)) && (
-        <p className="p-4 text-sm text-danger">Couldn’t load this report.</p>
+        <p className="p-4 text-body text-danger">Couldn’t load this report.</p>
       )}
       {!loading && initial && <ReportForm key={id ?? 'new'} id={id} initial={initial} />}
     </div>
@@ -205,13 +205,13 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
         >
           <IconX size={22} />
         </button>
-        <h1 className="flex-1 truncate text-[17px] font-medium text-text-primary">
+        <h1 className="flex-1 truncate text-heading font-medium text-text-primary">
           {id ? 'Edit Report' : 'New Report'}
         </h1>
         {!id && profile?.medical_importer_enabled && (
           <button
             onClick={() => openSheet(routes.medical.import)}
-            className="flex shrink-0 items-center gap-1.5 pl-2 text-sm text-accent"
+            className="flex shrink-0 items-center gap-1.5 pl-2 text-body text-accent"
           >
             <IconUpload size={16} /> Import JSON
           </button>
@@ -229,7 +229,7 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
         <div className="flex gap-3">
           <div className="flex-1">
-            <p className="mb-1 text-xs text-text-secondary">Report Date</p>
+            <p className="mb-1 text-caption text-text-secondary">Report Date</p>
             <button
               onClick={() => setDatePicker(true)}
               className={`text-left ${inputClass}`}
@@ -238,7 +238,7 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
             </button>
           </div>
           <div className="flex-1">
-            <p className="mb-1 text-xs text-text-secondary">Type</p>
+            <p className="mb-1 text-caption text-text-secondary">Type</p>
             <SelectMenu
               value={draft.report_type}
               onChange={(report_type) => update({ report_type })}
@@ -252,7 +252,7 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
         </div>
 
         {vis('provider') && (
-          <label className="text-xs text-text-secondary">
+          <label className="text-caption text-text-secondary">
             Provider
             <input
               value={draft.provider}
@@ -263,7 +263,7 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
         )}
 
         {usesBodyPart(draft.report_type) && vis('body_part') && (
-          <label className="text-xs text-text-secondary">
+          <label className="text-caption text-text-secondary">
             Body Part
             <input
               value={draft.body_part}
@@ -275,7 +275,7 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
         )}
 
         {vis('narrative') && (
-          <label className="text-xs text-text-secondary">
+          <label className="text-caption text-text-secondary">
             Narrative
             <textarea
               value={draft.narrative}
@@ -289,7 +289,7 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
 
         {vis('document_urls') && (
           <div>
-            <p className="mb-1 text-xs text-text-secondary">
+            <p className="mb-1 text-caption text-text-secondary">
               Document Links (Google Drive)
             </p>
             <div className="flex flex-col gap-2">
@@ -312,7 +312,7 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
               ))}
               <button
                 onClick={addUrl}
-                className="flex items-center gap-1.5 self-start text-sm text-positive"
+                className="flex items-center gap-1.5 self-start text-body text-positive"
               >
                 <IconPlus size={16} /> Add link
               </button>
@@ -324,18 +324,18 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
 
         <div>
           <div className="mb-2 flex items-center justify-between">
-            <p className="text-xs uppercase tracking-[0.08em] text-text-secondary">
+            <p className="text-caption uppercase tracking-[0.08em] text-text-secondary">
               {isEye ? 'Other Results' : 'Results'}
             </p>
             <button
               onClick={() => setPickerOpen(true)}
-              className="flex items-center gap-1.5 text-sm text-positive"
+              className="flex items-center gap-1.5 text-body text-positive"
             >
               <IconPlus size={16} /> Add result
             </button>
           </div>
           {listResults.length === 0 ? (
-            <p className="rounded-card border border-dashed border-border px-4 py-6 text-center text-sm text-text-tertiary">
+            <p className="rounded-card border border-dashed border-border px-4 py-6 text-center text-body text-text-tertiary">
               {isEye
                 ? 'No other results. Tap “Add result”.'
                 : 'No results yet. Tap “Add result”.'}

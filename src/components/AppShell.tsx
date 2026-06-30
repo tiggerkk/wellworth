@@ -8,6 +8,7 @@ import { Toaster } from './Toaster'
 import { useAuth } from '../auth/AuthProvider'
 import { useEnsureProfile } from '../hooks/useEnsureProfile'
 import { useProfile } from '../hooks/useProfile'
+import { useFontSizeSync } from '../hooks/useFontSizeSync'
 import { needsOnboarding } from '../lib/access'
 import { moduleForPath } from '../constants/modules'
 import { setLastModule } from '../lib/last-module'
@@ -64,6 +65,7 @@ const TAB_FOR_PATH: Record<string, React.ReactNode> = {
 export function AppShell() {
   const { session } = useAuth()
   useEnsureProfile(session)
+  useFontSizeSync()
 
   const location = useLocation()
   const outlet = useOutlet()

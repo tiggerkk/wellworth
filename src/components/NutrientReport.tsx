@@ -23,14 +23,14 @@ export function NutrientReport({ entries, loading, error }: NutrientReportProps)
   const { data: profile } = useProfile()
   const { byKey, nutrients } = useNutrientReference()
 
-  if (loading) return <p className="px-4 py-6 text-sm text-text-secondary">Loading…</p>
+  if (loading) return <p className="px-4 py-6 text-body text-text-secondary">Loading…</p>
   if (error)
-    return <p className="px-4 py-6 text-sm text-danger">Couldn’t load this report.</p>
+    return <p className="px-4 py-6 text-body text-danger">Couldn’t load this report.</p>
 
   const agg = aggregateEntries(entries ?? [])
   if (agg.loggedDays === 0) {
     return (
-      <p className="px-4 py-6 text-sm text-text-tertiary">
+      <p className="px-4 py-6 text-body text-text-tertiary">
         Nothing logged in this range.
       </p>
     )
@@ -55,7 +55,7 @@ export function NutrientReport({ entries, loading, error }: NutrientReportProps)
         if (rows.length === 0) return null
         return (
           <div key={section.category}>
-            <h2 className="mb-1 px-1 text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
+            <h2 className="mb-1 px-1 text-section font-medium uppercase tracking-[0.08em] text-text-secondary">
               {section.label}
             </h2>
             <div className="rounded-card border border-border bg-surface px-4 py-1">

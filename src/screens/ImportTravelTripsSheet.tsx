@@ -183,24 +183,24 @@ export function ImportTravelTripsSheet() {
         <button onClick={() => navigate(-1)} aria-label="Close">
           <IconX size={22} className="text-text-secondary" />
         </button>
-        <h1 className="text-[17px] font-medium text-text-primary">Import Trips</h1>
+        <h1 className="text-heading font-medium text-text-primary">Import Trips</h1>
       </header>
 
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
         {done !== null ? (
           <div className="flex flex-col gap-2">
-            <p className="text-[15px] font-medium text-text-primary">
+            <p className="text-body font-medium text-text-primary">
               Imported {done.trips} trip{done.trips === 1 ? '' : 's'} ({done.days} days,{' '}
               {done.stops} stops).
             </p>
-            <p className="text-sm text-text-secondary">
+            <p className="text-body text-text-secondary">
               They’re drafts — finish them in the Trip Builder. Expenses import
               separately.
             </p>
           </div>
         ) : (
           <>
-            <p className="text-sm text-text-secondary">
+            <p className="text-body text-text-secondary">
               Upload a JSON array of trips (see{' '}
               <code className="text-text-primary">
                 templates/travel-itinerary-prompt.md
@@ -222,22 +222,22 @@ export function ImportTravelTripsSheet() {
             />
             <button
               onClick={() => inputRef.current?.click()}
-              className="flex items-center justify-center gap-2 rounded-input border border-border bg-input px-4 py-3 text-[15px] text-text-primary"
+              className="flex items-center justify-center gap-2 rounded-input border border-border bg-input px-4 py-3 text-body text-text-primary"
             >
               <IconUpload size={18} />
               {fileName ? 'Choose a different file' : 'Choose JSON File'}
             </button>
             {fileName && (
-              <p className="text-xs text-text-secondary">
+              <p className="text-caption text-text-secondary">
                 Selected: <span className="text-text-primary">{fileName}</span>
               </p>
             )}
 
-            {error && <p className="text-xs text-danger">{error}</p>}
+            {error && <p className="text-caption text-danger">{error}</p>}
 
             {trips && (
               <>
-                <div className="rounded-card border border-border bg-surface px-4 py-3 text-sm text-text-primary">
+                <div className="rounded-card border border-border bg-surface px-4 py-3 text-body text-text-primary">
                   Ready to import <strong>{tripCount}</strong> trip
                   {tripCount === 1 ? '' : 's'} — {totals.days} days, {totals.stops} stops.
                 </div>
@@ -255,7 +255,7 @@ export function ImportTravelTripsSheet() {
                       >
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
-                            <span className="truncate text-[15px] text-text-primary">
+                            <span className="truncate text-body text-text-primary">
                               {t.name}
                             </span>
                             <StatusChip
@@ -263,7 +263,7 @@ export function ImportTravelTripsSheet() {
                               className={TRIP_STATUS_CHIP[t.status]}
                             />
                           </div>
-                          <p className="truncate text-xs text-text-secondary">
+                          <p className="truncate text-caption text-text-secondary">
                             {s.days} days · {s.stops} stops{types ? ` · ${types}` : ''}
                           </p>
                         </div>
@@ -284,10 +284,10 @@ export function ImportTravelTripsSheet() {
                         >
                           <IconMapPin size={16} className="shrink-0 text-text-tertiary" />
                           <div className="min-w-0 flex-1">
-                            <div className="truncate text-sm text-text-primary">
+                            <div className="truncate text-body text-text-primary">
                               {c.city}
                             </div>
-                            <div className="truncate text-xs text-text-secondary">
+                            <div className="truncate text-caption text-text-secondary">
                               {[prov, c.country].filter(Boolean).join(' · ') ||
                                 'unresolved'}
                               {p?.lat != null && ' · pinned'}
@@ -296,7 +296,7 @@ export function ImportTravelTripsSheet() {
                           <button
                             onClick={() => void lookUp(c)}
                             disabled={geocoding === norm(c.city)}
-                            className="shrink-0 rounded-pill bg-input px-2.5 py-1 text-xs font-medium text-accent disabled:opacity-50"
+                            className="shrink-0 rounded-pill bg-input px-2.5 py-1 text-caption font-medium text-accent disabled:opacity-50"
                           >
                             {geocoding === norm(c.city) ? '…' : 'Look up'}
                           </button>
@@ -308,10 +308,10 @@ export function ImportTravelTripsSheet() {
 
                 {warnings.length > 0 && (
                   <div className="flex flex-col gap-1">
-                    <p className="text-xs font-medium text-warning">
+                    <p className="text-caption font-medium text-warning">
                       {warnings.length} note{warnings.length === 1 ? '' : 's'}:
                     </p>
-                    <ul className="flex flex-col gap-1 text-xs text-text-secondary">
+                    <ul className="flex flex-col gap-1 text-caption text-text-secondary">
                       {warnings.map((m, i) => (
                         <li key={i}>{m}</li>
                       ))}

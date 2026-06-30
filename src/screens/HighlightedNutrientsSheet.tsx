@@ -20,11 +20,11 @@ export function HighlightedNutrientsSheet() {
         <button onClick={() => navigate(-1)} aria-label="Close">
           <IconX size={22} className="text-text-secondary" />
         </button>
-        <h1 className="text-[17px] font-medium text-text-primary">
+        <h1 className="text-heading font-medium text-text-primary">
           Highlighted Nutrients
         </h1>
       </header>
-      {loading && <p className="p-4 text-sm text-text-secondary">Loading…</p>}
+      {loading && <p className="p-4 text-body text-text-secondary">Loading…</p>}
       {profile && nutrients && (
         <Picker
           initial={profile.highlighted_nutrients}
@@ -61,7 +61,7 @@ function Picker({
 
   return (
     <div className="flex-1 overflow-y-auto p-4">
-      <p className="mb-3 text-xs text-text-secondary">
+      <p className="mb-3 text-caption text-text-secondary">
         Choose up to {MAX} for the Diary grid ({selected.length}/{MAX}).
       </p>
       <div className="flex flex-col gap-2">
@@ -70,7 +70,7 @@ function Picker({
           if (rows.length === 0) return null
           return (
             <div key={section.category}>
-              <h2 className="mb-1 px-1 text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
+              <h2 className="mb-1 px-1 text-section font-medium uppercase tracking-[0.08em] text-text-secondary">
                 {section.label}
               </h2>
               <div className="overflow-hidden rounded-card border border-border bg-surface">
@@ -86,7 +86,7 @@ function Picker({
                         disabled ? 'opacity-40' : ''
                       }`}
                     >
-                      <span className="text-[15px] text-text-primary">
+                      <span className="text-body text-text-primary">
                         {n.display_name}
                       </span>
                       {on && <IconCheck size={18} className="text-accent" />}

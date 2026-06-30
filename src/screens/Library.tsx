@@ -96,7 +96,7 @@ export function Library() {
                 tab === 'foods' ? routes.wellness.newFood : routes.wellness.newActivity,
               )
             }
-            className="flex items-center gap-1 text-sm text-positive"
+            className="flex items-center gap-1 text-body text-positive"
           >
             <IconPlus size={16} /> New {tab === 'foods' ? 'Food' : 'Activity'}
           </button>
@@ -111,7 +111,7 @@ export function Library() {
       <div className="overflow-hidden rounded-card border border-border bg-surface">
         {tab === 'foods' &&
           (foodList.length === 0 ? (
-            <p className="px-4 py-6 text-center text-sm text-text-tertiary">
+            <p className="px-4 py-6 text-center text-body text-text-tertiary">
               No foods yet.
             </p>
           ) : (
@@ -136,7 +136,7 @@ export function Library() {
 
         {tab === 'activities' &&
           (filteredActivities.length === 0 ? (
-            <p className="px-4 py-6 text-center text-sm text-text-tertiary">
+            <p className="px-4 py-6 text-center text-body text-text-tertiary">
               No activities yet.
             </p>
           ) : (

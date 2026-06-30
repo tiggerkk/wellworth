@@ -84,9 +84,11 @@ export function TravelDashboard() {
     [trips],
   )
 
-  if (loading) return <p className="p-4 text-sm text-text-secondary">Loading…</p>
+  if (loading) return <p className="p-4 text-body text-text-secondary">Loading…</p>
   if (error)
-    return <p className="p-4 text-sm text-danger">Couldn’t load your travel dashboard.</p>
+    return (
+      <p className="p-4 text-body text-danger">Couldn’t load your travel dashboard.</p>
+    )
 
   if (trips.length === 0) {
     return (
@@ -153,9 +155,9 @@ function Tile({
     <div className="rounded-card border border-border bg-surface px-3 py-3">
       <div className="flex items-baseline gap-1">
         <span className="text-xl font-semibold text-text-primary">{value}</span>
-        {suffix && <span className="text-xs text-text-secondary">{suffix}</span>}
+        {suffix && <span className="text-caption text-text-secondary">{suffix}</span>}
       </div>
-      <p className="mt-0.5 text-xs leading-tight text-text-secondary">{label}</p>
+      <p className="mt-0.5 text-caption leading-tight text-text-secondary">{label}</p>
     </div>
   )
 }
@@ -187,13 +189,13 @@ function Shelf({
             <Thumb url={t.cover_url} className="h-12 w-16 rounded-card" />
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <span className="truncate text-[15px] text-text-primary">{t.name}</span>
+                <span className="truncate text-body text-text-primary">{t.name}</span>
                 <StatusChip
                   label={tripStatusLabel(t.status)}
                   className={TRIP_STATUS_CHIP[t.status as keyof typeof TRIP_STATUS_CHIP]}
                 />
               </div>
-              <p className="truncate text-xs text-text-secondary">
+              <p className="truncate text-caption text-text-secondary">
                 {dateRange(t.start_date, t.end_date)}
                 {label ? ` · ${label}` : ''}
               </p>
@@ -205,7 +207,7 @@ function Shelf({
       {onSeeAll && (
         <button
           onClick={onSeeAll}
-          className="w-full px-3 py-2.5 text-left text-sm text-accent active:bg-input/40"
+          className="w-full px-3 py-2.5 text-left text-body text-accent active:bg-input/40"
         >
           See all trips
         </button>

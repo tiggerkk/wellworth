@@ -7,10 +7,18 @@ import { useProfileEditor } from '../hooks/useProfileEditor'
 import { useSheetNavigate } from '../hooks/useSheetNavigate'
 import { SectionCard } from '../components/SectionCard'
 import { FieldRow } from '../components/FieldRow'
+import { SegmentedTabs } from '../components/SegmentedTabs'
 import {
   ProfileMetricsFields,
   type ProfileMetrics,
 } from '../components/ProfileMetricsFields'
+import {
+  applyFontSize,
+  FONT_SIZE_LABELS,
+  FONT_SIZES,
+  isFontSize,
+  type FontSize,
+} from '../lib/font-scale'
 import { routes } from '../constants/routes'
 import type { Tables, TablesUpdate } from '../types/database'
 
@@ -35,11 +43,11 @@ export function Settings() {
         >
           <IconChevronLeft size={22} />
         </button>
-        <h1 className="text-lg font-medium text-text-primary">Settings</h1>
+        <h1 className="text-title font-medium text-text-primary">Settings</h1>
       </header>
-      {loading && <p className="text-sm text-text-secondary">Loading…</p>}
+      {loading && <p className="text-body text-text-secondary">Loading…</p>}
       {!loading && !profile && (
-        <p className="text-sm text-danger">
+        <p className="text-body text-danger">
           Couldn’t load your profile. If you just reset the database, sign out below and
           sign back in to recreate it.
         </p>
@@ -87,7 +95,7 @@ function AccountCard() {
         <button
           onClick={signOut}
           disabled={signingOut}
-          className="text-sm text-accent disabled:opacity-50"
+          className="text-body text-accent disabled:opacity-50"
         >
           {signingOut ? 'Signing out…' : 'Sign out'}
         </button>
@@ -108,6 +116,17 @@ function SettingsBody({ profile, save }: { profile: Tables<'profile'>; save: Sav
 
   const openSheet = useSheetNavigate()
 
+  // Font-size preset. Apply immediately (instant whole-UI feedback) and persist for other devices;
+  // useFontSizeSync reconciles a fresh device from the profile on load.
+  const [fontSize, setFontSize] = useState<FontSize>(
+    isFontSize(profile.font_size) ? profile.font_size : 'default',
+  )
+  function changeFontSize(size: FontSize) {
+    setFontSize(size)
+    applyFontSize(size)
+    void save({ font_size: size })
+  }
+
   function update(patch: Partial<ProfileMetrics>) {
     setValue((v) => ({ ...v, ...patch }))
     void save(patch)
@@ -115,8 +134,19 @@ function SettingsBody({ profile, save }: { profile: Tables<'profile'>; save: Sav
 
   return (
     <>
-      <ProfileMetricsFields value={value} onChange={update} />
       <SectionCard title="Display">
+        <FieldRow label="Font Size">
+          <div className="w-56">
+            <SegmentedTabs
+              value={fontSize}
+              onChange={changeFontSize}
+              options={FONT_SIZES.map((s) => ({
+                value: s,
+                label: FONT_SIZE_LABELS[s],
+              }))}
+            />
+          </div>
+        </FieldRow>
         <button
           onClick={() => openSheet(routes.settingsVisibleModules)}
           className="w-full"
@@ -125,7 +155,21 @@ function SettingsBody({ profile, save }: { profile: Tables<'profile'>; save: Sav
             <IconChevronRight size={18} className="text-text-tertiary" />
           </FieldRow>
         </button>
+        <FieldRow label="Units">
+          <div className="w-40">
+            <SegmentedTabs
+              value={value.units}
+              onChange={(v) => update({ units: v })}
+              options={[
+                { value: 'metric', label: 'Metric' },
+                { value: 'imperial', label: 'Imperial' },
+              ]}
+            />
+          </div>
+        </FieldRow>
       </SectionCard>
+      {/* Units lives under Display (above); Profile shows body metrics only. */}
+      <ProfileMetricsFields value={value} onChange={update} showUnits={false} />
     </>
   )
 }

@@ -49,7 +49,7 @@ export function MonthPicker({ month, onSelect, onClose }: MonthPickerProps) {
           >
             <IconChevronLeft size={20} />
           </button>
-          <span className="text-[15px] font-medium text-text-primary">{viewYear}</span>
+          <span className="text-body font-medium text-text-primary">{viewYear}</span>
           <button
             onClick={() => setViewYear((y) => y + 1)}
             aria-label="Next year"
@@ -66,7 +66,7 @@ export function MonthPicker({ month, onSelect, onClose }: MonthPickerProps) {
               <button
                 key={label}
                 onClick={() => setSelected(toIsoDate(new Date(viewYear, i, 1)))}
-                className={`rounded-card py-2.5 text-[15px] ${
+                className={`rounded-card py-2.5 text-body ${
                   isSelected ? 'bg-fill text-bg' : 'bg-input text-text-primary'
                 }`}
               >
@@ -79,13 +79,13 @@ export function MonthPicker({ month, onSelect, onClose }: MonthPickerProps) {
         <div className="mt-4 flex gap-2">
           <button
             onClick={onClose}
-            className="flex-1 rounded-pill bg-input py-2.5 text-sm text-text-primary"
+            className="flex-1 rounded-pill bg-input py-2.5 text-body text-text-primary"
           >
             Cancel
           </button>
           <button
             onClick={() => onSelect(selected)}
-            className="flex-1 rounded-pill bg-fill py-2.5 text-sm font-medium text-bg"
+            className="flex-1 rounded-pill bg-fill py-2.5 text-body font-medium text-bg"
           >
             OK
           </button>

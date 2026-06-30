@@ -121,21 +121,21 @@ export function ImportQuotesSheet() {
         <button onClick={() => navigate(-1)} aria-label="Close">
           <IconX size={22} className="text-text-secondary" />
         </button>
-        <h1 className="text-[17px] font-medium text-text-primary">Import Quotes</h1>
+        <h1 className="text-heading font-medium text-text-primary">Import Quotes</h1>
       </header>
 
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
         {done !== null ? (
           <div className="flex flex-col gap-2">
-            <p className="text-[15px] font-medium text-text-primary">
+            <p className="text-body font-medium text-text-primary">
               Imported {done.inserted} quote{done.inserted === 1 ? '' : 's'}
               {done.duplicates > 0 && ` — ${done.duplicates} duplicate skipped`}.
             </p>
-            <p className="text-sm text-text-secondary">They’re in your Library now.</p>
+            <p className="text-body text-text-secondary">They’re in your Library now.</p>
           </div>
         ) : (
           <>
-            <p className="text-sm text-text-secondary">
+            <p className="text-body text-text-secondary">
               Upload a CSV in the{' '}
               <code className="text-text-primary">quotes-import-template.csv</code> format
               (see <code className="text-text-primary">templates/</code>). Re-importing
@@ -156,7 +156,7 @@ export function ImportQuotesSheet() {
             <button
               onClick={() => inputRef.current?.click()}
               disabled={ctxLoading}
-              className="flex items-center justify-center gap-2 rounded-input border border-border bg-input px-4 py-3 text-[15px] text-text-primary disabled:opacity-50"
+              className="flex items-center justify-center gap-2 rounded-input border border-border bg-input px-4 py-3 text-body text-text-primary disabled:opacity-50"
             >
               <IconUpload size={18} />
               {ctxLoading
@@ -166,13 +166,13 @@ export function ImportQuotesSheet() {
                   : 'Choose CSV File'}
             </button>
             {fileName && (
-              <p className="text-xs text-text-secondary">
+              <p className="text-caption text-text-secondary">
                 Selected: <span className="text-text-primary">{fileName}</span>
               </p>
             )}
 
             {preview && (
-              <div className="rounded-card border border-border bg-surface px-4 py-3 text-sm text-text-primary">
+              <div className="rounded-card border border-border bg-surface px-4 py-3 text-body text-text-primary">
                 Ready to import <strong>{newCount}</strong> quote
                 {newCount === 1 ? '' : 's'}.
                 {(preview.duplicates > 0 || preview.errors.length > 0) && (
@@ -196,10 +196,8 @@ export function ImportQuotesSheet() {
                       key={i}
                       className="border-b border-border px-3 py-2.5 last:border-b-0"
                     >
-                      <p className="line-clamp-2 text-[15px] text-text-primary">
-                        {r.text}
-                      </p>
-                      <p className="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-secondary">
+                      <p className="line-clamp-2 text-body text-text-primary">{r.text}</p>
+                      <p className="mt-1 flex flex-wrap items-center gap-2 text-caption text-text-secondary">
                         <StatusChip
                           label={categoryLabel(categories, r.category)}
                           className={QUOTE_CATEGORY_CHIP}
@@ -215,7 +213,7 @@ export function ImportQuotesSheet() {
                   )
                 })}
                 {newCount > MAX_SAMPLE && (
-                  <p className="px-3 py-2 text-xs text-text-tertiary">
+                  <p className="px-3 py-2 text-caption text-text-tertiary">
                     …and {newCount - MAX_SAMPLE} more.
                   </p>
                 )}
@@ -224,11 +222,11 @@ export function ImportQuotesSheet() {
 
             {preview && preview.errors.length > 0 && (
               <div className="flex flex-col gap-1">
-                <p className="text-xs font-medium text-danger">
+                <p className="text-caption font-medium text-danger">
                   {preview.errors.length} row
                   {preview.errors.length === 1 ? '' : 's'} flagged:
                 </p>
-                <ul className="flex flex-col gap-1 text-xs text-danger">
+                <ul className="flex flex-col gap-1 text-caption text-danger">
                   {preview.errors.slice(0, MAX_SAMPLE).map((m, i) => (
                     <li key={i}>{m}</li>
                   ))}
@@ -239,7 +237,7 @@ export function ImportQuotesSheet() {
               </div>
             )}
 
-            {importError && <p className="text-xs text-danger">{importError}</p>}
+            {importError && <p className="text-caption text-danger">{importError}</p>}
           </>
         )}
       </div>

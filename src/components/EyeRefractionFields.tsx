@@ -21,7 +21,7 @@ export function EyeRefractionFields({ results, onSet }: EyeRefractionFieldsProps
 
   return (
     <div>
-      <p className="mb-2 text-xs uppercase tracking-[0.08em] text-text-secondary">
+      <p className="mb-2 text-caption uppercase tracking-[0.08em] text-text-secondary">
         Eye Refraction
       </p>
       <div className="overflow-hidden rounded-card border border-border bg-surface">
@@ -31,7 +31,7 @@ export function EyeRefractionFields({ results, onSet }: EyeRefractionFieldsProps
           {EYE_REFRACTION_COLUMNS.map((col) => (
             <div
               key={col}
-              className="bg-surface px-2 py-2 text-center text-[11px] uppercase tracking-wide text-text-secondary"
+              className="bg-surface px-2 py-2 text-center text-section uppercase tracking-wide text-text-secondary"
             >
               {col}
             </div>
@@ -48,7 +48,7 @@ export function EyeRefractionFields({ results, onSet }: EyeRefractionFieldsProps
           ))}
         </div>
       </div>
-      <p className="mt-1 px-1 text-[11px] text-text-tertiary">
+      <p className="mt-1 px-1 text-section text-text-tertiary">
         Dioptres (D). Leave a cell blank if not measured.
       </p>
     </div>
@@ -68,7 +68,7 @@ function Row({
 }) {
   return (
     <>
-      <div className="bg-surface px-2 py-2 text-[13px] font-medium text-text-primary">
+      <div className="bg-surface px-2 py-2 text-label font-medium text-text-primary">
         {eye}
       </div>
       {keys.map((key) => (
@@ -80,7 +80,7 @@ function Row({
           aria-label={labTestByKey.get(key)?.display_name ?? key}
           value={valueOf(key)}
           onChange={(e) => onSet(key, e.target.value)}
-          className="bg-surface px-2 py-2 text-center text-[15px] text-text-primary focus:bg-input focus:outline-none"
+          className="bg-surface px-2 py-2 text-center text-body text-text-primary focus:bg-input focus:outline-none"
         />
       ))}
     </>

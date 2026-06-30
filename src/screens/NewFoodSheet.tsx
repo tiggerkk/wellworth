@@ -62,9 +62,9 @@ export function NewFoodSheet() {
 
   return (
     <Sheet variant="full" label={isEdit ? 'Edit food' : 'New food'}>
-      {loading && <p className="p-4 text-sm text-text-secondary">Loading…</p>}
+      {loading && <p className="p-4 text-body text-text-secondary">Loading…</p>}
       {(error || (!loading && !initial)) && (
-        <p className="p-4 text-sm text-danger">Couldn’t load this item.</p>
+        <p className="p-4 text-body text-danger">Couldn’t load this item.</p>
       )}
       {initial && <FoodForm id={id} initial={initial} />}
     </Sheet>
@@ -163,7 +163,7 @@ function FoodForm({ id, initial }: { id: string | undefined; initial: FoodInitia
         <button onClick={() => navigate(-1)} aria-label="Close">
           <IconX size={22} className="text-text-secondary" />
         </button>
-        <h1 className="flex-1 truncate text-[17px] font-medium text-text-primary">
+        <h1 className="flex-1 truncate text-heading font-medium text-text-primary">
           {id ? 'Edit Food' : 'New Food'}
         </h1>
         <EntryHeaderActions
@@ -187,7 +187,7 @@ function FoodForm({ id, initial }: { id: string | undefined; initial: FoodInitia
           ]}
         />
 
-        <label className="text-xs text-text-secondary">
+        <label className="text-caption text-text-secondary">
           Food Name
           <input
             value={name}
@@ -198,7 +198,7 @@ function FoodForm({ id, initial }: { id: string | undefined; initial: FoodInitia
 
         {/* Serving sizes */}
         <div>
-          <p className="mb-1 text-xs text-text-secondary">Serving Sizes</p>
+          <p className="mb-1 text-caption text-text-secondary">Serving Sizes</p>
           <div className="flex flex-col gap-2">
             {servings.map((s, i) => (
               <div key={i} className="flex items-center gap-2">
@@ -237,7 +237,7 @@ function FoodForm({ id, initial }: { id: string | undefined; initial: FoodInitia
           </div>
           <button
             onClick={() => setServings((prev) => [...prev, { name: '', grams: '' }])}
-            className="mt-2 flex items-center gap-1 text-sm text-positive"
+            className="mt-2 flex items-center gap-1 text-body text-positive"
           >
             <IconPlus size={16} /> Add serving size
           </button>
@@ -245,7 +245,7 @@ function FoodForm({ id, initial }: { id: string | undefined; initial: FoodInitia
 
         {/* Basis */}
         <div>
-          <p className="mb-1 text-xs text-text-secondary">Nutrition Shown Per</p>
+          <p className="mb-1 text-caption text-text-secondary">Nutrition Shown Per</p>
           <SegmentedTabs
             value={basis}
             onChange={setBasis}
@@ -258,7 +258,7 @@ function FoodForm({ id, initial }: { id: string | undefined; initial: FoodInitia
 
         {/* Nutrition facts */}
         <div>
-          <p className="mb-2 text-xs text-text-secondary">
+          <p className="mb-2 text-caption text-text-secondary">
             Nutrition Facts (Per {basisLabel})
           </p>
           <div className="flex flex-col gap-2">
@@ -276,7 +276,7 @@ function FoodForm({ id, initial }: { id: string | undefined; initial: FoodInitia
                       key={n.key}
                       className="flex items-center justify-between gap-3 border-b border-border py-2 last:border-b-0"
                     >
-                      <span className="text-[15px] text-text-primary">
+                      <span className="text-body text-text-primary">
                         {n.display_name}
                       </span>
                       <span className="flex items-center gap-1">
@@ -290,7 +290,9 @@ function FoodForm({ id, initial }: { id: string | undefined; initial: FoodInitia
                           }
                           className="field-control w-20 text-right"
                         />
-                        <span className="w-7 text-xs text-text-secondary">{n.unit}</span>
+                        <span className="w-7 text-caption text-text-secondary">
+                          {n.unit}
+                        </span>
                       </span>
                     </div>
                   ))}

@@ -262,7 +262,7 @@ export function ActivityLogSheet() {
         <button onClick={() => navigate(-1)} aria-label="Close">
           <IconX size={22} className="text-text-secondary" />
         </button>
-        <h1 className="line-clamp-2 flex-1 text-[17px] font-medium text-text-primary">
+        <h1 className="line-clamp-2 flex-1 text-heading font-medium text-text-primary">
           {activity?.name ?? 'Activity'}
         </h1>
         {activity && (
@@ -278,21 +278,21 @@ export function ActivityLogSheet() {
         )}
       </header>
       {activity && strengthError && (
-        <p className="border-b border-border bg-surface px-4 py-2 text-xs text-danger">
+        <p className="border-b border-border bg-surface px-4 py-2 text-caption text-danger">
           {strengthError}
         </p>
       )}
 
       <div className="flex-1 overflow-y-auto p-4">
-        {loading && <p className="text-sm text-text-secondary">Loading…</p>}
+        {loading && <p className="text-body text-text-secondary">Loading…</p>}
         {(error || (!loading && !activity)) && (
-          <p className="text-sm text-danger">Couldn’t load this activity.</p>
+          <p className="text-body text-danger">Couldn’t load this activity.</p>
         )}
 
         {activity && (
           <div className="flex flex-col gap-4">
             <div>
-              <p className="mb-2 text-xs text-text-secondary">Effort Level</p>
+              <p className="mb-2 text-caption text-text-secondary">Effort Level</p>
               <EffortPicker
                 value={sessionEffort}
                 onChange={setEffort}
@@ -300,7 +300,7 @@ export function ActivityLogSheet() {
               />
             </div>
 
-            <label className="text-xs text-text-secondary">
+            <label className="text-caption text-text-secondary">
               Duration (minutes)
               <input
                 type="number"
@@ -319,19 +319,19 @@ export function ActivityLogSheet() {
 
             <div className="rounded-card border border-border bg-surface-alt px-4 py-3">
               <div className="flex items-center justify-between">
-                <span className="text-[15px] text-text-primary">Energy Burned</span>
-                <span className="text-[15px] font-medium text-accent">
+                <span className="text-body text-text-primary">Energy Burned</span>
+                <span className="text-body font-medium text-accent">
                   −{Math.round(energy)} kcal
                 </span>
               </div>
-              <p className="mt-1 text-xs text-text-secondary">
+              <p className="mt-1 text-caption text-text-secondary">
                 {met} MET × {weightKg} kg × {(minutesValue / 60).toFixed(2)} h
               </p>
             </div>
 
             {activity.template === 'strength' && (
               <div className="flex flex-col gap-3">
-                <p className="text-xs text-text-secondary">Exercises</p>
+                <p className="text-caption text-text-secondary">Exercises</p>
                 {exercises.map((ex, exIdx) => (
                   <div
                     key={exIdx}
@@ -351,7 +351,7 @@ export function ActivityLogSheet() {
                     />
                     {ex.sets.map((s, setIdx) => (
                       <div key={setIdx} className="mb-2 flex items-center gap-2">
-                        <span className="w-10 text-xs text-text-secondary">
+                        <span className="w-10 text-caption text-text-secondary">
                           Set {setIdx + 1}
                         </span>
                         <input
@@ -365,7 +365,7 @@ export function ActivityLogSheet() {
                           className="field-control no-spinner w-16"
                           aria-label="Reps"
                         />
-                        <span className="text-xs text-text-tertiary">reps ×</span>
+                        <span className="text-caption text-text-tertiary">reps ×</span>
                         <input
                           type="number"
                           min={0}
@@ -378,12 +378,12 @@ export function ActivityLogSheet() {
                           className="field-control no-spinner w-20"
                           aria-label="Weight"
                         />
-                        <span className="text-xs text-text-tertiary">kg</span>
+                        <span className="text-caption text-text-tertiary">kg</span>
                       </div>
                     ))}
                     <button
                       onClick={() => addSet(exIdx)}
-                      className="text-xs text-positive"
+                      className="text-caption text-positive"
                     >
                       + Add set
                     </button>
@@ -393,7 +393,7 @@ export function ActivityLogSheet() {
                   onClick={() =>
                     setExercises((prev) => [...prev, { name: '', sets: [blankSet()] }])
                   }
-                  className="flex items-center gap-1 text-sm text-positive"
+                  className="flex items-center gap-1 text-body text-positive"
                 >
                   <IconPlus size={16} /> Add exercise
                 </button>

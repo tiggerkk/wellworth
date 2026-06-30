@@ -123,7 +123,7 @@ export function ReorderList({
             >
               <IconGripVertical size={18} />
             </button>
-            <div className="min-w-0 flex-1 truncate text-[15px] text-text-primary">
+            <div className="min-w-0 flex-1 truncate text-body text-text-primary">
               {renderLabel(id)}
             </div>
             {renderTrailing && <div className="shrink-0">{renderTrailing(id)}</div>}

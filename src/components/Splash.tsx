@@ -3,7 +3,7 @@
 export function Splash() {
   return (
     <div className="flex min-h-svh items-center justify-center bg-bg">
-      <span className="text-sm text-text-secondary">Loading…</span>
+      <span className="text-body text-text-secondary">Loading…</span>
     </div>
   )
 }

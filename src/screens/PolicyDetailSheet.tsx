@@ -44,7 +44,7 @@ export function PolicyDetailSheet() {
         <button onClick={() => navigate(-1)} aria-label="Close">
           <IconX size={22} className="text-text-secondary" />
         </button>
-        <h1 className="line-clamp-2 flex-1 text-[17px] font-medium text-text-primary">
+        <h1 className="line-clamp-2 flex-1 text-heading font-medium text-text-primary">
           {data?.policy.policy_name || 'Policy'}
         </h1>
         {data && (
@@ -58,9 +58,9 @@ export function PolicyDetailSheet() {
         )}
       </header>
       <div className="flex-1 overflow-y-auto p-4">
-        {loading && <p className="text-sm text-text-secondary">Loading…</p>}
+        {loading && <p className="text-body text-text-secondary">Loading…</p>}
         {(error || (!loading && !data)) && (
-          <p className="text-sm text-danger">Couldn’t load this policy.</p>
+          <p className="text-body text-danger">Couldn’t load this policy.</p>
         )}
         {data && (
           <PolicyDetail

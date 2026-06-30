@@ -93,7 +93,7 @@ export function ImportInsuranceBulkSheet() {
         <button onClick={() => navigate(-1)} aria-label="Close">
           <IconX size={22} className="text-text-secondary" />
         </button>
-        <h1 className="text-[17px] font-medium text-text-primary">
+        <h1 className="text-heading font-medium text-text-primary">
           Import Insurance CSV
         </h1>
       </header>
@@ -101,16 +101,16 @@ export function ImportInsuranceBulkSheet() {
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
         {doneCount !== null ? (
           <div className="flex flex-col gap-2">
-            <p className="text-[15px] font-medium text-text-primary">
+            <p className="text-body font-medium text-text-primary">
               Imported {doneCount} polic{doneCount === 1 ? 'y' : 'ies'}.
             </p>
-            <p className="text-sm text-text-secondary">
+            <p className="text-body text-text-secondary">
               They’re in Insurance Policies and resolve into Monthly Entry by age.
             </p>
           </div>
         ) : (
           <>
-            <p className="text-sm text-text-secondary">
+            <p className="text-body text-text-secondary">
               Upload the wide insurance spreadsheet saved as CSV (see{' '}
               <code className="text-text-primary">
                 templates/insurance-import-guide.md
@@ -131,20 +131,20 @@ export function ImportInsuranceBulkSheet() {
             />
             <button
               onClick={() => inputRef.current?.click()}
-              className="flex items-center justify-center gap-2 rounded-input border border-border bg-input px-4 py-3 text-[15px] text-text-primary"
+              className="flex items-center justify-center gap-2 rounded-input border border-border bg-input px-4 py-3 text-body text-text-primary"
             >
               <IconUpload size={18} />
               {fileName ? 'Choose a different file' : 'Choose CSV File'}
             </button>
             {fileName && (
-              <p className="text-xs text-text-secondary">
+              <p className="text-caption text-text-secondary">
                 Selected: <span className="text-text-primary">{fileName}</span>
               </p>
             )}
 
             {result && (
               <div className="flex flex-col gap-3">
-                <div className="rounded-card border border-border bg-surface px-4 py-3 text-sm text-text-primary">
+                <div className="rounded-card border border-border bg-surface px-4 py-3 text-body text-text-primary">
                   {policies.length === 0
                     ? 'No importable policy blocks found.'
                     : `Ready to import ${policies.length} ${policies.length === 1 ? 'policy' : 'policies'}.`}
@@ -152,7 +152,7 @@ export function ImportInsuranceBulkSheet() {
 
                 {presentProviders.length > 0 && (
                   <div className="flex flex-col gap-2">
-                    <p className="text-xs uppercase tracking-[0.08em] text-text-secondary">
+                    <p className="text-caption uppercase tracking-[0.08em] text-text-secondary">
                       Confirm provider currency
                     </p>
                     {presentProviders.map((p) => (
@@ -160,7 +160,7 @@ export function ImportInsuranceBulkSheet() {
                         key={p.key}
                         className="flex items-center justify-between gap-3"
                       >
-                        <span className="text-[15px] text-text-primary">{p.label}</span>
+                        <span className="text-body text-text-primary">{p.label}</span>
                         <div className="w-36">
                           <SegmentedTabs
                             value={currencies[p.key] ?? p.defaultCurrency}
@@ -176,14 +176,14 @@ export function ImportInsuranceBulkSheet() {
                 )}
 
                 {warns.length > 0 && (
-                  <ul className="flex flex-col gap-1 text-xs text-warning">
+                  <ul className="flex flex-col gap-1 text-caption text-warning">
                     {warns.slice(0, MAX_MESSAGES).map((m, i) => (
                       <li key={i}>{m}</li>
                     ))}
                   </ul>
                 )}
                 {errs.length > 0 && (
-                  <ul className="flex flex-col gap-1 text-xs text-danger">
+                  <ul className="flex flex-col gap-1 text-caption text-danger">
                     {errs.slice(0, MAX_MESSAGES).map((m, i) => (
                       <li key={i}>{m}</li>
                     ))}
@@ -192,7 +192,7 @@ export function ImportInsuranceBulkSheet() {
               </div>
             )}
 
-            {importError && <p className="text-xs text-danger">{importError}</p>}
+            {importError && <p className="text-caption text-danger">{importError}</p>}
           </>
         )}
       </div>

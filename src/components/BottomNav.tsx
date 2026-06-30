@@ -25,7 +25,7 @@ export function BottomNav({ module }: { module: ModuleDef }) {
             to={to}
             end={end}
             className={({ isActive }) =>
-              `flex flex-1 flex-col items-center gap-1 py-2.5 text-center text-[11px] ${
+              `flex flex-1 flex-col items-center gap-1 py-2.5 text-center text-section ${
                 isActive ? 'text-accent' : 'text-text-secondary'
               }`
             }

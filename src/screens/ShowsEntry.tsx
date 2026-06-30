@@ -174,9 +174,9 @@ export function ShowsEntry() {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      {loading && <p className="p-4 text-sm text-text-secondary">Loading…</p>}
+      {loading && <p className="p-4 text-body text-text-secondary">Loading…</p>}
       {(error || (!loading && !initial)) && (
-        <p className="p-4 text-sm text-danger">Couldn’t load this show.</p>
+        <p className="p-4 text-body text-danger">Couldn’t load this show.</p>
       )}
       {!loading && initial && <ShowForm key={id ?? 'new'} id={id} initial={initial} />}
     </div>
@@ -419,7 +419,7 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
         >
           <IconX size={22} />
         </button>
-        <h1 className="flex-1 truncate text-[17px] font-medium text-text-primary">
+        <h1 className="flex-1 truncate text-heading font-medium text-text-primary">
           {id ? 'Edit Show' : 'New Show'}
         </h1>
         <button
@@ -452,7 +452,7 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
 
         <div>
           <div className="flex items-end gap-2">
-            <label className="flex-1 text-xs text-text-secondary">
+            <label className="flex-1 text-caption text-text-secondary">
               Title
               <input
                 value={draft.title}
@@ -462,7 +462,7 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
             </label>
             <button
               onClick={() => setSearchOpen(true)}
-              className="flex shrink-0 items-center justify-center gap-1.5 rounded-input bg-input px-3 py-2 text-sm text-accent"
+              className="flex shrink-0 items-center justify-center gap-1.5 rounded-input bg-input px-3 py-2 text-body text-accent"
             >
               <IconWorldSearch size={16} /> TMDB
             </button>
@@ -477,26 +477,26 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
             </button>
           </div>
           {metaLoading && (
-            <p className="mt-1 text-xs text-text-secondary">Fetching details…</p>
+            <p className="mt-1 text-caption text-text-secondary">Fetching details…</p>
           )}
           {metaError && (
-            <p className="mt-1 text-xs text-danger">Couldn’t fetch details.</p>
+            <p className="mt-1 text-caption text-danger">Couldn’t fetch details.</p>
           )}
           {refreshResult === 'updated' && (
-            <p className="mt-1 text-xs text-positive">Updated from TMDB.</p>
+            <p className="mt-1 text-caption text-positive">Updated from TMDB.</p>
           )}
           {refreshResult === 'nochange' && (
-            <p className="mt-1 text-xs text-text-secondary">Already up to date.</p>
+            <p className="mt-1 text-caption text-text-secondary">Already up to date.</p>
           )}
           {refreshResult === 'error' && (
-            <p className="mt-1 text-xs text-danger">Couldn’t refresh from TMDB.</p>
+            <p className="mt-1 text-caption text-danger">Couldn’t refresh from TMDB.</p>
           )}
         </div>
 
         {(show('original_title') || show('year')) && (
           <div className="flex gap-3">
             {show('original_title') && (
-              <label className="flex-1 text-xs text-text-secondary">
+              <label className="flex-1 text-caption text-text-secondary">
                 Original Title
                 <input
                   value={draft.original_title}
@@ -506,7 +506,7 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
               </label>
             )}
             {show('year') && (
-              <label className="w-24 text-xs text-text-secondary">
+              <label className="w-24 text-caption text-text-secondary">
                 Year
                 <input
                   type="number"
@@ -532,9 +532,9 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
               ) : (
                 <span className="h-36 w-24 shrink-0 rounded bg-input" />
               )}
-              <div className="min-w-0 flex-1 text-xs text-text-secondary">
+              <div className="min-w-0 flex-1 text-caption text-text-secondary">
                 {draft.genres?.length ? (
-                  <p className="text-[13px] text-text-primary">
+                  <p className="text-label text-text-primary">
                     {draft.genres.join(', ')}
                   </p>
                 ) : null}
@@ -558,7 +558,7 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
               </div>
             </div>
             {draft.overview && (
-              <p className="text-xs leading-relaxed text-text-secondary">
+              <p className="text-caption leading-relaxed text-text-secondary">
                 {draft.overview}
               </p>
             )}
@@ -567,7 +567,7 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
 
         <div className="flex gap-3">
           <div className="flex-1">
-            <p className="mb-1 text-xs text-text-secondary">Status</p>
+            <p className="mb-1 text-caption text-text-secondary">Status</p>
             <SelectMenu
               value={draft.status}
               onChange={changeStatus}
@@ -582,7 +582,7 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
           </div>
           {show('rating') && (
             <div>
-              <p className="mb-1 text-xs text-text-secondary">Rating</p>
+              <p className="mb-1 text-caption text-text-secondary">Rating</p>
               <div className="flex h-8 items-center">
                 <StarRating
                   value={draft.rating}
@@ -598,7 +598,9 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
           <div className="grid grid-cols-2 gap-3">
             {show('lgbtq_rep') && (
               <div>
-                <p className="mb-1 text-xs text-text-secondary">LGBT+ Representation</p>
+                <p className="mb-1 text-caption text-text-secondary">
+                  LGBT+ Representation
+                </p>
                 <SelectMenu
                   value={draft.lgbtq_rep}
                   onChange={(lgbtq_rep) => update({ lgbtq_rep })}
@@ -612,7 +614,7 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
             )}
             {show('dynasty') && (
               <div>
-                <p className="mb-1 text-xs text-text-secondary">Dynasty</p>
+                <p className="mb-1 text-caption text-text-secondary">Dynasty</p>
                 <SelectMenu
                   ariaLabel="Dynasty"
                   disabled={!isChinese}
@@ -654,8 +656,10 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
         {episodic && show('episodes') && (
           <div>
             <div className="grid grid-cols-2 gap-3">
-              <p className="text-xs text-text-secondary">Total Seasons / Episodes</p>
-              <p className="text-xs text-text-secondary">Watched Seasons / Episodes</p>
+              <p className="text-caption text-text-secondary">Total Seasons / Episodes</p>
+              <p className="text-caption text-text-secondary">
+                Watched Seasons / Episodes
+              </p>
             </div>
             <div className="mt-1 grid grid-cols-2 gap-3">
               <div className="flex gap-2">
@@ -665,7 +669,7 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
                   value={draft.total_seasons}
                   onChange={(e) => update({ total_seasons: e.target.value })}
                   placeholder="Seasons"
-                  className={`${inputClass} min-w-0 flex-1 placeholder:text-text-tertiary`}
+                  className={`${inputClass} min-w-0 flex-1`}
                 />
                 <input
                   type="number"
@@ -673,7 +677,7 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
                   value={draft.total_episodes}
                   onChange={(e) => update({ total_episodes: e.target.value })}
                   placeholder="Episodes"
-                  className={`${inputClass} min-w-0 flex-1 placeholder:text-text-tertiary`}
+                  className={`${inputClass} min-w-0 flex-1`}
                 />
               </div>
               <div className="flex gap-2">
@@ -683,7 +687,7 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
                   value={draft.watched_seasons}
                   onChange={(e) => update({ watched_seasons: e.target.value })}
                   placeholder="Seasons"
-                  className={`${inputClass} min-w-0 flex-1 placeholder:text-text-tertiary`}
+                  className={`${inputClass} min-w-0 flex-1`}
                 />
                 <input
                   type="number"
@@ -691,7 +695,7 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
                   value={draft.watched_episodes}
                   onChange={(e) => update({ watched_episodes: e.target.value })}
                   placeholder="Episodes"
-                  className={`${inputClass} min-w-0 flex-1 placeholder:text-text-tertiary`}
+                  className={`${inputClass} min-w-0 flex-1`}
                 />
               </div>
             </div>
@@ -699,7 +703,7 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
         )}
 
         {posterUrlVisible && (
-          <label className="text-xs text-text-secondary">
+          <label className="text-caption text-text-secondary">
             Poster URL
             <input
               value={draft.poster_path ?? ''}
@@ -711,7 +715,7 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
         )}
 
         {show('notes') && (
-          <div className="text-xs text-text-secondary">
+          <div className="text-caption text-text-secondary">
             <div className="flex items-center justify-between">
               <span>Notes</span>
               <button
@@ -735,7 +739,7 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
         {id && (
           <Link
             to={`${routes.quotes.library}?show=${id}`}
-            className="flex items-center justify-center gap-1.5 rounded-input bg-input py-2 text-sm text-accent"
+            className="flex items-center justify-center gap-1.5 rounded-input bg-input py-2 text-body text-accent"
           >
             <IconQuote size={16} /> Quotes from this title
           </Link>
@@ -789,7 +793,7 @@ function DateField({
 }) {
   return (
     <div>
-      <p className="mb-1 text-xs text-text-secondary">{label}</p>
+      <p className="mb-1 text-caption text-text-secondary">{label}</p>
       <div className="flex items-center gap-2">
         <button onClick={onPick} className={`flex-1 text-left ${inputClass}`}>
           {value ? (

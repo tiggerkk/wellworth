@@ -256,7 +256,7 @@ export function Diary() {
             </button>
             <button
               onClick={() => setCalendarOpen(true)}
-              className="min-w-28 text-center text-[15px] font-medium text-text-primary"
+              className="min-w-28 text-center text-body font-medium text-text-primary"
             >
               {formatDayLabel(day)}
             </button>
@@ -317,9 +317,9 @@ export function Diary() {
       </div>
 
       {/* States */}
-      {loading && <p className="px-4 py-6 text-sm text-text-secondary">Loading…</p>}
+      {loading && <p className="px-4 py-6 text-body text-text-secondary">Loading…</p>}
       {error && (
-        <p className="px-4 py-6 text-sm text-danger">
+        <p className="px-4 py-6 text-body text-danger">
           Couldn’t load this day. Pull to retry.
         </p>
       )}
@@ -364,7 +364,7 @@ export function Diary() {
                 />
                 {isOpen &&
                   (groupEntries.length === 0 ? (
-                    <p className="border-t border-border px-4 py-3 text-xs text-text-tertiary">
+                    <p className="border-t border-border px-4 py-3 text-caption text-text-tertiary">
                       Nothing logged.
                     </p>
                   ) : (
@@ -391,7 +391,7 @@ export function Diary() {
                         )
                       }}
                       renderTrailing={(id) => (
-                        <span className="text-sm text-text-muted">
+                        <span className="text-body text-text-muted">
                           {Math.round(byId.get(id)?.energy_kcal ?? 0)} kcal
                         </span>
                       )}

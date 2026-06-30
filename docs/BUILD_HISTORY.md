@@ -2948,3 +2948,29 @@ Small UX fixes; no schema. Behaviour in `05_networth.md`.
   (fits a 7-figure amount); row right padding `pr-2 → pr-1` so the trash sits closer to the edge; the
   Time Deposit **Maturity Date** detail field `w-24 → w-40` so a full date (`2027-06-15`) isn't clipped.
 - No test changes (UI-state + layout). Verified by `npm run check` (607 tests).
+
+## Typography standardization + Dynamic Type (2026-06-30)
+
+Readability + a user-adjustable text/icon size. New durable constraint: **F23** (`02_tech_spec.md`).
+i18n (English / 繁體中文) was scoped and **deferred** — see `PARKED.md`.
+
+- **Readability fix (Phase 0):** lightened `--color-text-tertiary` `#5b6172 → #7a8294` (hints/disabled
+  were too dim for the owner); standardized **placeholders to `text-text-secondary`** app-wide (baked
+  into `.field-control`; `SearchBar`/`TagInput`/`PinInput` set it directly) and dropped the per-field
+  `placeholder:text-text-tertiary` overrides — fixes the "some placeholders unreadable, one readable"
+  inconsistency on New Show etc.
+- **One type scale (Phase 1):** added rem `--text-*` tokens to `@theme`
+  (`title/heading/field/body/label/caption/section`) as the single source of truth, with documented
+  role recipes in `01_design_system.md`. Migrated **all ~730 hardcoded sizes** (`text-[Npx]`,
+  `text-xs/sm/lg`) to role tokens; no `text-[…px]` font sizes remain. Tokens are `rem` so they ride a
+  scale lever.
+- **Dynamic Type (Phase 2):** one `data-font-scale` attribute on `<html>` sets `--font-scale`
+  (default / `large` 1.15 / `larger` 1.30); root `font-size: calc(16px * var(--font-scale))` grows all
+  rem (text, padding, gaps); a `.tabler-icon` `transform: scale()` keyed off the same attribute grows
+  every icon (no per-icon churn; box unchanged → no wrap pressure). Presets ≥ 1 keep inputs ≥ 16px
+  (F21). Stored in **`profile.font_size`** (migration `01_…schema.sql`, in place; types regenerated),
+  mirrored to localStorage; boot script in `index.html` applies it pre-paint, `useFontSizeSync`
+  reconciles from the profile. New **Settings → Display → Font Size** control (`font-scale.ts`).
+  `FieldRow` now `flex-wrap`s so values drop to their own line at a larger preset.
+- No new tests (CSS/DOM plumbing); pure-helper count unchanged at **611**. Verified by `npm run check`
+  - a production build (asserted the scale-lever and icon-transform CSS emit).

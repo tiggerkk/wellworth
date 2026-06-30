@@ -30,11 +30,11 @@ export function QuotesSettings() {
         >
           <IconChevronLeft size={22} />
         </button>
-        <h1 className="text-lg font-medium text-text-primary">Quotes Settings</h1>
+        <h1 className="text-title font-medium text-text-primary">Quotes Settings</h1>
       </header>
-      {loading && <p className="text-sm text-text-secondary">Loading…</p>}
+      {loading && <p className="text-body text-text-secondary">Loading…</p>}
       {!loading && !profile && (
-        <p className="text-sm text-danger">Couldn’t load your profile.</p>
+        <p className="text-body text-danger">Couldn’t load your profile.</p>
       )}
       {profile && <Body profile={profile} save={save} />}
     </div>
@@ -87,12 +87,12 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
         {profile.quote_importer_enabled ? (
           <button
             onClick={() => openSheet(routes.quotes.import)}
-            className="flex w-full items-center gap-2 border-b border-border px-4 py-3 text-[15px] text-accent last:border-b-0 active:bg-input/40"
+            className="flex w-full items-center gap-2 border-b border-border px-4 py-3 text-body text-accent last:border-b-0 active:bg-input/40"
           >
             <IconUpload size={18} /> Import CSV Quotes
           </button>
         ) : (
-          <div className="px-4 py-2 text-xs text-text-tertiary">
+          <div className="px-4 py-2 text-caption text-text-tertiary">
             Turn this on to bulk-seed your library from a CSV.
           </div>
         )}

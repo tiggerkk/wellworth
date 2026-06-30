@@ -12,7 +12,7 @@ export function Toaster() {
       className="pointer-events-none fixed inset-x-0 bottom-20 z-50 flex justify-center px-4"
       aria-live="polite"
     >
-      <div className="animate-[slideUp_200ms_ease-out] rounded-pill border border-border bg-surface px-4 py-2 text-sm text-text-primary shadow-lg motion-reduce:animate-none">
+      <div className="animate-[slideUp_200ms_ease-out] rounded-pill border border-border bg-surface px-4 py-2 text-body text-text-primary shadow-lg motion-reduce:animate-none">
         {message}
       </div>
     </div>

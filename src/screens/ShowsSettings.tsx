@@ -36,11 +36,11 @@ export function ShowsSettings() {
         >
           <IconChevronLeft size={22} />
         </button>
-        <h1 className="text-lg font-medium text-text-primary">Shows Settings</h1>
+        <h1 className="text-title font-medium text-text-primary">Shows Settings</h1>
       </header>
-      {loading && <p className="text-sm text-text-secondary">Loading…</p>}
+      {loading && <p className="text-body text-text-secondary">Loading…</p>}
       {!loading && !profile && (
-        <p className="text-sm text-danger">Couldn’t load your profile.</p>
+        <p className="text-body text-danger">Couldn’t load your profile.</p>
       )}
       {profile && <Body profile={profile} save={save} />}
     </div>
@@ -76,7 +76,7 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
           <>
             <button
               onClick={() => openSheet(routes.shows.import)}
-              className="flex w-full items-center gap-2 border-b border-border px-4 py-3 text-[15px] text-accent active:bg-input/40"
+              className="flex w-full items-center gap-2 border-b border-border px-4 py-3 text-body text-accent active:bg-input/40"
             >
               <IconUpload size={18} /> Import CSV Shows
             </button>
@@ -86,19 +86,19 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
                 setCacheCount(0)
               }}
               disabled={cacheCount === 0}
-              className="flex w-full items-center gap-2 border-b border-border px-4 py-3 text-[15px] text-text-secondary last:border-b-0 active:bg-input/40 disabled:opacity-40"
+              className="flex w-full items-center gap-2 border-b border-border px-4 py-3 text-body text-text-secondary last:border-b-0 active:bg-input/40 disabled:opacity-40"
             >
               <IconTrash size={18} />
               Clear Import Match Cache{cacheCount ? ` (${cacheCount})` : ''}
             </button>
-            <p className="px-4 py-2 text-xs text-text-tertiary">
+            <p className="px-4 py-2 text-caption text-text-tertiary">
               The importer remembers each title’s TMDB match in this browser so
               re-importing the same CSV resolves instantly. Clearing it forces a fresh
               lookup next import. It’s not affected by a database reset.
             </p>
           </>
         ) : (
-          <div className="px-4 py-2 text-xs text-text-tertiary">
+          <div className="px-4 py-2 text-caption text-text-tertiary">
             Turn this on to bulk-seed your library from a CSV.
           </div>
         )}

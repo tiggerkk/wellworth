@@ -46,9 +46,9 @@ export function MedicalLockSheet() {
         <button onClick={() => navigate(-1)} aria-label="Close">
           <IconX size={22} className="text-text-secondary" />
         </button>
-        <h1 className="text-[17px] font-medium text-text-primary">Lock</h1>
+        <h1 className="text-heading font-medium text-text-primary">Lock</h1>
       </header>
-      {loading && <p className="p-4 text-sm text-text-secondary">Loading…</p>}
+      {loading && <p className="p-4 text-body text-text-secondary">Loading…</p>}
       {profile && <Body profile={profile} save={save} />}
     </Sheet>
   )
@@ -148,7 +148,7 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
   if (!enabled) {
     return (
       <div className="flex-1 overflow-y-auto p-4">
-        <p className="mb-3 text-sm text-text-secondary">
+        <p className="mb-3 text-body text-text-secondary">
           Lock the Medical module behind a PIN (and optional Face ID / Touch ID). It
           guards this device — your data is already private to your account.
         </p>
@@ -161,7 +161,7 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
               onSubmit={() => void enableLock()}
               placeholder="Confirm PIN"
             />
-            {error && <p className="text-sm text-danger">{error}</p>}
+            {error && <p className="text-body text-danger">{error}</p>}
             <PrimaryButton onClick={() => void enableLock()} disabled={busy}>
               Enable Lock
             </PrimaryButton>
@@ -176,12 +176,12 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
       {/* Plain (non-overflow-hidden) card so the SelectMenu dropdown isn't clipped — a SectionCard's
           `overflow-hidden` would cut off all but the first option or two. */}
       <div>
-        <h2 className="mb-2 px-1 text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
+        <h2 className="mb-2 px-1 text-section font-medium uppercase tracking-[0.08em] text-text-secondary">
           Auto-lock
         </h2>
         <div className="rounded-card border border-border bg-surface">
           <div className="flex items-center justify-between gap-3 px-4 py-3">
-            <span className="text-[15px] text-text-primary">Lock after</span>
+            <span className="text-body text-text-primary">Lock after</span>
             <SelectMenu
               value={timeoutToValue(profile.medical_lock_timeout_minutes)}
               options={LOCK_TIMEOUT_OPTIONS.map((o) => ({
@@ -195,7 +195,7 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
               className="w-44"
             />
           </div>
-          <div className="px-4 pb-3 text-xs text-text-tertiary">
+          <div className="px-4 pb-3 text-caption text-text-tertiary">
             Always re-locks when the app is restarted.
           </div>
         </div>
@@ -220,7 +220,7 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
               resetFields()
               setMode('change')
             }}
-            className="w-full px-4 py-3 text-left text-[15px] text-accent active:bg-input/40"
+            className="w-full px-4 py-3 text-left text-body text-accent active:bg-input/40"
           >
             Change PIN
           </button>
@@ -234,7 +234,7 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
               onSubmit={() => void changePin()}
               placeholder="Confirm new PIN"
             />
-            {error && <p className="text-sm text-danger">{error}</p>}
+            {error && <p className="text-body text-danger">{error}</p>}
             <div className="flex gap-2">
               <PrimaryButton onClick={() => void changePin()} disabled={busy}>
                 Save PIN
@@ -244,7 +244,7 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
                   setMode('none')
                   resetFields()
                 }}
-                className="px-3 py-1.5 text-sm text-text-secondary"
+                className="px-3 py-1.5 text-body text-text-secondary"
               >
                 Cancel
               </button>
@@ -260,13 +260,13 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
               resetFields()
               setMode('disable')
             }}
-            className="w-full px-4 py-3 text-left text-[15px] text-danger active:bg-input/40"
+            className="w-full px-4 py-3 text-left text-body text-danger active:bg-input/40"
           >
             Turn off lock
           </button>
         ) : (
           <div className="flex flex-col gap-3 p-4">
-            <p className="text-sm text-text-secondary">
+            <p className="text-body text-text-secondary">
               Enter your PIN to turn off the lock.
             </p>
             <PinInput
@@ -275,7 +275,7 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
               onSubmit={() => void disableLock()}
               placeholder="Current PIN"
             />
-            {error && <p className="text-sm text-danger">{error}</p>}
+            {error && <p className="text-body text-danger">{error}</p>}
             <div className="flex gap-2">
               <PrimaryButton onClick={() => void disableLock()} disabled={busy}>
                 Turn off lock
@@ -285,7 +285,7 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
                   setMode('none')
                   resetFields()
                 }}
-                className="px-3 py-1.5 text-sm text-text-secondary"
+                className="px-3 py-1.5 text-body text-text-secondary"
               >
                 Cancel
               </button>

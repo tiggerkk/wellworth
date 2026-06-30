@@ -49,7 +49,7 @@ export function SwipeRow({ children, onDelete }: SwipeRowProps) {
         type="button"
         onClick={onDelete}
         aria-label="Delete"
-        className="absolute inset-y-0 right-0 flex w-20 items-center justify-center bg-delete text-sm font-medium text-white"
+        className="absolute inset-y-0 right-0 flex w-20 items-center justify-center bg-delete text-body font-medium text-white"
       >
         Delete
       </button>

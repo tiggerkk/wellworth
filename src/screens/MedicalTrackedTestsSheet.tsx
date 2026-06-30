@@ -27,9 +27,9 @@ export function MedicalTrackedTestsSheet() {
         <button onClick={() => navigate(-1)} aria-label="Close">
           <IconX size={22} className="text-text-secondary" />
         </button>
-        <h1 className="text-[17px] font-medium text-text-primary">Tracked Tests</h1>
+        <h1 className="text-heading font-medium text-text-primary">Tracked Tests</h1>
       </header>
-      {loading && <p className="p-4 text-sm text-text-secondary">Loading…</p>}
+      {loading && <p className="p-4 text-body text-text-secondary">Loading…</p>}
       {profile && <Picker profile={profile} save={save} />}
     </Sheet>
   )
@@ -57,7 +57,7 @@ function Picker({
       <div className="flex flex-col gap-4">
         {medicalTestsByCategory().map((group) => (
           <div key={group.category}>
-            <h2 className="mb-1 px-1 text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
+            <h2 className="mb-1 px-1 text-section font-medium uppercase tracking-[0.08em] text-text-secondary">
               {MEDICAL_CATEGORY_LABELS[group.category]}
             </h2>
             <div className="overflow-hidden rounded-card border border-border bg-surface">
@@ -66,7 +66,7 @@ function Picker({
                   key={test.key}
                   className="flex items-center justify-between gap-3 border-b border-border px-4 py-2.5 last:border-b-0"
                 >
-                  <p className="min-w-0 truncate text-[15px] text-text-primary">
+                  <p className="min-w-0 truncate text-body text-text-primary">
                     {test.display_name}
                   </p>
                   <Toggle

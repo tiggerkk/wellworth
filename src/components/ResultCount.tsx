@@ -9,7 +9,7 @@ interface ResultCountProps {
  */
 export function ResultCount({ count, className = '' }: ResultCountProps) {
   return (
-    <p className={`px-1 text-xs text-text-secondary ${className}`}>
+    <p className={`px-1 text-caption text-text-secondary ${className}`}>
       {count} {count === 1 ? 'result' : 'results'}
     </p>
   )

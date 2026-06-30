@@ -197,9 +197,11 @@ export function NetWorthDashboard() {
 
   return (
     <div className="flex min-h-full flex-col pb-4">
-      {loading && <p className="px-4 pt-6 pb-6 text-sm text-text-secondary">Loading…</p>}
+      {loading && (
+        <p className="px-4 pt-6 pb-6 text-body text-text-secondary">Loading…</p>
+      )}
       {error && (
-        <p className="px-4 pt-6 pb-6 text-sm text-danger">
+        <p className="px-4 pt-6 pb-6 text-body text-danger">
           Couldn’t load your net worth.
         </p>
       )}
@@ -218,7 +220,7 @@ export function NetWorthDashboard() {
           {/* Current total */}
           <SectionCard>
             <div className="px-4 py-4">
-              <span className="block text-[11px] uppercase tracking-wide text-text-secondary">
+              <span className="block text-section uppercase tracking-wide text-text-secondary">
                 Net worth · {latest ? formatMonthLabel(latest.month) : ''}
               </span>
               <span className="mt-0.5 block text-3xl font-semibold text-text-primary">
@@ -243,7 +245,7 @@ export function NetWorthDashboard() {
               <div className="relative">
                 <button
                   onClick={() => setMenuOpen((o) => !o)}
-                  className="flex items-center gap-1 rounded-input bg-input px-2.5 py-1.5 text-sm text-text-primary"
+                  className="flex items-center gap-1 rounded-input bg-input px-2.5 py-1.5 text-body text-text-primary"
                 >
                   {range.label}
                   <IconChevronDown size={15} className="text-text-secondary" />
@@ -255,7 +257,7 @@ export function NetWorthDashboard() {
                       onClick={() => setMenuOpen(false)}
                       aria-hidden
                     />
-                    <div className="absolute right-0 z-20 mt-1 w-28 overflow-hidden rounded-card border border-border bg-surface text-sm shadow-lg">
+                    <div className="absolute right-0 z-20 mt-1 w-28 overflow-hidden rounded-card border border-border bg-surface text-body shadow-lg">
                       {NETWORTH_RANGES.map((r) => (
                         <button
                           key={r.key}
@@ -278,7 +280,7 @@ export function NetWorthDashboard() {
             <div className="px-2 py-3">
               <Suspense
                 fallback={
-                  <p className="py-10 text-center text-sm text-text-secondary">
+                  <p className="py-10 text-center text-body text-text-secondary">
                     Loading chart…
                   </p>
                 }
@@ -304,13 +306,13 @@ export function NetWorthDashboard() {
                     className="h-2.5 w-2.5 shrink-0 rounded-full"
                     style={{ background: ASSET_TYPE_COLORS[row.type] }}
                   />
-                  <span className="flex-1 text-[15px] text-text-primary">
+                  <span className="flex-1 text-body text-text-primary">
                     {ASSET_TYPE_LABELS[row.type]}
                   </span>
-                  <span className="text-[15px] text-text-primary">
+                  <span className="text-body text-text-primary">
                     {formatHkd(row.total)}
                   </span>
-                  <span className="w-12 text-right text-xs text-text-secondary">
+                  <span className="w-12 text-right text-caption text-text-secondary">
                     {Math.round(row.pct * 100)}%
                   </span>
                 </div>
@@ -327,15 +329,15 @@ export function NetWorthDashboard() {
                   onClick={() => navigate(routes.networth.fund(f.id))}
                   className="flex w-full items-center gap-3 border-b border-border px-4 py-2.5 text-left last:border-b-0 active:bg-input/40"
                 >
-                  <span className="min-w-0 flex-1 truncate text-[15px] text-text-primary">
+                  <span className="min-w-0 flex-1 truncate text-body text-text-primary">
                     {f.name}
                   </span>
-                  <span className="shrink-0 text-sm text-text-primary">
+                  <span className="shrink-0 text-body text-text-primary">
                     {formatHkd(f.valueHkd)}
                   </span>
                   {f.returnRate != null && (
                     <span
-                      className={`w-12 shrink-0 text-right text-xs ${gainLossClass(f.returnRate)}`}
+                      className={`w-12 shrink-0 text-right text-caption ${gainLossClass(f.returnRate)}`}
                     >
                       {f.returnRate > 0 ? '+' : ''}
                       {f.returnRate.toFixed(1)}%
@@ -349,7 +351,7 @@ export function NetWorthDashboard() {
           {/* Insurance — aggregate Cash Value vs Total Premiums */}
           {agg && agg.series.length > 0 && (
             <SectionCard title="Insurance · cash value vs premiums">
-              <div className="flex flex-wrap gap-x-6 gap-y-1 px-4 py-3 text-sm">
+              <div className="flex flex-wrap gap-x-6 gap-y-1 px-4 py-3 text-body">
                 <span className="text-text-secondary">
                   Cash value{' '}
                   <span className="text-text-primary">{formatHkd(agg.currentCash)}</span>
@@ -370,7 +372,7 @@ export function NetWorthDashboard() {
               <div className="px-2 py-3">
                 <Suspense
                   fallback={
-                    <p className="py-10 text-center text-sm text-text-secondary">
+                    <p className="py-10 text-center text-body text-text-secondary">
                       Loading chart…
                     </p>
                   }

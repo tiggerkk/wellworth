@@ -31,7 +31,7 @@ export function TravelSettings() {
         >
           <IconChevronLeft size={22} />
         </button>
-        <h1 className="text-lg font-medium text-text-primary">Travel Settings</h1>
+        <h1 className="text-title font-medium text-text-primary">Travel Settings</h1>
       </header>
 
       <SectionCard title="Entry Form">
@@ -50,14 +50,14 @@ export function TravelSettings() {
           onClick={() => openSheet(routes.travel.settingsCategories)}
           className="flex w-full items-center justify-between px-4 py-3 text-left active:bg-input/40"
         >
-          <span className="text-[15px] text-text-primary">Expense Categories</span>
+          <span className="text-body text-text-primary">Expense Categories</span>
           <IconChevronRight size={18} className="text-text-secondary" />
         </button>
       </SectionCard>
 
-      {loading && <p className="text-sm text-text-secondary">Loading…</p>}
+      {loading && <p className="text-body text-text-secondary">Loading…</p>}
       {!loading && !profile && (
-        <p className="text-sm text-danger">Couldn’t load your profile.</p>
+        <p className="text-body text-danger">Couldn’t load your profile.</p>
       )}
       {profile && <ImportSection profile={profile} save={save} openSheet={openSheet} />}
     </div>
@@ -86,19 +86,19 @@ function ImportSection({
         <>
           <button
             onClick={() => openSheet(routes.travel.importTrips)}
-            className="flex w-full items-center gap-2 border-b border-border px-4 py-3 text-[15px] text-accent last:border-b-0 active:bg-input/40"
+            className="flex w-full items-center gap-2 border-b border-border px-4 py-3 text-body text-accent last:border-b-0 active:bg-input/40"
           >
             <IconUpload size={18} /> Import JSON Trips
           </button>
           <button
             onClick={() => openSheet(routes.travel.importExpenses)}
-            className="flex w-full items-center gap-2 border-b border-border px-4 py-3 text-[15px] text-accent last:border-b-0 active:bg-input/40"
+            className="flex w-full items-center gap-2 border-b border-border px-4 py-3 text-body text-accent last:border-b-0 active:bg-input/40"
           >
             <IconUpload size={18} /> Import CSV Expenses
           </button>
         </>
       ) : (
-        <div className="px-4 py-2 text-xs text-text-tertiary">
+        <div className="px-4 py-2 text-caption text-text-tertiary">
           Turn this on to bulk-seed your trips from a JSON / CSV.
         </div>
       )}

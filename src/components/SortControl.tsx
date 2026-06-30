@@ -26,7 +26,7 @@ export function SortControl<T extends string>({
 }: SortControlProps<T>) {
   return (
     <div className="flex items-center gap-1">
-      <span className="text-xs text-text-secondary">Sort</span>
+      <span className="text-caption text-text-secondary">Sort</span>
       <SelectMenu
         value={field}
         options={options}

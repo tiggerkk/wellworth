@@ -74,9 +74,13 @@ and no way past it except finishing or signing out. Its header shows the WellWor
 
 App-wide; shared across all modules. Auto-save on change. A back chevron returns to the hub.
 
-- **PROFILE**: Birthday, Sex, Height, Weight (all editable; shared `ProfileMetricsFields`, so
-  **Birthday opens the shared `Calendar`** picker — same as Onboarding).
-- **PREFERENCES**: **Units** (Metric / Imperial — editable; display-only, DB stays metric).
+Section order: **DISPLAY** (first), **PROFILE**, **ACCOUNT**. (There is no separate Preferences
+section — Units sits under Display.)
+
+- **DISPLAY → Font Size** (Default / Large / Larger): the app-wide Dynamic Type preset — scales all
+  text **and** icons (tech-spec F23). Applies instantly (whole UI) and saves to `profile.font_size`
+  (cross-device); persisted via `applyFontSize` (`src/lib/font-scale.ts`) + reconciled by
+  `useFontSizeSync`. A larger preset is the accessibility lever for small text/icons.
 - **DISPLAY → Visible Modules** (secondary text "(Home)"): opens a full sheet listing every module in a
   single **combined** list (shared `ReorderList`) — **drag the grip to reorder** the Home hub and
   **toggle** each module to show/hide. Saved per profile to `module_order` / `visible_modules`; the Home
@@ -84,6 +88,11 @@ App-wide; shared across all modules. Auto-save on change. A back chevron returns
   visible** (the last toggle refuses to turn off, mirroring `ConfigListEditor`). Hiding only removes the
   Home card — a module's routes stay reachable by direct URL and the "reopen last-used module" launch
   default is unaffected.
+- **DISPLAY → Units** (Metric / Imperial — editable; display-only, DB stays metric). Third item under
+  Display. (Onboarding still shows Units in its own Preferences group via `ProfileMetricsFields`'s
+  `showUnits`; Settings passes `showUnits={false}` and renders Units here instead.)
+- **PROFILE**: Birthday, Sex, Height, Weight (all editable; shared `ProfileMetricsFields`, so
+  **Birthday opens the shared `Calendar`** picker — same as Onboarding).
 - **ACCOUNT**: Google account + **Sign out**. This card is driven by the **session, not the profile**,
   so it renders even when the profile fails to load (e.g. after a DB reset deletes the user). Sign
   out clears the session **locally** (`scope: 'local'`) and, as a guaranteed fallback, removes the
@@ -98,6 +107,7 @@ App-wide; shared across all modules. Auto-save on change. A back chevron returns
 - `protein_target_g` NUMERIC NULL — manual override; null = use DRI
 - `activity_factor` NUMERIC DEFAULT 1.4
 - `units` TEXT DEFAULT 'metric' — 'metric' | 'imperial' (display only)
+- `font_size` TEXT DEFAULT 'default' — 'default' | 'large' | 'larger'; Dynamic Type preset (display only, F23)
 - `highlighted_nutrients` TEXT[] — up to 8 nutrient keys for the Diary grid
 - `visible_nutrients` TEXT[] — nutrient keys shown on Dashboard/Daily Report
 - `module_order` TEXT[] NULL — Home-hub module order (module keys); **NULL = canonical `MODULES` order**.
@@ -176,7 +186,7 @@ App-wide; shared across all modules. Auto-save on change. A back chevron returns
 
 - birthday: `1974-09-06`, sex: `female`, height_cm: `171`, weight_kg: `56`
 - protein_target_g: `90` (manual override)
-- activity_factor: `1.4`, units: `metric`
+- activity_factor: `1.4`, units: `metric`, font_size: `default`
 - highlighted_nutrients (8): `protein, fiber, vitamin_d, calcium, iron, magnesium, folate, potassium`
 - visible_nutrients: all keys marked **Visible = yes** in `docs/04_wellness.md`
 - `onboarded_at`: stamped now ⇒ the owner **skips** the onboarding wizard.
@@ -184,5 +194,5 @@ App-wide; shared across all modules. Auto-save on change. A back chevron returns
 ### Member seed (`MEMBER_PROFILE_SEED`, non-owner family members)
 
 - **No body metrics** — birthday / sex / height / weight / protein_target_g are left **NULL**.
-- activity_factor: `1.4`, units: `metric`, highlighted_nutrients: the same 8 keys as the owner seed.
+- activity_factor: `1.4`, units: `metric`, font_size: `default`, highlighted_nutrients: the same 8 keys as the owner seed.
 - `onboarded_at`: **NULL** ⇒ the member is forced through the first-run Onboarding wizard.

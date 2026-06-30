@@ -61,7 +61,7 @@ export function TagInput({
         {value.map((tag) => (
           <span
             key={tag}
-            className="inline-flex items-center gap-1 rounded-pill bg-track px-2 py-0.5 text-[13px] text-text-primary"
+            className="inline-flex items-center gap-1 rounded-pill bg-track px-2 py-0.5 text-label text-text-primary"
           >
             {tag}
             <button
@@ -81,12 +81,12 @@ export function TagInput({
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           placeholder={value.length === 0 ? placeholder : ''}
-          className="min-w-24 flex-1 bg-transparent px-1 py-0.5 text-[16px] text-text-primary placeholder:text-text-tertiary focus:outline-none"
+          className="min-w-24 flex-1 bg-transparent px-1 py-0.5 text-field text-text-primary placeholder:text-text-secondary focus:outline-none"
         />
       </div>
 
       {focused && matches.length > 0 && (
-        <div className="absolute left-0 z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-card border border-border bg-surface text-sm shadow-lg">
+        <div className="absolute left-0 z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-card border border-border bg-surface text-body shadow-lg">
           {matches.map((s) => (
             <button
               key={s}

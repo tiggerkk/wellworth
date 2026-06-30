@@ -27,11 +27,11 @@ export function Dashboard() {
   return (
     <div className="pb-4">
       <header className="sticky top-0 z-10 flex items-center gap-2 bg-bg/90 px-4 py-3 backdrop-blur">
-        <span className="text-[15px] text-text-secondary">Daily average ·</span>
+        <span className="text-body text-text-secondary">Daily average ·</span>
         <div className="relative">
           <button
             onClick={() => setMenuOpen((o) => !o)}
-            className="flex items-center gap-1 text-[15px] font-medium text-text-primary"
+            className="flex items-center gap-1 text-body font-medium text-text-primary"
           >
             {option.label}
             <IconChevronDown size={16} className="text-text-secondary" />
@@ -43,7 +43,7 @@ export function Dashboard() {
                 onClick={() => setMenuOpen(false)}
                 aria-hidden
               />
-              <div className="absolute left-0 z-20 mt-1 w-44 overflow-hidden rounded-card border border-border bg-surface text-sm shadow-lg">
+              <div className="absolute left-0 z-20 mt-1 w-44 overflow-hidden rounded-card border border-border bg-surface text-body shadow-lg">
                 {WELLNESS_RANGES.map((r) => (
                   <button
                     key={r.key}

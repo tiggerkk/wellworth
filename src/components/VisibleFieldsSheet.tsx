@@ -58,9 +58,9 @@ export function VisibleFieldsSheet({
         <button onClick={() => navigate(-1)} aria-label="Close">
           <IconX size={22} className="text-text-secondary" />
         </button>
-        <h1 className="text-[17px] font-medium text-text-primary">Visible Fields</h1>
+        <h1 className="text-heading font-medium text-text-primary">Visible Fields</h1>
       </header>
-      {loading && <p className="p-4 text-sm text-text-secondary">Loading…</p>}
+      {loading && <p className="p-4 text-body text-text-secondary">Loading…</p>}
       {profile && (
         <Picker
           profile={profile}
@@ -111,7 +111,7 @@ function Picker({
 
   return (
     <div className="flex-1 overflow-y-auto p-4">
-      <p className="mb-2 px-1 text-xs text-text-secondary">{intro}</p>
+      <p className="mb-2 px-1 text-caption text-text-secondary">{intro}</p>
       <div className="overflow-hidden rounded-card border border-border bg-surface">
         {topExtras.map((e) => (
           <Row
@@ -178,7 +178,7 @@ function Row({
 }) {
   return (
     <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-2.5 last:border-b-0">
-      <span className="text-[15px] text-text-primary">{label}</span>
+      <span className="text-body text-text-primary">{label}</span>
       <Toggle checked={checked} onChange={onChange} label={label} />
     </div>
   )

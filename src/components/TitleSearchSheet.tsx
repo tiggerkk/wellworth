@@ -114,10 +114,10 @@ export function TitleSearchSheet({
                 >
                   <PosterThumb path={r.posterPath} size="w92" />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[15px] text-text-primary">
+                    <span className="block truncate text-body text-text-primary">
                       {r.title}
                     </span>
-                    <span className="mt-1 flex items-center gap-2 text-xs text-text-secondary">
+                    <span className="mt-1 flex items-center gap-2 text-caption text-text-secondary">
                       <ShowTypeBadge type={r.type} />
                       {r.year ?? '—'}
                     </span>
@@ -127,7 +127,7 @@ export function TitleSearchSheet({
             })}
 
             {results.length === 0 && (
-              <p className="px-4 py-6 text-center text-sm text-text-tertiary">
+              <p className="px-4 py-6 text-center text-body text-text-tertiary">
                 {!debounced.trim()
                   ? `Search TMDB for a ${typeLabel.toLowerCase()}.`
                   : loading
@@ -140,7 +140,7 @@ export function TitleSearchSheet({
           </div>
 
           {error && (
-            <p className="mt-3 text-xs text-danger">
+            <p className="mt-3 text-caption text-danger">
               Title search unavailable — is VITE_TMDB_API_KEY set?
             </p>
           )}

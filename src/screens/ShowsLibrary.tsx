@@ -254,9 +254,9 @@ export function ShowsLibrary() {
         </FilterPanel>
       )}
 
-      {loading && <p className="px-1 py-6 text-sm text-text-secondary">Loading…</p>}
+      {loading && <p className="px-1 py-6 text-body text-text-secondary">Loading…</p>}
       {error && (
-        <p className="px-1 py-6 text-sm text-danger">Couldn’t load your shows.</p>
+        <p className="px-1 py-6 text-body text-danger">Couldn’t load your shows.</p>
       )}
 
       {!loading && !error && allShows.length === 0 && (
@@ -274,7 +274,7 @@ export function ShowsLibrary() {
       {!loading && !error && allShows.length > 0 && (
         <div className="overflow-hidden rounded-card border border-border bg-surface">
           {view.length === 0 ? (
-            <p className="px-4 py-6 text-center text-sm text-text-tertiary">
+            <p className="px-4 py-6 text-center text-body text-text-tertiary">
               No matches.
             </p>
           ) : (
@@ -286,7 +286,7 @@ export function ShowsLibrary() {
                 >
                   <PosterThumb path={s.poster_path} size="w92" />
                   <span className="min-w-0 flex-1">
-                    <span className="flex items-center gap-1.5 text-[15px] text-text-primary">
+                    <span className="flex items-center gap-1.5 text-body text-text-primary">
                       {s.is_favorite && (
                         <IconHeartFilled
                           size={13}
@@ -305,7 +305,7 @@ export function ShowsLibrary() {
                         />
                       )}
                     </span>
-                    <span className="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-secondary">
+                    <span className="mt-1 flex flex-wrap items-center gap-2 text-caption text-text-secondary">
                       <ShowTypeBadge type={s.type as ShowType} />
                       <StatusChip
                         label={SHOW_STATUS_LABELS[s.status as ShowStatus]}
@@ -314,7 +314,7 @@ export function ShowsLibrary() {
                       {s.rating ? <StarRating value={s.rating} size={13} /> : null}
                     </span>
                     {(s.genres?.[0] || s.end_date || s.start_date) && (
-                      <span className="mt-0.5 flex items-center gap-2 text-xs text-text-tertiary">
+                      <span className="mt-0.5 flex items-center gap-2 text-caption text-text-tertiary">
                         {s.genres?.[0] && <span>{s.genres[0]}</span>}
                         {(s.end_date ?? s.start_date) && (
                           <span>{formatMonthDay((s.end_date ?? s.start_date)!)}</span>

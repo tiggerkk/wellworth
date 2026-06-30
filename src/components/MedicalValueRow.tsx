@@ -33,13 +33,13 @@ export function MedicalValueRow({
   return (
     <div className={`flex items-start justify-between gap-3 ${className}`}>
       <div className="min-w-0 flex-1">
-        <p className="text-[15px] text-text-primary">{name}</p>
-        {refRange && <p className="text-xs text-text-tertiary">Ref: {refRange}</p>}
+        <p className="text-body text-text-primary">{name}</p>
+        {refRange && <p className="text-caption text-text-tertiary">Ref: {refRange}</p>}
         {leftExtra}
       </div>
       <div className="shrink-0 text-right">
         <p
-          className={`text-[15px] ${flag ? MEDICAL_FLAG_CLASS[flag] : 'text-text-primary'}`}
+          className={`text-body ${flag ? MEDICAL_FLAG_CLASS[flag] : 'text-text-primary'}`}
         >
           {value}
         </p>

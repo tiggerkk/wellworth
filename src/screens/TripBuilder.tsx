@@ -21,6 +21,7 @@ import { SecondaryButton } from '../components/SecondaryButton'
 import { EntryHeaderActions } from '../components/EntryHeaderActions'
 import { ConfirmDeleteAction } from '../components/ConfirmDeleteAction'
 import { StopEditorSheet } from '../components/StopEditorSheet'
+import { StopTypeIcon } from '../components/StopTypeIcon'
 import { TripExpensesPanel } from '../components/TripExpensesPanel'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
@@ -115,7 +116,7 @@ function NewTrip() {
         <button onClick={close} aria-label="Close" className="text-text-secondary">
           <IconX size={22} />
         </button>
-        <h1 className="flex-1 text-[17px] font-medium text-text-primary">New Trip</h1>
+        <h1 className="flex-1 text-heading font-medium text-text-primary">New Trip</h1>
         <EntryHeaderActions
           editing={false}
           dirty={name.trim() !== '' || status !== 'planning' || baseCurrency !== 'CNY'}
@@ -131,7 +132,7 @@ function NewTrip() {
       </header>
       <div className="flex flex-col gap-4 p-4">
         <div className="flex gap-3">
-          <label className="flex-1 text-xs text-text-secondary">
+          <label className="flex-1 text-caption text-text-secondary">
             Trip Name
             <input
               value={name}
@@ -140,7 +141,7 @@ function NewTrip() {
               className={`mt-1 ${inputClass}`}
             />
           </label>
-          <div className="w-28 text-xs text-text-secondary">
+          <div className="w-28 text-caption text-text-secondary">
             Base Currency
             <div className="mt-1">
               <SelectMenu
@@ -152,7 +153,7 @@ function NewTrip() {
             </div>
           </div>
         </div>
-        <div className="w-40 text-xs text-text-secondary">
+        <div className="w-40 text-caption text-text-secondary">
           Status
           <div className="mt-1">
             <SelectMenu
@@ -166,7 +167,7 @@ function NewTrip() {
             />
           </div>
         </div>
-        <p className="px-1 text-xs text-text-tertiary">
+        <p className="px-1 text-caption text-text-tertiary">
           Add days, stops, and the rest of the trip details after you create it.
         </p>
       </div>
@@ -189,9 +190,11 @@ function EditTrip({ id }: { id: string }) {
   // unmount the body on every itinerary edit and discard the header's unsaved local state.
   return (
     <div className="flex h-full flex-col">
-      {loading && !bundle && <p className="p-4 text-sm text-text-secondary">Loading…</p>}
+      {loading && !bundle && (
+        <p className="p-4 text-body text-text-secondary">Loading…</p>
+      )}
       {error && !bundle && (
-        <p className="p-4 text-sm text-danger">Couldn’t load this trip.</p>
+        <p className="p-4 text-body text-danger">Couldn’t load this trip.</p>
       )}
       {bundle && <EditTripBody key={id} bundle={bundle} />}
     </div>
@@ -448,7 +451,7 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
         <button onClick={close} aria-label="Close" className="text-text-secondary">
           <IconX size={22} />
         </button>
-        <h1 className="flex-1 truncate text-[17px] font-medium text-text-primary">
+        <h1 className="flex-1 truncate text-heading font-medium text-text-primary">
           Edit Trip
         </h1>
         <EntryHeaderActions
@@ -467,7 +470,7 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
         <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
           {/* Row 1: Trip Name + Status */}
           <div className="flex gap-3">
-            <label className="flex-1 text-xs text-text-secondary">
+            <label className="flex-1 text-caption text-text-secondary">
               Trip Name
               <input
                 value={name}
@@ -475,7 +478,7 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
                 className={`mt-1 ${inputClass}`}
               />
             </label>
-            <div className="flex-1 text-xs text-text-secondary">
+            <div className="flex-1 text-caption text-text-secondary">
               Status
               <div className="mt-1">
                 <SelectMenu
@@ -494,7 +497,7 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
           {(show('companions') || show('rating')) && (
             <div className="flex gap-3">
               {show('companions') && (
-                <label className="flex-1 text-xs text-text-secondary">
+                <label className="flex-1 text-caption text-text-secondary">
                   Companions
                   <input
                     value={companions}
@@ -504,7 +507,7 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
                 </label>
               )}
               {show('rating') && (
-                <div className="text-xs text-text-secondary">
+                <div className="text-caption text-text-secondary">
                   Rating
                   <div className="mt-1 flex h-8 items-center">
                     <StarRating value={rating} onChange={setRating} />
@@ -515,7 +518,7 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
           )}
           {/* Row 3: Notes */}
           {show('notes') && (
-            <label className="text-xs text-text-secondary">
+            <label className="text-caption text-text-secondary">
               Notes
               <textarea
                 value={notes}
@@ -528,7 +531,7 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
           {/* Row 4: Cover Image URL */}
           {show('cover_url') && (
             <>
-              <label className="text-xs text-text-secondary">
+              <label className="text-caption text-text-secondary">
                 Cover Image URL
                 <input
                   value={coverUrl}
@@ -555,7 +558,7 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
 
         {tab === 'expenses' && (
           <section className="flex gap-3 rounded-card border border-border bg-surface p-4">
-            <div className="w-28 text-xs text-text-secondary">
+            <div className="w-28 text-caption text-text-secondary">
               Base Currency
               <div className="mt-1">
                 <SelectMenu
@@ -566,7 +569,7 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
                 />
               </div>
             </div>
-            <div className="text-xs text-text-secondary">
+            <div className="text-caption text-text-secondary">
               Track Reimburse
               <div className="mt-1 flex h-[38px] items-center">
                 <Toggle
@@ -595,7 +598,7 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
             </div>
 
             {days.length === 0 && (
-              <p className="px-1 text-sm text-text-secondary">
+              <p className="px-1 text-body text-text-secondary">
                 No days yet — add your first day.
               </p>
             )}
@@ -623,7 +626,7 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
                         <IconChevronRight size={18} />
                       )}
                     </button>
-                    <span className="text-[15px] font-medium text-text-primary">
+                    <span className="text-body font-medium text-text-primary">
                       Day {i + 1}
                     </span>
                     <button
@@ -633,9 +636,9 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
                           ? `Change date for Day ${i + 1}`
                           : `Add a date for Day ${i + 1}`
                       }
-                      className="flex items-center gap-1 rounded-pill bg-input px-2.5 py-1 text-left text-xs"
+                      className="flex items-center gap-1 rounded-pill bg-input px-2.5 py-1 text-left text-body"
                     >
-                      <IconCalendar size={14} className="shrink-0 text-text-secondary" />
+                      <IconCalendar size={16} className="shrink-0 text-text-secondary" />
                       {day.day_date ? (
                         <span className="text-text-primary">
                           {formatFullDate(day.day_date)}
@@ -674,7 +677,7 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
                           {runs.map((run, runIdx) => (
                             <div key={runIdx} className="flex flex-col gap-1">
                               {run.city && (
-                                <h3 className="px-1 text-[13px] font-medium text-text-primary">
+                                <h3 className="px-1 text-body font-medium text-text-primary">
                                   {run.city}
                                 </h3>
                               )}
@@ -706,17 +709,22 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
                                       onClick={() =>
                                         setStopEditor({ dayId: day.id, stop: s })
                                       }
-                                      className={`w-full truncate text-left ${
+                                      aria-label={`${stopTypeLabel(s.type)}: ${
+                                        s.description || 'no description'
+                                      }`}
+                                      className={`flex w-full items-center gap-1.5 text-left ${
                                         s.completion === 'skipped'
                                           ? 'text-text-tertiary line-through'
                                           : ''
                                       }`}
                                     >
-                                      <span className="text-text-secondary">
-                                        {stopTypeLabel(s.type)}
+                                      <StopTypeIcon
+                                        type={s.type}
+                                        className="shrink-0 text-text-secondary"
+                                      />
+                                      <span className="truncate">
+                                        {s.description || '—'}
                                       </span>
-                                      {' · '}
-                                      {s.description || '—'}
                                     </button>
                                   )
                                 }}
@@ -854,7 +862,7 @@ function ReorderDaysSheet({
         className="absolute inset-x-0 bottom-0 mx-auto max-w-md rounded-t-card bg-surface pb-[env(safe-area-inset-bottom)]"
       >
         <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-          <h1 className="flex-1 text-[17px] font-medium text-text-primary">
+          <h1 className="flex-1 text-heading font-medium text-text-primary">
             Reorder Days
           </h1>
           <button onClick={onClose} aria-label="Done" className="text-text-secondary">

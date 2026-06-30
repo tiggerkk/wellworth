@@ -18,7 +18,7 @@
   --color-text-primary: #e8eaf0;
   --color-text-secondary: #9aa3b5;
   --color-text-muted: #c2c7d4;
-  --color-text-tertiary: #5b6172;
+  --color-text-tertiary: #7a8294;
   --color-accent: #3874f6;
   --color-favorite: #e06aa0; /* favorite heart — decoupled from accent (rose) */
   --color-positive: #5dcaa5;
@@ -72,12 +72,53 @@
   --font-sans:
     -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', 'Segoe UI', Roboto,
     Helvetica, Arial, sans-serif;
+
+  /* Type scale — the ONE source of truth for font sizes. Sizes are in `rem`, so they ride the
+   * `--font-scale` lever on <html> (Dynamic Type, see below): bumping the preset scales every role
+   * at once. Each token maps to a documented role (docs/01_design_system.md); never hardcode
+   * `text-[Npx]` in a component — pick a role token. (Line-height intentionally unset so these
+   * behave like the old `text-[Npx]` arbitraries they replace; rhythm comes from the layout.) */
+  --text-title: 1.125rem; /* 18px — screen / sheet titles */
+  --text-heading: 1.0625rem; /* 17px — entry & modal headers */
+  --text-field: 1rem; /* 16px — form inputs (.field-control); iOS auto-zoom floor, see F21 */
+  --text-body: 0.9375rem; /* 15px — row titles, body text, button text */
+  --text-label: 0.8125rem; /* 13px — compact labels, chip body */
+  --text-caption: 0.75rem; /* 12px — captions, secondary lines, hints, ResultCount */
+  --text-section: 0.6875rem; /* 11px — UPPERCASE section labels, status chips */
 }
 
 html,
 body,
 #root {
   height: 100%;
+}
+
+/* Dynamic Type lever (F23). One attribute on <html> — `data-font-scale` — drives everything: it sets
+ * `--font-scale`, and the root font-size is `calc(16px * var(--font-scale))`, so every rem-based size
+ * (the whole type scale, paddings, gaps) grows proportionally. The presets never go below 1, so a
+ * focused input never drops under 16px (iOS auto-zoom floor, F21). `font-scale.ts` sets/clears the
+ * attribute; the boot script in index.html applies the cached value before first paint. */
+:root {
+  --font-scale: 1;
+}
+html[data-font-scale='large'] {
+  --font-scale: 1.15;
+}
+html[data-font-scale='larger'] {
+  --font-scale: 1.3;
+}
+html {
+  font-size: calc(16px * var(--font-scale));
+}
+
+/* Icons (Tabler) ride the same lever. We scale with `transform` rather than width/height so the
+ * icon's layout box stays put — bigger glyphs without adding wrap pressure to already-compact rows.
+ * Only the non-default presets emit a transform, so the default state has zero extra layers. */
+html[data-font-scale='large'] .tabler-icon {
+  transform: scale(1.15);
+}
+html[data-font-scale='larger'] .tabler-icon {
+  transform: scale(1.3);
 }
 
 body {
@@ -99,7 +140,7 @@ body {
   /* 16px (not 15px): iOS Safari auto-zooms a focused input/select/textarea whose font-size is
    * < 16px and never zooms back out. 16px keeps the design effectively identical while letting us
    * leave browser pinch-zoom enabled in the viewport meta (see index.html / F21). */
-  @apply rounded-input bg-input px-3 py-2 text-[16px] text-text-primary focus:outline-none;
+  @apply rounded-input bg-input px-3 py-2 text-field text-text-primary placeholder:text-text-secondary focus:outline-none;
 }
 
 /* Hide the number-input spin buttons app-wide — we never use the up/down steppers, and they crowd

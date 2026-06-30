@@ -112,10 +112,8 @@ export function FoodSearchSheet({
                 onClick={() => onSelect(f)}
                 className="flex w-full flex-col items-start px-3 py-2.5 text-left active:bg-input/40"
               >
-                <span className="break-words text-[15px] text-text-primary">
-                  {f.name}
-                </span>
-                <span className="mt-0.5 text-xs text-text-secondary">
+                <span className="break-words text-body text-text-primary">{f.name}</span>
+                <span className="mt-0.5 text-caption text-text-secondary">
                   {Object.keys(f.nutrients).length} nutrients · {externalFoodServing(f)}
                   {f.brand ? ` · ${f.brand}` : ''}
                 </span>
@@ -123,7 +121,7 @@ export function FoodSearchSheet({
             ))}
 
             {results.length === 0 && (
-              <p className="px-4 py-6 text-center text-sm text-text-tertiary">
+              <p className="px-4 py-6 text-center text-body text-text-tertiary">
                 {!debounced.trim()
                   ? 'Search USDA by name.'
                   : loading
@@ -136,7 +134,7 @@ export function FoodSearchSheet({
           </div>
 
           {error === 'failed' && (
-            <p className="mt-3 text-xs text-danger">
+            <p className="mt-3 text-caption text-danger">
               Food search unavailable — is <code>VITE_USDA_API_KEY</code> set?
             </p>
           )}

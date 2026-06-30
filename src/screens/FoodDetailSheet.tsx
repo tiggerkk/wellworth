@@ -397,7 +397,7 @@ export function FoodDetailSheet() {
         <button onClick={() => navigate(-1)} aria-label="Close">
           <IconX size={22} className="text-text-secondary" />
         </button>
-        <h1 className="line-clamp-2 flex-1 text-[17px] font-medium text-text-primary">
+        <h1 className="line-clamp-2 flex-1 text-heading font-medium text-text-primary">
           {food?.name ?? 'Food'}
         </h1>
         {food && (
@@ -433,15 +433,15 @@ export function FoodDetailSheet() {
       </header>
 
       <div className="flex-1 overflow-y-auto p-4">
-        {loading && <p className="text-sm text-text-secondary">Loading…</p>}
+        {loading && <p className="text-body text-text-secondary">Loading…</p>}
         {(error || (!loading && !food)) && (
-          <p className="text-sm text-danger">Couldn’t load this item.</p>
+          <p className="text-body text-danger">Couldn’t load this item.</p>
         )}
 
         {food && serving && (
           <>
             <div className="mb-2 flex gap-3">
-              <label className="flex-1 text-xs text-text-secondary">
+              <label className="flex-1 text-caption text-text-secondary">
                 Amount
                 <input
                   type="number"
@@ -456,7 +456,7 @@ export function FoodDetailSheet() {
                   className="mt-1 field-control no-spinner w-full"
                 />
               </label>
-              <label className="flex-1 text-xs text-text-secondary">
+              <label className="flex-1 text-caption text-text-secondary">
                 Serving Size
                 <select
                   value={servingIndex}
@@ -477,7 +477,7 @@ export function FoodDetailSheet() {
                 per-log quantity and never changes them. */}
             <button
               onClick={() => setManageOpen((o) => !o)}
-              className="mb-4 text-xs text-positive"
+              className="mb-4 text-caption text-positive"
             >
               {manageOpen ? 'Hide servings' : 'Manage servings'}
             </button>
@@ -527,19 +527,19 @@ export function FoodDetailSheet() {
                 ))}
                 <button
                   onClick={addServing}
-                  className="flex items-center gap-1 text-sm text-positive"
+                  className="flex items-center gap-1 text-body text-positive"
                 >
                   <IconPlus size={16} /> Add serving
                 </button>
               </div>
             )}
 
-            <h2 className="mb-1 text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
+            <h2 className="mb-1 text-section font-medium uppercase tracking-[0.08em] text-text-secondary">
               Complete Nutrient Summary
             </h2>
             <div className="rounded-card border border-border bg-surface px-4 py-1">
               {summaryKeys.length === 0 && (
-                <p className="py-3 text-sm text-text-tertiary">No nutrient data.</p>
+                <p className="py-3 text-body text-text-tertiary">No nutrient data.</p>
               )}
               {summaryKeys.map((key) => {
                 const ref = byKey.get(key)

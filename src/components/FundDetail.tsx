@@ -77,8 +77,8 @@ export function FundDetail({ data }: { data: FundDetailData }) {
           key={r.label}
           className="flex items-center justify-between gap-3 px-4 py-2.5"
         >
-          <span className="text-xs text-text-secondary">{r.label}</span>
-          <span className={`text-[15px] ${r.valueClass ?? 'text-text-primary'}`}>
+          <span className="text-caption text-text-secondary">{r.label}</span>
+          <span className={`text-body ${r.valueClass ?? 'text-text-primary'}`}>
             {r.value}
           </span>
         </div>

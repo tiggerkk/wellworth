@@ -7,7 +7,7 @@ import type { ReactNode } from 'react'
  */
 export function FilterPanel({ children }: { children: ReactNode }) {
   return (
-    <div className="flex flex-col gap-3 rounded-card border border-border bg-surface p-3 text-xs">
+    <div className="flex flex-col gap-3 rounded-card border border-border bg-surface p-3 text-caption">
       {children}
     </div>
   )

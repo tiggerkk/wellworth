@@ -178,7 +178,7 @@ export function QuotesLibrary() {
       </div>
 
       {constrained && (
-        <div className="flex items-center justify-between rounded-input bg-input px-3 py-2 text-sm">
+        <div className="flex items-center justify-between rounded-input bg-input px-3 py-2 text-body">
           <span className="min-w-0 truncate text-text-primary">
             Quotes from <span className="text-text-secondary">{constraintTitle}</span>
           </span>
@@ -236,7 +236,7 @@ export function QuotesLibrary() {
                 onChange={(e) => setTagQuery(e.target.value)}
                 placeholder="Filter tags…"
                 aria-label="Filter tags"
-                className="field-control w-full self-center placeholder:text-text-tertiary"
+                className="field-control w-full self-center"
               />
             )}
           </div>
@@ -249,7 +249,7 @@ export function QuotesLibrary() {
                   <button
                     key={tag}
                     onClick={() => toggleTag(tag)}
-                    className={`rounded-pill px-2 py-0.5 text-xs ${
+                    className={`rounded-pill px-2 py-0.5 text-caption ${
                       on ? 'bg-accent text-bg' : 'bg-input text-text-secondary'
                     }`}
                   >
@@ -283,8 +283,8 @@ export function QuotesLibrary() {
         </FilterPanel>
       )}
 
-      {loading && <p className="text-sm text-text-secondary">Loading…</p>}
-      {error && <p className="text-sm text-danger">Couldn’t load your quotes.</p>}
+      {loading && <p className="text-body text-text-secondary">Loading…</p>}
+      {error && <p className="text-body text-danger">Couldn’t load your quotes.</p>}
       {!loading && !error && view.length === 0 && all.length === 0 && (
         <EmptyState
           title="No quotes yet"
@@ -294,7 +294,9 @@ export function QuotesLibrary() {
         />
       )}
       {!loading && !error && view.length === 0 && all.length > 0 && (
-        <p className="py-16 text-center text-sm text-text-secondary">No quotes match.</p>
+        <p className="py-16 text-center text-body text-text-secondary">
+          No quotes match.
+        </p>
       )}
 
       {!loading && !error && view.length > 0 && (
@@ -307,7 +309,7 @@ export function QuotesLibrary() {
                   onClick={() => navigate(routes.quotes.edit(quote.id))}
                   className="block w-full border-b border-border px-3 py-3 text-left last:border-b-0"
                 >
-                  <span className="flex items-start gap-1.5 text-[15px] text-text-primary">
+                  <span className="flex items-start gap-1.5 text-body text-text-primary">
                     {quote.is_favorite && (
                       <IconHeartFilled
                         size={13}
@@ -317,7 +319,7 @@ export function QuotesLibrary() {
                     )}
                     <span className="line-clamp-2">{quote.text}</span>
                   </span>
-                  <span className="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-secondary">
+                  <span className="mt-1 flex flex-wrap items-center gap-2 text-caption text-text-secondary">
                     <StatusChip
                       label={categoryLabel(categories, quote.category)}
                       className={QUOTE_CATEGORY_CHIP}

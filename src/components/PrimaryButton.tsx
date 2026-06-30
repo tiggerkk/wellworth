@@ -23,7 +23,7 @@ export function PrimaryButton({
 }: PrimaryButtonProps) {
   return (
     <button
-      className={`flex items-center justify-center gap-2 rounded-pill ${TONE[tone]} ${SIZE[size]} text-sm font-medium text-bg transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
+      className={`flex items-center justify-center gap-2 rounded-pill ${TONE[tone]} ${SIZE[size]} text-body font-medium text-bg transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
       {...props}
     >
       {children}

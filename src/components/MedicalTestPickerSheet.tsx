@@ -62,14 +62,14 @@ export function MedicalTestPickerSheet({
         <div className="min-h-0 flex-1 overflow-y-auto p-4">
           <button
             onClick={onAddCustom}
-            className="mb-4 flex w-full items-center justify-center gap-2 rounded-input bg-input py-2.5 text-sm text-positive active:bg-input/60"
+            className="mb-4 flex w-full items-center justify-center gap-2 rounded-input bg-input py-2.5 text-body text-positive active:bg-input/60"
           >
             <IconPlus size={16} /> Add custom test
           </button>
 
           {groups.map((g) => (
             <div key={g.category} className="mb-4">
-              <h2 className="mb-1 px-1 text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
+              <h2 className="mb-1 px-1 text-section font-medium uppercase tracking-[0.08em] text-text-secondary">
                 {MEDICAL_CATEGORY_LABELS[g.category]}
               </h2>
               <div className="divide-y divide-border overflow-hidden rounded-card border border-border bg-surface">
@@ -79,11 +79,11 @@ export function MedicalTestPickerSheet({
                     onClick={() => onSelect(t)}
                     className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left active:bg-input/40"
                   >
-                    <span className="min-w-0 flex-1 truncate text-[15px] text-text-primary">
+                    <span className="min-w-0 flex-1 truncate text-body text-text-primary">
                       {t.display_name}
                     </span>
                     {t.default_unit && (
-                      <span className="shrink-0 text-xs text-text-tertiary">
+                      <span className="shrink-0 text-caption text-text-tertiary">
                         {t.default_unit}
                       </span>
                     )}
@@ -94,7 +94,7 @@ export function MedicalTestPickerSheet({
           ))}
 
           {groups.length === 0 && (
-            <p className="px-4 py-6 text-center text-sm text-text-tertiary">
+            <p className="px-4 py-6 text-center text-body text-text-tertiary">
               No tests match “{query}”. Use “Add custom test” for one not in the list.
             </p>
           )}

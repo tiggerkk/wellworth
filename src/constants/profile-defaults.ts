@@ -11,6 +11,7 @@ import type { TablesInsert } from '../types/database'
 export const MEMBER_PROFILE_SEED = {
   activity_factor: 1.4,
   units: 'metric',
+  font_size: 'default',
   highlighted_nutrients: [
     'protein',
     'fiber',

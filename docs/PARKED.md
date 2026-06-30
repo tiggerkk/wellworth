@@ -61,6 +61,25 @@ lock. **Shipped** end-to-end (see BUILD-HISTORY → "Medical Build Sequence"; be
 
 ## Deferred
 
+### English / 繁體中文 (HK Traditional) UI language toggle · Deferred (scoped 2026-06-30)
+
+**What:** A Settings language picker (English / 繁體中文) that translates **UI chrome** — headers, field
+labels, buttons, placeholders, tab labels, empty states, toasts, aria-labels, and dynamic enum labels
+(show statuses/types, nutrient names, asset types). **User-entered data stays as typed.**
+**Why deferred:** Largest, most independent track — ~350 strings across ~143 `.tsx`, a new i18n
+dependency, and a profile column. Sequenced **after** the typography + Dynamic Type work (done
+2026-06-30), which it doesn't depend on.
+**Decided (so we don't re-analyze):**
+
+- The existing `opencc-js` plumbing (`zh-convert.ts`, `zh-fold.ts`, `zh-query.ts`) is **data-side
+  only** (search folding / variant queries) and is **not** reusable for UI translation.
+- Use the project's **HK Traditional `'hk'`** locale convention, not Taiwan `'tw'`.
+- **Library:** `react-i18next` (extraction tooling, plurals) wrapping a `t()`, or a minimal in-house
+  dictionary to avoid the dep — pick at build time. The bulk of the work is string extraction + JSX
+  migration, not the toggle.
+- **Preference:** add `profile.language` (`'en' | 'zh-hk'`, default `'en'`) — same in-place-migration
+  rule as `font_size`; surface the picker next to **Settings → Display → Font Size**.
+
 ### HKPL / extra Chinese book catalogue as a match fallback · Deferred
 
 **What:** A third book-metadata source (beyond Google Books + Open Library) with strong Hong Kong /

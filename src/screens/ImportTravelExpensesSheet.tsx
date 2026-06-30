@@ -132,27 +132,27 @@ export function ImportTravelExpensesSheet() {
         <button onClick={() => navigate(-1)} aria-label="Close">
           <IconX size={22} className="text-text-secondary" />
         </button>
-        <h1 className="text-[17px] font-medium text-text-primary">Import Expenses</h1>
+        <h1 className="text-heading font-medium text-text-primary">Import Expenses</h1>
       </header>
 
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
         {done !== null ? (
           <div className="flex flex-col gap-2">
-            <p className="text-[15px] font-medium text-text-primary">
+            <p className="text-body font-medium text-text-primary">
               Imported {done.expenses} expense{done.expenses === 1 ? '' : 's'} across{' '}
               {done.trips} trip{done.trips === 1 ? '' : 's'}
               {done.created > 0 &&
                 ` (${done.created} new trip${done.created === 1 ? '' : 's'})`}
               .
             </p>
-            <p className="text-sm text-text-secondary">
+            <p className="text-body text-text-secondary">
               Amounts use each trip’s base currency — set the HKD rates in the trip’s
               Expenses tab.
             </p>
           </div>
         ) : (
           <>
-            <p className="text-sm text-text-secondary">
+            <p className="text-body text-text-secondary">
               Upload a wide CSV (
               <code className="text-text-primary">
                 Trip, Date, Restaurant… Flight/Train, Cost, Re-imbursed
@@ -174,19 +174,19 @@ export function ImportTravelExpensesSheet() {
             />
             <button
               onClick={() => inputRef.current?.click()}
-              className="flex items-center justify-center gap-2 rounded-input border border-border bg-input px-4 py-3 text-[15px] text-text-primary"
+              className="flex items-center justify-center gap-2 rounded-input border border-border bg-input px-4 py-3 text-body text-text-primary"
             >
               <IconUpload size={18} />
               {fileName ? 'Choose a different file' : 'Choose CSV File'}
             </button>
             {fileName && (
-              <p className="text-xs text-text-secondary">
+              <p className="text-caption text-text-secondary">
                 Selected: <span className="text-text-primary">{fileName}</span>
               </p>
             )}
 
             {parsed && parsed.errors.length > 0 && (
-              <ul className="flex flex-col gap-1 text-xs text-danger">
+              <ul className="flex flex-col gap-1 text-caption text-danger">
                 {parsed.errors.map((m, i) => (
                   <li key={i}>{m}</li>
                 ))}
@@ -196,7 +196,7 @@ export function ImportTravelExpensesSheet() {
             {parsed && parsed.errors.length === 0 && (
               <>
                 <SectionCard title="Detected columns">
-                  <p className="px-4 py-2 text-sm text-text-secondary">
+                  <p className="px-4 py-2 text-body text-text-secondary">
                     {[
                       parsed.tripCol != null && 'Trip',
                       parsed.dateCol != null && 'Date',
@@ -218,7 +218,7 @@ export function ImportTravelExpensesSheet() {
                         key={u.header}
                         className="flex items-center justify-between gap-3 border-b border-border px-3 py-2 last:border-b-0"
                       >
-                        <span className="truncate text-sm text-text-primary">
+                        <span className="truncate text-body text-text-primary">
                           {u.header}
                         </span>
                         <div className="w-40 shrink-0">
@@ -242,7 +242,7 @@ export function ImportTravelExpensesSheet() {
 
                 {built && (
                   <>
-                    <div className="rounded-card border border-border bg-surface px-4 py-3 text-sm text-text-primary">
+                    <div className="rounded-card border border-border bg-surface px-4 py-3 text-body text-text-primary">
                       Ready to import <strong>{count}</strong> expense
                       {count === 1 ? '' : 's'} across <strong>{tripsTouched}</strong> trip
                       {tripsTouched === 1 ? '' : 's'} (new trips created as needed).
@@ -252,7 +252,7 @@ export function ImportTravelExpensesSheet() {
                       {built.byTrip.map((g) => (
                         <div
                           key={g.tripName}
-                          className="flex items-center justify-between border-b border-border px-3 py-2 last:border-b-0 text-sm"
+                          className="flex items-center justify-between border-b border-border px-3 py-2 last:border-b-0 text-body"
                         >
                           <span className="truncate text-text-primary">{g.tripName}</span>
                           <span className="text-text-secondary">
@@ -263,7 +263,7 @@ export function ImportTravelExpensesSheet() {
                     </SectionCard>
 
                     <label className="flex items-center justify-between gap-3 rounded-card border border-border bg-surface px-4 py-3">
-                      <span className="text-sm text-text-primary">
+                      <span className="text-body text-text-primary">
                         Replace existing expenses for matched trips
                       </span>
                       <Toggle
@@ -275,11 +275,11 @@ export function ImportTravelExpensesSheet() {
 
                     {built.warnings.length > 0 && (
                       <div className="flex flex-col gap-1">
-                        <p className="text-xs font-medium text-warning">
+                        <p className="text-caption font-medium text-warning">
                           {built.warnings.length} note
                           {built.warnings.length === 1 ? '' : 's'}:
                         </p>
-                        <ul className="flex flex-col gap-1 text-xs text-text-secondary">
+                        <ul className="flex flex-col gap-1 text-caption text-text-secondary">
                           {built.warnings.slice(0, MAX_WARNINGS).map((m, i) => (
                             <li key={i}>{m}</li>
                           ))}
@@ -294,7 +294,7 @@ export function ImportTravelExpensesSheet() {
               </>
             )}
 
-            {error && <p className="text-xs text-danger">{error}</p>}
+            {error && <p className="text-caption text-danger">{error}</p>}
           </>
         )}
       </div>

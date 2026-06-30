@@ -93,7 +93,7 @@ export function NotesEditorModal({
           <button onClick={onClose} aria-label="Close" className="text-text-secondary">
             <IconX size={22} />
           </button>
-          <h1 className="flex-1 truncate text-[17px] font-medium text-text-primary">
+          <h1 className="flex-1 truncate text-heading font-medium text-text-primary">
             {headerTitle}
           </h1>
           <EntryHeaderActions
@@ -111,11 +111,11 @@ export function NotesEditorModal({
 
         <div className="flex flex-1 flex-col overflow-hidden p-4">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-text-secondary">Notes</span>
+            <span className="text-caption text-text-secondary">Notes</span>
             {canPaste && (
               <button
                 onClick={() => void pasteAtCursor()}
-                className="flex items-center gap-1 text-xs text-accent"
+                className="flex items-center gap-1 text-caption text-accent"
               >
                 <IconClipboard size={14} /> Paste
               </button>

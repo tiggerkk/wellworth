@@ -146,7 +146,7 @@ export function StopEditorSheet({
           <button onClick={onClose} aria-label="Close" className="text-text-secondary">
             <IconX size={22} />
           </button>
-          <h1 className="flex-1 text-[17px] font-medium text-text-primary">
+          <h1 className="flex-1 text-heading font-medium text-text-primary">
             {stop ? 'Edit Stop' : 'Add Stop'}
           </h1>
           <EntryHeaderActions
@@ -169,7 +169,7 @@ export function StopEditorSheet({
           {/* City — type it or look it up (mirrors the Shows Title + TMDB search). */}
           <div>
             <div className="flex items-end gap-2">
-              <label className="flex-1 text-xs text-text-secondary">
+              <label className="flex-1 text-caption text-text-secondary">
                 City
                 <input
                   value={city}
@@ -180,13 +180,13 @@ export function StopEditorSheet({
               </label>
               <button
                 onClick={() => setCityOpen(true)}
-                className="flex shrink-0 items-center justify-center gap-1.5 rounded-input bg-input px-3 py-2 text-sm text-accent"
+                className="flex shrink-0 items-center justify-center gap-1.5 rounded-input bg-input px-3 py-2 text-body text-accent"
               >
                 <IconWorldSearch size={16} /> Lookup
               </button>
             </div>
             <div className="mt-3 flex gap-3">
-              <label className="flex-1 text-xs text-text-secondary">
+              <label className="flex-1 text-caption text-text-secondary">
                 Province / Region
                 <input
                   value={province}
@@ -194,7 +194,7 @@ export function StopEditorSheet({
                   className={`mt-1 ${inputClass}`}
                 />
               </label>
-              <label className="flex-1 text-xs text-text-secondary">
+              <label className="flex-1 text-caption text-text-secondary">
                 Country
                 <input
                   value={country}
@@ -205,7 +205,7 @@ export function StopEditorSheet({
             </div>
           </div>
 
-          <label className="text-xs text-text-secondary">
+          <label className="text-caption text-text-secondary">
             Description
             <input
               value={description}
@@ -217,7 +217,7 @@ export function StopEditorSheet({
             />
           </label>
 
-          <label className="text-xs text-text-secondary">
+          <label className="text-caption text-text-secondary">
             Details
             <textarea
               value={details}
@@ -228,7 +228,7 @@ export function StopEditorSheet({
           </label>
 
           <div className="flex items-center gap-3">
-            <div className="flex-1 text-xs text-text-secondary">
+            <div className="flex-1 text-caption text-text-secondary">
               Completion
               <div className="mt-1">
                 <SelectMenu<CompletionValue>
@@ -244,7 +244,7 @@ export function StopEditorSheet({
               </div>
             </div>
             {days.length > 1 && (
-              <div className="flex-1 text-xs text-text-secondary">
+              <div className="flex-1 text-caption text-text-secondary">
                 Day
                 <div className="mt-1">
                   <SelectMenu

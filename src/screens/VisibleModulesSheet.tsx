@@ -27,9 +27,9 @@ export function VisibleModulesSheet() {
         <button onClick={() => navigate(-1)} aria-label="Close">
           <IconX size={22} className="text-text-secondary" />
         </button>
-        <h1 className="text-[17px] font-medium text-text-primary">Visible Modules</h1>
+        <h1 className="text-heading font-medium text-text-primary">Visible Modules</h1>
       </header>
-      {loading && <p className="p-4 text-sm text-text-secondary">Loading…</p>}
+      {loading && <p className="p-4 text-body text-text-secondary">Loading…</p>}
       {profile && <Editor profile={profile} save={save} />}
     </Sheet>
   )
@@ -73,7 +73,7 @@ function Editor({
 
   return (
     <div className="flex-1 overflow-y-auto p-4">
-      <p className="mb-2 px-1 text-xs text-text-secondary">
+      <p className="mb-2 px-1 text-caption text-text-secondary">
         Choose which modules appear on the Home hub, and drag the grip to reorder them.
       </p>
       <ReorderList

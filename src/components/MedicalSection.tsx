@@ -44,7 +44,7 @@ export function MedicalSection({
       ) : (
         <IconChevronRight size={16} className="shrink-0 text-text-tertiary" />
       )}
-      <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
+      <span className="text-section font-medium uppercase tracking-[0.08em] text-text-secondary">
         {MEDICAL_CATEGORY_LABELS[category]}
       </span>
     </button>

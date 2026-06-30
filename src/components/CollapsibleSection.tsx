@@ -20,7 +20,7 @@ export function CollapsibleSection({
         onClick={() => setOpen((o) => !o)}
         className="flex w-full items-center justify-between px-4 py-3"
       >
-        <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
+        <span className="text-section font-medium uppercase tracking-[0.08em] text-text-secondary">
           {title}
         </span>
         {open ? (

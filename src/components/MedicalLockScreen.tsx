@@ -71,8 +71,8 @@ export function MedicalLockScreen() {
         <IconLock size={26} className="text-text-secondary" />
       </div>
       <div className="text-center">
-        <h1 className="text-lg font-medium text-text-primary">Medical is locked</h1>
-        <p className="mt-1 text-sm text-text-secondary">Enter your PIN to continue.</p>
+        <h1 className="text-title font-medium text-text-primary">Medical is locked</h1>
+        <p className="mt-1 text-body text-text-secondary">Enter your PIN to continue.</p>
       </div>
 
       <div className="w-full max-w-xs">
@@ -87,7 +87,9 @@ export function MedicalLockScreen() {
           autoFocus
           ariaLabel="Unlock PIN"
         />
-        {error && <p className="mt-2 text-center text-sm text-danger">Incorrect PIN.</p>}
+        {error && (
+          <p className="mt-2 text-center text-body text-danger">Incorrect PIN.</p>
+        )}
         <PrimaryButton
           onClick={submitPin}
           disabled={pin.length < 4 || checking}
@@ -100,7 +102,7 @@ export function MedicalLockScreen() {
       {bioAvailable && credentialId && (
         <button
           onClick={tryBiometric}
-          className="flex items-center gap-2 text-sm font-medium text-accent"
+          className="flex items-center gap-2 text-body font-medium text-accent"
         >
           <IconFaceId size={18} /> Use Face ID / Touch ID
         </button>
@@ -108,7 +110,7 @@ export function MedicalLockScreen() {
 
       <button
         onClick={() => void supabase.auth.signOut()}
-        className="mt-2 text-xs text-text-tertiary"
+        className="mt-2 text-caption text-text-tertiary"
       >
         Forgot PIN? Sign out
       </button>

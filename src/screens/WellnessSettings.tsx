@@ -36,11 +36,11 @@ export function WellnessSettings() {
         >
           <IconChevronLeft size={22} />
         </button>
-        <h1 className="text-lg font-medium text-text-primary">Wellness Settings</h1>
+        <h1 className="text-title font-medium text-text-primary">Wellness Settings</h1>
       </header>
-      {loading && <p className="text-sm text-text-secondary">Loading…</p>}
+      {loading && <p className="text-body text-text-secondary">Loading…</p>}
       {!loading && !profile && (
-        <p className="text-sm text-danger">Couldn’t load your profile.</p>
+        <p className="text-body text-danger">Couldn’t load your profile.</p>
       )}
       {profile && <Body profile={profile} save={save} />}
     </div>
@@ -96,7 +96,7 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
             className={inputCls}
           />
         </FieldRow>
-        <div className="px-4 py-2 text-xs text-text-tertiary">
+        <div className="px-4 py-2 text-caption text-text-tertiary">
           Other targets are set automatically from your profile (DRI).
         </div>
       </SectionCard>
@@ -113,7 +113,7 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
           <>
             <button
               onClick={() => openSheet(routes.wellness.importFoods)}
-              className="flex w-full items-center gap-2 border-b border-border px-4 py-3 text-[15px] text-accent active:bg-input/40"
+              className="flex w-full items-center gap-2 border-b border-border px-4 py-3 text-body text-accent active:bg-input/40"
             >
               <IconUpload size={18} /> Import CSV Food
             </button>
@@ -123,12 +123,12 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
                 setCacheCount(0)
               }}
               disabled={cacheCount === 0}
-              className="flex w-full items-center gap-2 border-b border-border px-4 py-3 text-[15px] text-text-secondary last:border-b-0 active:bg-input/40 disabled:opacity-40"
+              className="flex w-full items-center gap-2 border-b border-border px-4 py-3 text-body text-text-secondary last:border-b-0 active:bg-input/40 disabled:opacity-40"
             >
               <IconTrash size={18} />
               Clear Import Match Cache{cacheCount ? ` (${cacheCount})` : ''}
             </button>
-            <p className="px-4 py-2 text-xs text-text-tertiary">
+            <p className="px-4 py-2 text-caption text-text-tertiary">
               Bulk-seed your foods from a CSV — each row is matched against USDA (custom
               foods for the rest), all saved as favorites. The importer remembers each
               USDA match in this browser so re-importing the same CSV is instant; clearing
@@ -136,7 +136,7 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
             </p>
           </>
         ) : (
-          <div className="px-4 py-2 text-xs text-text-tertiary">
+          <div className="px-4 py-2 text-caption text-text-tertiary">
             Turn this on to bulk-seed your foods from a CSV.
           </div>
         )}

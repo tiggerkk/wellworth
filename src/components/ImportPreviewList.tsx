@@ -43,14 +43,14 @@ export function ImportPreviewList({ items, onChange, onManual }: ImportPreviewLi
         >
           {item.media}
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[15px] text-text-primary">
+            <p className="truncate text-body text-text-primary">
               {item.title}
               {item.year ? ` (${item.year})` : ''}
             </p>
             {item.subtitle != null && (
-              <p className="truncate text-xs text-text-secondary">{item.subtitle}</p>
+              <p className="truncate text-caption text-text-secondary">{item.subtitle}</p>
             )}
-            <p className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-text-secondary">
+            <p className="mt-0.5 flex flex-wrap items-center gap-2 text-caption text-text-secondary">
               {item.meta}
               {item.status === 'nomatch' && <span className="text-danger">No match</span>}
               {item.status === 'review' && (
@@ -64,14 +64,14 @@ export function ImportPreviewList({ items, onChange, onManual }: ImportPreviewLi
           <div className="flex shrink-0 items-center gap-1.5">
             <button
               onClick={() => onChange(i)}
-              className="rounded-pill bg-input px-2.5 py-1 text-xs font-medium text-accent"
+              className="rounded-pill bg-input px-2.5 py-1 text-caption font-medium text-accent"
             >
               Change
             </button>
             <button
               onClick={() => onManual(i)}
               disabled={item.status === 'manual'}
-              className="rounded-pill bg-input px-2.5 py-1 text-xs font-medium text-text-secondary disabled:opacity-40"
+              className="rounded-pill bg-input px-2.5 py-1 text-caption font-medium text-text-secondary disabled:opacity-40"
             >
               Manual
             </button>

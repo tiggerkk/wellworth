@@ -155,7 +155,7 @@ export function CitySearchSheet({
           {/* Remembered cities (instant, no network) */}
           {matches.length > 0 && (
             <section className="mb-4">
-              <h2 className="mb-2 px-1 text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
+              <h2 className="mb-2 px-1 text-section font-medium uppercase tracking-[0.08em] text-text-secondary">
                 Remembered
               </h2>
               <div className="overflow-hidden rounded-card border border-border">
@@ -174,10 +174,10 @@ export function CitySearchSheet({
                     className="flex w-full items-center gap-2 border-b border-border px-3 py-2.5 text-left last:border-b-0 active:bg-input/40"
                   >
                     <IconMapPin size={16} className="shrink-0 text-text-tertiary" />
-                    <span className="flex-1 truncate text-[15px] text-text-primary">
+                    <span className="flex-1 truncate text-body text-text-primary">
                       {c.city}
                     </span>
-                    <span className="shrink-0 text-xs text-text-secondary">
+                    <span className="shrink-0 text-caption text-text-secondary">
                       {[c.province, c.country].filter(Boolean).join(' · ')}
                     </span>
                   </button>
@@ -188,7 +188,7 @@ export function CitySearchSheet({
 
           {/* Geocode results (auto) */}
           <section className="mb-4">
-            <h2 className="mb-2 px-1 text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
+            <h2 className="mb-2 px-1 text-section font-medium uppercase tracking-[0.08em] text-text-secondary">
               Search results
             </h2>
             <div className="overflow-hidden rounded-card border border-border">
@@ -200,10 +200,10 @@ export function CitySearchSheet({
                 >
                   <IconMapPin size={16} className="mt-0.5 shrink-0 text-text-tertiary" />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[15px] text-text-primary">
+                    <span className="block truncate text-body text-text-primary">
                       {s.city || s.displayName}
                     </span>
-                    <span className="mt-0.5 block truncate text-xs text-text-secondary">
+                    <span className="mt-0.5 block truncate text-caption text-text-secondary">
                       {[s.province, s.country].filter(Boolean).join(' · ') ||
                         s.displayName}
                     </span>
@@ -211,7 +211,7 @@ export function CitySearchSheet({
                 </button>
               ))}
               {suggestions.length === 0 && (
-                <p className="px-4 py-6 text-center text-sm text-text-tertiary">
+                <p className="px-4 py-6 text-center text-body text-text-tertiary">
                   {!debounced.trim()
                     ? 'Type a city to search.'
                     : geoState === 'loading'
@@ -226,7 +226,7 @@ export function CitySearchSheet({
           <section className="flex flex-col gap-3">
             <button
               onClick={() => setManualOpen((v) => !v)}
-              className="flex items-center gap-1 px-1 text-[13px] text-text-secondary"
+              className="flex items-center gap-1 px-1 text-label text-text-secondary"
             >
               {manualOpen ? (
                 <IconChevronDown size={14} className="shrink-0" />
@@ -237,7 +237,7 @@ export function CitySearchSheet({
             </button>
             {manualOpen && (
               <>
-                <label className="text-xs text-text-secondary">
+                <label className="text-caption text-text-secondary">
                   Country
                   <input
                     value={country}
@@ -245,7 +245,7 @@ export function CitySearchSheet({
                     className="mt-1 field-control w-full"
                   />
                 </label>
-                <div className="text-xs text-text-secondary">
+                <div className="text-caption text-text-secondary">
                   Province / Region
                   {isChina(country) ? (
                     <div className="mt-1">

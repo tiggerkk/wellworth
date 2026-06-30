@@ -37,9 +37,11 @@ export function InsuranceProvidersSheet() {
         <button onClick={() => navigate(-1)} aria-label="Close">
           <IconX size={22} className="text-text-secondary" />
         </button>
-        <h1 className="text-[17px] font-medium text-text-primary">Insurance Providers</h1>
+        <h1 className="text-heading font-medium text-text-primary">
+          Insurance Providers
+        </h1>
       </header>
-      {loading && <p className="p-4 text-sm text-text-secondary">Loading…</p>}
+      {loading && <p className="p-4 text-body text-text-secondary">Loading…</p>}
       {profile && (
         <ConfigListEditor<InsuranceProviderConfig>
           list={effectiveProviders(profile.insurance_providers)}

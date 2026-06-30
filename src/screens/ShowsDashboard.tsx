@@ -109,9 +109,9 @@ export function ShowsDashboard() {
         />
       </header>
 
-      {loading && <p className="px-4 py-6 text-sm text-text-secondary">Loading…</p>}
+      {loading && <p className="px-4 py-6 text-body text-text-secondary">Loading…</p>}
       {error && (
-        <p className="px-4 py-6 text-sm text-danger">Couldn’t load your shows.</p>
+        <p className="px-4 py-6 text-body text-danger">Couldn’t load your shows.</p>
       )}
 
       {!loading && !error && all.length === 0 && (
@@ -126,7 +126,7 @@ export function ShowsDashboard() {
       {!loading && !error && all.length > 0 && (
         <div className="flex flex-col gap-4 px-4">
           {watchedYear > 0 && (
-            <p className="px-1 text-xs text-text-secondary">
+            <p className="px-1 text-caption text-text-secondary">
               {watchedYear} watched this year
             </p>
           )}
@@ -256,7 +256,7 @@ function DashRow({
     <div className="flex items-center gap-3 border-b border-border px-3 py-2.5 last:border-b-0">
       <PosterThumb path={show.poster_path} size="w92" className="h-14 w-10" />
       <button onClick={onEdit} className="min-w-0 flex-1 text-left">
-        <span className="flex items-center gap-1.5 text-[15px] text-text-primary">
+        <span className="flex items-center gap-1.5 text-body text-text-primary">
           {show.is_favorite && (
             <IconHeartFilled
               size={13}
@@ -272,7 +272,7 @@ function DashRow({
             <StatusChip label={show.dynasty} className={`shrink-0 ${DYNASTY_CHIP}`} />
           )}
         </span>
-        <span className="mt-0.5 flex items-center gap-2 text-xs text-text-secondary">
+        <span className="mt-0.5 flex items-center gap-2 text-caption text-text-secondary">
           <ShowTypeBadge type={show.type as ShowType} />
           {secondary}
         </span>
@@ -326,7 +326,7 @@ function ActionButton({
     <button
       onClick={onClick}
       disabled={disabled}
-      className="shrink-0 rounded-pill bg-input px-2.5 py-1 text-xs font-medium text-accent disabled:opacity-50"
+      className="shrink-0 rounded-pill bg-input px-2.5 py-1 text-caption font-medium text-accent disabled:opacity-50"
     >
       {label}
     </button>

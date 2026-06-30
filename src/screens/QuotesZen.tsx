@@ -130,9 +130,9 @@ export function QuotesZen() {
 
   return (
     <div className="flex h-full flex-col">
-      {loading && <p className="px-4 py-6 text-sm text-text-secondary">Loading…</p>}
+      {loading && <p className="px-4 py-6 text-body text-text-secondary">Loading…</p>}
       {error && (
-        <p className="px-4 py-6 text-sm text-danger">Couldn’t load your quotes.</p>
+        <p className="px-4 py-6 text-body text-danger">Couldn’t load your quotes.</p>
       )}
 
       {!loading && !error && all.length === 0 && (
@@ -160,7 +160,7 @@ export function QuotesZen() {
             className="pointer-events-none absolute inset-x-0 top-2 flex justify-center"
             style={{ opacity: Math.min(pull / PULL_THRESHOLD, 1) }}
           >
-            <span className="flex items-center gap-1 text-xs text-text-secondary">
+            <span className="flex items-center gap-1 text-caption text-text-secondary">
               <IconArrowsShuffle size={14} />
               {pull > PULL_THRESHOLD ? 'Release to shuffle' : 'Pull to shuffle'}
             </span>
@@ -187,7 +187,7 @@ export function QuotesZen() {
             onClick={shuffle}
             disabled={all.length === 0}
             aria-label="Shuffle"
-            className="absolute right-4 bottom-4 z-10 flex items-center gap-1 rounded-pill bg-input px-3 py-1.5 text-sm text-accent shadow-sm disabled:opacity-40"
+            className="absolute right-4 bottom-4 z-10 flex items-center gap-1 rounded-pill bg-input px-3 py-1.5 text-body text-accent shadow-sm disabled:opacity-40"
           >
             <IconArrowsShuffle size={18} /> Shuffle
           </button>
@@ -244,7 +244,7 @@ function QuoteCard({
         {quote.text}
       </button>
 
-      <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-sm text-text-secondary">
+      <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-body text-text-secondary">
         {meta.map((node, i) => (
           <span key={i} className="flex items-center gap-2">
             {i > 0 && (
@@ -265,7 +265,7 @@ function QuoteCard({
         {quote.tags.map((tag) => (
           <span
             key={tag}
-            className="rounded-pill bg-input px-2 py-0.5 text-xs text-text-secondary"
+            className="rounded-pill bg-input px-2 py-0.5 text-caption text-text-secondary"
           >
             {tag}
           </span>

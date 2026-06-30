@@ -122,7 +122,7 @@ export function Calendar({ day, onSelect, onClose, loadCues }: CalendarProps) {
                   setPickYear(year)
                   setMode('months')
                 }}
-                className="rounded-input px-2 py-0.5 text-[15px] font-medium text-text-primary active:bg-input/40"
+                className="rounded-input px-2 py-0.5 text-body font-medium text-text-primary active:bg-input/40"
               >
                 {monthLabel}
               </button>
@@ -134,13 +134,13 @@ export function Calendar({ day, onSelect, onClose, loadCues }: CalendarProps) {
                   setMode('years')
                 }}
                 aria-label="Choose year"
-                className="rounded-input px-2 py-0.5 text-[15px] font-medium text-text-primary active:bg-input/40"
+                className="rounded-input px-2 py-0.5 text-body font-medium text-text-primary active:bg-input/40"
               >
                 {pickYear}
               </button>
             )}
             {mode === 'years' && (
-              <span className="px-2 text-[15px] font-medium text-text-primary">
+              <span className="px-2 text-body font-medium text-text-primary">
                 {yearBase}–{yearBase + YEAR_PAGE - 1}
               </span>
             )}
@@ -175,7 +175,7 @@ export function Calendar({ day, onSelect, onClose, loadCues }: CalendarProps) {
                   setPickYear(yr)
                   setMode('months')
                 }}
-                className={`rounded-card py-2.5 text-[15px] ${
+                className={`rounded-card py-2.5 text-body ${
                   yr === pickYear ? 'bg-fill text-bg' : 'bg-input text-text-primary'
                 }`}
               >
@@ -194,7 +194,7 @@ export function Calendar({ day, onSelect, onClose, loadCues }: CalendarProps) {
                     setViewMonth(toIsoDate(new Date(pickYear, i, 1)))
                     setMode('days')
                   }}
-                  className={`rounded-card py-2.5 text-[15px] ${
+                  className={`rounded-card py-2.5 text-body ${
                     isCurrent ? 'bg-fill text-bg' : 'bg-input text-text-primary'
                   }`}
                 >
@@ -205,7 +205,7 @@ export function Calendar({ day, onSelect, onClose, loadCues }: CalendarProps) {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-7 gap-1 text-center text-[11px] text-text-tertiary">
+            <div className="grid grid-cols-7 gap-1 text-center text-section text-text-tertiary">
               {WEEKDAYS.map((w, i) => (
                 <span key={i}>{w}</span>
               ))}
@@ -225,7 +225,7 @@ export function Calendar({ day, onSelect, onClose, loadCues }: CalendarProps) {
                   <button
                     key={d}
                     onClick={() => onSelect(d)}
-                    className={`relative flex aspect-square items-center justify-center rounded-full text-[13px] ${
+                    className={`relative flex aspect-square items-center justify-center rounded-full text-label ${
                       isSelected ? 'bg-accent text-white' : 'text-text-primary'
                     } ${isToday ? 'ring-1 ring-white' : ''}`}
                   >
@@ -246,7 +246,7 @@ export function Calendar({ day, onSelect, onClose, loadCues }: CalendarProps) {
         )}
 
         {mode === 'days' && loadCues && (
-          <div className="mt-3 flex items-center justify-between text-[11px] text-text-secondary">
+          <div className="mt-3 flex items-center justify-between text-section text-text-secondary">
             <span className="flex items-center gap-1">
               <span className="size-1.5 rounded-full bg-positive" /> Food
             </span>
@@ -265,7 +265,7 @@ export function Calendar({ day, onSelect, onClose, loadCues }: CalendarProps) {
               setPickYear(fromIsoDate(today).getFullYear())
               setMode('days')
             }}
-            className="rounded-pill bg-input px-8 py-2.5 text-sm text-text-primary"
+            className="rounded-pill bg-input px-8 py-2.5 text-body text-text-primary"
           >
             Today
           </button>

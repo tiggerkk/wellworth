@@ -170,13 +170,13 @@ export function ImportMedicalSheet() {
         <button onClick={() => navigate(-1)} aria-label="Close">
           <IconX size={22} className="text-text-secondary" />
         </button>
-        <h1 className="text-[17px] font-medium text-text-primary">
+        <h1 className="text-heading font-medium text-text-primary">
           Import Medical Report
         </h1>
       </header>
 
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
-        <p className="text-sm text-text-secondary">
+        <p className="text-body text-text-secondary">
           Choose a <code className="text-text-primary">.json</code> (preferred) or{' '}
           <code className="text-text-primary">.csv</code> file produced from a report by
           an AI tool (see{' '}
@@ -200,23 +200,23 @@ export function ImportMedicalSheet() {
         />
         <button
           onClick={() => inputRef.current?.click()}
-          className="flex items-center justify-center gap-2 rounded-input border border-border bg-input px-4 py-3 text-[15px] text-text-primary"
+          className="flex items-center justify-center gap-2 rounded-input border border-border bg-input px-4 py-3 text-body text-text-primary"
         >
           <IconUpload size={18} />
           {fileName ? 'Choose a different file' : 'Choose JSON/CSV File'}
         </button>
         {fileName && (
-          <p className="text-xs text-text-secondary">
+          <p className="text-caption text-text-secondary">
             Selected: <span className="text-text-primary">{fileName}</span>
           </p>
         )}
 
-        {error && <p className="text-sm text-danger">{error}</p>}
+        {error && <p className="text-body text-danger">{error}</p>}
 
         {draft && (
           <>
             <div className="rounded-card border border-border bg-surface p-3">
-              <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
+              <p className="text-section font-medium uppercase tracking-[0.08em] text-text-secondary">
                 Parsed {total} result{total === 1 ? '' : 's'}
                 {toReview > 0 ? ` · ${toReview} to review` : ''}
               </p>
@@ -224,19 +224,19 @@ export function ImportMedicalSheet() {
                 {counts.map(({ c, n }) => (
                   <span
                     key={c}
-                    className="rounded-pill bg-input px-2 py-0.5 text-[11px] text-text-secondary"
+                    className="rounded-pill bg-input px-2 py-0.5 text-section text-text-secondary"
                   >
                     {MEDICAL_CATEGORY_LABELS[c]} {n}
                   </span>
                 ))}
               </div>
-              <p className="mt-2 text-[11px] text-text-tertiary">
+              <p className="mt-2 text-section text-text-tertiary">
                 A missing section? Check the counts against the report, then “Add result”.
               </p>
             </div>
 
             <div>
-              <p className="mb-1 text-xs text-text-secondary">Report Date</p>
+              <p className="mb-1 text-caption text-text-secondary">Report Date</p>
               <button
                 onClick={() => setDatePicker(true)}
                 className={`text-left ${inputClass}`}
@@ -246,7 +246,7 @@ export function ImportMedicalSheet() {
             </div>
 
             <div>
-              <p className="mb-1 text-xs text-text-secondary">Type</p>
+              <p className="mb-1 text-caption text-text-secondary">Type</p>
               <SelectMenu
                 value={draft.report_type}
                 onChange={(report_type) => update({ report_type })}
@@ -259,7 +259,7 @@ export function ImportMedicalSheet() {
             </div>
 
             {usesBodyPart(draft.report_type) && (
-              <label className="text-xs text-text-secondary">
+              <label className="text-caption text-text-secondary">
                 Body Part
                 <input
                   value={draft.body_part}
@@ -269,7 +269,7 @@ export function ImportMedicalSheet() {
               </label>
             )}
 
-            <label className="text-xs text-text-secondary">
+            <label className="text-caption text-text-secondary">
               Provider
               <input
                 value={draft.provider}
@@ -278,7 +278,7 @@ export function ImportMedicalSheet() {
               />
             </label>
 
-            <label className="text-xs text-text-secondary">
+            <label className="text-caption text-text-secondary">
               Narrative
               <textarea
                 value={draft.narrative}
@@ -289,7 +289,7 @@ export function ImportMedicalSheet() {
             </label>
 
             <div>
-              <p className="mb-1 text-xs text-text-secondary">
+              <p className="mb-1 text-caption text-text-secondary">
                 Document Links (Google Drive)
               </p>
               <div className="flex flex-col gap-2">
@@ -316,7 +316,7 @@ export function ImportMedicalSheet() {
                 ))}
                 <button
                   onClick={() => update({ document_urls: [...draft.document_urls, ''] })}
-                  className="flex items-center gap-1.5 self-start text-sm text-positive"
+                  className="flex items-center gap-1.5 self-start text-body text-positive"
                 >
                   <IconPlus size={16} /> Add link
                 </button>
@@ -325,12 +325,12 @@ export function ImportMedicalSheet() {
 
             <div>
               <div className="mb-2 flex items-center justify-between">
-                <p className="text-xs uppercase tracking-[0.08em] text-text-secondary">
+                <p className="text-caption uppercase tracking-[0.08em] text-text-secondary">
                   Results
                 </p>
                 <button
                   onClick={() => setPickerOpen(true)}
-                  className="flex items-center gap-1.5 text-sm text-positive"
+                  className="flex items-center gap-1.5 text-body text-positive"
                 >
                   <IconPlus size={16} /> Add result
                 </button>
@@ -338,7 +338,7 @@ export function ImportMedicalSheet() {
               <div className="flex flex-col gap-5">
                 {groupResultsByCategory(orderedResults).map((g) => (
                   <div key={g.category} className="flex flex-col gap-2">
-                    <p className="px-1 text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
+                    <p className="px-1 text-section font-medium uppercase tracking-[0.08em] text-text-secondary">
                       {MEDICAL_CATEGORY_LABELS[g.category]}
                     </p>
                     <div className="flex flex-col gap-3">
@@ -357,7 +357,7 @@ export function ImportMedicalSheet() {
             </div>
 
             {warnings.length > 0 && (
-              <div className="flex flex-col gap-1 text-xs text-text-tertiary">
+              <div className="flex flex-col gap-1 text-caption text-text-tertiary">
                 {warnings.slice(0, 20).map((w, i) => (
                   <p key={i}>{w}</p>
                 ))}

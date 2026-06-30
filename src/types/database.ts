@@ -680,6 +680,7 @@ export type Database = {
           book_importer_enabled: boolean
           book_visible_fields: string[] | null
           created_at: string
+          font_size: string
           food_importer_enabled: boolean
           height_cm: number | null
           highlighted_nutrients: string[]
@@ -723,6 +724,7 @@ export type Database = {
           book_importer_enabled?: boolean
           book_visible_fields?: string[] | null
           created_at?: string
+          font_size?: string
           food_importer_enabled?: boolean
           height_cm?: number | null
           highlighted_nutrients?: string[]
@@ -766,6 +768,7 @@ export type Database = {
           book_importer_enabled?: boolean
           book_visible_fields?: string[] | null
           created_at?: string
+          font_size?: string
           food_importer_enabled?: boolean
           height_cm?: number | null
           highlighted_nutrients?: string[]

@@ -208,8 +208,8 @@ export function TravelTrips() {
         </FilterPanel>
       )}
 
-      {loading && <p className="p-4 text-sm text-text-secondary">Loading…</p>}
-      {error && <p className="p-4 text-sm text-danger">Couldn’t load your trips.</p>}
+      {loading && <p className="p-4 text-body text-text-secondary">Loading…</p>}
+      {error && <p className="p-4 text-body text-danger">Couldn’t load your trips.</p>}
 
       {!loading && !error && trips.length === 0 && (
         <EmptyState
@@ -226,7 +226,7 @@ export function TravelTrips() {
       {!loading && !error && trips.length > 0 && (
         <div className="overflow-hidden rounded-card border border-border bg-surface">
           {view.length === 0 ? (
-            <p className="px-4 py-6 text-center text-sm text-text-secondary">
+            <p className="px-4 py-6 text-center text-body text-text-secondary">
               No matches.
             </p>
           ) : (
@@ -241,7 +241,7 @@ export function TravelTrips() {
                     <Thumb url={t.cover_url} className="h-14 w-20 rounded-card" />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="truncate text-[15px] text-text-primary">
+                        <span className="truncate text-body text-text-primary">
                           {t.name}
                         </span>
                         <StatusChip
@@ -251,7 +251,7 @@ export function TravelTrips() {
                           }
                         />
                       </div>
-                      <p className="truncate text-xs text-text-secondary">
+                      <p className="truncate text-caption text-text-secondary">
                         {dateRange(t.start_date, t.end_date)}
                         {label ? ` · ${label}` : ''}
                       </p>

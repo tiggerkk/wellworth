@@ -25,9 +25,9 @@ export function MedicalOrderSheet() {
         <button onClick={() => navigate(-1)} aria-label="Close">
           <IconX size={22} className="text-text-secondary" />
         </button>
-        <h1 className="text-[17px] font-medium text-text-primary">Display Order</h1>
+        <h1 className="text-heading font-medium text-text-primary">Display Order</h1>
       </header>
-      {loading && <p className="p-4 text-sm text-text-secondary">Loading…</p>}
+      {loading && <p className="p-4 text-body text-text-secondary">Loading…</p>}
       {profile && <Editor profile={profile} save={save} />}
     </Sheet>
   )
@@ -79,7 +79,7 @@ function Editor({
     <div className="flex-1 overflow-y-auto p-4">
       <div className="flex flex-col gap-6">
         <div>
-          <h2 className="mb-1 px-1 text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
+          <h2 className="mb-1 px-1 text-section font-medium uppercase tracking-[0.08em] text-text-secondary">
             Sections
           </h2>
           <ReorderList
@@ -94,7 +94,7 @@ function Editor({
 
         <div>
           <div className="mb-1 flex items-center justify-between gap-2 px-1">
-            <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
+            <h2 className="text-section font-medium uppercase tracking-[0.08em] text-text-secondary">
               Tests in section
             </h2>
             <div className="w-44">

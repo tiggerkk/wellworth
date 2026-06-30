@@ -83,9 +83,9 @@ export function BooksDashboard() {
 
   return (
     <div className="flex min-h-full flex-col pb-4">
-      {loading && <p className="px-4 py-6 text-sm text-text-secondary">Loading…</p>}
+      {loading && <p className="px-4 py-6 text-body text-text-secondary">Loading…</p>}
       {error && (
-        <p className="px-4 py-6 text-sm text-danger">Couldn’t load your books.</p>
+        <p className="px-4 py-6 text-body text-danger">Couldn’t load your books.</p>
       )}
 
       {!loading && !error && all.length === 0 && (
@@ -100,7 +100,9 @@ export function BooksDashboard() {
       {!loading && !error && all.length > 0 && (
         <div className="flex flex-col gap-4 px-4">
           {readYear > 0 && (
-            <p className="px-1 text-xs text-text-secondary">{readYear} read this year</p>
+            <p className="px-1 text-caption text-text-secondary">
+              {readYear} read this year
+            </p>
           )}
 
           {favorites.length > 0 && (
@@ -209,7 +211,7 @@ function DashRow({
     <div className="flex items-center gap-3 border-b border-border px-3 py-2.5 last:border-b-0">
       <CoverThumb url={book.cover_url} className="h-14 w-10" />
       <button onClick={onEdit} className="min-w-0 flex-1 text-left">
-        <span className="flex items-center gap-1.5 text-[15px] text-text-primary">
+        <span className="flex items-center gap-1.5 text-body text-text-primary">
           {book.is_favorite && (
             <IconHeartFilled
               size={13}
@@ -225,7 +227,7 @@ function DashRow({
             <StatusChip label={book.dynasty} className={`shrink-0 ${DYNASTY_CHIP}`} />
           )}
         </span>
-        <span className="mt-0.5 flex items-center gap-2 text-xs text-text-secondary">
+        <span className="mt-0.5 flex items-center gap-2 text-caption text-text-secondary">
           {secondary}
         </span>
       </button>
@@ -258,7 +260,7 @@ function ActionButton({
     <button
       onClick={onClick}
       disabled={disabled}
-      className="shrink-0 rounded-pill bg-input px-2.5 py-1 text-xs font-medium text-accent disabled:opacity-50"
+      className="shrink-0 rounded-pill bg-input px-2.5 py-1 text-caption font-medium text-accent disabled:opacity-50"
     >
       {label}
     </button>

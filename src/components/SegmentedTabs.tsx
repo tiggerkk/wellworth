@@ -14,7 +14,7 @@ export function SegmentedTabs<T extends string>({
   onChange,
   size = 'compact',
 }: SegmentedTabsProps<T>) {
-  const btnSize = size === 'field' ? 'py-1 text-[15px]' : 'py-1.5 text-[13px]'
+  const btnSize = size === 'field' ? 'py-1 text-body' : 'py-1.5 text-label'
   return (
     <div className="flex gap-1 rounded-pill bg-input p-1">
       {options.map((opt) => {

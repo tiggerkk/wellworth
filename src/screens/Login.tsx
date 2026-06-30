@@ -34,7 +34,7 @@ export function Login() {
       <div className="flex flex-col items-center gap-2">
         <RingMark className="size-16 text-accent" />
         <h1 className="text-2xl font-medium text-text-primary">WellWorth</h1>
-        <p className="text-sm text-text-secondary">
+        <p className="text-body text-text-secondary">
           Track wellness, net-worth, shows, books, quote, medical reports and travel.
         </p>
       </div>
@@ -45,13 +45,13 @@ export function Login() {
       </PrimaryButton>
 
       {deniedEmail && (
-        <p className="text-xs text-danger">
+        <p className="text-caption text-danger">
           {deniedEmail} isn’t authorized to use this app. Sign in with an approved
           account.
         </p>
       )}
-      {authError && <p className="text-xs text-danger">{authError}</p>}
-      {error && <p className="text-xs text-danger">{error}</p>}
+      {authError && <p className="text-caption text-danger">{authError}</p>}
+      {error && <p className="text-caption text-danger">{error}</p>}
     </div>
   )
 }

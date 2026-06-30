@@ -58,11 +58,9 @@ export function GroupHeader({
           <IconChevronRight size={18} className="shrink-0 text-text-tertiary" />
         )}
         <Icon size={18} className={`shrink-0 ${iconClass}`} />
-        <span className="truncate text-[15px] font-medium text-text-primary">
-          {title}
-        </span>
+        <span className="truncate text-body font-medium text-text-primary">{title}</span>
         <span
-          className={`shrink-0 text-[13px] ${negative ? 'text-accent' : 'text-text-secondary'}`}
+          className={`shrink-0 text-label ${negative ? 'text-accent' : 'text-text-secondary'}`}
         >
           {Math.round(kcal)} kcal
         </span>

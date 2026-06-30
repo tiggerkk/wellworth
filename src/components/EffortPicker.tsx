@@ -23,8 +23,8 @@ export function EffortPicker({ value, onChange, available }: EffortPickerProps) 
               active ? 'border-accent bg-input' : 'border-border bg-surface-alt'
             } ${disabled ? 'opacity-40' : ''}`}
           >
-            <span className="text-[15px] text-text-primary">{level.label}</span>
-            <span className="text-xs text-text-secondary">{level.range}</span>
+            <span className="text-body text-text-primary">{level.label}</span>
+            <span className="text-caption text-text-secondary">{level.range}</span>
           </button>
         )
       })}

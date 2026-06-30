@@ -103,7 +103,7 @@ export function ExpenseEditorSheet({
           <button onClick={onClose} aria-label="Close" className="text-text-secondary">
             <IconX size={22} />
           </button>
-          <h1 className="flex-1 text-[17px] font-medium text-text-primary">
+          <h1 className="flex-1 text-heading font-medium text-text-primary">
             {expense ? 'Edit Expense' : 'Add Expense'}
           </h1>
           {expense && onDelete && (
@@ -130,9 +130,9 @@ export function ExpenseEditorSheet({
             onClick={() => setDatePickerOpen(true)}
             className="field-control flex items-center justify-between text-left"
           >
-            <span className="text-xs text-text-secondary">
+            <span className="text-caption text-text-secondary">
               Date
-              <span className="mt-0.5 block text-[15px] text-text-primary">
+              <span className="mt-0.5 block text-body text-text-primary">
                 {date ? (
                   formatFullDate(date)
                 ) : (
@@ -143,7 +143,7 @@ export function ExpenseEditorSheet({
             <IconCalendar size={18} className="shrink-0 text-text-secondary" />
           </button>
 
-          <label className="text-xs text-text-secondary">
+          <label className="text-caption text-text-secondary">
             Description
             <input
               value={description}
@@ -153,7 +153,7 @@ export function ExpenseEditorSheet({
             />
           </label>
 
-          <div className="text-xs text-text-secondary">
+          <div className="text-caption text-text-secondary">
             Category
             <div className="mt-1">
               <SelectMenu
@@ -166,7 +166,7 @@ export function ExpenseEditorSheet({
           </div>
 
           <div className="flex gap-3">
-            <label className="flex-1 text-xs text-text-secondary">
+            <label className="flex-1 text-caption text-text-secondary">
               Cost
               <input
                 type="number"
@@ -176,7 +176,7 @@ export function ExpenseEditorSheet({
                 className={`mt-1 ${inputClass}`}
               />
             </label>
-            <div className="w-24 text-xs text-text-secondary">
+            <div className="w-24 text-caption text-text-secondary">
               Currency
               <div className="mt-1">
                 <SelectMenu
@@ -191,7 +191,7 @@ export function ExpenseEditorSheet({
 
           {trackReimbursement && (
             <div className="flex flex-col gap-2 rounded-card border border-border bg-surface-alt p-3">
-              <label className="text-xs text-text-secondary">
+              <label className="text-caption text-text-secondary">
                 Reimbursed (number or formula on <code>amount</code>)
                 <input
                   value={formula}
@@ -205,19 +205,19 @@ export function ExpenseEditorSheet({
                   <button
                     key={p.label}
                     onClick={() => setFormula(p.formula)}
-                    className="rounded-pill bg-input px-3 py-1 text-sm text-text-primary"
+                    className="rounded-pill bg-input px-3 py-1 text-body text-text-primary"
                   >
                     {p.label}
                   </button>
                 ))}
                 <button
                   onClick={() => setFormula('')}
-                  className="rounded-pill bg-input px-3 py-1 text-sm text-text-secondary"
+                  className="rounded-pill bg-input px-3 py-1 text-body text-text-secondary"
                 >
                   None
                 </button>
               </div>
-              <p className="text-xs text-text-secondary">
+              <p className="text-caption text-text-secondary">
                 {formula.trim() && reimbursed == null ? (
                   <span className="text-danger">Invalid formula</span>
                 ) : (

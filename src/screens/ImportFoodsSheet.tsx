@@ -226,26 +226,26 @@ export function ImportFoodsSheet() {
         <button onClick={() => navigate(-1)} aria-label="Close">
           <IconX size={22} className="text-text-secondary" />
         </button>
-        <h1 className="text-[17px] font-medium text-text-primary">Import Foods</h1>
+        <h1 className="text-heading font-medium text-text-primary">Import Foods</h1>
       </header>
 
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
         {refLoading ? (
-          <p className="text-sm text-text-secondary">Loading…</p>
+          <p className="text-body text-text-secondary">Loading…</p>
         ) : done !== null ? (
           <div className="flex flex-col gap-2">
-            <p className="text-[15px] font-medium text-text-primary">
+            <p className="text-body font-medium text-text-primary">
               Imported {done.created + done.updated} food
               {done.created + done.updated === 1 ? '' : 's'} — {done.created} new,{' '}
               {done.updated} updated.
             </p>
-            <p className="text-sm text-text-secondary">
+            <p className="text-body text-text-secondary">
               They’re in your Favorites (and Custom, where USDA had no match).
             </p>
           </div>
         ) : (
           <>
-            <p className="text-sm text-text-secondary">
+            <p className="text-body text-text-secondary">
               Upload a CSV in the{' '}
               <code className="text-text-primary">wellness-foods-template.csv</code>{' '}
               format (see <code className="text-text-primary">templates/</code>). Each row
@@ -266,23 +266,23 @@ export function ImportFoodsSheet() {
             />
             <button
               onClick={() => inputRef.current?.click()}
-              className="flex items-center justify-center gap-2 rounded-input border border-border bg-input px-4 py-3 text-[15px] text-text-primary"
+              className="flex items-center justify-center gap-2 rounded-input border border-border bg-input px-4 py-3 text-body text-text-primary"
             >
               <IconUpload size={18} />
               {fileName ? 'Choose a different file' : 'Choose CSV File'}
             </button>
             {fileName && (
-              <p className="text-xs text-text-secondary">
+              <p className="text-caption text-text-secondary">
                 Selected: <span className="text-text-primary">{fileName}</span>
               </p>
             )}
 
             {skipped.length > 0 && (
               <div className="flex flex-col gap-1">
-                <p className="text-xs font-medium text-danger">
+                <p className="text-caption font-medium text-danger">
                   {skipped.length} row{skipped.length === 1 ? '' : 's'} skipped:
                 </p>
-                <ul className="flex flex-col gap-1 text-xs text-danger">
+                <ul className="flex flex-col gap-1 text-caption text-danger">
                   {skipped.slice(0, MAX_MESSAGES).map((m, i) => (
                     <li key={i}>{m}</li>
                   ))}
@@ -294,14 +294,14 @@ export function ImportFoodsSheet() {
             )}
 
             {progress && (
-              <p className="text-sm text-text-secondary">
+              <p className="text-body text-text-secondary">
                 Matching foods… {progress.done}/{progress.total}
               </p>
             )}
 
             {resolved && rowCount > 0 && (
               <>
-                <div className="rounded-card border border-border bg-surface px-4 py-3 text-sm text-text-primary">
+                <div className="rounded-card border border-border bg-surface px-4 py-3 text-body text-text-primary">
                   Ready to import <strong>{rowCount}</strong> food
                   {rowCount === 1 ? '' : 's'}.
                   {(noMatch > 0 || review > 0) && (
@@ -348,8 +348,8 @@ export function ImportFoodsSheet() {
 
             {parsed && parsed.warnings.length > 0 && (
               <div className="flex flex-col gap-1">
-                <p className="text-xs font-medium text-text-secondary">Warnings:</p>
-                <ul className="flex flex-col gap-1 text-xs text-text-secondary">
+                <p className="text-caption font-medium text-text-secondary">Warnings:</p>
+                <ul className="flex flex-col gap-1 text-caption text-text-secondary">
                   {parsed.warnings.slice(0, MAX_MESSAGES).map((m, i) => (
                     <li key={i}>{m}</li>
                   ))}
@@ -360,7 +360,7 @@ export function ImportFoodsSheet() {
               </div>
             )}
 
-            {importError && <p className="text-xs text-danger">{importError}</p>}
+            {importError && <p className="text-caption text-danger">{importError}</p>}
           </>
         )}
       </div>

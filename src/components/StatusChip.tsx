@@ -10,7 +10,7 @@ interface StatusChipProps {
 export function StatusChip({ label, className }: StatusChipProps) {
   return (
     <span
-      className={`inline-flex items-center rounded-pill px-2 py-0.5 text-[11px] font-medium ${className}`}
+      className={`inline-flex items-center rounded-pill px-2 py-0.5 text-section font-medium ${className}`}
     >
       {label}
     </span>

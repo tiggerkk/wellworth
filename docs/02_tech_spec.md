@@ -143,13 +143,13 @@ Supabase (Postgres + RLS). Components hold no SQL and never import the Supabase 
 - **F21 — iOS input-focus zoom.** iOS Safari auto-zooms when a focused `<input>/<select>/<textarea>`
   has font-size **< 16px** and **never zooms back out** — so closing a sheet left the parent screen
   stuck zoomed/clipped. Fixed by rendering **focusable text controls at 16px**, not by locking the
-  viewport: the shared `.field-control` (`src/index.css`) is `text-[16px]`, and the two inputs that
-  don't use it (`SearchBar`, `TagInput` — their chrome is on a wrapper) set `text-[16px]` directly.
+  viewport: the shared `.field-control` (`src/index.css`) is `text-field` (16px), and the two inputs
+  that don't use it (`SearchBar`, `TagInput` — their chrome is on a wrapper) set `text-field` directly.
   The `index.html` viewport keeps **pinch-zoom enabled** (no `maximum-scale` / `user-scalable=no`) so
   small text on any screen stays zoomable. (Earlier we instead locked the viewport to keep a 15px
   token; that disabled all browser pinch-zoom, so small text couldn't be magnified — reversed in favour
   of the 16px controls, since 15px→16px is visually negligible. **Any new focusable text input must be
-  ≥16px** — use `.field-control` or `text-[16px]`.) **`touch-action` also gates pinch-zoom:** an
+  ≥16px** — use `.field-control` or `text-field`.) **`touch-action` also gates pinch-zoom:** an
   element that captures a custom pointer gesture must list `pinch-zoom` (e.g. `pan-y pinch-zoom`, not
   bare `pan-y`), or the browser silently disables zoom over that whole subtree. This bit the
   `SwipeRow` rows (every list/library/reports/trips row) and `QuotesZen`'s scroll area — both now use
@@ -174,6 +174,20 @@ Supabase (Postgres + RLS). Components hold no SQL and never import the Supabase 
   resolved-to-cached food shows more than just "100 g". The **CSV importer** mirrors this — a USDA
   food's servings become its USDA serving plus the CSV `serving*` measures, with a `default_serving`;
   **re-import overwrites** servings/default (file wins), and `is_custom=true` skips USDA matching entirely.
+- **F23 — typography scale + Dynamic Type.** Font sizes are **one rem-based scale** — the `@theme`
+  `--text-*` tokens in `src/index.css` (`text-title/heading/field/body/label/caption/section`); see the
+  role recipes in `docs/01_design_system.md`. **Never hardcode `text-[Npx]`/`text-xs`/`text-sm`** — pick
+  a role token (CI-greppable: no `text-[…px]` should remain). Because the tokens are `rem`, the whole UI
+  scales from one lever: a single **`data-font-scale`** attribute on `<html>` sets `--font-scale`
+  (default→none / `large`→1.15 / `larger`→1.3), and `html { font-size: calc(16px * var(--font-scale)) }`
+  grows every rem (text, padding, gaps). **Icons** (Tabler) ride the same lever via a `.tabler-icon`
+  `transform: scale(...)` keyed off the same attribute — `transform`, not width/height, so the icon's
+  layout box doesn't grow and add wrap pressure. Presets are **≥ 1**, so a focused input never drops
+  below 16px (F21 stays satisfied). The preset lives in **`profile.font_size`** (cross-device) and is
+  mirrored to `localStorage`; an inline boot script in `index.html` applies the cached value before
+  first paint (no flash) and `useFontSizeSync` reconciles from the profile once it loads. `font-scale.ts`
+  is the one writer of the attribute. Compact label·value rows (`FieldRow`) use `flex-wrap` + `min-w-0`
+  so the value drops to its own line at a larger preset instead of squeezing.
 
 ## Auth & first-run
 

@@ -158,8 +158,8 @@ export function MedicalReports() {
         </FilterPanel>
       )}
 
-      {loading && <p className="text-sm text-text-secondary">Loading…</p>}
-      {error && <p className="text-sm text-danger">Couldn’t load your reports.</p>}
+      {loading && <p className="text-body text-text-secondary">Loading…</p>}
+      {error && <p className="text-body text-danger">Couldn’t load your reports.</p>}
       {!loading && !error && reports.length === 0 && (
         <EmptyState
           title="No medical reports yet"
@@ -174,7 +174,7 @@ export function MedicalReports() {
       {!loading && !error && reports.length > 0 && (
         <div className="divide-y divide-border overflow-hidden rounded-card border border-border bg-surface">
           {view.length === 0 ? (
-            <p className="px-4 py-6 text-center text-sm text-text-tertiary">
+            <p className="px-4 py-6 text-center text-body text-text-tertiary">
               No matches.
             </p>
           ) : (
@@ -187,10 +187,10 @@ export function MedicalReports() {
                     className="flex w-full items-center gap-3 px-3 py-2.5 text-left active:bg-input/40"
                   >
                     <span className="min-w-0 flex-1">
-                      <span className="block text-[15px] text-text-primary">
+                      <span className="block text-body text-text-primary">
                         {formatFullDate(r.report_date)}
                       </span>
-                      <span className="block truncate text-xs text-text-secondary">
+                      <span className="block truncate text-caption text-text-secondary">
                         {typeLabel(r.report_type)}
                         {secondary ? ` · ${secondary}` : ''}
                       </span>

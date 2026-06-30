@@ -20,9 +20,11 @@ export function ListRow({ leading, title, subtitle, trailing, onClick }: ListRow
     >
       {leading && <span className="shrink-0 text-text-secondary">{leading}</span>}
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[15px] text-text-primary">{title}</span>
+        <span className="block truncate text-body text-text-primary">{title}</span>
         {subtitle && (
-          <span className="block truncate text-xs text-text-secondary">{subtitle}</span>
+          <span className="block truncate text-caption text-text-secondary">
+            {subtitle}
+          </span>
         )}
       </span>
       {trailing && <span className="shrink-0 text-text-muted">{trailing}</span>}

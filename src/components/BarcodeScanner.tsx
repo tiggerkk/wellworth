@@ -17,23 +17,23 @@ export function BarcodeScanner({ onScan }: BarcodeScannerProps) {
             {status === 'idle' && (
               <button
                 onClick={start}
-                className="rounded-pill bg-fill px-5 py-2.5 text-sm font-medium text-bg"
+                className="rounded-pill bg-fill px-5 py-2.5 text-body font-medium text-bg"
               >
                 Start camera
               </button>
             )}
             {status === 'starting' && (
-              <span className="text-sm text-text-secondary">Starting…</span>
+              <span className="text-body text-text-secondary">Starting…</span>
             )}
             {status === 'error' && (
-              <span role="alert" className="px-6 text-center text-sm text-danger">
+              <span role="alert" className="px-6 text-center text-body text-danger">
                 {error ?? 'Camera unavailable'}
               </span>
             )}
           </div>
         )}
       </div>
-      <p className="text-xs text-text-secondary">
+      <p className="text-caption text-text-secondary">
         Point the camera at a product barcode.
       </p>
     </div>

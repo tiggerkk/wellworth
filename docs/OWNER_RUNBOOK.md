@@ -212,8 +212,9 @@ This creates the tables, security rules, and the nutrient reference data in your
    > supabase db push --dry-run
    > supabase db push
    ```
-   The CLI applies **every** file in `supabase/migrations/` — Wellness (`01_wellness_schema.sql` +
-   `02_wellness_seed_nutrient.sql`), Net Worth (`03_networth_schema.sql` — snapshots, asset entries +
+   The CLI applies **every** file in `supabase/migrations/` — Wellness (`01_wellness_schema.sql` —
+   creates `profile` incl. the global display prefs `units` + `font_size` (Dynamic Type preset), plus
+   the Wellness tables; `02_wellness_seed_nutrient.sql`), Net Worth (`03_networth_schema.sql` — snapshots, asset entries +
    the insurance catalogue tables; `04_networth_profile_settings.sql` — the Net Worth `profile`
    columns), Shows, Books, Quotes (each a schema +
    a `profile` settings migration), **Medical** (`11_medical_schema.sql` — the three Medical tables;

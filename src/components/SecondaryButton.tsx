@@ -17,7 +17,7 @@ export function SecondaryButton({
 }: SecondaryButtonProps) {
   return (
     <button
-      className={`flex items-center justify-center gap-2 rounded-pill border border-border bg-surface-alt ${SIZE[size]} text-sm font-medium text-text-secondary transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 ${className}`}
+      className={`flex items-center justify-center gap-2 rounded-pill border border-border bg-surface-alt ${SIZE[size]} text-body font-medium text-text-secondary transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 ${className}`}
       {...props}
     >
       {children}

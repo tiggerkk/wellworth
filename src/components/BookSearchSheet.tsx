@@ -115,12 +115,12 @@ export function BookSearchSheet({
               >
                 <CoverThumb url={r.coverUrl} />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[15px] text-text-primary">
+                  <span className="block truncate text-body text-text-primary">
                     {r.title}
                     {r.year ? ` (${r.year})` : ''}
                   </span>
                   {r.authors?.length ? (
-                    <span className="mt-0.5 block truncate text-xs text-text-secondary">
+                    <span className="mt-0.5 block truncate text-caption text-text-secondary">
                       {r.authors.join(', ')}
                     </span>
                   ) : null}
@@ -129,7 +129,7 @@ export function BookSearchSheet({
             ))}
 
             {results.length === 0 && (
-              <p className="px-4 py-6 text-center text-sm text-text-tertiary">
+              <p className="px-4 py-6 text-center text-body text-text-tertiary">
                 {!debounced.trim()
                   ? 'Search Google Books by title or author.'
                   : loading
@@ -146,19 +146,19 @@ export function BookSearchSheet({
           </div>
 
           {error === 'rate' && (
-            <p className="mt-3 text-xs text-danger">
+            <p className="mt-3 text-caption text-danger">
               Rate-limited by Google Books — pause a moment, or add a (free) Google Books
               API key for higher limits.
             </p>
           )}
           {error === 'quota' && (
-            <p className="mt-3 text-xs text-danger">
+            <p className="mt-3 text-caption text-danger">
               Daily Google Books quota exhausted — it resets at midnight US-Pacific. Raise
               the project’s “Queries per day” limit in Google Cloud for more.
             </p>
           )}
           {error === 'failed' && (
-            <p className="mt-3 text-xs text-danger">
+            <p className="mt-3 text-caption text-danger">
               Book search unavailable — please try again.
             </p>
           )}

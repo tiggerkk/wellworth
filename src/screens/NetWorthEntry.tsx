@@ -278,7 +278,7 @@ export function NetWorthEntry() {
               >
                 <IconChevronLeft size={20} />
               </button>
-              <span className="min-w-28 px-1 py-1 text-center text-[15px] font-medium text-text-primary">
+              <span className="min-w-28 px-1 py-1 text-center text-body font-medium text-text-primary">
                 {formatMonthLabel(month)}
               </span>
               <button
@@ -291,16 +291,16 @@ export function NetWorthEntry() {
             </div>
           </div>
           <div className="px-4 py-2">
-            <span className="block text-[11px] uppercase tracking-wide text-text-secondary">
+            <span className="block text-section uppercase tracking-wide text-text-secondary">
               Net worth
             </span>
-            <span className="block text-lg font-semibold text-text-tertiary">—</span>
+            <span className="block text-title font-semibold text-text-tertiary">—</span>
           </div>
         </header>
       )}
-      {loading && <p className="px-4 py-6 text-sm text-text-secondary">Loading…</p>}
+      {loading && <p className="px-4 py-6 text-body text-text-secondary">Loading…</p>}
       {error && (
-        <p className="px-4 py-6 text-sm text-danger">Couldn’t load this month.</p>
+        <p className="px-4 py-6 text-body text-danger">Couldn’t load this month.</p>
       )}
       {!loading && !error && initial && (
         <EntryForm
@@ -502,7 +502,7 @@ function EntryForm({
             <button
               onClick={() => setPickerOpen(true)}
               aria-label="Choose month"
-              className="min-w-28 rounded-input px-1 py-1 text-center text-[15px] font-medium text-text-primary"
+              className="min-w-28 rounded-input px-1 py-1 text-center text-body font-medium text-text-primary"
             >
               {formatMonthLabel(month)}
             </button>
@@ -525,16 +525,16 @@ function EntryForm({
         </div>
         <div className="flex items-center justify-between gap-2 px-4 py-2">
           <div>
-            <span className="block text-[11px] uppercase tracking-wide text-text-secondary">
+            <span className="block text-section uppercase tracking-wide text-text-secondary">
               Net worth
             </span>
-            <span className="block text-lg font-semibold text-text-primary">
+            <span className="block text-title font-semibold text-text-primary">
               {formatHkd(total)}
             </span>
           </div>
           <button
             onClick={() => openSheet(`${routes.networth.import}?month=${month}`)}
-            className="flex items-center gap-1 text-sm text-accent"
+            className="flex items-center gap-1 text-body text-accent"
           >
             <IconUpload size={16} /> Import CSV
           </button>
@@ -545,7 +545,7 @@ function EntryForm({
       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4">
         {/* Exchange rates */}
         <section className="shrink-0">
-          <h2 className="mb-2 px-1 text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
+          <h2 className="mb-2 px-1 text-section font-medium uppercase tracking-[0.08em] text-text-secondary">
             Exchange rates{' '}
             <span className="font-normal normal-case tracking-normal text-text-tertiary">
               (as of 1st of the month from Frankfurter)
@@ -555,7 +555,7 @@ function EntryForm({
             <div className="flex items-stretch gap-2 px-4 py-2.5">
               {(['CNY', 'USD'] as const).map((ccy) => (
                 <div key={ccy} className="flex flex-1 items-center gap-1.5">
-                  <span className="text-[15px] text-text-primary">{ccy}</span>
+                  <span className="text-body text-text-primary">{ccy}</span>
                   <input
                     type="number"
                     inputMode="decimal"
@@ -582,7 +582,7 @@ function EntryForm({
               ))}
             </div>
             {(['CNY', 'USD'] as const).some((c) => fetching === c || fxError[c]) && (
-              <p className="px-4 pb-2 text-xs text-text-tertiary">
+              <p className="px-4 pb-2 text-caption text-text-tertiary">
                 {(['CNY', 'USD'] as const)
                   .map((c) =>
                     fetching === c
@@ -629,11 +629,11 @@ function EntryForm({
                     <IconChevronRight size={18} />
                   )}
                 </button>
-                <span className="min-w-0 flex-1 truncate text-[15px] font-medium text-text-primary">
+                <span className="min-w-0 flex-1 truncate text-body font-medium text-text-primary">
                   {ASSET_TYPE_LABELS[type]}
                 </span>
                 {entries.length > 0 && (
-                  <span className="shrink-0 text-sm text-text-secondary">
+                  <span className="shrink-0 text-body text-text-secondary">
                     {formatHkd(subtotal)}
                   </span>
                 )}
@@ -661,7 +661,7 @@ function EntryForm({
 
               {isOpen &&
                 (entries.length === 0 ? (
-                  <p className="border-t border-border px-4 py-3 text-xs text-text-tertiary">
+                  <p className="border-t border-border px-4 py-3 text-caption text-text-tertiary">
                     Nothing logged.
                   </p>
                 ) : (
@@ -685,14 +685,14 @@ function EntryForm({
                           onClick={() => setFundModal(r)}
                           className="flex w-full items-center gap-2 border-b border-border px-3 py-2.5 text-left last:border-b-0 active:bg-input/40"
                         >
-                          <span className="min-w-0 flex-1 truncate text-[15px] text-text-primary">
+                          <span className="min-w-0 flex-1 truncate text-body text-text-primary">
                             {r.name}
                           </span>
-                          <span className="shrink-0 text-sm text-text-secondary">
+                          <span className="shrink-0 text-body text-text-secondary">
                             {formatHkd(rowBase(r))}
                           </span>
                           <span
-                            className={`w-16 shrink-0 text-right text-xs ${
+                            className={`w-16 shrink-0 text-right text-caption ${
                               r.details.return_rate
                                 ? gainLossClass(Number(r.details.return_rate))
                                 : 'text-text-tertiary'
@@ -732,7 +732,7 @@ function EntryForm({
             <button onClick={() => setFundModal(null)} aria-label="Close">
               <IconX size={22} className="text-text-secondary" />
             </button>
-            <h1 className="line-clamp-2 flex-1 text-[17px] font-medium text-text-primary">
+            <h1 className="line-clamp-2 flex-1 text-heading font-medium text-text-primary">
               {fundModal.name}
             </h1>
           </header>
@@ -809,7 +809,7 @@ function ManualRow({
         <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-2">
           {details.map((f) => (
             <label key={f.key} className="flex items-center gap-1.5">
-              <span className="shrink-0 text-xs text-text-secondary">{f.label}</span>
+              <span className="shrink-0 text-caption text-text-secondary">{f.label}</span>
               <input
                 value={row.details[f.key] ?? ''}
                 onChange={(e) => onDetail(f.key, e.target.value)}
@@ -826,7 +826,7 @@ function ManualRow({
             </label>
           ))}
           {showConversion && (
-            <span className="ml-auto text-xs text-text-secondary">
+            <span className="ml-auto text-caption text-text-secondary">
               = {formatHkd(rowBaseHkd)}
             </span>
           )}
@@ -867,7 +867,7 @@ function InsuranceRows({
         if (group.length === 0) return null
         return (
           <div key={provider}>
-            <p className="bg-surface-alt px-3 py-1 text-[11px] uppercase tracking-wide text-text-secondary">
+            <p className="bg-surface-alt px-3 py-1 text-section uppercase tracking-wide text-text-secondary">
               {providerLabel(providers, provider)}
             </p>
             {group.map((r) => (
@@ -881,15 +881,15 @@ function InsuranceRows({
                 className="flex w-full items-center gap-2 border-b border-border px-3 py-2 text-left last:border-b-0 active:bg-input/40"
               >
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[15px] text-text-primary">
+                  <span className="block truncate text-body text-text-primary">
                     {r.name}
                   </span>
-                  <span className="block truncate text-xs text-text-secondary">
+                  <span className="block truncate text-caption text-text-secondary">
                     {r.details.policy_number} · yr {r.details.policy_year}
                     {r.details.as_of_year ? ` · as of yr ${r.details.as_of_year}` : ''}
                   </span>
                 </span>
-                <span className="shrink-0 text-sm text-text-secondary">
+                <span className="shrink-0 text-body text-text-secondary">
                   {formatHkd(rowBase(r))}
                 </span>
               </button>

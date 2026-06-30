@@ -50,6 +50,7 @@ create table public.profile (
   protein_target_g      numeric, -- manual override; null = use DRI
   activity_factor       numeric not null default 1.4,
   units                 text not null default 'metric' check (units in ('metric', 'imperial')),
+  font_size             text not null default 'default' check (font_size in ('default', 'large', 'larger')), -- UI Dynamic Type preset (cross-device)
   highlighted_nutrients text[] not null default '{}', -- 8 keys for the Diary grid
   visible_nutrients     text[] not null default '{}', -- keys shown on Dashboard/Daily Report
   food_importer_enabled boolean not null default true, -- surfaces the Wellness CSV food importer in Settings

@@ -159,8 +159,8 @@ export function InsurancePolicies() {
         </FilterPanel>
       )}
 
-      {loading && <p className="text-sm text-text-secondary">Loading…</p>}
-      {error && <p className="text-sm text-danger">Couldn’t load your policies.</p>}
+      {loading && <p className="text-body text-text-secondary">Loading…</p>}
+      {error && <p className="text-body text-danger">Couldn’t load your policies.</p>}
       {!loading && !error && items.length === 0 && (
         <EmptyState
           title="No insurance policies yet"
@@ -175,7 +175,7 @@ export function InsurancePolicies() {
       {!loading && !error && items.length > 0 && (
         <div className="divide-y divide-border overflow-hidden rounded-card border border-border bg-surface">
           {view.length === 0 ? (
-            <p className="px-4 py-6 text-center text-sm text-text-tertiary">
+            <p className="px-4 py-6 text-center text-body text-text-tertiary">
               No matches.
             </p>
           ) : (
@@ -188,14 +188,14 @@ export function InsurancePolicies() {
                   className="flex w-full items-center gap-3 px-3 py-2.5 text-left active:bg-input/40"
                 >
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[15px] text-text-primary">
+                    <span className="block truncate text-body text-text-primary">
                       {policy.policy_name || policy.policy_number}
                     </span>
-                    <span className="block truncate text-xs text-text-secondary">
+                    <span className="block truncate text-caption text-text-secondary">
                       {policy.policy_number}
                       {policy.start_date ? ` · ${formatFullDate(policy.start_date)}` : ''}
                     </span>
-                    <span className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-text-tertiary">
+                    <span className="mt-1 flex flex-wrap items-center gap-1.5 text-caption text-text-tertiary">
                       <span>{providerLabel(providers, policy.provider)}</span>
                       {policy.termination_kind === 'surrendered' && (
                         <StatusChip

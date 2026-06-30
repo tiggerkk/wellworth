@@ -14,7 +14,7 @@ Dark, calm. These tokens are taken directly from the approved wireframes — mat
 | `text-primary`     | `#e8eaf0`                | Primary text                                                                                                                                                                                              |
 | `text-secondary`   | `#9aa3b5`                | Labels, captions, inactive                                                                                                                                                                                |
 | `text-muted`       | `#c2c7d4`                | Secondary values                                                                                                                                                                                          |
-| `text-tertiary`    | `#5b6172`                | Disabled / future dates                                                                                                                                                                                   |
+| `text-tertiary`    | `#7a8294`                | Hints / disabled / future dates (lightened from `#5b6172` for readability — still below `secondary`)                                                                                                      |
 | `accent` (blue)    | `#5ba3f5`                | Brand, active tab, links, energy-negative                                                                                                                                                                 |
 | `favorite` (rose)  | `#e06aa0`                | Filled favorite heart (decoupled from `accent`)                                                                                                                                                           |
 | `positive` (teal)  | `#5dcaa5`                | Add `+`, activity/supplement accents, "food logged" dot                                                                                                                                                   |
@@ -43,8 +43,30 @@ _not_ the primary-button color; it's for emphasis, active states, and energy.
 ## Typography
 
 - System sans (`-apple-system`/SF Pro; Inter as a web fallback).
-- Screen title 18 / 500. Modal title 17 / 500. Body 15. Secondary 12–13.
-- Section labels: 11px, UPPERCASE, letter-spacing 0.08em, color `text-secondary`.
+- **One font-size scale — the `@theme` `--text-*` tokens in `src/index.css`.** Sizes are in `rem`, so
+  they ride the **`--font-scale`** lever on `<html>` (`font-size: calc(16px * var(--font-scale))`). The
+  Settings **Font Size** preset just sets `--font-scale` (1 / 1.15 / 1.30) and the whole UI grows —
+  text (rem) and icons (a `.tabler-icon` transform) together (Dynamic Type; see `02_tech_spec.md` F23).
+- **Never hardcode `text-[Npx]`, `text-xs/sm/lg`, etc. — pick a role token.** Each role = one blessed
+  (size · color · weight) recipe:
+
+  | role token     | px @1× | recipe (size + color [+ weight])                                                  | used for                                   |
+  | -------------- | ------ | --------------------------------------------------------------------------------- | ------------------------------------------ |
+  | `text-title`   | 18     | `text-title font-medium text-text-primary`                                        | screen / sheet titles                      |
+  | `text-heading` | 17     | `text-heading font-medium text-text-primary`                                      | entry & modal headers                      |
+  | `text-field`   | 16     | baked into `.field-control` (iOS auto-zoom floor, F21)                            | form inputs                                |
+  | `text-body`    | 15     | `text-body text-text-primary` (row titles); `… text-text-secondary` (muted)       | body, row titles, button text              |
+  | `text-label`   | 13     | `text-label text-text-primary` / chip body                                        | compact labels, chips                      |
+  | `text-caption` | 12     | `text-caption text-text-secondary` (label/caption); `… text-text-tertiary` (hint) | captions, field labels, hints, ResultCount |
+  | `text-section` | 11     | `text-section font-medium uppercase tracking-[0.08em] text-text-secondary`        | section labels, status chips               |
+
+- Large display numerals (hero stats) may use Tailwind's `text-xl`/`2xl`/`3xl` — these are rem-based
+  and scale with the lever too; they're outside the 7-role chrome scale.
+- Color stays a **separate** `text-text-*` utility (don't fold color into the size token). Text colors:
+  `text-primary` body, `text-secondary` muted/labels, `text-tertiary` hints/disabled (lightened to
+  `#7a8294` for readability), `text-muted` trailing values. **Placeholders** are `text-text-secondary`
+  app-wide (baked into `.field-control`; `SearchBar`/`TagInput`/`PinInput` set it directly) — never
+  `text-tertiary` (too dim).
 
 ## Date formatting (one source of truth — `src/lib/date.ts`)
 
@@ -80,9 +102,9 @@ the Shows/Books exception above — no weekday is ever shown.
   inside the filter panel). A `size` prop (`compact` default / `field`) sizes it to the
   **`.field-control`** height so it aligns with form inputs on an entry screen.
 - **`.field-control`** (CSS class in `src/index.css`) — the **single source of truth for a single-line
-  form/filter field's chrome + height** (`rounded-input bg-input px-3 py-2 text-[16px]` via `@apply`).
-  Font is **16px** (not 15px) so a focused field never triggers iOS Safari's auto-zoom — see F21 in
-  `02_tech_spec.md`; any new focusable text input must stay ≥16px.
+  form/filter field's chrome + height** (`rounded-input bg-input px-3 py-2 text-field` via `@apply`).
+  Font is **`text-field` (16px)** (not 15px) so a focused field never triggers iOS Safari's auto-zoom
+  — see F21 in `02_tech_spec.md`; any new focusable text input must stay ≥16px.
   Use it for **every** `<input>`/`<button>`/`<select>`/`<textarea>` field app-wide (compose with
   `w-full`/`flex-1`/`w-NN` for width, `text-right`/`text-left` for alignment, `block`,
   `resize-none`, `placeholder:*`); per-screen `inputClass`/`inputCls` constants are just
@@ -93,10 +115,10 @@ the Shows/Books exception above — no weekday is ever shown.
   **`SearchBar`** already render at it, and **`SegmentedTabs`** takes `size="field"`. So a row mixing an
   input, a dropdown, a segmented control and a date button all line up. **Never re-spell the
   px/py/text/bg of a field in a screen** — change the height in one place here.
-- **Field labels** are uniformly **`text-xs text-text-secondary`** (12px) — the small caption above an
-  input (`mb-1 …`) or the wrapping `<label>`. Distinct from **section labels** (11px UPPERCASE
-  `tracking-[0.08em]`) and muted captions (`text-text-tertiary`). Don't use `text-[11px]`/`text-sm` for
-  a field label.
+- **Field labels** are uniformly **`text-caption text-text-secondary`** (12px) — the small caption above
+  an input (`mb-1 …`) or the wrapping `<label>`. Distinct from **section labels** (`text-section`, 11px
+  UPPERCASE `tracking-[0.08em]`) and muted captions (`text-text-tertiary`). Don't use
+  `text-section`/`text-body` for a field label.
 - **GroupHeader** — collapsible diary-group header: expand chevron · category icon · title · kcal
   subtotal (kcal next to the title) · ⟨spacer⟩ · **Delete · Copy · Paste · Add** action icons. Delete
   is a **`ConfirmDeleteAction`** (inline `Delete? ✓ ✗`); Delete/Copy disable on an empty group; Paste
@@ -299,6 +321,12 @@ food = apple, supplement = pill, activity = run/karate/barbell, energy = flame/f
 nav = chart-bar / notebook / apple / settings, delete = trash, favorite = heart, scan = barcode.
 Form header actions: delete = `IconTrash`, reset = `IconArrowBackUp` (undo), create = `IconPlus`,
 save = `IconDeviceFloppy`, search = `IconSearch`, source link = `IconLink`, TMDB refresh = `IconRefresh`.
+
+**Icon sizing & Dynamic Type:** keep passing a px `size={N}` per the wireframe scale (13/16/18/22/40…).
+Icons **scale with the font-size preset automatically** — a global `.tabler-icon { transform: scale(…) }`
+keyed off the `<html>` `data-font-scale` attribute (tech-spec F23) enlarges every Tabler glyph at the
+Large/Larger presets. It's a `transform` (not width/height), so the icon's layout box is unchanged —
+no extra wrap pressure; you don't need to do anything per-icon.
 
 **Diary group category icons** (in the group headers) use the `cat-*` color tokens above:
 Breakfast/Lunch/Dinner = red apple (`cat-meal`), Snacks = orange cookie (`cat-snack`),

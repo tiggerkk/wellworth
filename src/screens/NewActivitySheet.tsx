@@ -62,9 +62,9 @@ export function NewActivitySheet() {
 
   return (
     <Sheet variant="full" label={isEdit ? 'Edit activity' : 'New activity'}>
-      {loading && <p className="p-4 text-sm text-text-secondary">Loading…</p>}
+      {loading && <p className="p-4 text-body text-text-secondary">Loading…</p>}
       {(error || (!loading && !initial)) && (
-        <p className="p-4 text-sm text-danger">Couldn’t load this item.</p>
+        <p className="p-4 text-body text-danger">Couldn’t load this item.</p>
       )}
       {initial && <ActivityForm id={id} initial={initial} />}
     </Sheet>
@@ -168,7 +168,7 @@ function ActivityForm({
         <button onClick={() => navigate(-1)} aria-label="Close">
           <IconX size={22} className="text-text-secondary" />
         </button>
-        <h1 className="flex-1 truncate text-[17px] font-medium text-text-primary">
+        <h1 className="flex-1 truncate text-heading font-medium text-text-primary">
           {id ? 'Edit Activity' : 'New Activity'}
         </h1>
         <EntryHeaderActions
@@ -183,7 +183,7 @@ function ActivityForm({
       </header>
 
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
-        <label className="text-xs text-text-secondary">
+        <label className="text-caption text-text-secondary">
           Activity Name
           <input
             value={name}
@@ -192,7 +192,7 @@ function ActivityForm({
           />
         </label>
 
-        <label className="text-xs text-text-secondary">
+        <label className="text-caption text-text-secondary">
           Description (Optional)
           <input
             value={description}
@@ -202,7 +202,7 @@ function ActivityForm({
         </label>
 
         <div>
-          <p className="mb-1 text-xs text-text-secondary">Logging Template</p>
+          <p className="mb-1 text-caption text-text-secondary">Logging Template</p>
           <SegmentedTabs
             value={template}
             onChange={setTemplate}
@@ -213,7 +213,7 @@ function ActivityForm({
           />
         </div>
 
-        <label className="text-xs text-text-secondary">
+        <label className="text-caption text-text-secondary">
           Default Duration (Minutes)
           <input
             type="number"
@@ -231,7 +231,7 @@ function ActivityForm({
 
         {/* MET by effort + default effort selector */}
         <div>
-          <p className="mb-1 text-xs text-text-secondary">
+          <p className="mb-1 text-caption text-text-secondary">
             MET by Effort (fill at least one level; the default effort must have a value)
           </p>
           <div className="flex flex-col gap-2">
@@ -241,16 +241,16 @@ function ActivityForm({
                 <div key={level.key} className="flex items-center gap-2">
                   <button
                     onClick={() => setDefaultEffort(level.key)}
-                    className={`flex-1 rounded-input border px-3 py-2 text-left text-[15px] ${
+                    className={`flex-1 rounded-input border px-3 py-2 text-left text-body ${
                       active
                         ? 'border-accent bg-input text-text-primary'
                         : 'border-border bg-surface-alt text-text-secondary'
                     }`}
                   >
                     {level.label}{' '}
-                    <span className="text-xs text-text-tertiary">{level.range}</span>
+                    <span className="text-caption text-text-tertiary">{level.range}</span>
                     {active && (
-                      <span className="ml-1 text-xs text-accent">· default</span>
+                      <span className="ml-1 text-caption text-accent">· default</span>
                     )}
                   </button>
                   <input
@@ -269,7 +269,7 @@ function ActivityForm({
             })}
           </div>
           {anyMet && !defaultHasMet && (
-            <p className="mt-1 text-xs text-danger">
+            <p className="mt-1 text-caption text-danger">
               Set a MET for the default effort, or choose a default you’ve filled in.
             </p>
           )}
@@ -277,7 +277,7 @@ function ActivityForm({
 
         {/* Icon picker */}
         <div>
-          <p className="mb-1 text-xs text-text-secondary">Icon</p>
+          <p className="mb-1 text-caption text-text-secondary">Icon</p>
           <div className="flex flex-wrap gap-2">
             {Object.keys(ACTIVITY_ICONS).map((iconName) => {
               const Icon = resolveActivityIcon(iconName)

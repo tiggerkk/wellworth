@@ -60,9 +60,11 @@ export function MedicalDashboard() {
 
   return (
     <div className="flex min-h-full flex-col pb-4 pt-2">
-      {loading && <p className="px-4 py-6 text-sm text-text-secondary">Loading…</p>}
+      {loading && <p className="px-4 py-6 text-body text-text-secondary">Loading…</p>}
       {error && (
-        <p className="px-4 py-6 text-sm text-danger">Couldn’t load your medical data.</p>
+        <p className="px-4 py-6 text-body text-danger">
+          Couldn’t load your medical data.
+        </p>
       )}
 
       {isEmpty && (
@@ -79,7 +81,7 @@ export function MedicalDashboard() {
           {/* Trends — sparkline grid */}
           {tracked.length > 0 && (
             <section>
-              <h2 className="mb-2 px-1 text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
+              <h2 className="mb-2 px-1 text-section font-medium uppercase tracking-[0.08em] text-text-secondary">
                 Trends
               </h2>
               <div className="grid grid-cols-2 gap-2">
@@ -94,7 +96,7 @@ export function MedicalDashboard() {
           {recentReports.length > 0 && (
             <Link
               to={routes.medical.detail(recentReports[0]!.id)}
-              className="flex items-center justify-center gap-2 rounded-card border border-accent/40 bg-accent/10 px-4 py-2.5 text-[15px] font-medium text-accent active:bg-accent/20"
+              className="flex items-center justify-center gap-2 rounded-card border border-accent/40 bg-accent/10 px-4 py-2.5 text-body font-medium text-accent active:bg-accent/20"
             >
               <IconReportMedical size={18} /> Latest Report
             </Link>
@@ -135,13 +137,13 @@ function SparkCard({ trend, onOpen }: { trend: TrackedTrend; onOpen: () => void 
       onClick={onOpen}
       className="flex flex-col gap-0.5 rounded-card border border-border bg-surface p-3 text-left active:bg-input/40"
     >
-      <span className="truncate text-[13px] text-text-secondary">{trend.name}</span>
+      <span className="truncate text-label text-text-secondary">{trend.name}</span>
       <span
-        className={`text-lg font-semibold ${last.flag ? MEDICAL_FLAG_CLASS[last.flag] : 'text-text-primary'}`}
+        className={`text-title font-semibold ${last.flag ? MEDICAL_FLAG_CLASS[last.flag] : 'text-text-primary'}`}
       >
         {last.value}
         {trend.unit && (
-          <span className="ml-1 text-xs font-normal text-text-secondary">
+          <span className="ml-1 text-caption font-normal text-text-secondary">
             {trend.unit}
           </span>
         )}
@@ -190,10 +192,10 @@ function ReportsTimeline({ reports }: { reports: MedicalReportRow[] }) {
             className="flex items-center gap-3 border-b border-border px-4 py-2.5 last:border-b-0 active:bg-input/40"
           >
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[15px] text-text-primary">
+              <p className="truncate text-body text-text-primary">
                 {formatFullDate(rep.report_date)}
               </p>
-              <p className="truncate text-xs text-text-secondary">{secondary}</p>
+              <p className="truncate text-caption text-text-secondary">{secondary}</p>
             </div>
             <IconChevronRight size={18} className="shrink-0 text-text-tertiary" />
           </Link>
@@ -202,7 +204,7 @@ function ReportsTimeline({ reports }: { reports: MedicalReportRow[] }) {
       {reports.length > recent.length && (
         <Link
           to={routes.medical.reports}
-          className="block px-4 py-3 text-[15px] text-accent active:bg-input/40"
+          className="block px-4 py-3 text-body text-accent active:bg-input/40"
         >
           View all reports
         </Link>
@@ -246,15 +248,17 @@ function ExpandedTrend({
       >
         <div className="flex items-center gap-3 border-b border-border px-4 py-3">
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[15px] font-medium text-text-primary">
+            <p className="truncate text-body font-medium text-text-primary">
               {trend.name}
             </p>
-            {trend.unit && <p className="text-xs text-text-secondary">{trend.unit}</p>}
+            {trend.unit && (
+              <p className="text-caption text-text-secondary">{trend.unit}</p>
+            )}
           </div>
           <div className="relative">
             <button
               onClick={() => setMenuOpen((o) => !o)}
-              className="flex items-center gap-1 rounded-input bg-input px-2.5 py-1.5 text-sm text-text-primary"
+              className="flex items-center gap-1 rounded-input bg-input px-2.5 py-1.5 text-body text-text-primary"
             >
               {range.label}
               <IconChevronDown size={15} className="text-text-secondary" />
@@ -266,7 +270,7 @@ function ExpandedTrend({
                   onClick={() => setMenuOpen(false)}
                   aria-hidden
                 />
-                <div className="absolute right-0 z-20 mt-1 w-24 overflow-hidden rounded-card border border-border bg-surface text-sm shadow-lg">
+                <div className="absolute right-0 z-20 mt-1 w-24 overflow-hidden rounded-card border border-border bg-surface text-body shadow-lg">
                   {MEDICAL_RANGES.map((r) => (
                     <button
                       key={r.key}
@@ -292,13 +296,13 @@ function ExpandedTrend({
 
         <div className="px-2 py-4">
           {points.length === 0 ? (
-            <p className="py-10 text-center text-sm text-text-secondary">
+            <p className="py-10 text-center text-body text-text-secondary">
               No readings in this window.
             </p>
           ) : (
             <Suspense
               fallback={
-                <p className="py-10 text-center text-sm text-text-secondary">
+                <p className="py-10 text-center text-body text-text-secondary">
                   Loading chart…
                 </p>
               }

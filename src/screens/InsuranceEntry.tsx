@@ -73,7 +73,7 @@ function blankDraft(providers: InsuranceProviderConfig[]): PolicyDraft {
 const inputClass = 'field-control w-full'
 
 const pillBtn =
-  'rounded-pill border border-border bg-input px-3 py-1.5 text-xs font-medium'
+  'rounded-pill border border-border bg-input px-3 py-1.5 text-caption font-medium'
 const greyPill = `${pillBtn} text-text-secondary` // Mark Surrendered · Cancel · Un-mark
 const bluePill = `${pillBtn} text-accent` // Mark Matured
 
@@ -125,9 +125,9 @@ export function InsuranceEntry() {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      {loading && <p className="p-4 text-sm text-text-secondary">Loading…</p>}
+      {loading && <p className="p-4 text-body text-text-secondary">Loading…</p>}
       {(error || (!loading && !initial)) && (
-        <p className="p-4 text-sm text-danger">Couldn’t load this policy.</p>
+        <p className="p-4 text-body text-danger">Couldn’t load this policy.</p>
       )}
       {!loading && initial && (
         <PolicyForm
@@ -401,12 +401,12 @@ function PolicyForm({
         >
           <IconX size={22} />
         </button>
-        <h1 className="flex-1 truncate text-[17px] font-medium text-text-primary">
+        <h1 className="flex-1 truncate text-heading font-medium text-text-primary">
           {id ? 'Edit Insurance' : 'New Insurance'}
         </h1>
         <button
           onClick={() => setImportOpen(true)}
-          className="flex shrink-0 items-center gap-1.5 pl-2 text-sm text-accent"
+          className="flex shrink-0 items-center gap-1.5 pl-2 text-body text-accent"
         >
           <IconUpload size={16} /> Schedule
         </button>
@@ -423,7 +423,7 @@ function PolicyForm({
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
         <div className="flex gap-3">
           <div className="min-w-0 flex-1">
-            <p className="mb-1 text-xs text-text-secondary">Provider</p>
+            <p className="mb-1 text-caption text-text-secondary">Provider</p>
             <SelectMenu
               value={draft.provider}
               options={providerOptions}
@@ -434,7 +434,7 @@ function PolicyForm({
             />
           </div>
           <div className="shrink-0">
-            <p className="mb-1 text-xs text-text-secondary">Currency</p>
+            <p className="mb-1 text-caption text-text-secondary">Currency</p>
             <SegmentedTabs
               value={draft.currency}
               options={CCY_OPTIONS}
@@ -445,7 +445,7 @@ function PolicyForm({
         </div>
 
         <div className="flex gap-3">
-          <label className="flex-1 text-xs text-text-secondary">
+          <label className="flex-1 text-caption text-text-secondary">
             Policy Number
             <input
               value={draft.policy_number}
@@ -454,7 +454,7 @@ function PolicyForm({
             />
           </label>
           <div className="flex-1">
-            <p className="mb-1 text-xs text-text-secondary">Start Date</p>
+            <p className="mb-1 text-caption text-text-secondary">Start Date</p>
             <button onClick={() => setCal('start')} className={`text-left ${inputClass}`}>
               {draft.start_date ? (
                 formatFullDate(draft.start_date)
@@ -465,7 +465,7 @@ function PolicyForm({
           </div>
         </div>
 
-        <label className="text-xs text-text-secondary">
+        <label className="text-caption text-text-secondary">
           Policy Name
           <input
             value={draft.policy_name}
@@ -474,7 +474,7 @@ function PolicyForm({
           />
         </label>
 
-        <label className="text-xs text-text-secondary">
+        <label className="text-caption text-text-secondary">
           Notes
           <textarea
             value={draft.notes}
@@ -489,13 +489,13 @@ function PolicyForm({
           {activeKind ? (
             <>
               <div className="mb-2 flex items-center justify-between">
-                <p className="text-[11px] uppercase tracking-[0.08em] text-text-secondary">
+                <p className="text-section uppercase tracking-[0.08em] text-text-secondary">
                   {isMaturity ? 'Maturity' : 'Surrender'}
                 </p>
                 {isTerminated ? (
                   confirmUnmark ? (
                     <div className="flex items-center gap-1">
-                      <span className="text-xs text-text-secondary">
+                      <span className="text-caption text-text-secondary">
                         {isMaturity ? 'Un-mature?' : 'Un-surrender?'}
                       </span>
                       <button
@@ -527,7 +527,7 @@ function PolicyForm({
               <div className="flex flex-col gap-3 rounded-card border border-border bg-surface p-3">
                 <div className="flex gap-3">
                   <div className="flex-1">
-                    <p className="mb-1 text-xs text-text-secondary">
+                    <p className="mb-1 text-caption text-text-secondary">
                       {isMaturity ? 'Maturity Date' : 'Surrender Date'}
                     </p>
                     <button
@@ -542,7 +542,7 @@ function PolicyForm({
                     </button>
                   </div>
                   <div className="flex-1">
-                    <p className="mb-1 text-xs text-text-secondary">
+                    <p className="mb-1 text-caption text-text-secondary">
                       {isMaturity
                         ? 'Maturity Effective From'
                         : 'Surrender Effective From'}
@@ -559,7 +559,7 @@ function PolicyForm({
                     </button>
                   </div>
                 </div>
-                <label className="text-xs text-text-secondary">
+                <label className="text-caption text-text-secondary">
                   Actual Proceeds
                   <input
                     type="number"
@@ -570,7 +570,7 @@ function PolicyForm({
                     className={`no-spinner mt-1 ${inputClass}`}
                   />
                 </label>
-                <p className="text-xs text-text-tertiary">
+                <p className="text-caption text-text-tertiary">
                   Enter the cash received {isMaturity ? 'into' : 'as'} Cash in Monthly
                   Entry.
                 </p>
@@ -578,7 +578,7 @@ function PolicyForm({
             </>
           ) : (
             <div className="flex items-center justify-between">
-              <p className="text-[11px] uppercase tracking-[0.08em] text-text-secondary">
+              <p className="text-section uppercase tracking-[0.08em] text-text-secondary">
                 Termination
               </p>
               <div className="flex items-center gap-2">
@@ -595,16 +595,16 @@ function PolicyForm({
 
         {/* SCHEDULE */}
         <div>
-          <p className="mb-2 text-[11px] uppercase tracking-[0.08em] text-text-secondary">
+          <p className="mb-2 text-section uppercase tracking-[0.08em] text-text-secondary">
             Schedule
           </p>
           {!id ? (
-            <p className="rounded-card border border-dashed border-border px-4 py-6 text-center text-sm text-text-tertiary">
+            <p className="rounded-card border border-dashed border-border px-4 py-6 text-center text-body text-text-tertiary">
               Save the policy, then import a schedule — or use the Schedule button above
               to create it from a file.
             </p>
           ) : schedules.length === 0 ? (
-            <p className="rounded-card border border-dashed border-border px-4 py-6 text-center text-sm text-text-tertiary">
+            <p className="rounded-card border border-dashed border-border px-4 py-6 text-center text-body text-text-tertiary">
               No schedule versions yet. Use the Import Schedule button above.
             </p>
           ) : (
@@ -648,7 +648,7 @@ function PolicyForm({
               </div>
               {selected && (
                 <div className="overflow-hidden rounded-card border border-border bg-surface">
-                  <div className="grid grid-cols-5 gap-2 border-b border-border px-3 py-2 text-[11px] uppercase tracking-wide text-text-secondary">
+                  <div className="grid grid-cols-5 gap-2 border-b border-border px-3 py-2 text-section uppercase tracking-wide text-text-secondary">
                     <span>Age</span>
                     <span>Yr</span>
                     <span className="text-right">Premium</span>
@@ -664,7 +664,7 @@ function PolicyForm({
                     return (
                       <div
                         key={p.age}
-                        className="grid grid-cols-5 gap-2 border-b border-border px-3 py-1.5 text-[13px] text-text-primary last:border-b-0"
+                        className="grid grid-cols-5 gap-2 border-b border-border px-3 py-1.5 text-label text-text-primary last:border-b-0"
                       >
                         <span>{p.age}</span>
                         <span className="text-text-secondary">{p.policy_year}</span>
@@ -777,13 +777,13 @@ function ImportScheduleOverlay({
         <button onClick={onClose} aria-label="Close">
           <IconX size={22} className="text-text-secondary" />
         </button>
-        <h1 className="text-[17px] font-medium text-text-primary">
+        <h1 className="text-heading font-medium text-text-primary">
           Import Policy Schedule
         </h1>
       </header>
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
         {!policyNumber && (
-          <p className="text-xs text-warning">
+          <p className="text-caption text-warning">
             Enter the Policy Number first — the file must match it.
           </p>
         )}
@@ -800,14 +800,14 @@ function ImportScheduleOverlay({
         />
         <button
           onClick={() => inputRef.current?.click()}
-          className="flex items-center justify-center gap-2 rounded-input border border-border bg-input px-4 py-3 text-[15px] text-text-primary"
+          className="flex items-center justify-center gap-2 rounded-input border border-border bg-input px-4 py-3 text-body text-text-primary"
         >
           <IconUpload size={18} />
           {fileName ? 'Choose a different file' : 'Choose CSV File'}
         </button>
 
         {parseErrors.length > 0 && (
-          <ul className="flex flex-col gap-1 text-xs text-danger">
+          <ul className="flex flex-col gap-1 text-caption text-danger">
             {parseErrors.map((m, i) => (
               <li key={i}>{m}</li>
             ))}
@@ -816,18 +816,18 @@ function ImportScheduleOverlay({
 
         {parsed && (
           <div className="flex flex-col gap-3">
-            <div className="rounded-card border border-border bg-surface px-4 py-3 text-sm text-text-primary">
+            <div className="rounded-card border border-border bg-surface px-4 py-3 text-body text-text-primary">
               {parsed.policy_number} · {parsed.points.length} schedule point
               {parsed.points.length === 1 ? '' : 's'}
               {parsed.termination_kind === 'matured' && ' · auto-detected Matured'}
             </div>
             {mismatch && (
-              <p className="text-xs text-danger">
+              <p className="text-caption text-danger">
                 File doesn’t match this policy’s provider / number.
               </p>
             )}
             <div>
-              <p className="mb-1 text-xs uppercase tracking-[0.08em] text-text-secondary">
+              <p className="mb-1 text-caption uppercase tracking-[0.08em] text-text-secondary">
                 Apply as
               </p>
               <SelectMenu

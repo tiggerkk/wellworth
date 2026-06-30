@@ -26,7 +26,7 @@ export function DailyReportSheet() {
         <button onClick={() => navigate(-1)} aria-label="Close">
           <IconX size={22} className="text-text-secondary" />
         </button>
-        <h1 className="text-[17px] font-medium text-text-primary">
+        <h1 className="text-heading font-medium text-text-primary">
           Daily Report · {formatFullDate(day)}
         </h1>
       </header>

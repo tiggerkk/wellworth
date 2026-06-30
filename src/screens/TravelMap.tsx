@@ -97,8 +97,8 @@ export function TravelMap() {
     }
   }
 
-  if (loading) return <p className="p-4 text-sm text-text-secondary">Loading…</p>
-  if (error) return <p className="p-4 text-sm text-danger">Couldn’t load the map.</p>
+  if (loading) return <p className="p-4 text-body text-text-secondary">Loading…</p>
+  if (error) return <p className="p-4 text-body text-danger">Couldn’t load the map.</p>
 
   if (trips.length === 0) {
     return (
@@ -116,7 +116,7 @@ export function TravelMap() {
   return (
     <div className="relative flex h-full flex-col">
       <div className="flex items-center justify-between border-b border-border px-4 py-2">
-        <div className="flex items-center gap-3 text-[11px] text-text-secondary">
+        <div className="flex items-center gap-3 text-section text-text-secondary">
           <span className="inline-flex items-center gap-1">
             <Dot color="#e8623c" /> Visited
           </span>
@@ -124,7 +124,7 @@ export function TravelMap() {
             <Dot color="#9aa3b5" /> Planned
           </span>
         </div>
-        <label className="flex items-center gap-2 text-xs text-text-secondary">
+        <label className="flex items-center gap-2 text-caption text-text-secondary">
           Region fill
           <Toggle checked={showFill} onChange={setShowFill} label="Region fill" />
         </label>
@@ -133,7 +133,7 @@ export function TravelMap() {
       <div className="relative flex-1">
         <Suspense
           fallback={
-            <div className="grid h-full place-items-center text-sm text-text-secondary">
+            <div className="grid h-full place-items-center text-body text-text-secondary">
               Loading map…
             </div>
           }
@@ -148,7 +148,7 @@ export function TravelMap() {
         </Suspense>
 
         {cities.length === 0 && (
-          <div className="pointer-events-none absolute inset-x-4 top-3 z-[1100] rounded-card border border-border bg-surface/90 px-3 py-2 text-center text-xs text-text-secondary">
+          <div className="pointer-events-none absolute inset-x-4 top-3 z-[1100] rounded-card border border-border bg-surface/90 px-3 py-2 text-center text-caption text-text-secondary">
             No mapped cities yet — add coordinates via the city picker’s “Look up online”.
           </div>
         )}
@@ -156,7 +156,7 @@ export function TravelMap() {
         {selected && (
           <div className="absolute inset-x-3 bottom-3 z-[1100] overflow-hidden rounded-card border border-border bg-surface shadow-lg">
             <div className="flex items-center justify-between border-b border-border px-3 py-2">
-              <span className="text-[15px] font-medium text-text-primary">
+              <span className="text-body font-medium text-text-primary">
                 {selected.city}
               </span>
               <button
@@ -173,7 +173,7 @@ export function TravelMap() {
                 onClick={() => navigate(routes.travel.edit(t.id))}
                 className="flex w-full items-center gap-2 border-b border-border px-3 py-2.5 text-left last:border-b-0 active:bg-input/40"
               >
-                <span className="flex-1 truncate text-[15px] text-text-primary">
+                <span className="flex-1 truncate text-body text-text-primary">
                   {t.name}
                 </span>
                 <StatusChip

@@ -32,7 +32,7 @@ export function NutrientBar({
 
   return (
     <div className="py-2">
-      <div className="flex items-baseline justify-between gap-2 text-[13px]">
+      <div className="flex items-baseline justify-between gap-2 text-label">
         <span className="truncate text-text-primary">{label}</span>
         <span className="shrink-0 text-text-secondary">
           {!compact && (

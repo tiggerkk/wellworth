@@ -264,22 +264,22 @@ export function ImportBooksSheet() {
         <button onClick={() => navigate(-1)} aria-label="Close">
           <IconX size={22} className="text-text-secondary" />
         </button>
-        <h1 className="text-[17px] font-medium text-text-primary">Import Books</h1>
+        <h1 className="text-heading font-medium text-text-primary">Import Books</h1>
       </header>
 
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
         {done !== null ? (
           <div className="flex flex-col gap-2">
-            <p className="text-[15px] font-medium text-text-primary">
+            <p className="text-body font-medium text-text-primary">
               Imported {done.created + done.updated} book
               {done.created + done.updated === 1 ? '' : 's'} — {done.created} new,{' '}
               {done.updated} updated.
             </p>
-            <p className="text-sm text-text-secondary">They’re in your Library now.</p>
+            <p className="text-body text-text-secondary">They’re in your Library now.</p>
           </div>
         ) : (
           <>
-            <p className="text-sm text-text-secondary">
+            <p className="text-body text-text-secondary">
               Upload a CSV in the{' '}
               <code className="text-text-primary">books-import-template.csv</code> format
               (see <code className="text-text-primary">templates/</code>). Each row is
@@ -300,23 +300,23 @@ export function ImportBooksSheet() {
             />
             <button
               onClick={() => inputRef.current?.click()}
-              className="flex items-center justify-center gap-2 rounded-input border border-border bg-input px-4 py-3 text-[15px] text-text-primary"
+              className="flex items-center justify-center gap-2 rounded-input border border-border bg-input px-4 py-3 text-body text-text-primary"
             >
               <IconUpload size={18} />
               {fileName ? 'Choose a different file' : 'Choose CSV File'}
             </button>
             {fileName && (
-              <p className="text-xs text-text-secondary">
+              <p className="text-caption text-text-secondary">
                 Selected: <span className="text-text-primary">{fileName}</span>
               </p>
             )}
 
             {errs.length > 0 && (
               <div className="flex flex-col gap-1">
-                <p className="text-xs font-medium text-danger">
+                <p className="text-caption font-medium text-danger">
                   {errs.length} row{errs.length === 1 ? '' : 's'} skipped:
                 </p>
-                <ul className="flex flex-col gap-1 text-xs text-danger">
+                <ul className="flex flex-col gap-1 text-caption text-danger">
                   {errs.slice(0, MAX_MESSAGES).map((m, i) => (
                     <li key={i}>{m}</li>
                   ))}
@@ -328,14 +328,14 @@ export function ImportBooksSheet() {
             )}
 
             {progress && (
-              <p className="text-sm text-text-secondary">
+              <p className="text-body text-text-secondary">
                 Matching books… {progress.done}/{progress.total}
               </p>
             )}
 
             {resolved && rowCount > 0 && (
               <>
-                <div className="rounded-card border border-border bg-surface px-4 py-3 text-sm text-text-primary">
+                <div className="rounded-card border border-border bg-surface px-4 py-3 text-body text-text-primary">
                   Ready to import <strong>{rowCount}</strong> book
                   {rowCount === 1 ? '' : 's'}.
                   {(noMatch > 0 || review > 0) && (
@@ -381,7 +381,7 @@ export function ImportBooksSheet() {
               </>
             )}
 
-            {importError && <p className="text-xs text-danger">{importError}</p>}
+            {importError && <p className="text-caption text-danger">{importError}</p>}
           </>
         )}
       </div>

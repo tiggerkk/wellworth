@@ -129,9 +129,9 @@ export function TripExpensesPanel({ trip, userId }: Props) {
     }
   }
 
-  if (loading) return <p className="px-1 py-4 text-sm text-text-secondary">Loading…</p>
+  if (loading) return <p className="px-1 py-4 text-body text-text-secondary">Loading…</p>
   if (error)
-    return <p className="px-1 py-4 text-sm text-danger">Couldn’t load expenses.</p>
+    return <p className="px-1 py-4 text-body text-danger">Couldn’t load expenses.</p>
 
   return (
     <section className="flex flex-col gap-4">
@@ -142,7 +142,7 @@ export function TripExpensesPanel({ trip, userId }: Props) {
       </SecondaryButton>
 
       {expenses.length === 0 ? (
-        <p className="px-1 text-sm text-text-secondary">
+        <p className="px-1 text-body text-text-secondary">
           No expenses yet. The trip’s spend total lives here — stop costs are never
           summed.
         </p>
@@ -155,8 +155,8 @@ export function TripExpensesPanel({ trip, userId }: Props) {
                 key={t.currency}
                 className="flex items-center justify-between border-b border-border px-3 py-2 last:border-b-0"
               >
-                <span className="text-sm text-text-secondary">{t.currency}</span>
-                <span className="text-sm text-text-primary">
+                <span className="text-body text-text-secondary">{t.currency}</span>
+                <span className="text-body text-text-primary">
                   {formatMoney(t.cost, t.currency)}
                   {track && t.reimbursed > 0 && (
                     <span className="text-text-secondary">
@@ -168,8 +168,8 @@ export function TripExpensesPanel({ trip, userId }: Props) {
               </div>
             ))}
             <div className="flex items-center justify-between px-3 py-2.5">
-              <span className="text-[15px] font-medium text-text-primary">HKD total</span>
-              <span className="text-[15px] font-semibold text-text-primary">
+              <span className="text-body font-medium text-text-primary">HKD total</span>
+              <span className="text-body font-semibold text-text-primary">
                 {formatHkd(hkd.cost)}
                 {track && hkd.reimbursed > 0 && (
                   <span className="text-text-secondary"> · net {formatHkd(hkd.net)}</span>
@@ -177,7 +177,7 @@ export function TripExpensesPanel({ trip, userId }: Props) {
               </span>
             </div>
             {hkd.missing.length > 0 && (
-              <p className="border-t border-border px-3 py-2 text-xs text-warning">
+              <p className="border-t border-border px-3 py-2 text-caption text-warning">
                 No HKD rate for {hkd.missing.join(', ')} — excluded from the total. Fetch
                 or set it below.
               </p>
@@ -194,7 +194,7 @@ export function TripExpensesPanel({ trip, userId }: Props) {
                     key={c}
                     className="flex items-center justify-between gap-3 border-b border-border px-3 py-2 last:border-b-0"
                   >
-                    <span className="text-sm text-text-secondary">{c} → HKD</span>
+                    <span className="text-body text-text-secondary">{c} → HKD</span>
                     <input
                       key={`${c}:${r ?? ''}`}
                       type="number"
@@ -228,7 +228,7 @@ export function TripExpensesPanel({ trip, userId }: Props) {
               <div className="p-2">
                 <Suspense
                   fallback={
-                    <div className="grid h-[200px] place-items-center text-sm text-text-secondary">
+                    <div className="grid h-[200px] place-items-center text-body text-text-secondary">
                       Loading chart…
                     </div>
                   }
@@ -250,20 +250,20 @@ export function TripExpensesPanel({ trip, userId }: Props) {
                     className="flex w-full items-center gap-3 px-3 py-2.5 text-left active:bg-input/40"
                   >
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-[15px] text-text-primary">
+                      <div className="truncate text-body text-text-primary">
                         {e.description}
                       </div>
-                      <div className="truncate text-xs text-text-secondary">
+                      <div className="truncate text-caption text-text-secondary">
                         {e.expense_date ? `${formatMonthDay(e.expense_date)} · ` : ''}
                         {categoryLabel(categories, e.category)}
                       </div>
                     </div>
                     <div className="shrink-0 text-right">
-                      <div className="text-[15px] text-text-primary">
+                      <div className="text-body text-text-primary">
                         {formatMoney(e.cost, e.currency)}
                       </div>
                       {track && e.reimbursed_amount != null && (
-                        <div className="text-xs text-text-secondary">
+                        <div className="text-caption text-text-secondary">
                           net {formatMoney(net, e.currency)}
                         </div>
                       )}

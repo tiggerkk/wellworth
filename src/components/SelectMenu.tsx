@@ -55,7 +55,7 @@ export function SelectMenu<T extends string>({
         aria-label={ariaLabel}
         disabled={disabled}
         className={`flex w-full items-center justify-between gap-1 rounded-input bg-input ${
-          size === 'field' ? 'px-3 py-2 text-[15px]' : 'px-2.5 py-1.5 text-sm'
+          size === 'field' ? 'px-3 py-2 text-body' : 'px-2.5 py-1.5 text-body'
         } ${disabled ? 'text-text-tertiary' : 'text-text-primary'}`}
       >
         <span className="truncate">{current?.label ?? placeholder ?? value}</span>
@@ -69,7 +69,7 @@ export function SelectMenu<T extends string>({
             aria-hidden
           />
           <div
-            className={`absolute left-0 z-20 max-h-64 w-full min-w-36 overflow-y-auto rounded-card border border-border bg-surface text-sm shadow-lg ${
+            className={`absolute left-0 z-20 max-h-64 w-full min-w-36 overflow-y-auto rounded-card border border-border bg-surface text-body shadow-lg ${
               flipUp ? 'bottom-full mb-1' : 'mt-1'
             }`}
           >

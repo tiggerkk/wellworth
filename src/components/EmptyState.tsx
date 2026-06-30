@@ -21,10 +21,10 @@ export function EmptyState({ title, actionLabel, to, Icon }: EmptyStateProps) {
   return (
     <div className="flex min-h-[60vh] flex-1 flex-col items-center justify-center gap-3 px-4 text-center">
       {Icon && <Icon size={40} className="text-text-tertiary" />}
-      <p className="text-sm text-text-secondary">{title}</p>
+      <p className="text-body text-text-secondary">{title}</p>
       <Link
         to={to}
-        className="flex items-center gap-1 rounded-pill bg-input px-3 py-1.5 text-sm text-positive"
+        className="flex items-center gap-1 rounded-pill bg-input px-3 py-1.5 text-body text-positive"
       >
         <IconPlus size={16} /> {actionLabel.replace(/^\+\s*/, '')}
       </Link>

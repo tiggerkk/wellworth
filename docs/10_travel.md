@@ -63,11 +63,13 @@ literal **"Edit Trip"**.
   **Calendar date chip** (the date or "Add date" — writes `trip_day.day_date` and re-caches the
   trip's start/end) · spacer · **Delete** (a `ConfirmDeleteAction` — inline `Delete? ✓ ✗`, no browser
   dialog) · **Duplicate** (copy) · **Add Stop** (green `+`).
+  The day's **date chip** and the city sub-headers render at a slightly larger font (`text-sm` /
+  `text-[15px]`) for readability.
   When expanded, stops are grouped under **city-only sub-headers** for consecutive same-city stops;
   each run is a drag-reorder list (swipe-left on a stop reveals a Delete action that deletes on tap).
-  Each stop row:
-  `Type · description`, with inline **done / skipped** icon toggles on the right (tap the active one
-  to clear); skipped stops are struck through. Tap a stop to edit. **All Edit-Trip itinerary edits are
+  Each stop row leads with the **stop-type icon** (`StopTypeIcon`, replacing the type text) then the
+  description, with inline **done / skipped** icon toggles on the right (tap the active one to clear);
+  skipped stops are struck through. Tap a stop to edit. **All Edit-Trip itinerary edits are
   optimistic**: the builder keeps `days`/`stops` in local state, and every action — add/copy/delete a
   day, reorder days/stops, add/edit/delete a stop, the date picker, and the done/skipped toggle —
   mutates that state instantly and persists in the background **without** `bumpTravel()`, so none of
@@ -137,9 +139,10 @@ literal **"Edit Trip"**.
 
 ## Visual design (Travel-specific)
 
-- **Stop-type icons** (Tabler): Travel = plane/train (`IconPlane`/`IconTrain`), Visit = map-pin
-  (`IconMapPin`), Eat = kitchen tools (`IconToolsKitchen`), Shop = shopping bag
-  (`IconShoppingBag`), Stay = bed (`IconBed`), Other = dots.
+- **Stop-type icons** (Tabler, via the shared `StopTypeIcon` component): Travel = `IconTrain`,
+  Visit = `IconCamera`, Eat = `IconBowlChopsticks`, Shop = `IconBrandShopee`, Stay = `IconBed`,
+  Other = `IconCategory`. In the Edit-Trip itinerary, each stop row leads with this icon (replacing
+  the type **text**), followed by the description; the type still names the row via `aria-label`.
 - **Completion**: Done = a teal fill (`positive`); Skipped = a solid grey fill (`bg-text-secondary`)
   with the struck-through stop row.
 - **Trip cover**: a rounded image rendered `referrerpolicy="no-referrer"` (thumbnail in lists, larger

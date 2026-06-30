@@ -103,7 +103,7 @@ export function QuoteSourceLinkSheet({
               >
                 <Thumb url={c.thumbUrl} />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[15px] text-text-primary">
+                  <span className="block truncate text-body text-text-primary">
                     {c.title}
                     {c.year ? ` (${c.year})` : ''}
                   </span>
@@ -113,7 +113,7 @@ export function QuoteSourceLinkSheet({
                       className="bg-input text-text-secondary"
                     />
                     {c.authors.length > 0 && (
-                      <span className="truncate text-xs text-text-secondary">
+                      <span className="truncate text-caption text-text-secondary">
                         {c.authors.join(', ')}
                       </span>
                     )}
@@ -123,7 +123,7 @@ export function QuoteSourceLinkSheet({
             ))}
 
             {results.length === 0 && (
-              <p className="px-4 py-6 text-center text-sm text-text-tertiary">
+              <p className="px-4 py-6 text-center text-body text-text-tertiary">
                 {loading
                   ? 'Loading…'
                   : error

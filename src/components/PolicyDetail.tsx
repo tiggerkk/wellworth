@@ -82,8 +82,8 @@ export function PolicyDetail({
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <p className="text-[15px] text-text-primary">{policy.policy_name}</p>
-        <p className="text-xs text-text-secondary">
+        <p className="text-body text-text-primary">{policy.policy_name}</p>
+        <p className="text-caption text-text-secondary">
           {providerLabel ?? policy.provider} · {policy.policy_number} · {ccy}
         </p>
       </div>
@@ -94,8 +94,8 @@ export function PolicyDetail({
             key={m.label}
             className="flex items-center justify-between gap-3 px-4 py-2.5"
           >
-            <span className="text-xs text-text-secondary">{m.label}</span>
-            <span className={`text-[15px] ${m.valueClass ?? 'text-text-primary'}`}>
+            <span className="text-caption text-text-secondary">{m.label}</span>
+            <span className={`text-body ${m.valueClass ?? 'text-text-primary'}`}>
               {m.value}
             </span>
           </div>
@@ -103,11 +103,11 @@ export function PolicyDetail({
       </div>
 
       <div>
-        <p className="mb-2 text-[11px] uppercase tracking-[0.08em] text-text-secondary">
+        <p className="mb-2 text-section uppercase tracking-[0.08em] text-text-secondary">
           Schedule
         </p>
         <div className="overflow-hidden rounded-card border border-border bg-surface">
-          <div className="grid grid-cols-5 gap-2 border-b border-border px-3 py-2 text-[11px] uppercase tracking-wide text-text-secondary">
+          <div className="grid grid-cols-5 gap-2 border-b border-border px-3 py-2 text-section uppercase tracking-wide text-text-secondary">
             <span>Age</span>
             <span>Yr</span>
             <span className="text-right">Premium</span>
@@ -115,7 +115,7 @@ export function PolicyDetail({
             <span className="text-right">Gain %/Yr</span>
           </div>
           {series.length === 0 ? (
-            <p className="px-3 py-4 text-center text-sm text-text-tertiary">
+            <p className="px-3 py-4 text-center text-body text-text-tertiary">
               No schedule yet.
             </p>
           ) : (
@@ -128,7 +128,7 @@ export function PolicyDetail({
               return (
                 <div
                   key={p.age}
-                  className="grid grid-cols-5 gap-2 border-b border-border px-3 py-1.5 text-[13px] text-text-primary last:border-b-0"
+                  className="grid grid-cols-5 gap-2 border-b border-border px-3 py-1.5 text-label text-text-primary last:border-b-0"
                 >
                   <span>{p.age}</span>
                   <span className="text-text-secondary">{p.policyYear}</span>

@@ -80,7 +80,7 @@ export function MedicalResultCard({
             className={inputClass}
           />
         ) : (
-          <span className="min-w-0 flex-1 text-[15px] text-text-primary">
+          <span className="min-w-0 flex-1 text-body text-text-primary">
             {row.test_name}
           </span>
         )}
@@ -108,7 +108,7 @@ export function MedicalResultCard({
       <div className="flex gap-2">
         {showNumber && (
           <div className="flex-1">
-            <p className="mb-1 text-xs text-text-secondary">Value</p>
+            <p className="mb-1 text-caption text-text-secondary">Value</p>
             <input
               inputMode="decimal"
               value={row.value_num}
@@ -118,7 +118,7 @@ export function MedicalResultCard({
           </div>
         )}
         <div className="w-20">
-          <p className="mb-1 text-xs text-text-secondary">Unit</p>
+          <p className="mb-1 text-caption text-text-secondary">Unit</p>
           <input
             value={row.unit}
             onChange={(e) => edit({ unit: e.target.value })}
@@ -126,7 +126,7 @@ export function MedicalResultCard({
           />
         </div>
         <div className="w-28">
-          <p className="mb-1 text-xs text-text-secondary">Flag</p>
+          <p className="mb-1 text-caption text-text-secondary">Flag</p>
           <SelectMenu
             value={row.flag}
             onChange={(flag) => edit({ flag })}
@@ -137,7 +137,7 @@ export function MedicalResultCard({
       </div>
 
       {showText && (
-        <label className="text-xs text-text-secondary">
+        <label className="text-caption text-text-secondary">
           Result text
           <input
             value={row.value_text}
@@ -148,7 +148,7 @@ export function MedicalResultCard({
         </label>
       )}
 
-      <label className="text-xs text-text-secondary">
+      <label className="text-caption text-text-secondary">
         Reference Range
         <input
           value={row.ref_text}
@@ -159,7 +159,7 @@ export function MedicalResultCard({
       </label>
 
       {row.normalized && row.value_num_original != null && (
-        <p className="text-[11px] text-text-tertiary">
+        <p className="text-section text-text-tertiary">
           normalized from {row.value_num_original}
           {row.unit_original ? ` ${row.unit_original}` : ''}
         </p>
@@ -167,12 +167,12 @@ export function MedicalResultCard({
 
       {reviewReason && (
         <div className="flex items-center justify-between gap-3 border-t border-accent/20 pt-2">
-          <span className="text-[13px] font-medium text-accent">
+          <span className="text-label font-medium text-accent">
             Review – {reviewReason}
           </span>
           <button
             onClick={() => onChange({ uncertain: false })}
-            className="shrink-0 rounded-pill bg-input px-2.5 py-1 text-xs font-medium text-accent"
+            className="shrink-0 rounded-pill bg-input px-2.5 py-1 text-caption font-medium text-accent"
           >
             Mark Reviewed
           </button>

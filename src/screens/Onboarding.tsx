@@ -72,10 +72,10 @@ export function Onboarding() {
               icon is necessarily a separate raster (public/*.png, see scripts/gen-icons.mjs). */}
           <RingMark className="size-16 text-accent" />
           <div>
-            <h1 className="text-lg font-medium text-text-primary">
+            <h1 className="text-title font-medium text-text-primary">
               Welcome to WellWorth
             </h1>
-            <p className="mt-1 text-sm text-text-secondary">
+            <p className="mt-1 text-body text-text-secondary">
               Tell us a little about you so your targets are accurate.
             </p>
           </div>
@@ -84,7 +84,7 @@ export function Onboarding() {
         <ProfileMetricsFields value={value} onChange={update} />
 
         {attempted && (
-          <p className="text-center text-sm text-danger">
+          <p className="text-center text-body text-danger">
             Please fill in your birthday, height and weight to continue.
           </p>
         )}
@@ -95,7 +95,7 @@ export function Onboarding() {
 
         <button
           onClick={() => void supabase.auth.signOut()}
-          className="mx-auto text-xs text-text-tertiary"
+          className="mx-auto text-caption text-text-tertiary"
         >
           Sign out
         </button>

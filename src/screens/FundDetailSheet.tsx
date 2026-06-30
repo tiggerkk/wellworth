@@ -19,14 +19,14 @@ export function FundDetailSheet() {
         <button onClick={() => navigate(-1)} aria-label="Close">
           <IconX size={22} className="text-text-secondary" />
         </button>
-        <h1 className="line-clamp-2 flex-1 text-[17px] font-medium text-text-primary">
+        <h1 className="line-clamp-2 flex-1 text-heading font-medium text-text-primary">
           {entry?.name ?? 'Fund'}
         </h1>
       </header>
       <div className="flex-1 overflow-y-auto p-4">
-        {loading && <p className="text-sm text-text-secondary">Loading…</p>}
+        {loading && <p className="text-body text-text-secondary">Loading…</p>}
         {(error || (!loading && !entry)) && (
-          <p className="text-sm text-danger">Couldn’t load this fund.</p>
+          <p className="text-body text-danger">Couldn’t load this fund.</p>
         )}
         {entry && (
           <FundDetail

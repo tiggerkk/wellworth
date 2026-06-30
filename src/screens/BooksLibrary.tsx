@@ -239,9 +239,9 @@ export function BooksLibrary() {
         </FilterPanel>
       )}
 
-      {loading && <p className="px-1 py-6 text-sm text-text-secondary">Loading…</p>}
+      {loading && <p className="px-1 py-6 text-body text-text-secondary">Loading…</p>}
       {error && (
-        <p className="px-1 py-6 text-sm text-danger">Couldn’t load your books.</p>
+        <p className="px-1 py-6 text-body text-danger">Couldn’t load your books.</p>
       )}
 
       {!loading && !error && allBooks.length === 0 && (
@@ -259,7 +259,7 @@ export function BooksLibrary() {
       {!loading && !error && allBooks.length > 0 && (
         <div className="overflow-hidden rounded-card border border-border bg-surface">
           {view.length === 0 ? (
-            <p className="px-4 py-6 text-center text-sm text-text-tertiary">
+            <p className="px-4 py-6 text-center text-body text-text-tertiary">
               No matches.
             </p>
           ) : (
@@ -271,7 +271,7 @@ export function BooksLibrary() {
                 >
                   <CoverThumb url={b.cover_url} />
                   <span className="min-w-0 flex-1">
-                    <span className="flex items-center gap-1.5 text-[15px] text-text-primary">
+                    <span className="flex items-center gap-1.5 text-body text-text-primary">
                       {b.is_favorite && (
                         <IconHeartFilled
                           size={13}
@@ -291,11 +291,11 @@ export function BooksLibrary() {
                       )}
                     </span>
                     {b.authors?.length ? (
-                      <span className="block truncate text-xs text-text-secondary">
+                      <span className="block truncate text-caption text-text-secondary">
                         {b.authors.join(', ')}
                       </span>
                     ) : null}
-                    <span className="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-secondary">
+                    <span className="mt-1 flex flex-wrap items-center gap-2 text-caption text-text-secondary">
                       <StatusChip
                         label={BOOK_STATUS_LABELS[b.status as BookStatus]}
                         className={BOOK_STATUS_CHIP[b.status as BookStatus]}
@@ -303,7 +303,7 @@ export function BooksLibrary() {
                       {b.rating ? <StarRating value={b.rating} size={13} /> : null}
                     </span>
                     {(b.genres?.[0] || b.end_date || b.start_date) && (
-                      <span className="mt-0.5 flex items-center gap-2 text-xs text-text-tertiary">
+                      <span className="mt-0.5 flex items-center gap-2 text-caption text-text-tertiary">
                         {b.genres?.[0] && <span>{b.genres[0]}</span>}
                         {(b.end_date ?? b.start_date) && (
                           <span>{formatMonthDay((b.end_date ?? b.start_date)!)}</span>

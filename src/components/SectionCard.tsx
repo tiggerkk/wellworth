@@ -12,7 +12,7 @@ export function SectionCard({ children, title, className = '' }: SectionCardProp
   return (
     <section className={className}>
       {title && (
-        <h2 className="mb-2 px-1 text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
+        <h2 className="mb-2 px-1 text-section font-medium uppercase tracking-[0.08em] text-text-secondary">
           {title}
         </h2>
       )}

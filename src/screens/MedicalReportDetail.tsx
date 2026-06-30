@@ -58,7 +58,7 @@ export function MedicalReportDetail() {
         <div className="min-w-0 flex-1">
           {data ? (
             <>
-              <p className="truncate text-[17px] font-medium text-text-primary">
+              <p className="truncate text-heading font-medium text-text-primary">
                 {formatFullDate(data.report.report_date)} -{' '}
                 {REPORT_TYPE_LABELS[data.report.report_type as ReportType] ??
                   data.report.report_type}
@@ -67,13 +67,13 @@ export function MedicalReportDetail() {
                   : ''}
               </p>
               {data.report.provider && (
-                <p className="truncate text-xs text-text-secondary">
+                <p className="truncate text-caption text-text-secondary">
                   {data.report.provider}
                 </p>
               )}
             </>
           ) : (
-            <p className="truncate text-[17px] font-medium text-text-primary">Report</p>
+            <p className="truncate text-heading font-medium text-text-primary">Report</p>
           )}
         </div>
         {id && data && (
@@ -88,9 +88,9 @@ export function MedicalReportDetail() {
       </header>
 
       <div className="flex-1 overflow-y-auto p-4">
-        {loading && <p className="text-sm text-text-secondary">Loading…</p>}
+        {loading && <p className="text-body text-text-secondary">Loading…</p>}
         {(error || (!loading && !data)) && (
-          <p className="text-sm text-danger">Couldn’t load this report.</p>
+          <p className="text-body text-danger">Couldn’t load this report.</p>
         )}
         {data && <Body data={data} />}
       </div>
@@ -118,7 +118,7 @@ function Body({ data }: { data: ReportWithResults }) {
               href={url}
               target="_blank"
               rel="noreferrer"
-              className="flex items-center gap-2 text-sm text-accent"
+              className="flex items-center gap-2 text-body text-accent"
             >
               <IconExternalLink size={16} /> Open original
               {report.document_urls.length > 1 ? ` ${i + 1}` : ''}
@@ -129,10 +129,10 @@ function Body({ data }: { data: ReportWithResults }) {
 
       {report.narrative && (
         <div className="rounded-card border border-border bg-surface p-3">
-          <h2 className="mb-1 text-[11px] font-medium uppercase tracking-[0.08em] text-text-secondary">
+          <h2 className="mb-1 text-section font-medium uppercase tracking-[0.08em] text-text-secondary">
             Narrative
           </h2>
-          <p className="whitespace-pre-line text-sm leading-relaxed text-text-primary">
+          <p className="whitespace-pre-line text-body leading-relaxed text-text-primary">
             {report.narrative}
           </p>
         </div>
@@ -149,7 +149,7 @@ function Body({ data }: { data: ReportWithResults }) {
       ))}
 
       {results.length === 0 && (
-        <p className="text-sm text-text-tertiary">This report has no result rows.</p>
+        <p className="text-body text-text-tertiary">This report has no result rows.</p>
       )}
     </div>
   )
@@ -175,19 +175,21 @@ function ResultRow({ r }: { r: MedicalResultRow }) {
       leftExtra={
         <>
           {r.normalized && r.value_num_original != null && (
-            <p className="text-xs text-text-tertiary">
+            <p className="text-caption text-text-tertiary">
               normalized from {r.value_num_original}
               {r.unit_original ? ` ${r.unit_original}` : ''}
             </p>
           )}
           {reviewReason && (
-            <p className="text-xs font-medium text-accent">Review – {reviewReason}</p>
+            <p className="text-caption font-medium text-accent">
+              Review – {reviewReason}
+            </p>
           )}
         </>
       }
       rightExtra={
         flag && (
-          <p className="text-[11px] text-text-tertiary">{MEDICAL_FLAG_LABELS[flag]}</p>
+          <p className="text-section text-text-tertiary">{MEDICAL_FLAG_LABELS[flag]}</p>
         )
       }
     />

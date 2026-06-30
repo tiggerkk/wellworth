@@ -251,7 +251,7 @@ export function AddFoodSheet() {
         {scanning ? (
           <Suspense
             fallback={
-              <p className="py-6 text-center text-sm text-text-secondary">
+              <p className="py-6 text-center text-body text-text-secondary">
                 Loading scanner…
               </p>
             }
@@ -275,7 +275,7 @@ export function AddFoodSheet() {
                   <span className="min-w-0 flex-1">
                     {/* Line 1: name (wraps) · heart */}
                     <span className="flex items-start gap-2">
-                      <span className="min-w-0 flex-1 break-words text-[15px] text-text-primary">
+                      <span className="min-w-0 flex-1 break-words text-body text-text-primary">
                         {r.name}
                       </span>
                       {r.favorite ? (
@@ -298,7 +298,7 @@ export function AddFoodSheet() {
                       )}
                     </span>
                     {/* Line 2: nutrient count · serving (left) — source (right) */}
-                    <span className="mt-0.5 flex items-baseline justify-between gap-2 text-xs text-text-secondary">
+                    <span className="mt-0.5 flex items-baseline justify-between gap-2 text-caption text-text-secondary">
                       <span className="min-w-0 truncate">
                         {r.nutrientCount} nutrients · {r.serving}
                       </span>
@@ -309,7 +309,7 @@ export function AddFoodSheet() {
               ))}
 
               {results.length === 0 && (
-                <p className="px-4 py-6 text-center text-sm text-text-tertiary">
+                <p className="px-4 py-6 text-center text-body text-text-tertiary">
                   {tab === 'all' && !debounced.trim()
                     ? 'Search USDA, or pick from Favorites/Custom.'
                     : usdaLoading
@@ -320,7 +320,7 @@ export function AddFoodSheet() {
             </div>
 
             {usdaError && (
-              <p className="mt-3 text-xs text-danger">
+              <p className="mt-3 text-caption text-danger">
                 Food search unavailable — is VITE_USDA_API_KEY set?
               </p>
             )}

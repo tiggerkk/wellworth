@@ -42,7 +42,7 @@ export function EntryHeaderActions({
   if (confirming && editing && onDelete) {
     return (
       <div className="flex items-center gap-2">
-        <span className="text-xs text-text-secondary">Delete?</span>
+        <span className="text-caption text-text-secondary">Delete?</span>
         <button
           onClick={() => {
             setConfirming(false)

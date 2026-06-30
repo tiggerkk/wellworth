@@ -25,7 +25,7 @@ export function ConfirmDeleteAction({
   if (confirming && !disabled) {
     return (
       <div className="flex shrink-0 items-center gap-1">
-        <span className="text-xs text-text-secondary">Delete?</span>
+        <span className="text-caption text-text-secondary">Delete?</span>
         <button
           type="button"
           onClick={() => {

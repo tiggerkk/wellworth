@@ -32,7 +32,7 @@ export function PinInput({
       onKeyDown={(e) => {
         if (e.key === 'Enter') onSubmit?.()
       }}
-      className="w-full rounded-input bg-input px-3 py-2.5 text-center text-lg tracking-[0.3em] text-text-primary placeholder:tracking-normal placeholder:text-text-tertiary focus:outline-none"
+      className="w-full rounded-input bg-input px-3 py-2.5 text-center text-title tracking-[0.3em] text-text-primary placeholder:tracking-normal placeholder:text-text-secondary focus:outline-none"
     />
   )
 }
