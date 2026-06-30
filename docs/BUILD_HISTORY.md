@@ -3322,3 +3322,39 @@ came from `knip` + `ts-prune` + ESLint, cross-verified by grep.
   `SettingsLayout`, `FIELD_CLASS` to `01`, and `useDirty` + the shells to `02_tech_spec.md`.
 - **Snapshot:** **632** tests pass (+19 since the prior 613 snapshot, from the intervening passes);
   `npm run check` (format + lint + typecheck + test) green.
+
+## Travel — Expenses tab: auto-fetch rates + merged Totals/Conversion — 2026-06-30
+
+UX pass on the Expenses tab (no schema change). Two complaints: the Base-Currency → Fetch-missing-rates
+region wasted vertical space, and a foreign-currency trip opened with a broken HKD total + an orange
+warning until the user hunted for a "Fetch missing rates" button.
+
+- **Auto-fetch on open** (`TripExpensesPanel`): a `useEffect` fills any **missing** rate from
+  Frankfurter at the trip's first day on mount / when a new foreign currency first appears — so the HKD
+  total just works. Gaps only (frozen rates + manual overrides untouched). Dedup/loop control is a
+  single `fetchingRef` in-flight guard keyed off `missingKey = hkd.missing.join(',')`: an unpriceable
+  currency (offline / non-ECB) stays in `missing` but keeps `missingKey` stable, so the effect doesn't
+  re-fire — left for a manual rate or **Refresh**.
+- **StrictMode-deadlock fix** (durable lesson — **F-anchor candidate**): the first cut marked a
+  currency `attempted` on the **first** effect run and used a `cancelled` cleanup flag. Under
+  StrictMode's setup→cleanup→setup double-invoke, the re-run saw the currency already attempted and
+  bailed, while the original (now-`cancelled`) fetch skipped both `saveRates` **and** `setFxBusy(false)`
+  → spinner stuck forever, rate never saved. Rule: an auto-fetch effect must be **idempotent** — never
+  record "done" before the work completes, and **always** clear the busy flag in `finally` (a setState
+  after a StrictMode/real unmount is a harmless no-op in React 18). Use a ref **in-flight** guard, not
+  attempted-before-fetch + cancel.
+- **Merged Totals + Conversion** into one card: the separate "Conversion to HKD" card is gone; each
+  non-HKD currency now carries its **inline editable first-day rate + live HKD subtotal** on a second
+  line under its native total. The old standalone warning paragraph became a compact footer note + a
+  small **Refresh** (↻) action; **Refresh** force-re-pulls all foreign rates (overwrites overrides).
+  Footer note is neutral grey while fetching, red (`text-warning`) only on a real pricing failure.
+- **Compact top strip** (`TripBuilder`): the currency + Track Reimburse went from a padded card with
+  stacked labels to a single slim `flex-wrap` row with inline labels.
+- **Renamed the label "Base Currency" → "Default Currency"** across both Trip forms +
+  `TravelFieldsSheet` (the **DB column stays `base_currency`** — UI label only). It only prefills the
+  currency of new expense rows; the reporting/total currency is always **HKD**. The old name read like
+  a reporting-currency setting and confused the owner. ("Default Expense Currency" was tried first but
+  is too long for the New-trip header column — shortened to **"Default Currency"**.)
+- Lesson (durable, → `docs/10_travel.md`): the first FX fetch is **automatic** (gap-only, deduped by an
+  in-flight ref); the manual control is now a force **Refresh**, not the primary path.
+- **Snapshot:** **632** tests pass (UI-only change, no new tests); `npm run check` green.

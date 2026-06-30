@@ -27,7 +27,7 @@ interface DragState {
  * Events pattern as `ReorderList`/`SwipeRow` (mouse + touch + pen, no dnd dependency).
  *
  * Cells lay out in `grid-cols-2`, so the linear `ids` order maps to the Home hub's reading order
- * (left→right, top→down) and the numbered badges show each card's hub position.
+ * (left→right, top→down) — a cell's position in the grid is its hub position.
  *
  * Interaction tradeoff: instead of a full 2-D reflow animation (fiddly + jumpy on touch), the dragged
  * cell floats under the finger and the destination slot is outlined; the array commits on release. The
@@ -114,9 +114,6 @@ export function ReorderGrid({
                   : 'border-border'
             }`}
           >
-            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-input text-caption text-text-secondary">
-              {i + 1}
-            </span>
             <div className="min-w-0 flex-1 truncate text-body text-text-primary">
               {renderLabel(id)}
             </div>

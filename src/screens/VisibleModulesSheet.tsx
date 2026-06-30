@@ -13,8 +13,8 @@ import type { Tables, TablesUpdate } from '../types/database'
 /**
  * Global Settings → DISPLAY → Visible Modules: a 2-up combined grid (`ReorderGrid`, mirroring the
  * Home hub's 2-column layout) where each module cell has a visibility `Toggle` in its trailing slot —
- * drag the grip to reorder the hub, toggle to show/hide. The numbered badges (1,2,3…) are each card's
- * hub position, filling left→right then top→down. Saved per-profile to `module_order` /
+ * drag the grip to reorder the hub, toggle to show/hide. A cell's grid position (left→right then
+ * top→down) is its hub position. Saved per-profile to `module_order` /
  * `visible_modules` and consumed by the Home hub (`homeModules`). At least one module must stay visible
  * (mirrors `ConfigListEditor` refusing to delete the last value).
  */
@@ -76,7 +76,7 @@ function Editor({
     <div className="flex-1 overflow-y-auto p-4">
       <p className="mb-2 px-1 text-caption text-text-secondary">
         Choose which modules appear on the Home hub, and drag the grip to reorder them.
-        Numbers are each card's position, filling left→right then top to bottom.
+        Cards fill the hub left→right then top to bottom.
       </p>
       <ReorderGrid
         ids={order}

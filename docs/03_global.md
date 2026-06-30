@@ -96,8 +96,8 @@ components Onboarding renders**, so the screens stay identical.
   `useFontSizeSync`. A larger preset is the accessibility lever for small text/icons.
 - **DISPLAY → Visible Modules** (secondary text "(Home)"): opens a full sheet listing every module in a
   **2-up combined grid** (`ReorderGrid`, mirroring the hub's 2-column layout) — **drag the grip to
-  reorder** the Home hub and **toggle** each module to show/hide. Each cell shows a **position number**
-  (1,2,3…) = its hub slot, filling left→right then top→down. Saved per profile to `module_order` /
+  reorder** the Home hub and **toggle** each module to show/hide. A cell's grid position (left→right
+  then top→down) is its hub slot — no number badge (it crowded longer labels on narrow phones). Saved per profile to `module_order` /
   `visible_modules`; the Home
   hub reads them via `homeModules` (`src/lib/modules-display.ts`). **At least one module must stay
   visible** (the last toggle refuses to turn off, mirroring `ConfigListEditor`). Hiding only removes the

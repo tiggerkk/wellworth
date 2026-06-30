@@ -148,13 +148,13 @@ function NewTrip() {
               className={`mt-1 ${inputClass}`}
             />
           </label>
-          <div className="w-28 text-caption text-text-secondary">
-            Base Currency
+          <div className="w-32 text-caption text-text-secondary">
+            Default Currency
             <div className="mt-1">
               <SelectMenu
                 value={baseCurrency}
                 onChange={setBaseCurrency}
-                ariaLabel="Base currency"
+                ariaLabel="Default currency"
                 options={CURRENCIES.map((c) => ({ value: c, label: c }))}
               />
             </div>
@@ -643,27 +643,24 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
         />
 
         {tab === 'expenses' && (
-          <section className="flex gap-3 rounded-card border border-border bg-surface p-4">
-            <div className="w-28 text-caption text-text-secondary">
-              Base Currency
-              <div className="mt-1">
-                <SelectMenu
-                  value={baseCurrency}
-                  onChange={setBaseCurrency}
-                  ariaLabel="Base currency"
-                  options={CURRENCIES.map((c) => ({ value: c, label: c }))}
-                />
-              </div>
+          <section className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-card border border-border bg-surface px-3 py-2">
+            <span className="text-caption text-text-secondary">Default Currency</span>
+            <div className="w-24">
+              <SelectMenu
+                value={baseCurrency}
+                onChange={setBaseCurrency}
+                ariaLabel="Default currency"
+                size="compact"
+                options={CURRENCIES.map((c) => ({ value: c, label: c }))}
+              />
             </div>
-            <div className="text-caption text-text-secondary">
-              Track Reimburse
-              <div className="mt-1 flex h-[38px] items-center">
-                <Toggle
-                  checked={trackReimb}
-                  onChange={setTrackReimb}
-                  label="Track reimbursement"
-                />
-              </div>
+            <div className="ml-auto flex items-center gap-2">
+              <span className="text-caption text-text-secondary">Track Reimburse</span>
+              <Toggle
+                checked={trackReimb}
+                onChange={setTrackReimb}
+                label="Track reimbursement"
+              />
             </div>
           </section>
         )}

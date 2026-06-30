@@ -1,6 +1,5 @@
-import { Suspense, useMemo, useState } from 'react'
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { IconRefresh } from '@tabler/icons-react'
-import { SecondaryButton } from './SecondaryButton'
 import { SectionCard } from './SectionCard'
 import { ExpenseRowsEditor, type ExpenseDraft } from './ExpenseRowsEditor'
 import { lazyWithReload } from '../lib/lazy-with-reload'
@@ -104,14 +103,43 @@ export function TripExpensesPanel({
     void saveRates(next)
   }
 
-  async function fetchRates() {
+  // Auto-fill any missing rate on open / when a new foreign currency appears, so the HKD total just
+  // works without hunting for a button. Frozen first-day rates and manual overrides are left untouched
+  // (we fetch gaps only). `fetchingRef` dedupes concurrent runs (incl. StrictMode's double-invoke) so
+  // we never deadlock or double-fetch; a currency Frankfurter can't price (offline / non-ECB) stays in
+  // `missing` but keeps `missingKey` stable, so the effect doesn't re-fire — it's left for a manual rate
+  // or the Refresh action. fxBusy always clears in `finally`, even after unmount (a harmless no-op).
+  const fetchingRef = useRef(false)
+  const missingKey = hkd.missing.join(',')
+  useEffect(() => {
+    if (!missingKey || fetchingRef.current) return
+    fetchingRef.current = true
+    setFxBusy(true)
+    const firstDay = tripFirstDay(
+      trip,
+      expenses.map((e) => e.expense_date),
+    )
+    void fetchTripRates(hkd.missing, firstDay, rates)
+      .then(({ rates: merged }) => saveRates(merged))
+      .finally(() => {
+        fetchingRef.current = false
+        setFxBusy(false)
+      })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [missingKey])
+
+  // Manual refresh: re-pull every foreign currency to its latest first-day rate (overwrites manual
+  // overrides — a deliberate user action, unlike the gap-only auto-fetch above).
+  async function refreshRates() {
     setFxBusy(true)
     try {
       const firstDay = tripFirstDay(
         trip,
         expenses.map((e) => e.expense_date),
       )
-      const { rates: merged } = await fetchTripRates(nonHkdUsed, firstDay, rates)
+      const { rates: merged } = await fetchTripRates(nonHkdUsed, firstDay, rates, {
+        force: true,
+      })
       await saveRates(merged)
     } finally {
       setFxBusy(false)
@@ -122,25 +150,57 @@ export function TripExpensesPanel({
     <section className="flex flex-col gap-4">
       {expenses.length > 0 && (
         <>
-          {/* Totals */}
+          {/* Totals — per-currency native sums, each foreign currency carrying its own editable
+              first-day rate + live HKD subtotal inline (no separate conversion card), then the HKD
+              total. Rates auto-fetch on open; the footer refreshes them to the latest. */}
           <SectionCard title="Totals">
-            {perCurrency.map((t) => (
-              <div
-                key={t.currency}
-                className="flex items-center justify-between border-b border-border px-3 py-2 last:border-b-0"
-              >
-                <span className="text-body text-text-secondary">{t.currency}</span>
-                <span className="text-body text-text-primary">
-                  {formatMoney(t.cost, t.currency)}
-                  {track && t.reimbursed > 0 && (
-                    <span className="text-text-secondary">
-                      {' '}
-                      · net {formatMoney(t.net, t.currency)}
+            {perCurrency.map((t) => {
+              const rate = rateFor(t.currency, rates)
+              const subtotal = rate != null ? t.cost * rate : null
+              return (
+                <div
+                  key={t.currency}
+                  className="border-b border-border px-3 py-2 last:border-b-0"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-body text-text-secondary">{t.currency}</span>
+                    <span className="text-body text-text-primary">
+                      {formatMoney(t.cost, t.currency)}
+                      {track && t.reimbursed > 0 && (
+                        <span className="text-text-secondary">
+                          {' '}
+                          · net {formatMoney(t.net, t.currency)}
+                        </span>
+                      )}
                     </span>
+                  </div>
+                  {t.currency !== 'HKD' && (
+                    <div className="mt-1.5 flex items-center gap-2 text-caption text-text-secondary">
+                      <span className="shrink-0">1 {t.currency} =</span>
+                      <input
+                        key={`${t.currency}:${rate ?? ''}`}
+                        type="number"
+                        inputMode="decimal"
+                        defaultValue={rate ?? ''}
+                        placeholder="rate"
+                        aria-label={`${t.currency} to HKD rate`}
+                        onBlur={(e) => saveRate(t.currency, e.target.value)}
+                        className="field-control h-8 w-24 text-right"
+                      />
+                      <span className="ml-auto text-right">
+                        {subtotal != null ? (
+                          <span className="text-text-primary">
+                            = {formatHkd(subtotal)}
+                          </span>
+                        ) : (
+                          <span className="text-warning">set a rate</span>
+                        )}
+                      </span>
+                    </div>
                   )}
-                </span>
-              </div>
-            ))}
+                </div>
+              )
+            })}
             <div className="flex items-center justify-between px-3 py-2.5">
               <span className="text-body font-medium text-text-primary">HKD total</span>
               <span className="text-body font-semibold text-text-primary">
@@ -150,51 +210,33 @@ export function TripExpensesPanel({
                 )}
               </span>
             </div>
-            {hkd.missing.length > 0 && (
-              <p className="border-t border-border px-3 py-2 text-caption text-warning">
-                No HKD rate for {hkd.missing.join(', ')} — excluded from the total. Fetch
-                or set it below.
-              </p>
+            {nonHkdUsed.length > 0 && (
+              <div className="flex items-center justify-between gap-2 border-t border-border px-3 py-2">
+                <span
+                  className={`text-caption ${
+                    !fxBusy && hkd.missing.length > 0
+                      ? 'text-warning'
+                      : 'text-text-tertiary'
+                  }`}
+                >
+                  {fxBusy
+                    ? 'Fetching rates…'
+                    : hkd.missing.length > 0
+                      ? `Couldn’t fetch ${hkd.missing.join(', ')} — set a rate above`
+                      : 'Rates frozen at the trip’s first day'}
+                </span>
+                <button
+                  onClick={() => void refreshRates()}
+                  disabled={fxBusy}
+                  aria-label="Refresh rates"
+                  className="inline-flex shrink-0 items-center gap-1 text-caption text-text-secondary disabled:opacity-50"
+                >
+                  <IconRefresh size={15} className={fxBusy ? 'animate-spin' : ''} />
+                  Refresh
+                </button>
+              </div>
             )}
           </SectionCard>
-
-          {/* FX rates → HKD */}
-          {nonHkdUsed.length > 0 && (
-            <SectionCard title="Conversion to HKD (trip’s first-day rate)">
-              {nonHkdUsed.map((c) => {
-                const r = rateFor(c, rates)
-                return (
-                  <div
-                    key={c}
-                    className="flex items-center justify-between gap-3 border-b border-border px-3 py-2 last:border-b-0"
-                  >
-                    <span className="text-body text-text-secondary">{c} → HKD</span>
-                    <input
-                      key={`${c}:${r ?? ''}`}
-                      type="number"
-                      inputMode="decimal"
-                      defaultValue={r ?? ''}
-                      placeholder="rate"
-                      onBlur={(e) => saveRate(c, e.target.value)}
-                      className="field-control w-28 text-right"
-                    />
-                  </div>
-                )
-              })}
-              <div className="px-3 py-2">
-                <SecondaryButton
-                  size="sm"
-                  onClick={() => void fetchRates()}
-                  disabled={fxBusy}
-                >
-                  <span className="inline-flex items-center gap-1">
-                    <IconRefresh size={15} />{' '}
-                    {fxBusy ? 'Fetching…' : 'Fetch missing rates'}
-                  </span>
-                </SecondaryButton>
-              </div>
-            </SectionCard>
-          )}
 
           {/* Category breakdown */}
           {slices.length > 0 && (

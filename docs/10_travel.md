@@ -44,16 +44,17 @@
 Header top-left: **✕ Close** (returns to origin, Escape does the same). Edit header title is the
 literal **"Edit Trip"**.
 
-- **New** (`/travel/entry`): header-only — **Trip Name** + **Base Currency** on one line, **Status**
-  below — with **Reset** + **Create** icon actions. **Create** persists the trip and opens it for
-  editing (days/stops need a saved trip).
+- **New** (`/travel/entry`): header-only — **Trip Name** + **Default Currency** on one line,
+  **Status** below — with **Reset** + **Create** icon actions. **Create** persists the trip and opens
+  it for editing (days/stops need a saved trip).
 - **Edit** header card — row order: **Trip Name** + **Status** on one line; **Companions** +
   **Rating** (0–5 half-stars) on the next (both conditional); **Notes**; **Cover Image URL**
   (rendered `no-referrer`, previewed). Top-right icon actions (Delete · Reset · Save);
   days/stops/expenses **auto-save on each change**, so Save only persists the header fields.
-- Two sub-tabs: **Itinerary** and **Expenses**. When **Expenses** is selected, **Base Currency** and
-  **Track Reimburse** appear in a small card immediately below the tab strip (always visible in this
-  context, not gated by visible-fields settings).
+- Two sub-tabs: **Itinerary** and **Expenses**. When **Expenses** is selected, **Default Currency**
+  (the currency new expense rows prefill — _not_ the reporting currency, which is always HKD) and
+  **Track Reimburse** appear in a **compact single-row strip** immediately below the tab strip
+  (inline labels, not stacked; always visible in this context, not gated by visible-fields settings).
 
 **Itinerary sub-tab:**
 
@@ -98,13 +99,21 @@ literal **"Edit Trip"**.
 
 **Expenses sub-tab** (the trip-level expenses hub):
 
-- A **Totals** card (per-currency cost/net, then the **HKD total**); a **Conversion to HKD** card (per
-  non-HKD currency: an editable rate + a **Fetch missing rates** button — Frankfurter at the trip's
-  first day; missing currencies flagged and excluded until priced); a **By Category (HKD)** Recharts
-  donut (split by **category** — the totals card is the per-currency view); and the **full ledger**
-  rendered by the shared `ExpenseRowsEditor` (below), **grouped by `expense_date` ascending** (undated
-  last) with inline add/edit/reorder. Base Currency + Track Reimburse live in the card under the tab
-  strip (above).
+- A single **Totals** card: per non-HKD currency, the native cost/net on line 1 and an **inline
+  editable first-day rate + live HKD subtotal** on line 2 (HKD shows just its sum); then the **HKD
+  total**; then a footer row — a status note ("Rates frozen at the trip's first day", or a warning
+  naming any currency that couldn't be priced) + a small **Refresh** (↻) action. The separate
+  "Conversion to HKD" card is gone — rates live next to the totals they drive.
+  **Rates auto-fetch on open** (and when a new foreign currency first appears): the panel fills any
+  **missing** rate from Frankfurter at the trip's first day without the user clicking anything, so the
+  HKD total just works. Auto-fetch only fills **gaps** — frozen rates and manual overrides are left
+  untouched; a currency Frankfurter can't price (offline / non-ECB) is attempted **once per mount**
+  and then left for a manual rate (no retry loop). **Refresh** force-re-pulls every foreign currency
+  to its latest first-day rate (overwrites manual overrides — a deliberate action).
+- A **By Category (HKD)** Recharts donut (split by **category** — the totals card is the per-currency
+  view); and the **full ledger** rendered by the shared `ExpenseRowsEditor` (below), **grouped by
+  `expense_date` ascending** (undated last) with inline add/edit/reorder. Default Currency +
+  Track Reimburse live in the compact strip under the tab strip (above).
 
 **Inline expense editor** (`ExpenseRowsEditor`, shared by the per-day modal and the Expenses-tab
 ledger — replaces the old one-at-a-time `ExpenseEditorSheet`):
@@ -150,7 +159,7 @@ ledger — replaces the old one-at-a-time `ExpenseEditorSheet`):
 - **Entry Form → Visible Fields**: shared **VisibleFieldsSheet** (see `docs/01_design_system.md`) over
   the optional Trip-form fields in form order: **Rating, Cover Image URL, Companions, Track
   Reimbursement, Notes**. Stored on `profile.travel_visible_fields` (**NULL = all visible**); auto-saves
-  per toggle. Trip Name, Base Currency, and Status are always shown.
+  per toggle. Trip Name, Default Currency, and Status are always shown.
 - **Expenses → Expense Categories**: shared **ConfigListEditor** (see `docs/01_design_system.md`) to
   add / rename / delete / **drag-reorder** the category list (stored on
   `profile.travel_expense_categories`). Deleting a category still used by expenses prompts a
@@ -218,7 +227,8 @@ precached, loaded on demand by the lazy map chunk):
 **Frankfurter** (shared with Net Worth, see `docs/02_tech_spec.md` → Shared external APIs):
 `fetchRateToHkdOn(currency, date)` fetches the per-trip first-day rates. Helper:
 `src/lib/trip-fx.ts`. Per-trip FX rates are frozen in `trip.fx_rates` on first fetch and are
-overridable per-currency in the Expenses tab.
+overridable per-currency in the Expenses tab. The **first fetch is automatic** — the Expenses tab
+fills missing rates on open (gaps only, once per mount); the **Refresh** action force-re-pulls them.
 
 ---
 

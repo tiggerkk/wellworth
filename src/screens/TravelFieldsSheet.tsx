@@ -5,7 +5,7 @@ import { TRIP_ENTRY_FIELDS } from '../lib/travel'
 export function TravelFieldsSheet() {
   return (
     <VisibleFieldsSheet
-      intro="Choose which fields appear on the New/Edit Trip form. Trip Name, Base Currency and Status are always shown."
+      intro="Choose which fields appear on the New/Edit Trip form. Trip Name, Default Currency and Status are always shown."
       fields={TRIP_ENTRY_FIELDS}
       column="travel_visible_fields"
     />
