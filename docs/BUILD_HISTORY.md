@@ -34,7 +34,7 @@ Each module's former staging spec (`docs/06-books.md`, `07-quotes.md`, `medical.
 
 ## Snapshot
 
-- **Tests:** 620 Vitest tests (pure helpers only).
+- **Tests:** 631 Vitest tests (pure helpers only).
 - **Deploy:** Deployed — GitHub `main` → Vercel auto-deploy; installed + tested on iPhone (PWA).
 - **Stack / scripts / env / gates / conventions:** see `02_tech_spec.md` (the canonical, current reference) — not duplicated here.
 
@@ -3201,3 +3201,88 @@ text-accent`; aligned to the editor's `text-label font-medium text-warning` so r
 - Decision: kept Literature's own corpus-derived list rather than the shared `dynasty.ts` `DYNASTIES`
   — the corpus legitimately has `現代`/`金朝`/`當代` that the shared list lacks. Docs synced
   (`11_literature.md`).
+
+## Literature — Poems list Sort + Clear Filters — 2026-06-30
+
+- **Goal:** mirror the Shows Library footer in the Poems `FilterPanel` — a Sort menu (朝代 / 作者 /
+  標題, default 朝代 ascending) to the right of the 只看收藏 toggle, with 清除篩選 bottom-right on the
+  same line.
+- **Sort** is a new pure `sortPoems(poems, field, dir, dynastyOrder)` in `src/lib/literature.ts`,
+  modelled on Shows' `compareShows`: dynasty rank = position in `meta.dynasties` (already chronological
+  after the ordering fix above, so no second source of truth), author/title by `localeCompare`,
+  null/unknown values sort last, stable title tiebreak. Kept **separate** from `applyHomeView` (filter)
+  so each pure function stays single-purpose and the existing filter tests stay order-independent.
+- `HomeCriteria` gained `sortField`/`sortDir` (defaults 朝代/asc); `useSessionState` shallow-merges
+  defaults so existing sessions pick them up. 清除篩選 now preserves `query` + sort (like Shows).
+- UI uses the shared **`SortControl`** + role tokens only (no hardcoded text sizes). Tests added for
+  `sortPoems`. Docs synced (`11_literature.md`).
+
+## Profile-order flash fix — local profile cache (stale-while-revalidate) — 2026-06-30
+
+- **Symptom:** the Home hub (and Medical/Net Worth ordered lists) painted the canonical default order
+  for ~100–400 ms, then jumped to the user's saved order/visibility once `useProfile` resolved.
+- **Cause:** profile is fetched **per-screen, asynchronously** (no app-wide cache). `useAsync`'s initial
+  state is `{ data: undefined }`, so ordering helpers (`homeModules`, etc.) hit their canonical fallback
+  on first paint and re-rendered when the Supabase fetch landed — on every cold load AND every navigation.
+- **Fix:** `useProfile` now seeds its first render from a **local cache of the last-known profile**
+  (`src/lib/profile-cache.ts`, keyed `wellworth:profile:<userId>`), plumbed via a new optional
+  `initialData` seed on `useAsync` (additive — the 40+ existing callers are unchanged). Every fetch
+  refreshes the cache. This is the `last-module` / `networth-liquid-filter` localStorage convention
+  applied to the whole row (see tech-spec **F21**). One central change fixes all affected screens (Home,
+  Medical Dashboard/Entry/Report Detail, Net Worth Monthly Entry) plus the minor `*_visible_fields`
+  flicker — no per-screen edits.
+- **Security:** the cache is **sanitized on write** — `medical_lock_pin_hash` (a brute-forceable PBKDF2
+  hash of a 4–8 digit PIN) and `medical_lock_webauthn_id` are stripped, never persisted to localStorage.
+- **Opt-outs (`useProfile({ seed: false })`):** `useProfileEditor` (editors copy the profile into local
+  state on mount → need the authoritative fresh row, not a possibly-stale cache) and `MedicalLockProvider`
+  (a hash-stripped seed would read as "lock not configured" for one frame and briefly unlock Medical; it
+  has its own synchronous `enabledHint` gate). Audit confirmed every `useState`-from-profile editor is fed
+  via `useProfileEditor`, so these two opt-outs fully cover the freeze/security risks.
+- **Tests:** `src/lib/profile-cache.test.ts` (round-trip, per-user isolation, **secret-stripping**,
+  storage-unavailable + corrupt-JSON graceful degradation). Docs synced (`02_tech_spec.md` F21,
+  `03_global.md`).
+
+## Travel — expense rows overflow fix (always 2-line) — 2026-06-30
+
+- **Symptom:** in the `ExpenseRowsEditor` (per-day modal + trip ledger), the expense rows spilled past
+  the card's right edge, and at default font the Category/Currency dropdowns over-truncated
+  ("Flight/…", "H…").
+- **Causes:** (1) the **Cost `<input>` had no width utility**, so a bare `<input>` kept its intrinsic
+  ~20-char width and overflowed its `w-16`/`w-24 shrink-0` wrapper (Description escaped this only via
+  `flex-1`); (2) the default-font **single-line** layout crammed all four fields + chevron into one row.
+- **Fix:** rows are **always stacked 2-line** now (Description + expand on line 1; Category · Currency ·
+  Cost on line 2) at every font size — the adaptive single-line variant and the `font_size` prop were
+  dropped from `ExpenseRowsEditor`, `DayExpensesSheet`, `TripExpensesPanel`, and `TripBuilder`. Both
+  Cost inputs gained `w-full`.
+- **Durable lesson** (now a gotcha in `01_design_system.md` / `10_travel.md`): a bare `<input>` inside a
+  fixed-width `shrink-0` flex wrapper must be `w-full`, or its intrinsic width overflows.
+- **Add-row data-loss fix:** the add row never persisted typed input until an explicit `+` was pressed,
+  and `+` required **both** description **and** cost — so a complete-feeling row that wasn't committed
+  (no `+`/Enter, or a blank cost) was silently discarded on close. Three changes: (1) **only a
+  description is required** — a blank cost commits as `0`, editable inline (`canAdd` dropped the
+  `cost.trim() !== ''` gate; blank cost coerces to 0); (2) **Enter commits from the description field**
+  too (previously only the cost field); (3) **a complete draft auto-commits when the editor unmounts**
+  (closing the day modal / leaving the Expenses tab) via a latest-draft `useRef` flushed in an unmount
+  `useEffect` — it no-ops on an empty/incomplete row, so no blank rows and no double-save (incl. dev
+  StrictMode's mount→cleanup).
+- No schema or test change (pure layout/markup + doc sync).
+
+## Literature — 名家 tab uses the source app's curated famous-poet list — 2026-06-30
+
+- **Symptom:** the Poets (名家) tab listed **every** writer in the corpus (802 with poems), not the
+  curated roster the standalone source app (github.com/tiggerkk/chinese-literature) shows.
+- **Cause:** the source app curates via an `isFamous` flag on its `writers` table (set by
+  `migrate-writers.cjs` from a 50-name `famousNames` array; `/api/writers` filters `WHERE isFamous=1`).
+  WellWorth ships the corpus as a static asset, not a DB, and `build-literature-data.mjs` emitted every
+  writer with ≥1 poem into `meta.writers`.
+- **Fix:** ported the 50-name roster as a `FAMOUS_WRITERS` set in `build-literature-data.mjs`; only
+  those names (with ≥1 poem) go into `meta.writers`. **No runtime change** — `LiteraturePoets.tsx` /
+  `groupWritersByDynasty` render whatever `meta.writers` holds (verified `meta.writers` has no other
+  consumer). `writer/<id>.json` is still written for **all** writers, so a poem by a non-famous author
+  still links to a working poet page (`LiteraturePoemDetail` links any `writerId`).
+- **Durable lesson** (now an `F:` note in `11_literature.md`): the famous list follows **this corpus's
+  HK-Traditional (OpenCC) spelling**, not the source's — the source's `高啟` is stored here as `高啓`,
+  so `FAMOUS_WRITERS` uses `高啓` (49/50 matched verbatim; this was the one variant). The build
+  `console.warn`s any name with no matching writer to catch future spelling drift.
+- Regenerated + committed `public/literature/meta.json` (writers 802 → 50; poem/writer/index files
+  byte-identical). No schema change.

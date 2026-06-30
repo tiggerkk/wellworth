@@ -23,7 +23,6 @@ import type { TravelCategoryConfig } from '../lib/travel-config'
 import { fetchTripRates, tripFirstDay } from '../lib/trip-fx'
 import { todayLocal } from '../lib/date'
 import { CURRENCIES } from '../constants/travel'
-import type { FontSize } from '../lib/font-scale'
 import type { TripRow } from '../lib/travel'
 
 const TravelExpenseChart = lazyWithReload(() =>
@@ -36,7 +35,6 @@ interface Props {
   expenses: ExpenseRow[]
   categories: TravelCategoryConfig[]
   defaultCurrency: string
-  fontSize: FontSize
   onAdd: (draft: ExpenseDraft) => void
   onUpdate: (id: string, patch: ExpenseUpdate) => void
   onDelete: (id: string) => void
@@ -54,7 +52,6 @@ export function TripExpensesPanel({
   expenses,
   categories,
   defaultCurrency,
-  fontSize,
   onAdd,
   onUpdate,
   onDelete,
@@ -228,7 +225,6 @@ export function TripExpensesPanel({
         defaultCurrency={defaultCurrency}
         defaultDate={trip.start_date ?? todayLocal()}
         trackReimbursement={track}
-        fontSize={fontSize}
         onAdd={onAdd}
         onUpdate={onUpdate}
         onDelete={onDelete}

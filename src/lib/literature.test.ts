@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   applyHomeView,
   groupWritersByDynasty,
+  sortPoems,
   type LiteratureType,
   type PoemIndexEntry,
   type WriterLite,
@@ -51,7 +52,15 @@ function view(
 ) {
   return applyHomeView(
     POEMS,
-    { query: '', dynasty: null, typeIds: [], favoritesOnly: false, ...criteria },
+    {
+      query: '',
+      dynasty: null,
+      typeIds: [],
+      favoritesOnly: false,
+      sortField: 'dynasty',
+      sortDir: 'asc',
+      ...criteria,
+    },
     { typesById, favoriteIds },
   ).map((p) => p.id)
 }
@@ -88,6 +97,48 @@ describe('applyHomeView', () => {
   it('filters to favourites only', () => {
     expect(view({ favoritesOnly: true }, new Set([2]))).toEqual([2])
     expect(view({ favoritesOnly: true }, new Set())).toEqual([])
+  })
+})
+
+describe('sortPoems', () => {
+  const order = ['唐代', '宋代'] // chronological corpus order (meta.dynasties)
+  const ids = (
+    field: Parameters<typeof sortPoems>[1],
+    dir: Parameters<typeof sortPoems>[2],
+  ) => sortPoems(POEMS, field, dir, order).map((p) => p.id)
+
+  it('sorts by dynasty chronologically, then title; desc flips the groups', () => {
+    expect(ids('dynasty', 'asc')).toEqual([2, 1, 3]) // 唐代 (春曉, 靜夜思) then 宋代
+    expect(ids('dynasty', 'desc')).toEqual([3, 2, 1]) // 宋代 first; title tiebreak stays ascending
+  })
+
+  it('sorts by author and title', () => {
+    expect(ids('author', 'asc')).toEqual([2, 1, 3]) // 孟浩然 < 李白 < 陸游
+    expect(ids('title', 'asc')).toEqual([2, 3, 1]) // 春曉 < 示兒 < 靜夜思
+    expect(ids('title', 'desc')).toEqual([1, 3, 2])
+  })
+
+  it('puts a poem with an unknown/absent dynasty last regardless of direction', () => {
+    const withUnknown: PoemIndexEntry[] = [
+      ...POEMS,
+      {
+        id: 4,
+        title: '佚題',
+        writerId: 9,
+        writer: '佚名',
+        dynasty: null,
+        typeIds: [],
+        excerpt: '',
+      },
+    ]
+    expect(sortPoems(withUnknown, 'dynasty', 'asc', order).at(-1)?.id).toBe(4)
+    expect(sortPoems(withUnknown, 'dynasty', 'desc', order).at(-1)?.id).toBe(4)
+  })
+
+  it('does not mutate its input', () => {
+    const copy = POEMS.map((p) => p.id)
+    sortPoems(POEMS, 'title', 'desc', order)
+    expect(POEMS.map((p) => p.id)).toEqual(copy)
   })
 })
 

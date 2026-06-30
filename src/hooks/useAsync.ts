@@ -13,13 +13,19 @@ interface AsyncState<T> {
  *
  * Pass a STABLE `fn` (wrap the call site in `useCallback` with its own deps) so the effect
  * doesn't re-run every render.
+ *
+ * Optional `initialData` seeds the first render (stale-while-revalidate): the seeded value paints
+ * immediately and `fn` still runs to reconcile. With a seed there's nothing to "load" yet, so initial
+ * `loading` is false; the background fetch then runs normally (the effect preserves `data` throughout).
+ * Omitting `initialData` is the original behavior exactly.
  */
 export function useAsync<T>(
   fn: () => Promise<T>,
+  initialData?: T,
 ): AsyncState<T> & { refetch: () => void } {
   const [state, setState] = useState<AsyncState<T>>({
-    data: undefined,
-    loading: true,
+    data: initialData,
+    loading: initialData === undefined,
     error: undefined,
   })
   const [nonce, setNonce] = useState(0)

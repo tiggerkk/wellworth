@@ -59,7 +59,10 @@ const IDLE_POLL_MS = 20_000
  * never flashes. The lock is convenience over RLS, not a cryptographic boundary (see tech-spec).
  */
 export function MedicalLockProvider({ children }: { children: ReactNode }) {
-  const { data: profile } = useProfile()
+  // seed:false — the profile cache strips the PIN hash, so a seeded row would read as "lock not
+  // configured" for one frame and momentarily unlock Medical content. The synchronous `enabledHint`
+  // below already prevents the cold-start flash, so this provider needs no seed.
+  const { data: profile } = useProfile({ seed: false })
   const location = useLocation()
   const inMedical = moduleForPath(location.pathname)?.key === 'medical'
 

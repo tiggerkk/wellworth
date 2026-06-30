@@ -8,14 +8,17 @@ import { loadIndex, loadMeta } from '../data/literature'
 import {
   applyHomeView,
   DEFAULT_HOME_CRITERIA,
+  sortPoems,
   type HomeCriteria,
   type LiteratureType,
+  type PoemSortField,
   type TypeKind,
 } from '../lib/literature'
 import { routes } from '../constants/routes'
 import { SearchBar } from '../components/SearchBar'
 import { FilterToggleButton } from '../components/FilterToggleButton'
 import { FilterPanel } from '../components/FilterPanel'
+import { SortControl } from '../components/SortControl'
 import { Toggle } from '../components/Toggle'
 import { EmptyState } from '../components/EmptyState'
 import { ResultCount } from '../components/ResultCount'
@@ -33,6 +36,11 @@ const FILTER_KINDS: Exclude<TypeKind, 'other'>[] = [
   'season',
   'anthology',
   'style',
+]
+const SORT_OPTIONS: { value: PoemSortField; label: string }[] = [
+  { value: 'dynasty', label: '朝代' },
+  { value: 'author', label: '作者' },
+  { value: 'title', label: '標題' },
 ]
 // Cap the initial paint so a multi-thousand-poem result doesn't render all at once.
 const PAGE = 60
@@ -77,13 +85,15 @@ export function LiteratureHome() {
     return groups
   }, [meta])
 
-  const view = useMemo(
-    () => applyHomeView(index ?? [], criteria, { typesById, favoriteIds }),
-    [index, criteria, typesById, favoriteIds],
-  )
-
-  const activeFilters =
-    !!criteria.dynasty || criteria.typeIds.length > 0 || criteria.favoritesOnly
+  const view = useMemo(() => {
+    const filtered = applyHomeView(index ?? [], criteria, { typesById, favoriteIds })
+    return sortPoems(
+      filtered,
+      criteria.sortField,
+      criteria.sortDir,
+      meta?.dynasties ?? [],
+    )
+  }, [index, criteria, typesById, favoriteIds, meta])
 
   function toggleType(id: number) {
     setCrit({
@@ -93,7 +103,12 @@ export function LiteratureHome() {
     })
   }
   function clearFilters() {
-    setCriteria((c) => ({ ...DEFAULT_HOME_CRITERIA, query: c.query }))
+    setCriteria((c) => ({
+      ...DEFAULT_HOME_CRITERIA,
+      query: c.query,
+      sortField: c.sortField,
+      sortDir: c.sortDir,
+    }))
     setLimit(PAGE)
   }
 
@@ -156,20 +171,30 @@ export function LiteratureHome() {
             )
           })}
 
-          <div className="flex items-center justify-between">
-            <label className="flex items-center gap-2">
-              <Toggle
-                checked={criteria.favoritesOnly}
-                onChange={(v) => setCrit({ favoritesOnly: v })}
-                label="只看收藏"
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <label className="flex items-center gap-2">
+                <span className="text-text-secondary">只看收藏</span>
+                <Toggle
+                  checked={criteria.favoritesOnly}
+                  onChange={(v) => setCrit({ favoritesOnly: v })}
+                  label="只看收藏"
+                />
+              </label>
+              <SortControl
+                field={criteria.sortField}
+                options={SORT_OPTIONS}
+                onFieldChange={(f) => setCrit({ sortField: f })}
+                dir={criteria.sortDir}
+                onToggleDir={() =>
+                  setCrit({ sortDir: criteria.sortDir === 'asc' ? 'desc' : 'asc' })
+                }
+                label="排序"
               />
-              <span className="text-text-secondary">只看收藏</span>
-            </label>
-            {activeFilters && (
-              <button onClick={clearFilters} className="text-accent">
-                清除篩選
-              </button>
-            )}
+            </div>
+            <button onClick={clearFilters} className="text-accent">
+              清除篩選
+            </button>
           </div>
         </FilterPanel>
       )}

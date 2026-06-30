@@ -102,7 +102,8 @@ components Onboarding renders**, so the screens stay identical.
   hub reads them via `homeModules` (`src/lib/modules-display.ts`). **At least one module must stay
   visible** (the last toggle refuses to turn off, mirroring `ConfigListEditor`). Hiding only removes the
   Home card — a module's routes stay reachable by direct URL and the "reopen last-used module" launch
-  default is unaffected.
+  default is unaffected. The hub paints the saved order/visibility on the **first** render (no reorder
+  flash) because `useProfile` seeds from a local profile cache — see tech-spec **F21**.
 - **DISPLAY → Units** (Metric / Imperial — editable; display-only, DB stays metric). Third item under
   Display, in the shared `DisplaySettingsCard` (Onboarding renders the same card, so Units is under
   Display there too — there is no longer a separate Preferences group).

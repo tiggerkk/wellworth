@@ -122,6 +122,66 @@ const TYPE_ALIAS_GROUPS = {
   樂府: ['民歌', '民謠'],
 }
 
+// The curated 名家 (famous poets) roster shown on the Poets tab — NOT every writer in the corpus.
+// Ported verbatim from the source app's `scripts/migrate-writers.cjs` `famousNames` array
+// (github.com/tiggerkk/chinese-literature), where it sets the `isFamous` flag the writers API filters
+// on. Only writers whose name is in this set (and have ≥1 poem) are emitted into meta.writers; every
+// other writer's writer/<id>.json is still written so poem→poet links resolve for non-famous authors.
+// Names follow THIS corpus's HK-Traditional (OpenCC) spelling: the source's 高啟 is stored here as
+// 高啓 (the 啓 variant) — see docs/11_literature.md. A name with no matching writer warns at build time.
+const FAMOUS_WRITERS = new Set([
+  '屈原',
+  '曹操',
+  '曹植',
+  '陶淵明',
+  '謝靈運',
+  '鮑照',
+  '謝朓',
+  '庾信',
+  '王勃',
+  '賀知章',
+  '王之渙',
+  '孟浩然',
+  '王昌齡',
+  '王維',
+  '李白',
+  '高適',
+  '杜甫',
+  '岑參',
+  '韋應物',
+  '孟郊',
+  '韓愈',
+  '劉禹錫',
+  '白居易',
+  '柳宗元',
+  '元稹',
+  '賈島',
+  '李賀',
+  '杜牧',
+  '李商隱',
+  '李煜',
+  '柳永',
+  '梅堯臣',
+  '歐陽修',
+  '蘇舜欽',
+  '王安石',
+  '蘇軾',
+  '黃庭堅',
+  '秦觀',
+  '賀鑄',
+  '周邦彥',
+  '李清照',
+  '陸游',
+  '范成大',
+  '楊萬里',
+  '辛棄疾',
+  '文天祥',
+  '元好問',
+  '高啓',
+  '納蘭性德',
+  '龔自珍',
+])
+
 // Canonical dynasty order (oldest→newest) for sorting the distinct poem dynasties into filter order.
 // Tolerant of both '唐' and '唐代' style values; lists every dynasty value this corpus actually emits
 // (incl. '隋代'/'金朝'/'當代' and the catch-all '未知', sorted last). A value not listed sorts last (stable).
@@ -295,11 +355,17 @@ function main() {
   }
 
   // --- writer detail files + meta writers-lite -------------------------------------------------
+  // meta.writers is the curated 名家 list (FAMOUS_WRITERS only); writer/<id>.json is written for EVERY
+  // writer with poems, so a poem by a non-famous author still links to a working poet-detail page.
   const writersLite = []
+  const seenFamous = new Set()
   for (const w of writerRows) {
     const poemIds = poemIdsByWriter.get(w.id) ?? []
     if (poemIds.length === 0) continue // skip writers with no poems in the corpus
-    writersLite.push({ id: w.id, name: w.name, dynasty: w.dynasty ?? null })
+    if (FAMOUS_WRITERS.has(w.name)) {
+      writersLite.push({ id: w.id, name: w.name, dynasty: w.dynasty ?? null })
+      seenFamous.add(w.name)
+    }
     writeJson(`writer/${w.id}.json`, {
       id: w.id,
       name: w.name,
@@ -309,6 +375,15 @@ function main() {
       headImageUrl: w.headImageUrl ?? null,
       poemIds,
     })
+  }
+  const writersWithPoems = [...poemIdsByWriter.values()].filter(
+    (ids) => ids.length,
+  ).length
+  const missingFamous = [...FAMOUS_WRITERS].filter((n) => !seenFamous.has(n))
+  if (missingFamous.length) {
+    console.warn(
+      `  famous poets not found in corpus (dropped from 名家 — check OpenCC spelling): ${missingFamous.join(' ')}`,
+    )
   }
 
   const dynasties = [...dynastySet].sort(
@@ -328,7 +403,7 @@ function main() {
   console.log(
     `Literature corpus built → public/literature/\n` +
       `  poems   : ${index.length}\n` +
-      `  writers : ${writersLite.length}\n` +
+      `  writers : ${writersLite.length} famous (of ${writersWithPoems} with poems)\n` +
       `  types   : ${types.length} (${otherCount} unclassified → kind 'other', not shown as filters)\n` +
       `  aliased : ${aliasToTargetId.size} granular tags feed the 28 filters\n` +
       `  coverage: ${withFilterTag}/${index.length} poems carry ≥1 filter tag\n` +

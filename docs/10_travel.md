@@ -109,13 +109,20 @@ literal **"Edit Trip"**.
 **Inline expense editor** (`ExpenseRowsEditor`, shared by the per-day modal and the Expenses-tab
 ledger — replaces the old one-at-a-time `ExpenseEditorSheet`):
 
-- Each row is the four core fields in this order: **Description · Category · Currency · Cost**.
-  Layout is **adaptive to Dynamic Type** (tech-spec F23): a **single-line** spreadsheet row at
-  `profile.font_size === 'default'`, **stacked 2-line** rows (Description; then Category · Currency ·
-  Cost) at `large` / `larger` — read via `useProfile`.
+- Each row is the four core fields in this order: **Description · Category · Currency · Cost**, laid
+  out as **always-stacked 2-line** rows (Description + expand chevron on line 1; then Category ·
+  Currency · Cost on line 2) at **every** Dynamic Type preset (tech-spec F23). Cramming all four into
+  one line over-truncated the dropdowns and overflowed the card's right edge, so the single-line
+  variant was dropped — the editor no longer takes a `font_size` prop. (Each field input that sits in
+  a fixed-width `shrink-0` wrapper must be `w-full`: a bare `<input>` keeps its intrinsic ~20-char
+  width and spills past the wrapper — see the Cost input.)
 - A trailing **add row** commits new expenses without a modal (spreadsheet-style); in the trip ledger
   it carries a **date chip** (target any, incl. new, date), in the day modal the date is fixed to the
-  day.
+  day. **Only a description is required** — a blank cost commits as **0** (editable inline afterward),
+  so an item can be jotted down by name and priced later. A complete draft commits on **`+` / Enter**
+  (Enter in either the description or cost field) **and auto-commits when the editor is closed/unmounts**
+  (closing the day modal, leaving the Expenses tab) so a typed-but-uncommitted row is no longer silently
+  lost on close. The auto-commit no-ops on an empty/incomplete row, so it never creates blank rows.
 - **Tap a row to expand** a panel with: an editable **Date** (Calendar; re-dating moves the row to the
   end of its new date group), **reorder** up/down within the date group, the **Reimbursed** field
   (number or formula on `amount`; presets ½ / ⅖ / Full; live net) **only when Track Reimburse is on**,

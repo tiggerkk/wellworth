@@ -11,6 +11,10 @@ import { MODULES, type ModuleDef } from '../constants/modules'
  * Both are tolerant: unknown stored keys are dropped, and any module missing from a stored order
  * (e.g. a newly-shipped module after a redeploy) is appended in its canonical position — so the
  * ordering always covers every module exactly once and a new module can't disappear from reorder.
+ *
+ * The canonical fallback below only shows on a truly first-ever load: `useProfile` seeds from a local
+ * cache of the last-known profile, so a returning user's saved order paints on the first render (no
+ * reorder flash) rather than this default flashing before the fetch resolves.
  */
 
 /** All modules in the user's chosen order (newly-shipped modules appended in canonical order). */

@@ -60,7 +60,6 @@ import {
 } from '../lib/travel'
 import type { ExpenseRow, ExpenseUpdate } from '../lib/expenses'
 import { effectiveCategories } from '../lib/travel-config'
-import { isFontSize, type FontSize } from '../lib/font-scale'
 import { useProfile } from '../hooks/useProfile'
 import { routes } from '../constants/routes'
 import { addDays, formatFullDate, todayLocal } from '../lib/date'
@@ -246,9 +245,6 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
     () => effectiveCategories(profile?.travel_expense_categories ?? null),
     [profile],
   )
-  const fontSize: FontSize = isFontSize(profile?.font_size)
-    ? profile.font_size
-    : 'default'
 
   // Close → back if we came from within the app, else fall back to the Trips list.
   const close = () =>
@@ -876,7 +872,6 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
             expenses={expenses}
             categories={categories}
             defaultCurrency={baseCurrency}
-            fontSize={fontSize}
             onAdd={(d) => void addExpense(d)}
             onUpdate={(id, patch) => void editExpense(id, patch)}
             onDelete={(id) => void removeExpense(id)}
@@ -957,7 +952,6 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
           currencies={CURRENCIES}
           defaultCurrency={baseCurrency}
           trackReimbursement={trip.track_reimbursement}
-          fontSize={fontSize}
           onAdd={(d) => void addExpense(d)}
           onUpdate={(id, patch) => void editExpense(id, patch)}
           onDelete={(id) => void removeExpense(id)}

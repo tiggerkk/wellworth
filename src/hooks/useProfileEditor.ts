@@ -17,7 +17,9 @@ export function useProfileEditor(): {
 } {
   const { session } = useAuth()
   const userId = session?.user.id
-  const { data: profile, loading, error } = useProfile()
+  // seed:false — the editor copies the profile into local state on mount, so it must initialize from
+  // the authoritative fresh fetch, not a possibly-stale local cache.
+  const { data: profile, loading, error } = useProfile({ seed: false })
 
   const save = useCallback(
     async (patch: TablesUpdate<'profile'>) => {

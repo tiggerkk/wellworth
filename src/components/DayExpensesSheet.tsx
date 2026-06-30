@@ -3,7 +3,6 @@ import { ExpenseRowsEditor, type ExpenseDraft } from './ExpenseRowsEditor'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 import type { ExpenseRow, ExpenseUpdate } from '../lib/expenses'
 import type { TravelCategoryConfig } from '../lib/travel-config'
-import type { FontSize } from '../lib/font-scale'
 import { formatFullDate } from '../lib/date'
 
 interface DayExpensesSheetProps {
@@ -18,7 +17,6 @@ interface DayExpensesSheetProps {
   currencies: readonly string[]
   defaultCurrency: string
   trackReimbursement: boolean
-  fontSize: FontSize
   onAdd: (draft: ExpenseDraft) => void
   onUpdate: (id: string, patch: ExpenseUpdate) => void
   onDelete: (id: string) => void
@@ -40,7 +38,6 @@ export function DayExpensesSheet({
   currencies,
   defaultCurrency,
   trackReimbursement,
-  fontSize,
   onAdd,
   onUpdate,
   onDelete,
@@ -78,7 +75,6 @@ export function DayExpensesSheet({
             defaultCurrency={defaultCurrency}
             defaultDate={defaultDate}
             trackReimbursement={trackReimbursement}
-            fontSize={fontSize}
             onAdd={onAdd}
             onUpdate={onUpdate}
             onDelete={onDelete}

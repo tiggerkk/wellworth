@@ -68,10 +68,15 @@ Settings**. Poem/Poet detail are drill-ins (not tabs).
 - Sticky **`SearchBar`** ("搜尋詩詞、作者…") + **`FilterToggleButton`**. Search is real-time over
   title + writer + excerpt, Traditional⇄Simplified-agnostic (`foldZh`).
 - **`FilterPanel`**: 朝代 (dynasty, **single-select** pills, options from `meta.dynasties`) · 主題 / 時令 /
-  選集 / 風格 (**multi-select** pills, from `meta.types` by `kind`) · **只看收藏** toggle · 清除篩選.
+  選集 / 風格 (**multi-select** pills, from `meta.types` by `kind`). Footer row (mirrors Shows Library):
+  **只看收藏** toggle · the shared **`SortControl`** (labelled 排序; 朝代 / 作者 / 標題, default 朝代
+  ascending, with an asc/desc toggle) · **清除篩選** (bottom-right, same line; clears filters but keeps
+  the query + sort).
   Filter semantics: **OR within a kind-group, AND across groups** (e.g. (春天 OR 秋天) AND 唐詩三百首).
-  Pills use the shared **`FilterPill`** (`text-body`, `bg-input text-text-primary` inactive / accent-filled
-  selected) — the same chip the Quotes Library tag facet, the Poets list, and a poem's tag list use.
+  Sorting is the pure `sortPoems` (dynasty rank = position in `meta.dynasties`, so it's corpus-consistent;
+  author/title by `localeCompare`; null/unknown dynasty sorts last). Pills use the shared **`FilterPill`**
+  (`text-body`, `bg-input text-text-primary` inactive / accent-filled selected) — the same chip the Quotes
+  Library tag facet, the Poets list, and a poem's tag list use.
 - **`ResultCount`** + a list of **`PoemCard`**s (title · writer · gold dynasty badge · excerpt + heart).
   Tapping a card opens the poem; the heart toggles a favourite (optimistic). Initial paint capped
   (`PAGE = 60`) with a "載入更多" button. Criteria persist via `useSessionState('wellworth:literature-home')`.
@@ -90,9 +95,18 @@ Settings**. Poem/Poet detail are drill-ins (not tabs).
 
 ### Poets (`/literature/poets`) + Poet detail (`/literature/poet/:id`)
 
-- **Poets**: writers grouped by dynasty (corpus order) as tappable **`FilterPill`**s
-  (`groupWritersByDynasty`). **No screen title** (the old 名家 header was removed) — the panel sits at the
-  standard top inset like the other tabs.
+- **Poets**: a **curated 名家 roster** (not every writer in the corpus), grouped by dynasty (corpus
+  order) as tappable **`FilterPill`**s (`groupWritersByDynasty`). The roster = the `FAMOUS_WRITERS` set
+  in `scripts/build-literature-data.mjs` (50 classical poets), ported from the source app's `isFamous`
+  flag (`migrate-writers.cjs`); only those names (with ≥1 poem) are emitted into `meta.writers`. **No
+  screen title** (the old 名家 header was removed) — the panel sits at the standard top inset like the
+  other tabs.
+  - **F: the famous list follows THIS corpus's HK-Traditional (OpenCC) spelling, not the source's.**
+    The source's `高啟` is stored here as `高啓` (啓 variant), so `FAMOUS_WRITERS` uses `高啓`. The build
+    `console.warn`s any name with no matching writer — if a future corpus rebuild drops a poet from 名家,
+    check for an OpenCC spelling drift first.
+  - Non-famous writers are still reachable: `writer/<id>.json` is written for **every** writer with
+    poems, so tapping a non-famous author from a poem-detail page still resolves.
 - **Poet detail**: header = **X** (close) · poet **name** · gold dynasty chip. Body = portrait (graceful
   fallback when `headImageUrl` is dead), then collapsible color-accented **作者簡介** bio (gated by the
   Settings → 顯示 prefs, starts collapsed) · **作品** works list (always shown, links to each poem) via

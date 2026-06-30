@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   IconCalendarEvent,
   IconChevronDown,
@@ -17,7 +17,6 @@ import {
   type ExpenseUpdate,
 } from '../lib/expenses'
 import type { TravelCategoryConfig } from '../lib/travel-config'
-import type { FontSize } from '../lib/font-scale'
 import { formatFullDate, todayLocal } from '../lib/date'
 
 /** The four core fields captured for a new expense (date carried from the add row's chip). */
@@ -40,7 +39,6 @@ interface ExpenseRowsEditorProps {
   /** New-row date default (day modal → the day's date; trip ledger → today). */
   defaultDate: string | null
   trackReimbursement: boolean
-  fontSize: FontSize
   onAdd: (draft: ExpenseDraft) => void
   onUpdate: (id: string, patch: ExpenseUpdate) => void
   onDelete: (id: string) => void
@@ -50,10 +48,11 @@ interface ExpenseRowsEditorProps {
 
 /**
  * Inline, spreadsheet-style expense editor shared by the Day modal and the trip-level Expenses ledger.
- * Fields in the owner's order: **Description · Category · Currency · Cost**. Layout is **adaptive to
- * Dynamic Type** (F23): single-line at `font_size === 'default'`, stacked 2-line at `large`/`larger`.
- * Each row taps open to reveal Date · reorder · Reimbursed (when tracked) · Delete. A trailing add row
- * commits new expenses without a modal. Ordering/grouping is driven by the parent (this component is
+ * Fields in the owner's order: **Description · Category · Currency · Cost**. Each row is **always
+ * stacked 2-line** (Description + expand on line 1; Category · Currency · Cost on line 2) so the four
+ * fields never crowd into one line and over-truncate — at every Dynamic Type preset (F23). Each row
+ * taps open to reveal Date · reorder · Reimbursed (when tracked) · Delete. A trailing add row commits
+ * new expenses without a modal. Ordering/grouping is driven by the parent (this component is
  * `sort_order`-free); reorder is positional within a date group.
  */
 export function ExpenseRowsEditor({
@@ -64,13 +63,11 @@ export function ExpenseRowsEditor({
   defaultCurrency,
   defaultDate,
   trackReimbursement,
-  fontSize,
   onAdd,
   onUpdate,
   onDelete,
   onReorder,
 }: ExpenseRowsEditorProps) {
-  const stacked = fontSize !== 'default'
   // Group existing rows for display; the day modal is a single (header-less) group. Empty groups are
   // dropped — the add row below is the entry point when there's nothing yet.
   const groups = (
@@ -93,7 +90,6 @@ export function ExpenseRowsEditor({
                 <RowEditor
                   key={`${e.id}:${e.updated_at}`}
                   expense={e}
-                  stacked={stacked}
                   categories={categories}
                   currencies={currencies}
                   trackReimbursement={trackReimbursement}
@@ -117,7 +113,6 @@ export function ExpenseRowsEditor({
       {/* One add row. Trip ledger: a date chip targets any (incl. new) date. Day modal: date fixed. */}
       <div className="rounded-card border border-border bg-surface">
         <AddRow
-          stacked={stacked}
           categories={categories}
           currencies={currencies}
           defaultCurrency={defaultCurrency}
@@ -134,7 +129,6 @@ export function ExpenseRowsEditor({
 
 function RowEditor({
   expense: e,
-  stacked,
   categories,
   currencies,
   trackReimbursement,
@@ -145,7 +139,6 @@ function RowEditor({
   onMove,
 }: {
   expense: ExpenseRow
-  stacked: boolean
   categories: TravelCategoryConfig[]
   currencies: readonly string[]
   trackReimbursement: boolean
@@ -215,7 +208,7 @@ function RowEditor({
       onChange={(ev) => setCost(ev.target.value)}
       onBlur={commitCost}
       aria-label="Cost"
-      className="field-control text-right"
+      className="field-control w-full text-right"
     />
   )
   const chevron = (
@@ -231,27 +224,17 @@ function RowEditor({
 
   return (
     <div className="px-3 py-2">
-      {stacked ? (
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-center gap-2">
-            {descInput}
-            {chevron}
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="min-w-0 flex-1">{categorySelect}</div>
-            <div className="w-20 shrink-0">{currencySelect}</div>
-            <div className="w-24 shrink-0">{costInput}</div>
-          </div>
-        </div>
-      ) : (
-        <div className="flex items-center gap-1.5">
+      <div className="flex flex-col gap-1.5">
+        <div className="flex items-center gap-2">
           {descInput}
-          <div className="w-24 shrink-0">{categorySelect}</div>
-          <div className="w-16 shrink-0">{currencySelect}</div>
-          <div className="w-16 shrink-0">{costInput}</div>
           {chevron}
         </div>
-      )}
+        <div className="flex items-center gap-2">
+          <div className="min-w-0 flex-1">{categorySelect}</div>
+          <div className="w-20 shrink-0">{currencySelect}</div>
+          <div className="w-24 shrink-0">{costInput}</div>
+        </div>
+      </div>
 
       {open && (
         <div className="mt-2 flex flex-col gap-3 rounded-card bg-surface-alt p-3">
@@ -330,7 +313,6 @@ function RowEditor({
 // --- Trailing "add expense" row ---
 
 function AddRow({
-  stacked,
   categories,
   currencies,
   defaultCurrency,
@@ -338,7 +320,6 @@ function AddRow({
   showDateChip,
   onAdd,
 }: {
-  stacked: boolean
   categories: TravelCategoryConfig[]
   currencies: readonly string[]
   defaultCurrency: string
@@ -355,12 +336,15 @@ function AddRow({
   const [pickDate, setPickDate] = useState(false)
   const descRef = useRef<HTMLInputElement>(null)
 
-  const costNum = Number(cost)
-  const canAdd =
-    description.trim() !== '' && cost.trim() !== '' && Number.isFinite(costNum)
+  // Cost is optional at add time — a blank cost commits as 0 so an expense can be jotted down by name
+  // and priced later (the cost field stays editable inline). Only a description is required.
+  const costNum = cost.trim() === '' ? 0 : Number(cost)
+  const canAdd = description.trim() !== '' && Number.isFinite(costNum)
 
-  function commit() {
-    if (!canAdd) return
+  /** Persist the draft if it's complete (description filled, cost valid-or-blank). Returns whether it
+   *  committed — `commit` uses that to clear + refocus; the unmount flush ignores it. */
+  function commitDraft() {
+    if (!canAdd) return false
     onAdd({
       description: description.trim(),
       category,
@@ -368,16 +352,33 @@ function AddRow({
       cost: costNum,
       expense_date: date,
     })
+    return true
+  }
+
+  function commit() {
+    if (!commitDraft()) return
     setDescription('')
     setCost('')
     descRef.current?.focus()
   }
+
+  // Auto-commit a complete draft when the editor is closed/unmounted before +/Enter is pressed
+  // (e.g. closing the day modal or leaving the Expenses tab) — otherwise the typed-but-uncommitted
+  // row was silently lost on close. A ref keeps the flush reading the latest draft/handler without
+  // re-subscribing each keystroke; it no-ops on an empty/incomplete row (so a cleared add row, incl.
+  // the dev StrictMode mount→cleanup, never double-saves).
+  const flushRef = useRef(commitDraft)
+  useEffect(() => {
+    flushRef.current = commitDraft
+  })
+  useEffect(() => () => void flushRef.current(), [])
 
   const descInput = (
     <input
       ref={descRef}
       value={description}
       onChange={(e) => setDescription(e.target.value)}
+      onKeyDown={(e) => e.key === 'Enter' && commit()}
       placeholder="Add expense…"
       aria-label="New expense description"
       className="field-control min-w-0 flex-1"
@@ -410,7 +411,7 @@ function AddRow({
       onKeyDown={(e) => e.key === 'Enter' && commit()}
       placeholder="0"
       aria-label="New expense cost"
-      className="field-control text-right"
+      className="field-control w-full text-right"
     />
   )
   const addBtn = (
@@ -440,31 +441,18 @@ function AddRow({
 
   return (
     <div className="bg-surface-alt/40 px-3 py-2">
-      {stacked ? (
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-center gap-2">
-            {descInput}
-            {addBtn}
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="min-w-0 flex-1">{categorySelect}</div>
-            <div className="w-20 shrink-0">{currencySelect}</div>
-            <div className="w-24 shrink-0">{costInput}</div>
-          </div>
-          {dateChip && <div className="flex">{dateChip}</div>}
+      <div className="flex flex-col gap-1.5">
+        <div className="flex items-center gap-2">
+          {descInput}
+          {addBtn}
         </div>
-      ) : (
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-center gap-1.5">
-            {descInput}
-            <div className="w-24 shrink-0">{categorySelect}</div>
-            <div className="w-16 shrink-0">{currencySelect}</div>
-            <div className="w-16 shrink-0">{costInput}</div>
-            {addBtn}
-          </div>
-          {dateChip && <div className="flex">{dateChip}</div>}
+        <div className="flex items-center gap-2">
+          <div className="min-w-0 flex-1">{categorySelect}</div>
+          <div className="w-20 shrink-0">{currencySelect}</div>
+          <div className="w-24 shrink-0">{costInput}</div>
         </div>
-      )}
+        {dateChip && <div className="flex">{dateChip}</div>}
+      </div>
 
       {pickDate && (
         <Calendar

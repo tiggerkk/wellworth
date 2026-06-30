@@ -81,7 +81,11 @@ export const SPEECH_LANG_OPTIONS: { value: SpeechLang; label: string }[] = [
 
 // --- list criteria -----------------------------------------------------------------------------
 
-/** Home (poem list) search + filter state. Held in `useSessionState` so it survives drill-in/back. */
+/** Poem-list sort field (matches the Library Sort menu, mirroring Shows). */
+export type PoemSortField = 'dynasty' | 'author' | 'title'
+export type SortDir = 'asc' | 'desc'
+
+/** Home (poem list) search + filter + sort state. Held in `useSessionState` so it survives drill-in/back. */
 export interface HomeCriteria {
   query: string
   /** Selected dynasty (exact match on the poem's dynasty), or null for any. */
@@ -89,6 +93,8 @@ export interface HomeCriteria {
   /** Selected type ids (主題/時令/選集): OR within a kind-group, AND across groups. */
   typeIds: number[]
   favoritesOnly: boolean
+  sortField: PoemSortField
+  sortDir: SortDir
 }
 
 export const DEFAULT_HOME_CRITERIA: HomeCriteria = {
@@ -96,6 +102,8 @@ export const DEFAULT_HOME_CRITERIA: HomeCriteria = {
   dynasty: null,
   typeIds: [],
   favoritesOnly: false,
+  sortField: 'dynasty',
+  sortDir: 'asc',
 }
 
 /** Gold dynasty badge, shared with Shows/Books (design-system `--color-dynasty`). */
@@ -176,6 +184,61 @@ export function applyHomeView(
     }
     return true
   })
+}
+
+// --- sorting -----------------------------------------------------------------------------------
+
+function poemSortKey(
+  p: PoemIndexEntry,
+  field: PoemSortField,
+  rank: Map<string, number>,
+): string | number | null {
+  switch (field) {
+    case 'dynasty': {
+      // Chronological by the corpus dynasty order (oldest→newest); null/unknown sorts last.
+      if (p.dynasty == null) return null
+      return rank.get(p.dynasty) ?? null
+    }
+    case 'author':
+      return p.writer.toLowerCase()
+    case 'title':
+      return p.title.toLowerCase()
+  }
+}
+
+function comparePoems(
+  a: PoemIndexEntry,
+  b: PoemIndexEntry,
+  field: PoemSortField,
+  dir: SortDir,
+  rank: Map<string, number>,
+): number {
+  const ka = poemSortKey(a, field, rank)
+  const kb = poemSortKey(b, field, rank)
+  // Missing values always sort last, regardless of direction.
+  if (ka == null && kb == null) return a.title.localeCompare(b.title)
+  if (ka == null) return 1
+  if (kb == null) return -1
+  const primary =
+    typeof ka === 'number' && typeof kb === 'number'
+      ? ka - kb
+      : String(ka).localeCompare(String(kb))
+  if (primary !== 0) return dir === 'asc' ? primary : -primary
+  return a.title.localeCompare(b.title) // stable tiebreak
+}
+
+/**
+ * Sort a (already-filtered) poem list by field + direction. Pure — copies before sorting.
+ * `dynastyOrder` is `meta.dynasties` (already chronological), so the dynasty sort is corpus-consistent.
+ */
+export function sortPoems(
+  poems: PoemIndexEntry[],
+  field: PoemSortField,
+  dir: SortDir,
+  dynastyOrder: string[],
+): PoemIndexEntry[] {
+  const rank = new Map(dynastyOrder.map((d, i) => [d, i]))
+  return [...poems].sort((a, b) => comparePoems(a, b, field, dir, rank))
 }
 
 /** Writers grouped by dynasty for the Poets screen, in the corpus's dynasty order. */

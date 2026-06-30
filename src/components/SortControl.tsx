@@ -10,6 +10,8 @@ interface SortControlProps<T extends string> {
   onFieldChange: (field: T) => void
   dir: SortDir
   onToggleDir: () => void
+  /** Visible label before the dropdown (default "Sort"; e.g. "排序" for the Chinese modules). */
+  label?: string
 }
 
 /**
@@ -23,10 +25,11 @@ export function SortControl<T extends string>({
   onFieldChange,
   dir,
   onToggleDir,
+  label = 'Sort',
 }: SortControlProps<T>) {
   return (
     <div className="flex items-center gap-1">
-      <span className="text-caption text-text-secondary">Sort</span>
+      <span className="text-caption text-text-secondary">{label}</span>
       <SelectMenu
         value={field}
         options={options}

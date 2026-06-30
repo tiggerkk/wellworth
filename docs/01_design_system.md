@@ -316,9 +316,13 @@ flex flex-col`, or `h-full` for Zen) so the `flex-1` fills the real content area
 - **ExpenseRowsEditor** — the shared inline, spreadsheet-style expense editor
   (`src/components/ExpenseRowsEditor.tsx`): rows of **Description · Category · Currency · Cost** with a
   trailing add row (no modal) and a tap-to-expand panel (Date · up/down reorder within the date group ·
-  Reimbursed when tracked · Delete). **Adaptive to Dynamic Type** (F23): single-line at `font_size`
-  `default`, **stacked 2-line** at `large`/`larger`. Ordering/grouping is driven by the parent (the
-  component is `sort_order`-free; reorder is positional). Used by the Travel per-day expense modal
+  Reimbursed when tracked · Delete). Rows are **always stacked 2-line** (Description + expand chevron
+  on line 1; Category · Currency · Cost on line 2) at every Dynamic Type preset (F23) — the four fields
+  on one line over-truncated + overflowed, so the single-line variant was dropped and the component no
+  longer takes a `font_size` prop. **Layout gotcha:** each field input in a fixed-width `shrink-0`
+  wrapper is `w-full` (a bare `<input>` keeps its intrinsic ~20-char width and spills past the wrapper —
+  the Cost field was the overflow culprit). Ordering/grouping is driven by the parent (the component is
+  `sort_order`-free; reorder is positional). Used by the Travel per-day expense modal
   (`DayExpensesSheet`) and the trip-level `TripExpensesPanel` ledger (the latter with `groupByDate`).
 - **ImportPreviewList** — the shared CSV-importer result list (`src/components/ImportPreviewList.tsx`):
   a bordered card of rows, each `{ media, title, year, subtitle?, meta?, status, reviewLabel }` plus the

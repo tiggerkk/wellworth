@@ -12,9 +12,11 @@ import { homeModules } from '../lib/modules-display'
  * Cards are laid out in a 2-column grid that fills left→right, top→bottom, so their visual order
  * is exactly the linear `module_order`. Each card is a button-style link (no chevron).
  *
- * The card list is filtered + ordered per-profile (Global Settings → Display → Visible Modules):
- * while the profile loads (or fails) it falls back to all modules in canonical order, so the hub
- * never flashes empty. Hiding only removes the card — module routes stay reachable by direct URL.
+ * The card list is filtered + ordered per-profile (Global Settings → Display → Visible Modules).
+ * `useProfile` seeds the first render from a local cache of the last-known profile, so the hub paints
+ * the user's saved order/visibility immediately rather than flashing the canonical order (and never
+ * flashes empty); on a fresh sign-in with no cache it falls back to all modules in canonical order.
+ * Hiding only removes the card — module routes stay reachable by direct URL.
  */
 export function Home() {
   const { data: profile } = useProfile()

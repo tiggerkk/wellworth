@@ -132,6 +132,17 @@ Supabase (Postgres + RLS). Components hold no SQL and never import the Supabase 
     unmounts the child and discards edits (**F13**, Travel Trip Builder); instead render once `data`
     exists and show a first-load spinner only when `loading && !data`.
   - Rule: a gate keyed on a fetched value reads `data`, never `loading`.
+- **F21** — `useProfile` seeds its first render from a **local cache of the last-known profile**
+  (`src/lib/profile-cache.ts`, keyed `wellworth:profile:<userId>`), so screens rendering a per-profile
+  order/visibility (Home hub, Medical/Net Worth ordering) paint the user's choice immediately instead of
+  flashing the canonical default while the fetch is in flight; every fetch refreshes the cache. This is
+  the `last-module` / `networth-liquid-filter` localStorage convention applied to the whole row, plumbed
+  through an optional `initialData` seed on `useAsync` (stale-while-revalidate). **Sanitize-on-write:**
+  the cache strips the Medical lock credentials (`medical_lock_pin_hash`, `medical_lock_webauthn_id`) — a
+  brute-forceable PIN hash must never persist to localStorage. **Opt out with `useProfile({ seed: false })`**
+  where the seed is unsafe: editors that copy the profile into local state on mount need the authoritative
+  fresh row (`useProfileEditor`), and `MedicalLockProvider` must not see a row with its hash stripped
+  (it would briefly unlock; it has its own synchronous `enabledHint` gate instead).
 - **F16a** — bulk DB ops go in **one batched call** (`.insert(rows)` / `.upsert(rows)`, chunked), never
   a per-row `await` loop. The CSV importers move N rows, so a sequential loop is N round-trips (the
   Shows importer stalled on IMPORT this way); `saveImportedShows` splits new/existing and issues a bulk
