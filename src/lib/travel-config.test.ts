@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   addCategory,
+  categoryColor,
   categoryLabel,
   defaultCategories,
   effectiveCategories,
@@ -10,6 +11,10 @@ import {
   renameCategory,
   reorderCategories,
 } from './travel-config'
+import {
+  TRAVEL_CATEGORY_COLOR_FALLBACK,
+  TRAVEL_CATEGORY_COLORS,
+} from '../constants/travel'
 
 describe('defaults', () => {
   it('seed categories in owner order', () => {
@@ -53,6 +58,38 @@ describe('effectiveCategories', () => {
       'restaurant',
       'mine',
     ])
+  })
+})
+
+describe('category colours', () => {
+  it('seed defaults each carry a palette colour', () => {
+    const defaults = defaultCategories()
+    expect(defaults.every((e) => typeof e.color === 'string' && e.color)).toBe(true)
+    expect(defaults[0]!.color).toBe(TRAVEL_CATEGORY_COLORS[0]!.value)
+  })
+  it('categoryColor uses the saved colour, then position, then the orphan fallback', () => {
+    const list = [
+      { key: 'a', label: 'A', color: 'var(--color-danger)' },
+      { key: 'b', label: 'B' }, // legacy entry, no stored colour
+    ]
+    expect(categoryColor(list, 'a')).toBe('var(--color-danger)')
+    expect(categoryColor(list, 'b')).toBe(TRAVEL_CATEGORY_COLORS[1]!.value) // position 1
+    expect(categoryColor(list, 'gone')).toBe(TRAVEL_CATEGORY_COLOR_FALLBACK)
+  })
+  it('readEntry preserves a stored colour and drops a blank one', () => {
+    const out = effectiveCategories([
+      { key: 'a', label: 'A', color: 'var(--color-accent)' },
+      { key: 'b', label: 'B', color: '  ' },
+    ])
+    expect(out[0]!.color).toBe('var(--color-accent)')
+    expect(out[1]!.color).toBeUndefined()
+  })
+  it('a new category gets a distinct default colour not already in use', () => {
+    const list = addCategory(defaultCategories(), 'Gifts')
+    const added = list[list.length - 1]!
+    expect(typeof added.color).toBe('string')
+    // defaults already consume the first 8 swatches, so the 9th is chosen.
+    expect(added.color).toBe(TRAVEL_CATEGORY_COLORS[8]!.value)
   })
 })
 

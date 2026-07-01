@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { IconWorld } from '@tabler/icons-react'
+import { IconRoute } from '@tabler/icons-react'
 import { SearchBar } from '../components/SearchBar'
 import { SelectMenu } from '../components/SelectMenu'
 import { SwipeRow } from '../components/SwipeRow'
@@ -216,7 +216,7 @@ export function TravelTrips() {
           title="No trips yet"
           actionLabel="New Trip"
           to={routes.travel.entry}
-          Icon={IconWorld}
+          Icon={IconRoute}
         />
       )}
 

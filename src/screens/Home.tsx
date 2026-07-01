@@ -3,6 +3,7 @@ import { IconSettings } from '@tabler/icons-react'
 import { routes } from '../constants/routes'
 import { useProfile } from '../hooks/useProfile'
 import { homeModules } from '../lib/modules-display'
+import { BrandMark } from '../components/BrandMark'
 
 /**
  * The Home hub: a launcher of module cards. Selecting a module enters it (its own
@@ -25,7 +26,10 @@ export function Home() {
   return (
     <div className="flex flex-col gap-5 px-4 py-4">
       <header className="flex items-center justify-between">
-        <h1 className="text-title font-medium text-text-primary">WellWorth</h1>
+        <div className="flex items-center gap-2">
+          <BrandMark className="size-7 text-accent" />
+          <h1 className="text-title font-medium text-text-primary">WellWorth</h1>
+        </div>
         <Link
           to={routes.settings}
           aria-label="Settings"
@@ -40,12 +44,12 @@ export function Home() {
           <Link
             key={m.key}
             to={m.base}
-            className="flex items-center gap-3 rounded-card border border-border bg-surface px-3 py-3 active:bg-input/40"
+            className="flex flex-col items-center gap-2 rounded-card border border-border bg-surface px-3 py-4 text-center active:bg-input/40"
           >
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-card bg-input text-accent">
-              <m.Icon size={20} stroke={1.75} />
+            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-card bg-input text-accent">
+              <m.Icon size={32} stroke={1.75} />
             </span>
-            <span className="min-w-0 flex-1">
+            <span className="w-full min-w-0">
               <span className="block truncate text-body font-medium text-text-primary">
                 {m.label}
               </span>

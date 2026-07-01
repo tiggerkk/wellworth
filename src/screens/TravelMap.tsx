@@ -1,6 +1,6 @@
 import { Suspense, useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { IconWorld, IconX } from '@tabler/icons-react'
+import { IconRoute, IconX } from '@tabler/icons-react'
 import { Toggle } from '../components/Toggle'
 import { EmptyState } from '../components/EmptyState'
 import { StatusChip } from '../components/StatusChip'
@@ -107,7 +107,7 @@ export function TravelMap() {
           title="No trips yet"
           actionLabel="New Trip"
           to={routes.travel.entry}
-          Icon={IconWorld}
+          Icon={IconRoute}
         />
       </div>
     )

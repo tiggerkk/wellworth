@@ -16,17 +16,30 @@
  *   - customized (non-null)   ⇒ exactly the saved list.
  */
 import {
+  TRAVEL_CATEGORY_COLOR_FALLBACK,
+  TRAVEL_CATEGORY_COLORS,
   TRAVEL_EXPENSE_CATEGORIES,
   TRAVEL_EXPENSE_CATEGORY_LABELS,
 } from '../constants/travel'
 
-export type TravelCategoryConfig = { key: string; label: string }
+/** A configurable expense category. `color` is optional (legacy rows may lack it — resolve via
+ *  `categoryColor`), a CSS-var/hex string chosen from `TRAVEL_CATEGORY_COLORS`. */
+export type TravelCategoryConfig = { key: string; label: string; color?: string }
+
+const PALETTE = TRAVEL_CATEGORY_COLORS.map((c) => c.value)
+
+/** The default swatch for a category at display position `i` (cycles the palette). */
+function paletteColor(i: number): string {
+  const n = PALETTE.length
+  return PALETTE[((i % n) + n) % n] ?? TRAVEL_CATEGORY_COLOR_FALLBACK
+}
 
 /** The canonical expense-category defaults (seed + NULL fallback), in their display order. */
 export function defaultCategories(): TravelCategoryConfig[] {
-  return TRAVEL_EXPENSE_CATEGORIES.map((key) => ({
+  return TRAVEL_EXPENSE_CATEGORIES.map((key, i) => ({
     key,
     label: TRAVEL_EXPENSE_CATEGORY_LABELS[key],
+    color: paletteColor(i),
   }))
 }
 
@@ -37,7 +50,9 @@ function readEntry(v: unknown): TravelCategoryConfig | null {
   const o = v as Record<string, unknown>
   const key = typeof o.key === 'string' ? o.key.trim() : ''
   const label = typeof o.label === 'string' ? o.label.trim() : ''
-  return key && label ? { key, label } : null
+  if (!key || !label) return null
+  const color = typeof o.color === 'string' && o.color.trim() ? o.color.trim() : undefined
+  return color ? { key, label, color } : { key, label }
 }
 
 /** Resolve the owner's category list (override JSONB) → validated configs; NULL/empty ⇒ defaults. */
@@ -56,6 +71,28 @@ export function effectiveCategories(override: unknown): TravelCategoryConfig[] {
 /** The configured label for a key, falling back to the raw key (orphan tolerance). */
 export function categoryLabel(list: TravelCategoryConfig[], key: string): string {
   return list.find((e) => e.key === key)?.label ?? key
+}
+
+/**
+ * The **stable** display colour for a category key: its saved `color`, else a deterministic
+ * position-based palette colour (so a legacy entry with no stored colour still renders consistently),
+ * else the neutral fallback for an orphan key (a deleted category still referenced by an expense).
+ * Drives the Expenses donut slices, keyed by category rather than by slice order.
+ */
+export function categoryColor(list: TravelCategoryConfig[], key: string): string {
+  const i = list.findIndex((e) => e.key === key)
+  if (i === -1) return TRAVEL_CATEGORY_COLOR_FALLBACK
+  return list[i]?.color ?? paletteColor(i)
+}
+
+/** The default colour for a newly-added category: the first palette swatch not already in use, else
+ *  a position-based cycle so a distinct colour is pre-selected (the owner can change it). */
+function nextColor(list: TravelCategoryConfig[]): string {
+  const used = new Set(list.map((e) => e.color).filter(Boolean))
+  return (
+    TRAVEL_CATEGORY_COLORS.find((c) => !used.has(c.value))?.value ??
+    paletteColor(list.length)
+  )
 }
 
 /** Match a free-text cell (CSV import) to a configured key by key OR label, case-insensitive. */
@@ -87,7 +124,8 @@ export function generateKey(label: string, existingKeys: string[]): string {
   return `${slug}_${n}`
 }
 
-/** Append a new category with a generated key (duplicate labels allowed; keys stay unique). */
+/** Append a new category with a generated key (duplicate labels allowed; keys stay unique) and a
+ *  distinct default colour the owner can then change. */
 export function addCategory(
   list: TravelCategoryConfig[],
   label: string,
@@ -96,7 +134,7 @@ export function addCategory(
     label,
     list.map((e) => e.key),
   )
-  return [...list, { key, label: label.trim() }]
+  return [...list, { key, label: label.trim(), color: nextColor(list) }]
 }
 
 /** Rename changes only the label (the key is immutable, so expense rows are untouched). */

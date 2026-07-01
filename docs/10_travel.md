@@ -58,13 +58,15 @@ literal **"Edit Trip"**.
 
 **Itinerary sub-tab:**
 
-- **Add Day** (defaults the new day's date to the previous day's date + 1) + (when >1) **Reorder
-  Days** (a drag-reorder sheet via shared `ReorderList`). Each **Day** card has a **collapse/expand
+- **Add Day** (defaults the new day's date to the previous day's date + 1) sits **bottom-right, below
+  the last Day card** (shared Add-button style — outline `SecondaryButton`, teal `IconPlus`); the
+  **Reorder Days** button (when >1 day, a drag-reorder sheet via shared `ReorderList`) stays at the top
+  of the itinerary. Each **Day** card has a **collapse/expand
   chevron** at the left (all days expanded by default). Header row: chevron · `Day N` · tappable
   **Calendar date chip** (the date or "Add date" — writes `trip_day.day_date` and re-caches the
   trip's start/end) · spacer · **Delete** (a `ConfirmDeleteAction` — inline `Delete? ✓ ✗`, no browser
-  dialog) · **Duplicate** (copy) · **Expenses** (`IconReceipt2` — opens the day's expense modal) ·
-  **Add Stop** (green `+`).
+  dialog) · **Duplicate** (copy) · **Expenses** (`IconReceipt2`, tinted **accent/blue** — opens the
+  day's expense modal) · **Add Stop** (green `+`).
 - **Per-day Expenses modal** (`DayExpensesSheet`, a local overlay so the builder draft survives): logs
   the day's spend as it's incurred. Shows only the expenses whose `expense_date` matches the day; new
   rows **prefill that date** (editable). It's the same shared inline editor (`ExpenseRowsEditor`) and the
@@ -179,10 +181,15 @@ ledger — replaces the old one-at-a-time `ExpenseEditorSheet`):
 
 ## Visual design (Travel-specific)
 
-- **Stop-type icons** (Tabler, via the shared `StopTypeIcon` component): Travel = `IconTrain`,
+- **Stop-type icons** (Tabler, via the shared `StopTypeIcon` component): Travel = `IconPlaneTilt`,
   Visit = `IconCamera`, Eat = `IconBowlChopsticks`, Shop = `IconBrandShopee`, Stay = `IconBed`,
-  Other = `IconCategory`. In the Edit-Trip itinerary, each stop row leads with this icon (replacing
-  the type **text**), followed by the description; the type still names the row via `aria-label`.
+  Other = `IconMapPin`. Each is **tinted per kind** from `STOP_TYPE_COLORS` (`constants/travel.ts`,
+  the Net-Worth `ASSET_TYPE_COLORS` pattern — design-token CSS vars): travel = green (`positive`),
+  visit = gold (`dynasty`), eat = red (`danger`), shop = blue (`cat-activity`), stay = purple
+  (`cat-supplement`), other = grey (`text-tertiary` — a darker grey than `text-muted`, so the map-pin
+  reads apart from the near-white stop description beside it). `StopTypeIcon` sets the colour itself
+  (callers pass layout classes only). In the Edit-Trip itinerary, each stop row leads with this icon
+  (replacing the type **text**), followed by the description; the type still names the row via `aria-label`.
 - **Completion**: Done = a teal fill (`positive`); Skipped = a solid grey fill (`bg-text-secondary`)
   with the struck-through stop row.
 - **Trip cover**: a rounded image rendered `referrerpolicy="no-referrer"` (thumbnail in lists, larger
@@ -195,11 +202,19 @@ ledger — replaces the old one-at-a-time `ExpenseEditorSheet`):
   needs an explicit `z-index` above Leaflet's controls (`.leaflet-top/.leaflet-bottom` are
   `z-index:1000`) — use `z-[1100]`; otherwise the controls paint over it and swallow taps.
 - **Expense breakdown**: a small Recharts donut over the categories (HKD-equivalent), lazy-loaded
-  into its own chunk. Its palette is **accent-led and design-token-driven** (`var(--color-*)` in the
-  `Cell` fills, like the other charts), so it tracks the theme instead of hardcoding hexes — when
-  `--color-accent` changed to blue the lead slice followed (it used to hardcode the old accent orange).
+  into its own chunk. **Slice colours are stable _per category_** — each expense category carries a
+  chosen `color` (see the category editor below), resolved by `categoryColor(list, key)` and passed
+  through the slice, so a category is the same hue on every trip. `TravelExpenseChart` still keeps an
+  accent-led, design-token-driven **fallback** palette (`COLORS[i % …]`) used only for a slice with no
+  explicit colour. Independent of the `STOP_TYPE_COLORS` above (stop kinds and expense categories are
+  separate taxonomies).
 - **Reorder / category editors**: drag handles via the shared `ReorderList`; the category editor is
-  the shared `ConfigListEditor`.
+  the shared `ConfigListEditor`. Each category row also has a **colour picker** (`ColorPicker` via the
+  editor's `rowExtra` slot) that sets the category's donut colour from the `TRAVEL_CATEGORY_COLORS`
+  swatch palette; the choice is stored per entry on `profile.travel_expense_categories` (alongside
+  `key`/`label`, no migration — JSONB). Seed defaults + new categories get a distinct default swatch
+  (`defaultCategories` / `addCategory`, palette-cycled); legacy entries with no stored colour fall back
+  to a deterministic position-based swatch via `categoryColor`.
 
 ---
 

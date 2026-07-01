@@ -3388,3 +3388,108 @@ clipped, Addition off-screen), and the row labels were the cryptic optometry **O
   `medical_section_order` stays NULL → `effectiveSectionOrder` falls back to the new order; an existing
   saved override is unaffected.
 - **Snapshot:** **632** tests pass (UI-only change, label/defaults not asserted); `npm run check` green.
+
+## Module icons refresh: Home hub, bottom-nav Home, Travel route icon — 2026-06-30
+
+Cosmetic/UX icon pass across modules (no schema change; shared components + the module registry).
+
+- **Home hub header** now shows the `BrandMark` logo (accent-tinted, `size-7`) to the left of the
+  "WellWorth" title.
+- **Home hub cards** switched from a horizontal (icon · label) row to a **vertical stack** — a larger
+  module icon (`size 32` in an `h-14 w-14` tile, up from `size 20` / `h-9 w-9`) on top of the label and
+  description, centered.
+- **Bottom-nav Home item** now renders the `BrandMark` logo (inline SVG, `currentColor` so it still
+  tints active/inactive) inside the existing accent chip instead of `IconHome`. `BottomNav` renders the
+  Home link explicitly rather than mapping it through the `NavItem`/Tabler-`Icon` list.
+- **Travel module icon** changed from `IconWorld` to `IconRoute` — in the module registry
+  (`constants/modules.ts`) and the "No trips yet" `EmptyState` on the Travel Dashboard, Map, and Trips
+  screens.
+- **Wellness Library tab** relabelled **Food & Activities** (the screen is unchanged).
+- **Snapshot:** **632** tests pass (UI-only change); `npm run check` green.
+
+## Unify the "+ Add / + New" buttons on the shared Add-button style — 2026-06-30
+
+Made the module Add/New entry-point buttons match Travel Edit-Trip's **Add Day** button — an outline
+`SecondaryButton size="sm"` with a teal-tinted `IconPlus` + label — instead of the bare inline
+text-positive links (no schema change; UI-only).
+
+- **Wellness Library** (`Library.tsx`) — `+ New Food` / `+ New Activity` (right of the results row) is
+  now a `SecondaryButton` in the shared style.
+- **Medical Add/Edit Report** (`MedicalEntry.tsx`):
+  - **Add Result** → shared `SecondaryButton` style.
+  - **Add Link** moved to the **right of the "Document Links (Google Drive)" label** (shared style).
+    One empty link textbox (placeholder `http://…`) is now **always shown** even before any link
+    exists — a ghost row (`document_urls.length ? urls : ['']`); typing seeds the first entry, and the
+    per-row remove ✕ only shows for real (stored) rows. Empty rows are still trimmed on save.
+- **Travel Edit Trip** (`TripBuilder.tsx`) — **Add Day** moved from the top of the itinerary to the
+  **bottom-right, below the last Day card**; **Reorder Days** stays at the top (shown only when >1 day).
+- **Snapshot:** **632** tests pass (UI-only); `npm run check` green.
+
+## Travel stop-type icons: plane-tilt / map-pin + per-kind colours — 2026-06-30
+
+Refreshed the itinerary stop-type icons and gave each kind a distinct accent colour (no schema
+change; UI-only).
+
+- **Icons** (`StopTypeIcon`): Travel `IconTrain → IconPlaneTilt`; Other `IconCategory → IconMapPin`
+  (Visit/Eat/Shop/Stay unchanged).
+- **Per-kind colours** — new `STOP_TYPE_COLORS` in `constants/travel.ts` (the Net-Worth
+  `ASSET_TYPE_COLORS` pattern, design-token CSS vars): travel = green, visit = gold, eat = red,
+  shop = blue, stay = purple, other = grey. `StopTypeIcon` applies the colour itself via inline
+  `style.color`; the one caller (`TripBuilder` stop row) now passes layout classes only (dropped its
+  `text-text-secondary` override).
+- **Day-header Expenses icon** (`IconReceipt2`) recoloured `text-text-secondary → text-accent` (blue).
+- **Donut colours (answer to a question, no change):** `TravelExpenseChart`'s slice palette is assigned
+  **positionally** (`COLORS[i % COLORS.length]`, by slice order), design-token-driven and accent-led —
+  it is **not** keyed to the expense category and is independent of `STOP_TYPE_COLORS`.
+- **Snapshot:** **632** tests pass (UI-only); `npm run check` green.
+
+## Travel: darker map-pin grey + stable per-category expense colours — 2026-06-30
+
+Two follow-ups to the stop-icon pass (one schema-free data-shape change on the categories JSONB).
+
+- **Map-pin (other) grey darkened** — `STOP_TYPE_COLORS.other` `text-muted → text-tertiary` (#7a8294),
+  so the grey icon reads apart from the near-white stop description beside it.
+- **Stable per-category expense colours** (replaces the donut's positional palette):
+  - `TravelCategoryConfig` gains an optional `color`; stored per entry on
+    `profile.travel_expense_categories` (JSONB — **no migration**). `defaultCategories()` +
+    `addCategory` assign a distinct default swatch (palette-cycled / first-unused); `readEntry`
+    preserves a stored colour; **`categoryColor(list, key)`** resolves saved → position-based →
+    orphan-fallback so legacy entries stay consistent.
+  - New **`TRAVEL_CATEGORY_COLORS`** swatch palette (design-token CSS vars) in `constants/travel.ts`.
+  - New shared **`ColorPicker`** component; wired into the Expense-Categories editor via
+    `ConfigListEditor`'s `rowExtra` slot (per-row swatch → auto-saves).
+  - Donut (`TripExpensesPanel` → `TravelExpenseChart`) now passes each slice its category colour;
+    the old `COLORS[i % …]` palette stays only as a fallback for a colourless slice.
+- **Tests:** +1 file group in `travel-config.test.ts` (defaults carry colour, `categoryColor`
+  precedence, blank-colour drop, new-category distinct colour). **636** tests pass; `npm run check` green.
+
+## Fix: category ColorPicker popover hidden inside the reorder list — 2026-06-30
+
+The Expense-Categories colour swatch opened nothing (just a warped sliver under the swatch) on desktop.
+
+- **Root cause (two ancestors):** the picker lives in a `ConfigListEditor` `rowExtra`, i.e. inside a
+  `ReorderList` row. The list container is `overflow-hidden` (clips an `absolute` popover past its
+  edges), and every reorder row carries a `transform` — which establishes a **stacking context**, so a
+  popover overflowing into sibling rows paints **under** the later rows no matter its `z-index`.
+- **Fix:** `ColorPicker` now renders its scrim + swatch grid via `createPortal(…, document.body)`,
+  positioned `fixed` from the trigger's `getBoundingClientRect()` (right-aligned to the swatch; flips
+  **above** when there's no room below). Escapes both the clip and the per-row stacking context.
+- **Docs:** new Layout-gotcha in `01_design_system.md` (portal any popover inside a `ReorderList` row);
+  `ColorPicker` entry updated. No behaviour/schema change elsewhere; **636** tests pass, `npm run check` green.
+
+## Fix: transparent SelectMenu dropdown in the day-expenses editor — 2026-06-30
+
+The category dropdown in the per-day Expenses modal rendered see-through — the rows behind bled through
+the open menu.
+
+- **Root cause:** the add-expense row dims its default Category · Currency · Cost line with
+  `opacity-55` (a "these are defaults" hint). `opacity < 1` renders the whole subtree — including the
+  `SelectMenu`'s `absolute` panel and its `bg-surface` — into an alpha buffer, so the menu (which flips
+  **up** over the rows above, being the last row) showed at 55% opacity. The same latent trap hit the
+  `SelectMenu` inside `ConfigListEditor`'s `rowExtra` (insurance currency), clipped by `ReorderList`'s
+  `overflow-hidden`.
+- **Fix:** `SelectMenu` now **portals** its scrim + menu to `document.body`, positioned `fixed` from the
+  trigger's rect (same pattern as `ColorPicker`) — escaping ancestor `opacity` / `overflow` /
+  `transform`. Flip-up + available-space `maxHeight` logic preserved; trigger unchanged.
+- **Docs:** generalised the Layout-gotcha (portal popovers under `overflow`/`transform`/`opacity`) and
+  updated the `SelectMenu` entry. No schema/behaviour change; **636** tests pass, `npm run check` green.

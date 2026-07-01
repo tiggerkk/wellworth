@@ -13,6 +13,7 @@ import { SearchBar } from '../components/SearchBar'
 import { ListRow } from '../components/ListRow'
 import { SwipeRow } from '../components/SwipeRow'
 import { ResultCount } from '../components/ResultCount'
+import { SecondaryButton } from '../components/SecondaryButton'
 import { foldZh } from '../lib/zh-fold'
 
 type Tab = 'foods' | 'activities'
@@ -98,16 +99,19 @@ export function Library() {
         {tab === 'activities' && filteredActivities.length > 0 && (
           <ResultCount count={filteredActivities.length} />
         )}
-        <button
+        <SecondaryButton
+          size="sm"
+          className="ml-auto"
           onClick={() =>
             openSheet(
               tab === 'foods' ? routes.wellness.newFood : routes.wellness.newActivity,
             )
           }
-          className="ml-auto flex items-center gap-1 px-1 text-body text-positive"
         >
-          <IconPlus size={16} /> New {tab === 'foods' ? 'Food' : 'Activity'}
-        </button>
+          <span className="inline-flex items-center gap-1 text-positive">
+            <IconPlus size={15} /> New {tab === 'foods' ? 'Food' : 'Activity'}
+          </span>
+        </SecondaryButton>
       </div>
 
       <div className="overflow-hidden rounded-card border border-border bg-surface">

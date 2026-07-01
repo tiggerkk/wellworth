@@ -86,7 +86,11 @@ _Search, filter, and sort persist for the **browser-tab session** (`useSessionSt
   **Provider** below; then **Body Part** (shown for mri/ultrasound/mammogram/other), **Narrative**, and
   **Document Links** (repeatable Google Drive URL rows). Optional fields hidden when trimmed in Medical
   Settings → Visible Fields; Date/Type/Results are always shown.
-- **Results:** an **Add Result** button opens a searchable **test picker** (the seeded reference
+- **Document Links:** the **`+ Add Link`** action sits at the **right of the "Document Links (Google
+  Drive)" label** (shared Add-button style — outline `SecondaryButton`, teal `IconPlus`). One empty
+  link textbox (`http://…` placeholder) is **always shown** even with no links stored yet — typing into
+  that ghost row seeds the first entry; empty rows are trimmed out on save (`draftToSaveInput`).
+- **Results:** an **Add Result** button (same shared Add-button style) opens a searchable **test picker** (the seeded reference
   grouped by category) or **Add custom test** (an ad-hoc row with editable name + category). Result
   cards render in the owner's **Tests Display Order** (same `orderResultsForDisplay` as Dashboard +
   Report detail) and are **grouped under collapsible, color-accented category sections** (shared

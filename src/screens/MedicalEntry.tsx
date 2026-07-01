@@ -33,6 +33,7 @@ import { formatFullDate } from '../lib/date'
 import { routes } from '../constants/routes'
 import { Calendar } from '../components/Calendar'
 import { EntryHeaderActions } from '../components/EntryHeaderActions'
+import { SecondaryButton } from '../components/SecondaryButton'
 import { SelectMenu } from '../components/SelectMenu'
 import { MedicalResultCard } from '../components/MedicalResultCard'
 import { MedicalSection } from '../components/MedicalSection'
@@ -161,10 +162,12 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
   }
 
   function setUrl(i: number, value: string) {
-    setDraft((d) => ({
-      ...d,
-      document_urls: d.document_urls.map((u, j) => (j === i ? value : u)),
-    }))
+    setDraft((d) => {
+      // The UI always shows at least one (ghost) link row even when none are stored yet,
+      // so typing into that row seeds the first entry.
+      const urls = d.document_urls.length > 0 ? d.document_urls : ['']
+      return { ...d, document_urls: urls.map((u, j) => (j === i ? value : u)) }
+    })
   }
   const addUrl = () => update({ document_urls: [...draft.document_urls, ''] })
   const removeUrl = (i: number) =>
@@ -290,33 +293,39 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
 
         {vis('document_urls') && (
           <div>
-            <p className="mb-1 text-caption text-text-secondary">
-              Document Links (Google Drive)
-            </p>
+            <div className="mb-1 flex items-center justify-between gap-2">
+              <p className="text-caption text-text-secondary">
+                Document Links (Google Drive)
+              </p>
+              <SecondaryButton size="sm" onClick={addUrl}>
+                <span className="inline-flex items-center gap-1 text-positive">
+                  <IconPlus size={15} /> Add Link
+                </span>
+              </SecondaryButton>
+            </div>
             <div className="flex flex-col gap-2">
-              {draft.document_urls.map((u, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <input
-                    value={u}
-                    onChange={(e) => setUrl(i, e.target.value)}
-                    placeholder="https://drive.google.com/…"
-                    className={inputClass}
-                  />
-                  <button
-                    onClick={() => removeUrl(i)}
-                    aria-label="Remove link"
-                    className="p-1 text-text-tertiary"
-                  >
-                    <IconX size={18} />
-                  </button>
-                </div>
-              ))}
-              <button
-                onClick={addUrl}
-                className="flex items-center gap-1.5 self-start text-body text-positive"
-              >
-                <IconPlus size={16} /> Add Link
-              </button>
+              {/* Always show at least one (ghost) row so a link box is visible before "Add Link". */}
+              {(draft.document_urls.length > 0 ? draft.document_urls : ['']).map(
+                (u, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <input
+                      value={u}
+                      onChange={(e) => setUrl(i, e.target.value)}
+                      placeholder="http://…"
+                      className={inputClass}
+                    />
+                    {draft.document_urls.length > 0 && (
+                      <button
+                        onClick={() => removeUrl(i)}
+                        aria-label="Remove link"
+                        className="p-1 text-text-tertiary"
+                      >
+                        <IconX size={18} />
+                      </button>
+                    )}
+                  </div>
+                ),
+              )}
             </div>
           </div>
         )}
@@ -328,12 +337,11 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
             <p className="text-caption uppercase tracking-[0.08em] text-text-secondary">
               {isEye ? 'Other Results' : 'Results'}
             </p>
-            <button
-              onClick={() => setPickerOpen(true)}
-              className="flex items-center gap-1.5 text-body text-positive"
-            >
-              <IconPlus size={16} /> Add Result
-            </button>
+            <SecondaryButton size="sm" onClick={() => setPickerOpen(true)}>
+              <span className="inline-flex items-center gap-1 text-positive">
+                <IconPlus size={15} /> Add Result
+              </span>
+            </SecondaryButton>
           </div>
           {listResults.length === 0 ? (
             <p className="rounded-card border border-dashed border-border px-4 py-6 text-center text-body text-text-tertiary">

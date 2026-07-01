@@ -154,9 +154,12 @@ Identical layout to the Dashboard, scoped to a single day instead of an averaged
 
 ### Library (tab)
 
-The pinned top pane holds the sub-tab control + `SearchBar` only; the teal **`+ New Food`** /
+The bottom-nav tab is labelled **Food & Activities** (the screen is still the Food/Activity Library).
+The pinned top pane holds the sub-tab control + `SearchBar` only; the **`+ New Food`** /
 **`+ New Activity`** action sits at the **right edge of the "XX results" row** (below the pane),
-opposite the `ResultCount` — so it scrolls with the list rather than staying pinned.
+opposite the `ResultCount` — so it scrolls with the list rather than staying pinned. It's a
+`SecondaryButton` (outline pill, `size="sm"`) with a teal-tinted `IconPlus` + label — the shared
+**Add-button style** used app-wide (Travel **Add Day**, Medical **Add Result** / **Add Link**).
 
 Two sub-tabs:
 

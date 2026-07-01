@@ -4,12 +4,14 @@
 
 - The app opens to a **Home hub** — a launcher of module cards in a **2-column grid** that fills
   left→right, top→bottom (default order: Wellness | Net Worth, Quotes | Literature, Shows | Books,
-  Travel | Medical; more later). Cards are **button-style** (icon + label + short description, **no
-  chevron**), each label/description truncated to one line for uniform card heights.
+  Travel | Medical; more later). Cards are **button-style**, **vertically stacked** (a large module
+  icon on top, then the label, then the short description; **no chevron**), each label/description
+  truncated to one line for uniform card heights. The hub header shows the **`BrandMark`** logo to
+  the left of the "WellWorth" title.
 - Selecting a module enters it and the **bottom tab bar becomes that module's tabs**, with a
   **Home** item to return to the hub.
-- The Home item's icon sits in a subtle chip so it reads as the hub anchor, distinct from the module
-  tabs.
+- The Home item shows the **`BrandMark`** logo in a subtle chip so it reads as the hub anchor,
+  distinct from the module tabs.
 - On launch the app reopens the **last-used module** so daily Wellness use skips the hub.
 
 - The **Login** and **Onboarding** screens both show the WellWorth brand mark (a chop-seal "W"
@@ -24,7 +26,7 @@
   onto the dark canvas (`BG`) so there's no transparency, with the maskable variant inset to the
   ~80% safe zone. **Changing the logo:** `OWNER_RUNBOOK.md` Part T.
 
-- **Wellness** tabs: **Home**, **Dashboard**, **Diary**, **Library**, **Settings**.
+- **Wellness** tabs: **Home**, **Dashboard**, **Diary**, **Food & Activities** (the Library), **Settings**.
 - **Net Worth** tabs: **Home**, **Dashboard**, **Monthly Entry**, **Insurance Policies**, **Settings**.
   The New/Edit Insurance screen is reached from the teal **+ New Insurance** action on the Insurance
   Policies result-count row / its empty state (new) or by tapping an **Insurance Policies** row (edit) —

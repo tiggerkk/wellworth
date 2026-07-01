@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router'
-import { IconChevronRight, IconWorld } from '@tabler/icons-react'
+import { IconChevronRight, IconRoute } from '@tabler/icons-react'
 import { SectionCard } from '../components/SectionCard'
 import { StatusChip } from '../components/StatusChip'
 import { Thumb } from '../components/Thumb'
@@ -97,7 +97,7 @@ export function TravelDashboard() {
           title="No trips yet"
           actionLabel="New Trip"
           to={routes.travel.entry}
-          Icon={IconWorld}
+          Icon={IconRoute}
         />
       </div>
     )

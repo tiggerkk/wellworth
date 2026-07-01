@@ -27,6 +27,22 @@ export const STOP_TYPE_LABELS: Record<StopType, string> = {
   other: 'Other',
 }
 
+/**
+ * Per-stop-type icon accent colour (CSS custom-property refs, à la Net Worth's `ASSET_TYPE_COLORS`),
+ * so the itinerary stop icons read apart by kind. Hues jump across the wheel — no two adjacent types
+ * share a warm/cool band. Consumed by `StopTypeIcon`.
+ * travel(plane)=green · visit(camera)=gold · eat(chopsticks)=red · shop(shopee)=blue ·
+ * stay(bed)=purple · other(map-pin)=grey.
+ */
+export const STOP_TYPE_COLORS: Record<StopType, string> = {
+  travel: 'var(--color-positive)', // green
+  visit: 'var(--color-dynasty)', // gold
+  eat: 'var(--color-danger)', // red
+  shop: 'var(--color-cat-activity)', // blue
+  stay: 'var(--color-cat-supplement)', // purple
+  other: 'var(--color-text-tertiary)', // grey (darker than text-muted, so it reads apart from the row text)
+}
+
 /** Per-stop completion. Null (unmarked) is the default and isn't represented here. */
 export const COMPLETIONS = ['done', 'skipped'] as const
 export type Completion = (typeof COMPLETIONS)[number]
@@ -60,6 +76,29 @@ export const TRAVEL_EXPENSE_CATEGORY_LABELS: Record<TravelExpenseCategory, strin
   flight_train: 'Flight/Train',
   hotel: 'Hotel',
 }
+
+/**
+ * The swatch palette for **expense-category colours** — the choices offered by the per-row colour
+ * picker in Travel Settings → Expense Categories, and the default-assignment cycle for seed / new
+ * categories (`src/lib/travel-config.ts`). Values are design tokens (CSS vars) so they track the theme;
+ * the one literal cyan has no matching token (mirrors the donut fallback palette in `TravelExpenseChart`).
+ * The category's chosen colour is stored per entry on `profile.travel_expense_categories` and drives the
+ * **stable** per-category slice colour in the Expenses donut.
+ */
+export const TRAVEL_CATEGORY_COLORS = [
+  { name: 'Blue', value: 'var(--color-accent)' },
+  { name: 'Green', value: 'var(--color-positive)' },
+  { name: 'Orange', value: 'var(--color-warning)' },
+  { name: 'Rose', value: 'var(--color-favorite)' },
+  { name: 'Gold', value: 'var(--color-dynasty)' },
+  { name: 'Purple', value: 'var(--color-cat-supplement)' },
+  { name: 'Cyan', value: '#54b3c4' },
+  { name: 'Red', value: 'var(--color-danger)' },
+  { name: 'Grey', value: 'var(--color-text-secondary)' },
+] as const
+
+/** Neutral fallback for an orphan/unconfigured category colour (e.g. a deleted category still on a row). */
+export const TRAVEL_CATEGORY_COLOR_FALLBACK = 'var(--color-text-secondary)'
 
 /**
  * Currency codes offered in the trip/stop/expense currency pickers (ISO 4217). The owner can travel

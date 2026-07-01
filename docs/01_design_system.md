@@ -89,8 +89,9 @@ the Shows/Books exception above — no weekday is ever shown.
 ## Core components (build once in `src/components`)
 
 - **BottomNav** — leading **Home** item + module tabs; active item tints `accent`. The **Home**
-  icon sits in a soft accent-tinted (`bg-accent/20`) rounded-pill chip so the hub anchor reads
-  apart from the flat module tabs.
+  item shows the **`BrandMark`** logo (not a Tabler icon) in a soft accent-tinted (`bg-accent/20`)
+  rounded-pill chip so the hub anchor reads apart from the flat module tabs; the mark uses
+  `currentColor`, so it tints with the active/inactive state like the other tabs.
 - **SectionCard** — `surface` rounded container wrapping rows with hairline dividers.
 - **ListRow** — leading icon, two-line name/subtitle, trailing value or chevron.
 - **NutrientBar** — name + "value / target" (muted) + %; thin track+fill; **red variant** when over UL.
@@ -274,13 +275,16 @@ flex flex-col`, or `h-full` for Zen) so the `flex-1` fills the real content area
 - **TagInput** — a free-form tag editor (`src/components/TagInput.tsx`): committed tags as removable
   `rounded-pill` chips + a text input that commits on **Enter/comma**, removes the last on Backspace,
   and offers an autocomplete dropdown over passed suggestions (case-insensitive dedupe).
-- **SelectMenu** — a compact dropdown (button + label + chevron → scrim + absolute menu of
-  `{value,label}` options); generic over string options. Used by Library filters/sort and the Entry
-  forms' Status / LGBT+ / Language / Type controls. **Esc** collapses an open menu (via
-  `useEscapeKey`). The menu **flips upward** when there isn't room below, and its **max-height is the
-  space actually available** on the chosen side (minus an 8px margin), capped at the list's own height
-  — so a long list (Dynasty, Quotes Category/Source, …) fills the screen's spare vertical room instead
-  of being clipped to a fixed few rows. A `size` prop
+- **SelectMenu** — a compact dropdown (button + label + chevron → scrim + menu of `{value,label}`
+  options); generic over string options. Used by Library filters/sort and the Entry forms' Status /
+  LGBT+ / Language / Type controls. **Esc** collapses an open menu (via `useEscapeKey`). The menu is
+  **portaled to `document.body`** and positioned `fixed` from the trigger's rect (like `ColorPicker`),
+  so it can't be clipped, mis-stacked, or made semi-transparent by an ancestor's `overflow` /
+  `transform` / `opacity` — the reason it renders correctly inside a `ReorderList` `rowExtra` (insurance
+  currency) and the dimmed (`opacity-55`) add-expense row. It **flips upward** when there isn't room
+  below, and its **max-height is the space actually available** on the chosen side (minus an 8px
+  margin), capped at the list's own height — so a long list (Dynasty, Quotes Category/Source, …) fills
+  the screen's spare vertical room instead of being clipped to a fixed few rows. A `size` prop
   (**`field` default** / `compact`) keeps the trigger at the **`.field-control`** height across forms +
   filters; pass `size="compact"` to opt a tight spot back down.
 - **useEscapeKey(handler, enabled?)** (`src/hooks/useEscapeKey.ts`) — shared **Escape-to-dismiss**.
@@ -328,8 +332,18 @@ flex flex-col`, or `h-full` for Zen) so the `flex-1` fills the real content area
   configurable list, generic over `{key,label}` entries (`src/components/ConfigListEditor.tsx`).
   Wraps `ReorderList` (rename + delete in the trailing slot) and auto-saves each change; deleting a
   value still used by records opens a `SelectMenu` reassignment picker, refuses the last value, and
-  honours delete-protected keys. Used by Quotes source-type/category lists and the Travel expense
-  categories.
+  honours delete-protected keys. The `rowExtra` slot adds a per-row control (e.g. an insurance
+  provider's default currency, or the Travel expense category's **`ColorPicker`**). Used by Quotes
+  source-type/category lists and the Travel expense categories.
+- **ColorPicker** — a compact swatch colour picker (`src/components/ColorPicker.tsx`): a round swatch
+  button that opens a small popover grid of `{name,value}` colour options (scrim + `useEscapeKey` to
+  dismiss). The popover is **portaled to `document.body`** and positioned `fixed` from the trigger's
+  rect (flipping above when there's no room below) — it must escape the `ConfigListEditor` row it lives
+  in: `ReorderList`'s container is `overflow-hidden` (would clip it) and each reorder row carries a
+  `transform` (a per-row **stacking context** that paints later rows over an in-flow popover). See the
+  Layout-gotcha below. Presentational + controlled (parent owns `value`, persists in `onChange`). Used
+  by the Travel Expense-Categories editor (`ConfigListEditor` `rowExtra`) to set each category's donut
+  colour from the `TRAVEL_CATEGORY_COLORS` palette.
 - **ExpenseRowsEditor** — the shared inline, spreadsheet-style expense editor
   (`src/components/ExpenseRowsEditor.tsx`): rows of **Description · Category · Currency · Cost** with a
   trailing add row (no modal) and a tap-to-expand panel (Date · up/down reorder within the date group ·
@@ -379,6 +393,16 @@ flex flex-col`, or `h-full` for Zen) so the `flex-1` fills the real content area
   third-party widget needs an explicit `z-index` above that widget's own controls (e.g. Leaflet's
   `.leaflet-top/.leaflet-bottom` sit at `z-index:1000`, so use `z-[1100]`), or the widget's controls
   swallow taps.
+- **Portal any popover that can render inside `overflow` / `transform` / `opacity`.** An `absolute`
+  dropdown/popover is hidden three ways by common ancestors: an `overflow-hidden` container clips it
+  (e.g. a `ReorderList` row / a rounded card); a `transform` ancestor creates a **stacking context**, so
+  the popover overflowing into siblings paints **under** later ones regardless of `z-index` (every
+  reorder row has a drag `transform`); and an `opacity < 1` ancestor renders the whole subtree —
+  background included — into an alpha buffer, so the panel goes **semi-transparent** (this is what made
+  the dimmed `opacity-55` add-expense row's category menu see-through). Fix all three by rendering the
+  popover via `createPortal(…, document.body)`, positioned `fixed` from the trigger's
+  `getBoundingClientRect()` (flip above when no room below). **`SelectMenu`** and **`ColorPicker`** both
+  do this; any new in-list/in-form popover should too.
 
 ## Icons
 

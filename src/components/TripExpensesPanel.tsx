@@ -17,7 +17,7 @@ import {
   type ExpenseUpdate,
   type RateMap,
 } from '../lib/expenses'
-import { categoryLabel } from '../lib/travel-config'
+import { categoryColor, categoryLabel } from '../lib/travel-config'
 import type { TravelCategoryConfig } from '../lib/travel-config'
 import { fetchTripRates, tripFirstDay } from '../lib/trip-fx'
 import { todayLocal } from '../lib/date'
@@ -81,6 +81,7 @@ export function TripExpensesPanel({
       categoryTotalsHkd(expenses, rates).map((c) => ({
         label: categoryLabel(categories, c.key),
         hkd: c.hkd,
+        color: categoryColor(categories, c.key),
       })),
     [expenses, rates, categories],
   )

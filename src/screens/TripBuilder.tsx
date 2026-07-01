@@ -667,18 +667,13 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
 
         {tab === 'itinerary' ? (
           <section className="flex flex-col gap-4">
-            <div className="flex gap-2">
-              <SecondaryButton size="sm" onClick={() => void addDay()}>
-                <span className="inline-flex items-center gap-1 text-positive">
-                  <IconPlus size={15} /> Add Day
-                </span>
-              </SecondaryButton>
-              {days.length > 1 && (
+            {days.length > 1 && (
+              <div className="flex gap-2">
                 <SecondaryButton size="sm" onClick={() => setReorderDaysOpen(true)}>
                   Reorder Days
                 </SecondaryButton>
-              )}
-            </div>
+              </div>
+            )}
 
             {days.length === 0 && (
               <p className="px-1 text-body text-text-secondary">
@@ -745,7 +740,7 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
                     <button
                       onClick={() => setDayExpensesFor(day)}
                       aria-label={`Expenses for Day ${i + 1}`}
-                      className="p-1 text-text-secondary"
+                      className="p-1 text-accent"
                     >
                       <IconReceipt2 size={18} />
                     </button>
@@ -808,10 +803,7 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
                                           : ''
                                       }`}
                                     >
-                                      <StopTypeIcon
-                                        type={s.type}
-                                        className="shrink-0 text-text-secondary"
-                                      />
+                                      <StopTypeIcon type={s.type} className="shrink-0" />
                                       <span className="truncate">
                                         {s.description || '—'}
                                       </span>
@@ -860,6 +852,15 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
                 </div>
               )
             })}
+
+            {/* Add Day sits at the bottom-right, below the last day. */}
+            <div className="flex justify-end">
+              <SecondaryButton size="sm" onClick={() => void addDay()}>
+                <span className="inline-flex items-center gap-1 text-positive">
+                  <IconPlus size={15} /> Add Day
+                </span>
+              </SecondaryButton>
+            </div>
           </section>
         ) : userId ? (
           <TripExpensesPanel

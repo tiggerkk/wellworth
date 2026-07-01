@@ -4,13 +4,16 @@ import { formatHkd } from '../lib/expenses'
 export interface ExpenseSlice {
   label: string
   hkd: number
+  /** The category's stable per-category colour (from `categoryColor`); falls back to the positional
+   *  palette below when absent. */
+  color?: string
 }
 
 /**
- * Donut palette — **accent-led**, distinct hues that read on the dark surface. Driven by the design
- * tokens (`var(--color-*)`) so it tracks the theme: when `--color-accent` changed blue, the lead slice
- * followed instead of staying the old orange (now demoted to the `--color-warning` slice). Recharts
- * resolves `var(...)` in `fill` (cf. `MedicalTrendChart`). One literal cyan remains — no matching token.
+ * Fallback donut palette — **accent-led**, distinct hues that read on the dark surface. Driven by the
+ * design tokens (`var(--color-*)`) so it tracks the theme. Used only when a slice carries no explicit
+ * `color` (slices normally get a **stable per-category** colour via `categoryColor`). Recharts resolves
+ * `var(...)` in `fill` (cf. `MedicalTrendChart`). One literal cyan remains — no matching token.
  */
 const COLORS = [
   'var(--color-accent)',
@@ -43,7 +46,7 @@ export function TravelExpenseChart({ data }: { data: ExpenseSlice[] }) {
           stroke="var(--color-surface)"
         >
           {data.map((d, i) => (
-            <Cell key={d.label} fill={COLORS[i % COLORS.length]} />
+            <Cell key={d.label} fill={d.color ?? COLORS[i % COLORS.length]} />
           ))}
         </Pie>
         <Tooltip

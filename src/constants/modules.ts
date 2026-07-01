@@ -18,7 +18,6 @@ import {
   IconSparkles,
   IconUsers,
   IconWallet,
-  IconWorld,
   type Icon,
 } from '@tabler/icons-react'
 import { routes } from './routes'
@@ -63,7 +62,7 @@ export const MODULES: ModuleDef[] = [
     tabs: [
       { to: routes.wellness.dashboard, label: 'Dashboard', Icon: IconChartBar },
       { to: routes.wellness.diary, label: 'Diary', Icon: IconNotebook, end: true },
-      { to: routes.wellness.library, label: 'Library', Icon: IconApple },
+      { to: routes.wellness.library, label: 'Food & Activities', Icon: IconApple },
       { to: routes.wellness.settings, label: 'Settings', Icon: IconSettings },
     ],
   },
@@ -144,7 +143,7 @@ export const MODULES: ModuleDef[] = [
   {
     key: 'travel',
     label: 'Travel',
-    Icon: IconWorld,
+    Icon: IconRoute,
     base: routes.travel.base,
     description: 'Trips, places & spend',
     tabs: [
