@@ -123,6 +123,8 @@ describe('distinctCities / tripSummary', () => {
       name: 'A',
       status: 'visited',
       base_currency: 'CNY',
+      companions: 'Mary',
+      rating: 4,
       days: [
         {
           date: null,
