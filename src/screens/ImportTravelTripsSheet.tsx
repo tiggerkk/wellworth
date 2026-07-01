@@ -139,6 +139,8 @@ export function ImportTravelTripsSheet() {
           name: t.name,
           status: t.status,
           base_currency: t.base_currency,
+          companions: t.companions ?? null,
+          rating: t.rating ?? null,
         })
         for (let di = 0; di < t.days.length; di++) {
           const d = t.days[di]!
@@ -156,7 +158,7 @@ export function ImportTravelTripsSheet() {
               type: s.type,
               city: s.city,
               country: s.country,
-              province: s.province,
+              province: pending[norm(s.city ?? '')]?.province ?? s.province,
               description: s.description,
               details: s.details,
               completion: s.completion,

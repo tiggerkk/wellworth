@@ -36,6 +36,8 @@ export interface TripDraft {
   name: string
   status: TripStatus
   base_currency: string
+  companions: string | null
+  rating: number | null
   days: DayDraft[]
 }
 
@@ -95,6 +97,14 @@ function asDate(v: unknown): string | null {
   const s = strOrNull(v)
   return s && /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : null
 }
+function numOrNull(v: unknown): number | null {
+  if (typeof v === 'number' && Number.isFinite(v)) return v
+  if (typeof v === 'string') {
+    const n = Number(v.trim())
+    return Number.isFinite(n) ? n : null
+  }
+  return null
+}
 
 function toStop(raw: unknown): StopDraft {
   const o = (typeof raw === 'object' && raw !== null ? raw : {}) as Record<
@@ -148,6 +158,8 @@ export function parseItineraryJson(raw: string): ItineraryParse {
       statusStr && STATUS_SET.has(statusStr) ? statusStr : 'visited'
     ) as TripStatus
     const base_currency = strOrNull(o.base_currency) ?? 'CNY'
+    const companions = strOrNull(o.companions)
+    const rating = numOrNull(o.rating)
     const rawDays = Array.isArray(o.days) ? o.days : []
     const days: DayDraft[] = rawDays.map((rawDay) => {
       const d = (typeof rawDay === 'object' && rawDay !== null ? rawDay : {}) as Record<
@@ -157,8 +169,8 @@ export function parseItineraryJson(raw: string): ItineraryParse {
       const stops = (Array.isArray(d.stops) ? d.stops : []).map(toStop)
       return { date: asDate(d.date), stops }
     })
-    if (days.length === 0) warnings.push(`“${name}”: no days.`)
-    trips.push({ name, status, base_currency, days })
+    if (days.length === 0) warnings.push(`"${name}": no days.`)
+    trips.push({ name, status, base_currency, companions, rating, days })
   })
 
   if (trips.length === 0 && warnings.length === 0) {
