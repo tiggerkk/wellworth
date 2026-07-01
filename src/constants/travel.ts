@@ -81,20 +81,21 @@ export const TRAVEL_EXPENSE_CATEGORY_LABELS: Record<TravelExpenseCategory, strin
  * The swatch palette for **expense-category colours** — the choices offered by the per-row colour
  * picker in Travel Settings → Expense Categories, and the default-assignment cycle for seed / new
  * categories (`src/lib/travel-config.ts`). Values are design tokens (CSS vars) so they track the theme;
- * the one literal cyan has no matching token (mirrors the donut fallback palette in `TravelExpenseChart`).
+ * the one literal brown has no matching token (mirrors the donut fallback palette in `TravelExpenseChart`).
  * The category's chosen colour is stored per entry on `profile.travel_expense_categories` and drives the
  * **stable** per-category slice colour in the Expenses donut.
  */
 export const TRAVEL_CATEGORY_COLORS = [
-  { name: 'Blue', value: 'var(--color-accent)' },
   { name: 'Green', value: 'var(--color-positive)' },
-  { name: 'Orange', value: 'var(--color-warning)' },
   { name: 'Rose', value: 'var(--color-favorite)' },
   { name: 'Gold', value: 'var(--color-dynasty)' },
+  { name: 'Brown', value: '#8c564b' },
   { name: 'Purple', value: 'var(--color-cat-supplement)' },
-  { name: 'Cyan', value: '#54b3c4' },
-  { name: 'Red', value: 'var(--color-danger)' },
   { name: 'Grey', value: 'var(--color-text-secondary)' },
+  { name: 'Blue', value: 'var(--color-accent)' },
+  { name: 'Orange', value: 'var(--color-warning)' },
+  { name: 'Cyan', value: 'var(--color-med-bone)' },
+  { name: 'Red', value: 'var(--color-danger)' },
 ] as const
 
 /** Neutral fallback for an orphan/unconfigured category colour (e.g. a deleted category still on a row). */

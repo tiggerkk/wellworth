@@ -13,17 +13,19 @@ export interface ExpenseSlice {
  * Fallback donut palette — **accent-led**, distinct hues that read on the dark surface. Driven by the
  * design tokens (`var(--color-*)`) so it tracks the theme. Used only when a slice carries no explicit
  * `color` (slices normally get a **stable per-category** colour via `categoryColor`). Recharts resolves
- * `var(...)` in `fill` (cf. `MedicalTrendChart`). One literal cyan remains — no matching token.
+ * `var(...)` in `fill` (cf. `MedicalTrendChart`). One literal brown remains — no matching token.
  */
 const COLORS = [
   'var(--color-accent)',
-  'var(--color-positive)',
   'var(--color-warning)',
-  'var(--color-favorite)',
-  'var(--color-dynasty)',
+  'var(--color-positive)',
   'var(--color-cat-supplement)',
-  '#54b3c4',
   'var(--color-text-secondary)',
+  'var(--color-favorite)',
+  '#8c564b',
+  'var(--color-med-bone)',
+  'var(--color-dynasty)',
+  'var(--color-danger)',
 ]
 
 /**
