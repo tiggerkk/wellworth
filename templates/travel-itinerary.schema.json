@@ -15,6 +15,8 @@
         "default": "visited"
       },
       "base_currency": { "type": ["string", "null"], "default": "CNY" },
+      "companions": { "type": ["string", "null"], "default": "Ady" },
+      "rating": { "type": ["string", "null"], "default": "4" },
       "days": {
         "type": "array",
         "items": {
@@ -36,7 +38,7 @@
                   },
                   "description": {
                     "type": ["string", "null"],
-                    "description": "The place/restaurant/hotel name; for a travel leg, the leg itself incl. mode, e.g. 'Train: 香港 → 荆州'."
+                    "description": "The place/restaurant/hotel name; for a travel leg, the leg itself incl. mode, e.g. '香港-荆州'."
                   },
                   "city": { "type": ["string", "null"] },
                   "country": { "type": ["string", "null"] },
@@ -63,16 +65,18 @@
       "trip_name": "湖北",
       "status": "visited",
       "base_currency": "CNY",
+      "companions": "Ady",
+      "rating": "4.5",
       "days": [
         {
           "date": "2026-03-28",
           "stops": [
             {
               "type": "travel",
-              "description": "Train: 香港 → 荆州",
+              "description": "香港-荆州",
               "city": "荆州",
-              "country": "China",
-              "details": "香港-深圳北 11:41-11:59 转 荆州 12:47-19:49 ¥2067",
+              "country": "中国",
+              "details": "（11:41-11:59）-（12:47-19:49, ¥2067）",
               "completion": "done"
             }
           ]
@@ -82,18 +86,18 @@
           "stops": [
             {
               "type": "visit",
-              "description": "楚王车马阵",
+              "description": "楚王车马阵¥58",
               "city": "荆州",
-              "country": "China",
-              "details": "¥58",
+              "country": "中国",
+              "details": "",
               "completion": "done"
             },
             {
               "type": "visit",
-              "description": "关羽祠",
+              "description": "关羽祠¥25",
               "city": "荆州",
-              "country": "China",
-              "details": "¥25",
+              "country": "中国",
+              "details": "",
               "completion": "done"
             }
           ]
@@ -104,16 +108,18 @@
       "trip_name": "肇庆",
       "status": "visited",
       "base_currency": "CNY",
+      "companions": "Ady",
+      "rating": "3",
       "days": [
         {
           "date": "2026-01-30",
           "stops": [
             {
               "type": "travel",
-              "description": "Train: 香港 → 肇庆东",
+              "description": "香港-肇庆东",
               "city": "肇庆",
-              "country": "China",
-              "details": "10:02-11:48",
+              "country": "¥25",
+              "details": "（10:02-11:48）",
               "completion": "done"
             }
           ]

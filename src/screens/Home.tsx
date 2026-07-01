@@ -47,7 +47,7 @@ export function Home() {
             className="flex flex-col items-center gap-2 rounded-card border border-border bg-surface px-3 py-4 text-center active:bg-input/40"
           >
             <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-card bg-input text-accent">
-              <m.Icon size={32} stroke={1.75} />
+              <m.Icon size={32} stroke={2.5} />
             </span>
             <span className="w-full min-w-0">
               <span className="block truncate text-body font-medium text-text-primary">

@@ -1,70 +1,60 @@
 # Trip Itinerary → JSON Extraction Prompt (model-agnostic, ALL trips at once)
 
-Use with **any** capable AI tool (Claude, Gemini, GPT, etc.) to convert your whole back-catalogue of trips
-in **one pass**. Prefix each trip's text with a delimiter line, paste them all, then the prompt below. Save
-the output as `trips.json` and import via WellWorth → Settings → **Import JSON Trips**. The import is a
-**draft** you finish in the Trip Builder — don't aim for perfection.
+Prefix each trip's text with a delimiter line, paste them all, then the prompt below. Save the output as `trips.json` and import via WellWorth → Settings → **Import JSON Trips**. The import is a **draft** you finish in the Trip Builder.
 
 ## Step 1 — add a delimiter line before each trip
 
 ```
-=== TRIP: 湖北 | 2026-03 | visited ===
-28（六）：香港-深圳北（11:41-11:59）-荆州（12:47-19:49, ¥2067）
-1（日）：楚王车马阵¥58，荆州博物馆，关羽祠¥25，...
-=== TRIP: 肇庆 | 2026-01 | visited ===
-30：香港-肇庆东（10:02-11:48）...
-```
+=== TRIP: 湖北 | 2026-03 | visited | "Ady" | 4.5 ===
 
-`=== TRIP: <name> | <YYYY-MM start> | <status> ===` gives the AI the trip name, the year/month anchor (so
-day numbers like 28 → 1 roll into the next month deterministically), and status (want|planning|visited).
+28（荆州）：travel,"香港-深圳北-荆州","（11:41-11:59）-（12:47-19:49, ¥2067）"
+1（荆州）：visit,"楚王车马阵¥58" | visit,"荆州博物馆" | visit,"开元观" | visit,"关羽祠¥25" | visit,"关帝庙¥18" | other,"幸福蓝海国际影城¥42" | visit,"荆街"]
+
+=== TRIP: 肇庆 | 2026-01 | visited | "Ady" | 3.5 ===
+30（肇庆）: travel,"香港-肇庆东","（10:02-11:48）" | eat,"黔牛爷牛肉私房菜馆" | visit,"七星岩（免费咖啡）" | shop,"敏捷广场（永旺）"
+```
 
 ## Step 2 — paste this prompt, then all your delimited trips
 
 ```
-You convert MANY freeform travel itineraries into one JSON array. The input is divided into trips, each
-starting with a line: === TRIP: <name> | <YYYY-MM> | <status> ===. Output ONLY one JSON array — no prose,
-no code fences. Process EVERY trip.
+You convert MANY freeform travel itineraries into one JSON array. The input is divided into trips, each starting with a line: === TRIP: <trip_name> | <YYYY-MM> | <status> | <companions> | <rating> ===. Output ONLY one JSON array — no prose, no code fences. Process EVERY trip.
 
-For EACH trip, use its delimiter for trip_name, the start year/month, and status. Then read its day lines.
+TRIP fields:
+- For EACH trip, use its delimiter to parse the trip_name, start year/month, status, companions and rating. Then read its DAY lines.
+- base_currency: set it to "CNY".
 
-DAYS & DATES:
-- Each line after the delimiter is ONE DAY, starting with a day-of-month (often a weekday in brackets), e.g.
-  "28（六）：...". Build full dates in SEQUENCE from the trip's start YYYY-MM: when the day number DROPS
-  (28 -> 1), advance to the next month (and to January + next year after December).
-- A day's stops are comma-separated (Chinese ， or ASCII ,). Brackets 《》【】() carry sub-notes.
+DAYS fields:
+- Each line after the === delimiter is ONE DAY, starting with a day-of-month and the city in brackets, e.g. "28（荆州）：...".
+- Build full dates in SEQUENCE from the trip's start YYYY-MM: when the day number DROPS (e.g. 28 -> 1), advance to the next month (and to January + next year after December).
+- "city" is not part of the "days" JSON, but part of the "stops" JSON (see STOP fields below).
+- After the colon (Chinese ：or ASCII :), A day's stops are delimited by |.
 
-STOP TYPE (by meaning):
-- "travel" = INTER-CITY leg: "CityA-CityB（time-time, ¥fare）" or text with 机票/航班/飞机/高铁/动车/火车/船.
-  Put the leg in "description" incl. the mode, e.g. "Train: 香港 → 荆州" / "Flight: HKG → PVG"; city = ARRIVAL city.
-- "eat" = restaurant/food/drink (菜/餐厅/饭店/火锅/面/食/咖啡/茶/烧烤, or wrapped in 【】).
-- "shop" = 沃尔玛/万达/Popmart/超市/购物/广场/mall/商城/免税/SKP.
-- "stay" = 酒店/宾馆/住/hotel.
-- "visit" = attractions: 博物馆/博物院, 寺/庙/祠, 公园, 故居, 古城/古镇, 石窟, 楼/塔, scenic spots. DEFAULT.
-- "other" = performances/light shows/walks (表演/秀/灯光秀/巡游) and anything else.
+STOPS fields:
+- Each stop's fields are comma-separated (Chinese ， or ASCII ,).
+- There can be a maximum of 5 fields in a stop: <type>,"<description>","<details>","<city>",<completion>].
+- type: enums are ["travel", "visit", "eat", "shop", "stay", "other"]; required.
+- description: enclosed in ""; required.
+- details: enclosed in ""; nullable.
+- city: enclosed in ""; if null, set it to the DAY's city.
+- country: not in the file, always set it to "中国".
+- completion: enums are ["done", "skipped"]; if null, set it to "done".
 
-PER-STOP FIELDS:
-- "description": the place/restaurant/hotel name. For a travel leg, the leg itself incl. the mode
-  ("Train: A → B"). Fold any "how to get there" note (metro exit, 打车, 观光车) into this text too.
-- "city": the city the stop is in; CARRY FORWARD from the latest travel ARRIVAL or context; update when it
-  changes; null if unknown. Do NOT use the trip name as a city unless it clearly is one.
-- "country": "China" for Chinese itineraries unless clearly elsewhere; else the country.
-- "details": leftover notes — raw cost text (e.g. "¥58"), times, seat tips, anything not in description; else null.
-- "completion": "done" normally; "skipped" if under a 没去 / 未去 / 取消 / "didn't go" heading.
-
-Output EXACTLY this shape (valid JSON; commas between all properties; re-read once to confirm it parses):
+If anything cannot be passed, output the line number and error; if everything passes, output EXACTLY this shape (valid JSON; commas between all properties; re-read once to confirm it parses):
 
 [
   {
     "trip_name": "string",
     "status": "want | planning | visited",
     "base_currency": "string",
+    "companions": "string | null",
+    "rating": "string | null",
     "days": [
       {
-        "date": "YYYY-MM-DD | null",
+        "date": "YYYY-MM-DD",
         "stops": [
           {
             "type": "travel|visit|eat|shop|stay|other",
-            "description": "string | null",
+            "description": "string",
             "city": "string | null",
             "country": "string | null",
             "details": "string | null",
@@ -76,7 +66,7 @@ Output EXACTLY this shape (valid JSON; commas between all properties; re-read on
   }
 ]
 
-Return the JSON array now, and nothing else.
+Return the JSON array now, and nothing else.  If the prompt is unclear or confusing, ask questions or suggest how to improve it.
 ```
 
 ## Step 3 — after you get the JSON
