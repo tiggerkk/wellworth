@@ -976,44 +976,39 @@ key** — guard it like the DB password.
 
 ## Part R — Browser storage & when to clear it ("Delete data")
 
-When a code change tells you to **"Delete data"** / **"Clear site data,"** it's almost always to drop
-**stale cached app code** (see "cached assets" below) — _not_ to wipe your real data. Knowing the
-difference saves you from needless logouts.
+When a code change tells you to **"Delete data"** / **"Clear site data,"** it's almost always to drop **stale cached app code** (see "cached assets" below) — _not_ to wipe your real data. Knowing the difference saves you from needless logouts.
 
 ### R0 — Three separate places your stuff lives
 
-| Layer                      | Holds                                                                                               | Lives                        | Cleared by `supabase db reset` / truncate? | Cleared by "Delete data"?    |
-| -------------------------- | --------------------------------------------------------------------------------------------------- | ---------------------------- | ------------------------------------------ | ---------------------------- |
-| **Supabase database**      | Your actual data — every show, book, diary entry, trip, medical result                              | Supabase's servers (cloud)   | **Yes** (that's what those commands do)    | No (it's not in the browser) |
-| **Browser `localStorage`** | Small client state: login token, last-opened module, the **book / show / food import match caches** | This browser, on this device | **No** — survives every DB reset           | Yes                          |
-| **Browser PWA cache**      | "Cached assets" — copies of the **app's own files** for offline use (see R3)                        | This browser, on this device | No                                         | Yes                          |
+| Layer                      | Holds                                                                                                                   | Lives                        | Cleared by `supabase db reset` / truncate? | Cleared by "Delete data"?    |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ---------------------------- | ------------------------------------------ | ---------------------------- |
+| **Supabase database**      | Your actual data — every show, book, diary entry, trip, medical result                                                  | Supabase's servers (cloud)   | **Yes** (that's what those commands do)    | No (it's not in the browser) |
+| **Browser `localStorage`** | Small client state: login token, last-opened module, the **book / show / food import match caches, Liquid Only toggle** | This browser, on this device | **No** — survives every DB reset           | Yes                          |
+| **Browser PWA cache**      | "Cached assets" — copies of the **app's own files** for offline use (see R3)                                            | This browser, on this device | No                                         | Yes                          |
 
-**`localStorage`** is a tiny key→value store built into every browser, kept on disk per **origin**
-(`http://localhost:5173` and `https://<your-app>.vercel.app` each get a _separate_ one) and per
-browser/device. It is **completely independent of the database**: truncating `book` or running
-`supabase db reset --linked` (Part M) never touches it — which is exactly why the import match cache
-keeps working across your test resets.
+**`localStorage`** is a tiny key→value store built into every browser, kept on disk per **origin** (`http://localhost:5173` and `https://<your-app>.vercel.app` each get a _separate_ one) and per browser/device. It is **completely independent of the database**: truncating `book` or running `supabase db reset --linked` (Part M) never touches it — which is exactly why the import match cache keeps working across your test resets.
 
 ### R1 — The two ways to clear it (both are the "nuclear" option)
 
 Both wipe **all** browser storage for that origin (everything in the two browser rows above):
 
-1. **Info icon** (the tune/🔒 icon just left of the address bar) → **Site settings** → under **Usage**,
-   **Delete data**.
+1. **Info icon** (the tune/🔒 icon just left of the address bar) → **Site settings** → under **Usage**, **Delete data**.
 2. **F12** (DevTools) → **Application** tab → **Storage** (left sidebar) → **Clear site data**.
 
 They're equivalent. Do this on the right origin — localhost vs your Vercel URL are independent.
 
 ### R2 — What "Delete data" wipes, and the effect on the app
 
-| Gets wiped                                                  | Effect                                                                                            |
-| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| Supabase auth token (`localStorage`)                        | **You're logged out** → sign in with Google again                                                 |
-| Last-opened module (`localStorage`)                         | App reopens at the Home hub instead of your last module                                           |
-| **Book / show / food import match caches** (`localStorage`) | Next CSV import re-queries Google Books / TMDB / USDA (book cache also re-spends the daily quota) |
-| Search / filter / sort state (`sessionStorage`)             | List screens reset to defaults                                                                    |
-| **Cached assets** + service worker (PWA cache)              | App re-downloads its files on next load (a beat slower once)                                      |
-| Cookies                                                     | Any other site cookies for the origin are cleared                                                 |
+| Gets wiped                                                            | Effect                                                                                            |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Supabase auth token (`localStorage`)                                  | **You're logged out** → sign in with Google again                                                 |
+| Last-opened module (`localStorage`)                                   | App reopens at the Home hub instead of your last module                                           |
+| Book / show / food import match caches (`localStorage`)               | Next CSV import re-queries Google Books / TMDB / USDA (book cache also re-spends the daily quota) |
+| Net Worth Liquid Only toggle (`localStorage`)                         | Resets to off                                                                                     |
+| Search / filter / sort state (`sessionStorage`)                       | List screens reset to defaults                                                                    |
+| Net Worth Monthly Entry Asset Type expansion state (`sessionStorage`) | Asset Type sections are expanded if >= 1 item                                                     |
+| **Cached assets** + service worker (PWA cache)                        | App re-downloads its files on next load (a beat slower once)                                      |
+| Cookies                                                               | Any other site cookies for the origin are cleared                                                 |
 
 Your **shows, books, entries, etc. are untouched** — they're in the database, not the browser.
 
@@ -1027,11 +1022,7 @@ fast. These are the "cached assets":
 - The **Travel map's base data** — the bundled `world-countries.geojson` / `china-provinces.geojson`
   (Leaflet tiles themselves come from the network, not this cache).
 
-They are **not** your data. In particular, **matched shows and matched books are _data_**, stored as
-rows in the **Supabase database** — they're not "cached assets." The only match data kept in the
-browser is the **import match caches** in `localStorage` (R5) — `wellworth:book-match-cache`,
-`wellworth:show-match-cache`, and `wellworth:food-match-cache` — which exist purely to speed up
-re-imports (and, for books, save the daily Google Books quota).
+They are **not** your data. In particular, **matched shows and matched books are _data_**, stored as rows in the **Supabase database** — they're not "cached assets." The only match data kept in the browser is the **import match caches** in `localStorage` (R5) — `wellworth:book-match-cache`, `wellworth:show-match-cache`, and `wellworth:food-match-cache` — which exist purely to speed up re-imports (and, for books, save the daily Google Books quota), and also `wellworth:networth-liquid-only` - which is the Liquid Only toggle.
 
 ### R4 — When you actually need to "Delete data"
 
@@ -1052,14 +1043,8 @@ To drop just an **import match cache** without logging out:
 - **In the app:** the module's **Settings → Import → "Clear Import Match Cache"** — **Books** (Google
   Books matches), **Shows** (TMDB), or **Wellness** (USDA food matches). (Recommended — one tap, stays
   logged in.)
-- **In DevTools, per-key:** F12 → **Application** → **Storage → Local Storage** → click your origin →
-  you'll see individual rows (`wellworth:book-match-cache`, `wellworth:show-match-cache`,
-  `wellworth:food-match-cache`, `wellworth:last-module`, the `sb-…-auth-token`). Select a single row and
-  press **Delete** (or right-click → Delete). Deleting only a `…-match-cache` row clears that import
-  cache and leaves your login intact.
-- **In the Console:** `localStorage.removeItem('wellworth:book-match-cache')` (or
-  `'wellworth:show-match-cache'`). (Avoid `localStorage.clear()` — it also removes the auth token and
-  logs you out.)
+- **In DevTools, per-key:** F12 → **Application** → **Storage → Local Storage** → click your origin → you'll see individual rows (`wellworth:book-match-cache`, `wellworth:show-match-cache`, `wellworth:food-match-cache`, `wellworth:last-module`, `wellworth:networth-liquid-only`, the `sb-…-auth-token`). Select a single row and press **Delete** (or right-click → Delete). Deleting only a `…-match-cache` row clears that import cache and leaves your login intact.
+- **In the Console:** `localStorage.removeItem('wellworth:book-match-cache')` (or `'wellworth:show-match-cache'`). (Avoid `localStorage.clear()` — it also removes the auth token and logs you out.)
 
 ---
 

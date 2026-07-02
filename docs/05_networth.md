@@ -194,9 +194,7 @@ empty-state action).
 - **Header**: compact `‹ month ›` with Delete/Reset/Save (`EntryHeaderActions`) to the right of the
   next-arrow; the **manual Import CSV** sits on the NET WORTH total line.
 - **Exchange rates**: title `EXCHANGE RATES` + small grey `(as of 1st of the month from Frankfurter)`.
-- **Collapsible asset-type sections** (chevron; Diary pattern). Sections with ≥1 entry auto-expand;
-  an expanded **empty** section shows **"Nothing logged."** in muted text (Diary group pattern);
-  visibility + order come from `profile.networth_visible_asset_types` / `networth_asset_type_order`.
+- **Collapsible asset-type sections** (chevron; Diary pattern). On first visit (fresh tab) sections with ≥1 entry auto-expand. Expand/collapse state **persists for the browser-tab session** (`useSessionState`, key `networth-entry-expanded`) — when switching months, each section restores its last toggled state regardless of whether it has entries; a fresh tab re-derives the initial state from the current month's data.
 - **Copy-forward**: manual types cloned; **fund** cloned as a placeholder (overwritten by import);
   **insurance** is NOT cloned — it is **re-resolved from the catalogue** at the month's age and
   **frozen into the snapshot on SAVE**.

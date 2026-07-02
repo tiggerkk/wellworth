@@ -360,7 +360,8 @@ function EntryForm({
   const [fetching, setFetching] = useState<FetchableCurrency | null>(null)
   const [fxError, setFxError] = useState<Partial<Record<FetchableCurrency, boolean>>>({})
   const [pickerOpen, setPickerOpen] = useState(false)
-  const [expanded, setExpanded] = useState<Record<string, boolean>>(() =>
+  const [expanded, setExpanded] = useSessionState<Record<string, boolean>>(
+    'networth-entry-expanded',
     Object.fromEntries(
       visibleTypes.map((t) => [t, initial.rows.some((r) => r.asset_type === t)]),
     ),
