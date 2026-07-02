@@ -35,11 +35,11 @@ export const STOP_TYPE_LABELS: Record<StopType, string> = {
  * stay(bed)=purple · other(map-pin)=grey.
  */
 export const STOP_TYPE_COLORS: Record<StopType, string> = {
-  travel: 'var(--color-positive)', // green
-  visit: 'var(--color-dynasty)', // gold
-  eat: 'var(--color-danger)', // red
-  shop: 'var(--color-cat-activity)', // blue
-  stay: 'var(--color-cat-supplement)', // purple
+  travel: 'var(--color-accent)', // blue
+  visit: 'var(--color-cat-supplement)', // violet
+  eat: 'var(--color-dynasty)', // gold
+  shop: 'var(--color-med-stool)', // brown
+  stay: 'var(--color-warning)', // orange
   other: 'var(--color-text-tertiary)', // grey (darker than text-muted, so it reads apart from the row text)
 }
 
@@ -89,7 +89,7 @@ export const TRAVEL_CATEGORY_COLORS = [
   { name: 'Green', value: 'var(--color-positive)' },
   { name: 'Rose', value: 'var(--color-favorite)' },
   { name: 'Gold', value: 'var(--color-dynasty)' },
-  { name: 'Brown', value: '#8c564b' },
+  { name: 'Brown', value: 'var(--color-med-stool)' },
   { name: 'Purple', value: 'var(--color-cat-supplement)' },
   { name: 'Grey', value: 'var(--color-text-secondary)' },
   { name: 'Blue', value: 'var(--color-accent)' },

@@ -32,45 +32,45 @@
   --color-dynasty: #d8a657; /* gold badge — Chinese-dynasty chip (Shows/Books) */
 
   /* Category accents — Diary group icons (meal red matches danger today but is its own role) */
-  --color-cat-meal: #e2574c;
-  --color-cat-snack: #e2933c;
-  --color-cat-supplement: #a779e0;
-  --color-cat-activity: #5b8def;
+  --color-cat-meal: #e2574c; /* red */
+  --color-cat-snack: #e2933c; /* orange */
+  --color-cat-supplement: #a779e0; /* purple */
+  --color-cat-activity: #5b8def; /* blue */
 
   /* Medical category accents — one distinct hue per lab-result section (left stripe + tinted
      header on the Report/Edit/Dashboard sections). Consumed via MEDICAL_CATEGORY_COLOR in
      src/lib/medical.ts; tints are derived at the boundary with color-mix. Hues are ordered so
      that *consecutive* categories (the sequence in MEDICAL_CATEGORIES) jump far across the colour
      wheel — no two adjacent sections share a warm/cool band — so neighbours read clearly apart. */
-  --color-med-general: #7e8aa6; /* slate grey-blue */
+  --color-med-eye: #a779e0; /* purple */
+  --color-med-general: #5b8def; /* blue */
   --color-med-vitals: #e2574c; /* red */
   --color-med-lipids: #e0a83a; /* gold */
   --color-med-glucose: #2fb0a0; /* teal-green */
-  --color-med-liver: #8a78e0; /* indigo */
+  --color-med-liver: #a779e0; /* purple */
   --color-med-renal: #e87a4a; /* coral */
   --color-med-electrolytes: #4a86e8; /* blue */
   --color-med-cbc: #5bbf4a; /* green */
-  --color-med-thyroid: #b06fe0; /* violet */
+  --color-med-thyroid: #d869b0; /* magenta */
   --color-med-bone: #3fb6c4; /* cyan */
-  --color-med-tumour_markers: #d869b0; /* magenta */
-  --color-med-hepatitis: #e2933c; /* orange */
+  --color-med-tumour_markers: #e2933c; /* orange */
+  --color-med-hepatitis: #8a78e0; /* indigo */
   --color-med-inflammation: #6cc24a; /* green */
   --color-med-urine: #5b8def; /* blue */
-  --color-med-stool: #b07a45; /* brown */
+  --color-med-stool: #8c564b; /* brown */
   --color-med-imaging: #2f9fb0; /* blue-teal */
-  --color-med-eye: #9b7de0; /* violet */
   --color-med-other: #8a93a8; /* grey */
 
   /* Literature section accents — colored left stripe + tinted header on the Poem/Poet detail
      collapsible sections (the Net Worth Monthly Entry pattern). Consumed via
      LITERATURE_SECTION_COLOR in src/constants/literature-sections.ts. Hues are spaced so that
      *consecutive* sections (原文→譯文→註釋→賞析, 作者簡介→作品) sit far apart on the wheel. */
-  --color-lit-original: #5b8def; /* blue — 原文 */
-  --color-lit-translation: #2fb0a0; /* teal-green — 譯文 */
-  --color-lit-remark: #e0a83a; /* gold — 註釋 */
-  --color-lit-shangxi: #b06fe0; /* violet — 賞析 */
-  --color-lit-bio: #e87a4a; /* coral — 作者簡介 */
-  --color-lit-works: #5bbf4a; /* green — 作品 */
+  --color-lit-original: #e0a83a; /* gold — 原文 */
+  --color-lit-translation: #5b8def; /* blue — 譯文 */
+  --color-lit-remark: #6cc24a; /* green — 註釋 */
+  --color-lit-shangxi: #d869b0; /* magenta — 賞析 */
+  --color-lit-bio: #3fb6c4; /* cyan — 作者簡介 */
+  --color-lit-works: #e87a4a; /* coral — 作品 */
 
   /* Radii */
   --radius-screen: 28px;

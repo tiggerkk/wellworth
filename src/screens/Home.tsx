@@ -27,7 +27,7 @@ export function Home() {
     <div className="flex flex-col gap-5 px-4 py-4">
       <header className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <BrandMark className="size-7 text-accent" />
+          <BrandMark className="size-8 text-accent" />
           <h1 className="text-title font-medium text-text-primary">WellWorth</h1>
         </div>
         <Link
@@ -47,7 +47,7 @@ export function Home() {
             className="flex flex-col items-center gap-2 rounded-card border border-border bg-surface px-3 py-4 text-center active:bg-input/40"
           >
             <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-card bg-input text-accent">
-              <m.Icon size={32} stroke={2.5} />
+              <m.Icon size={36} stroke={2.25} />
             </span>
             <span className="w-full min-w-0">
               <span className="block truncate text-body font-medium text-text-primary">
