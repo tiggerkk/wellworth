@@ -227,12 +227,12 @@ export function visibleAssetTypes(
  * orange → rose → grey) — no two adjacent sections share a warm/cool band, so they read clearly apart.
  */
 export const ASSET_TYPE_COLORS: Record<AssetType, string> = {
-  cash: 'var(--color-dynasty)', // gold
-  time_deposit: 'var(--color-positive)', // teal-green
-  stock: 'var(--color-cat-supplement)', // purple
-  fund: 'var(--color-cat-activity)', // blue
-  retirement: 'var(--color-cat-snack)', // orange
-  insurance: 'var(--color-favorite)', // rose
+  cash: 'var(--color-lit-original)', // gold
+  time_deposit: 'var(--color-lit-translation)', // blue
+  stock: 'var(--color-lit-remark)', // green
+  fund: 'var(--color-lit-shangxi)', // magenta
+  retirement: 'var(--color-lit-bio)', // cyan
+  insurance: 'var(--color-danger)', // red
   property: 'var(--color-text-muted)', // grey
 }
 
