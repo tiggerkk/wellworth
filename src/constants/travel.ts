@@ -81,7 +81,7 @@ export const TRAVEL_EXPENSE_CATEGORY_LABELS: Record<TravelExpenseCategory, strin
  * The swatch palette for **expense-category colours** — the choices offered by the per-row colour
  * picker in Travel Settings → Expense Categories, and the default-assignment cycle for seed / new
  * categories (`src/lib/travel-config.ts`). Values are design tokens (CSS vars) so they track the theme;
- * the one literal brown has no matching token (mirrors the donut fallback palette in `TravelExpenseChart`).
+ * the one literal brown has no matching token (follows the donut fallback palette in `TravelExpenseChart`).
  * The category's chosen colour is stored per entry on `profile.travel_expense_categories` and drives the
  * **stable** per-category slice colour in the Expenses donut.
  */

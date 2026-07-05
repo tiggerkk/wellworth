@@ -104,12 +104,12 @@ components Onboarding renders**, so the screens stay identical.
   `DisplaySettingsCard`) and saves to `profile.font_size` (cross-device); reconciled by
   `useFontSizeSync`. A larger preset is the accessibility lever for small text/icons.
 - **DISPLAY → Visible Modules** (secondary text "(Home)"): opens a full sheet listing every module in a
-  **2-up combined grid** (`ReorderGrid`, mirroring the hub's 2-column layout) — **drag the grip to
+  **2-up combined grid** (`ReorderGrid`, same as the hub's 2-column layout) — **drag the grip to
   reorder** the Home hub and **toggle** each module to show/hide. A cell's grid position (left→right
   then top→down) is its hub slot — no number badge (it crowded longer labels on narrow phones). Saved per profile to `module_order` /
   `visible_modules`; the Home
   hub reads them via `homeModules` (`src/lib/modules-display.ts`). **At least one module must stay
-  visible** (the last toggle refuses to turn off, mirroring `ConfigListEditor`). Hiding only removes the
+  visible** (the last toggle refuses to turn off, following `ConfigListEditor`). Hiding only removes the
   Home card — a module's routes stay reachable by direct URL and the "reopen last-used module" launch
   default is unaffected. The hub paints the saved order/visibility on the **first** render (no reorder
   flash) because `useProfile` seeds from a local profile cache — see tech-spec **F21**.
@@ -192,8 +192,7 @@ components Onboarding renders**, so the screens stay identical.
   `src/constants/travel.ts`)
 - `travel_visible_fields` TEXT[] NULL — Trip Entry-form field visibility; **NULL = all visible**
 - `travel_importer_enabled` BOOLEAN NOT NULL DEFAULT true — single toggle surfacing **both** Travel
-  importers (JSON Trips + CSV Expenses); on by default (mirrors `medical_importer_enabled`)
-  (added by `supabase/migrations/15_travel_profile_settings.sql`)
+  importers (JSON Trips + CSV Expenses); on by default (added by `supabase/migrations/15_travel_profile_settings.sql`)
 - `created_at`, `updated_at` TIMESTAMPTZ
 
 ---

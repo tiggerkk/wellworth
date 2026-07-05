@@ -208,7 +208,7 @@ export function restrictTotals(
 }
 
 /** Visible asset types in display order — NULL visible = all; a type absent from `order` (newer
- *  than the saved customization) defaults visible (mirrors the Home-hub module rule). */
+ *  than the saved customization) defaults visible. */
 export function visibleAssetTypes(
   order: string[] | null | undefined,
   visible: string[] | null | undefined,

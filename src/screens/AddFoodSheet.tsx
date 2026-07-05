@@ -71,7 +71,7 @@ export function AddFoodSheet() {
     return () => clearTimeout(t)
   }, [query])
 
-  // Mirror tab + search into the URL (replace, so keystrokes don't pile up history). The
+  // Follow tab + search into the URL (replace, so keystrokes don't pile up history). The
   // entry left behind when opening Food Detail then carries them, so navigate(-1) restores
   // them. We keep `location.state` (the painted background) intact across the replace.
   useEffect(() => {

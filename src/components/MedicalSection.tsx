@@ -20,9 +20,9 @@ interface MedicalSectionProps {
 }
 
 /**
- * A collapsible lab-result section with a left chevron (mirrors the Diary group header) and a
- * per-category color accent: a colored left stripe + a tinted header background, both derived from
- * `MEDICAL_CATEGORY_COLOR`. Shared by the read-only Report, the Edit Report form, and the Dashboard.
+ * A collapsible lab-result section with a left chevron and a per-category color accent:
+ * a colored left stripe + a tinted header background, both derived from `MEDICAL_CATEGORY_COLOR`.
+ * Shared by the read-only Report, the Edit Report form, and the Dashboard.
  */
 export function MedicalSection({
   category,

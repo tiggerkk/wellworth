@@ -92,7 +92,7 @@ describe('EYE_REFRACTION constants (M7 form grid)', () => {
   })
 })
 
-describe('seed migration mirrors the reference list (no drift)', () => {
+describe('seed migration follows the reference list (no drift)', () => {
   it('seeds exactly the same set of keys as MEDICAL_LAB_TESTS', () => {
     const tsKeys = [...MEDICAL_LAB_TESTS.map((t) => t.key)].sort()
     const sqlKeys = [...seedKeys()].sort()

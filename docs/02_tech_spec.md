@@ -205,7 +205,7 @@ Supabase (Postgres + RLS). Components hold no SQL and never import the Supabase 
   `deleteFoodSmart` (soft if a diary entry references the food, else hard) — see `docs/04_wellness.md`.
   **Seed on first save:** the food's servings (incl. its USDA/OFF household serving) are written when
   it's first cached — both interactively (`ensureCachedId` → `writeServings`) and on import — so a
-  resolved-to-cached food shows more than just "100 g". The **CSV importer** mirrors this — a USDA
+  resolved-to-cached food shows more than just "100 g". The **CSV importer** follows this — a USDA
   food's servings become its USDA serving plus the CSV `serving*` measures, with a `default_serving`;
   **re-import overwrites** servings/default (file wins), and `is_custom=true` skips USDA matching entirely.
 - **F23 — typography scale + Dynamic Type.** Font sizes are **one rem-based scale** — the `@theme`
@@ -218,7 +218,7 @@ Supabase (Postgres + RLS). Components hold no SQL and never import the Supabase 
   `transform: scale(...)` keyed off the same attribute — `transform`, not width/height, so the icon's
   layout box doesn't grow and add wrap pressure. Presets are **≥ 1**, so a focused input never drops
   below 16px (F21 stays satisfied). The preset lives in **`profile.font_size`** (cross-device) and is
-  mirrored to `localStorage`; an inline boot script in `index.html` applies the cached value before
+  saved to `localStorage`; an inline boot script in `index.html` applies the cached value before
   first paint (no flash) and `useFontSizeSync` reconciles from the profile once it loads. `font-scale.ts`
   is the one writer of the attribute. Compact label·value rows (`FieldRow`) use `flex-wrap` + `min-w-0`
   so the value drops to its own line at a larger preset instead of squeezing.

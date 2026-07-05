@@ -1,5 +1,5 @@
 /**
- * Pure search / filter / sort for the Insurance Policies list (mirrors `lib/medical` list helpers).
+ * Pure search / filter / sort for the Insurance Policies list.
  * Operates on the catalogue shape `{ policy, schedules }` so it stays free of any data-layer import.
  */
 import { hasBrokenEven, type ScheduleVersion } from './networth'

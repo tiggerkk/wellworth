@@ -19,7 +19,7 @@ interface MedicalTestPickerSheetProps {
  * Test picker for the Add/Edit Report form — a **local** fixed overlay (not the routing `Sheet`,
  * which would remount the Entry form and lose the in-progress draft). Searches the static
  * `MEDICAL_LAB_TESTS` reference grouped by category; selecting one prefills a result row, or
- * "Add custom test" creates an ad-hoc row (test_key null). Mirrors `TitleSearchSheet`.
+ * "Add custom test" creates an ad-hoc row (test_key null).
  */
 export function MedicalTestPickerSheet({
   onSelect,

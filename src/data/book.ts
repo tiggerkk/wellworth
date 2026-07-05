@@ -68,8 +68,7 @@ export async function saveImportedBooks(
   for (const p of payloads) byKey.set(dedupKey(p.title, p.authors?.[0]), p)
 
   // Split into inserts (new) and updates (existing id), then batch each — a single bulk insert + bulk
-  // upsert instead of one round-trip per row (was sequential, ~N awaits for N rows). Mirrors
-  // `saveImportedShows`; see F16a.
+  // upsert instead of one round-trip per row (was sequential, ~N awaits for N rows). See F16a.
   const newRows: BookInsert[] = []
   const updRows: BookInsert[] = []
   for (const [key, payload] of byKey) {

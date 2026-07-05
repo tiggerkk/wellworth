@@ -45,9 +45,9 @@ const STATUS_OPTIONS: { value: InsuranceStatusFilter; label: string }[] = [
 ]
 
 /**
- * Insurance Policies — searchable/filterable/sortable policy list (mirrors Medical Reports). Tap a
- * row → New/Edit Insurance. New policies come from the teal "+ New Insurance" action on the result-
- * count row (and the empty-state action) — the entry point that replaced the old bottom-nav tab.
+ * Insurance Policies — searchable/filterable/sortable policy list. Tap a row → New/Edit Insurance.
+ * New policies come from the teal "+ New Insurance" action on the result- count row (and the
+ * empty-state action) — the entry point that replaced the old bottom-nav tab.
  * Break-even / surrendered filters are computed from the bounded catalogue client-side.
  */
 export function InsurancePolicies() {

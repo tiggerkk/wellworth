@@ -30,7 +30,7 @@ const isChina = (country: string) => CHINA_NAMES.has(country.trim().toLowerCase(
 /**
  * The City picker — a **local** fixed overlay (not a route sheet, so the Trip Builder's draft
  * survives). Seeded with the stop's current City, it searches the remembered-cities cache (instant)
- * and Nominatim (auto, debounced) and lists matches immediately, mirroring the Shows TMDB search.
+ * and Nominatim (auto, debounced) and lists matches immediately.
  * Selecting a result confirms it and returns; manual entry is the fallback, collapsed by default and
  * auto-expanded when search finds nothing. Province is snapped to a canonical `CHINA_PROVINCES` value
  * before saving so the shaded map stays consistent. Confirming a city upserts it into the cache.
@@ -74,7 +74,7 @@ export function CitySearchSheet({
     /* eslint-enable react-hooks/set-state-in-effect */
   }, [geoState, suggestions.length, debounced])
 
-  // Auto-run the Nominatim assist on open and as the typed city settles (mirrors TitleSearchSheet).
+  // Auto-run the Nominatim assist on open and as the typed city settles.
   useEffect(() => {
     /* eslint-disable react-hooks/set-state-in-effect */
     const term = debounced.trim()

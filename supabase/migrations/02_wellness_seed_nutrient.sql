@@ -1,8 +1,8 @@
 -- Seed the nutrient reference table (docs/05-seed-data.md).
 --
 -- Idempotent: ON CONFLICT (key) DO UPDATE so this reaches production via `supabase db push`
--- and is safe to re-run (and lets a future migration correct values). default_visible mirrors
--- the doc's "Visible = yes"; has_upper_limit mirrors "UL". DRI target/UL numeric values live in
+-- and is safe to re-run (and lets a future migration correct values). default_visible is the same as
+-- the doc's "Visible = yes"; has_upper_limit is the same as "UL". DRI target/UL numeric values live in
 -- src/lib/dri.ts, not here. parent_key nests sub-nutrients (validated by the deferrable self-FK).
 --
 -- category-level display order (General, Vitamins, Minerals, Carbohydrates, Lipids,

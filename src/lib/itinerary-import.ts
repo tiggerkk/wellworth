@@ -1,9 +1,9 @@
 /**
  * Itinerary AI-import (M7) — accepts a **JSON array of trips** (shape =
  * `templates/travel-itinerary.schema.json`, produced outside the app by any AI tool from freeform
- * itinerary text via `templates/travel-itinerary-prompt.md`). Pure: no I/O. Applies the same tolerant
- * JSON repair as Medical (stray quote after a number; a missing comma before a new key), then validates
- * each trip into a draft (days preserve null dates; stops keep order; enums fall back safely; province is
+ * itinerary text via `templates/travel-itinerary-prompt.md`). Pure: no I/O. Applies tolerant JSON
+ * repair (stray quote after a number; a missing comma before a new key), then validates each trip
+ * into a draft (days preserve null dates; stops keep order; enums fall back safely; province is
  * snapped to a canonical `CHINA_PROVINCES` value for Chinese stops). The review screen
  * (`ImportTravelTripsSheet`) confirms trip/day/stop counts + pooled new cities before writing drafts the
  * owner finishes in the Trip Builder.
@@ -45,7 +45,7 @@ export type ItineraryParse =
   | { ok: true; trips: TripDraft[]; warnings: string[] }
   | { ok: false; error: string }
 
-// ── tolerant JSON repair (mirrors medical-import) ───────────────────────────────────────────
+// ── tolerant JSON repair ───────────────────────────────────────────
 const repairStrayQuote = (s: string) =>
   s.replace(/(:\s*-?\d+(?:\.\d+)?)"(?=\s*[,}\]\r\n])/g, '$1')
 const insertMissingCommas = (s: string) =>

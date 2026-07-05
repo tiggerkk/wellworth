@@ -44,7 +44,7 @@ function renderDot(props: unknown) {
 /**
  * Full single-test trend chart (recharts). Imported **lazily** by the Dashboard's expanded view so
  * recharts only loads when a sparkline is opened (its own chunk). Colours come from the @theme CSS
- * vars to match the dark theme. Mirrors `NetWorthTrendChart`.
+ * vars to match the dark theme.
  */
 export function MedicalTrendChart({ points, unit, refLow, refHigh }: Props) {
   const hasBand = refLow != null && refHigh != null

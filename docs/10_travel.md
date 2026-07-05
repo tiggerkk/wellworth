@@ -12,7 +12,7 @@
 - **Shelves**: **Recently Visited** (reverse-chron, with a "See all trips" link), **Planning**,
   **Want to Visit** — each a card row (cover thumbnail · name · date range · primary region · status
   chip), tapping into the Trip Builder. Empty overall → **New Trip** CTA (shared EmptyState).
-- **Status chip palette** (`TRIP_STATUS_CHIP`, mirrors Shows/Books): Want = purple (`plan`), Planning =
+- **Status chip palette** (`TRIP_STATUS_CHIP`): Want = purple (`plan`), Planning =
   orange (`warning`), Visited = teal (`positive`) — via the shared `StatusChip`.
 
 ### Map (`/travel/map`)
@@ -167,8 +167,8 @@ ledger — replaces the old one-at-a-time `ExpenseEditorSheet`):
   `profile.travel_expense_categories`). Deleting a category still used by expenses prompts a
   **reassignment** first; the last category can't be deleted.
 - **Import → Enable Bulk Trips Import** (`profile.travel_importer_enabled`, **on by default**): a single
-  toggle that surfaces **both** launchers below (mirrors Medical's importer toggle). When off, a
-  secondary note ("Turn this on to bulk-seed your trips from a JSON / CSV.") replaces them.
+  toggle that surfaces **both** launchers below. When off, a secondary note ("Turn this on to bulk-seed
+  your trips from a JSON / CSV.") replaces them.
 - **Import → Import JSON Trips** (listed first): a JSON array of trips → one combined review
   (per-trip day/stop counts + a pooled **new-cities** list with optional per-city geocode) → import
   as drafts.
@@ -194,7 +194,7 @@ ledger — replaces the old one-at-a-time `ExpenseEditorSheet`):
   with the struck-through stop row.
 - **Trip cover**: a rounded image rendered `referrerpolicy="no-referrer"` (thumbnail in lists, larger
   in the header); a neutral placeholder when null (the shared `Thumb`).
-- **Status chip palette** (`TRIP_STATUS_CHIP`, mirrors Shows/Books): Want = purple (`plan`), Planning =
+- **Status chip palette** (`TRIP_STATUS_CHIP`): Want = purple (`plan`), Planning =
   orange (`warning`), Visited = teal (`positive`) — via the shared `StatusChip`.
 - **Map**: Leaflet over OSM tiles; **accent** dots (`accent` = visited) / **neutral** dots
   (`text-secondary` = planned), clustered; the visited-region fill is `positive` at low opacity.

@@ -1,7 +1,6 @@
 -- WellWorth — Shows module preferences on the profile.
 --
--- Two additive preference columns for the Shows module (mirroring how Wellness stores its
--- nutrient-visibility prefs on profile). They are plain columns on the existing profile table —
+-- Two additive preference columns for the Shows module. They are plain columns on the existing profile table —
 -- RLS, the API-role grants, and the moddatetime trigger already cover profile, so nothing else
 -- is needed here.
 --   * show_visible_fields  — which Entry/Edit fields are shown. NULL = all fields visible

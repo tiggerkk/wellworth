@@ -43,7 +43,7 @@ const SORT_OPTIONS: { value: ReportSortField; label: string }[] = [
  * Medical Reports — searchable/filterable/sortable list (newest first by default); tap a row →
  * Report detail, swipe-left to delete (hard, immediate; the FK cascades the report's results). New
  * reports come from the "New Medical" bottom-nav tab. All filtering/sorting is the pure
- * `applyReportView`; this screen just holds the criteria state. Mirrors `ShowsLibrary`.
+ * `applyReportView`; this screen just holds the criteria state.
  */
 export function MedicalReports() {
   const { session } = useAuth()

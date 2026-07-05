@@ -30,7 +30,7 @@
   Source Type } with an **asc/desc** toggle (Date = date added; Category/Source Type sort on the stored
   key); default is **Date** descending.
 - **List**: a **ResultCount** ("N results") sits above the list. Rows — a small filled favourite ♥
-  (when `is_favorite`, mirroring Shows/Books) before the quote snippet, the category badge, and author.
+  (when `is_favorite`) before the quote snippet, the category badge, and author.
   Tap → Add/Edit; **swipe-left** →
   Delete (hard; tapping the revealed Delete acts immediately — no browser dialog). The delete is
   **optimistic** — the row drops from local state instantly,

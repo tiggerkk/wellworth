@@ -1,7 +1,7 @@
 -- Seed the medical_lab_test reference table (docs/medical.md → 05-seed-data.md).
 --
 -- Idempotent: ON CONFLICT (key) DO UPDATE so this reaches production via `supabase db push` and is
--- safe to re-run (and lets a future migration correct values). This list is the SQL mirror of
+-- safe to re-run (and lets a future migration correct values). This list is the SQL replica of
 -- src/lib/medical.ts (MEDICAL_LAB_TESTS) — the front-end source of truth; src/lib/medical.test.ts
 -- cross-checks the two so they can't drift.
 --

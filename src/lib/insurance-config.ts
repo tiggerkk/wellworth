@@ -9,10 +9,9 @@
  * to the raw key (orphan tolerance, like `quotes-config`) so a policy whose provider was deleted still
  * renders + edits.
  *
- * NULL/empty/invalid override ⇒ the canonical seed defaults in `src/lib/networth.ts`. Mirrors the
- * Quotes/Travel pattern: a non-null override is **authoritative and complete** (we do NOT re-append
- * missing canonical defaults) — otherwise a deleted default would resurrect on next load.
- */
+ * NULL/empty/invalid override ⇒ the canonical seed defaults in `src/lib/networth.ts`. A non-null override
+ * is **authoritative and complete** (we do NOT re-append missing canonical defaults) — otherwise a deleted
+ * default would resurrect on next load.*/
 import {
   INSURANCE_PROVIDERS,
   INSURANCE_PROVIDER_LABELS,

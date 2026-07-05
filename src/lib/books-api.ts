@@ -429,7 +429,7 @@ export async function getBookDetails(
     // Honor the author/year/cover of the result the user actually selected: Google's full volume
     // record sometimes lists a different (mis-attributed) author than the search snippet that was
     // displayed and picked, so the carried value wins; the detail only enriches the rest (description,
-    // genres, page count, ISBN, language). Mirrors the Open Library path (`mapOpenLibraryWork`).
+    // genres, page count, ISBN, language). Follows the Open Library path (`mapOpenLibraryWork`).
     return {
       ...meta,
       authors: result.authors ?? meta.authors,

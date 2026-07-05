@@ -85,7 +85,7 @@ function AccountCard() {
 }
 
 function SettingsBody({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
-  // Local mirror of the canonical metrics; each field change persists immediately (auto-save).
+  // Local replica of the canonical metrics; each field change persists immediately (auto-save).
   const [value, setValue] = useState<ProfileMetrics>({
     birthday: profile.birthday,
     sex: profile.sex === 'male' ? 'male' : 'female',

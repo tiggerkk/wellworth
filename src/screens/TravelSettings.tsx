@@ -12,8 +12,8 @@ type SaveFn = (patch: TablesUpdate<'profile'>) => Promise<void>
 
 /**
  * Travel Settings. M5 adds the **Expense Categories** editor (Quotes pattern). A single
- * **Enable JSON / CSV Import** toggle (mirrors Medical) surfaces BOTH importers (JSON Trips +
- * CSV Expenses). Per-trip FX overrides live in the trip's Expenses tab (where they're actionable),
+ * **Enable JSON / CSV Import** toggle surfaces BOTH importers (JSON Trips + CSV Expenses).
+ * Per-trip FX overrides live in the trip's Expenses tab (where they're actionable),
  * not here.
  */
 export function TravelSettings() {

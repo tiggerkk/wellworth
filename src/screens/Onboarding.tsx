@@ -30,7 +30,7 @@ export function Onboarding() {
   // Font size is a Display preference, not a body metric, so it lives outside `ProfileMetrics`.
   // `DisplaySettingsCard` applies the preset instantly; we persist it with the rest on submit.
   const [fontSize, setFontSize] = useState<FontSize>('default')
-  // Mirror the latest value so submit reads fresh data even when a height/weight blur commits in the
+  // Replica of the latest value so submit reads fresh data even when a height/weight blur commits in the
   // same tap as the button click (blur fires before the click, but its setState hasn't re-rendered).
   const valueRef = useRef(value)
   const [saving, setSaving] = useState(false)

@@ -26,11 +26,10 @@ entries yet" · "+ Monthly Entry").
 ### Monthly Entry
 
 - Month selector (defaults to the current month; can pick a past month for retrospective entry).
-  The `‹ month ›` cluster is **centered in the header** (mirrors the Wellness Diary day nav), with
-  the form actions to its right. The arrows step one month; **tapping the month label opens a
-  month/year picker** (year stepper over a month grid, OK/Cancel — see
-  `docs/01_design_system.md` → MonthPicker). The selected month **persists for the browser-tab
-  session** (`useSessionState`, key `networth-entry-month`) so it survives the unmount when an Import
+  The `‹ month ›` cluster is **centered in the header**, with the form actions to its right. The arrows
+  step one month; **tapping the month label opens a month/year picker** (year stepper over a month grid,
+  OK/Cancel — see `docs/01_design_system.md` → MonthPicker). The selected month **persists for the
+  browser-tab session** (`useSessionState`, key `networth-entry-month`) so it survives the unmount when an Import
   sheet opens over the entry and closes — the entry stays on the imported month instead of snapping
   back to the current one. (The background-location tab is re-rendered from a static element map, so
   plain `useState` would reset; a fresh tab still defaults to the current month.)
@@ -40,7 +39,7 @@ entries yet" · "+ Monthly Entry").
 - The **header is pinned** — month selector, the live **NET WORTH** total in HKD, and
   **RESET**/**SAVE** stay visible while the **asset-type list scrolls** beneath. **While a month
   loads**, the month-nav header stays pinned (with a `—` total placeholder) and `Loading…` shows in
-  the body below — mirroring the Wellness Diary's persistent day-nav header.
+  the body below.
 - Entries **grouped by asset type**; each row editable: name, currency, `value_native`, and the
   type-specific `details`. The row is **compact** — **Name · currency · value · delete on one
   line**; the value box (`w-24`, drops the number-spinner via `.no-spinner`) fits a 7-figure amount,
@@ -214,7 +213,7 @@ empty-state action).
   Entry) — a non-HKD base currency (USD/CNY unit cost + NAV) keeps its `CODE 1,234` prefix + decimals —
   and the priced-as-of date via the global **`formatFullDate`** (**`Jun 25, 2026`** — MMM DD, YYYY; the
   importer stores `YYYY/MM/DD`). The local modal reserves `pt-[env(safe-area-inset-top)]` so its header
-  clears the iOS status bar, and closes on **Esc** (`useEscapeKey`) to mirror the routed `Sheet`, which
+  clears the iOS status bar, and closes on **Esc** (`useEscapeKey`) to follow the routed `Sheet`, which
   closes on Esc + browser-back for free (only the read-only body is shared via `FundDetail`; the wrappers differ).
 - **Insurance section**: auto-populated, grouped by the owner's configured provider order (orphan
   providers last), ordered by policy number within a provider;
@@ -241,8 +240,7 @@ Policy Year · Premium · Cash Value (native→HKD)` with an "as of yr N" tag wh
   status toggle (`criteria.status`), line 3 Started date range, line 4 sort + Clear Filters. Sort
   (Start Date / Policy Number / Policy Name / Provider, descending default). Tap → New/Edit Insurance.
   A teal **`+ New Insurance`** action sits at the right edge of the `ResultCount` row (and is the
-  `EmptyState` action) — the sole entry point for a new policy now the bottom-nav tab is gone.
-  Mirrors Medical Reports. Each row shows the provider plus status **badges** (`StatusChip`):
+  `EmptyState` action). Each row shows the provider plus status **badges** (`StatusChip`):
   **Surrendered** = grey (`bg-track`), **Matured** = blue (`bg-accent`), **Past Break Even** =
   teal (`bg-positive`). (Both filter + badges read `policy.termination_kind`.)
   - **"Past break-even" is relative to the current age**, not "ever breaks even": `breakEven` returns
@@ -294,7 +292,7 @@ Policy Year · Premium · Cash Value (native→HKD)` with an "as of yr N" tag wh
 
 ### Settings (`IconSettings` tab)
 
-- **DISPLAY → Visible Asset Types** → reorder/visibility sheet (mirrors Visible Modules; ≥1 visible).
+- **DISPLAY → Visible Asset Types** → reorder/visibility sheet (≥1 visible).
 - **DISPLAY → Liquid Assets** → per-asset-type liquid/non-liquid toggles
   (`NetWorthLiquidAssetTypesSheet`). Drives the "Liquid Only" view toggle; saved to
   `profile.networth_liquid_asset_types` (NULL = defaults: cash/time_deposit/stock/fund).

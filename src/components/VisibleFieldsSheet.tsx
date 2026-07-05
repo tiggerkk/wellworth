@@ -44,7 +44,7 @@ interface VisibleFieldsSheetProps {
 /**
  * Shared "Visible Fields" sheet for every module's Settings — auto-saves each toggle. The module's
  * `text[]` column is NULL until the owner customizes (all fields visible); the first toggle writes the
- * explicit array. `fields` order should mirror the New/Edit form; `extras` are boolean-column toggles
+ * explicit array. `fields` order should follow the New/Edit form; `extras` are boolean-column toggles
  * (e.g. Shows' Poster URL) interleaved into form-order position.
  */
 export function VisibleFieldsSheet({

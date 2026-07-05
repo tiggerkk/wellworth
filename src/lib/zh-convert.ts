@@ -8,7 +8,7 @@
  *
  * The opencc-js dictionaries (~1MB) are dynamically imported, so they land in their own chunk
  * and only enter memory on first use — never on app start and never on the local-filter
- * keystroke path. The chunk is excluded from the PWA precache (see vite config), mirroring the
+ * keystroke path. The chunk is excluded from the PWA precache (see vite config), following the
  * vendored Travel GeoJSON.
  *
  * `'hk'` (Hong Kong Traditional) is the project's Traditional locale, not `'tw'`.

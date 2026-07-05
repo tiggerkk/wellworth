@@ -4,7 +4,7 @@ import type { Tables } from '../types/database'
  * Caches the signed-in user's last-known `profile` row in localStorage so screens can paint the
  * user's chosen order/visibility on the FIRST render instead of flashing the canonical default while
  * the Supabase fetch is in flight (stale-while-revalidate — `useProfile` seeds from here, then
- * reconciles with the live fetch). Mirrors the `last-module` / `networth-liquid-filter` convention.
+ * reconciles with the live fetch). Follows the `last-module` / `networth-liquid-filter` convention.
  *
  * Keyed per user so two family members on one device never seed each other's profile.
  *

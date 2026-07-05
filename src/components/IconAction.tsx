@@ -16,8 +16,8 @@ interface IconActionProps {
 }
 
 /**
- * Header action icon-button shared by the Diary day header and group headers — mirrors the inline
- * icon cluster on the Edit Trip day header (`TripBuilder.tsx`). Tabler icon at size 18, `p-1` hit area.
+ * Header action icon-button shared by the Diary day header and group headers.
+ * Tabler icon at size 18, `p-1` hit area.
  */
 export function IconAction({
   Icon,

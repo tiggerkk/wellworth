@@ -14,8 +14,7 @@ type SaveFn = (patch: TablesUpdate<'profile'>) => Promise<void>
 
 /**
  * Shows-specific sub-settings (Entry field visibility + the CSV importer toggle). Reached from a
- * gear in the Shows headers — mirrors the Wellness Settings split. App-wide settings live in the
- * global Settings screen at the Home level.
+ * gear in the Shows headers. App-wide settings live in the global Settings screen at the Home level.
  */
 export function ShowsSettings() {
   const { profile, loading, save } = useProfileEditor()

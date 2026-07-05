@@ -265,7 +265,7 @@ Migration: `supabase/migrations/11_medical_schema.sql`. Profile columns added by
 - A `security_invoker` view: `DISTINCT ON (user_id, coalesce(test_key, 'name:'||lower(btrim(test_name))))`
   of `medical_result` ⨝ `medical_report`, ordered so the **latest `report_date`** wins (`created_at`
   breaks ties) — the most recent result per test, with its `report_date`/`report_type`. The dedupe key
-  mirrors the client's `latestResultPerTest` (ad-hoc NULL-`test_key` rows dedupe by name).
+  follows the client's `latestResultPerTest` (ad-hoc NULL-`test_key` rows dedupe by name).
 - `security_invoker = true` (PG15+) → base-table RLS applies; `grant select` to the API roles. Powers
   the Dashboard's latest-values card (`listLatestResultPerTest`) without fetching all history (cf. F18,
   same pattern as `networth_monthly_type_total`). Created by the same migration; reflected in
@@ -278,7 +278,7 @@ Migration: `supabase/migrations/11_medical_schema.sql`. Profile columns added by
 ### Lab test reference seed
 
 The **full source of truth** is `MEDICAL_LAB_TESTS` in `src/lib/medical.ts`; the migration
-`supabase/migrations/12_medical_seed_lab_test.sql` mirrors it. A build-time test asserts they match.
+`supabase/migrations/12_medical_seed_lab_test.sql` follows it. A build-time test asserts they match.
 Built from the owner's 2021–2026 reports across three providers (MediFast HK, Mobile Medical HK,
 Global HealthCare Shanghai).
 

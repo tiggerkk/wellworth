@@ -79,7 +79,7 @@ async function applyImportServings(
  * Idempotent — re-running the same file updates in place, never duplicates: USDA rows dedupe on
  * (source, external_id); custom rows on lower(name) among the user's custom foods. New rows are
  * bulk-inserted (one statement) with their servings linked by position; existing rows are updated
- * (and custom servings replaced). Returns created/updated counts. Mirrors `saveImportedShows`/Books.
+ * (and custom servings replaced). Returns created/updated counts.
  */
 export async function saveImportedFoods(
   userId: string,

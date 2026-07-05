@@ -5,14 +5,13 @@
  * aliases are added there once `database.ts` is regenerated from the applied migrations.
  *
  * MEDICAL_LAB_TESTS is the **source of truth** for the seed migration
- * (`supabase/migrations/12_medical_seed_lab_test.sql`). The seed mirrors this list
+ * (`supabase/migrations/12_medical_seed_lab_test.sql`). The seed replicates this list
  * exactly; `medical.test.ts` cross-checks the two so they can't drift.
  */
 import type { Tables, TablesInsert, TablesUpdate } from '../types/database'
 import { foldZh } from './zh-fold'
 
-// DB row/insert/update aliases — the data layer (`src/data/medical.ts`) imports these (mirrors how
-// `src/data/show.ts` imports its types from `src/lib/shows.ts`).
+// DB row/insert/update aliases — the data layer (`src/data/medical.ts`) imports these.
 export type MedicalReportRow = Tables<'medical_report'>
 export type MedicalReportInsert = TablesInsert<'medical_report'>
 export type MedicalReportUpdate = TablesUpdate<'medical_report'>
@@ -23,7 +22,7 @@ export type MedicalResultUpdate = TablesUpdate<'medical_result'>
 export type MedicalResultInput = Omit<MedicalResultInsert, 'report_id' | 'user_id'>
 
 // The CHECK-constrained enums come through the generated types as plain `string`; these unions +
-// label maps are the front-end's narrowed view (mirrors the Shows/Books pattern).
+// label maps are the front-end's narrowed view.
 
 /** Result categories in section display order (also the default Dashboard/Report section order). */
 export const MEDICAL_CATEGORIES = [
@@ -623,7 +622,7 @@ export const EYE_REFRACTION_COLUMNS = ['Sphere', 'Cylinder', 'Addition'] as cons
 /** Flat set of the six refraction keys, for hiding them from the generic results list on eye reports. */
 export const EYE_REFRACTION_KEYS: string[] = EYE_REFRACTION_ROWS.flatMap((r) => r.keys)
 
-/** Reference test by key (the static seed mirror is the runtime reference — no DB round-trip). */
+/** Reference test by key (the static seed replica is the runtime reference — no DB round-trip). */
 export const labTestByKey: Map<string, MedicalLabTestSeed> = new Map(
   MEDICAL_LAB_TESTS.map((t) => [t.key, t]),
 )
@@ -700,7 +699,7 @@ export const MEDICAL_REPORT_FIELDS: { key: string; label: string }[] = [
   { key: 'document_urls', label: 'Document Links' },
 ]
 
-/** NULL = all fields visible (default-on); an explicit array is the trimmed set. Mirrors Shows. */
+/** NULL = all fields visible (default-on); an explicit array is the trimmed set. */
 export function isMedicalFieldVisible(
   visibleFields: string[] | null | undefined,
   key: string,

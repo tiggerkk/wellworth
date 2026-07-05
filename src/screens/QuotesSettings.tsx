@@ -12,8 +12,8 @@ type SaveFn = (patch: TablesUpdate<'profile'>) => Promise<void>
 
 /**
  * Quotes-specific sub-settings (Entry field visibility + the CSV importer toggle). Reached from a
- * gear in the Quotes headers — mirrors the Wellness/Shows/Books Settings split. App-wide settings
- * live in the global Settings screen at the Home level. The importer launcher lands in M7; for now
+ * gear in the Quotes headers. App-wide settings live in the global Settings screen at the Home level.
+ * The importer launcher lands in M7; for now
  * the toggle just persists `quote_importer_enabled`.
  */
 export function QuotesSettings() {

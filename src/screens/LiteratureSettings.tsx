@@ -14,8 +14,7 @@ type SaveFn = (patch: TablesUpdate<'profile'>) => Promise<void>
 
 /**
  * Literature sub-settings — 顯示 (per-field visibility for the Poem/Poet detail screens) + 朗讀
- * (read-aloud auto-loop + default language). Mirrors the other modules' Settings split; auto-saves
- * on change.
+ * (read-aloud auto-loop + default language). Auto-saves on change.
  */
 export function LiteratureSettings() {
   const { profile, loading, save } = useProfileEditor()

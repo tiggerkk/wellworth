@@ -16,7 +16,9 @@
       },
       "base_currency": { "type": ["string", "null"], "default": "CNY" },
       "companions": { "type": ["string", "null"], "default": "Ady" },
-      "rating": { "type": ["string", "null"], "default": "4" },
+      "rating": { "type": ["number", "null"], "default": "4" },
+      "notes": { "type": ["string", "null"] },
+      "url": { "type": ["string", "null"] },
       "days": {
         "type": "array",
         "items": {

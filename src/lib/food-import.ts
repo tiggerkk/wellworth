@@ -45,7 +45,7 @@ export interface ImportParseResult {
   warnings: string[]
 }
 
-/** Lenient truthy parse for a CSV boolean cell: `true/1/yes/y` (case-insensitive) ⇒ true (mirrors Books/Shows). */
+/** Lenient truthy parse for a CSV boolean cell: `true/1/yes/y` (case-insensitive) ⇒ true. */
 function parseBool(raw: string): boolean {
   return ['true', '1', 'yes', 'y'].includes(raw.trim().toLowerCase())
 }

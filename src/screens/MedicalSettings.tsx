@@ -13,7 +13,7 @@ type SaveFn = (patch: TablesUpdate<'profile'>) => Promise<void>
 /**
  * Medical sub-settings (reached from the Settings tab in the Medical bottom nav): Dashboard tracked
  * tests (M4), drag-to-reorder Display Order (M5), the biometric/PIN Lock (M6), Entry field
- * visibility, and the structured importer toggle. Mirrors `ShowsSettings`.
+ * visibility, and the structured importer toggle.
  */
 export function MedicalSettings() {
   const { profile, loading, save } = useProfileEditor()

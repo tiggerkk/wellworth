@@ -5,7 +5,7 @@ import { MODULES, type ModuleDef } from '../constants/modules'
  *   - `module_order`   — ordered module keys; NULL/empty = canonical `MODULES` order. It also doubles
  *     as the set of modules the user has **seen** (the Visible Modules sheet always writes it whenever
  *     visibility changes), so a newly-shipped module — absent from a stored order — defaults to visible.
- *   - `visible_modules` — module keys shown on the hub; NULL = all visible (mirrors the
+ *   - `visible_modules` — module keys shown on the hub; NULL = all visible (same as the
  *     `*_visible_fields` columns). The Visible Modules sheet guarantees ≥1 visible.
  *
  * Both are tolerant: unknown stored keys are dropped, and any module missing from a stored order

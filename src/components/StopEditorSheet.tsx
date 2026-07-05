@@ -164,7 +164,7 @@ export function StopEditorSheet({
             options={STOP_TYPES.map((t) => ({ value: t, label: STOP_TYPE_LABELS[t] }))}
           />
 
-          {/* City — type it or look it up (mirrors the Shows Title + TMDB search). */}
+          {/* City — type it or look it up. */}
           <div>
             <div className="flex items-end gap-2">
               <label className="flex-1 text-caption text-text-secondary">

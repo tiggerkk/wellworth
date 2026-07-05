@@ -7,8 +7,8 @@ interface FilterToggleButtonProps {
 }
 
 /**
- * Icon-only Filter toggle shared by every module's Library/Reports/Trips header. Mirrors the
- * original Travel design: a bare `IconFilter` that turns accent while its panel is open. Place it to
+ * Icon-only Filter toggle shared by every module's Library/Reports/Trips header.
+ * A bare `IconFilter` that turns accent while its panel is open. Place it to
  * the right of the `SearchBar` (Shows/Books/Quotes/Medical) or on its own row (Travel).
  */
 export function FilterToggleButton({ active, onClick }: FilterToggleButtonProps) {

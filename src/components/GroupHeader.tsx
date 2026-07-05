@@ -30,7 +30,7 @@ interface GroupHeaderProps {
 
 /**
  * Collapsible diary-group header. Left-to-right: expand chevron · category icon · title · kcal
- * subtotal · ⟨spacer⟩ · Delete · Copy · Paste · Add — mirroring the Edit Trip day header.
+ * subtotal · ⟨spacer⟩ · Delete · Copy · Paste · Add.
  * Delete/Copy are disabled on an empty group; Paste lights teal (`text-positive`) only when the
  * clipboard holds items.
  */

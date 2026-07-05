@@ -120,7 +120,7 @@ export async function replaceAssetTypeEntries(
   await saveSnapshotEntries(userId, month, [...kept, ...rows])
 }
 
-/** Resolve the catalogue into frozen `insurance` rows for a month (mirrors Monthly Entry's SAVE). */
+/** Resolve the catalogue into frozen `insurance` rows for a month (same as Monthly Entry's SAVE). */
 export function buildResolvedInsuranceEntries(
   catalogue: PolicyWithSchedules[],
   month: string,
@@ -207,8 +207,7 @@ export async function saveManualImportComplete(
 /**
  * Create-or-replace a month's entries: ensure the month's snapshot exists, delete its current
  * `asset_entry` rows, then insert the supplied set. **Idempotent per month** — re-running for a
- * month replaces its entries, never duplicating them. Mirrors `data/serving.replaceServings`;
- * reused by the CSV importer (M6).
+ * month replaces its entries, never duplicating them. Reused by the CSV importer (M6).
  *
  * NOTE: the delete-then-insert is not transactional (acceptable for a solo app — the same
  * trade-off as `replaceServings`; a transactional RPC is a later nicety).

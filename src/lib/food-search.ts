@@ -38,7 +38,7 @@ export function toUsdaWildcardQuery(term: string): string {
  *   ok      — exact / leading-word-exact name (score ≥ 4): confident, auto-accept
  *   review  — weaker partial match (score 1–3): needs a glance
  *   nomatch — no usable hit (score 0): import as custom (or fix via Change)
- * Mirrors the Books/Shows ok/review/nomatch split (which use title tiers). Pure.
+ * Pure.
  */
 export function foodMatchStatus(topScore: number): 'ok' | 'review' | 'nomatch' {
   if (topScore >= 4) return 'ok'

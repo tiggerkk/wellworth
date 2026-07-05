@@ -211,10 +211,10 @@ non-100 g measures are available on edit; an uncustomized USDA food still only o
 
 ### Activities CSV bulk import · Deferred
 
-**What:** A CSV import for the activity library, mirroring the foods/supplements importer.
+**What:** A CSV import for the activity library, following the foods/supplements importer.
 **Why deferred:** Foods/supplements import was built (`templates/wellness-foods-template.csv`, Library →
 **Import CSV**); an activities import was explicitly declined for now.
-**Decided:** Mirror the foods path — an activities template (name, template, default_effort,
+**Decided:** Follow the foods path — an activities template (name, template, default_effort,
 default_duration_min, met_by_effort, icon) parsed in-browser and inserted via the data layer.
 
 ### Shows Library — wide-screen sortable table · Deferred
@@ -303,7 +303,7 @@ search first also validates the `opencc-js` engine choice before the display wor
 **Decided (don't re-litigate):**
 
 - **Storage:** a `profile.zh_display` column (`'off' | 'traditional' | 'simplified'`, default `'off'`) —
-  migration + `npm run gen:types`. Mirrors the existing `units` preference exactly (Settings →
+  migration + `npm run gen:types`. Follows the existing `units` preference exactly (Settings →
   `ProfileMetricsFields` `SegmentedTabs` + `useProfileEditor` auto-save).
 - **Engine reuse:** the conversion is **already built** — `convertZh(text, 'hk' | 'cn')`
   (`src/lib/zh-convert.ts`, lazy `opencc-js`, loaded for remote search). The toggle adds a

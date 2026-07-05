@@ -140,8 +140,7 @@ match` to fix.
    same file updates in place, never duplicates). Dates from the file; `created_at` = `start_date`.
    `saveImportedBooks` **batches** the writes — one bulk `insert` for new books + one bulk `upsert`
    (conflict on `id`) for existing ones, chunked at 500, with `{ defaultToNull: false }` (the
-   conditional `created_at` key — see Shows) — rather than a per-row round-trip. Mirrors
-   `saveImportedShows`; see tech-spec F16a.
+   conditional `created_at` key — see Shows) — rather than a per-row round-trip. See tech-spec F16a.
 
 Full guide: `templates/books-import-guide.md`.
 
@@ -184,7 +183,7 @@ Full guide: `templates/books-import-guide.md`.
   same way in bulk import and in the search box.
 - `getBookDetails` **honors the author/year/cover of the selected result** (Google's full volume record
   can list a different, mis-attributed author than the displayed search snippet); the detail only
-  enriches description/genres/page-count/ISBN/language. Mirrors the Open Library path.
+  enriches description/genres/page-count/ISBN/language. Follows the Open Library path.
 - `normMatch` is the canonical match key: `foldZh` (Traditional→Simplified + lowercase) then strip all
   whitespace + ASCII/CJK punctuation, **keeping** CJK ideographs (an earlier ASCII-only normalizer
   collapsed every Chinese title to '', so every CJK match looked exact).

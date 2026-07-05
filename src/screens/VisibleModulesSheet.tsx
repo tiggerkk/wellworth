@@ -11,12 +11,12 @@ import { showToast } from '../lib/toast'
 import type { Tables, TablesUpdate } from '../types/database'
 
 /**
- * Global Settings → DISPLAY → Visible Modules: a 2-up combined grid (`ReorderGrid`, mirroring the
+ * Global Settings → DISPLAY → Visible Modules: a 2-up combined grid (`ReorderGrid`, following the
  * Home hub's 2-column layout) where each module cell has a visibility `Toggle` in its trailing slot —
  * drag the grip to reorder the hub, toggle to show/hide. A cell's grid position (left→right then
  * top→down) is its hub position. Saved per-profile to `module_order` /
  * `visible_modules` and consumed by the Home hub (`homeModules`). At least one module must stay visible
- * (mirrors `ConfigListEditor` refusing to delete the last value).
+ * (same as `ConfigListEditor` refusing to delete the last value).
  */
 export function VisibleModulesSheet() {
   const navigate = useNavigate()

@@ -13,7 +13,7 @@ import type { Tables, TablesUpdate } from '../types/database'
  * Medical → Display Order (M5): drag-to-reorder the category **sections** and the **tests within a
  * section**. Saved as personal overrides on the profile (`medical_section_order` / a flat
  * `medical_test_order`), consumed by `orderResultsForDisplay` on the Dashboard + Report detail;
- * unset/partial overrides fall back to the seeded order. Mirrors the other Medical settings sheets.
+ * unset/partial overrides fall back to the seeded order. Follows the other Medical settings sheets.
  */
 export function MedicalOrderSheet() {
   const navigate = useNavigate()

@@ -14,8 +14,7 @@ type SaveFn = (patch: TablesUpdate<'profile'>) => Promise<void>
 
 /**
  * Books-specific sub-settings (Entry field visibility + the CSV importer toggle). Reached from a
- * gear in the Books headers — mirrors the Wellness/Shows Settings split. App-wide settings live in
- * the global Settings screen at the Home level.
+ * gear in the Books headers. App-wide settings live in the global Settings screen at the Home level.
  */
 export function BooksSettings() {
   const { profile, loading, save } = useProfileEditor()

@@ -127,7 +127,7 @@ the Shows/Books exception above — no weekday is ever shown.
   subtotal (kcal next to the title) · ⟨spacer⟩ · **Delete · Copy · Paste · Add** action icons. Delete
   is a **`ConfirmDeleteAction`** (inline `Delete? ✓ ✗`); Delete/Copy disable on an empty group; Paste
   tints **positive** (teal) only while the in-app clipboard holds items; Add is the green `+`. The
-  icons mirror the Edit Trip day-header cluster.
+  icons follow the Edit Trip day-header cluster.
 - **IconAction** — the shared header action icon-button (`src/components/IconAction.tsx`): a bare
   Tabler icon at `size 18`, `p-1` hit area, tinted `secondary` (Copy) or `positive` (Add, and
   Paste while armed), muted `text-tertiary` when `disabled`. Used by both the Diary day header and
@@ -297,7 +297,7 @@ flex flex-col`, or `h-full` for Zen) so the `flex-1` fills the real content area
 - **NutrientReport** — shared body of Dashboard + Daily Report (energy card + visible-nutrient sections).
 - **CollapsibleSection** — collapsible card for the New Food nutrient-entry groups.
 - **MedicalSection** — collapsible, color-accented lab-result section (`src/components/MedicalSection.tsx`):
-  a left chevron (mirrors `GroupHeader`) + per-category colored **left stripe** and **tinted header**
+  a left chevron (follows `GroupHeader`) + per-category colored **left stripe** and **tinted header**
   (`MEDICAL_CATEGORY_COLOR` → `--color-med-*`, tint via `color-mix`); default **expanded**. `variant="card"`
   wraps the body in a `surface` card (Report detail, Dashboard latest-values); `variant="bare"` is the
   header bar only (Edit Report, whose children are already `MedicalResultCard`s).
@@ -327,7 +327,7 @@ flex flex-col`, or `h-full` for Zen) so the `flex-1` fills the real content area
   cell center, from rects cached at drag start) rather than a 1-D row-shift. A cell's grid position
   (linear order = reading order) **is** its hub position — no number badge (it crowded the longer
   labels on narrow phones); each cell has an optional `renderTrailing(id)` control. Used only by the
-  **Visible Modules** sheet, whose grid mirrors the 2-column Home hub.
+  **Visible Modules** sheet, whose grid follows the 2-column Home hub.
 - **ConfigListEditor** — the shared add / rename (inline) / delete / drag-reorder editor for a
   configurable list, generic over `{key,label}` entries (`src/components/ConfigListEditor.tsx`).
   Wraps `ReorderList` (rename + delete in the trailing slot) and auto-saves each change; deleting a

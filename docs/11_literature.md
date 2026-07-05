@@ -68,7 +68,7 @@ Settings**. Poem/Poet detail are drill-ins (not tabs).
 - Sticky **`SearchBar`** ("搜尋詩詞、作者…") + **`FilterToggleButton`**. Search is real-time over
   title + writer + excerpt, Traditional⇄Simplified-agnostic (`foldZh`).
 - **`FilterPanel`**: 朝代 (dynasty, **single-select** pills, options from `meta.dynasties`) · 主題 / 時令 /
-  選集 / 風格 (**multi-select** pills, from `meta.types` by `kind`). Footer row (mirrors Shows Library):
+  選集 / 風格 (**multi-select** pills, from `meta.types` by `kind`). Footer row:
   **只看收藏** toggle · the shared **`SortControl`** (labelled 排序; 朝代 / 作者 / 標題, default 朝代
   ascending, with an asc/desc toggle) · **清除篩選** (bottom-right, same line; clears filters but keeps
   the query + sort).

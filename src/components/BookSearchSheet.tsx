@@ -24,8 +24,8 @@ interface BookSearchSheetProps {
 /**
  * Google Books / Open Library title search — a **local** fixed overlay (not the routing `Sheet`,
  * which would put the Entry form behind a background-location and remount it, losing the in-progress
- * draft). Mirrors the Shows `TitleSearchSheet`; selecting a result hands it back via `onSelect` to
- * populate the live form. The Google key is optional, so a failure is network/quota — not a missing key.
+ * draft). Selecting a result hands it back via `onSelect` to populate the live form.
+ * The Google key is optional, so a failure is network/quota — not a missing key.
  */
 export function BookSearchSheet({
   onSelect,

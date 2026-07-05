@@ -36,8 +36,8 @@
 - **Diary groups, in order:** Breakfast, Lunch, Dinner, Snacks, Supplements, Activities.
   Each header reads, left-to-right: **expand chevron · category icon · group name · kcal subtotal**
   (kcal sits right next to the name; activities show negative kcal coral) · ⟨spacer⟩ · **Delete ·
-  Copy · Paste · Add** icons (mirroring the Edit Trip day header — `IconTrash` / `IconCopy` /
-  `IconClipboard` / green `IconPlus`). **Delete** is a `ConfirmDeleteAction` (inline `Delete? ✓ ✗`,
+  Copy · Paste · Add** icons (`IconTrash` / `IconCopy` / `IconClipboard` / green `IconPlus`).
+  **Delete** is a `ConfirmDeleteAction` (inline `Delete? ✓ ✗`,
   no browser dialog) — as is the day-level Delete in the top-right header, whose icon row uses the
   same `gap-2` spacing as the group headers. Category icons use `cat-*` color tokens (see
   `docs/01_design_system.md` → Icons).
@@ -213,14 +213,14 @@ Wellness-module sub-settings. Auto-save on change.
 - **IMPORT**: **Enable Bulk Food Import** toggle (`profile.food_importer_enabled`, **on by default**;
   column added to the `profile` table in `01_wellness_schema.sql`). When on: an **Import CSV Food**
   launcher opens the importer sheet, plus a **Clear Import Match Cache (N)** button
-  (`clearFoodMatchCache` / `foodMatchCacheSize`). Mirrors Books/Shows Settings → Import.
+  (`clearFoodMatchCache` / `foodMatchCacheSize`)..
 
 #### Import CSV (sheet, from Wellness Settings)
 
 Reused CSV format: `templates/wellness-foods-template.csv` (guide: `templates/wellness-foods-import-guide.md`).
 Columns are all optional except `name` (`type` food|supplement, `is_custom`, `is_favorite`,
 `nutrient_basis` (custom rows only — blank/ignored for USDA), three `serving*` pairs, `default_serving`,
-and the nutrient columns). Flow (mirrors Books/Shows — shared `ImportPreviewList`):
+and the nutrient columns). Uses `ImportPreviewList`:
 
 - Each row is **matched against USDA** using the **same logic as Diary Add Food → All** (`searchFoods` +
   `foodMatchScore`); the best hit's score → status via `foodMatchStatus`: exact/leading-exact → **ok**,

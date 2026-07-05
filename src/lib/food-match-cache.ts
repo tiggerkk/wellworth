@@ -5,8 +5,7 @@ import { createMatchCache } from './match-cache'
 /**
  * Browser-side cache of resolved USDA matches for the Wellness food CSV importer. USDA has no per-day
  * quota, so this is a **performance** aid: re-importing the same file (e.g. after `supabase db reset
- * --linked` while testing) skips the network and resolves instantly. Mirrors `book-match-cache.ts` /
- * `show-match-cache.ts`.
+ * --linked` while testing) skips the network and resolves instantly.
  *
  * Keyed on the CSV row's food name via `normMatch` (Trad→Simp fold + case/space strip). Value = the
  * **full** resolved `ExternalFood` (from `getUsdaFood`), so a cache hit needs no search *or* detail

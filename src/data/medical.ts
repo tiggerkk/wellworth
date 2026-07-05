@@ -129,7 +129,7 @@ export async function deleteReport(id: string): Promise<void> {
 
 /**
  * Create-or-replace a report's results: delete its current `medical_result` rows, then insert the
- * supplied set. **Idempotent per report** — re-saving replaces them, never duplicating. Mirrors
+ * supplied set. **Idempotent per report** — re-saving replaces them, never duplicating. Follows
  * `asset-entry.saveSnapshotEntries` (the delete-then-insert is not transactional — the accepted
  * solo-app trade-off; a transactional RPC is a later nicety). Reused by the M3 importer.
  */

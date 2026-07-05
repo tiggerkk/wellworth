@@ -282,8 +282,7 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
   const dayLabel = (day: TripDayRow, index: number) =>
     `Day ${index + 1}${day.day_date ? ` · ${formatFullDate(day.day_date)}` : ''}`
 
-  // Header dirty-check + reset (mirrors the other modules' Entry/Edit forms). Days/stops/expenses
-  // auto-save on each change; this guards only the header fields.
+  // Header dirty-check + reset. Days/stops/expenses auto-save on each change; this guards only the header fields.
   const headerDirty =
     name !== trip.name ||
     status !== trip.status ||

@@ -31,8 +31,8 @@ function rankFoods(results: ExternalFood[], query: string): ExternalFood[] {
 
 /**
  * USDA food search — a **local** fixed overlay (not the routing `Sheet`, which would remount the
- * importer and lose its in-progress preview). Mirrors `BookSearchSheet`: a search bar over result
- * rows (name + "{N} nutrients · {serving}"); selecting a row hands the `ExternalFood` back via
+ * importer and lose its in-progress preview). A search bar over result rows
+ * (name + "{N} nutrients · {serving}"); selecting a row hands the `ExternalFood` back via
  * `onSelect`. Used by the food importer's "Change" action.
  */
 export function FoodSearchSheet({

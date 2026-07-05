@@ -13,7 +13,7 @@ const RELOAD_FLAG = 'ww:chunk-reload'
  * `sessionStorage` guard prevents a reload loop if the import is genuinely broken (the second failure
  * rethrows so the route's error UI shows). The flag is cleared on a successful load.
  */
-// Mirror React.lazy's own generic constraint (`ComponentType<any>`) so any component — with whatever
+// Follow React.lazy's own generic constraint (`ComponentType<any>`) so any component — with whatever
 // props — flows through transparently; T is still inferred precisely from `factory`, keeping prop
 // types intact at every call site.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

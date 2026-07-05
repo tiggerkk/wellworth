@@ -12,10 +12,9 @@ import {
 import type { Tables, TablesUpdate } from '../types/database'
 
 /**
- * Medical → Tracked Tests: which tests trend on the Dashboard (the sparkline grid). Mirrors
- * Wellness's `VisibleNutrientsSheet` — grouped by category, a `Toggle` per test, persisted to
- * `profile.medical_tracked_tests`. NULL falls back to the seeded `default_tracked` starter set
- * (also what `ensureOwnerProfile` seeds on first run).
+ * Medical → Tracked Tests: which tests trend on the Dashboard (the sparkline grid). Grouped by
+ * category, a `Toggle` per test, persisted to `profile.medical_tracked_tests`. NULL falls back
+ * to the seeded `default_tracked` starter set (also what `ensureOwnerProfile` seeds on first run).
  */
 export function MedicalTrackedTestsSheet() {
   const navigate = useNavigate()

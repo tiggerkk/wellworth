@@ -270,7 +270,7 @@ export function NetWorthEntry() {
   return (
     <div className="flex h-full min-h-0 flex-col">
       {/* While the month loads, keep the month-nav header pinned and show Loading in the body
-          below — mirrors the Wellness Diary (its day-nav header stays put during a load). */}
+          below — its day-nav header stays put during a load. */}
       {(loading || error) && (
         <header className="shrink-0 border-b border-border bg-bg">
           <div className="flex items-center px-3 pt-2">

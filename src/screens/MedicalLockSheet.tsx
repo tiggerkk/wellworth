@@ -33,7 +33,7 @@ type SaveFn = (patch: TablesUpdate<'profile'>) => Promise<void>
 /**
  * Medical → Security → Lock (M6): set up / change / turn off the PIN, register the optional biometric
  * unlock, and pick the auto-lock timeout. The PIN is mandatory and stored only as a salted hash; the
- * biometric toggle is hidden where no platform authenticator is available. Mirrors the other Medical
+ * biometric toggle is hidden where no platform authenticator is available. Follows the other Medical
  * settings sheets; the actual gate lives in `MedicalLockProvider` / `MedicalLockScreen`.
  */
 export function MedicalLockSheet() {

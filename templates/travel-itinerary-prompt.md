@@ -1,31 +1,40 @@
 # Trip Itinerary → JSON Extraction Prompt (model-agnostic, ALL trips at once)
 
-Prefix each trip's text with a delimiter line, paste them all, then the prompt below. Save the output as `trips.json` and import via WellWorth → Settings → **Import JSON Trips**. The import is a **draft** you finish in the Trip Builder.
+Prefix each trip's text with a delimiter line, paste them all, then the prompt below.
 
 ## Step 1 — add a delimiter line before each trip
 
 ```
 === TRIP: 湖北 | 2026-03 | visited | "Ady" | 4.5 ===
+notes: "notes: "没去: restaurants line 1
+sightseeing line 2"
+url: http://xxx.com/image.png
 
 28（荆州）：travel,"香港-深圳北-荆州","（11:41-11:59）-（12:47-19:49, ¥2067）"
-1（荆州）：visit,"楚王车马阵¥58" | visit,"荆州博物馆" | visit,"开元观" | visit,"关羽祠¥25" | visit,"关帝庙¥18" | other,"幸福蓝海国际影城¥42" | visit,"荆街"]
+1（荆州）：visit,"楚王车马阵¥58" | other,"幸福蓝海国际影城¥42" | visit,"荆街"]
 
 === TRIP: 肇庆 | 2026-01 | visited | "Ady" | 3.5 ===
+
 30（肇庆）: travel,"香港-肇庆东","（10:02-11:48）" | eat,"黔牛爷牛肉私房菜馆" | visit,"七星岩（免费咖啡）" | shop,"敏捷广场（永旺）"
 ```
 
 ## Step 2 — paste this prompt, then all your delimited trips
 
 ```
-You convert MANY freeform travel itineraries into one JSON array. The input is divided into trips, each starting with a line: === TRIP: <trip_name> | <YYYY-MM> | <status> | <companions> | <rating> ===. Output ONLY one JSON array — no prose, no code fences. Process EVERY trip.
+You convert MANY freeform travel itineraries into one JSON array. Output ONLY one JSON array — no prose, no code fences. Process EVERY trip.  Preserve new line characters within quotes " exactly as they are.
+
+The input is divided into trips, each starting with a line: === TRIP: <trip_name> | <YYYY-MM> | <status> | <companions> | <rating> ===.
 
 TRIP fields:
-- For EACH trip, use its delimiter to parse the trip_name, start year/month, status, companions and rating. Then read its DAY lines.
+- For EACH trip, use its delimiter to parse the trip_name, start year/month, status, companions and rating.
+- After the === delimiter, the next line contains optional notes (enclosed in "") and the next line contains an optional url.
 - base_currency: set it to "CNY".
+- Then read the trip's DAY lines.
 
 DAYS fields:
-- Each line after the === delimiter is ONE DAY, starting with a day-of-month and the city in brackets, e.g. "28（荆州）：...".
+- Each line after the === delimiter, notes and url is ONE DAY, starting with a day-of-month and the city in brackets, e.g. "28（荆州）：...".
 - Build full dates in SEQUENCE from the trip's start YYYY-MM: when the day number DROPS (e.g. 28 -> 1), advance to the next month (and to January + next year after December).
+- If a full date in YYYY-MM-DD format is at the start of the line, use that as the DAY's date directly.
 - "city" is not part of the "days" JSON, but part of the "stops" JSON (see STOP fields below).
 - After the colon (Chinese ：or ASCII :), A day's stops are delimited by |.
 
@@ -47,7 +56,9 @@ If anything cannot be passed, output the line number and error; if everything pa
     "status": "want | planning | visited",
     "base_currency": "string",
     "companions": "string | null",
-    "rating": "string | null",
+    "rating": "number | null",
+    "notes": "string | null",
+    "url": "string | null",
     "days": [
       {
         "date": "YYYY-MM-DD",

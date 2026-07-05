@@ -148,7 +148,7 @@ create trigger handle_updated_at before update on public.medical_result
 -- medical_latest_result — the most recent result **per test** (per user), with its report's
 -- date + type. Powers the Dashboard's "latest values by category" card without fetching every
 -- historical result: the payload is O(distinct tests), not O(reports × tests). DISTINCT ON keys
--- by `coalesce(test_key, 'name:'||lower(btrim(test_name)))` — exactly mirroring the client's
+-- by `coalesce(test_key, 'name:'||lower(btrim(test_name)))` — exactly the same as the client's
 -- `latestResultPerTest` so ad-hoc (NULL test_key) tests dedupe by name; latest = greatest
 -- report_date (created_at breaks ties). `security_invoker = true` (PG15+) runs the view as the
 -- querying user, so the base tables' RLS still scopes rows to the owner.

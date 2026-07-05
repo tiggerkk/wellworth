@@ -36,7 +36,7 @@ export interface ParsedQuoteRow {
   is_favorite: boolean
   /** Date the quote is recorded under (drives the "Date" sort); frozen onto `created_at`. */
   created_at: IsoDate
-  /** lower(trim(text)) — the app-side mirror of the DB's generated `text_norm`. */
+  /** lower(trim(text)) — the app-side replica of the DB's generated `text_norm`. */
   text_norm: string
 }
 
@@ -50,7 +50,7 @@ export interface QuotesImportResult {
   errors: string[]
 }
 
-/** App-side mirror of the DB generated column `text_norm = lower(btrim(text))`. */
+/** App-side replica of the DB generated column `text_norm = lower(btrim(text))`. */
 export function normalizeQuoteText(text: string): string {
   return text.trim().toLowerCase()
 }

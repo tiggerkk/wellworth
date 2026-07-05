@@ -16,7 +16,7 @@ interface EntryLoaderProps<T> {
 /**
  * The shared outer wrapper for every New/Edit entry screen: a full-height flex column that shows a
  * `Loading…` line, an error/not-found line, or — once the data resolves — the inner form (via a
- * render prop, so `data` is narrowed to non-null). Mirrors the `useAsync` outer-loader + inner-form
+ * render prop, so `data` is narrowed to non-null). Follows the `useAsync` outer-loader + inner-form
  * pattern; the caller still keys the form by id so a stale result never mounts under the wrong item.
  */
 export function EntryLoader<T>({

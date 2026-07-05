@@ -24,8 +24,8 @@ interface TitleSearchSheetProps {
 
 /**
  * TMDB title search — a **local** fixed overlay (not the routing `Sheet`, which would put the
- * Entry form behind a background-location and remount it, losing the in-progress draft). Mirrors
- * the Add Food search UI; selecting a result hands it back via `onSelect` to populate the live form.
+ * Entry form behind a background-location and remount it, losing the in-progress draft).
+ * Selecting a result hands it back via `onSelect` to populate the live form.
  */
 export function TitleSearchSheet({
   type,

@@ -9,7 +9,7 @@
  */
 import { foldZh } from './zh-fold'
 
-// --- static-asset shapes (mirror scripts/build-literature-data.mjs output) ----------------------
+// --- static-asset shapes (follow scripts/build-literature-data.mjs output) ----------------------
 
 export type TypeKind = 'theme' | 'season' | 'anthology' | 'style' | 'other'
 
@@ -81,7 +81,7 @@ export const SPEECH_LANG_OPTIONS: { value: SpeechLang; label: string }[] = [
 
 // --- list criteria -----------------------------------------------------------------------------
 
-/** Poem-list sort field (matches the Library Sort menu, mirroring Shows). */
+/** Poem-list sort field (follows the Library Sort menu). */
 export type PoemSortField = 'dynasty' | 'author' | 'title'
 export type SortDir = 'asc' | 'desc'
 

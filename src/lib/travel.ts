@@ -44,7 +44,7 @@ export interface ResolvedCity {
   lng: number | null
 }
 
-// --- Status palette (mirrors Shows/Books `*_STATUS_CHIP`) ---
+// --- Status palette ---
 
 // want = purple (planned), planning = orange (active/in-progress), visited = teal (done) —
 // matches Shows/Books `*_STATUS_CHIP`.
@@ -225,7 +225,7 @@ export function facetsForStops(
   return f
 }
 
-// --- Entry/Edit field visibility (Travel Settings; mirrors Shows/Books/Quotes/Medical) ---
+// --- Entry/Edit field visibility (Travel Settings) ---
 
 /**
  * The Trip-form fields the owner can hide from Travel Settings, in form order. Trip Name, Base

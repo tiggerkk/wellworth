@@ -15,10 +15,9 @@ import { showToast } from '../lib/toast'
 import type { Tables, TablesUpdate } from '../types/database'
 
 /**
- * Net Worth Settings → Display → Visible Asset Types: a combined reorder + visibility list (mirrors
- * Global Settings → Visible Modules). Drag to reorder, toggle to show/hide on Monthly Entry +
- * Dashboard. Saved to `networth_asset_type_order` / `networth_visible_asset_types`. At least one
- * type must stay visible.
+ * Net Worth Settings → Display → Visible Asset Types: a combined reorder + visibility list. Drag to
+ * reorder, toggle to show/hide on Monthly Entry Dashboard. Saved to `networth_asset_type_order` /
+ * `networth_visible_asset_types`. At least one type must stay visible.
  */
 export function NetWorthVisibleAssetTypesSheet() {
   const navigate = useNavigate()

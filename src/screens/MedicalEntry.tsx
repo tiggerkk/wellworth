@@ -44,8 +44,7 @@ const EYE_KEY_SET = new Set(EYE_REFRACTION_KEYS)
 
 /**
  * Add / Edit Medical Report — the report parent plus its result rows (the structured import is a
- * separate sheet, M3). Mirrors `ShowsEntry`'s outer loader + inner form keyed by id, and the Net
- * Worth parent+children RESET/CREATE/SAVE pattern. The draft model + result-row editor are shared
+ * separate sheet, M3). The draft model + result-row editor are shared
  * with the import review screen (`src/lib/medical-draft.ts` + `MedicalResultCard`).
  */
 export function MedicalEntry() {

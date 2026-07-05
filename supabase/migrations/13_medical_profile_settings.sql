@@ -1,8 +1,7 @@
 -- WellWorth — Medical module preferences on the profile (docs/medical.md → 03-data-model.md).
 --
--- Additive preference columns for the Medical module (mirroring how Wellness/Shows store prefs on
--- profile). RLS, API-role grants, and the moddatetime trigger already cover profile, so nothing
--- else is needed here.
+-- Additive preference columns for the Medical module.  RLS, API-role grants, and the moddatetime
+-- trigger already cover profile, so nothing else is needed here.
 --   * medical_tracked_tests   — test keys whose trends show on the Dashboard. NULL until first-run,
 --     when ensureOwnerProfile seeds it from medical_lab_test.default_tracked (like visible_nutrients).
 --   * medical_section_order    — personal category-section order override; NULL/empty = seeded order.

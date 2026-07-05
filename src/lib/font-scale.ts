@@ -2,7 +2,7 @@
  * Dynamic Type presets. A single lever — the `data-font-scale` attribute on `<html>` — drives both
  * the text scale (`--font-scale` → root `font-size`, so every rem-based size grows) and the icon
  * scale (a `.tabler-icon` transform), both defined in `src/index.css`. We persist the choice in the
- * profile (cross-device) and mirror it to localStorage so the boot script in `index.html` can apply
+ * profile (cross-device) and replicates it to localStorage so the boot script in `index.html` can apply
  * it before first paint (no flash). See docs/02_tech_spec.md (F23) + docs/03_global.md.
  */
 export const FONT_SIZES = ['default', 'large', 'larger'] as const
