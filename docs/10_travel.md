@@ -184,10 +184,7 @@ ledger — replaces the old one-at-a-time `ExpenseEditorSheet`):
 - **Stop-type icons** (Tabler, via the shared `StopTypeIcon` component): Travel = `IconPlaneTilt`,
   Visit = `IconCamera`, Eat = `IconBowlChopsticks`, Shop = `IconBrandShopee`, Stay = `IconBed`,
   Other = `IconMapPin`. Each is **tinted per kind** from `STOP_TYPE_COLORS` (`constants/travel.ts`,
-  the Net-Worth `ASSET_TYPE_COLORS` pattern — design-token CSS vars): travel = green (`positive`),
-  visit = gold (`dynasty`), eat = red (`danger`), shop = blue (`cat-activity`), stay = purple
-  (`cat-supplement`), other = grey (`text-tertiary` — a darker grey than `text-muted`, so the map-pin
-  reads apart from the near-white stop description beside it). `StopTypeIcon` sets the colour itself
+  the Net-Worth `ASSET_TYPE_COLORS` pattern — design-token CSS vars). `StopTypeIcon` sets the color itself
   (callers pass layout classes only). In the Edit-Trip itinerary, each stop row leads with this icon
   (replacing the type **text**), followed by the description; the type still names the row via `aria-label`.
 - **Completion**: Done = a teal fill (`positive`); Skipped = a solid grey fill (`bg-text-secondary`)

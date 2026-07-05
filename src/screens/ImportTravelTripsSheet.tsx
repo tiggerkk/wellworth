@@ -9,7 +9,7 @@ import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import {
   createDay,
-  createStop,
+  createStops,
   createTrip,
   listRememberedCities,
   recomputeTripDates,
@@ -141,6 +141,8 @@ export function ImportTravelTripsSheet() {
           base_currency: t.base_currency,
           companions: t.companions ?? null,
           rating: t.rating ?? null,
+          notes: t.notes ?? null,
+          cover_url: t.cover_url ?? null,
         })
         for (let di = 0; di < t.days.length; di++) {
           const d = t.days[di]!
@@ -150,21 +152,19 @@ export function ImportTravelTripsSheet() {
             day_date: d.date,
             sort_order: di,
           })
-          for (let si = 0; si < d.stops.length; si++) {
-            const s = d.stops[si]!
-            await createStop({
-              user_id: userId,
-              trip_day_id: day.id,
-              type: s.type,
-              city: s.city,
-              country: s.country,
-              province: pending[norm(s.city ?? '')]?.province ?? s.province,
-              description: s.description,
-              details: s.details,
-              completion: s.completion,
-              sort_order: si,
-            })
-          }
+          const stopBatch = d.stops.map((s, si) => ({
+            user_id: userId,
+            trip_day_id: day.id,
+            type: s.type,
+            city: s.city,
+            country: s.country,
+            province: pending[norm(s.city ?? '')]?.province ?? s.province,
+            description: s.description,
+            details: s.details,
+            completion: s.completion,
+            sort_order: si,
+          }))
+          await createStops(stopBatch)
         }
         await recomputeTripDates(trip.id)
       }

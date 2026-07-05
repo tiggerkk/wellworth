@@ -38,6 +38,8 @@ export interface TripDraft {
   base_currency: string
   companions: string | null
   rating: number | null
+  notes: string | null
+  cover_url: string | null
   days: DayDraft[]
 }
 
@@ -160,6 +162,8 @@ export function parseItineraryJson(raw: string): ItineraryParse {
     const base_currency = strOrNull(o.base_currency) ?? 'CNY'
     const companions = strOrNull(o.companions)
     const rating = numOrNull(o.rating)
+    const notes = strOrNull(o.notes)
+    const cover_url = strOrNull(o.url)
     const rawDays = Array.isArray(o.days) ? o.days : []
     const days: DayDraft[] = rawDays.map((rawDay) => {
       const d = (typeof rawDay === 'object' && rawDay !== null ? rawDay : {}) as Record<
@@ -170,7 +174,16 @@ export function parseItineraryJson(raw: string): ItineraryParse {
       return { date: asDate(d.date), stops }
     })
     if (days.length === 0) warnings.push(`"${name}": no days.`)
-    trips.push({ name, status, base_currency, companions, rating, days })
+    trips.push({
+      name,
+      status,
+      base_currency,
+      companions,
+      rating,
+      notes,
+      cover_url,
+      days,
+    })
   })
 
   if (trips.length === 0 && warnings.length === 0) {

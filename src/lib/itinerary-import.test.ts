@@ -110,6 +110,38 @@ describe('parseItineraryJson', () => {
     expect(r.ok).toBe(true)
   })
 
+  it('parses notes and url fields, preserving newlines in notes', () => {
+    const json = JSON.stringify([
+      {
+        trip_name: 'Xinjiang',
+        notes: '没去: 乌鲁木齐-吐鲁番北(09:30-10:27 ¥103)\n10:30-11:30: 高昌故城¥70+30',
+        url: 'https://example.com/cover.jpg',
+        days: [{ stops: [{ type: 'visit' }] }],
+      },
+    ])
+    const r = parseItineraryJson(json)
+    expect(r.ok).toBe(true)
+    if (!r.ok) return
+    expect(r.trips[0]!.notes).toBe(
+      '没去: 乌鲁木齐-吐鲁番北(09:30-10:27 ¥103)\n10:30-11:30: 高昌故城¥70+30',
+    )
+    expect(r.trips[0]!.cover_url).toBe('https://example.com/cover.jpg')
+  })
+
+  it('treats null and absent notes/url as null', () => {
+    const json = JSON.stringify([
+      { trip_name: 'A', notes: null, url: null, days: [{ stops: [{ type: 'visit' }] }] },
+      { trip_name: 'B', days: [{ stops: [{ type: 'visit' }] }] },
+    ])
+    const r = parseItineraryJson(json)
+    expect(r.ok).toBe(true)
+    if (!r.ok) return
+    expect(r.trips[0]!.notes).toBeNull()
+    expect(r.trips[0]!.cover_url).toBeNull()
+    expect(r.trips[1]!.notes).toBeNull()
+    expect(r.trips[1]!.cover_url).toBeNull()
+  })
+
   it('rejects non-array and empty input', () => {
     expect(parseItineraryJson('{"trip_name":"X"}').ok).toBe(false)
     expect(parseItineraryJson('   ').ok).toBe(false)
@@ -125,6 +157,8 @@ describe('distinctCities / tripSummary', () => {
       base_currency: 'CNY',
       companions: 'Mary',
       rating: 4,
+      notes: null,
+      cover_url: null,
       days: [
         {
           date: null,

@@ -27,7 +27,7 @@ The input is divided into trips, each starting with a line: === TRIP: <trip_name
 
 TRIP fields:
 - For EACH trip, use its delimiter to parse the trip_name, start year/month, status, companions and rating.
-- After the === delimiter, the next line contains optional notes (enclosed in "") and the next line contains an optional url.
+- After the === delimiter, the next line contains optional notes (enclosed in "") and the next line contains an optional url.  Write the url as is - do NOT put the url in square brackets followed by the url in parentheses.
 - base_currency: set it to "CNY".
 - Then read the trip's DAY lines.
 

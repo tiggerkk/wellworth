@@ -68,17 +68,19 @@
       "status": "visited",
       "base_currency": "CNY",
       "companions": "Ady",
-      "rating": "4.5",
+      "rating": 4.5,
+      "notes": "Notes line 1\nline 2",
+      "url": "https://dimg04.c-ctrip.com/images/1me6o224x98zbu0d2A05B_W_640_10000_Q90.jpg?proc=source/tripcommunity",
       "days": [
         {
           "date": "2026-03-28",
           "stops": [
             {
               "type": "travel",
-              "description": "香港-荆州",
+              "description": "香港-深圳北-荆州(11:41-11:59，12:47-19:49, ¥2067)",
               "city": "荆州",
               "country": "中国",
-              "details": "（11:41-11:59）-（12:47-19:49, ¥2067）",
+              "details": null,
               "completion": "done"
             }
           ]
@@ -100,7 +102,7 @@
               "city": "荆州",
               "country": "中国",
               "details": "",
-              "completion": "done"
+              "completion": "skipped"
             }
           ]
         }
@@ -112,6 +114,8 @@
       "base_currency": "CNY",
       "companions": "Ady",
       "rating": "3",
+      "notes": null,
+      "url": null,
       "days": [
         {
           "date": "2026-01-30",
