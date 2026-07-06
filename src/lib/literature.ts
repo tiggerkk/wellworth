@@ -85,8 +85,8 @@ export const SPEECH_LANG_OPTIONS: { value: SpeechLang; label: string }[] = [
 export type PoemSortField = 'dynasty' | 'author' | 'title'
 export type SortDir = 'asc' | 'desc'
 
-/** Home (poem list) search + filter + sort state. Held in `useSessionState` so it survives drill-in/back. */
-export interface HomeCriteria {
+/** Poem search + filter + sort state. Held in `useSessionState` so it survives drill-in/back. */
+export interface PoemCriteria {
   query: string
   /** Selected dynasty (exact match on the poem's dynasty), or null for any. */
   dynasty: string | null
@@ -97,7 +97,7 @@ export interface HomeCriteria {
   sortDir: SortDir
 }
 
-export const DEFAULT_HOME_CRITERIA: HomeCriteria = {
+export const DEFAULT_POEM_CRITERIA: PoemCriteria = {
   query: '',
   dynasty: null,
   typeIds: [],
@@ -161,9 +161,9 @@ export interface HomeViewContext {
 }
 
 /** Apply search + filters to the poem index (client-side; the index is small + in memory). */
-export function applyHomeView(
+export function applyPoemView(
   index: PoemIndexEntry[],
-  c: HomeCriteria,
+  c: PoemCriteria,
   ctx: HomeViewContext,
 ): PoemIndexEntry[] {
   const q = foldZh(c.query.trim())

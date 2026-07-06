@@ -44,8 +44,8 @@ export const STOP_TYPE_COLORS: Record<StopType, string> = {
 }
 
 /** Per-stop completion. Null (unmarked) is the default and isn't represented here. */
-export const COMPLETIONS = ['done', 'skipped'] as const
-export type Completion = (typeof COMPLETIONS)[number]
+export const STOP_COMPLETIONS = ['done', 'skipped'] as const
+export type StopCompletion = (typeof STOP_COMPLETIONS)[number]
 
 /**
  * The default expense categories + their initial display order. These are only the **seed defaults**:

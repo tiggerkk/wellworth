@@ -67,7 +67,7 @@ export function stopTypeLabel(type: string): string {
 export type TripSortField = 'date' | 'country' | 'province' | 'city' | 'status' | 'name'
 export type TripSortDir = 'asc' | 'desc'
 
-export interface TripListCriteria {
+export interface TripCriteria {
   query: string
   status: 'all' | TripStatus
   country: 'all' | string
@@ -78,7 +78,7 @@ export interface TripListCriteria {
   sortDir: TripSortDir
 }
 
-export const DEFAULT_TRIP_LIST_CRITERIA: TripListCriteria = {
+export const DEFAULT_TRIP_CRITERIA: TripCriteria = {
   query: '',
   status: 'all',
   country: 'all',
@@ -108,7 +108,7 @@ export interface TripFacets {
 export function applyTripList(
   trips: TripRow[],
   facetsByTrip: Map<string, TripFacets>,
-  c: TripListCriteria,
+  c: TripCriteria,
 ): TripRow[] {
   // foldZh lowercases + normalizes Chinese variant, so name/city/companion search is
   // Traditional⇄Simplified agnostic (see src/lib/zh-fold.ts).
@@ -232,7 +232,7 @@ export function facetsForStops(
  * Currency and Status are required and always shown (not listed here). Stored on
  * `profile.travel_visible_fields` (NULL = all visible).
  */
-export const TRIP_ENTRY_FIELDS: { key: string; label: string }[] = [
+export const TRIP_VISIBLE_FIELDS: { key: string; label: string }[] = [
   { key: 'rating', label: 'Rating' },
   { key: 'cover_url', label: 'Cover Image URL' },
   { key: 'companions', label: 'Companions' },

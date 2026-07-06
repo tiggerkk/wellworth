@@ -237,7 +237,7 @@ export function applyLibraryView(books: BookRow[], c: LibraryCriteria): BookRow[
  * controls are always shown and are not listed here. Stored on `profile.book_visible_fields`
  * (NULL = all visible); `'metadata'` covers the read-only Google Books display block.
  */
-export const BOOK_ENTRY_FIELDS: { key: string; label: string }[] = [
+export const BOOK_VISIBLE_FIELDS: { key: string; label: string }[] = [
   { key: 'authors', label: 'Author(s)' },
   { key: 'year', label: 'Year' },
   { key: 'metadata', label: 'Google Books Metadata' },

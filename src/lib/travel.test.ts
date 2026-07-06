@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
-  DEFAULT_TRIP_LIST_CRITERIA,
-  TRIP_ENTRY_FIELDS,
+  DEFAULT_TRIP_CRITERIA,
+  TRIP_VISIBLE_FIELDS,
   applyTripList,
   compareTripsByDateDesc,
   facetsForStops,
@@ -9,7 +9,7 @@ import {
   primaryLabel,
   tripYear,
   type TripFacets,
-  type TripListCriteria,
+  type TripCriteria,
   type TripRow,
 } from './travel'
 
@@ -34,8 +34,8 @@ function trip(p: Partial<TripRow>): TripRow {
   }
 }
 
-const crit = (p: Partial<TripListCriteria> = {}): TripListCriteria => ({
-  ...DEFAULT_TRIP_LIST_CRITERIA,
+const crit = (p: Partial<TripCriteria> = {}): TripCriteria => ({
+  ...DEFAULT_TRIP_CRITERIA,
   ...p,
 })
 
@@ -149,9 +149,9 @@ describe('applyTripList', () => {
   })
 })
 
-describe('TRIP_ENTRY_FIELDS / isFieldVisible', () => {
+describe('TRIP_VISIBLE_FIELDS / isFieldVisible', () => {
   it('lists the toggleable trip fields in form order', () => {
-    expect(TRIP_ENTRY_FIELDS.map((f) => f.key)).toEqual([
+    expect(TRIP_VISIBLE_FIELDS.map((f) => f.key)).toEqual([
       'rating',
       'cover_url',
       'companions',
@@ -160,7 +160,7 @@ describe('TRIP_ENTRY_FIELDS / isFieldVisible', () => {
     ])
   })
   it('treats NULL prefs as all-visible (default-on)', () => {
-    for (const f of TRIP_ENTRY_FIELDS) expect(isFieldVisible(null, f.key)).toBe(true)
+    for (const f of TRIP_VISIBLE_FIELDS) expect(isFieldVisible(null, f.key)).toBe(true)
   })
   it('respects an explicit visible list', () => {
     expect(isFieldVisible(['rating', 'notes'], 'rating')).toBe(true)

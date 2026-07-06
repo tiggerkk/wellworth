@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
-  applyHomeView,
+  applyPoemView,
   groupWritersByDynasty,
   sortPoems,
   type LiteratureType,
@@ -47,10 +47,10 @@ const POEMS: PoemIndexEntry[] = [
 ]
 
 function view(
-  criteria: Partial<Parameters<typeof applyHomeView>[1]>,
+  criteria: Partial<Parameters<typeof applyPoemView>[1]>,
   favoriteIds = new Set<number>(),
 ) {
-  return applyHomeView(
+  return applyPoemView(
     POEMS,
     {
       query: '',
@@ -65,7 +65,7 @@ function view(
   ).map((p) => p.id)
 }
 
-describe('applyHomeView', () => {
+describe('applyPoemView', () => {
   it('returns everything with empty criteria', () => {
     expect(view({})).toEqual([1, 2, 3])
   })

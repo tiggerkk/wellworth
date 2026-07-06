@@ -692,7 +692,7 @@ export function medicalReviewReason(args: {
 }
 
 /** Optional Add/Edit-Report parent fields, gated by `profile.medical_visible_fields`. */
-export const MEDICAL_REPORT_FIELDS: { key: string; label: string }[] = [
+export const MEDICAL_VISIBLE_FIELDS: { key: string; label: string }[] = [
   { key: 'provider', label: 'Provider' },
   { key: 'body_part', label: 'Body Part' },
   { key: 'narrative', label: 'Narrative' },

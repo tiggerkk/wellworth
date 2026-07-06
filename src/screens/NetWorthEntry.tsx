@@ -27,7 +27,7 @@ import {
   ASSET_TYPE_LABELS,
   CURRENCIES,
   DEFAULT_BIRTH_YEAR,
-  DETAIL_FIELDS,
+  ASSET_DETAIL_FIELDS,
   formatHkd,
   gainLossClass,
   liquidAssetTypes,
@@ -460,7 +460,7 @@ function EntryForm({
           if (READONLY_TYPES.has(r.asset_type)) {
             details = { ...r.details } // fund/insurance carry their full detail set
           } else {
-            for (const f of DETAIL_FIELDS[r.asset_type]) {
+            for (const f of ASSET_DETAIL_FIELDS[r.asset_type]) {
               const v = (r.details[f.key] ?? '').trim()
               if (v) details[f.key] = v
             }
@@ -798,7 +798,7 @@ function ManualRow({
   onDetail: (key: string, value: string) => void
   onRemove: () => void
 }) {
-  const details = DETAIL_FIELDS[row.asset_type]
+  const details = ASSET_DETAIL_FIELDS[row.asset_type]
   const showConversion = row.currency !== 'HKD'
   return (
     <div className="border-b border-border py-3 pr-1 pl-3 last:border-b-0">

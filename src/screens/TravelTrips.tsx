@@ -17,7 +17,7 @@ import { useSessionState } from '../hooks/useSessionState'
 import { deleteTrip, listTripFacetRows, listTrips } from '../data/travel'
 import { bumpTravel, useTravelVersion } from '../lib/travel-refresh'
 import {
-  DEFAULT_TRIP_LIST_CRITERIA,
+  DEFAULT_TRIP_CRITERIA,
   TRIP_STATUS_CHIP,
   applyTripList,
   facetsForStops,
@@ -25,7 +25,7 @@ import {
   tripStatusLabel,
   tripYear,
   type TripFacets,
-  type TripListCriteria,
+  type TripCriteria,
   type TripSortField,
 } from '../lib/travel'
 import { TRIP_STATUSES } from '../constants/travel'
@@ -60,9 +60,9 @@ export function TravelTrips() {
   const { session } = useAuth()
   const userId = session?.user.id
   const version = useTravelVersion()
-  const [criteria, setCriteria] = useSessionState<TripListCriteria>(
+  const [criteria, setCriteria] = useSessionState<TripCriteria>(
     'wellworth:travel-trips',
-    DEFAULT_TRIP_LIST_CRITERIA,
+    DEFAULT_TRIP_CRITERIA,
   )
   const [filtersOpen, setFiltersOpen] = useState(false)
 
@@ -118,12 +118,11 @@ export function TravelTrips() {
     bumpTravel()
   }
 
-  const set = (patch: Partial<TripListCriteria>) =>
-    setCriteria((c) => ({ ...c, ...patch }))
+  const set = (patch: Partial<TripCriteria>) => setCriteria((c) => ({ ...c, ...patch }))
 
   function clearFilters() {
     setCriteria((c) => ({
-      ...DEFAULT_TRIP_LIST_CRITERIA,
+      ...DEFAULT_TRIP_CRITERIA,
       query: c.query,
       sortField: c.sortField,
       sortDir: c.sortDir,
@@ -168,7 +167,7 @@ export function TravelTrips() {
             />
             <SelectMenu
               value={criteria.status}
-              onChange={(v) => set({ status: v as TripListCriteria['status'] })}
+              onChange={(v) => set({ status: v as TripCriteria['status'] })}
               ariaLabel="Status"
               options={[
                 { value: 'all', label: 'Any Status' },

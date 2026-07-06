@@ -25,7 +25,7 @@ import {
   BRAND_MARK_DOT,
 } from '../src/lib/brand-mark.js'
 
-const ACCENT = '#3874f6' // mark colour — matches --color-accent in src/index.css
+const ACCENT = '#1B59FF' // mark colour — Neon Hyper-Blue - higher contrast than --color-accent = #3874f6 in src/index.css
 const BG = '#161b28' // canvas — matches --color-bg / manifest background_color
 
 const publicDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'public')

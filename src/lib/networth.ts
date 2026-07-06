@@ -33,7 +33,7 @@ export interface DetailField {
   key: string
   label: string
 }
-export const DETAIL_FIELDS: Record<AssetType, DetailField[]> = {
+export const ASSET_DETAIL_FIELDS: Record<AssetType, DetailField[]> = {
   cash: [],
   time_deposit: [{ key: 'maturity_date', label: 'Maturity Date' }],
   stock: [

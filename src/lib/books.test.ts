@@ -3,7 +3,7 @@ import {
   applyLibraryView,
   bookAuthors,
   bookGenres,
-  BOOK_ENTRY_FIELDS,
+  BOOK_VISIBLE_FIELDS,
   BOOK_STATUS_CHIP,
   BOOK_STATUS_LABELS,
   BOOK_STATUSES,
@@ -281,7 +281,7 @@ describe('applyLibraryView', () => {
 
 describe('isFieldVisible', () => {
   it('treats NULL prefs as all-visible (default-on)', () => {
-    for (const f of BOOK_ENTRY_FIELDS) expect(isFieldVisible(null, f.key)).toBe(true)
+    for (const f of BOOK_VISIBLE_FIELDS) expect(isFieldVisible(null, f.key)).toBe(true)
   })
 
   it('respects an explicit visible list', () => {
@@ -290,9 +290,9 @@ describe('isFieldVisible', () => {
   })
 })
 
-describe('BOOK_ENTRY_FIELDS', () => {
+describe('BOOK_VISIBLE_FIELDS', () => {
   it('lists fields in New/Edit form order with the renamed labels', () => {
-    expect(BOOK_ENTRY_FIELDS.map((f) => f.key)).toEqual([
+    expect(BOOK_VISIBLE_FIELDS.map((f) => f.key)).toEqual([
       'authors',
       'year',
       'metadata',
@@ -303,7 +303,7 @@ describe('BOOK_ENTRY_FIELDS', () => {
       'end_date',
       'notes',
     ])
-    const byKey = Object.fromEntries(BOOK_ENTRY_FIELDS.map((f) => [f.key, f.label]))
+    const byKey = Object.fromEntries(BOOK_VISIBLE_FIELDS.map((f) => [f.key, f.label]))
     expect(byKey.metadata).toBe('Google Books Metadata')
   })
 })

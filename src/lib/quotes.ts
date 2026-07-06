@@ -204,7 +204,7 @@ export function applyLibraryView(quotes: QuoteRow[], c: LibraryCriteria): QuoteR
  * required and always shown** (not listed here), as are the favourite heart + action buttons.
  * Stored on `profile.quote_visible_fields` (NULL = all visible).
  */
-export const QUOTE_ENTRY_FIELDS: { key: string; label: string }[] = [
+export const QUOTE_VISIBLE_FIELDS: { key: string; label: string }[] = [
   { key: 'title', label: 'Title' },
   { key: 'source_link', label: 'Source Link' },
   { key: 'author', label: 'Author' },

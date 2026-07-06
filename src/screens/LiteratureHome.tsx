@@ -6,10 +6,10 @@ import { useSessionState } from '../hooks/useSessionState'
 import { useLiteratureFavorites } from '../hooks/useLiteratureFavorites'
 import { loadIndex, loadMeta } from '../data/literature'
 import {
-  applyHomeView,
-  DEFAULT_HOME_CRITERIA,
+  applyPoemView,
+  DEFAULT_POEM_CRITERIA,
   sortPoems,
-  type HomeCriteria,
+  type PoemCriteria,
   type LiteratureType,
   type PoemSortField,
   type TypeKind,
@@ -59,13 +59,13 @@ export function LiteratureHome() {
   const { data: index, loading: indexLoading, error: indexError } = useAsync(indexFn)
   const { data: meta } = useAsync(metaFn)
 
-  const [criteria, setCriteria] = useSessionState<HomeCriteria>(
+  const [criteria, setCriteria] = useSessionState<PoemCriteria>(
     'wellworth:literature-home',
-    DEFAULT_HOME_CRITERIA,
+    DEFAULT_POEM_CRITERIA,
   )
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [limit, setLimit] = useState(PAGE)
-  const setCrit = (patch: Partial<HomeCriteria>) => {
+  const setCrit = (patch: Partial<PoemCriteria>) => {
     setCriteria((c) => ({ ...c, ...patch }))
     setLimit(PAGE)
   }
@@ -86,7 +86,7 @@ export function LiteratureHome() {
   }, [meta])
 
   const view = useMemo(() => {
-    const filtered = applyHomeView(index ?? [], criteria, { typesById, favoriteIds })
+    const filtered = applyPoemView(index ?? [], criteria, { typesById, favoriteIds })
     return sortPoems(
       filtered,
       criteria.sortField,
@@ -104,7 +104,7 @@ export function LiteratureHome() {
   }
   function clearFilters() {
     setCriteria((c) => ({
-      ...DEFAULT_HOME_CRITERIA,
+      ...DEFAULT_POEM_CRITERIA,
       query: c.query,
       sortField: c.sortField,
       sortDir: c.sortDir,

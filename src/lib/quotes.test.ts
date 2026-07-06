@@ -7,7 +7,7 @@ import {
   initialZenPool,
   isFieldVisible,
   nextZenPool,
-  QUOTE_ENTRY_FIELDS,
+  QUOTE_VISIBLE_FIELDS,
   quoteSearchText,
   rankedTags,
   randomItem,
@@ -328,9 +328,9 @@ describe('isFieldVisible', () => {
   })
 })
 
-describe('QUOTE_ENTRY_FIELDS', () => {
+describe('QUOTE_VISIBLE_FIELDS', () => {
   it('lists fields in New/Edit form order', () => {
-    expect(QUOTE_ENTRY_FIELDS.map((f) => f.key)).toEqual([
+    expect(QUOTE_VISIBLE_FIELDS.map((f) => f.key)).toEqual([
       'title',
       'source_link',
       'author',

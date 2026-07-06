@@ -55,7 +55,7 @@ export const SHOW_STATUS_CHIP: Record<ShowStatus, string> = {
 }
 
 // --- Poster URLs. `poster_path` holds EITHER a TMDB path OR a full pasted image URL. ---
-export const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p'
+const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p'
 
 /** True for a full `http(s)://` URL — a manually pasted poster, not a TMDB path. */
 export function isAbsoluteUrl(path: string | null | undefined): boolean {
@@ -366,7 +366,7 @@ export function applyLibraryView(shows: ShowRow[], c: LibraryCriteria): ShowRow[
  * (NULL = all visible); `'episodes'` covers the TV season/episode block, `'metadata'` the read-only
  * TMDB display.
  */
-export const SHOW_ENTRY_FIELDS: { key: string; label: string }[] = [
+export const SHOW_VISIBLE_FIELDS: { key: string; label: string }[] = [
   { key: 'original_title', label: 'Original Title' },
   { key: 'year', label: 'Year' },
   { key: 'metadata', label: 'TMDB Metadata' },

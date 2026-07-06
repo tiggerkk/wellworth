@@ -254,7 +254,7 @@ working under `/wellness/*` and Net Worth reachable as a placeholder module. No 
 Goal: make Net Worth real — data layer + pure calc helpers + the Monthly Entry screen (replacing the
 M2 placeholder). **Manual FX** in M3 (auto-fetch is M4); no schema change.
 
-- **Calc/constants** `src/lib/networth.ts`: `ASSET_TYPES` (+labels), `DETAIL_FIELDS`, `CURRENCIES`,
+- **Calc/constants** `src/lib/networth.ts`: `ASSET_TYPES` (+labels), `ASSET_DETAIL_FIELDS`, `CURRENCIES`,
   `valueBase`/`totalBase`/`groupByType`/`formatHkd` — pure (+6 tests → **82** total).
 - **Data layer** `src/data/networth-snapshot.ts` + `asset-entry.ts`. The SAVE path is
   `saveSnapshotEntries(userId, month, rows)` — get-or-create the month's snapshot, delete its
@@ -482,7 +482,7 @@ false`. Additive columns on an existing table → RLS/grants/`moddatetime` alrea
 == null || prefs.includes(key)` (`src/lib/shows.ts`, +2 tests → **127**).
 - **Screens** (mirror `WellnessSettings`/`VisibleNutrientsSheet`): `ShowsSettings` (full screen — a
   **Visible Fields** row + an **Enable CSV import** `Toggle` on `show_importer_enabled`) and
-  `ShowsFieldsSheet` (route `Sheet` of per-field toggles over `SHOW_ENTRY_FIELDS`, auto-saving via
+  `ShowsFieldsSheet` (route `Sheet` of per-field toggles over `SHOW_VISIBLE_FIELDS`, auto-saving via
   `useProfileEditor`; initialised from `show_visible_fields ?? all keys`). A **gear** was added to the
   `ShowsDashboard`/`ShowsLibrary` headers → `/shows/settings`; `/shows/settings/visible` is the sheet.
 - **Entry** reads the prefs via `useProfile` and wraps each hideable field in `isFieldVisible(...)`
@@ -693,7 +693,7 @@ false`. Additive columns on an existing table → RLS/grants/`moddatetime` alrea
   `prefs == null || prefs.includes(key)` (`src/lib/books.ts`, +2 tests → **177**).
 - **Screens** (mirror `ShowsSettings`/`ShowsFieldsSheet`): `BooksSettings` (a **Visible Fields** row + an
   **Enable CSV import** `Toggle` on `book_importer_enabled`) and `BooksFieldsSheet` (route `Sheet` of
-  per-field toggles over `BOOK_ENTRY_FIELDS`, auto-saving via `useProfileEditor`; initialised from
+  per-field toggles over `BOOK_VISIBLE_FIELDS`, auto-saving via `useProfileEditor`; initialised from
   `book_visible_fields ?? all keys`). A **gear** was added to the `BooksDashboard`/`BooksLibrary` headers
   (the spot left for it since M4/M5) → `/books/settings`; `/books/settings/visible` is the sheet.
 - **Entry** reads the prefs via `useProfile` and wraps each hideable field in `isFieldVisible(...)`
@@ -918,7 +918,7 @@ false`. Additive columns on an existing table → RLS/grants/`moddatetime` alrea
 key)` = `prefs == null || prefs.includes(key)` (`src/lib/quotes.ts`, +2 tests → **219**).
 - **Screens** (mirror `BooksSettings`/`BooksFieldsSheet`): `QuotesSettings` (a **Visible Fields** row +
   an **Enable CSV import** `Toggle` on `quote_importer_enabled`) and `QuotesFieldsSheet` (route `Sheet`
-  of per-field toggles over `QUOTE_ENTRY_FIELDS` — `author`/`source_link`/`source_type`/`title`/`tags`/
+  of per-field toggles over `QUOTE_VISIBLE_FIELDS` — `author`/`source_link`/`source_type`/`title`/`tags`/
   `language`; **Quote Text + Category are always shown**), auto-saving via `useProfileEditor`;
   initialised from `quote_visible_fields ?? all keys`. A **gear** was added to the `QuotesZen`/
   `QuotesLibrary` headers → `/quotes/settings`; `/quotes/settings/visible` is the sheet.
@@ -1017,7 +1017,7 @@ read-only Report detail, delete (cascades results). No import/trends/lock yet.
   `lib/shows.ts`). Refresh tick `src/lib/medical-refresh.ts` (`bumpMedical`/`useMedicalVersion`).
 - **Pure helpers** in `src/lib/medical.ts`: `labTestByKey`, `medicalTestsByCategory`,
   `orderResultsForDisplay` (category section order → seeded `sort_order`; ad-hoc/unknown last; honours
-  the M5 override params), `MEDICAL_REPORT_FIELDS` + `isMedicalFieldVisible`, `formatResultValue`/
+  the M5 override params), `MEDICAL_VISIBLE_FIELDS` + `isMedicalFieldVisible`, `formatResultValue`/
   `formatRefRange`. The static `MEDICAL_LAB_TESTS` is the runtime reference (no DB fetch for the
   picker/ordering). New `formatFullDate` in `src/lib/date.ts` (reports span years).
 - **Screens:** `MedicalReports` (swipe-delete list) → new `MedicalReportDetail` (results grouped by
@@ -1058,7 +1058,7 @@ fuzzy test matching, unit normalization, and a mandatory review.
   (edit/add/remove via the picker) → idempotent save. Data: `findReportByDateType` + `saveImportedReport`
   (reuses `saveReport`, replacing a same-date+type report) in `src/data/medical.ts`.
 - **Settings:** `MedicalSettings` gained the **Visible Fields** sheet (`MedicalFieldsSheet`, over
-  `MEDICAL_REPORT_FIELDS`) + the **importer toggle** (`medical_importer_enabled`) gating the Import
+  `MEDICAL_VISIBLE_FIELDS`) + the **importer toggle** (`medical_importer_enabled`) gating the Import
   launcher; the New-Report form shows an Import button when enabled. Routes `/medical/import`,
   `/medical/settings/visible`.
 - Verified by `npm run check` (all gates, **295** tests).
@@ -1716,7 +1716,7 @@ A second round of small follow-ups (same session, UI-only):
 - **Travel visible-fields (new).** Schema change: `profile.travel_visible_fields text[]` added to the
   **existing** `15_travel_profile_settings.sql` (edited in place per the DB-reset workflow)
   and to `src/types/database.ts` (owner applies via `supabase db reset --linked`). `src/lib/travel.ts`
-  gained `TRIP_ENTRY_FIELDS` (rating, cover_url, companions, **track_reimbursement** — owner chose to
+  gained `TRIP_VISIBLE_FIELDS` (rating, cover_url, companions, **track_reimbursement** — owner chose to
   make it hideable — notes) + `isFieldVisible`; new route `travel/settings/visible`, `TravelFieldsSheet`,
   a Travel Settings **Entry Form** section, and `isFieldVisible` gating of the five fields in
   `TripBuilder`.
@@ -1858,7 +1858,7 @@ start_date`** (a plain column, honoured on insert _and_ update), and **`updated_
 - **Date sort (Shows/Books)** changed `end_date ?? last_update_date ?? updated_at` → **`end_date ??
 start_date`** (and the Library row's secondary date likewise); `updated_at` is import-time noise now.
 - **Entry forms** lose the 3-way date picker's `'last'` branch (now Start/Finish only) and the
-  Last-Update field; removing it from `SHOW_ENTRY_FIELDS`/`BOOK_ENTRY_FIELDS` also drops it from the
+  Last-Update field; removing it from `SHOW_VISIBLE_FIELDS`/`BOOK_VISIBLE_FIELDS` also drops it from the
   **Visible Fields** modal. Templates + three guides + docs (`01-screens`, `02-tech-spec`,
   `03-data-model`) updated; importer tests rewritten for the new columns. All gates green.
 - **Known limit:** `updated_at` can't be set to a historical value via the importer (the trigger), and a
@@ -1891,7 +1891,7 @@ A cross-module cosmetic pass — no schema/data/behavior changes, all presentati
   a small muted note inline after the label — used by Medical Settings so "(Dashboard)" sits next to
   **Tracked Tests** and "(Dashboard, Report & Entry)" next to **Tests Display Order** (the smaller hint
   text lets the label keep its full name on one line on iPhone).
-- **Labels.** Shows/Books Entry + Visible-Fields "Comments" → **Notes** (`SHOW_/BOOK_ENTRY_FIELDS`).
+- **Labels.** Shows/Books Entry + Visible-Fields "Comments" → **Notes** (`SHOW_VISIBLE_FIELDS`/`BOOK_VISIBLE_FIELDS`).
   Quotes category **labels** "Heart" → **Love**, "Connection" → **Relationship** (keys `heart`/
   `connection` unchanged — no data migration; importer still matches the old CSV values by key).
 - **Wellness Settings** "Display" section moved above "Targets".
@@ -1904,7 +1904,7 @@ A cross-module cosmetic pass — no schema/data/behavior changes, all presentati
 Owner refinements after daily Quotes use:
 
 - **Entry field order** — **Title + Show/Book link** now render **above** Author + Source Type on the
-  New/Edit form (`QuotesEntry`), and `QUOTE_ENTRY_FIELDS` was reordered to match so the Visible-Fields
+  New/Edit form (`QuotesEntry`), and `QUOTE_VISIBLE_FIELDS` was reordered to match so the Visible-Fields
   modal mirrors it (key reorder is data-safe — `isFieldVisible` is membership-based).
 - **"Linked Titles Only" filter** — new `linkedOnly` field on `LibraryCriteria` (+ default + a predicate
   in `applyLibraryView`: excludes quotes with no `show_id`/`book_id`); surfaced as a `Toggle` on its own
@@ -2289,7 +2289,7 @@ in `06_shows.md` / `07_books.md`; the new shared modal is referenced from both.
 
 - **`comments` → `notes`** end-to-end: the `show`/`book` create migrations (`04_`/`06_`, edited in
   place — owner reconciles via `db reset`), `database.ts` (hand-patched, regen on next reset),
-  `SHOW_ENTRY_FIELDS`/`BOOK_ENTRY_FIELDS` keys, the Entry drafts/save, the importers, and tests/docs.
+  `SHOW_VISIBLE_FIELDS`/`BOOK_VISIBLE_FIELDS` keys, the Entry drafts/save, the importers, and tests/docs.
   The visible-fields key changed too; stored `*_visible_fields` arrays default NULL (= all visible) and
   the owner's reset clears any stale `'comments'` entry, so no data migration. Postgres `text` is
   effectively unbounded, so no type change for long notes.
@@ -3210,9 +3210,9 @@ text-accent`; aligned to the editor's `text-label font-medium text-warning` so r
 - **Sort** is a new pure `sortPoems(poems, field, dir, dynastyOrder)` in `src/lib/literature.ts`,
   modelled on Shows' `compareShows`: dynasty rank = position in `meta.dynasties` (already chronological
   after the ordering fix above, so no second source of truth), author/title by `localeCompare`,
-  null/unknown values sort last, stable title tiebreak. Kept **separate** from `applyHomeView` (filter)
+  null/unknown values sort last, stable title tiebreak. Kept **separate** from `applyPoemView` (filter)
   so each pure function stays single-purpose and the existing filter tests stay order-independent.
-- `HomeCriteria` gained `sortField`/`sortDir` (defaults 朝代/asc); `useSessionState` shallow-merges
+- `PoemCriteria` gained `sortField`/`sortDir` (defaults 朝代/asc); `useSessionState` shallow-merges
   defaults so existing sessions pick them up. 清除篩選 now preserves `query` + sort (like Shows).
 - UI uses the shared **`SortControl`** + role tokens only (no hardcoded text sizes). Tests added for
   `sortPoems`. Docs synced (`11_literature.md`).
