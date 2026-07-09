@@ -9,16 +9,18 @@ import { deleteBook, listBooks } from '../data/book'
 import {
   applyLibraryView,
   bookGenres,
-  BOOK_STATUS_CHIP,
-  BOOK_STATUS_LABELS,
-  BOOK_STATUSES,
   DEFAULT_LIBRARY_CRITERIA,
-  LGBTQ_REP_LABELS,
-  LGBTQ_REPS,
   type BookStatus,
   type LibraryCriteria,
   type SortField,
 } from '../lib/books'
+import {
+  BOOK_STATUS_CHIP,
+  BOOK_STATUS_LABELS,
+  BOOK_STATUSES,
+  LGBTQ_REP_LABELS,
+  LGBTQ_REPS,
+} from '../constants/books'
 import { DYNASTIES, DYNASTY_CHIP } from '../constants/dynasty'
 import { formatMonthDay, todayLocal, type IsoDate } from '../lib/date'
 import { routes } from '../constants/routes'

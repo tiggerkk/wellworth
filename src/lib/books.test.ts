@@ -3,25 +3,27 @@ import {
   applyLibraryView,
   bookAuthors,
   bookGenres,
-  BOOK_VISIBLE_FIELDS,
-  BOOK_STATUS_CHIP,
-  BOOK_STATUS_LABELS,
-  BOOK_STATUSES,
   bookSearchText,
   countReadThisYear,
   currentlyReading,
   DEFAULT_LIBRARY_CRITERIA,
   favoriteBooks,
   isFieldVisible,
-  LGBTQ_REP_LABELS,
-  LGBTQ_REPS,
   markRead,
   recentlyRead,
   startReading,
   wantToRead,
   type BookRow,
   type LibraryCriteria,
-} from './books'
+} from '../lib/books'
+import {
+  BOOK_VISIBLE_FIELDS,
+  BOOK_STATUS_CHIP,
+  BOOK_STATUS_LABELS,
+  BOOK_STATUSES,
+  LGBTQ_REP_LABELS,
+  LGBTQ_REPS,
+} from '../constants/books'
 
 const crit = (p: Partial<LibraryCriteria>): LibraryCriteria => ({
   ...DEFAULT_LIBRARY_CRITERIA,

@@ -6,8 +6,6 @@ import { useAsync } from '../hooks/useAsync'
 import { useBooksVersion, bumpBooks } from '../lib/books-refresh'
 import { listBooks, updateBook } from '../data/book'
 import {
-  BOOK_STATUS_CHIP,
-  BOOK_STATUS_LABELS,
   countReadThisYear,
   currentlyReading,
   favoriteBooks,
@@ -19,6 +17,7 @@ import {
   type BookStatus,
   type BookUpdate,
 } from '../lib/books'
+import { BOOK_STATUS_CHIP, BOOK_STATUS_LABELS } from '../constants/books'
 import { formatMonthDay, todayLocal } from '../lib/date'
 import { DYNASTY_CHIP } from '../constants/dynasty'
 import { routes } from '../constants/routes'

@@ -18,15 +18,17 @@ import { createBook, deleteBook, getBook, updateBook } from '../data/book'
 import { numStr } from '../lib/quantity'
 import { FIELD_CLASS as inputClass } from '../constants/forms'
 import {
-  BOOK_STATUS_LABELS,
-  BOOK_STATUSES,
   isFieldVisible,
-  LGBTQ_REP_LABELS,
-  LGBTQ_REPS,
   type BookRow,
   type BookStatus,
   type LgbtqRep,
 } from '../lib/books'
+import {
+  BOOK_STATUS_LABELS,
+  BOOK_STATUSES,
+  LGBTQ_REP_LABELS,
+  LGBTQ_REPS,
+} from '../constants/books'
 import { getBookDetails, type BookSearchResult } from '../lib/books-api'
 import { containsCjk } from '../lib/cjk'
 import { DEFAULT_DYNASTY, DYNASTIES, type Dynasty } from '../constants/dynasty'

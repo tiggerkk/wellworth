@@ -1,5 +1,5 @@
 import { VisibleFieldsSheet } from '../components/VisibleFieldsSheet'
-import { BOOK_VISIBLE_FIELDS } from '../lib/books'
+import { BOOK_VISIBLE_FIELDS } from '../constants/books'
 
 /** Books → Visible Fields. Thin wrapper over the shared `VisibleFieldsSheet`. */
 export function BooksFieldsSheet() {

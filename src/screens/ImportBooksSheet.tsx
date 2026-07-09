@@ -16,7 +16,7 @@ import {
   type BooksImportResult,
   type ParsedBookRow,
 } from '../lib/books-import'
-import { BOOK_STATUS_CHIP, BOOK_STATUS_LABELS } from '../lib/books'
+import { BOOK_STATUS_CHIP, BOOK_STATUS_LABELS } from '../constants/books'
 import {
   BookSearchRateLimitError,
   getBookDetails,

@@ -7,40 +7,15 @@ import type { Tables, TablesInsert, TablesUpdate } from '../types/database'
 import type { IsoDate } from './date'
 import { type Dynasty, dynastySortRank } from '../constants/dynasty'
 import { foldZh } from './zh-fold'
+import { BOOK_STATUSES, LGBTQ_REPS } from '../constants/books'
 
 export type BookRow = Tables<'book'>
 export type BookInsert = TablesInsert<'book'>
 export type BookUpdate = TablesUpdate<'book'>
 
-// The CHECK-constrained enums come through the generated types as plain `string`; these
-// unions + label maps are the front-end's narrowed view.
-export const BOOK_STATUSES = ['want', 'reading', 'read', 'dropped'] as const
 export type BookStatus = (typeof BOOK_STATUSES)[number]
-export const BOOK_STATUS_LABELS: Record<BookStatus, string> = {
-  want: 'Want',
-  reading: 'Reading',
-  read: 'Read',
-  dropped: 'Dropped',
-}
 
-// Same three-value LGBT+ representation control as Shows. Defined locally (a trivial constant)
-// rather than imported from `shows.ts`, to keep the two modules decoupled.
-export const LGBTQ_REPS = ['none', 'some', 'significant'] as const
 export type LgbtqRep = (typeof LGBTQ_REPS)[number]
-export const LGBTQ_REP_LABELS: Record<LgbtqRep, string> = {
-  none: 'None',
-  some: 'Some',
-  significant: 'Significant',
-}
-
-/** Status-chip palette (Tailwind classes on the design tokens): want = purple (planned), reading =
- * orange (active/in-progress), read = teal (positive), dropped = grey (muted). */
-export const BOOK_STATUS_CHIP: Record<BookStatus, string> = {
-  want: 'bg-plan text-bg',
-  reading: 'bg-warning text-bg',
-  read: 'bg-positive text-bg',
-  dropped: 'bg-track text-text-secondary',
-}
 
 // --- Status transitions (pure: take `today` so they're deterministic in tests) ---
 
@@ -104,13 +79,13 @@ export function countReadThisYear(
 
 // --- Library filtering + sorting (pure; the screen just holds the criteria state) ---
 
-/** Sort/precedence order for statuses. */
-export const BOOK_STATUS_ORDER: Record<BookStatus, number> = {
+/** Sort/precedence order for statuses (used by Library sort). */
+const BOOK_STATUS_ORDER: Record<BookStatus, number> = {
   want: 0,
   reading: 1,
   read: 2,
   dropped: 3,
-}
+} as const
 
 /** Sorted unique genres present across the given books (drives the Library Genre filter). */
 export function bookGenres(books: Pick<BookRow, 'genres'>[]): string[] {
@@ -229,25 +204,6 @@ export function applyLibraryView(books: BookRow[], c: LibraryCriteria): BookRow[
     .filter((b) => matchesCriteria(b, c))
     .sort((a, b) => compareBooks(a, b, c.sortField, c.sortDir))
 }
-
-// --- Entry/Edit field visibility (Books Settings) ---
-
-/**
- * The Entry/Edit fields the owner can hide from Books Settings. The core Title / Status / Search
- * controls are always shown and are not listed here. Stored on `profile.book_visible_fields`
- * (NULL = all visible); `'metadata'` covers the read-only Google Books display block.
- */
-export const BOOK_VISIBLE_FIELDS: { key: string; label: string }[] = [
-  { key: 'authors', label: 'Author(s)' },
-  { key: 'year', label: 'Year' },
-  { key: 'metadata', label: 'Google Books Metadata' },
-  { key: 'rating', label: 'Rating' },
-  { key: 'lgbtq_rep', label: 'LGBT+ Representation' },
-  { key: 'dynasty', label: 'Dynasty' },
-  { key: 'start_date', label: 'Start Date' },
-  { key: 'end_date', label: 'Finish / Drop Date' },
-  { key: 'notes', label: 'Notes' },
-]
 
 /** Whether an Entry field is visible. NULL stored prefs (or an unknown key) ⇒ visible (default-on). */
 export function isFieldVisible(visibleFields: string[] | null, key: string): boolean {

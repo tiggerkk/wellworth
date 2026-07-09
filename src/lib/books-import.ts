@@ -10,13 +10,9 @@
  * (`updated_at` is left to the DB). The per-row lookup uses title **and** author to disambiguate
  * (book titles collide far more than shows).
  */
-import {
-  BOOK_STATUSES,
-  LGBTQ_REPS,
-  type BookInsert,
-  type BookStatus,
-  type LgbtqRep,
-} from './books'
+import { type BookInsert } from '../lib/books'
+import { type BookStatus, type LgbtqRep } from '../lib/books'
+import { BOOK_STATUSES, LGBTQ_REPS } from '../constants/books'
 import type { BookMetadata } from './books-api'
 import type { IsoDate } from './date'
 import { containsCjk } from './cjk'
