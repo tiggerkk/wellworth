@@ -1,6 +1,6 @@
 # 01 — Design System (Look & Feel)
 
-Dark, calm. These tokens are taken directly from the approved wireframes — match them exactly. (Screenshots, if added, live in `docs/wireframes/` but serve as samples only; docs/\*.md files are authoritative.)
+Dark, calm. These tokens are taken directly from the approved wireframes — match them exactly.
 
 ## Color tokens
 

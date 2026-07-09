@@ -3,7 +3,7 @@
 ## Overview
 
 - **WellWorth** is a personal mobile app — a private "super-app" of self-contained modules for one household.
-- It launches to a Home hub of module cards; the modules are (1) Wellness — food, supplements, and activity with full nutrient reporting — (2) Net Worth, (3) Quotes — favourite quotes from screen, page, and sound — (4) Literature — classical Chinese poems & prose with read-aloud — (5) Shows — tracking TV shows and movies watched or to watch — (6) Books — tracking books read or to read — (7) Travel — trips logged as day-by-day itineraries, a map of the places visited, and per-trip expenses — and (8) Medical — multi-year lab results and narrative reports with trend charts.
+- It launches to a Home hub of module cards: (1) Wellness — food, supplements, and activity with full nutrient reporting; (2) Net Worth; (3) Quotes — favourite quotes from screen, page, and sound; (4) Literature — classical Chinese poems & prose with read-aloud; (5) Shows — tracking TV shows and movies watched or to watch; (6) Books — tracking books read or to read; (7) Travel — trips logged as day-by-day itineraries, a map of the places visited, and per-trip expenses; and (8) Medical — multi-year lab results and narrative reports with trend charts.
 - Further modules may be added later as new cards with no structural change.
 - It is delivered as an installable PWA (web app added to the iPhone/iPad home screen) so it needs no Apple Developer account and is free to run.
 
