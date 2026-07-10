@@ -303,10 +303,14 @@ function PolicyForm({
         const created = await createPolicy(userId, policyPatch())
         policyId = created.id
       }
-      // The file may override name / start date / notes, and auto-detected maturity.
+      const hasOriginal = schedules.some((v) => v.kind === 'original')
+
+      // The file may override name / notes, and auto-detected maturity. start_date is the policy's
+      // inception date — only the ORIGINAL schedule's file should set it; on an update import the
+      // same "number: date" cell means this version's effective date instead (handled below).
       const overridePatch: TablesUpdate<'insurance_policy'> = {}
       if (parsed.policy_name) overridePatch.policy_name = parsed.policy_name
-      if (parsed.start_date) overridePatch.start_date = parsed.start_date
+      if (parsed.start_date && !hasOriginal) overridePatch.start_date = parsed.start_date
       if (parsed.notes) overridePatch.notes = parsed.notes
       if (parsed.termination_kind) {
         overridePatch.termination_kind = parsed.termination_kind
@@ -324,14 +328,11 @@ function PolicyForm({
           points: parsed.points,
         })
       } else {
-        const hasOriginal = schedules.some((v) => v.kind === 'original')
-        const startYear = (parsed.start_date ?? draft.start_date ?? todayLocal()).slice(
-          0,
-          4,
-        )
-        const effective = hasOriginal
-          ? `${todayLocal().slice(0, 4)}-${(parsed.start_date ?? draft.start_date ?? todayLocal()).slice(5)}`
-          : (parsed.start_date ?? draft.start_date ?? `${startYear}-01-01`)
+        const effective =
+          parsed.start_date ?? // explicit date from the file — trust it as-is
+          (hasOriginal
+            ? `${todayLocal().slice(0, 4)}-${(draft.start_date ?? todayLocal()).slice(5)}`
+            : (draft.start_date ?? `${todayLocal().slice(0, 4)}-01-01`))
         await addScheduleVersion(policyId, {
           kind: hasOriginal ? 'update' : 'original',
           first_year: parsed.first_year,

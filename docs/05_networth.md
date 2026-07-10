@@ -267,10 +267,11 @@ Policy Year · Premium · Cash Value (native→HKD)` with an "as of yr N" tag wh
   Unset date fields read **"Set date"** in muted `text-tertiary` (the Shows Entry pattern). The
   SCHEDULE table adds a right-most **GAIN %/Yr** column (Surrender Gain %/Yr per point).
 - **Single-policy import** (local overlay): file must match Provider + Policy Number; Policy Name /
-  Start Date / **Notes** may be overridden; **maturity is auto-detected** (same rule as the bulk
-  seed); currency + effective date are NOT in the file. Choose **Add new version** or **Replace
-  existing version**; a brand-new policy's first import creates the **Original**. Closes on its X /
-  **Esc** (`useEscapeKey(onClose)`) — the innermost overlay, so Esc closes it before the form.
+  / Notes may be overridden; **maturity is auto-detected** (same rule as the bulk
+  seed); currency is NOT in the file. Choose **Add new version** or **Replace existing version**;
+  a brand-new policy's first import creates the **Original**. Date next to Policy Number becomes the Start Date
+  for **Original**, Effective Date for **Update**.
+  Closes on its X / **Esc** (`useEscapeKey(onClose)`) — the innermost overlay, so Esc closes it before the form.
 
 ### Insurance model + resolution (pure helpers in `src/lib/networth.ts`)
 
