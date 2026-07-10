@@ -141,8 +141,9 @@ export function ShowsLibrary() {
     setCriteria((c) => ({
       ...DEFAULT_LIBRARY_CRITERIA,
       query: c.query,
-      sortField: c.sortField,
-      sortDir: c.sortDir,
+      type: c.type, // Clears all filters except type (TV/Movies/Docs)
+      //sortField: c.sortField,
+      //sortDir: c.sortDir,
     }))
   }
 

@@ -133,8 +133,8 @@ export function BooksLibrary() {
     setCriteria((c) => ({
       ...DEFAULT_LIBRARY_CRITERIA,
       query: c.query,
-      sortField: c.sortField,
-      sortDir: c.sortDir,
+      //sortField: c.sortField,
+      //sortDir: c.sortDir,
     }))
   }
 

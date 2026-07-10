@@ -124,8 +124,8 @@ export function TravelTrips() {
     setCriteria((c) => ({
       ...DEFAULT_TRIP_CRITERIA,
       query: c.query,
-      sortField: c.sortField,
-      sortDir: c.sortDir,
+      //sortField: c.sortField,
+      //sortDir: c.sortDir,
     }))
   }
 

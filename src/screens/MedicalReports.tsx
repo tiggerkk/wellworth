@@ -88,8 +88,8 @@ export function MedicalReports() {
     setCriteria((c) => ({
       ...DEFAULT_REPORT_LIST_CRITERIA,
       query: c.query,
-      sortField: c.sortField,
-      sortDir: c.sortDir,
+      //sortField: c.sortField,
+      //sortDir: c.sortDir,
     }))
   }
 

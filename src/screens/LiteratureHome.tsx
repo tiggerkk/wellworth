@@ -106,8 +106,8 @@ export function LiteratureHome() {
     setCriteria((c) => ({
       ...DEFAULT_POEM_CRITERIA,
       query: c.query,
-      sortField: c.sortField,
-      sortDir: c.sortDir,
+      //sortField: c.sortField,
+      //sortDir: c.sortDir,
     }))
     setLimit(PAGE)
   }

@@ -90,8 +90,8 @@ export function InsurancePolicies() {
     setCriteria((c) => ({
       ...DEFAULT_INSURANCE_CRITERIA,
       query: c.query,
-      sortField: c.sortField,
-      sortDir: c.sortDir,
+      //sortField: c.sortField,
+      //sortDir: c.sortDir,
     }))
   }
 
