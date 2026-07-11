@@ -4,11 +4,18 @@ import { EntryHeaderActions } from './EntryHeaderActions'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 
 interface NotesEditorModalProps {
-  /** Item title for the header. */
+  /** Item title for the header (line 1). */
   title: string
-  /** Release / publication year; when null the header shows the title alone (no parentheses). */
-  year: number | null
-  /** Current Notes value from the parent form. */
+  /** Release / publication year; when null the title shows alone (no parentheses). Ignored when
+   *  `title` already contains everything line 1 needs (e.g. a pre-formatted date - type string). */
+  year?: number | null
+  /** Optional line 2, rendered in secondary/caption style under the title (e.g. a provider or
+   *  studio name). Omitted entirely when null/empty. */
+  subtitle?: string | null
+  /** Label for the field being edited — used above the textarea and in the dialog's aria-label.
+   *  Defaults to 'Notes'. */
+  fieldLabel?: string
+  /** Current field value from the parent form. */
   value: string
   /** Apply the edited buffer back to the parent form field (does not persist to the DB). */
   onSave: (next: string) => void
@@ -19,15 +26,20 @@ interface NotesEditorModalProps {
 const canPaste = typeof navigator !== 'undefined' && !!navigator.clipboard
 
 /**
- * Full-screen editor for a long Notes field. A **buffered** editor: it edits a local copy and only
- * `onSave` writes it back to the parent form (the form's own Save then persists). Reuses the shared
- * `EntryHeaderActions` cluster — Delete clears the text (two-step confirm), Reset reverts to the value
- * at open, Save applies + closes — with a top-left X to Cancel (discard). Local overlay (not a route),
- * modelled on `Calendar`.
+ * Full-screen editor for a long free-text field (Notes, Narrative, …). A **buffered** editor: it
+ * edits a local copy and only `onSave` writes it back to the parent form (the form's own Save then
+ * persists). Reuses the shared `EntryHeaderActions` cluster — Delete clears the text (two-step
+ * confirm), Reset reverts to the value at open, Save applies + closes — with a top-left X to Cancel
+ * (discard). Local overlay (not a route), modelled on `Calendar`.
+ *
+ * Shared across Books/Shows Notes and the Medical Narrative editor — see the callers for how the
+ * header is composed (title + optional year, vs. a pre-formatted "Date - Type" + provider subtitle).
  */
 export function NotesEditorModal({
   title,
-  year,
+  year = null,
+  subtitle = null,
+  fieldLabel = 'Notes',
   value,
   onSave,
   onClose,
@@ -43,7 +55,7 @@ export function NotesEditorModal({
     ? year != null
       ? `${trimmed} (${year})`
       : trimmed
-    : 'Notes'
+    : fieldLabel
   const dirty = buffer !== value
 
   // Focus the textarea on open with the caret at the end (ready to append).
@@ -86,16 +98,21 @@ export function NotesEditorModal({
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Edit notes"
+        aria-label={`Edit ${fieldLabel.toLowerCase()}`}
         className="absolute inset-0 flex flex-col bg-surface pt-[env(safe-area-inset-top)] motion-reduce:animate-none animate-[slideUp_200ms_ease-out]"
       >
         <header className="flex items-center gap-3 border-b border-border px-4 py-3">
           <button onClick={onClose} aria-label="Close" className="text-text-secondary">
             <IconX size={22} />
           </button>
-          <h1 className="flex-1 truncate text-heading font-medium text-text-primary">
-            {headerTitle}
-          </h1>
+          <div className="min-w-0 flex-1">
+            <h1 className="truncate text-heading font-medium text-text-primary">
+              {headerTitle}
+            </h1>
+            {subtitle && (
+              <p className="truncate text-caption text-text-secondary">{subtitle}</p>
+            )}
+          </div>
           <EntryHeaderActions
             editing
             dirty={dirty}
@@ -111,7 +128,7 @@ export function NotesEditorModal({
 
         <div className="flex flex-1 flex-col overflow-hidden p-4">
           <div className="flex items-center justify-between">
-            <span className="text-caption text-text-secondary">Notes</span>
+            <span className="text-caption text-text-secondary">{fieldLabel}</span>
             {canPaste && (
               <button
                 onClick={() => void pasteAtCursor()}

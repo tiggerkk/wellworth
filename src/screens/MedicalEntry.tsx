@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
-import { IconPlus, IconUpload, IconX } from '@tabler/icons-react'
+import { IconArrowsDiagonal, IconPlus, IconUpload, IconX } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useDirty } from '../hooks/useDirty'
@@ -39,6 +39,7 @@ import { MedicalResultCard } from '../components/MedicalResultCard'
 import { MedicalSection } from '../components/MedicalSection'
 import { MedicalTestPickerSheet } from '../components/MedicalTestPickerSheet'
 import { EyeRefractionFields } from '../components/EyeRefractionFields'
+import { NotesEditorModal } from '../components/NotesEditorModal'
 
 const EYE_KEY_SET = new Set(EYE_REFRACTION_KEYS)
 
@@ -81,11 +82,18 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
   const [saving, setSaving] = useState(false)
   const [datePicker, setDatePicker] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
+  const [narrativeOpen, setNarrativeOpen] = useState(false)
 
   useEscapeKey(() => navigate(-1))
 
   const update = (patch: Partial<ReportDraft>) => setDraft((d) => ({ ...d, ...patch }))
   const dirty = useDirty(draft, initial)
+
+  // Mirrors the read-only Report detail screen's header (Line 1: Date - Type · Body Part), so the
+  // Narrative editor modal opens on a heading the person already recognizes from that screen.
+  const narrativeHeaderTitle =
+    `${formatFullDate(draft.report_date)} - ${REPORT_TYPE_LABELS[draft.report_type] ?? draft.report_type}` +
+    (usesBodyPart(draft.report_type) && draft.body_part ? ` · ${draft.body_part}` : '')
 
   // Eye reports surface the six refraction values in a dedicated grid; hide those rows from the
   // generic results list so they aren't edited twice.
@@ -278,8 +286,18 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
         )}
 
         {vis('narrative') && (
-          <label className="text-caption text-text-secondary">
-            Narrative
+          <div className="text-caption text-text-secondary">
+            <div className="flex items-center justify-between">
+              <span>Narrative</span>
+              <button
+                type="button"
+                onClick={() => setNarrativeOpen(true)}
+                aria-label="Expand narrative"
+                className="text-accent"
+              >
+                <IconArrowsDiagonal size={16} />
+              </button>
+            </div>
             <textarea
               value={draft.narrative}
               onChange={(e) => update({ narrative: e.target.value })}
@@ -287,7 +305,7 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
               placeholder="MRI / imaging / eye findings, doctor's comments"
               className={`mt-1 ${inputClass} resize-none`}
             />
-          </label>
+          </div>
         )}
 
         {vis('document_urls') && (
@@ -383,6 +401,17 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
           onSelect={addFromTest}
           onAddCustom={addCustom}
           onClose={() => setPickerOpen(false)}
+        />
+      )}
+
+      {narrativeOpen && (
+        <NotesEditorModal
+          title={narrativeHeaderTitle}
+          subtitle={draft.provider || null}
+          fieldLabel="Narrative"
+          value={draft.narrative}
+          onSave={(next) => update({ narrative: next })}
+          onClose={() => setNarrativeOpen(false)}
         />
       )}
     </>
