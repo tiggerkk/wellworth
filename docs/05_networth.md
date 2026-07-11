@@ -56,7 +56,7 @@
 ### New/Edit Insurance
 
 - Header:
-  - X · title · **Schedule** (import) · Delete/Reset/Create/Save.
+  - X · title · Delete/Reset/Create/Save.
   - It's a plain route screen (not a `Sheet`), so it registers `useEscapeKey(() => navigate(-1))` itself for laptop Esc-to-close (an open Calendar / SelectMenu / import overlay sits above it on the shared LIFO stack and consumes Esc first).
 - Body:
   - Provider (picked from the configured list — manage it in Settings → Manage Providers) + Currency (mandatory; HKD/CNY/USD) on one line (equal-height controls so the dropdown and segmented toggle align).
@@ -69,9 +69,10 @@
   - Helper "Enter the cash received {into|as} Cash in Monthly Entry."
   - When terminated, the section shows with an **Un-Surrender / Un-Mature** pill (clears all four `termination_*` fields).
 - **SCHEDULE** section listing versions:
-  - The selected version's editable `effective_date` is the first field, the version dropdown to its right, then a hard-delete that promotes the earliest remaining to Original).
+  - **Schedule** (import) button to the right of the SCHEDULE header.
+  - The selected version's editable `effective_date` is the first field, the version dropdown to its right, then a hard-delete that promotes the earliest remaining to Original.
   - Unset date fields read **"Set date"** in muted `text-tertiary`. The SCHEDULE table right-most column is **GAIN %/Yr** (Surrender Gain %/Yr per point).
-- **Compare Schedules** (SCHEDULE section, next to the version dropdown): a compare icon button (`IconArrowsLeftRight`, disabled below 2 schedule versions) opens **`InsuranceCompareOverlay`** — a local full-screen overlay (same pattern as the single-policy import overlay, not a routed Sheet; closes on X / Esc). Two `SelectMenu` pickers (Schedule 1 / Schedule 2, same `Original · <date>` / `Update · <date>` labels as the version dropdown; defaults to Original vs whichever version was selected when Compare was opened).
+- **Compare Schedules** (SCHEDULE section, next to the version dropdown): a compare icon button (`IconArrowsLeftRight`, disabled below 2 schedule versions) opens **`InsuranceCompareOverlay`** — a local full-screen overlay (same pattern as the single-policy import overlay, not a routed Sheet; closes on X / Esc). Two `SelectMenu` pickers (Schedule 1 / Schedule 2, same `(O) <date>` / `(U) <date>` labels as the version dropdown; defaults to Original vs whichever version was selected when Compare was opened).
   - **Comparison table**: 6 columns in order **AGE · YR · Cash 1 · Gain 1 · Cash 2 · Gain 2**, horizontally scrollable as one unit (not pinned) on iPhone width. Rows = the **union** of ages present in either schedule, ascending; a schedule with no point at a given age shows **"–"**.
   - Values stay in the policy's own `currency`, unconverted — unlike the Dashboard's HKD-only aggregate chart.
   - Below the table, **`InsuranceCompareCharts`** (lazy-loaded, own chunk): two **stacked** line charts sharing an Age X-axis — **Cash** (2 lines + a shaded variance band between them) and **Gain %/Yr** (2 lines, its own Y-axis) — kept separate rather than dual-axis-on-one-chart, since Cash and Gain %/Yr don't read well sharing one scale.

@@ -27,6 +27,7 @@ import { parseInsuranceSingleCsv, type ParsedSinglePolicy } from '../lib/insuran
 import {
   CURRENCIES,
   gainLossClass,
+  sortSchedulesDesc,
   surrenderGainPctPerYear,
   type Currency,
   type ScheduleVersion,
@@ -81,6 +82,11 @@ const greyPill = `${pillBtn} text-text-secondary` // Mark Surrendered · Cancel 
 const bluePill = `${pillBtn} text-accent` // Mark Matured
 
 const CCY_OPTIONS = CURRENCIES.map((c) => ({ value: c, label: c }))
+
+function scheduleLabel(v: ScheduleVersion): string {
+  const prefix = v.kind === 'original' ? '(O)' : '(U)'
+  return v.effective_date ? `${prefix} ${formatFullDate(v.effective_date)}` : prefix
+}
 
 export function InsuranceEntry() {
   const { id } = useParams()
@@ -173,7 +179,7 @@ function PolicyForm({
   const [baseline, setBaseline] = useState<PolicyDraft>(initialDraft)
   const [schedules, setSchedules] = useState<ScheduleVersion[]>(initialSchedules)
   const [selectedSchedule, setSelectedSchedule] = useState<string>(
-    initialSchedules[0]?.id ?? '',
+    sortSchedulesDesc(initialSchedules)[0]?.id ?? '',
   )
   const [saving, setSaving] = useState(false)
   // Which kind's section is being opened on a not-yet-terminated policy (null = neither).
@@ -196,7 +202,9 @@ function PolicyForm({
     if (data) {
       setSchedules(data.schedules)
       setSelectedSchedule((s) =>
-        data.schedules.some((v) => v.id === s) ? s : (data.schedules[0]?.id ?? ''),
+        data.schedules.some((v) => v.id === s)
+          ? s
+          : (sortSchedulesDesc(data.schedules)[0]?.id ?? ''),
       )
     }
   }
@@ -413,12 +421,6 @@ function PolicyForm({
         <h1 className="flex-1 truncate text-heading font-medium text-text-primary">
           {id ? 'Edit Insurance' : 'New Insurance'}
         </h1>
-        <button
-          onClick={() => setImportOpen(true)}
-          className="flex shrink-0 items-center gap-1.5 pl-2 text-body text-accent"
-        >
-          <IconUpload size={16} /> Schedule
-        </button>
         <EntryHeaderActions
           editing={!!id}
           dirty={dirty}
@@ -604,9 +606,17 @@ function PolicyForm({
 
         {/* SCHEDULE */}
         <div>
-          <p className="mb-2 text-section uppercase tracking-[0.08em] text-text-secondary">
-            Schedule
-          </p>
+          <div className="mb-2 flex items-center justify-between">
+            <p className="text-section uppercase tracking-[0.08em] text-text-secondary">
+              Schedule
+            </p>
+            <button
+              onClick={() => setImportOpen(true)}
+              className="flex shrink-0 items-center gap-1.5 text-body text-accent"
+            >
+              <IconUpload size={16} /> Schedule
+            </button>
+          </div>
           {!id ? (
             <p className="rounded-card border border-dashed border-border px-4 py-6 text-center text-body text-text-tertiary">
               Save the policy, then import a schedule — or use the Schedule button above
@@ -634,9 +644,9 @@ function PolicyForm({
                 )}
                 <SelectMenu
                   value={selectedSchedule}
-                  options={schedules.map((v) => ({
+                  options={sortSchedulesDesc(schedules).map((v) => ({
                     value: v.id,
-                    label: `${v.kind === 'original' ? 'Original' : 'Update'}${v.effective_date ? ` · ${formatFullDate(v.effective_date)}` : ''}`,
+                    label: scheduleLabel(v),
                   }))}
                   onChange={setSelectedSchedule}
                   ariaLabel="Schedule version"
@@ -801,7 +811,7 @@ function ImportScheduleOverlay({
   const canApply = parsed != null && parseErrors.length === 0 && !mismatch && !busy
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-bg">
+    <div className="fixed inset-0 z-50 flex flex-col bg-bg pt-[env(safe-area-inset-top)]">
       <header className="flex items-center gap-3 border-b border-border px-4 py-3">
         <button onClick={onClose} aria-label="Close">
           <IconX size={22} className="text-text-secondary" />

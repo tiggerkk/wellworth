@@ -367,6 +367,14 @@ export function originalSchedule(schedules: ScheduleVersion[]): ScheduleVersion 
   )
 }
 
+/** Schedule versions newest-effective-date first; versions with no effective_date sort last.
+ *  Shared by the Edit Insurance schedule picker and the Compare Schedules dropdowns. */
+export function sortSchedulesDesc(schedules: ScheduleVersion[]): ScheduleVersion[] {
+  return [...schedules].sort((a, b) =>
+    (b.effective_date ?? '').localeCompare(a.effective_date ?? ''),
+  )
+}
+
 /** Original (baseline) cash value at an age (nearest earlier real point), or null. */
 export function originalCashValueAtAge(
   schedules: ScheduleVersion[],

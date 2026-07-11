@@ -5,8 +5,8 @@ import { lazyWithReload } from '../lib/lazy-with-reload'
 import { SelectMenu } from './SelectMenu'
 import {
   buildScheduleComparisonRows,
-  formatNative,
   gainLossClass,
+  sortSchedulesDesc,
   type Currency,
   type ScheduleVersion,
 } from '../lib/networth'
@@ -18,8 +18,8 @@ const InsuranceCompareCharts = lazyWithReload(() =>
 )
 
 function versionLabel(v: ScheduleVersion): string {
-  const kind = v.kind === 'original' ? 'Original' : 'Update'
-  return v.effective_date ? `${kind} · ${formatFullDate(v.effective_date)}` : kind
+  const prefix = v.kind === 'original' ? '(O)' : '(U)'
+  return v.effective_date ? `${prefix} ${formatFullDate(v.effective_date)}` : prefix
 }
 
 /**
@@ -56,10 +56,13 @@ export function InsuranceCompareOverlay({
     [versionA, versionB],
   )
 
-  const options = schedules.map((v) => ({ value: v.id, label: versionLabel(v) }))
+  const options = sortSchedulesDesc(schedules).map((v) => ({
+    value: v.id,
+    label: versionLabel(v),
+  }))
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-bg">
+    <div className="fixed inset-0 z-50 flex flex-col bg-bg pt-[env(safe-area-inset-top)]">
       <header className="flex items-center gap-3 border-b border-border px-4 py-3">
         <button onClick={onClose} aria-label="Close">
           <IconX size={22} className="text-text-secondary" />
@@ -95,10 +98,15 @@ export function InsuranceCompareOverlay({
 
         {versionA && versionB && (
           <>
-            {/* Fixed 6-column layout; the table scrolls as one unit on narrow (iPhone) widths. */}
-            <div className="overflow-x-auto rounded-card border border-border bg-surface">
-              <div className="min-w-[560px]">
-                <div className="grid grid-cols-6 gap-2 border-b border-border px-3 py-2 text-section uppercase tracking-wide text-text-secondary">
+            {/* Fixed 6-column layout; the table scrolls as one unit on narrow (iPhone) widths.
+                `shrink-0` matters: this div sets overflow-x-auto, which per the CSS overflow spec
+                forces its overflow-y to compute as `auto` too — and an `auto`-overflow box used as
+                a flex child (our parent above is `flex flex-col`) gets an automatic min-height of 0,
+                so without shrink-0 it gets squeezed short and grows its own inner scrollbar instead
+                of the page just scrolling normally. */}
+            <div className="shrink-0 overflow-x-auto rounded-card border border-border bg-surface">
+              <div className="min-w-[480px]">
+                <div className="grid grid-cols-[2.5rem_2rem_4.5rem_1fr_4.5rem_1fr] gap-2 border-b border-border px-3 py-2 text-section uppercase tracking-wide text-text-secondary">
                   <span>Age</span>
                   <span>Yr</span>
                   <span className="text-right">Cash 1</span>
@@ -109,12 +117,14 @@ export function InsuranceCompareOverlay({
                 {rows.map((r) => (
                   <div
                     key={r.age}
-                    className="grid grid-cols-6 gap-2 border-b border-border px-3 py-1.5 text-label text-text-primary last:border-b-0"
+                    className="grid grid-cols-[2.5rem_2rem_4.5rem_1fr_4.5rem_1fr] gap-2 border-b border-border px-3 py-1.5 text-label text-text-primary last:border-b-0"
                   >
                     <span>{r.age}</span>
                     <span className="text-text-secondary">{r.policy_year}</span>
                     <span className="text-right">
-                      {r.cashA != null ? formatNative(r.cashA, currency) : '–'}
+                      {r.cashA != null
+                        ? Math.round(r.cashA).toLocaleString('en-US')
+                        : '–'}
                     </span>
                     <span
                       className={`text-right ${r.gainA != null ? gainLossClass(r.gainA) : 'text-text-tertiary'}`}
@@ -122,7 +132,9 @@ export function InsuranceCompareOverlay({
                       {r.gainA != null ? `${r.gainA.toFixed(2)}%` : '–'}
                     </span>
                     <span className="text-right">
-                      {r.cashB != null ? formatNative(r.cashB, currency) : '–'}
+                      {r.cashB != null
+                        ? Math.round(r.cashB).toLocaleString('en-US')
+                        : '–'}
                     </span>
                     <span
                       className={`text-right ${r.gainB != null ? gainLossClass(r.gainB) : 'text-text-tertiary'}`}
