@@ -1,12 +1,14 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
-import { IconCheck, IconUpload, IconX } from '@tabler/icons-react'
+import { IconArrowsLeftRight, IconCheck, IconUpload, IconX } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useDirty } from '../hooks/useDirty'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 import { useProfile } from '../hooks/useProfile'
 import { EntryLoader } from '../components/EntryLoader'
+import { IconAction } from '../components/IconAction'
+import { InsuranceCompareOverlay } from '../components/InsuranceCompareOverlay'
 import {
   addScheduleVersion,
   createPolicy,
@@ -179,6 +181,7 @@ function PolicyForm({
   const [confirmUnmark, setConfirmUnmark] = useState(false)
   const [cal, setCal] = useState<'start' | 'termDate' | 'termEff' | 'eff' | null>(null)
   const [importOpen, setImportOpen] = useState(false)
+  const [compareOpen, setCompareOpen] = useState(false)
 
   const update = (patch: Partial<PolicyDraft>) => setDraft((d) => ({ ...d, ...patch }))
   const dirty = useDirty(draft, baseline)
@@ -640,6 +643,12 @@ function PolicyForm({
                   className="flex-1"
                   size="field"
                 />
+                <IconAction
+                  Icon={IconArrowsLeftRight}
+                  label="Compare schedules"
+                  onClick={() => setCompareOpen(true)}
+                  disabled={schedules.length < 2}
+                />
                 {selected && (
                   <ConfirmDeleteAction
                     label="Delete schedule version"
@@ -719,6 +728,18 @@ function PolicyForm({
           busy={saving}
           onApply={applyImport}
           onClose={() => setImportOpen(false)}
+        />
+      )}
+
+      {compareOpen && schedules.length >= 2 && (
+        <InsuranceCompareOverlay
+          schedules={schedules}
+          currency={draft.currency}
+          initialAId={
+            schedules.find((v) => v.kind === 'original')?.id ?? schedules[0]!.id
+          }
+          initialBId={selectedSchedule || schedules[0]!.id}
+          onClose={() => setCompareOpen(false)}
         />
       )}
     </>

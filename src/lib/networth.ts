@@ -97,6 +97,26 @@ export function formatHkdCompact(n: number): string {
   return `HK$${Math.round(n)}`
 }
 
+const CURRENCY_PREFIX: Record<Currency, string> = { HKD: 'HK$', CNY: 'CN¥', USD: 'US$' }
+
+/** Like `formatHkd`, but in the given (native, unconverted) currency — e.g. `US$12,345`. Used
+ *  wherever a figure must stay in a policy's own currency rather than being converted to HKD
+ *  (the Insurance Compare Schedules table/charts; the Dashboard's aggregate views convert to
+ *  HKD instead and use `formatHkd`). */
+export function formatNative(n: number, currency: Currency): string {
+  return `${CURRENCY_PREFIX[currency]}${Math.round(n).toLocaleString('en-US')}`
+}
+
+/** Compact native-currency form for chart axes/ticks, e.g. `US$1.2M` / `CN¥450K`. */
+export function formatNativeCompact(n: number, currency: Currency): string {
+  const prefix = CURRENCY_PREFIX[currency]
+  const abs = Math.abs(n)
+  if (abs >= 1_000_000)
+    return `${prefix}${(n / 1_000_000).toFixed(abs >= 10_000_000 ? 0 : 1)}M`
+  if (abs >= 1_000) return `${prefix}${Math.round(n / 1_000)}K`
+  return `${prefix}${Math.round(n)}`
+}
+
 /** Sum `value_base` per asset type (all 7 keys present, 0 default). */
 export function typeTotals(
   entries: { value_base: number; asset_type: string }[],
@@ -412,4 +432,49 @@ export function surrenderGainPctPerYear(
 ): number {
   if (premium <= 0 || policyYear <= 0) return 0
   return ((cashValue - premium) / premium / policyYear) * 100
+}
+
+/** One row of the Insurance Compare Schedules table/charts — cash + gain for both schedules at
+ *  a given age, `null` when that schedule has no real point at that age. */
+export interface ScheduleComparisonRow {
+  age: number
+  policy_year: number
+  cashA: number | null
+  gainA: number | null
+  cashB: number | null
+  gainB: number | null
+}
+
+/**
+ * Merge two schedule versions' `points` on the union of `age`, ascending, for the Compare
+ * Schedules overlay. A schedule with no point at a given age contributes `null` cash/gain for
+ * that row rather than being carried forward — carry-forward is a display rule for a *single*
+ * schedule elsewhere in the app, not something this comparison should apply across two different
+ * schedules. `policy_year` is taken from whichever schedule has a point at that age (they're
+ * expected to agree when both do). Pure.
+ */
+export function buildScheduleComparisonRows(
+  a: ScheduleVersion,
+  b: ScheduleVersion,
+): ScheduleComparisonRow[] {
+  const byAgeA = new Map(a.points.map((p) => [p.age, p]))
+  const byAgeB = new Map(b.points.map((p) => [p.age, p]))
+  const ages = [...new Set([...byAgeA.keys(), ...byAgeB.keys()])].sort((x, y) => x - y)
+
+  return ages.map((age) => {
+    const pa = byAgeA.get(age) ?? null
+    const pb = byAgeB.get(age) ?? null
+    return {
+      age,
+      policy_year: (pa ?? pb)!.policy_year,
+      cashA: pa ? pa.cash_value : null,
+      gainA: pa
+        ? surrenderGainPctPerYear(pa.cash_value, pa.total_premium_paid, pa.policy_year)
+        : null,
+      cashB: pb ? pb.cash_value : null,
+      gainB: pb
+        ? surrenderGainPctPerYear(pb.cash_value, pb.total_premium_paid, pb.policy_year)
+        : null,
+    }
+  })
 }
