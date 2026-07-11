@@ -105,8 +105,8 @@ export function InsuranceCompareOverlay({
                 so without shrink-0 it gets squeezed short and grows its own inner scrollbar instead
                 of the page just scrolling normally. */}
             <div className="shrink-0 overflow-x-auto rounded-card border border-border bg-surface">
-              <div className="min-w-[480px]">
-                <div className="grid grid-cols-[2.5rem_2rem_4.5rem_1fr_4.5rem_1fr] gap-2 border-b border-border px-3 py-2 text-section uppercase tracking-wide text-text-secondary">
+              <div className="min-w-[360px]">
+                <div className="grid grid-cols-[2.5rem_2rem_3.6rem_minmax(0,1fr)_3.6rem_minmax(0,1fr)] gap-2 border-b border-border px-3 py-2 text-section uppercase tracking-wide text-text-secondary">
                   <span>Age</span>
                   <span>Yr</span>
                   <span className="text-right">Cash 1</span>
@@ -117,7 +117,7 @@ export function InsuranceCompareOverlay({
                 {rows.map((r) => (
                   <div
                     key={r.age}
-                    className="grid grid-cols-[2.5rem_2rem_4.5rem_1fr_4.5rem_1fr] gap-2 border-b border-border px-3 py-1.5 text-label text-text-primary last:border-b-0"
+                    className="grid grid-cols-[2.5rem_2rem_3.6rem_minmax(0,1fr)_3.6rem_minmax(0,1fr)] gap-2 border-b border-border px-3 py-1.5 text-label text-text-primary last:border-b-0"
                   >
                     <span>{r.age}</span>
                     <span className="text-text-secondary">{r.policy_year}</span>
