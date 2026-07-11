@@ -729,7 +729,7 @@ function EntryForm({
                             {formatHkd(rowBase(r))}
                           </span>
                           <span
-                            className={`w-16 shrink-0 text-right text-caption ${
+                            className={`w-12 shrink-0 text-right text-caption ${
                               r.details.return_rate
                                 ? gainLossClass(Number(r.details.return_rate))
                                 : 'text-text-tertiary'
