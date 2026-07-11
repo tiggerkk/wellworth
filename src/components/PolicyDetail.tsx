@@ -13,12 +13,14 @@ import {
   varianceAtAge,
   type ScheduleVersion,
 } from '../lib/networth'
+import { InsurancePolicyHeader } from './InsurancePolicyHeader'
 
 export interface PolicyDetailData {
   provider: string
   policy_number: string
   policy_name: string
   currency: string
+  start_date: string | null
 }
 
 function money(currency: string, v: number | null): string {
@@ -82,10 +84,12 @@ export function PolicyDetail({
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <p className="text-body text-text-primary">{policy.policy_number}</p>
-        <p className="text-caption text-text-secondary">
-          {providerLabel ?? policy.provider} · {policy.policy_name}
-        </p>
+        <InsurancePolicyHeader
+          policyNumber={policy.policy_number}
+          startDate={policy.start_date}
+          providerLabel={providerLabel ?? policy.provider}
+          policyName={policy.policy_name}
+        />
       </div>
 
       <div className="divide-y divide-border overflow-hidden rounded-card border border-border bg-surface">

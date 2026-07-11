@@ -11,6 +11,7 @@ import {
   type ScheduleVersion,
 } from '../lib/networth'
 import { formatFullDate } from '../lib/date'
+import { InsurancePolicyHeader } from './InsurancePolicyHeader'
 
 // Lazy so recharts is fetched only when the overlay actually renders (own chunk).
 const InsuranceCompareCharts = lazyWithReload(() =>
@@ -30,12 +31,21 @@ function versionLabel(v: ScheduleVersion): string {
  * policy's own `currency` — never converted to HKD.
  */
 export function InsuranceCompareOverlay({
+  policyNumber,
+  startDate,
+  providerLabel,
+  policyName,
   schedules,
   currency,
   initialAId,
   initialBId,
   onClose,
 }: {
+  /** Policy Number · Policy Original Start Date header shown above the schedule pickers. */
+  policyNumber: string
+  startDate: string | null
+  providerLabel: string
+  policyName: string
   schedules: ScheduleVersion[]
   currency: Currency
   initialAId: string
@@ -71,6 +81,15 @@ export function InsuranceCompareOverlay({
       </header>
 
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
+        <div>
+          <InsurancePolicyHeader
+            policyNumber={policyNumber}
+            startDate={startDate}
+            providerLabel={providerLabel}
+            policyName={policyName}
+          />
+        </div>
+
         <div className="flex items-center gap-2">
           <SelectMenu
             value={idA}

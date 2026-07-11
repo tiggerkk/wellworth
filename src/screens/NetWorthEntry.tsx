@@ -59,6 +59,7 @@ import { FundDetail } from '../components/FundDetail'
 import { EntryHeaderActions } from '../components/EntryHeaderActions'
 import { ConfirmDeleteAction } from '../components/ConfirmDeleteAction'
 import { MonthPicker } from '../components/MonthPicker'
+import { InsurancePolicyHeader } from '../components/InsurancePolicyHeader'
 import type { Json, Tables } from '../types/database'
 
 // --- Draft model -------------------------------------------------------------------------
@@ -144,6 +145,7 @@ function resolveInsuranceRows(
         policy_id: policy.id,
         policy_number: policy.policy_number,
         provider: policy.provider,
+        start_date: policy.start_date ?? '',
         policy_year: String(r.policyYear),
         premium: String(r.premium),
         cash_value_original: original == null ? '' : String(original),
@@ -918,13 +920,18 @@ function InsuranceRows({
                 className="flex w-full items-center gap-2 border-b border-border px-3 py-2 text-left last:border-b-0 active:bg-input/40"
               >
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-body text-text-primary">
-                    {r.details.policy_number} · yr {r.details.policy_year}
-                    {r.details.as_of_year ? ` · as of yr ${r.details.as_of_year}` : ''}
-                  </span>
-                  <span className="block truncate text-caption text-text-secondary">
-                    {providerLabel(providers, provider)} · {r.name}
-                  </span>
+                  <InsurancePolicyHeader
+                    policyNumber={r.details.policy_number ?? ''}
+                    startDate={r.details.start_date || null}
+                    providerLabel={providerLabel(providers, provider)}
+                    policyName={r.name}
+                    truncate
+                  />
+                  {r.details.as_of_year && (
+                    <span className="block truncate text-caption text-text-tertiary">
+                      as of yr {r.details.as_of_year}
+                    </span>
+                  )}
                 </span>
                 <span className="shrink-0 text-body text-text-secondary">
                   {formatHkd(rowBase(r))}

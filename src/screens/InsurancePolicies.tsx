@@ -16,13 +16,14 @@ import {
 } from '../lib/insurance-view'
 import { ageForYear, DEFAULT_BIRTH_YEAR, hasBrokenEven } from '../lib/networth'
 import { effectiveProviders, providerLabel } from '../lib/insurance-config'
-import { formatFullDate, todayLocal } from '../lib/date'
+import { todayLocal } from '../lib/date'
 import { StatusChip } from '../components/StatusChip'
 import { routes } from '../constants/routes'
 import { SearchBar } from '../components/SearchBar'
 import { SelectMenu } from '../components/SelectMenu'
 import { SegmentedTabs } from '../components/SegmentedTabs'
 import { Toggle } from '../components/Toggle'
+import { InsurancePolicyHeader } from '../components/InsurancePolicyHeader'
 import { Calendar } from '../components/Calendar'
 import { FilterToggleButton } from '../components/FilterToggleButton'
 import { FilterPanel } from '../components/FilterPanel'
@@ -199,14 +200,13 @@ export function InsurancePolicies() {
                   className="flex w-full items-center gap-3 px-3 py-2.5 text-left active:bg-input/40"
                 >
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-body text-text-primary">
-                      {policy.policy_number}
-                      {policy.start_date ? ` · ${formatFullDate(policy.start_date)}` : ''}
-                    </span>
-                    <span className="block truncate text-caption text-text-secondary">
-                      {providerLabel(providers, policy.provider)} ·{' '}
-                      {policy.policy_name || policy.policy_number}
-                    </span>
+                    <InsurancePolicyHeader
+                      policyNumber={policy.policy_number}
+                      startDate={policy.start_date}
+                      providerLabel={providerLabel(providers, policy.provider)}
+                      policyName={policy.policy_name || policy.policy_number}
+                      truncate
+                    />
                     <span className="mt-1 flex flex-wrap items-center gap-1.5 text-caption text-text-tertiary">
                       {policy.termination_kind === 'surrendered' && (
                         <StatusChip

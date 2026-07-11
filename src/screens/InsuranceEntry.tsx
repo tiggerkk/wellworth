@@ -9,6 +9,7 @@ import { useProfile } from '../hooks/useProfile'
 import { EntryLoader } from '../components/EntryLoader'
 import { IconAction } from '../components/IconAction'
 import { InsuranceCompareOverlay } from '../components/InsuranceCompareOverlay'
+import { InsurancePolicyHeader } from '../components/InsurancePolicyHeader'
 import {
   addScheduleVersion,
   createPolicy,
@@ -733,6 +734,8 @@ function PolicyForm({
           provider={draft.provider}
           providers={providers}
           policyNumber={draft.policy_number.trim()}
+          startDate={draft.start_date}
+          policyName={draft.policy_name}
           schedules={schedules}
           currentAge={currentAge}
           busy={saving}
@@ -743,6 +746,12 @@ function PolicyForm({
 
       {compareOpen && schedules.length >= 2 && (
         <InsuranceCompareOverlay
+          policyNumber={draft.policy_number}
+          startDate={draft.start_date}
+          providerLabel={
+            providers.find((p) => p.key === draft.provider)?.label ?? draft.provider
+          }
+          policyName={draft.policy_name}
           schedules={schedules}
           currency={draft.currency}
           initialAId={
@@ -762,6 +771,8 @@ function ImportScheduleOverlay({
   provider,
   providers,
   policyNumber,
+  startDate,
+  policyName,
   schedules,
   currentAge,
   busy,
@@ -771,6 +782,8 @@ function ImportScheduleOverlay({
   provider: string
   providers: InsuranceProviderConfig[]
   policyNumber: string
+  startDate: string | null
+  policyName: string
   schedules: ScheduleVersion[]
   currentAge: number
   busy: boolean
@@ -821,6 +834,17 @@ function ImportScheduleOverlay({
         </h1>
       </header>
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
+        <div>
+          <InsurancePolicyHeader
+            policyNumber={policyNumber || 'New policy'}
+            startDate={startDate}
+            providerLabel={
+              (providers.find((p) => p.key === provider)?.label ?? provider) || '—'
+            }
+            policyName={policyName || '—'}
+          />
+        </div>
+
         {!policyNumber && (
           <p className="text-caption text-warning">
             Enter the Policy Number first — the file must match it.
