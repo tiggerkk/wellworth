@@ -557,7 +557,7 @@ function EntryForm({
               onClick={() => openSheet(`${routes.networth.import}?month=${month}`)}
               className="flex items-center gap-1 text-body text-accent"
             >
-              <IconUpload size={16} /> Import CSV
+              <IconUpload size={16} /> Import
             </button>
           </div>
         </div>
@@ -686,6 +686,13 @@ function EntryForm({
                   >
                     <IconUpload size={18} />
                   </button>
+                )}
+                {isInsurance && (
+                  <span
+                    className="shrink-0"
+                    style={{ width: 18, height: 18 }}
+                    aria-hidden="true"
+                  />
                 )}
               </div>
 

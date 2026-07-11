@@ -673,7 +673,7 @@ function PolicyForm({
               </div>
               {selected && (
                 <div className="overflow-hidden rounded-card border border-border bg-surface">
-                  <div className="grid grid-cols-5 gap-2 border-b border-border px-3 py-2 text-section uppercase tracking-wide text-text-secondary">
+                  <div className="grid grid-cols-[2.5rem_2rem_4.5rem_1fr_1fr] gap-2 border-b border-border px-3 py-2 text-section uppercase tracking-wide text-text-secondary">
                     <span>Age</span>
                     <span>Yr</span>
                     <span className="text-right">Premium</span>
@@ -689,7 +689,7 @@ function PolicyForm({
                     return (
                       <div
                         key={p.age}
-                        className="grid grid-cols-5 gap-2 border-b border-border px-3 py-1.5 text-label text-text-primary last:border-b-0"
+                        className="grid grid-cols-[2.5rem_2rem_4.5rem_1fr_1fr] gap-2 border-b border-border px-3 py-1.5 text-label text-text-primary last:border-b-0"
                       >
                         <span>{p.age}</span>
                         <span className="text-text-secondary">{p.policy_year}</span>
