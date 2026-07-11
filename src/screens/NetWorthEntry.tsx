@@ -919,11 +919,11 @@ function InsuranceRows({
               >
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-body text-text-primary">
-                    {r.name}
-                  </span>
-                  <span className="block truncate text-caption text-text-secondary">
                     {r.details.policy_number} · yr {r.details.policy_year}
                     {r.details.as_of_year ? ` · as of yr ${r.details.as_of_year}` : ''}
+                  </span>
+                  <span className="block truncate text-caption text-text-secondary">
+                    {providerLabel(providers, provider)} · {r.name}
                   </span>
                 </span>
                 <span className="shrink-0 text-body text-text-secondary">

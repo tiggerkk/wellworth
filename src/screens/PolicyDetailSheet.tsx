@@ -45,7 +45,7 @@ export function PolicyDetailSheet() {
           <IconX size={22} className="text-text-secondary" />
         </button>
         <h1 className="line-clamp-2 flex-1 text-heading font-medium text-text-primary">
-          {data?.policy.policy_name || 'Policy'}
+          Insurance Policy Detail
         </h1>
         {data && (
           <button

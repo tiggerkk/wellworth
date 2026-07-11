@@ -82,9 +82,9 @@ export function PolicyDetail({
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <p className="text-body text-text-primary">{policy.policy_name}</p>
+        <p className="text-body text-text-primary">{policy.policy_number}</p>
         <p className="text-caption text-text-secondary">
-          {providerLabel ?? policy.provider} · {policy.policy_number} · {ccy}
+          {providerLabel ?? policy.provider} · {policy.policy_name}
         </p>
       </div>
 

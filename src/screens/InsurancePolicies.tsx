@@ -200,14 +200,14 @@ export function InsurancePolicies() {
                 >
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-body text-text-primary">
-                      {policy.policy_name || policy.policy_number}
-                    </span>
-                    <span className="block truncate text-caption text-text-secondary">
                       {policy.policy_number}
                       {policy.start_date ? ` · ${formatFullDate(policy.start_date)}` : ''}
                     </span>
+                    <span className="block truncate text-caption text-text-secondary">
+                      {providerLabel(providers, policy.provider)} ·{' '}
+                      {policy.policy_name || policy.policy_number}
+                    </span>
                     <span className="mt-1 flex flex-wrap items-center gap-1.5 text-caption text-text-tertiary">
-                      <span>{providerLabel(providers, policy.provider)}</span>
                       {policy.termination_kind === 'surrendered' && (
                         <StatusChip
                           label="Surrendered"
