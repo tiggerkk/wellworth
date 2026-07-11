@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { IconUpload, IconX } from '@tabler/icons-react'
 import { Sheet } from '../components/Sheet'
@@ -8,7 +8,12 @@ import { useAuth } from '../auth/AuthProvider'
 import { useProfile } from '../hooks/useProfile'
 import { parseCsv } from '../lib/csv'
 import { parseInsuranceBulkCsv, type InsuranceBulkResult } from '../lib/insurance-import'
-import { upsertBulkPolicies } from '../data/insurance'
+import {
+  planBulkImport,
+  applyBulkImport,
+  type BulkImportItem,
+  type BulkImportPlan,
+} from '../data/insurance'
 import { bumpNetWorth } from '../lib/networth-refresh'
 import { errorMessage } from '../lib/errors'
 import { CURRENCIES, type Currency } from '../lib/networth'
@@ -18,10 +23,21 @@ import { todayLocal } from '../lib/date'
 const MAX_MESSAGES = 20
 const CCY_OPTIONS = CURRENCIES.map((c) => ({ value: c, label: c }))
 
+type BucketKey = 'created' | 'added' | 'untouched'
+
+interface DoneStats {
+  created: number
+  added: number
+  untouched: number
+}
+
 /**
- * One-time BULK SEED of the insurance policy catalogue from the wide spreadsheet (saved as CSV).
- * Confirms each provider's currency (defaults CHUBB/BOC = USD, Manulife = HKD), then upserts every
- * numbered policy block + its Original schedule. Re-running replaces the seeded schedules.
+ * BULK import of the insurance policy catalogue from the wide spreadsheet (saved as CSV).
+ * Confirms each provider's currency, previews what will change (new policies / new schedule
+ * versions / already-up-to-date), then applies it on IMPORT: creates policies that don't exist
+ * yet (with an Original schedule), adds a new schedule version to existing policies whose CSV
+ * date is new, and leaves everything else untouched — it never deletes or replaces an existing
+ * schedule. To force a re-import of a specific schedule, delete it manually first.
  */
 export function ImportInsuranceBulkSheet() {
   const navigate = useNavigate()
@@ -37,7 +53,16 @@ export function ImportInsuranceBulkSheet() {
   const [currencies, setCurrencies] = useState<Record<string, Currency>>({})
   const [importing, setImporting] = useState(false)
   const [importError, setImportError] = useState<string | null>(null)
-  const [doneCount, setDoneCount] = useState<number | null>(null)
+  const [doneStats, setDoneStats] = useState<DoneStats | null>(null)
+
+  const [plan, setPlan] = useState<BulkImportPlan | null>(null)
+  const [planLoading, setPlanLoading] = useState(false)
+  const [planError, setPlanError] = useState<string | null>(null)
+  const [openBucket, setOpenBucket] = useState<Record<BucketKey, boolean>>({
+    created: true,
+    added: true,
+    untouched: false,
+  })
 
   // Owner's current insurance age drives maturity auto-detection (a schedule ending before it =
   // matured). Skipped (NaN) when no birthday is set.
@@ -51,9 +76,34 @@ export function ImportInsuranceBulkSheet() {
     ? parseInsuranceBulkCsv(raw, providers, currencies, currentAge)
     : null
 
+  const policies = result?.policies ?? []
+
+  // Preview (read-only) against the DB whenever the parsed policies would change. Guarded against
+  // out-of-order responses with a cancelled flag, since this fires on every currency toggle too.
+  useEffect(() => {
+    if (!userId || policies.length === 0) {
+      return
+    }
+    let cancelled = false
+    planBulkImport(userId, policies)
+      .then((p) => {
+        if (!cancelled) setPlan(p)
+      })
+      .catch((e) => {
+        if (!cancelled) setPlanError(errorMessage(e, 'Could not preview the import.'))
+      })
+      .finally(() => {
+        if (!cancelled) setPlanLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, raw, currencies])
+
   async function onFile(file: File) {
     setImportError(null)
-    setDoneCount(null)
+    setDoneStats(null)
     try {
       const text = await file.text()
       setRaw(parseCsv(text))
@@ -64,7 +114,6 @@ export function ImportInsuranceBulkSheet() {
     }
   }
 
-  const policies = result?.policies ?? []
   const presentProviders = providers.filter((p) =>
     policies.some((pol) => pol.provider === p.key),
   )
@@ -74,9 +123,9 @@ export function ImportInsuranceBulkSheet() {
     setImporting(true)
     setImportError(null)
     try {
-      const n = await upsertBulkPolicies(userId, policies)
+      const stats = await applyBulkImport(userId, policies)
       bumpNetWorth()
-      setDoneCount(n)
+      setDoneStats(stats)
     } catch (e) {
       setImportError(errorMessage(e, 'Import failed.'))
     } finally {
@@ -99,13 +148,21 @@ export function ImportInsuranceBulkSheet() {
       </header>
 
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
-        {doneCount !== null ? (
+        {doneStats !== null ? (
           <div className="flex flex-col gap-2">
-            <p className="text-body font-medium text-text-primary">
-              Imported {doneCount} polic{doneCount === 1 ? 'y' : 'ies'}.
-            </p>
+            <p className="text-body font-medium text-text-primary">Import complete.</p>
+            <ul className="flex flex-col gap-1 text-body text-text-secondary">
+              <li>
+                {doneStats.created} new polic{doneStats.created === 1 ? 'y' : 'ies'}{' '}
+                created
+              </li>
+              <li>
+                {doneStats.added} new schedule{doneStats.added === 1 ? '' : 's'} added
+              </li>
+              <li>{doneStats.untouched} already up to date — left untouched</li>
+            </ul>
             <p className="text-body text-text-secondary">
-              They’re in Insurance Policies and resolve into Monthly Entry by age.
+              They're in Insurance Policies and resolve into Monthly Entry by age.
             </p>
           </div>
         ) : (
@@ -115,7 +172,10 @@ export function ImportInsuranceBulkSheet() {
               <code className="text-text-primary">
                 templates/insurance-import-guide.md
               </code>
-              ). Blocks without a policy number are skipped.
+              ). Blocks without a policy number are skipped. Existing schedules are never
+              deleted or replaced — a policy number new to the sheet creates a policy, a
+              date new to an existing policy adds a schedule, and anything already on file
+              is left alone.
             </p>
 
             <input
@@ -144,11 +204,48 @@ export function ImportInsuranceBulkSheet() {
 
             {result && (
               <div className="flex flex-col gap-3">
-                <div className="rounded-card border border-border bg-surface px-4 py-3 text-body text-text-primary">
-                  {policies.length === 0
-                    ? 'No importable policy blocks found.'
-                    : `Ready to import ${policies.length} ${policies.length === 1 ? 'policy' : 'policies'}.`}
-                </div>
+                {policies.length === 0 ? (
+                  <div className="rounded-card border border-border bg-surface px-4 py-3 text-body text-text-primary">
+                    No importable policy blocks found.
+                  </div>
+                ) : (
+                  <>
+                    {planLoading && (
+                      <p className="text-caption text-text-secondary">
+                        Checking against your existing policies…
+                      </p>
+                    )}
+                    {planError && <p className="text-caption text-danger">{planError}</p>}
+                    {plan && (
+                      <div className="flex flex-col gap-2">
+                        <PlanBucket
+                          label="New policies"
+                          items={plan.toCreate}
+                          open={openBucket.created}
+                          onToggle={() =>
+                            setOpenBucket((s) => ({ ...s, created: !s.created }))
+                          }
+                        />
+                        <PlanBucket
+                          label="New schedules"
+                          items={plan.toAddSchedule}
+                          open={openBucket.added}
+                          onToggle={() =>
+                            setOpenBucket((s) => ({ ...s, added: !s.added }))
+                          }
+                        />
+                        <PlanBucket
+                          label="Already up to date"
+                          items={plan.untouched}
+                          open={openBucket.untouched}
+                          onToggle={() =>
+                            setOpenBucket((s) => ({ ...s, untouched: !s.untouched }))
+                          }
+                        />
+                      </div>
+                    )}
+                  </>
+                )}
 
                 {presentProviders.length > 0 && (
                   <div className="flex flex-col gap-2">
@@ -198,24 +295,56 @@ export function ImportInsuranceBulkSheet() {
       </div>
 
       <div className="border-t border-border p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
-        {doneCount !== null ? (
+        {doneStats !== null ? (
           <PrimaryButton onClick={() => navigate(-1)} className="w-full">
             DONE
           </PrimaryButton>
         ) : (
           <PrimaryButton
             onClick={() => void runImport()}
-            disabled={importing || policies.length === 0}
+            disabled={importing || planLoading || policies.length === 0}
             className="w-full"
           >
-            {importing
-              ? 'Importing…'
-              : policies.length > 0
-                ? `IMPORT ${policies.length} POLIC${policies.length === 1 ? 'Y' : 'IES'}`
-                : 'IMPORT'}
+            {importing ? 'Importing…' : 'IMPORT'}
           </PrimaryButton>
         )}
       </div>
     </Sheet>
+  )
+}
+
+function PlanBucket({
+  label,
+  items,
+  open,
+  onToggle,
+}: {
+  label: string
+  items: BulkImportItem[]
+  open: boolean
+  onToggle: () => void
+}) {
+  if (items.length === 0) return null
+  return (
+    <div className="rounded-card border border-border bg-surface px-4 py-3">
+      <button
+        onClick={onToggle}
+        className="flex w-full items-center justify-between text-body text-text-primary"
+      >
+        <span>
+          {label} ({items.length})
+        </span>
+        <span className="text-text-secondary">{open ? '−' : '+'}</span>
+      </button>
+      {open && (
+        <ul className="mt-2 flex flex-col gap-1 text-caption text-text-secondary">
+          {items.map((i) => (
+            <li key={i.policy_number}>
+              {i.policy_name || i.policy_number} ({i.policy_number})
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   )
 }

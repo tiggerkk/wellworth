@@ -305,7 +305,8 @@ Policy Year · Premium · Cash Value (native→HKD)` with an "as of yr N" tag wh
   can't be deleted; deleting an in-use provider reassigns its policies first. `insurance_policy.provider`
   has **no DB CHECK** — it stores the stable `key` (orphan keys still render via the raw-key fallback).
 - **IMPORT → Enable Bulk Insurance Import** toggle (`networth_bulk_insurance_import_enabled`) →
-  `Import CSV Insurance` (one-time bulk seed). Manual / fund / single-policy imports are always enabled.
+  `Import CSV Insurance` (can re-run repeatedly which creates new policies, adds new schedules for new dates,
+  leaves everything else alone). Manual / fund / single-policy imports are always enabled.
 
 ### Imports
 
@@ -321,10 +322,12 @@ Policy Year · Premium · Cash Value (native→HKD)` with an "as of yr N" tag wh
 - **Insurance bulk** (`src/lib/insurance-import.ts`): wide sheet, 4-col blocks from col B, provider
   carried forward (label matched to the configured provider list — an **unknown provider skips its
   block** with an error until you add it in Settings), blocks without a policy number skipped, trailing
-  total columns dropped; confirms per-provider currency (seeded from each provider's `defaultCurrency`;
-  HKD/CNY/USD). **Header rows are now provider · name · number:date · notes · sub-header** (a
-  per-policy **Notes** row before the sub-header). **Maturity auto-detected** (`detectMaturity`): a
-  block whose schedule ends before the owner's current age (from `profile.birthday`) → Matured,
+  total columns dropped. Existing schedules are never deleted or replaced — a policy number new to the
+  sheet creates a policy, a date new to an existing policy adds a schedule, and anything already on file
+  is left alone. Before IMPORT, a preview breakdown (created/added/untouched with expandable lists) is shown,
+  lets user confirm per-provider currency (seeded from each provider's `defaultCurrency`; HKD/CNY/USD).
+  **Header rows are provider · name · number:date · notes · sub-header**. **Maturity auto-detected** (`detectMaturity`):
+  a block whose schedule ends before the owner's current age (from `profile.birthday`) → Matured,
   proceeds = last cash value, date = start month/day + year `start_year + last policy_year`.
 - **Insurance single**: header (Provider, Policy Number, optional Policy Name / Start Date / **Notes**)
   - the `Age, Policy Year, Total Premium Paid, Cash Value, Surrender Gain %/Yr` table (Surrender Gain

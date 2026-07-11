@@ -251,78 +251,178 @@ export async function deleteSchedule(
   if (pErr) throw pErr
 }
 
+/** Minimal identity for a plan bucket — enough to render an expandable list in the UI. */
+export interface BulkImportItem {
+  policy_number: string
+  policy_name: string
+  provider: string
+}
+
+/** Read-only classification of a bulk CSV against the current DB state. No writes. */
+export interface BulkImportPlan {
+  /** Policy number not found in the DB — will create the policy + an Original schedule. */
+  toCreate: BulkImportItem[]
+  /** Policy exists; its CSV date isn't among its existing schedules — will add an update schedule. */
+  toAddSchedule: BulkImportItem[]
+  /** Policy exists and its CSV date already matches an existing schedule — left alone entirely. */
+  untouched: BulkImportItem[]
+}
+
+type PolicyScheduleDatesRow = {
+  id: string
+  policy_number: string
+  insurance_schedule: { effective_date: string | null }[] | null
+}
+
 /**
- * One-time BULK SEED: upsert each parsed policy (conflict on user_id+policy_number) and (re)seed
- * a single Original schedule with its points. Re-running replaces the seeded schedules, never
- * duplicates. Batched per table (F16a).
+ * Shared classification step for both `planBulkImport` (preview) and `applyBulkImport` (write):
+ * one query fetching the CSV's policy numbers + each existing policy's schedule effective_dates,
+ * then bucketing every parsed policy into create / add-schedule / untouched.
  */
-export async function upsertBulkPolicies(
+async function classifyBulkImport(
   userId: string,
   parsed: ParsedPolicy[],
-): Promise<number> {
-  if (parsed.length === 0) return 0
+): Promise<{ plan: BulkImportPlan; existingIdByNumber: Map<string, string> }> {
+  const plan: BulkImportPlan = { toCreate: [], toAddSchedule: [], untouched: [] }
+  const existingIdByNumber = new Map<string, string>()
+  if (parsed.length === 0) return { plan, existingIdByNumber }
 
-  const { data: upserted, error: uErr } = await supabase
+  const { data, error } = await supabase
     .from('insurance_policy')
-    .upsert(
-      parsed.map((p) => ({
-        user_id: userId,
-        provider: p.provider,
-        policy_number: p.policy_number,
-        policy_name: p.policy_name,
-        start_date: p.start_date,
-        currency: p.currency,
-        notes: p.notes,
-        termination_kind: p.termination_kind,
-        termination_date: p.termination_date,
-        termination_effective_date: p.termination_effective_date,
-        termination_proceeds: p.termination_proceeds,
-      })),
-      { onConflict: 'user_id,policy_number' },
+    .select('id, policy_number, insurance_schedule(effective_date)')
+    .eq('user_id', userId)
+    .in(
+      'policy_number',
+      parsed.map((p) => p.policy_number),
     )
-    .select('id, policy_number')
-  if (uErr) throw uErr
+  if (error) throw error
 
-  const idByNumber = new Map(upserted!.map((r) => [r.policy_number, r.id]))
-  const policyIds = [...idByNumber.values()]
-
-  // Replace any existing schedules for these policies (the bulk seed owns the Original).
-  const { error: delErr } = await supabase
-    .from('insurance_schedule')
-    .delete()
-    .in('policy_id', policyIds)
-  if (delErr) throw delErr
-
-  const { data: schedules, error: sErr } = await supabase
-    .from('insurance_schedule')
-    .insert(
-      parsed.map((p) => ({
-        policy_id: idByNumber.get(p.policy_number)!,
-        kind: 'original' as const,
-        first_year: p.first_year,
-        effective_date: p.start_date,
-      })),
+  const datesByNumber = new Map<string, Set<string | null>>()
+  for (const row of (data ?? []) as PolicyScheduleDatesRow[]) {
+    existingIdByNumber.set(row.policy_number, row.id)
+    datesByNumber.set(
+      row.policy_number,
+      new Set((row.insurance_schedule ?? []).map((s) => s.effective_date)),
     )
-    .select('id, policy_id')
-  if (sErr) throw sErr
-
-  const scheduleByPolicy = new Map(schedules!.map((s) => [s.policy_id, s.id]))
-  const pointRows = parsed.flatMap((p) =>
-    p.points.map((pt) => ({
-      schedule_id: scheduleByPolicy.get(idByNumber.get(p.policy_number)!)!,
-      age: pt.age,
-      policy_year: pt.policy_year,
-      total_premium_paid: pt.total_premium_paid,
-      cash_value: pt.cash_value,
-    })),
-  )
-  // Chunk the points insert to stay well within statement limits.
-  for (let i = 0; i < pointRows.length; i += 500) {
-    const { error: pErr } = await supabase
-      .from('insurance_schedule_point')
-      .insert(pointRows.slice(i, i + 500))
-    if (pErr) throw pErr
   }
 
-  return parsed.length
+  for (const p of parsed) {
+    const item: BulkImportItem = {
+      policy_number: p.policy_number,
+      policy_name: p.policy_name,
+      provider: p.provider,
+    }
+    if (!existingIdByNumber.has(p.policy_number)) {
+      plan.toCreate.push(item)
+    } else if (datesByNumber.get(p.policy_number)?.has(p.start_date)) {
+      plan.untouched.push(item)
+    } else {
+      plan.toAddSchedule.push(item)
+    }
+  }
+  return { plan, existingIdByNumber }
+}
+
+/** Read-only preview of what `applyBulkImport` would do for this CSV — no writes. */
+export async function planBulkImport(
+  userId: string,
+  parsed: ParsedPolicy[],
+): Promise<BulkImportPlan> {
+  const { plan } = await classifyBulkImport(userId, parsed)
+  return plan
+}
+
+/**
+ * Apply a bulk CSV import, never deleting or replacing existing schedules:
+ *  - Policy number not in the DB yet → create the policy (all fields) + an Original schedule.
+ *  - Policy exists, CSV date isn't among its existing schedules → add a new `update` schedule
+ *    (points only — policy-level fields are never touched on an existing policy).
+ *  - Policy exists, CSV date already matches an existing schedule → left untouched, no write at
+ *    all. (To force a re-import of that schedule, delete it manually first.)
+ * Re-classifies against the DB at write time rather than trusting an earlier preview, in case the
+ * DB changed between preview and this call. Batched per table (F16a).
+ */
+export async function applyBulkImport(
+  userId: string,
+  parsed: ParsedPolicy[],
+): Promise<{ created: number; added: number; untouched: number }> {
+  if (parsed.length === 0) return { created: 0, added: 0, untouched: 0 }
+
+  const { plan, existingIdByNumber } = await classifyBulkImport(userId, parsed)
+  const createNumbers = new Set(plan.toCreate.map((i) => i.policy_number))
+  const addNumbers = new Set(plan.toAddSchedule.map((i) => i.policy_number))
+  const toCreate = parsed.filter((p) => createNumbers.has(p.policy_number))
+  const toAddSchedule = parsed.filter((p) => addNumbers.has(p.policy_number))
+
+  if (toCreate.length > 0) {
+    const { data: inserted, error: iErr } = await supabase
+      .from('insurance_policy')
+      .insert(
+        toCreate.map((p) => ({
+          user_id: userId,
+          provider: p.provider,
+          policy_number: p.policy_number,
+          policy_name: p.policy_name,
+          start_date: p.start_date,
+          currency: p.currency,
+          notes: p.notes,
+          termination_kind: p.termination_kind,
+          termination_date: p.termination_date,
+          termination_effective_date: p.termination_effective_date,
+          termination_proceeds: p.termination_proceeds,
+        })),
+      )
+      .select('id, policy_number')
+    if (iErr) throw iErr
+
+    const createdIdByNumber = new Map(inserted!.map((r) => [r.policy_number, r.id]))
+
+    const { data: schedules, error: sErr } = await supabase
+      .from('insurance_schedule')
+      .insert(
+        toCreate.map((p) => ({
+          policy_id: createdIdByNumber.get(p.policy_number)!,
+          kind: 'original' as const,
+          first_year: p.first_year,
+          effective_date: p.start_date,
+        })),
+      )
+      .select('id, policy_id')
+    if (sErr) throw sErr
+
+    const scheduleByPolicyId = new Map(schedules!.map((s) => [s.policy_id, s.id]))
+    const pointRows = toCreate.flatMap((p) => {
+      const scheduleId = scheduleByPolicyId.get(createdIdByNumber.get(p.policy_number)!)!
+      return p.points.map((pt) => ({
+        schedule_id: scheduleId,
+        age: pt.age,
+        policy_year: pt.policy_year,
+        total_premium_paid: pt.total_premium_paid,
+        cash_value: pt.cash_value,
+      }))
+    })
+    // Chunk the points insert to stay well within statement limits.
+    for (let i = 0; i < pointRows.length; i += 500) {
+      const { error: pErr } = await supabase
+        .from('insurance_schedule_point')
+        .insert(pointRows.slice(i, i + 500))
+      if (pErr) throw pErr
+    }
+  }
+
+  for (const p of toAddSchedule) {
+    const policyId = existingIdByNumber.get(p.policy_number)!
+    await addScheduleVersion(policyId, {
+      kind: 'update',
+      first_year: p.first_year,
+      effective_date: p.start_date,
+      points: p.points,
+    })
+  }
+
+  return {
+    created: toCreate.length,
+    added: toAddSchedule.length,
+    untouched: plan.untouched.length,
+  }
 }
