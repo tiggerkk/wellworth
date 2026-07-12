@@ -6,6 +6,12 @@ import { useAsync } from '../hooks/useAsync'
 import { useShowsVersion, bumpShows } from '../lib/shows-refresh'
 import { listShows, updateShow } from '../data/show'
 import {
+  type ShowType,
+  type ShowStatus,
+  SHOW_STATUS_LABELS,
+  SHOW_STATUS_CHIP,
+} from '../constants/shows'
+import {
   countWatchedThisYear,
   favoriteShows,
   isUpNext,
@@ -13,13 +19,9 @@ import {
   markWatched,
   progressLabel,
   recentlyWatched,
-  SHOW_STATUS_CHIP,
-  SHOW_STATUS_LABELS,
   startWatching,
   usesEpisodes,
   type ShowRow,
-  type ShowStatus,
-  type ShowType,
   type ShowUpdate,
 } from '../lib/shows'
 import { formatMonthDay, todayLocal } from '../lib/date'

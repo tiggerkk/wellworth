@@ -58,7 +58,7 @@ src/
                      # date, food-api, off-api, food-search, food-import, food-match-cache,
                      # diary-refresh, diary-clipboard, toast, csv,
                      # networth, fx, networth-refresh, networth-import, fund-import, insurance-import,
-                     # insurance-view, shows, shows-refresh, tmdb-api, shows-import, show-match-cache,
+                     # insurance-view, shows, shows-refresh, shows-tmdb-api, shows-import, shows-match-cache,
                      # books, books-refresh, books-api, books-import, book-match-cache,
                      # match-cache (shared importer match-cache factory), quotes, quotes-refresh,
                      # quotes-import, travel, travel-config, travel-refresh, travel-stats,

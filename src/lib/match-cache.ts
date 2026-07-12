@@ -2,7 +2,7 @@
  * Generic `localStorage`-backed cache of resolved external-API matches for the CSV importers, so
  * re-importing the **same** file (the common case when truncating a table / `supabase db reset
  * --linked` to re-test) skips the network on a hit. Each importer creates one instance with its own
- * storage key + key function; see `book-match-cache.ts` (Google Books) and `show-match-cache.ts`
+ * storage key + key function; see `books-match-cache.ts` (Google Books) and `shows-match-cache.ts`
  * (TMDB).
  *
  * Design notes shared by every instance:

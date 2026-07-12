@@ -6,8 +6,8 @@ import {
   setCachedShowMatch,
   showMatchCacheSize,
   showMatchKey,
-} from './show-match-cache'
-import type { ShowMetadata } from './tmdb-api'
+} from './shows-match-cache'
+import type { ShowMetadata } from './shows-tmdb-api'
 
 const meta = (title: string): ShowMetadata => ({
   title,

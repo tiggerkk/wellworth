@@ -1,6 +1,6 @@
-import type { ShowMetadata } from './tmdb-api'
+import type { ShowMetadata } from './shows-tmdb-api'
 import { normMatch } from './title-match'
-import type { ShowType } from './shows'
+import type { ShowType } from '../constants/shows'
 import { createMatchCache } from './match-cache'
 
 /**
@@ -21,7 +21,7 @@ interface ShowKey {
 }
 
 const cache = createMatchCache<ShowKey, ShowMetadata>({
-  storageKey: 'wellworth:show-match-cache',
+  storageKey: 'wellworth:shows-match-cache',
   version: 1,
   keyFn: ({ type, title, year }) => `${type}|${normMatch(title)}|${year ?? ''}`,
 })

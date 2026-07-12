@@ -1,6 +1,6 @@
 /**
  * Shared, pure title-matching primitives used by both the Google Books client (`books-api.ts`) and
- * the TMDB client (`tmdb-api.ts`) to rank remote search hits and judge importer confidence. Kept
+ * the TMDB client (`shows-tmdb-api.ts`) to rank remote search hits and judge importer confidence. Kept
  * free of either domain so both can depend on it without coupling Shows↔Books.
  */
 import { foldZh } from './zh-fold'

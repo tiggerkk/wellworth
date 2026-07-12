@@ -1,7 +1,8 @@
 import { containsCjk } from './cjk'
 import { searchZhVariants } from './zh-query'
 import { normMatch, titleTier } from './title-match'
-import type { ShowRow, ShowType } from './shows'
+import type { ShowRow } from './shows'
+import type { ShowType } from '../constants/shows'
 
 export { containsCjk }
 

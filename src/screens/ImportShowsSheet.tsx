@@ -16,7 +16,8 @@ import {
   type ParsedShowRow,
   type ShowsImportResult,
 } from '../lib/shows-import'
-import { SHOW_STATUS_CHIP, SHOW_STATUS_LABELS, usesEpisodes } from '../lib/shows'
+import { SHOW_STATUS_CHIP, SHOW_STATUS_LABELS } from '../constants/shows'
+import { usesEpisodes } from '../lib/shows'
 import {
   getTitleDetails,
   isConfidentTitleMatch,
@@ -26,12 +27,12 @@ import {
   tmdbLanguage,
   type ShowMetadata,
   type TmdbSearchResult,
-} from '../lib/tmdb-api'
+} from '../lib/shows-tmdb-api'
 import {
   getCachedShowMatch,
   removeCachedShowMatch,
   setCachedShowMatch,
-} from '../lib/show-match-cache'
+} from '../lib/shows-match-cache'
 import { saveImportedShows } from '../data/show'
 import { bumpShows } from '../lib/shows-refresh'
 import { errorMessage } from '../lib/errors'

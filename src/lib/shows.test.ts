@@ -21,7 +21,7 @@ import {
   type LibraryCriteria,
   type ShowRow,
 } from './shows'
-import type { ShowMetadata } from './tmdb-api'
+import type { ShowMetadata } from './shows-tmdb-api'
 
 function makeShow(p: Partial<ShowRow>): ShowRow {
   return {

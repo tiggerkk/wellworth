@@ -7,17 +7,18 @@ import { useSessionState } from '../hooks/useSessionState'
 import { useShowsVersion, bumpShows } from '../lib/shows-refresh'
 import { deleteShow, listShows } from '../data/show'
 import {
+  type ShowType,
+  SHOW_STATUSES,
+  type ShowStatus,
+  SHOW_STATUS_LABELS,
+  SHOW_STATUS_CHIP,
+} from '../constants/shows'
+import { LGBTQ_REPS, LGBTQ_REP_LABELS } from '../constants/lgbtq'
+import {
   applyLibraryView,
   DEFAULT_LIBRARY_CRITERIA,
-  LGBTQ_REP_LABELS,
-  LGBTQ_REPS,
-  SHOW_STATUS_CHIP,
-  SHOW_STATUS_LABELS,
-  SHOW_STATUSES,
   showGenres,
   type LibraryCriteria,
-  type ShowStatus,
-  type ShowType,
   type SortField,
 } from '../lib/shows'
 import { DYNASTIES, DYNASTY_CHIP } from '../constants/dynasty'

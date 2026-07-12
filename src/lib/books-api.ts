@@ -1,11 +1,11 @@
 /**
  * Google Books (primary) + Open Library (fallback) client + pure field mapping. Called directly
  * from the browser — both APIs are CORS-enabled. Two-step, on-demand only: search → details on
- * select. Only the pure mappers below are unit-tested (matching tmdb-api / food-api / off-api / fx);
+ * select. Only the pure mappers below are unit-tested (matching shows-tmdb-api / food-api / off-api / fx);
  * the network calls are not. Nothing is persisted here — the Entry form writes mapped fields into a
  * `book` row only on CREATE/SAVE.
  *
- * Unlike `tmdb-api.ts`, the Google Books API key is **optional** — the API works keyless (at a lower
+ * Unlike `shows-tmdb-api.ts`, the Google Books API key is **optional** — the API works keyless (at a lower
  * quota), so `googleKeyParam()` never throws; it just appends `&key=…` when one is configured.
  */
 

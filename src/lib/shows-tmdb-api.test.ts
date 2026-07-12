@@ -11,7 +11,7 @@ import {
   pickYear,
   rankTitleResults,
   type TmdbSearchResult,
-} from './tmdb-api'
+} from './shows-tmdb-api'
 
 const hit = (p: Partial<TmdbSearchResult>): TmdbSearchResult => ({
   tmdbId: p.tmdbId ?? Math.abs((p.title ?? 'x').length + (p.year ?? 0)),

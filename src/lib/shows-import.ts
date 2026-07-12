@@ -10,19 +10,17 @@
  * multi-line values in quotes). `created_at` is frozen to `start_date`; `updated_at` is left to the DB.
  */
 import {
-  LGBTQ_REPS,
-  SHOW_STATUSES,
   SHOW_TYPES,
-  usesEpisodes,
-  type LgbtqRep,
-  type ShowInsert,
-  type ShowStatus,
   type ShowType,
-} from './shows'
-import type { ShowMetadata } from './tmdb-api'
+  SHOW_STATUSES,
+  type ShowStatus,
+} from '../constants/shows'
+import { LGBTQ_REPS, type LgbtqRep } from '../constants/lgbtq'
+import { DYNASTIES, type Dynasty } from '../constants/dynasty'
+import { usesEpisodes, type ShowInsert } from './shows'
+import type { ShowMetadata } from './shows-tmdb-api'
 import type { IsoDate } from './date'
 import { containsCjk } from './cjk'
-import { DYNASTIES, type Dynasty } from '../constants/dynasty'
 
 const REQUIRED_COLUMNS = ['title', 'type', 'status']
 

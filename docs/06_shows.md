@@ -130,8 +130,8 @@ Columns: `title,type,status,rating,lgbtq_rep,dynasty,watched_seasons,watched_epi
   `watched_seasons`), resolved to that season's TMDB episode count at import (left blank if TMDB has
   no count); used elsewhere, the row is skipped.
 
-**Match cache (`src/lib/show-match-cache.ts`, a `match-cache.ts` instance shared with Books):**
-resolved matches are cached in **`localStorage`** (one key, `wellworth:show-match-cache`) keyed on
+**Match cache (`src/lib/shows-match-cache.ts`, a `match-cache.ts` instance shared with Books):**
+resolved matches are cached in **`localStorage`** (one key, `wellworth:shows-match-cache`) keyed on
 `type|normMatch(title)|year`, so re-importing the **same** file (e.g. after `supabase db reset
 --linked` while testing) **skips TMDB entirely** on a hit and resolves instantly. Unlike Books this is
 a **performance** aid, not a quota guard (TMDB has no per-day cap). Only **positive** matches are
@@ -173,7 +173,7 @@ Full guide: `templates/shows-import-guide.md`.
 **TMDB** (`api.themoviedb.org/3`): `VITE_TMDB_API_KEY` (public v3 key, client-side).
 
 - **CJK-aware**: a query containing CJK is sent with `language=zh-CN` (via `containsCjk` +
-  `tmdbLanguage` in `src/lib/tmdb-api.ts`). Both scripts get a query via `searchZhVariants`
+  `tmdbLanguage` in `src/lib/shows-tmdb-api.ts`). Both scripts get a query via `searchZhVariants`
   (see `docs/02_tech_spec.md` → Shared external APIs) and results are merged.
 - **Documentary → `/tv` endpoint**: `endpointFor` maps `documentary` to `/tv` so multi-part docs
   get seasons/episodes.

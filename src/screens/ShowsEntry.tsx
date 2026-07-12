@@ -19,26 +19,26 @@ import { createShow, deleteShow, getShow, updateShow } from '../data/show'
 import { numStr } from '../lib/quantity'
 import { FIELD_CLASS as inputClass } from '../constants/forms'
 import {
+  SHOW_TYPES,
+  type ShowType,
+  SHOW_TYPE_LABELS,
+  type ShowStatus,
+} from '../constants/shows'
+import { LGBTQ_REPS, type LgbtqRep, LGBTQ_REP_LABELS } from '../constants/lgbtq'
+import {
   buildRefreshPatch,
   isAbsoluteUrl,
   isFieldVisible,
-  LGBTQ_REP_LABELS,
-  LGBTQ_REPS,
   posterUrl,
-  SHOW_TYPE_LABELS,
-  SHOW_TYPES,
   usesEpisodes,
-  type LgbtqRep,
   type ShowRow,
-  type ShowStatus,
-  type ShowType,
 } from '../lib/shows'
 import {
   getTitleDetails,
   refreshFromTmdb,
   tmdbLanguage,
   type TmdbSearchResult,
-} from '../lib/tmdb-api'
+} from '../lib/shows-tmdb-api'
 import { containsCjk } from '../lib/cjk'
 import { DEFAULT_DYNASTY, DYNASTIES, type Dynasty } from '../constants/dynasty'
 import { useProfile } from '../hooks/useProfile'

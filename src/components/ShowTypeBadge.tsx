@@ -1,5 +1,5 @@
 import { IconDeviceTv, IconMovie, IconVideo } from '@tabler/icons-react'
-import { SHOW_TYPE_LABELS, type ShowType } from '../lib/shows'
+import { SHOW_TYPE_LABELS, type ShowType } from '../constants/shows'
 
 const TYPE_ICON = { tv: IconDeviceTv, movie: IconMovie, documentary: IconVideo } as const
 

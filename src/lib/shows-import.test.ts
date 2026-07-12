@@ -5,7 +5,7 @@ import {
   parseShowsCsv,
   type ParsedShowRow,
 } from './shows-import'
-import type { ShowMetadata } from './tmdb-api'
+import type { ShowMetadata } from './shows-tmdb-api'
 
 const HEADER =
   'title,type,status,rating,lgbtq_rep,watched_seasons,watched_episodes,is_favorite,start_date,end_date'

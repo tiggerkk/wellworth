@@ -9,8 +9,8 @@ import {
   rankTitleResults,
   searchTitles,
   type TmdbSearchResult,
-} from '../lib/tmdb-api'
-import { SHOW_TYPE_LABELS, type ShowType } from '../lib/shows'
+} from '../lib/shows-tmdb-api'
+import { SHOW_TYPE_LABELS, type ShowType } from '../constants/shows'
 
 interface TitleSearchSheetProps {
   type: ShowType

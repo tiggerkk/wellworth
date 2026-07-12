@@ -1,57 +1,23 @@
 /**
- * Shows (TV & movies) domain constants + pure helpers. UI-framework-free so it's unit-tested
- * and shared by the Entry form, the Library, and the (M4) Dashboard. DB access lives in
- * `src/data/show.ts`; TMDB mapping will live in `src/lib/tmdb-api.ts` (M3).
+ * Shows (TV & movies)  domain helpers — UI-framework-free so they're unit-tested and shared by Shows functions.
+ * DB access lives in `src/data/show.ts`; enums + labels live in `src/constants/shows.ts`;
+ * TMDB mapping lives in `src/lib/shows-tmdb-api.ts`.
  */
 import type { Tables, TablesInsert, TablesUpdate } from '../types/database'
 import type { IsoDate } from './date'
-import type { ShowMetadata } from './tmdb-api'
+import type { ShowMetadata } from './shows-tmdb-api'
 import { type Dynasty, dynastySortRank } from '../constants/dynasty'
+import { type LgbtqRep } from '../constants/lgbtq'
+import { type ShowType, type ShowStatus } from '../constants/shows'
 import { foldZh } from './zh-fold'
 
 export type ShowRow = Tables<'show'>
 export type ShowInsert = TablesInsert<'show'>
 export type ShowUpdate = TablesUpdate<'show'>
 
-// The CHECK-constrained enums come through the generated types as plain `string`; these
-// unions + label maps are the front-end's narrowed view.
-export const SHOW_TYPES = ['tv', 'movie', 'documentary'] as const
-export type ShowType = (typeof SHOW_TYPES)[number]
-export const SHOW_TYPE_LABELS: Record<ShowType, string> = {
-  tv: 'TV Show',
-  movie: 'Movie',
-  documentary: 'Documentary',
-}
-
 /** Episodic types carry the season/episode UI + watched counts; a movie is a single title. */
 export function usesEpisodes(type: string): boolean {
   return type === 'tv' || type === 'documentary'
-}
-
-export const SHOW_STATUSES = ['want', 'watching', 'watched', 'dropped'] as const
-export type ShowStatus = (typeof SHOW_STATUSES)[number]
-export const SHOW_STATUS_LABELS: Record<ShowStatus, string> = {
-  want: 'Want',
-  watching: 'Watching',
-  watched: 'Watched',
-  dropped: 'Dropped',
-}
-
-export const LGBTQ_REPS = ['none', 'some', 'significant'] as const
-export type LgbtqRep = (typeof LGBTQ_REPS)[number]
-export const LGBTQ_REP_LABELS: Record<LgbtqRep, string> = {
-  none: 'None',
-  some: 'Some',
-  significant: 'Significant',
-}
-
-/** Status-chip palette (Tailwind classes on the design tokens): want = purple (planned), watching =
- * orange (active/in-progress), watched = teal (positive), dropped = grey (muted). */
-export const SHOW_STATUS_CHIP: Record<ShowStatus, string> = {
-  want: 'bg-plan text-bg',
-  watching: 'bg-warning text-bg',
-  watched: 'bg-positive text-bg',
-  dropped: 'bg-track text-text-secondary',
 }
 
 // --- Poster URLs. `poster_path` holds EITHER a TMDB path OR a full pasted image URL. ---
@@ -223,7 +189,7 @@ export function countWatchedThisYear(
 // --- Library filtering + sorting (pure; the screen just holds the criteria state) ---
 
 /** Sort/precedence order for statuses. */
-export const SHOW_STATUS_ORDER: Record<ShowStatus, number> = {
+const SHOW_STATUS_ORDER: Record<ShowStatus, number> = {
   want: 0,
   watching: 1,
   watched: 2,
