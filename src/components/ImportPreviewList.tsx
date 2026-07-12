@@ -1,6 +1,10 @@
 import { type ReactNode } from 'react'
 
-export type ImportRowStatus = 'ok' | 'review' | 'nomatch' | 'manual'
+// 'ratelimited' is distinct from 'nomatch': the source lookup was throttled/blocked rather than
+// genuinely finding no result, so callers should offer a retry rather than implying the item
+// doesn't exist. Currently only produced by the Books importer (Google Books 429s); other
+// importers (Foods, Shows) simply never set it.
+export type ImportRowStatus = 'ok' | 'review' | 'nomatch' | 'ratelimited' | 'manual'
 
 export interface ImportPreviewItem {
   /** Thumbnail (cover/poster) sized `h-14 w-10` — omit for modules with no image (e.g. foods). */
@@ -53,11 +57,14 @@ export function ImportPreviewList({ items, onChange, onManual }: ImportPreviewLi
             <p className="mt-0.5 flex flex-wrap items-center gap-2 text-caption text-text-secondary">
               {item.meta}
               {item.status === 'nomatch' && <span className="text-danger">No match</span>}
+              {item.status === 'ratelimited' && (
+                <span className="text-danger">Rate-limited — retry</span>
+              )}
               {item.status === 'review' && (
-                <span className="text-accent">review “{item.reviewLabel}”</span>
+                <span className="text-accent">Review “{item.reviewLabel}”</span>
               )}
               {item.status === 'manual' && (
-                <span className="text-text-tertiary">manual entry</span>
+                <span className="text-text-tertiary">Manual entry</span>
               )}
             </p>
           </div>

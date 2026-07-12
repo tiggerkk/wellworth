@@ -1,7 +1,7 @@
 /**
  * Google Books (primary) + Open Library (fallback) client + pure field mapping. Called directly
  * from the browser — both APIs are CORS-enabled. Two-step, on-demand only: search → details on
- * select. Only the pure mappers below are unit-tested (matching shows-tmdb-api / food-api / off-api / fx);
+ * select. Only the pure mappers below are unit-tested (matching tmdb-api / food-api / off-api / fx);
  * the network calls are not. Nothing is persisted here — the Entry form writes mapped fields into a
  * `book` row only on CREATE/SAVE.
  *
@@ -308,7 +308,10 @@ export function isConfidentMatch(
  */
 export class BookSearchRateLimitError extends Error {
   readonly daily: boolean
-  constructor(daily = false) {
+  /** Google's own `Retry-After` hint (ms), when the response included one. Usually null — Google
+   * Books doesn't reliably send it — so callers must still fall back to a computed backoff. */
+  readonly retryAfterMs: number | null
+  constructor(daily = false, retryAfterMs: number | null = null) {
     super(
       daily
         ? 'Google Books daily quota exhausted — resets at midnight US-Pacific.'
@@ -316,6 +319,7 @@ export class BookSearchRateLimitError extends Error {
     )
     this.name = 'BookSearchRateLimitError'
     this.daily = daily
+    this.retryAfterMs = retryAfterMs
   }
 }
 
@@ -331,14 +335,63 @@ export function isDailyQuotaBody(body: unknown): boolean {
   return typeof msg === 'string' && /per day/i.test(msg)
 }
 
+/** Parse a `Retry-After` header (seconds, per RFC) into ms — null if absent/unparseable. Google
+ * Books doesn't reliably send this, but honour it when present rather than guessing. */
+function parseRetryAfterMs(res: Response): number | null {
+  const header = res.headers.get('Retry-After')
+  if (!header) return null
+  const secs = Number(header)
+  return Number.isFinite(secs) && secs > 0 ? secs * 1000 : null
+}
+
 /** Build the right rate-limit error from a 429 response — reads the body once to classify daily vs
- * transient (an unreadable body falls back to transient, the safer "retry" assumption). */
+ * transient (an unreadable body falls back to transient, the safer "retry" assumption), and carries
+ * any `Retry-After` hint along for the caller's backoff. */
 async function rateLimitError(res: Response): Promise<BookSearchRateLimitError> {
+  const retryAfterMs = parseRetryAfterMs(res)
   try {
-    return new BookSearchRateLimitError(isDailyQuotaBody(await res.json()))
+    return new BookSearchRateLimitError(isDailyQuotaBody(await res.json()), retryAfterMs)
   } catch {
-    return new BookSearchRateLimitError(false)
+    return new BookSearchRateLimitError(false, retryAfterMs)
   }
+}
+
+/**
+ * Thrown when Google Books returns a **5xx** (500/502/503/504) — the backend itself is temporarily
+ * overloaded/unreachable, as distinct from `BookSearchRateLimitError`'s 429 (the caller's own quota).
+ * Both are transient and worth a backoff + retry, which is why callers generally treat the two
+ * alongside each other — see `isRetryableBookSearchError` — but they're kept as separate error types
+ * since the cause (and any future divergent handling) is different.
+ */
+export class BookSearchUnavailableError extends Error {
+  readonly status: number
+  readonly retryAfterMs: number | null
+  constructor(status: number, retryAfterMs: number | null = null) {
+    super(`Google Books temporarily unavailable (${status}) — safe to retry shortly.`)
+    this.name = 'BookSearchUnavailableError'
+    this.status = status
+    this.retryAfterMs = retryAfterMs
+  }
+}
+
+const RETRYABLE_STATUS = new Set([500, 502, 503, 504])
+
+/**
+ * Whether an error from a Google Books call is worth retrying (429 transient, or a 5xx backend
+ * hiccup) rather than treated as a real failure — and the `Retry-After` hint to use, if any. Returns
+ * null for anything else (including the 429 *daily*-quota case, which callers must handle themselves
+ * since retrying it is actively wrong).
+ */
+export function isRetryableBookSearchError(
+  e: unknown,
+): { retryAfterMs: number | null } | null {
+  if (e instanceof BookSearchRateLimitError) {
+    return e.daily ? null : { retryAfterMs: e.retryAfterMs }
+  }
+  if (e instanceof BookSearchUnavailableError) {
+    return { retryAfterMs: e.retryAfterMs }
+  }
+  return null
 }
 
 /**
@@ -350,6 +403,60 @@ export function hasGoogleBooksApiKey(): boolean {
   return Boolean(import.meta.env.VITE_GOOGLE_BOOKS_API_KEY)
 }
 
+// --- Proactive request pacing (avoids Google Books' per-~100s burst limit) --------------------
+//
+// PRIMARY STRATEGY. Bulk import fires many requests in a short window (the importer's worker pool
+// × 2 requests/row: search + details). Retrying *after* a 429 wastes quota and — as observed —
+// doesn't recover for 60-120s (Google's rolling per-user window), so a short retry loop just burns
+// time and mislabels rows. Instead, every Google Books call (search + details, from bulk import
+// *and* interactive search — one choke point covers both) waits for a slot here before firing, so
+// the batch runs at the fastest safe pace and normally never sees a 429 at all.
+//
+// The two limits below are conservative guesses — Google doesn't publish the per-window number —
+// tuned lower for the keyless path (its per-IP quota is much smaller/stricter). If you still see
+// 429s in bulk import with these in place, lower GOOGLE_RATE_LIMIT further; if imports feel slower
+// than necessary once you've watched real behaviour in the Network tab, raise it.
+const GOOGLE_RATE_WINDOW_MS = 100_000 // Google's quota window is commonly ~100s
+const GOOGLE_RATE_LIMIT = hasGoogleBooksApiKey() ? 85 : 15 // max requests per window
+
+const googleRequestTimestamps: number[] = []
+
+/** Resolve once it's safe to fire the next Google Books request, without exceeding
+ * GOOGLE_RATE_LIMIT requests per GOOGLE_RATE_WINDOW_MS (sliding window). Rejects immediately on an
+ * already-aborted signal, and re-checks between waits, so a cancelled interactive search (see
+ * `searchBooks` callers) doesn't sit consuming a slot it'll never use. Otherwise just delays. */
+async function acquireGoogleSlot(signal?: AbortSignal): Promise<void> {
+  for (;;) {
+    if (signal?.aborted) throw new DOMException('Aborted', 'AbortError')
+    const now = Date.now()
+    while (
+      googleRequestTimestamps.length &&
+      now - googleRequestTimestamps[0]! > GOOGLE_RATE_WINDOW_MS
+    ) {
+      googleRequestTimestamps.shift()
+    }
+    if (googleRequestTimestamps.length < GOOGLE_RATE_LIMIT) {
+      googleRequestTimestamps.push(now)
+      return
+    }
+    const waitMs = GOOGLE_RATE_WINDOW_MS - (now - googleRequestTimestamps[0]!) + 50
+    await new Promise((resolve) => setTimeout(resolve, waitMs))
+  }
+}
+
+// --- FALLBACK (commented out): fixed-gap pacing instead of a sliding window. Simpler (one
+// request every FIXED_GAP_MS, no burst allowance at all) but wastes headroom early in a batch and
+// paces one-off interactive searches unnecessarily. Swap in if the sliding window above still lets
+// through more burst than your key's real quota tolerates — replace the `acquireGoogleSlot()`
+// calls below with `acquireGoogleSlotFixed()`.
+// let lastGoogleRequestAt = 0
+// const FIXED_GAP_MS = 1100 // ~1 request/second, safely under most per-second bursts
+// async function acquireGoogleSlotFixed(): Promise<void> {
+//   const wait = lastGoogleRequestAt + FIXED_GAP_MS - Date.now()
+//   if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait))
+//   lastGoogleRequestAt = Date.now()
+// }
+
 function googleKeyParam(): string {
   const key = import.meta.env.VITE_GOOGLE_BOOKS_API_KEY
   return key ? `&key=${encodeURIComponent(key)}` : ''
@@ -359,9 +466,13 @@ async function searchGoogle(
   query: string,
   signal?: AbortSignal,
 ): Promise<BookSearchResult[]> {
+  await acquireGoogleSlot(signal)
   const url = `${GOOGLE_BOOKS_BASE}/volumes?q=${encodeURIComponent(query)}&maxResults=20${googleKeyParam()}`
   const res = await fetch(url, { signal })
   if (res.status === 429) throw await rateLimitError(res)
+  if (RETRYABLE_STATUS.has(res.status)) {
+    throw new BookSearchUnavailableError(res.status, parseRetryAfterMs(res))
+  }
   if (!res.ok) throw new Error(`Google Books search failed (${res.status})`)
   const json = (await res.json()) as { items?: GoogleVolume[] }
   return mapGoogleSearchItems(json)
@@ -406,7 +517,8 @@ async function searchBooksOne(
     const google = await searchGoogle(q, signal)
     if (google.length) return google
   } catch (e) {
-    if (e instanceof BookSearchRateLimitError) throw e
+    if (e instanceof BookSearchRateLimitError || e instanceof BookSearchUnavailableError)
+      throw e
     if (signal?.aborted) throw e
     // other Google error → try Open Library
   }
@@ -420,9 +532,13 @@ export async function getBookDetails(
 ): Promise<BookMetadata> {
   const signal = opts?.signal
   if (result.source === 'google') {
+    await acquireGoogleSlot(signal)
     const url = `${GOOGLE_BOOKS_BASE}/volumes/${encodeURIComponent(result.sourceId)}?${googleKeyParam().slice(1)}`
     const res = await fetch(url, { signal })
     if (res.status === 429) throw await rateLimitError(res)
+    if (RETRYABLE_STATUS.has(res.status)) {
+      throw new BookSearchUnavailableError(res.status, parseRetryAfterMs(res))
+    }
     if (!res.ok) throw new Error(`Google Books details failed (${res.status})`)
     const json = (await res.json()) as GoogleVolume
     const meta = mapGoogleVolume(json)
