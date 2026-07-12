@@ -10,11 +10,11 @@
  * ForDisplay` (in `medical.ts`) is separately tolerant for the read path.
  */
 import {
-  labTestByKey,
   MEDICAL_CATEGORIES,
   MEDICAL_LAB_TESTS,
   type MedicalCategory,
-} from './medical'
+} from '../constants/medical'
+import { labTestByKey } from './medical'
 
 /** Categories in the user's order: valid override entries (de-duped) then any missing, canonical. */
 export function effectiveSectionOrder(

@@ -19,16 +19,18 @@ import {
   type ReportDraft,
 } from '../lib/medical-draft'
 import {
-  EYE_REFRACTION_KEYS,
-  isMedicalFieldVisible,
-  labTestByKey,
   MEDICAL_CATEGORY_COLOR,
   MEDICAL_CATEGORY_LABELS,
-  orderResultsForDisplay,
   REPORT_TYPE_LABELS,
   REPORT_TYPES,
-  usesBodyPart,
   type MedicalLabTestSeed,
+  EYE_REFRACTION_KEYS,
+} from '../constants/medical'
+import {
+  isMedicalFieldVisible,
+  labTestByKey,
+  orderResultsForDisplay,
+  usesBodyPart,
 } from '../lib/medical'
 import { groupResultsByCategory } from '../lib/medical-order'
 import { formatFullDate } from '../lib/date'

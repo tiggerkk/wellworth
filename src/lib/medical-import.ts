@@ -9,7 +9,6 @@
  */
 import { parseCsv } from './csv'
 import {
-  labTestByKey,
   MEDICAL_CATEGORIES,
   MEDICAL_FLAGS,
   MEDICAL_LAB_TESTS,
@@ -17,7 +16,8 @@ import {
   type MedicalCategory,
   type MedicalFlag,
   type ReportType,
-} from './medical'
+} from '../constants/medical'
+import { labTestByKey } from './medical'
 import { normalizeResult } from './medical-units'
 
 export interface ParsedResult {

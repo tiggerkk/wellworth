@@ -1,4 +1,5 @@
-import { EYE_REFRACTION_COLUMNS, EYE_REFRACTION_ROWS, labTestByKey } from '../lib/medical'
+import { EYE_REFRACTION_COLUMNS, EYE_REFRACTION_ROWS } from '../constants/medical'
+import { labTestByKey } from '../lib/medical'
 import type { ResultDraft } from '../lib/medical-draft'
 
 interface EyeRefractionFieldsProps {

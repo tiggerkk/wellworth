@@ -7,18 +7,20 @@ import { useProfile } from '../hooks/useProfile'
 import { getReportWithResults, type ReportWithResults } from '../data/medical'
 import { useMedicalVersion } from '../lib/medical-refresh'
 import {
-  formatRefRange,
-  formatResultValue,
   MEDICAL_CATEGORY_COLOR,
   MEDICAL_CATEGORY_LABELS,
   MEDICAL_FLAG_LABELS,
+  type MedicalFlag,
+  REPORT_TYPE_LABELS,
+  type ReportType,
+} from '../constants/medical'
+import {
+  formatRefRange,
+  formatResultValue,
   medicalReviewReason,
   orderResultsForDisplay,
-  REPORT_TYPE_LABELS,
   usesBodyPart,
-  type MedicalFlag,
   type MedicalResultRow,
-  type ReportType,
 } from '../lib/medical'
 import { groupResultsByCategory } from '../lib/medical-order'
 import { formatFullDate } from '../lib/date'

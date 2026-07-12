@@ -21,12 +21,11 @@ import {
 import {
   MEDICAL_CATEGORIES,
   MEDICAL_CATEGORY_LABELS,
-  orderResultsForDisplay,
   REPORT_TYPE_LABELS,
   REPORT_TYPES,
-  usesBodyPart,
   type MedicalLabTestSeed,
-} from '../lib/medical'
+} from '../constants/medical'
+import { orderResultsForDisplay, usesBodyPart } from '../lib/medical'
 import { groupResultsByCategory } from '../lib/medical-order'
 import { useProfile } from '../hooks/useProfile'
 import { formatFullDate } from '../lib/date'

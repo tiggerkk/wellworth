@@ -3,22 +3,24 @@ import { describe, expect, it } from 'vitest'
 // so the seed migration is cross-checked against the TS list without needing node fs types.
 import SEED_SQL from '../../supabase/migrations/12_medical_seed_lab_test.sql?raw'
 import {
+  EYE_REFRACTION_KEYS,
+  EYE_REFRACTION_ROWS,
+  MEDICAL_CATEGORIES,
+  MEDICAL_LAB_TESTS,
+  VALUE_KINDS,
+} from '../constants/medical'
+import {
   applyReportView,
   DEFAULT_REPORT_LIST_CRITERIA,
   defaultTrackedTestKeys,
-  EYE_REFRACTION_KEYS,
-  EYE_REFRACTION_ROWS,
   formatRefRange,
   formatResultValue,
   isMedicalFieldVisible,
   labTestByKey,
-  MEDICAL_CATEGORIES,
-  MEDICAL_LAB_TESTS,
   medicalTestsByCategory,
   orderResultsForDisplay,
   reportBodyParts,
   reportProviders,
-  VALUE_KINDS,
   type MedicalReportRow,
   type ReportListCriteria,
 } from './medical'

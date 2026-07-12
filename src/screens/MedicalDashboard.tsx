@@ -13,22 +13,18 @@ import { Sparkline } from '../components/Sparkline'
 import { EmptyState } from '../components/EmptyState'
 import { SectionCard } from '../components/SectionCard'
 import {
-  MEDICAL_RANGES,
-  MEDICAL_RANGE_DEFAULT,
-  medicalRangeCutoff,
-} from '../constants/medical-ranges'
-import { asFlag, latestPoint, type TrackedTrend } from '../lib/medical-trends'
-import {
-  formatRefRange,
-  formatResultValue,
   MEDICAL_CATEGORY_COLOR,
   MEDICAL_CATEGORY_LABELS,
   MEDICAL_FLAG_COLOR,
   MEDICAL_FLAG_CLASS,
   REPORT_TYPE_LABELS,
-  type MedicalReportRow,
   type ReportType,
-} from '../lib/medical'
+  MEDICAL_RANGES,
+  MEDICAL_RANGE_DEFAULT,
+  medicalRangeCutoff,
+} from '../constants/medical'
+import { asFlag, latestPoint, type TrackedTrend } from '../lib/medical-trends'
+import { formatRefRange, formatResultValue, type MedicalReportRow } from '../lib/medical'
 import type { ResultWithReportMeta } from '../data/medical'
 import { formatFullDate, todayLocal } from '../lib/date'
 import { useEscapeKey } from '../hooks/useEscapeKey'

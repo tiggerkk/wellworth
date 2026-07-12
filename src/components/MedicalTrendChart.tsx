@@ -9,7 +9,7 @@ import {
   YAxis,
 } from 'recharts'
 import { formatFullDate, formatMonthShort } from '../lib/date'
-import { MEDICAL_FLAG_COLOR, type MedicalFlag } from '../lib/medical'
+import { MEDICAL_FLAG_COLOR, type MedicalFlag } from '../constants/medical'
 
 /** One charted reading. `flag` colours its dot (the report's own range drives the flag). */
 export interface MedicalChartPoint {

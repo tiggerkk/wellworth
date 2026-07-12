@@ -8,12 +8,11 @@
  * reuses this same layer untouched.
  */
 import {
-  labTestByKey,
   MEDICAL_CATEGORIES,
-  orderResultsForDisplay,
   type MedicalCategory,
   type MedicalFlag,
-} from './medical'
+} from '../constants/medical'
+import { labTestByKey, orderResultsForDisplay } from './medical'
 import type { IsoDate } from './date'
 
 /** The minimal shape these helpers need — `ResultWithReportMeta` satisfies it structurally. */

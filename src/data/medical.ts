@@ -11,7 +11,7 @@ import type {
  * Typed data-access for the Medical module (`medical_report` + its `medical_result` children).
  * Components never call Supabase directly — they go through here. RLS enforces `user_id = auth.uid()`
  * server-side. The `medical_lab_test` reference is NOT fetched at runtime — the static
- * `MEDICAL_LAB_TESTS` in `src/lib/medical.ts` (identical to the seeded rows) is the read-only source.
+ * `MEDICAL_LAB_TESTS` in `src/constants/medical.ts` (identical to the seeded rows) is the read-only source.
  */
 
 /** All of a user's reports, newest report-date first (Reports list order). */

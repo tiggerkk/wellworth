@@ -5,16 +5,14 @@ import { useAsync } from '../hooks/useAsync'
 import { useSessionState } from '../hooks/useSessionState'
 import { deleteReport, listReports } from '../data/medical'
 import { bumpMedical, useMedicalVersion } from '../lib/medical-refresh'
+import { REPORT_TYPES, REPORT_TYPE_LABELS, type ReportType } from '../constants/medical'
 import {
   applyReportView,
   DEFAULT_REPORT_LIST_CRITERIA,
   reportBodyParts,
   reportProviders,
-  REPORT_TYPES,
-  REPORT_TYPE_LABELS,
   type ReportListCriteria,
   type ReportSortField,
-  type ReportType,
 } from '../lib/medical'
 import { formatFullDate } from '../lib/date'
 import { routes } from '../constants/routes'

@@ -10,12 +10,11 @@ import { PrimaryButton } from '../components/PrimaryButton'
 import { PinInput } from '../components/PinInput'
 import { useProfileEditor } from '../hooks/useProfileEditor'
 import { useAuth } from '../auth/AuthProvider'
+import { DEFAULT_LOCK_TIMEOUT_MINUTES, LOCK_TIMEOUT_OPTIONS } from '../constants/medical'
 import {
-  DEFAULT_LOCK_TIMEOUT_MINUTES,
   forgetUnlocked,
   hashPin,
   isValidPin,
-  LOCK_TIMEOUT_OPTIONS,
   rememberUnlocked,
   setEnabledHint,
   timeoutToValue,

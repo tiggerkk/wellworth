@@ -4,11 +4,8 @@ import { IconX } from '@tabler/icons-react'
 import { Sheet } from '../components/Sheet'
 import { Toggle } from '../components/Toggle'
 import { useProfileEditor } from '../hooks/useProfileEditor'
-import {
-  defaultTrackedTestKeys,
-  MEDICAL_CATEGORY_LABELS,
-  medicalTestsByCategory,
-} from '../lib/medical'
+import { MEDICAL_CATEGORY_LABELS } from '../constants/medical'
+import { defaultTrackedTestKeys, medicalTestsByCategory } from '../lib/medical'
 import type { Tables, TablesUpdate } from '../types/database'
 
 /**

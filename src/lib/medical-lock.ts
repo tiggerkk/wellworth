@@ -73,22 +73,6 @@ export function isValidPin(pin: string): boolean {
 
 // ── Auto-lock timeout ──────────────────────────────────────────────────────────────────────────
 
-/** Timeout choices. `minutes: null` = Indefinite (re-lock only on cold start); 0 = Immediately. */
-export const LOCK_TIMEOUT_OPTIONS: {
-  value: string
-  label: string
-  minutes: number | null
-}[] = [
-  { value: '0', label: 'Immediately', minutes: 0 },
-  { value: '1', label: 'After 1 minute', minutes: 1 },
-  { value: '5', label: 'After 5 minutes', minutes: 5 },
-  { value: '15', label: 'After 15 minutes', minutes: 15 },
-  { value: 'indefinite', label: 'Only on app restart', minutes: null },
-]
-
-/** The default applied when the lock is first enabled (the column itself is nullable). */
-export const DEFAULT_LOCK_TIMEOUT_MINUTES = 5
-
 export function timeoutToValue(minutes: number | null | undefined): string {
   return minutes == null ? 'indefinite' : String(minutes)
 }

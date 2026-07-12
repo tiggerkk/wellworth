@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { MEDICAL_FLAG_CLASS, type MedicalFlag } from '../lib/medical'
+import { MEDICAL_FLAG_CLASS, type MedicalFlag } from '../constants/medical'
 
 /**
  * Presentational result row shared by the Medical Dashboard (latest-by-category list) and the View

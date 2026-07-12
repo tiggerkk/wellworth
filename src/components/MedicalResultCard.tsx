@@ -1,13 +1,12 @@
 import { IconTrash } from '@tabler/icons-react'
 import {
-  labTestByKey,
   MEDICAL_CATEGORIES,
   MEDICAL_CATEGORY_COLOR,
   MEDICAL_CATEGORY_LABELS,
   MEDICAL_FLAG_LABELS,
-  medicalReviewReason,
   type MedicalFlag,
-} from '../lib/medical'
+} from '../constants/medical'
+import { labTestByKey, medicalReviewReason } from '../lib/medical'
 import type { ResultDraft } from '../lib/medical-draft'
 import { FIELD_CLASS as inputClass } from '../constants/forms'
 import { SelectMenu } from './SelectMenu'

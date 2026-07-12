@@ -2,11 +2,8 @@ import { useState } from 'react'
 import { IconPlus, IconX } from '@tabler/icons-react'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 import { SearchBar } from './SearchBar'
-import {
-  MEDICAL_CATEGORY_LABELS,
-  medicalTestsByCategory,
-  type MedicalLabTestSeed,
-} from '../lib/medical'
+import { MEDICAL_CATEGORY_LABELS, type MedicalLabTestSeed } from '../constants/medical'
+import { medicalTestsByCategory } from '../lib/medical'
 import { foldZh } from '../lib/zh-fold'
 
 interface MedicalTestPickerSheetProps {

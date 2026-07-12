@@ -7,11 +7,13 @@
 import {
   type MedicalCategory,
   type MedicalFlag,
+  type ReportType,
+} from '../constants/medical'
+import {
   type MedicalReportInsert,
   type MedicalReportRow,
   type MedicalResultInput,
   type MedicalResultRow,
-  type ReportType,
   usesBodyPart,
 } from './medical'
 import { todayLocal, type IsoDate } from './date'

@@ -6,7 +6,8 @@ import {
   flattenTestOrder,
   groupResultsByCategory,
 } from './medical-order'
-import { MEDICAL_CATEGORIES, MEDICAL_LAB_TESTS, medicalReviewReason } from './medical'
+import { MEDICAL_CATEGORIES, MEDICAL_LAB_TESTS } from '../constants/medical'
+import { medicalReviewReason } from './medical'
 
 describe('effectiveSectionOrder', () => {
   it('returns the canonical order when there is no override', () => {

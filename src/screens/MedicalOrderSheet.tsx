@@ -5,7 +5,7 @@ import { Sheet } from '../components/Sheet'
 import { SelectMenu } from '../components/SelectMenu'
 import { ReorderList } from '../components/ReorderList'
 import { useProfileEditor } from '../hooks/useProfileEditor'
-import { MEDICAL_CATEGORY_LABELS, type MedicalCategory } from '../lib/medical'
+import { MEDICAL_CATEGORY_LABELS, type MedicalCategory } from '../constants/medical'
 import { buildOrderModel, flattenTestOrder, testDisplayName } from '../lib/medical-order'
 import type { Tables, TablesUpdate } from '../types/database'
 

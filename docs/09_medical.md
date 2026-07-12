@@ -14,7 +14,7 @@ When there is data, three sections:
   - Each card: test name, **latest value** (+ unit, coloured by the latest flag), and a small **inline-SVG** sparkline (no chart library; shared `Sparkline` component).
   - Tapping a card opens a bottom-sheet with the full trend chart (lazy-loaded Recharts, `MedicalTrendChart`): flag-coloured points, an optional shaded **reference band** from the latest printed range, and a time-window selector (1Y / 2Y / 3Y / 5Y / All; default **All**).
   - Escape/tap-outside closes.
-  - The window list + default live in `src/constants/medical-ranges.ts` (`MEDICAL_RANGES` + `MEDICAL_RANGE_DEFAULT`) — **pure UI constants**, not persisted, so editing them takes effect on reload with **no DB change and no other code change** (the default lives beside the list so the screen never hardcodes a key).
+  - The window list + default live in `src/constants/medical.ts` (`MEDICAL_RANGES` + `MEDICAL_RANGE_DEFAULT`) — **pure UI constants**, not persisted, so editing them takes effect on reload with **no DB change and no other code change** (the default lives beside the list so the screen never hardcodes a key).
 - **Latest Report** button:
   - Directly under the Trends grid (only when ≥1 report): an accent-styled button (`IconReportMedical`) linking straight to the **newest** report's detail (`recentReports[0]`, reports are newest-first). A shortcut to the most-recent report even though Latest-values mixes tests across reports.
 - **Latest values by category**:
@@ -111,8 +111,8 @@ Sections in order: **Display**, **Report / Entry Form**, **Import**, **Security*
 - **Test matching** (`src/lib/medical-import.ts`, `matchTestKey`): fuzzy, CJK-aware, with a provider-alias map so provider-specific names resolve to canonical keys.
 - **Dashboard derivations** (`src/lib/medical-trends.ts`, `useMedicalTrends`): computes the latest value per test, the sparkline data points per tracked test, and the recent reports list. The hook loads **three bounded queries**, never every historical result: `listLatestResultPerTest` (the `medical_latest_result` view — latest per test, for the latest-values card), `listTrackedResultSeries(trackedKeys)` (history for just the tracked tests — the sparklines), and `listReports` (the timeline). So the payload doesn't grow with every test's full history.
 - **Display order** (`src/lib/medical-order.ts`): `orderResultsForDisplay` merges personal overrides with the seeded section/test order.
-- **Eye refraction** (`EYE_REFRACTION_*` in `src/lib/medical.ts`): the six test keys `sphere_od, cylinder_od, addition_od, sphere_os, cylinder_os, addition_os` are stored as normal `medical_result` rows (category `eye`) but surfaced in a structured grid in Add/Edit; their values trend like any measurement.
-- **MEDICAL_LAB_TESTS** in `src/lib/medical.ts` is the **front-end source of truth** for the test reference; `src/lib/medical.test.ts` cross-checks it against the DB so they can't drift. Seeded by `supabase/migrations/12_medical_seed_lab_test.sql` (idempotent `ON CONFLICT (key) DO UPDATE`).
+- **Eye refraction** (`EYE_REFRACTION_*` in `src/constants/medical.ts`): the six test keys `sphere_od, cylinder_od, addition_od, sphere_os, cylinder_os, addition_os` are stored as normal `medical_result` rows (category `eye`) but surfaced in a structured grid in Add/Edit; their values trend like any measurement.
+- **MEDICAL_LAB_TESTS** in `src/constants/medical.ts` is the **front-end source of truth** for the test reference; `src/lib/medical.test.ts` cross-checks it against the DB so they can't drift. Seeded by `supabase/migrations/12_medical_seed_lab_test.sql` (idempotent `ON CONFLICT (key) DO UPDATE`).
 
 ---
 
@@ -168,7 +168,7 @@ Standard rules on `medical_report`/`medical_result`: own `user_id` for direct RL
 
 ### Lab test reference seed
 
-The **full source of truth** is `MEDICAL_LAB_TESTS` in `src/lib/medical.ts`; the migration `supabase/migrations/12_medical_seed_lab_test.sql` follows it. A build-time test asserts they match. Built from the owner's 2021–2026 reports across three providers (MediFast HK, Mobile Medical HK, Global HealthCare Shanghai).
+The **full source of truth** is `MEDICAL_LAB_TESTS` in `src/constants/medical.ts`; the migration `supabase/migrations/12_medical_seed_lab_test.sql` follows it. A build-time test asserts they match. Built from the owner's 2021–2026 reports across three providers (MediFast HK, Mobile Medical HK, Global HealthCare Shanghai).
 
 **Section order** (categories in display order — **eye first**, so a refraction report's grid trends lead the Dashboard):
 `eye, general, vitals, lipids, glucose, liver, renal, electrolytes, cbc, thyroid, bone, tumour_markers, hepatitis, inflammation, urine, stool, imaging, other`
