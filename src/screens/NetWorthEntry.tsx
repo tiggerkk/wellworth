@@ -30,10 +30,10 @@ import {
   ASSET_DETAIL_FIELDS,
   formatHkd,
   gainLossClass,
+  insuranceRowDetails,
   liquidAssetTypes,
   originalCashValueAtAge,
   resolvePolicyAtAge,
-  surrenderGainPctPerYear,
   totalBase,
   valueBase,
   varianceAtAge,
@@ -134,25 +134,13 @@ function resolveInsuranceRows(
     if (!r) continue
     const original = originalCashValueAtAge(schedules, age)
     const variance = varianceAtAge(schedules, age)
-    const pct = surrenderGainPctPerYear(r.cashValue, r.premium, r.policyYear)
     rows.push({
       clientId: nextId(),
       asset_type: 'insurance',
       name: policy.policy_name || policy.policy_number,
       currency: (policy.currency as Currency) ?? 'HKD',
       valueNative: String(r.cashValue),
-      details: {
-        policy_id: policy.id,
-        policy_number: policy.policy_number,
-        provider: policy.provider,
-        start_date: policy.start_date ?? '',
-        policy_year: String(r.policyYear),
-        premium: String(r.premium),
-        cash_value_original: original == null ? '' : String(original),
-        variance: variance == null ? '' : String(variance),
-        surrender_pct: pct.toFixed(2),
-        as_of_year: r.isCarried ? String(r.asOfYear) : '',
-      },
+      details: insuranceRowDetails(policy, r, original, variance),
     })
   }
   // Sort by the owner's configured provider order; orphan keys (deleted providers) sort last.

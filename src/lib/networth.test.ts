@@ -7,6 +7,7 @@ import {
   formatHkd,
   formatHkdCompact,
   groupByType,
+  insuranceRowDetails,
   originalCashValueAtAge,
   resolvePolicyAtAge,
   type ScheduleVersion,
@@ -225,5 +226,38 @@ describe('insurance resolution', () => {
     expect(surrenderGainPctPerYear(110, 100, 5)).toBeCloseTo(2)
     expect(surrenderGainPctPerYear(100, 0, 5)).toBe(0)
     expect(surrenderGainPctPerYear(100, 100, 0)).toBe(0)
+  })
+
+  it('insuranceRowDetails includes start_date and matches resolvePolicyAtAge — the single builder shared by the live Monthly Entry resolver and the manual-import freeze path', () => {
+    const policy = {
+      id: 'p1',
+      policy_number: 'POL-001',
+      provider: 'aia',
+      start_date: '2014-03-01',
+    }
+    const resolved = resolvePolicyAtAge([original, update], 47)!
+    const details = insuranceRowDetails(policy, resolved, 110, 20)
+    expect(details).toMatchObject({
+      policy_id: 'p1',
+      policy_number: 'POL-001',
+      provider: 'aia',
+      start_date: '2014-03-01',
+      policy_year: '7',
+      premium: '100',
+      cash_value_original: '110',
+      variance: '20',
+      as_of_year: '',
+    })
+  })
+
+  it('insuranceRowDetails falls back to an empty start_date when the policy has none', () => {
+    const policy = {
+      id: 'p2',
+      policy_number: 'POL-002',
+      provider: 'aia',
+      start_date: null,
+    }
+    const resolved = resolvePolicyAtAge([original, update], 47)!
+    expect(insuranceRowDetails(policy, resolved, null, null).start_date).toBe('')
   })
 })

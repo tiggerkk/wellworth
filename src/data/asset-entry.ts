@@ -2,9 +2,9 @@ import { supabase } from '../lib/supabase'
 import type { Tables, TablesInsert } from '../types/database'
 import {
   ageForYear,
+  insuranceRowDetails,
   originalCashValueAtAge,
   resolvePolicyAtAge,
-  surrenderGainPctPerYear,
   varianceAtAge,
   type AssetType,
 } from '../lib/networth'
@@ -141,24 +141,13 @@ export function buildResolvedInsuranceEntries(
     if (!r) continue
     const original = originalCashValueAtAge(schedules, age)
     const variance = varianceAtAge(schedules, age)
-    const pct = surrenderGainPctPerYear(r.cashValue, r.premium, r.policyYear)
     const rate =
       policy.currency === 'USD' ? rates.usd : policy.currency === 'CNY' ? rates.cny : 1
     out.push({
       asset_type: 'insurance',
       name: policy.policy_name || policy.policy_number,
       currency: policy.currency,
-      details: {
-        policy_id: policy.id,
-        policy_number: policy.policy_number,
-        provider: policy.provider,
-        policy_year: String(r.policyYear),
-        premium: String(r.premium),
-        cash_value_original: original == null ? '' : String(original),
-        variance: variance == null ? '' : String(variance),
-        surrender_pct: pct.toFixed(2),
-        as_of_year: r.isCarried ? String(r.asOfYear) : '',
-      },
+      details: insuranceRowDetails(policy, r, original, variance),
       value_native: r.cashValue,
       fx_rate_to_base: rate,
       value_base: r.cashValue * rate,

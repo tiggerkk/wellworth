@@ -393,6 +393,45 @@ export function varianceAtAge(schedules: ScheduleVersion[], age: number): number
   return resolved.cashValue - original
 }
 
+/** Minimal policy shape `insuranceRowDetails` needs — satisfied by the full `Policy` row. */
+export interface InsuranceRowPolicy {
+  id: string
+  policy_number: string
+  provider: string
+  start_date: string | null
+}
+
+/**
+ * The `asset_entry.details` map for a resolved insurance row — single source of truth for every
+ * place that freezes or live-resolves an insurance row (Monthly Entry's live resolver AND the
+ * manual-import freeze path in `data/asset-entry.ts`), so a field added here can't fall out of
+ * sync between the two the way `start_date` once did.
+ */
+export function insuranceRowDetails(
+  policy: InsuranceRowPolicy,
+  resolved: ResolvedPolicy,
+  original: number | null,
+  variance: number | null,
+): Record<string, string> {
+  const pct = surrenderGainPctPerYear(
+    resolved.cashValue,
+    resolved.premium,
+    resolved.policyYear,
+  )
+  return {
+    policy_id: policy.id,
+    policy_number: policy.policy_number,
+    provider: policy.provider,
+    start_date: policy.start_date ?? '',
+    policy_year: String(resolved.policyYear),
+    premium: String(resolved.premium),
+    cash_value_original: original == null ? '' : String(original),
+    variance: variance == null ? '' : String(variance),
+    surrender_pct: pct.toFixed(2),
+    as_of_year: resolved.isCarried ? String(resolved.asOfYear) : '',
+  }
+}
+
 export interface ResolvedSeriesPoint extends ResolvedPolicy {
   age: number
 }
