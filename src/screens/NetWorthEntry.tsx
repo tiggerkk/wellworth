@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import {
-  IconChevronDown,
   IconChevronLeft,
   IconChevronRight,
   IconPlus,
@@ -60,6 +59,7 @@ import { EntryHeaderActions } from '../components/EntryHeaderActions'
 import { ConfirmDeleteAction } from '../components/ConfirmDeleteAction'
 import { MonthPicker } from '../components/MonthPicker'
 import { InsurancePolicyHeader } from '../components/InsurancePolicyHeader'
+import { Collapsible } from '../components/Collapsible'
 import type { Json, Tables } from '../types/database'
 
 // --- Draft model -------------------------------------------------------------------------
@@ -622,125 +622,102 @@ function EntryForm({
           // toward the header total — flag them so the header can mark them "Excluded".
           const excluded = liquidOnly && !liquidTypes.includes(type)
           return (
-            <div
+            <Collapsible
               key={type}
-              className="shrink-0 overflow-hidden rounded-card border border-border bg-surface"
-              style={{ borderLeft: `4px solid ${ASSET_TYPE_COLORS[type]}` }}
-            >
-              <div
-                className="flex items-center gap-2 px-3 py-2.5"
-                style={{
-                  backgroundColor: `color-mix(in srgb, ${ASSET_TYPE_COLORS[type]} 14%, transparent)`,
-                }}
-              >
-                <button
-                  onClick={() => setExpanded((e) => ({ ...e, [type]: !isOpen }))}
-                  aria-label={isOpen ? 'Collapse' : 'Expand'}
-                  className="text-text-secondary"
-                >
-                  {isOpen ? (
-                    <IconChevronDown size={18} />
-                  ) : (
-                    <IconChevronRight size={18} />
+              title={ASSET_TYPE_LABELS[type]}
+              color={ASSET_TYPE_COLORS[type]}
+              className="shrink-0"
+              open={isOpen}
+              onOpenChange={(next) => setExpanded((e) => ({ ...e, [type]: next }))}
+              actions={
+                <>
+                  {excluded && (
+                    <span className="shrink-0 rounded-pill bg-input px-2 py-0.5 text-caption text-text-tertiary">
+                      Excluded
+                    </span>
                   )}
-                </button>
-                <span className="min-w-0 flex-1 truncate text-body font-medium text-text-primary">
-                  {ASSET_TYPE_LABELS[type]}
-                </span>
-                {excluded && (
-                  <span className="shrink-0 rounded-pill bg-input px-2 py-0.5 text-caption text-text-tertiary">
-                    Excluded
-                  </span>
-                )}
-                {entries.length > 0 && (
-                  <span className="shrink-0 text-body text-text-secondary">
-                    {formatHkd(subtotal)}
-                  </span>
-                )}
-                {isManual && (
-                  <button
-                    onClick={() => addRow(type)}
-                    aria-label={`Add ${ASSET_TYPE_LABELS[type]}`}
-                    className="shrink-0 text-positive"
-                  >
-                    <IconPlus size={18} />
-                  </button>
-                )}
-                {isFund && (
-                  <button
-                    onClick={() =>
-                      openSheet(`${routes.networth.importFund}?month=${month}`)
-                    }
-                    aria-label="Import funds CSV"
-                    className="shrink-0 text-accent"
-                  >
-                    <IconUpload size={18} />
-                  </button>
-                )}
-                {isInsurance && (
-                  <span
-                    className="shrink-0"
-                    style={{ width: 18, height: 18 }}
-                    aria-hidden="true"
-                  />
-                )}
-              </div>
-
-              {isOpen &&
-                (entries.length === 0 ? (
-                  <p className="border-t border-border px-4 py-3 text-caption text-text-tertiary">
-                    Nothing logged.
-                  </p>
-                ) : (
-                  <div className="border-t border-border">
-                    {isManual &&
-                      entries.map((r) => (
-                        <ManualRow
-                          key={r.clientId}
-                          row={r}
-                          inputCls={inputCls}
-                          rowBaseHkd={rowBase(r)}
-                          onChange={(patch) => updateRow(r.clientId, patch)}
-                          onDetail={(k, v) => updateDetail(r.clientId, k, v)}
-                          onRemove={() => removeRow(r.clientId)}
-                        />
-                      ))}
-                    {isFund &&
-                      entries.map((r) => (
-                        <button
-                          key={r.clientId}
-                          onClick={() => setFundModal(r)}
-                          className="flex w-full items-center gap-2 border-b border-border px-3 py-2.5 text-left last:border-b-0 active:bg-input/40"
-                        >
-                          <span className="min-w-0 flex-1 truncate text-body text-text-primary">
-                            {r.name}
-                          </span>
-                          <span className="shrink-0 text-body text-text-secondary">
-                            {formatHkd(rowBase(r))}
-                          </span>
-                          <span
-                            className={`w-12 shrink-0 text-right text-caption ${
-                              r.details.return_rate
-                                ? gainLossClass(Number(r.details.return_rate))
-                                : 'text-text-tertiary'
-                            }`}
-                          >
-                            {r.details.return_rate ? `${r.details.return_rate}%` : ''}
-                          </span>
-                        </button>
-                      ))}
-                    {isInsurance && (
-                      <InsuranceRows
-                        rows={entries}
-                        month={month}
-                        providers={providers}
-                        rowBase={rowBase}
-                        navigate={navigate}
+                  {entries.length > 0 && (
+                    <span className="shrink-0 text-body text-text-secondary">
+                      {formatHkd(subtotal)}
+                    </span>
+                  )}
+                  {isManual && (
+                    <button
+                      onClick={() => addRow(type)}
+                      aria-label={`Add ${ASSET_TYPE_LABELS[type]}`}
+                      className="shrink-0 text-positive"
+                    >
+                      <IconPlus size={18} />
+                    </button>
+                  )}
+                  {isFund && (
+                    <button
+                      onClick={() =>
+                        openSheet(`${routes.networth.importFund}?month=${month}`)
+                      }
+                      aria-label="Import funds CSV"
+                      className="shrink-0 text-accent"
+                    >
+                      <IconUpload size={18} />
+                    </button>
+                  )}
+                </>
+              }
+            >
+              {entries.length === 0 ? (
+                <p className="px-4 py-3 text-caption text-text-tertiary">
+                  Nothing logged.
+                </p>
+              ) : (
+                <>
+                  {isManual &&
+                    entries.map((r) => (
+                      <ManualRow
+                        key={r.clientId}
+                        row={r}
+                        inputCls={inputCls}
+                        rowBaseHkd={rowBase(r)}
+                        onChange={(patch) => updateRow(r.clientId, patch)}
+                        onDetail={(k, v) => updateDetail(r.clientId, k, v)}
+                        onRemove={() => removeRow(r.clientId)}
                       />
-                    )}
-                  </div>
-                ))}
-            </div>
+                    ))}
+                  {isFund &&
+                    entries.map((r) => (
+                      <button
+                        key={r.clientId}
+                        onClick={() => setFundModal(r)}
+                        className="flex w-full items-center gap-2 border-b border-border px-3 py-2.5 text-left last:border-b-0 active:bg-input/40"
+                      >
+                        <span className="min-w-0 flex-1 truncate text-body text-text-primary">
+                          {r.name}
+                        </span>
+                        <span className="shrink-0 text-body text-text-secondary">
+                          {formatHkd(rowBase(r))}
+                        </span>
+                        <span
+                          className={`w-12 shrink-0 text-right text-caption ${
+                            r.details.return_rate
+                              ? gainLossClass(Number(r.details.return_rate))
+                              : 'text-text-tertiary'
+                          }`}
+                        >
+                          {r.details.return_rate ? `${r.details.return_rate}%` : ''}
+                        </span>
+                      </button>
+                    ))}
+                  {isInsurance && (
+                    <InsuranceRows
+                      rows={entries}
+                      month={month}
+                      providers={providers}
+                      rowBase={rowBase}
+                      navigate={navigate}
+                    />
+                  )}
+                </>
+              )}
+            </Collapsible>
           )
         })}
       </div>

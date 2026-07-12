@@ -4,7 +4,7 @@ import { IconPlus, IconTrash, IconX } from '@tabler/icons-react'
 import { Sheet } from '../components/Sheet'
 import { EntryHeaderActions } from '../components/EntryHeaderActions'
 import { SegmentedTabs } from '../components/SegmentedTabs'
-import { CollapsibleSection } from '../components/CollapsibleSection'
+import { Collapsible } from '../components/Collapsible'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useNutrientReference } from '../hooks/useNutrientReference'
@@ -266,9 +266,11 @@ function FoodForm({ id, initial }: { id: string | undefined; initial: FoodInitia
               const rows = (refRows ?? []).filter((n) => n.category === section.category)
               if (rows.length === 0) return null
               return (
-                <CollapsibleSection
+                <Collapsible
                   key={section.category}
                   title={section.label}
+                  titleCase="caption"
+                  bodyClassName="px-4 py-1"
                   defaultOpen={section.category === 'general'}
                 >
                   {rows.map((n) => (
@@ -296,7 +298,7 @@ function FoodForm({ id, initial }: { id: string | undefined; initial: FoodInitia
                       </span>
                     </div>
                   ))}
-                </CollapsibleSection>
+                </Collapsible>
               )
             })}
           </div>

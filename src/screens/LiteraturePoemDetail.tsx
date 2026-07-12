@@ -11,7 +11,7 @@ import { LITERATURE_SECTION_COLOR } from '../constants/literature-sections'
 import { routes } from '../constants/routes'
 import { PoemReader } from '../components/PoemReader'
 import { FilterPill } from '../components/FilterPill'
-import { CollapsibleColorSection } from '../components/CollapsibleColorSection'
+import { Collapsible } from '../components/Collapsible'
 
 /** Strip HTML to plain text, turning <br>/block-ends into newlines (poem fields may carry markup). */
 function htmlToText(s: string | null | undefined): string {
@@ -37,11 +37,11 @@ function ProseSection({
 }) {
   if (!text) return null
   return (
-    <CollapsibleColorSection title={title} color={color} defaultOpen={false}>
+    <Collapsible title={title} color={color} defaultOpen={false}>
       <p className="whitespace-pre-line px-4 py-3 text-body leading-relaxed text-text-secondary">
         {text}
       </p>
-    </CollapsibleColorSection>
+    </Collapsible>
   )
 }
 
@@ -140,11 +140,15 @@ export function LiteraturePoemDetail() {
             </div>
           )}
 
-          <CollapsibleColorSection title="原文" color={LITERATURE_SECTION_COLOR.content}>
+          <Collapsible
+            title="原文"
+            color={LITERATURE_SECTION_COLOR.content}
+            defaultOpen={true}
+          >
             <p className="whitespace-pre-line px-4 py-4 text-center text-xl leading-loose text-text-primary">
               {content}
             </p>
-          </CollapsibleColorSection>
+          </Collapsible>
 
           {isFieldVisible(visibleFields, 'translation') && (
             <ProseSection

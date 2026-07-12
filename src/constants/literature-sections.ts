@@ -1,9 +1,9 @@
 /**
  * Accent colors for the collapsible sections on the Literature Poem/Poet detail screens — a colored
- * left stripe + tinted header (the Net Worth Monthly Entry / `MedicalSection` pattern), consumed by
- * `CollapsibleColorSection`. Keyed by the poem field / writer section; values are the design-system
- * `--color-lit-*` tokens (see `src/index.css`). Consecutive sections use well-separated hues so the
- * adjacent stripes stay distinguishable.
+ * left stripe + tinted header, consumed by the shared `Collapsible` component's `color` prop. Keyed
+ * by the poem field / writer section; values are the design-system `--color-lit-*` tokens (see
+ * `src/index.css`). Consecutive sections use well-separated hues so the adjacent stripes stay
+ * distinguishable.
  */
 export const LITERATURE_SECTION_COLOR = {
   content: 'var(--color-lit-original)', // 原文 (always shown)

@@ -3493,3 +3493,38 @@ the open menu.
   `transform`. Flip-up + available-space `maxHeight` logic preserved; trigger unchanged.
 - **Docs:** generalised the Layout-gotcha (portal popovers under `overflow`/`transform`/`opacity`) and
   updated the `SelectMenu` entry. No schema/behaviour change; **636** tests pass, `npm run check` green.
+
+## Collapsible Header Standardization
+
+### Problem
+
+Six independent collapsible implementations exist (`CollapsibleSection`, `CollapsibleColorSection`, `MedicalSection`, plus inline patterns in `Diary.tsx`, `NetWorthEntry.tsx` and `TripBuilder.tsx`). Click target, color usage, title case, and state ownership all differ for no principled reason — Net Worth/Travel only fell back to chevron-only because their headers carry extra buttons that a full-row `<button>` would swallow. Built new component: `src/components/Collapsible.tsx`.
+
+### Standard interaction rule (replaces all six current behaviors)
+
+Header row = `[toggle button: chevron + title, flex-1] [actions, siblings]`.
+
+- No `actions` passed → button fills the row → click-anywhere, unchanged from today's Wellness/Literature/Medical behavior.
+- `actions` passed → clicking the badge/subtotal/date-pill/icon buttons never toggles; clicking chevron or title text does. This _expands_ Net Worth's and Travel's clickable area from "chevron pixel only" to "chevron + label," without touching the other buttons' click handlers.
+
+### Standard visuals
+
+- Chevron always **left** of title, for every module.
+- `color` stays semantic/optional — only passed where it means something (asset type, medical category, poem accent). Wellness passes none.
+- `titleCase` explicit per call site (no implicit derivation from `color`).
+
+## Migration map
+
+| Site                                                     | color            | titleCase | variant | actions                                     | state                                                  |
+| -------------------------------------------------------- | ---------------- | --------- | ------- | ------------------------------------------- | ------------------------------------------------------ |
+| Wellness `NewFoodSheet.tsx`                              | —                | `caption` | `card`  | —                                           | uncontrolled                                           |
+| Literature `LiteraturePoemDetail.tsx` / `PoetDetail.tsx` | accent color     | `body`    | `card`  | —                                           | uncontrolled                                           |
+| Medical `MedicalDashboard.tsx`                           | category color   | `caption` | `card`  | —                                           | uncontrolled                                           |
+| Medical `MedicalReportDetail.tsx`                        | category color   | `caption` | `card`  | —                                           | uncontrolled                                           |
+| Medical `MedicalEntry.tsx`                               | category color   | `caption` | `bare`  | —                                           | uncontrolled                                           |
+| Net Worth `NetWorthEntry.tsx`                            | asset-type color | `body`    | `card`  | Excluded badge, subtotal, Add, Import       | controlled — existing `expanded` sessionStorage record |
+| Travel `TripBuilder.tsx`                                 | —                | `body`    | `card`  | date pill, delete, duplicate, expenses, add | controlled — existing `collapsedDays` Set              |
+
+### Note on Medical's `card` vs `bare`
+
+`card` = header + content share one bordered/colored box (divider between them) — structurally identical to Net Worth's asset-type sections. `bare` = only the header gets the colored box; content renders outside it, undecorated.

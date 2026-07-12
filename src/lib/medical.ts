@@ -221,7 +221,8 @@ export const MEDICAL_FLAG_COLOR: Record<MedicalFlag, string> = {
 /**
  * Category → a raw CSS colour var (the `--color-med-*` palette in index.css). Drives the colored
  * left stripe + tinted header of each collapsible section (Report detail, Edit Report, Dashboard
- * latest-values) via `MedicalSection`. One distinct hue per category so adjacent sections read apart.
+ * latest-values) via the shared `Collapsible` component's `color` prop. One distinct hue per
+ * category so adjacent sections read apart.
  */
 export const MEDICAL_CATEGORY_COLOR: Record<MedicalCategory, string> = {
   general: 'var(--color-med-general)',

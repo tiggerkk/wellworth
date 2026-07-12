@@ -9,6 +9,8 @@ import { useMedicalVersion } from '../lib/medical-refresh'
 import {
   formatRefRange,
   formatResultValue,
+  MEDICAL_CATEGORY_COLOR,
+  MEDICAL_CATEGORY_LABELS,
   MEDICAL_FLAG_LABELS,
   medicalReviewReason,
   orderResultsForDisplay,
@@ -23,7 +25,7 @@ import { formatFullDate } from '../lib/date'
 import { routes } from '../constants/routes'
 import { PrimaryButton } from '../components/PrimaryButton'
 import { MedicalValueRow } from '../components/MedicalValueRow'
-import { MedicalSection } from '../components/MedicalSection'
+import { Collapsible } from '../components/Collapsible'
 
 /**
  * Medical Report detail — read-only view of a report's parent fields, Drive link(s), narrative, and
@@ -139,13 +141,19 @@ function Body({ data }: { data: ReportWithResults }) {
       )}
 
       {groups.map((g) => (
-        <MedicalSection key={g.category} category={g.category}>
+        <Collapsible
+          key={g.category}
+          title={MEDICAL_CATEGORY_LABELS[g.category]}
+          color={MEDICAL_CATEGORY_COLOR[g.category]}
+          titleCase="caption"
+          defaultOpen
+        >
           <div className="divide-y divide-border">
             {g.rows.map((r) => (
               <ResultRow key={r.id} r={r} />
             ))}
           </div>
-        </MedicalSection>
+        </Collapsible>
       ))}
 
       {results.length === 0 && (

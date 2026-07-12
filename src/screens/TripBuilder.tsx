@@ -4,8 +4,6 @@ import {
   IconBan,
   IconCalendar,
   IconCheck,
-  IconChevronDown,
-  IconChevronRight,
   IconCopy,
   IconPlus,
   IconReceipt2,
@@ -24,6 +22,7 @@ import { EntryHeaderActions } from '../components/EntryHeaderActions'
 import { ConfirmDeleteAction } from '../components/ConfirmDeleteAction'
 import { StopEditorSheet } from '../components/StopEditorSheet'
 import { StopTypeIcon } from '../components/StopTypeIcon'
+import { Collapsible } from '../components/Collapsible'
 import { TripExpensesPanel } from '../components/TripExpensesPanel'
 import { DayExpensesSheet } from '../components/DayExpensesSheet'
 import type { ExpenseDraft } from '../components/ExpenseRowsEditor'
@@ -684,80 +683,70 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
               const dayStops = stopsByDay(day.id)
               const expanded = !collapsedDays.has(day.id)
               return (
-                <div
+                <Collapsible
                   key={day.id}
-                  className="flex flex-col gap-2 rounded-card border border-border bg-surface p-3"
+                  title={`Day ${i + 1}`}
+                  titleGrow={false}
+                  bodyClassName="flex flex-col gap-2 p-3"
+                  open={expanded}
+                  onOpenChange={() => toggleDay(day.id)}
+                  actions={
+                    <>
+                      <button
+                        onClick={() => setDatePickerDay(day)}
+                        aria-label={
+                          day.day_date
+                            ? `Change date for Day ${i + 1}`
+                            : `Add a date for Day ${i + 1}`
+                        }
+                        className="flex items-center gap-1 rounded-pill bg-input px-2.5 py-1 text-left text-body"
+                      >
+                        <IconCalendar
+                          size={16}
+                          className="shrink-0 text-text-secondary"
+                        />
+                        {day.day_date ? (
+                          <span className="text-text-primary">
+                            {formatFullDate(day.day_date)}
+                          </span>
+                        ) : (
+                          <span className="text-text-tertiary">Add date</span>
+                        )}
+                      </button>
+                      <div className="flex-1" />
+                      <ConfirmDeleteAction
+                        label="Delete day"
+                        onDelete={() => void removeDay(day.id)}
+                      />
+                      <button
+                        onClick={() => void duplicateDay(day)}
+                        aria-label="Duplicate day"
+                        className="p-1 text-text-secondary"
+                      >
+                        <IconCopy size={18} />
+                      </button>
+                      <button
+                        onClick={() => setDayExpensesFor(day)}
+                        aria-label={`Expenses for Day ${i + 1}`}
+                        className="p-1 text-accent"
+                      >
+                        <IconReceipt2 size={18} />
+                      </button>
+                      <button
+                        onClick={() => setStopEditor({ dayId: day.id })}
+                        aria-label="Add stop"
+                        className="p-1 text-positive"
+                      >
+                        <IconPlus size={18} stroke={2.25} />
+                      </button>
+                    </>
+                  }
                 >
-                  {/* Day header: chevron · Day X · date · spacer · trash · copy · green + */}
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => toggleDay(day.id)}
-                      aria-label={
-                        expanded ? `Collapse Day ${i + 1}` : `Expand Day ${i + 1}`
-                      }
-                      className="shrink-0 p-0.5 text-text-tertiary"
-                    >
-                      {expanded ? (
-                        <IconChevronDown size={18} />
-                      ) : (
-                        <IconChevronRight size={18} />
-                      )}
-                    </button>
-                    <span className="text-body font-medium text-text-primary">
-                      Day {i + 1}
-                    </span>
-                    <button
-                      onClick={() => setDatePickerDay(day)}
-                      aria-label={
-                        day.day_date
-                          ? `Change date for Day ${i + 1}`
-                          : `Add a date for Day ${i + 1}`
-                      }
-                      className="flex items-center gap-1 rounded-pill bg-input px-2.5 py-1 text-left text-body"
-                    >
-                      <IconCalendar size={16} className="shrink-0 text-text-secondary" />
-                      {day.day_date ? (
-                        <span className="text-text-primary">
-                          {formatFullDate(day.day_date)}
-                        </span>
-                      ) : (
-                        <span className="text-text-tertiary">Add date</span>
-                      )}
-                    </button>
-                    <div className="flex-1" />
-                    <ConfirmDeleteAction
-                      label="Delete day"
-                      onDelete={() => void removeDay(day.id)}
-                    />
-                    <button
-                      onClick={() => void duplicateDay(day)}
-                      aria-label="Duplicate day"
-                      className="p-1 text-text-secondary"
-                    >
-                      <IconCopy size={18} />
-                    </button>
-                    <button
-                      onClick={() => setDayExpensesFor(day)}
-                      aria-label={`Expenses for Day ${i + 1}`}
-                      className="p-1 text-accent"
-                    >
-                      <IconReceipt2 size={18} />
-                    </button>
-                    <button
-                      onClick={() => setStopEditor({ dayId: day.id })}
-                      aria-label="Add stop"
-                      className="p-1 text-positive"
-                    >
-                      <IconPlus size={18} stroke={2.25} />
-                    </button>
-                  </div>
-
-                  {expanded &&
-                    dayStops.length > 0 &&
+                  {dayStops.length > 0 &&
                     (() => {
                       const runs = cityRuns(dayStops)
                       return (
-                        <div className="flex flex-col gap-2">
+                        <>
                           {runs.map((run, runIdx) => (
                             <div key={runIdx} className="flex flex-col gap-1">
                               {run.city && (
@@ -845,10 +834,10 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
                               />
                             </div>
                           ))}
-                        </div>
+                        </>
                       )
                     })()}
-                </div>
+                </Collapsible>
               )
             })}
 

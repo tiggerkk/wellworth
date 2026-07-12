@@ -21,6 +21,8 @@ import { asFlag, latestPoint, type TrackedTrend } from '../lib/medical-trends'
 import {
   formatRefRange,
   formatResultValue,
+  MEDICAL_CATEGORY_COLOR,
+  MEDICAL_CATEGORY_LABELS,
   MEDICAL_FLAG_COLOR,
   MEDICAL_FLAG_CLASS,
   REPORT_TYPE_LABELS,
@@ -31,7 +33,7 @@ import type { ResultWithReportMeta } from '../data/medical'
 import { formatFullDate, todayLocal } from '../lib/date'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 import { MedicalValueRow } from '../components/MedicalValueRow'
-import { MedicalSection } from '../components/MedicalSection'
+import { Collapsible } from '../components/Collapsible'
 import { routes } from '../constants/routes'
 
 // Lazy so recharts is fetched only when a sparkline is expanded (its own chunk). The grid itself
@@ -104,11 +106,17 @@ export function MedicalDashboard() {
 
           {/* Latest values per test, grouped by category */}
           {latestByCategory.map((group) => (
-            <MedicalSection key={group.category} category={group.category}>
+            <Collapsible
+              key={group.category}
+              title={MEDICAL_CATEGORY_LABELS[group.category]}
+              color={MEDICAL_CATEGORY_COLOR[group.category]}
+              titleCase="caption"
+              defaultOpen
+            >
               {group.rows.map((row) => (
                 <LatestRow key={row.id} row={row} />
               ))}
-            </MedicalSection>
+            </Collapsible>
           ))}
 
           {/* Recent reports timeline */}

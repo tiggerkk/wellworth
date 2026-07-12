@@ -8,7 +8,7 @@ import { getWriter, loadIndex } from '../data/literature'
 import { DYNASTY_CHIP, isFieldVisible } from '../lib/literature'
 import { LITERATURE_SECTION_COLOR } from '../constants/literature-sections'
 import { routes } from '../constants/routes'
-import { CollapsibleColorSection } from '../components/CollapsibleColorSection'
+import { Collapsible } from '../components/Collapsible'
 
 /** Writer portrait with a graceful fallback when `headImageUrl` is absent or dead. */
 function Portrait({ url, name }: { url: string | null; name: string }) {
@@ -88,7 +88,7 @@ export function LiteraturePoetDetail() {
           </div>
 
           {bio && showBio && (
-            <CollapsibleColorSection
+            <Collapsible
               title="作者簡介"
               color={LITERATURE_SECTION_COLOR.bio}
               defaultOpen={false}
@@ -96,11 +96,15 @@ export function LiteraturePoetDetail() {
               <p className="whitespace-pre-line px-4 py-3 text-body leading-relaxed text-text-secondary">
                 {bio}
               </p>
-            </CollapsibleColorSection>
+            </Collapsible>
           )}
 
           {works.length > 0 && (
-            <CollapsibleColorSection title="作品" color={LITERATURE_SECTION_COLOR.works}>
+            <Collapsible
+              title="作品"
+              color={LITERATURE_SECTION_COLOR.works}
+              defaultOpen={true}
+            >
               {works.map((p) => (
                 <button
                   key={p.id}
@@ -110,7 +114,7 @@ export function LiteraturePoetDetail() {
                   《{p.title}》
                 </button>
               ))}
-            </CollapsibleColorSection>
+            </Collapsible>
           )}
         </>
       )}

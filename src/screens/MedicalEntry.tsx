@@ -22,6 +22,8 @@ import {
   EYE_REFRACTION_KEYS,
   isMedicalFieldVisible,
   labTestByKey,
+  MEDICAL_CATEGORY_COLOR,
+  MEDICAL_CATEGORY_LABELS,
   orderResultsForDisplay,
   REPORT_TYPE_LABELS,
   REPORT_TYPES,
@@ -36,7 +38,7 @@ import { EntryHeaderActions } from '../components/EntryHeaderActions'
 import { SecondaryButton } from '../components/SecondaryButton'
 import { SelectMenu } from '../components/SelectMenu'
 import { MedicalResultCard } from '../components/MedicalResultCard'
-import { MedicalSection } from '../components/MedicalSection'
+import { Collapsible } from '../components/Collapsible'
 import { MedicalTestPickerSheet } from '../components/MedicalTestPickerSheet'
 import { EyeRefractionFields } from '../components/EyeRefractionFields'
 import { NotesEditorModal } from '../components/NotesEditorModal'
@@ -369,7 +371,14 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
           ) : (
             <div className="flex flex-col gap-5">
               {groupResultsByCategory(listResults).map((g) => (
-                <MedicalSection key={g.category} category={g.category} variant="bare">
+                <Collapsible
+                  key={g.category}
+                  title={MEDICAL_CATEGORY_LABELS[g.category]}
+                  color={MEDICAL_CATEGORY_COLOR[g.category]}
+                  titleCase="caption"
+                  variant="bare"
+                  defaultOpen
+                >
                   {g.rows.map((r) => (
                     <MedicalResultCard
                       key={r.clientId}
@@ -378,7 +387,7 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
                       onRemove={() => removeResult(r.clientId)}
                     />
                   ))}
-                </MedicalSection>
+                </Collapsible>
               ))}
             </div>
           )}
