@@ -1,8 +1,16 @@
-import { useState, type ReactNode } from 'react'
+import { useState, type ComponentType, type ReactNode } from 'react'
 import { IconChevronDown, IconChevronRight } from '@tabler/icons-react'
 
 interface CollapsibleProps {
   title: string
+  /** Leading category icon rendered inside the toggle button, before the title (e.g. Wellness
+   *  Diary's per-group icon). */
+  icon?: ComponentType<{ size?: number; className?: string }>
+  iconClassName?: string
+  /** Extra content inside the toggle button, after the title — e.g. Wellness Diary's kcal
+   *  subtotal, which (unlike Net Worth's subtotal) is part of what gets toggled, not a separate
+   *  action. */
+  titleSuffix?: ReactNode
   children: ReactNode
   /**
    * Accent color (CSS value, e.g. a `var(--color-*)` token) for the left stripe + tinted header.
@@ -59,6 +67,9 @@ interface CollapsibleProps {
  */
 export function Collapsible({
   title,
+  icon: Icon,
+  iconClassName = '',
+  titleSuffix,
   children,
   color,
   titleCase = 'body',
@@ -105,9 +116,11 @@ export function Collapsible({
         ) : (
           <IconChevronRight size={18} className="shrink-0 text-text-secondary" />
         )}
+        {Icon && <Icon size={18} className={`shrink-0 ${iconClassName}`} />}
         <span className={`min-w-0 truncate ${titleGrow ? 'flex-1' : ''} ${titleClass}`}>
           {title}
         </span>
+        {titleSuffix}
       </button>
       {actions}
     </div>

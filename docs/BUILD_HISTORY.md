@@ -3498,7 +3498,7 @@ the open menu.
 
 ### Problem
 
-Six independent collapsible implementations exist (`CollapsibleSection`, `CollapsibleColorSection`, `MedicalSection`, plus inline patterns in `Diary.tsx`, `NetWorthEntry.tsx` and `TripBuilder.tsx`). Click target, color usage, title case, and state ownership all differ for no principled reason — Net Worth/Travel only fell back to chevron-only because their headers carry extra buttons that a full-row `<button>` would swallow. Built new component: `src/components/Collapsible.tsx`.
+Six independent collapsible implementations exist (`GroupHeader`, `CollapsibleSection`, `CollapsibleColorSection`, `MedicalSection`, plus inline patterns in `NetWorthEntry.tsx` and `TripBuilder.tsx`). Click target, color usage, title case, and state ownership all differ for no principled reason — Net Worth/Travel only fell back to chevron-only because their headers carry extra buttons that a full-row `<button>` would swallow. Built new component: `src/components/Collapsible.tsx`.
 
 ### Standard interaction rule (replaces all six current behaviors)
 
@@ -3517,6 +3517,7 @@ Header row = `[toggle button: chevron + title, flex-1] [actions, siblings]`.
 
 | Site                                                     | color            | titleCase | variant | actions                                     | state                                                  |
 | -------------------------------------------------------- | ---------------- | --------- | ------- | ------------------------------------------- | ------------------------------------------------------ |
+| Wellness `Diary.tsx`                                     | —                | `body`    | `card`  | delete, copy, paste, add                    | uncontrolled                                           |
 | Wellness `NewFoodSheet.tsx`                              | —                | `caption` | `card`  | —                                           | uncontrolled                                           |
 | Literature `LiteraturePoemDetail.tsx` / `PoetDetail.tsx` | accent color     | `body`    | `card`  | —                                           | uncontrolled                                           |
 | Medical `MedicalDashboard.tsx`                           | category color   | `caption` | `card`  | —                                           | uncontrolled                                           |

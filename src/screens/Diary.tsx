@@ -5,6 +5,7 @@ import {
   IconChevronRight,
   IconClipboard,
   IconCopy,
+  IconPlus,
   IconReportAnalytics,
 } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
@@ -37,7 +38,7 @@ import { DIARY_GROUPS, type DiaryGroup, type GroupName } from '../constants/grou
 import { routes } from '../constants/routes'
 import type { Tables } from '../types/database'
 import { Calendar, type DayCue } from '../components/Calendar'
-import { GroupHeader } from '../components/GroupHeader'
+import { Collapsible } from '../components/Collapsible'
 import { IconAction } from '../components/IconAction'
 import { ConfirmDeleteAction } from '../components/ConfirmDeleteAction'
 import { NutrientBar } from '../components/NutrientBar'
@@ -335,69 +336,97 @@ export function Diary() {
             )
             const isOpen = expanded[group.key] ?? false
             const byId = new Map(groupEntries.map((e) => [e.id, e]))
+            const negative = subtotal < 0
             return (
-              <div
+              <Collapsible
                 key={group.key}
-                className="overflow-hidden rounded-card border border-border bg-surface"
-              >
-                <GroupHeader
-                  title={group.label}
-                  Icon={group.Icon}
-                  iconClass={group.iconClass}
-                  kcal={subtotal}
-                  count={groupEntries.length}
-                  canPaste={canPaste}
-                  expanded={isOpen}
-                  onAdd={() =>
-                    openSheet(
-                      group.kind === 'activity'
-                        ? `${routes.wellness.addActivity}?day=${day}`
-                        : `${routes.wellness.addFood}?group=${group.key}&day=${day}`,
-                    )
-                  }
-                  onToggle={() =>
-                    setExpanded((prev) => ({ ...prev, [group.key]: !isOpen }))
-                  }
-                  onDelete={() => void deleteGroup(group)}
-                  onCopy={() => void copyGroup(group)}
-                  onPaste={() => void pasteGroup(group)}
-                />
-                {isOpen &&
-                  (groupEntries.length === 0 ? (
-                    <p className="border-t border-border px-4 py-3 text-caption text-text-tertiary">
-                      Nothing logged.
-                    </p>
-                  ) : (
-                    <ReorderList
-                      ids={groupEntries.map((e) => e.id)}
-                      containerClassName="border-t border-border divide-y divide-border"
-                      onReorder={(nextIds) => {
-                        setOrderOverride((prev) => ({ ...prev, [group.key]: nextIds }))
-                        void reorderEntries(nextIds).catch(() => bumpDiary())
-                      }}
-                      onDelete={(id) => void handleDelete(id)}
-                      handleLabel={() => `Drag to reorder in ${group.label}`}
-                      renderLabel={(id) => {
-                        const e = byId.get(id)
-                        if (!e) return null
-                        return (
-                          <button
-                            onClick={() => openEdit(e)}
-                            className="block w-full truncate text-left"
-                          >
-                            {e.label}
-                            {e.duration_min ? ` · ${e.duration_min} min` : ''}
-                          </button>
-                        )
-                      }}
-                      renderTrailing={(id) => (
-                        <span className="text-body text-text-muted">
-                          {Math.round(byId.get(id)?.energy_kcal ?? 0)} kcal
-                        </span>
-                      )}
+                title={group.label}
+                icon={group.Icon}
+                iconClassName={group.iconClass}
+                titleSuffix={
+                  <span
+                    className={`shrink-0 text-label ${negative ? 'text-accent' : 'text-text-secondary'}`}
+                  >
+                    {Math.round(subtotal)} kcal
+                  </span>
+                }
+                titleGrow={false}
+                open={isOpen}
+                onOpenChange={() =>
+                  setExpanded((prev) => ({ ...prev, [group.key]: !isOpen }))
+                }
+                actions={
+                  <>
+                    <div className="flex-1" />
+                    <ConfirmDeleteAction
+                      label={`Delete all in ${group.label}`}
+                      onDelete={() => void deleteGroup(group)}
+                      disabled={groupEntries.length === 0}
                     />
-                  ))}
-              </div>
+                    <IconAction
+                      Icon={IconCopy}
+                      label={`Copy ${group.label}`}
+                      onClick={() => void copyGroup(group)}
+                      disabled={groupEntries.length === 0}
+                    />
+                    <IconAction
+                      Icon={IconClipboard}
+                      label={`Paste into ${group.label}`}
+                      onClick={() => void pasteGroup(group)}
+                      disabled={!canPaste}
+                      tone="positive"
+                    />
+                    <IconAction
+                      Icon={IconPlus}
+                      label={`Add to ${group.label}`}
+                      onClick={() =>
+                        openSheet(
+                          group.kind === 'activity'
+                            ? `${routes.wellness.addActivity}?day=${day}`
+                            : `${routes.wellness.addFood}?group=${group.key}&day=${day}`,
+                        )
+                      }
+                      tone="positive"
+                      stroke={2.25}
+                    />
+                  </>
+                }
+              >
+                {groupEntries.length === 0 ? (
+                  <p className="px-4 py-3 text-caption text-text-tertiary">
+                    Nothing logged.
+                  </p>
+                ) : (
+                  <ReorderList
+                    ids={groupEntries.map((e) => e.id)}
+                    containerClassName="divide-y divide-border"
+                    onReorder={(nextIds) => {
+                      setOrderOverride((prev) => ({ ...prev, [group.key]: nextIds }))
+                      void reorderEntries(nextIds).catch(() => bumpDiary())
+                    }}
+                    onDelete={(id) => void handleDelete(id)}
+                    handleLabel={() => `Drag to reorder in ${group.label}`}
+                    renderLabel={(id) => {
+                      const e = byId.get(id)
+                      if (!e) return null
+                      return (
+                        <button
+                          onClick={() => openEdit(e)}
+                          className="block w-full truncate text-left"
+                        >
+                          {e.label}
+                          {e.duration_min ? ` · ${e.duration_min} min` : ''}
+                        </button>
+                      )
+                    }}
+                    renderTrailing={(id) => (
+                      <span className="text-body text-text-muted">
+                        {Math.round(byId.get(id)?.energy_kcal ?? 0)} kcal
+                      </span>
+                    )}
+                  />
+                )}
+              </Collapsible>
             )
           })}
         </div>
