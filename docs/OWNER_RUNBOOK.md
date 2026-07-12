@@ -1022,7 +1022,7 @@ fast. These are the "cached assets":
 - The **Travel map's base data** — the bundled `world-countries.geojson` / `china-provinces.geojson`
   (Leaflet tiles themselves come from the network, not this cache).
 
-They are **not** your data. In particular, **matched shows and matched books are _data_**, stored as rows in the **Supabase database** — they're not "cached assets." The only match data kept in the browser is the **import match caches** in `localStorage` (R5) — `wellworth:book-match-cache`, `wellworth:shows-match-cache`, and `wellworth:food-match-cache` — which exist purely to speed up re-imports (and, for books, save the daily Google Books quota), and also `wellworth:networth-liquid-only` - which is the Liquid Only toggle.
+They are **not** your data. In particular, **matched shows and matched books are _data_**, stored as rows in the **Supabase database** — they're not "cached assets." The only match data kept in the browser is the **import match caches** in `localStorage` (R5) — `wellworth:books-match-cache`, `wellworth:shows-match-cache`, and `wellworth:food-match-cache` — which exist purely to speed up re-imports (and, for books, save the daily Google Books quota), and also `wellworth:networth-liquid-only` - which is the Liquid Only toggle.
 
 ### R4 — When you actually need to "Delete data"
 
@@ -1043,8 +1043,8 @@ To drop just an **import match cache** without logging out:
 - **In the app:** the module's **Settings → Import → "Clear Import Match Cache"** — **Books** (Google
   Books matches), **Shows** (TMDB), or **Wellness** (USDA food matches). (Recommended — one tap, stays
   logged in.)
-- **In DevTools, per-key:** F12 → **Application** → **Storage → Local Storage** → click your origin → you'll see individual rows (`wellworth:book-match-cache`, `wellworth:shows-match-cache`, `wellworth:food-match-cache`, `wellworth:last-module`, `wellworth:networth-liquid-only`, the `sb-…-auth-token`). Select a single row and press **Delete** (or right-click → Delete). Deleting only a `…-match-cache` row clears that import cache and leaves your login intact.
-- **In the Console:** `localStorage.removeItem('wellworth:book-match-cache')` (or `'wellworth:shows-match-cache'`). (Avoid `localStorage.clear()` — it also removes the auth token and logs you out.)
+- **In DevTools, per-key:** F12 → **Application** → **Storage → Local Storage** → click your origin → you'll see individual rows (`wellworth:books-match-cache`, `wellworth:shows-match-cache`, `wellworth:food-match-cache`, `wellworth:last-module`, `wellworth:networth-liquid-only`, the `sb-…-auth-token`). Select a single row and press **Delete** (or right-click → Delete). Deleting only a `…-match-cache` row clears that import cache and leaves your login intact.
+- **In the Console:** `localStorage.removeItem('wellworth:books-match-cache')` (or `'wellworth:shows-match-cache'`). (Avoid `localStorage.clear()` — it also removes the auth token and logs you out.)
 
 ---
 

@@ -59,7 +59,7 @@ src/
                      # diary-refresh, diary-clipboard, toast, csv,
                      # networth, fx, networth-refresh, networth-import, fund-import, insurance-import,
                      # insurance-view, shows, shows-refresh, shows-tmdb-api, shows-import, shows-match-cache,
-                     # books, books-refresh, books-api, books-import, book-match-cache,
+                     # books, books-refresh, books-api, books-import, books-match-cache,
                      # match-cache (shared importer match-cache factory), quotes, quotes-refresh,
                      # quotes-import, travel, travel-config, travel-refresh, travel-stats,
                      # travel-geo, places, trip-fx, expenses, reimburse, travel-expense-import,

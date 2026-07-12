@@ -13,17 +13,12 @@ import {
   recentlyRead,
   startReading,
   wantToRead,
+  BOOK_VISIBLE_FIELDS,
   type BookRow,
   type LibraryCriteria,
 } from '../lib/books'
-import {
-  BOOK_VISIBLE_FIELDS,
-  BOOK_STATUS_CHIP,
-  BOOK_STATUS_LABELS,
-  BOOK_STATUSES,
-  LGBTQ_REP_LABELS,
-  LGBTQ_REPS,
-} from '../constants/books'
+import { BOOK_STATUSES, BOOK_STATUS_LABELS, BOOK_STATUS_CHIP } from '../constants/books'
+import { LGBTQ_REP_LABELS, LGBTQ_REPS } from '../constants/lgbtq'
 
 const crit = (p: Partial<LibraryCriteria>): LibraryCriteria => ({
   ...DEFAULT_LIBRARY_CRITERIA,

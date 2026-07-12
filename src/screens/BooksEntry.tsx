@@ -17,18 +17,9 @@ import { EntryLoader } from '../components/EntryLoader'
 import { createBook, deleteBook, getBook, updateBook } from '../data/book'
 import { numStr } from '../lib/quantity'
 import { FIELD_CLASS as inputClass } from '../constants/forms'
-import {
-  isFieldVisible,
-  type BookRow,
-  type BookStatus,
-  type LgbtqRep,
-} from '../lib/books'
-import {
-  BOOK_STATUS_LABELS,
-  BOOK_STATUSES,
-  LGBTQ_REP_LABELS,
-  LGBTQ_REPS,
-} from '../constants/books'
+import { BOOK_STATUSES, type BookStatus, BOOK_STATUS_LABELS } from '../constants/books'
+import { LGBTQ_REPS, type LgbtqRep, LGBTQ_REP_LABELS } from '../constants/lgbtq'
+import { isFieldVisible, type BookRow } from '../lib/books'
 import { getBookDetails, type BookSearchResult } from '../lib/books-api'
 import { containsCjk } from '../lib/cjk'
 import { DEFAULT_DYNASTY, DYNASTIES, type Dynasty } from '../constants/dynasty'

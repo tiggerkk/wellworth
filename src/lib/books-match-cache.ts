@@ -18,7 +18,7 @@ interface BookKey {
 }
 
 const cache = createMatchCache<BookKey, BookMetadata>({
-  storageKey: 'wellworth:book-match-cache',
+  storageKey: 'wellworth:books-match-cache',
   version: 1,
   keyFn: ({ title, author }) => `${normMatch(title)}|${normMatch(author ?? '')}`,
 })

@@ -3,8 +3,6 @@
  * generated DB types surface as plain `string`). Pure constants only — runtime helpers live in `src/lib/shows.ts`.
  */
 
-// The CHECK-constrained enums come through the generated types as plain `string`; these
-// unions + label maps are the front-end's narrowed view.
 export const SHOW_TYPES = ['tv', 'movie', 'documentary'] as const
 export type ShowType = (typeof SHOW_TYPES)[number]
 export const SHOW_TYPE_LABELS: Record<ShowType, string> = {

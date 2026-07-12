@@ -62,7 +62,7 @@ Columns: `title,author,status,rating,lgbtq_rep,dynasty,is_favorite,start_date,en
 - `created_at` frozen to `start_date`, or — when a `want` omits it — defaults to import time.
 
 - **Match cache (`src/lib/books-match-cache.ts`, a `match-cache.ts` instance shared with Shows):**
-  - Resolved matches are cached in **`localStorage`** (one key, `wellworth:book-match-cache`) keyed on `normMatch(title)|normMatch(author)` so re-importing the **same** file (the common case when truncating `book` / `supabase db reset --linked` to re-test).
+  - Resolved matches are cached in **`localStorage`** (one key, `wellworth:books-match-cache`) keyed on `normMatch(title)|normMatch(author)` so re-importing the **same** file (the common case when truncating `book` / `supabase db reset --linked` to re-test).
   - **Skips the network entirely** on a hit — the big saving against the per-day Google Books quota.
   - Only **positive** matches are cached; no-match / timed-out / quota-aborted rows re-query next run.
   - **Change** overwrites the entry with the owner's pick (so the correction persists across re-imports).

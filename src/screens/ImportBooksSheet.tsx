@@ -33,7 +33,7 @@ import {
   getCachedBookMatch,
   removeCachedBookMatch,
   setCachedBookMatch,
-} from '../lib/book-match-cache'
+} from '../lib/books-match-cache'
 import { saveImportedBooks } from '../data/book'
 import { bumpBooks } from '../lib/books-refresh'
 import { errorMessage } from '../lib/errors'

@@ -1,5 +1,5 @@
 /**
- * Shows (TV & movies)  domain helpers — UI-framework-free so they're unit-tested and shared by Shows functions.
+ * Shows (TV & movies) domain helpers — UI-framework-free so they're unit-tested and shared by Shows functions.
  * DB access lives in `src/data/show.ts`; enums + labels live in `src/constants/shows.ts`;
  * TMDB mapping lives in `src/lib/shows-tmdb-api.ts`.
  */

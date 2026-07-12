@@ -1,21 +1,18 @@
 /**
- * Books (read / to read) domain constants + pure helpers. UI-framework-free so it's unit-tested
- * and shared by the Entry form, the Library, and the (M4) Dashboard. DB access lives in
- * `src/data/book.ts`; Google Books / Open Library mapping will live in `src/lib/books-api.ts` (M3).
+ * Books domain helpers — UI-framework-free so they're unit-tested and shared by Books functions.
+ * DB access lives in `src/data/books.ts`; enums + labels live in `src/constants/books.ts`;
+ * Google Books / Open Library mapping lives in `src/lib/books-api.ts`.
  */
 import type { Tables, TablesInsert, TablesUpdate } from '../types/database'
 import type { IsoDate } from './date'
 import { type Dynasty, dynastySortRank } from '../constants/dynasty'
+import { type LgbtqRep } from '../constants/lgbtq'
 import { foldZh } from './zh-fold'
-import { BOOK_STATUSES, LGBTQ_REPS } from '../constants/books'
+import { type BookStatus } from '../constants/books'
 
 export type BookRow = Tables<'book'>
 export type BookInsert = TablesInsert<'book'>
 export type BookUpdate = TablesUpdate<'book'>
-
-export type BookStatus = (typeof BOOK_STATUSES)[number]
-
-export type LgbtqRep = (typeof LGBTQ_REPS)[number]
 
 // --- Status transitions (pure: take `today` so they're deterministic in tests) ---
 
@@ -204,6 +201,25 @@ export function applyLibraryView(books: BookRow[], c: LibraryCriteria): BookRow[
     .filter((b) => matchesCriteria(b, c))
     .sort((a, b) => compareBooks(a, b, c.sortField, c.sortDir))
 }
+
+// --- Entry/Edit field visibility (Books Settings) ---
+
+/**
+ * The Entry/Edit fields the owner can hide from Books Settings. The core Title / Status / Search
+ * controls are always shown and are not listed here. Stored on `profile.book_visible_fields`
+ * (NULL = all visible); `'metadata'` covers the read-only Google Books display block.
+ */
+export const BOOK_VISIBLE_FIELDS: { key: string; label: string }[] = [
+  { key: 'authors', label: 'Author(s)' },
+  { key: 'year', label: 'Year' },
+  { key: 'metadata', label: 'Google Books Metadata' },
+  { key: 'rating', label: 'Rating' },
+  { key: 'lgbtq_rep', label: 'LGBT+ Representation' },
+  { key: 'dynasty', label: 'Dynasty' },
+  { key: 'start_date', label: 'Start Date' },
+  { key: 'end_date', label: 'Finish / Drop Date' },
+  { key: 'notes', label: 'Notes' },
+] as const
 
 /** Whether an Entry field is visible. NULL stored prefs (or an unknown key) ⇒ visible (default-on). */
 export function isFieldVisible(visibleFields: string[] | null, key: string): boolean {

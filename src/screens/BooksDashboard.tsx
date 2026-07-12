@@ -14,10 +14,9 @@ import {
   startReading,
   wantToRead,
   type BookRow,
-  type BookStatus,
   type BookUpdate,
 } from '../lib/books'
-import { BOOK_STATUS_CHIP, BOOK_STATUS_LABELS } from '../constants/books'
+import { type BookStatus, BOOK_STATUS_LABELS, BOOK_STATUS_CHIP } from '../constants/books'
 import { formatMonthDay, todayLocal } from '../lib/date'
 import { DYNASTY_CHIP } from '../constants/dynasty'
 import { routes } from '../constants/routes'

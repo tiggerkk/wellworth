@@ -6,7 +6,7 @@ import {
   getCachedBookMatch,
   removeCachedBookMatch,
   setCachedBookMatch,
-} from './book-match-cache'
+} from './books-match-cache'
 import type { BookMetadata } from './books-api'
 
 const meta = (title: string): BookMetadata => ({
@@ -86,13 +86,13 @@ describe('book match cache', () => {
   })
   it('ignores a stale-version blob', () => {
     localStorage.setItem(
-      'wellworth:book-match-cache',
+      'wellworth:books-match-cache',
       JSON.stringify({ version: 999, entries: { x: meta('X') } }),
     )
     expect(bookMatchCacheSize()).toBe(0)
   })
   it('survives disabled/corrupt storage without throwing', () => {
-    localStorage.setItem('wellworth:book-match-cache', 'not json')
+    localStorage.setItem('wellworth:books-match-cache', 'not json')
     expect(getCachedBookMatch('Dune', 'Herbert')).toBeNull()
     expect(() => setCachedBookMatch('Dune', 'Herbert', meta('Dune'))).not.toThrow()
   })
