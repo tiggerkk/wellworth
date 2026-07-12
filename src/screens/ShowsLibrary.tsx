@@ -24,16 +24,15 @@ import {
 import { DYNASTIES, DYNASTY_CHIP } from '../constants/dynasty'
 import { formatMonthDay, todayLocal, type IsoDate } from '../lib/date'
 import { routes } from '../constants/routes'
-import { SearchBar } from '../components/SearchBar'
 import { SwipeRow } from '../components/SwipeRow'
 import { SegmentedTabs } from '../components/SegmentedTabs'
 import { SelectMenu } from '../components/SelectMenu'
 import { Toggle } from '../components/Toggle'
 import { Calendar } from '../components/Calendar'
-import { FilterToggleButton } from '../components/FilterToggleButton'
+import { ListSearchHeader } from '../components/ListSearchHeader'
 import { FilterPanel } from '../components/FilterPanel'
+import { FilterPanelFooter } from '../components/FilterPanelFooter'
 import { ResultCount } from '../components/ResultCount'
-import { SortControl } from '../components/SortControl'
 import { DateRangeRow } from '../components/DateRangeRow'
 import { ShowTypeBadge } from '../components/ShowTypeBadge'
 import { StatusChip } from '../components/StatusChip'
@@ -141,7 +140,7 @@ export function ShowsLibrary() {
   function clearFilters() {
     setCriteria((c) => ({
       ...DEFAULT_LIBRARY_CRITERIA,
-      query: c.query,
+      //query: c.query,
       type: c.type, // Clears all filters except type (TV/Movies/Docs)
       //sortField: c.sortField,
       //sortDir: c.sortDir,
@@ -170,18 +169,23 @@ export function ShowsLibrary() {
           onChange={(t) => setCrit({ type: t })}
           options={TYPE_OPTIONS}
         />
-        <div className="flex items-center gap-2">
-          <SearchBar
-            value={criteria.query}
-            onChange={(q) => setCrit({ query: q })}
-            placeholder="Search title, director, cast"
-            className="min-w-0 flex-1"
-          />
-          <FilterToggleButton
-            active={filtersOpen}
-            onClick={() => setFiltersOpen((o) => !o)}
-          />
-        </div>
+        <ListSearchHeader
+          query={criteria.query}
+          onQueryChange={(q) => setCrit({ query: q })}
+          placeholder="Search title, director, cast"
+          filtersOpen={filtersOpen}
+          onToggleFilters={() => setFiltersOpen((o) => !o)}
+        />
+        <FilterPanelFooter
+          sortField={criteria.sortField}
+          sortOptions={SORT_OPTIONS}
+          onSortFieldChange={(f) => setCrit({ sortField: f })}
+          sortDir={criteria.sortDir}
+          onToggleSortDir={() =>
+            setCrit({ sortDir: criteria.sortDir === 'asc' ? 'desc' : 'asc' })
+          }
+          onClearFilters={clearFilters}
+        />
       </div>
 
       {filtersOpen && (
@@ -239,20 +243,6 @@ export function ShowsLibrary() {
             onClearFrom={() => setBound('endFrom', null)}
             onClearTo={() => setBound('endTo', null)}
           />
-          <div className="flex items-center justify-between">
-            <SortControl
-              field={criteria.sortField}
-              options={SORT_OPTIONS}
-              onFieldChange={(f) => setCrit({ sortField: f })}
-              dir={criteria.sortDir}
-              onToggleDir={() =>
-                setCrit({ sortDir: criteria.sortDir === 'asc' ? 'desc' : 'asc' })
-              }
-            />
-            <button onClick={clearFilters} className="text-accent">
-              Clear Filters
-            </button>
-          </div>
         </FilterPanel>
       )}
 

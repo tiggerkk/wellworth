@@ -1,16 +1,15 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { IconRoute } from '@tabler/icons-react'
-import { SearchBar } from '../components/SearchBar'
 import { SelectMenu } from '../components/SelectMenu'
 import { SwipeRow } from '../components/SwipeRow'
 import { StatusChip } from '../components/StatusChip'
 import { Thumb } from '../components/Thumb'
 import { EmptyState } from '../components/EmptyState'
-import { FilterToggleButton } from '../components/FilterToggleButton'
+import { ListSearchHeader } from '../components/ListSearchHeader'
 import { FilterPanel } from '../components/FilterPanel'
+import { FilterPanelFooter } from '../components/FilterPanelFooter'
 import { ResultCount } from '../components/ResultCount'
-import { SortControl } from '../components/SortControl'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useSessionState } from '../hooks/useSessionState'
@@ -121,9 +120,9 @@ export function TravelTrips() {
   const set = (patch: Partial<TripCriteria>) => setCriteria((c) => ({ ...c, ...patch }))
 
   function clearFilters() {
-    setCriteria((c) => ({
+    setCriteria(() => ({
       ...DEFAULT_TRIP_CRITERIA,
-      query: c.query,
+      //query: c.query,
       //sortField: c.sortField,
       //sortDir: c.sortDir,
     }))
@@ -131,18 +130,23 @@ export function TravelTrips() {
 
   return (
     <div className="flex min-h-full flex-col gap-3 px-4 py-4">
-      <div className="flex items-center gap-2">
-        <SearchBar
-          value={criteria.query}
-          onChange={(q) => set({ query: q })}
-          placeholder="Search trip name, city, companion"
-          className="min-w-0 flex-1"
-        />
-        <FilterToggleButton
-          active={filtersOpen}
-          onClick={() => setFiltersOpen((o) => !o)}
-        />
-      </div>
+      <ListSearchHeader
+        query={criteria.query}
+        onQueryChange={(q) => set({ query: q })}
+        placeholder="Search trip name, city, companion"
+        filtersOpen={filtersOpen}
+        onToggleFilters={() => setFiltersOpen((o) => !o)}
+      />
+      <FilterPanelFooter
+        sortField={criteria.sortField}
+        sortOptions={SORT_OPTIONS}
+        onSortFieldChange={(f) => set({ sortField: f })}
+        sortDir={criteria.sortDir}
+        onToggleSortDir={() =>
+          set({ sortDir: criteria.sortDir === 'asc' ? 'desc' : 'asc' })
+        }
+        onClearFilters={clearFilters}
+      />
 
       {filtersOpen && (
         <FilterPanel>
@@ -189,20 +193,6 @@ export function TravelTrips() {
                 ...years.map((y) => ({ value: y, label: y })),
               ]}
             />
-          </div>
-          <div className="flex items-center justify-between">
-            <SortControl
-              field={criteria.sortField}
-              options={SORT_OPTIONS}
-              onFieldChange={(f) => set({ sortField: f })}
-              dir={criteria.sortDir}
-              onToggleDir={() =>
-                set({ sortDir: criteria.sortDir === 'asc' ? 'desc' : 'asc' })
-              }
-            />
-            <button onClick={clearFilters} className="text-accent">
-              Clear Filters
-            </button>
           </div>
         </FilterPanel>
       )}

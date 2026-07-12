@@ -23,16 +23,15 @@ import {
 } from '../lib/quotes-config'
 import { QUOTE_LANGUAGES, QUOTE_LANGUAGE_LABELS } from '../constants/quotes'
 import { routes } from '../constants/routes'
-import { SearchBar } from '../components/SearchBar'
 import { SwipeRow } from '../components/SwipeRow'
 import { EmptyState } from '../components/EmptyState'
 import { SelectMenu } from '../components/SelectMenu'
 import { Toggle } from '../components/Toggle'
 import { StatusChip } from '../components/StatusChip'
-import { FilterToggleButton } from '../components/FilterToggleButton'
+import { ListSearchHeader } from '../components/ListSearchHeader'
 import { FilterPanel } from '../components/FilterPanel'
+import { FilterPanelFooter } from '../components/FilterPanelFooter'
 import { FilterPill } from '../components/FilterPill'
-import { SortControl } from '../components/SortControl'
 import { ResultCount } from '../components/ResultCount'
 
 const LANGUAGE_OPTIONS: { value: string; label: string }[] = [
@@ -123,9 +122,9 @@ export function QuotesLibrary() {
   }
 
   function clearFilters() {
-    setCriteria((c) => ({
+    setCriteria(() => ({
       ...DEFAULT_LIBRARY_CRITERIA,
-      query: c.query,
+      //query: c.query,
       //sortField: c.sortField,
       //sortDir: c.sortDir,
     }))
@@ -164,18 +163,23 @@ export function QuotesLibrary() {
   return (
     <div className="flex min-h-full flex-col gap-3 px-4 py-4">
       <div className="sticky top-0 z-10 -mx-4 flex flex-col gap-3 bg-bg/90 px-4 py-3 backdrop-blur">
-        <div className="flex items-center gap-2">
-          <SearchBar
-            value={criteria.query}
-            onChange={(q) => setCrit({ query: q })}
-            placeholder="Search quote, author, title, tag"
-            className="min-w-0 flex-1"
-          />
-          <FilterToggleButton
-            active={filtersOpen}
-            onClick={() => setFiltersOpen((o) => !o)}
-          />
-        </div>
+        <ListSearchHeader
+          query={criteria.query}
+          onQueryChange={(q) => setCrit({ query: q })}
+          placeholder="Search quote, author, title, tag"
+          filtersOpen={filtersOpen}
+          onToggleFilters={() => setFiltersOpen((o) => !o)}
+        />
+        <FilterPanelFooter
+          sortField={criteria.sortField}
+          sortOptions={SORT_OPTIONS}
+          onSortFieldChange={(f) => setCrit({ sortField: f })}
+          sortDir={criteria.sortDir}
+          onToggleSortDir={() =>
+            setCrit({ sortDir: criteria.sortDir === 'asc' ? 'desc' : 'asc' })
+          }
+          onClearFilters={clearFilters}
+        />
       </div>
 
       {constrained && (
@@ -260,21 +264,6 @@ export function QuotesLibrary() {
               )}
             </div>
           )}
-
-          <div className="flex items-center justify-between">
-            <SortControl
-              field={criteria.sortField}
-              options={SORT_OPTIONS}
-              onFieldChange={(f) => setCrit({ sortField: f })}
-              dir={criteria.sortDir}
-              onToggleDir={() =>
-                setCrit({ sortDir: criteria.sortDir === 'asc' ? 'desc' : 'asc' })
-              }
-            />
-            <button onClick={clearFilters} className="text-accent">
-              Clear Filters
-            </button>
-          </div>
         </FilterPanel>
       )}
 

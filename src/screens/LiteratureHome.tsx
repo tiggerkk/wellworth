@@ -15,10 +15,9 @@ import {
   type TypeKind,
 } from '../lib/literature'
 import { routes } from '../constants/routes'
-import { SearchBar } from '../components/SearchBar'
-import { FilterToggleButton } from '../components/FilterToggleButton'
+import { ListSearchHeader } from '../components/ListSearchHeader'
 import { FilterPanel } from '../components/FilterPanel'
-import { SortControl } from '../components/SortControl'
+import { FilterPanelFooter } from '../components/FilterPanelFooter'
 import { Toggle } from '../components/Toggle'
 import { EmptyState } from '../components/EmptyState'
 import { ResultCount } from '../components/ResultCount'
@@ -103,9 +102,9 @@ export function LiteratureHome() {
     })
   }
   function clearFilters() {
-    setCriteria((c) => ({
+    setCriteria(() => ({
       ...DEFAULT_POEM_CRITERIA,
-      query: c.query,
+      //query: c.query,
       //sortField: c.sortField,
       //sortDir: c.sortDir,
     }))
@@ -115,18 +114,35 @@ export function LiteratureHome() {
   return (
     <div className="flex min-h-full flex-col gap-3 px-4 py-4">
       <div className="sticky top-0 z-10 -mx-4 flex flex-col gap-3 bg-bg/90 px-4 py-3 backdrop-blur">
-        <div className="flex items-center gap-2">
-          <SearchBar
-            value={criteria.query}
-            onChange={(q) => setCrit({ query: q })}
-            placeholder="搜尋詩詞、作者"
-            className="min-w-0 flex-1"
-          />
-          <FilterToggleButton
-            active={filtersOpen}
-            onClick={() => setFiltersOpen((o) => !o)}
-          />
-        </div>
+        <ListSearchHeader
+          query={criteria.query}
+          onQueryChange={(q) => setCrit({ query: q })}
+          placeholder="搜尋詩詞、作者"
+          filtersOpen={filtersOpen}
+          onToggleFilters={() => setFiltersOpen((o) => !o)}
+        />
+        <FilterPanelFooter
+          sortField={criteria.sortField}
+          sortOptions={SORT_OPTIONS}
+          onSortFieldChange={(f) => setCrit({ sortField: f })}
+          sortDir={criteria.sortDir}
+          onToggleSortDir={() =>
+            setCrit({ sortDir: criteria.sortDir === 'asc' ? 'desc' : 'asc' })
+          }
+          sortLabel="排序"
+          onClearFilters={clearFilters}
+          clearLabel="清除篩選"
+          leading={
+            <label className="flex items-center gap-2">
+              <span className="text-text-secondary">只看收藏</span>
+              <Toggle
+                checked={criteria.favoritesOnly}
+                onChange={(v) => setCrit({ favoritesOnly: v })}
+                label="只看收藏"
+              />
+            </label>
+          }
+        />
       </div>
 
       {filtersOpen && (
@@ -170,32 +186,6 @@ export function LiteratureHome() {
               </div>
             )
           })}
-
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <label className="flex items-center gap-2">
-                <span className="text-text-secondary">只看收藏</span>
-                <Toggle
-                  checked={criteria.favoritesOnly}
-                  onChange={(v) => setCrit({ favoritesOnly: v })}
-                  label="只看收藏"
-                />
-              </label>
-              <SortControl
-                field={criteria.sortField}
-                options={SORT_OPTIONS}
-                onFieldChange={(f) => setCrit({ sortField: f })}
-                dir={criteria.sortDir}
-                onToggleDir={() =>
-                  setCrit({ sortDir: criteria.sortDir === 'asc' ? 'desc' : 'asc' })
-                }
-                label="排序"
-              />
-            </div>
-            <button onClick={clearFilters} className="text-accent">
-              清除篩選
-            </button>
-          </div>
         </FilterPanel>
       )}
 

@@ -19,17 +19,16 @@ import { effectiveProviders, providerLabel } from '../lib/insurance-config'
 import { todayLocal } from '../lib/date'
 import { StatusChip } from '../components/StatusChip'
 import { routes } from '../constants/routes'
-import { SearchBar } from '../components/SearchBar'
 import { SelectMenu } from '../components/SelectMenu'
 import { SegmentedTabs } from '../components/SegmentedTabs'
 import { Toggle } from '../components/Toggle'
 import { InsurancePolicyHeader } from '../components/InsurancePolicyHeader'
 import { Calendar } from '../components/Calendar'
-import { FilterToggleButton } from '../components/FilterToggleButton'
+import { ListSearchHeader } from '../components/ListSearchHeader'
 import { FilterPanel } from '../components/FilterPanel'
+import { FilterPanelFooter } from '../components/FilterPanelFooter'
 import { DateRangeRow } from '../components/DateRangeRow'
 import { ResultCount } from '../components/ResultCount'
-import { SortControl } from '../components/SortControl'
 import { EmptyState } from '../components/EmptyState'
 
 const SORT_OPTIONS: { value: InsuranceSortField; label: string }[] = [
@@ -88,9 +87,9 @@ export function InsurancePolicies() {
   const view = applyInsuranceView(items, criteria, currentAge)
 
   function clearFilters() {
-    setCriteria((c) => ({
+    setCriteria(() => ({
       ...DEFAULT_INSURANCE_CRITERIA,
-      query: c.query,
+      //query: c.query,
       //sortField: c.sortField,
       //sortDir: c.sortDir,
     }))
@@ -99,18 +98,25 @@ export function InsurancePolicies() {
   return (
     <div className="flex min-h-full flex-col gap-3 px-4 py-4">
       {!error && (
-        <div className="flex items-center gap-2">
-          <SearchBar
-            value={criteria.query}
-            onChange={(q) => setCrit({ query: q })}
-            placeholder="Search policy number, policy name, notes"
-            className="min-w-0 flex-1"
-          />
-          <FilterToggleButton
-            active={filtersOpen}
-            onClick={() => setFiltersOpen((o) => !o)}
-          />
-        </div>
+        <ListSearchHeader
+          query={criteria.query}
+          onQueryChange={(q) => setCrit({ query: q })}
+          placeholder="Search policy number, policy name, notes"
+          filtersOpen={filtersOpen}
+          onToggleFilters={() => setFiltersOpen((o) => !o)}
+        />
+      )}
+      {!error && items.length > 0 && (
+        <FilterPanelFooter
+          sortField={criteria.sortField}
+          sortOptions={SORT_OPTIONS}
+          onSortFieldChange={(f) => setCrit({ sortField: f })}
+          sortDir={criteria.sortDir}
+          onToggleSortDir={() =>
+            setCrit({ sortDir: criteria.sortDir === 'asc' ? 'desc' : 'asc' })
+          }
+          onClearFilters={clearFilters}
+        />
       )}
 
       {filtersOpen && items.length > 0 && (
@@ -144,20 +150,6 @@ export function InsurancePolicies() {
             onClearFrom={() => setCrit({ startFrom: null })}
             onClearTo={() => setCrit({ startTo: null })}
           />
-          <div className="flex items-center justify-between">
-            <SortControl
-              field={criteria.sortField}
-              options={SORT_OPTIONS}
-              onFieldChange={(f) => setCrit({ sortField: f })}
-              dir={criteria.sortDir}
-              onToggleDir={() =>
-                setCrit({ sortDir: criteria.sortDir === 'asc' ? 'desc' : 'asc' })
-              }
-            />
-            <button onClick={clearFilters} className="text-accent">
-              Clear Filters
-            </button>
-          </div>
         </FilterPanel>
       )}
 

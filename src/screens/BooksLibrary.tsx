@@ -23,15 +23,14 @@ import {
 } from '../lib/books'
 import { formatMonthDay, todayLocal, type IsoDate } from '../lib/date'
 import { routes } from '../constants/routes'
-import { SearchBar } from '../components/SearchBar'
 import { SwipeRow } from '../components/SwipeRow'
 import { SelectMenu } from '../components/SelectMenu'
 import { Toggle } from '../components/Toggle'
 import { Calendar } from '../components/Calendar'
-import { FilterToggleButton } from '../components/FilterToggleButton'
+import { ListSearchHeader } from '../components/ListSearchHeader'
 import { FilterPanel } from '../components/FilterPanel'
+import { FilterPanelFooter } from '../components/FilterPanelFooter'
 import { ResultCount } from '../components/ResultCount'
-import { SortControl } from '../components/SortControl'
 import { DateRangeRow } from '../components/DateRangeRow'
 import { StatusChip } from '../components/StatusChip'
 import { StarRating } from '../components/StarRating'
@@ -129,9 +128,9 @@ export function BooksLibrary() {
   }
 
   function clearFilters() {
-    setCriteria((c) => ({
+    setCriteria(() => ({
       ...DEFAULT_LIBRARY_CRITERIA,
-      query: c.query,
+      //query: c.query,
       //sortField: c.sortField,
       //sortDir: c.sortDir,
     }))
@@ -154,18 +153,23 @@ export function BooksLibrary() {
   return (
     <div className="flex min-h-full flex-col gap-3 px-4 py-4">
       <div className="sticky top-0 z-10 -mx-4 flex flex-col gap-3 bg-bg/90 px-4 py-3 backdrop-blur">
-        <div className="flex items-center gap-2">
-          <SearchBar
-            value={criteria.query}
-            onChange={(q) => setCrit({ query: q })}
-            placeholder="Search title, author"
-            className="min-w-0 flex-1"
-          />
-          <FilterToggleButton
-            active={filtersOpen}
-            onClick={() => setFiltersOpen((o) => !o)}
-          />
-        </div>
+        <ListSearchHeader
+          query={criteria.query}
+          onQueryChange={(q) => setCrit({ query: q })}
+          placeholder="Search title, author"
+          filtersOpen={filtersOpen}
+          onToggleFilters={() => setFiltersOpen((o) => !o)}
+        />
+        <FilterPanelFooter
+          sortField={criteria.sortField}
+          sortOptions={SORT_OPTIONS}
+          onSortFieldChange={(f) => setCrit({ sortField: f })}
+          sortDir={criteria.sortDir}
+          onToggleSortDir={() =>
+            setCrit({ sortDir: criteria.sortDir === 'asc' ? 'desc' : 'asc' })
+          }
+          onClearFilters={clearFilters}
+        />
       </div>
 
       {filtersOpen && (
@@ -223,20 +227,6 @@ export function BooksLibrary() {
             onClearFrom={() => setBound('endFrom', null)}
             onClearTo={() => setBound('endTo', null)}
           />
-          <div className="flex items-center justify-between">
-            <SortControl
-              field={criteria.sortField}
-              options={SORT_OPTIONS}
-              onFieldChange={(f) => setCrit({ sortField: f })}
-              dir={criteria.sortDir}
-              onToggleDir={() =>
-                setCrit({ sortDir: criteria.sortDir === 'asc' ? 'desc' : 'asc' })
-              }
-            />
-            <button onClick={clearFilters} className="text-accent">
-              Clear Filters
-            </button>
-          </div>
         </FilterPanel>
       )}
 

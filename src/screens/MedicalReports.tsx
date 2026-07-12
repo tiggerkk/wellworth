@@ -19,12 +19,11 @@ import { routes } from '../constants/routes'
 import { IconHeartbeat } from '@tabler/icons-react'
 import { SwipeRow } from '../components/SwipeRow'
 import { EmptyState } from '../components/EmptyState'
-import { SearchBar } from '../components/SearchBar'
 import { SelectMenu } from '../components/SelectMenu'
-import { FilterToggleButton } from '../components/FilterToggleButton'
+import { ListSearchHeader } from '../components/ListSearchHeader'
 import { FilterPanel } from '../components/FilterPanel'
+import { FilterPanelFooter } from '../components/FilterPanelFooter'
 import { ResultCount } from '../components/ResultCount'
-import { SortControl } from '../components/SortControl'
 
 const TYPE_OPTIONS = [
   { value: 'all', label: 'Any Type' },
@@ -83,9 +82,9 @@ export function MedicalReports() {
   }
 
   function clearFilters() {
-    setCriteria((c) => ({
+    setCriteria(() => ({
       ...DEFAULT_REPORT_LIST_CRITERIA,
-      query: c.query,
+      //query: c.query,
       //sortField: c.sortField,
       //sortDir: c.sortDir,
     }))
@@ -106,18 +105,25 @@ export function MedicalReports() {
   return (
     <div className="flex min-h-full flex-col gap-3 px-4 py-4">
       {!error && (
-        <div className="flex items-center gap-2">
-          <SearchBar
-            value={criteria.query}
-            onChange={(q) => setCrit({ query: q })}
-            placeholder="Search body part, narrative"
-            className="min-w-0 flex-1"
-          />
-          <FilterToggleButton
-            active={filtersOpen}
-            onClick={() => setFiltersOpen((o) => !o)}
-          />
-        </div>
+        <ListSearchHeader
+          query={criteria.query}
+          onQueryChange={(q) => setCrit({ query: q })}
+          placeholder="Search body part, narrative"
+          filtersOpen={filtersOpen}
+          onToggleFilters={() => setFiltersOpen((o) => !o)}
+        />
+      )}
+      {!error && reports.length > 0 && (
+        <FilterPanelFooter
+          sortField={criteria.sortField}
+          sortOptions={SORT_OPTIONS}
+          onSortFieldChange={(f) => setCrit({ sortField: f })}
+          sortDir={criteria.sortDir}
+          onToggleSortDir={() =>
+            setCrit({ sortDir: criteria.sortDir === 'asc' ? 'desc' : 'asc' })
+          }
+          onClearFilters={clearFilters}
+        />
       )}
 
       {filtersOpen && reports.length > 0 && (
@@ -138,20 +144,6 @@ export function MedicalReports() {
               options={bodyPartOptions}
               onChange={(v) => setCrit({ bodyPart: v })}
             />
-          </div>
-          <div className="flex items-center justify-between">
-            <SortControl
-              field={criteria.sortField}
-              options={SORT_OPTIONS}
-              onFieldChange={(f) => setCrit({ sortField: f })}
-              dir={criteria.sortDir}
-              onToggleDir={() =>
-                setCrit({ sortDir: criteria.sortDir === 'asc' ? 'desc' : 'asc' })
-              }
-            />
-            <button onClick={clearFilters} className="text-accent">
-              Clear Filters
-            </button>
           </div>
         </FilterPanel>
       )}
