@@ -26,6 +26,7 @@ export const MEDICAL_CATEGORIES = [
   'other',
 ] as const
 export type MedicalCategory = (typeof MEDICAL_CATEGORIES)[number]
+
 export const MEDICAL_CATEGORY_LABELS: Record<MedicalCategory, string> = {
   general: 'General',
   vitals: 'Vitals',
@@ -56,6 +57,7 @@ export const REPORT_TYPES = [
   'other',
 ] as const
 export type ReportType = (typeof REPORT_TYPES)[number]
+
 export const REPORT_TYPE_LABELS: Record<ReportType, string> = {
   health_screening: 'Health Screening',
   mri: 'MRI',

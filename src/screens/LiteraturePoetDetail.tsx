@@ -6,7 +6,7 @@ import { useProfile } from '../hooks/useProfile'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 import { getWriter, loadIndex } from '../data/literature'
 import { DYNASTY_CHIP, isFieldVisible } from '../lib/literature'
-import { LITERATURE_SECTION_COLOR } from '../constants/literature-sections'
+import { LITERATURE_SECTION_COLOR } from '../constants/literature'
 import { routes } from '../constants/routes'
 import { Collapsible } from '../components/Collapsible'
 

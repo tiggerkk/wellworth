@@ -1,7 +1,6 @@
 /**
- * Quotes domain helpers — UI-framework-free so they're unit-tested and shared by the Entry form,
- * the Library, and (later) the Zen dashboard + importer. DB access lives in `src/data/quote.ts`;
- * the category/source/language enums + labels live in `src/constants/quotes.ts`.
+ * Quotes domain helpers — UI-framework-free so they're unit-tested and shared by Quotes functions.
+ * DB access lives in `src/data/quote.ts`; enums + labels live in `src/constants/quotes.ts`
  */
 import type { Tables, TablesInsert, TablesUpdate } from '../types/database'
 import type { QuoteLanguage, QuoteSourceType } from '../constants/quotes'

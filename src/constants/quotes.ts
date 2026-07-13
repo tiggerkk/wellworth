@@ -1,12 +1,12 @@
 /**
  * Quotes module enums + display labels (the source of truth for the CHECK columns, which the
  * generated DB types surface as plain `string`). Pure constants only — runtime helpers
- * (language detection, category-chip palette, selectors) live in `src/lib/quotes.ts`.
+ * live in `src/lib/quotes.ts`.
  */
 
 /**
  * The default categories + their initial display order. Exactly one category is required per quote.
- * Since M8 these are only the **seed defaults**: the owner can add/rename/delete/reorder them in Quotes
+ * These are only the **seed defaults**: the owner can add/rename/delete/reorder them in Quotes
  * Settings (stored on `profile.quote_categories`). The literal-union type describes the defaults' shape;
  * stored values are plain `string` keys (see `src/lib/quotes-config.ts`).
  */

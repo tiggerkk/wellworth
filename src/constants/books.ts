@@ -4,6 +4,7 @@
  */
 export const BOOK_STATUSES = ['want', 'reading', 'read', 'dropped'] as const
 export type BookStatus = (typeof BOOK_STATUSES)[number]
+
 export const BOOK_STATUS_LABELS = {
   want: 'Want',
   reading: 'Reading',
