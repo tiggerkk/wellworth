@@ -43,7 +43,7 @@ import { containsCjk } from '../lib/cjk'
 import { DEFAULT_DYNASTY, DYNASTIES, type Dynasty } from '../constants/dynasty'
 import { useProfile } from '../hooks/useProfile'
 import { bumpShows } from '../lib/shows-refresh'
-import { NotesEditorModal } from '../components/NotesEditorModal'
+import { NotesEditorOverlay } from '../components/NotesEditorOverlay'
 import { formatFullDate, todayLocal, type IsoDate } from '../lib/date'
 import { Calendar } from '../components/Calendar'
 import { EntryHeaderActions } from '../components/EntryHeaderActions'
@@ -768,7 +768,7 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
       )}
 
       {notesOpen && (
-        <NotesEditorModal
+        <NotesEditorOverlay
           title={draft.title}
           year={Number.parseInt(draft.year, 10) || null}
           value={draft.notes}

@@ -3,7 +3,7 @@ import { IconClipboard, IconX } from '@tabler/icons-react'
 import { EntryHeaderActions } from './EntryHeaderActions'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 
-interface NotesEditorModalProps {
+interface NotesEditorOverlayProps {
   /** Item title for the header (line 1). */
   title: string
   /** Release / publication year; when null the title shows alone (no parentheses). Ignored when
@@ -35,7 +35,7 @@ const canPaste = typeof navigator !== 'undefined' && !!navigator.clipboard
  * Shared across Books/Shows Notes and the Medical Narrative editor — see the callers for how the
  * header is composed (title + optional year, vs. a pre-formatted "Date - Type" + provider subtitle).
  */
-export function NotesEditorModal({
+export function NotesEditorOverlay({
   title,
   year = null,
   subtitle = null,
@@ -43,7 +43,7 @@ export function NotesEditorModal({
   value,
   onSave,
   onClose,
-}: NotesEditorModalProps) {
+}: NotesEditorOverlayProps) {
   const [buffer, setBuffer] = useState(value)
   const taRef = useRef<HTMLTextAreaElement>(null)
   // Caret to restore after a programmatic paste (null = leave the caret where the browser put it).

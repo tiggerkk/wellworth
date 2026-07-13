@@ -35,7 +35,7 @@ Reached from the **New Book** bottom-nav tab (`/books/entry`, new) or by tapping
 - **Author(s)** (comma-separated), **Year**.
 - **Status** (Want / Reading / Read / Dropped) is a **dropdown** sharing a line with **Rating** (0–5 half-star): Reading defaults **Start Date** to today; Read/Dropped defaults **Finish/Drop date** to today.
 - **LGBT+ Representation** (None / Some / Significant dropdown) and **Dynasty** share one compact row. **Dynasty** is a dropdown of the 13 values (全部 近代 … 先秦), defaulting to 全部, and is **editable only when the Title contains CJK**; for non-Chinese titles it's disabled and stored as NULL.
-- **Start Date** and **Finish / Drop Date** share a line; each opens the Calendar modal and is clearable. **Notes** sits below: a **4-row** textarea with an **expand icon** beside the label that opens the shared full-screen **`NotesEditorModal`** (header `Title (Year)`, title only when Year is unknown) — a **buffered** editor (only Save writes back) using the shared **EntryHeaderActions** (Delete clears · Reset reverts · Save applies), a top-left ✕ to cancel, and a **paste** icon that inserts clipboard text **at the cursor**. Stored as `notes` (TEXT, effectively unbounded).
+- **Start Date** and **Finish / Drop Date** share a line; each opens the Calendar modal and is clearable. **Notes** sits below: a **4-row** textarea with an **expand icon** beside the label that opens the shared full-screen **`NotesEditorOverlay`** (header `Title (Year)`, title only when Year is unknown) — a **buffered** editor (only Save writes back) using the shared **EntryHeaderActions** (Delete clears · Reset reverts · Save applies), a top-left ✕ to cancel, and a **paste** icon that inserts clipboard text **at the cursor**. Stored as `notes` (TEXT, effectively unbounded).
 - Top-right icon actions (Delete when editing · Reset · Create/Save) via shared **EntryHeaderActions**. Create requires a Title.
 - Field visibility controlled by **Books Settings → Visible Fields**.
 
@@ -120,7 +120,7 @@ Full guide: `templates/books-import-guide.md`.
 - `dynasty` TEXT NULL — Chinese dynasty (CHECK against the 13 `DYNASTIES` values in `src/constants/dynasty.ts`); set only for Chinese titles, NULL otherwise; editable only when the Title contains CJK
 - `is_favorite` BOOLEAN NOT NULL DEFAULT false — ♥; favourites filter + Dashboard shelf
 - `start_date` DATE NULL · `end_date` DATE NULL
-- `notes` TEXT NULL — free-text user notes (effectively unbounded; edited inline or via `NotesEditorModal`)
+- `notes` TEXT NULL — free-text user notes (effectively unbounded; edited inline or via `NotesEditorOverlay`)
 - `created_at`, `updated_at`
 - Index on (`user_id`, `status`) and (`user_id`, `is_favorite`)
 

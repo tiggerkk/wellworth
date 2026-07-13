@@ -43,7 +43,7 @@ import { MedicalResultCard } from '../components/MedicalResultCard'
 import { Collapsible } from '../components/Collapsible'
 import { MedicalTestPickerOverlay } from '../components/MedicalTestPickerOverlay'
 import { EyeRefractionFields } from '../components/EyeRefractionFields'
-import { NotesEditorModal } from '../components/NotesEditorModal'
+import { NotesEditorOverlay } from '../components/NotesEditorOverlay'
 
 const EYE_KEY_SET = new Set(EYE_REFRACTION_KEYS)
 
@@ -416,7 +416,7 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
       )}
 
       {narrativeOpen && (
-        <NotesEditorModal
+        <NotesEditorOverlay
           title={narrativeHeaderTitle}
           subtitle={draft.provider || null}
           fieldLabel="Narrative"

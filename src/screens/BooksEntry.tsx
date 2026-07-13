@@ -30,7 +30,7 @@ import { Calendar } from '../components/Calendar'
 import { BookSearchOverlay } from '../components/BookSearchOverlay'
 import { CoverThumb } from '../components/CoverThumb'
 import { EntryHeaderActions } from '../components/EntryHeaderActions'
-import { NotesEditorModal } from '../components/NotesEditorModal'
+import { NotesEditorOverlay } from '../components/NotesEditorOverlay'
 import { SelectMenu } from '../components/SelectMenu'
 import { StarRating } from '../components/StarRating'
 
@@ -520,7 +520,7 @@ function BookForm({ id, initial }: { id: string | undefined; initial: BookDraft 
       )}
 
       {notesOpen && (
-        <NotesEditorModal
+        <NotesEditorOverlay
           title={draft.title}
           year={Number.parseInt(draft.year, 10) || null}
           value={draft.notes}

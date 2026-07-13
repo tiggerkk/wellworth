@@ -76,7 +76,7 @@ Reached from the **New Show** bottom-nav tab (`/shows/entry`, new) or by tapping
 - **Total Seasons / Episodes** and **Watched Seasons / Episodes** (episodic types — TV + documentary):
   two labels over four side-by-side number inputs.
 - **Notes** (free text): a **4-row** textarea. An **expand icon** beside the label opens the shared
-  full-screen **`NotesEditorModal`** for long notes — header `Title (Year)` (title only when Year is
+  full-screen **`NotesEditorOverlay`** for long notes — header `Title (Year)` (title only when Year is
   unknown), a **buffered** editor (only Save writes back to the form) using the shared
   **EntryHeaderActions** (Delete clears the text · Reset reverts to the value at open · Save applies +
   closes), a top-left ✕ to cancel/discard, and a **paste** icon that inserts clipboard text **at the
@@ -217,7 +217,7 @@ Full guide: `templates/shows-import-guide.md`.
   form only when the title contains CJK
 - `is_favorite` BOOLEAN NOT NULL DEFAULT false — ♥; favourites filter + Dashboard shelf
 - `start_date` DATE NULL · `end_date` DATE NULL — start and finish/drop date
-- `notes` TEXT NULL — free-text user notes (effectively unbounded; edited inline or via `NotesEditorModal`)
+- `notes` TEXT NULL — free-text user notes (effectively unbounded; edited inline or via `NotesEditorOverlay`)
 - `created_at`, `updated_at`
 - Index on (`user_id`, `status`) and (`user_id`, `is_favorite`)
 

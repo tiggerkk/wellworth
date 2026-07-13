@@ -51,7 +51,7 @@ Tracked tests are chosen in Medical Settings → Tracked Tests (seeded from `def
   - **Report Date** (Calendar; defaults today) + **Type** (dropdown) share one line.
   - **Provider**.
   - **Body Part** (shown for mri/ultrasound/mammogram/other).
-  - **Narrative** (free text): **4-row** textarea. An **expand icon** beside the label opens the shared full-screen **`NotesEditorModal`** for long notes, a **buffered** editor (only Save writes back to the form) using the shared **EntryHeaderActions** (Delete clears the text · Reset reverts to the value at open · Save applies + closes), a top-left ✕ to cancel/discard, and a **paste** icon that inserts clipboard text **at the cursor**. Stored as `narrative` (TEXT, effectively unbounded).
+  - **Narrative** (free text): **4-row** textarea. An **expand icon** beside the label opens the shared full-screen **`NotesEditorOverlay`** for long notes, a **buffered** editor (only Save writes back to the form) using the shared **EntryHeaderActions** (Delete clears the text · Reset reverts to the value at open · Save applies + closes), a top-left ✕ to cancel/discard, and a **paste** icon that inserts clipboard text **at the cursor**. Stored as `narrative` (TEXT, effectively unbounded).
   - **Document Links:** the **`+ Add Link`** action sits at the **right of the "Document Links (Google Drive)" label** (shared Add-button style — outline `SecondaryButton`, teal `IconPlus`). One empty link textbox (`http://…` placeholder) is **always shown** even with no links stored yet — typing into that ghost row seeds the first entry; empty rows are trimmed out on save (`draftToSaveInput`).
   - Optional fields hidden when trimmed in Medical Settings → Visible Fields; Date/Type/Results are always shown.
 - **Results:**
