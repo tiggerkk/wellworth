@@ -20,7 +20,7 @@ const KIND_LABEL: Partial<Record<QuoteSourceType, string>> = {
   book: 'Book',
 }
 
-interface QuoteSourceLinkSheetProps {
+interface QuoteSourceLinkOverlayProps {
   onSelect: (candidate: LinkCandidate) => void
   onClose: () => void
   /** Seed the search box (e.g. the Entry form's current Title) so results filter on open. */
@@ -30,14 +30,14 @@ interface QuoteSourceLinkSheetProps {
 /**
  * Cross-module source linker — a **local** fixed overlay (not the routing `Sheet`, which would put
  * the Entry form behind a background-location and remount it, losing the in-progress draft; same
- * lesson as Shows `TitleSearchSheet` / Books `BookSearchSheet`). Searches the user's own `show` +
+ * lesson as Shows `TitleSearchOverlay` / Books `BookSearchOverlay`). Searches the user's own `show` +
  * `book` rows (no external API); selecting one hands a `LinkCandidate` back via `onSelect`.
  */
-export function QuoteSourceLinkSheet({
+export function QuoteSourceLinkOverlay({
   onSelect,
   onClose,
   initialQuery = '',
-}: QuoteSourceLinkSheetProps) {
+}: QuoteSourceLinkOverlayProps) {
   const { session } = useAuth()
   const userId = session?.user.id
   const [query, setQuery] = useState(initialQuery)

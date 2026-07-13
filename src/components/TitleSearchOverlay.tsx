@@ -13,7 +13,7 @@ import {
 } from '../lib/shows-tmdb-api'
 import { SHOW_TYPE_LABELS, type ShowType } from '../constants/shows'
 
-interface TitleSearchSheetProps {
+interface TitleSearchOverlayProps {
   type: ShowType
   onSelect: (result: TmdbSearchResult) => void
   onClose: () => void
@@ -28,13 +28,13 @@ interface TitleSearchSheetProps {
  * Entry form behind a background-location and remount it, losing the in-progress draft).
  * Selecting a result hands it back via `onSelect` to populate the live form.
  */
-export function TitleSearchSheet({
+export function TitleSearchOverlay({
   type,
   onSelect,
   onClose,
   initialQuery = '',
   yearHint = null,
-}: TitleSearchSheetProps) {
+}: TitleSearchOverlayProps) {
   const [query, setQuery] = useState(initialQuery)
   const [debounced, setDebounced] = useState(initialQuery)
   const [results, setResults] = useState<TmdbSearchResult[]>([])

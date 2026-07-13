@@ -67,7 +67,7 @@ literal **"Edit Trip"**.
   trip's start/end) · spacer · **Delete** (a `ConfirmDeleteAction` — inline `Delete? ✓ ✗`, no browser
   dialog) · **Duplicate** (copy) · **Expenses** (`IconReceipt2`, tinted **accent/blue** — opens the
   day's expense modal) · **Add Stop** (green `+`).
-- **Per-day Expenses modal** (`DayExpensesSheet`, a local overlay so the builder draft survives): logs
+- **Per-day Expenses modal** (`DayExpensesOverlay`, a local overlay so the builder draft survives): logs
   the day's spend as it's incurred. Shows only the expenses whose `expense_date` matches the day; new
   rows **prefill that date** (editable). It's the same shared inline editor (`ExpenseRowsEditor`) and the
   same lifted expense state the Expenses tab uses, so the two views stay in sync. Expenses are **never

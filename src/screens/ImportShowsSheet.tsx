@@ -8,7 +8,7 @@ import { PosterThumb } from '../components/PosterThumb'
 import { ShowTypeBadge } from '../components/ShowTypeBadge'
 import { StatusChip } from '../components/StatusChip'
 import { ImportPreviewList } from '../components/ImportPreviewList'
-import { TitleSearchSheet } from '../components/TitleSearchSheet'
+import { TitleSearchOverlay } from '../components/TitleSearchOverlay'
 import { useAuth } from '../auth/AuthProvider'
 import { parseCsv } from '../lib/csv'
 import {
@@ -349,7 +349,7 @@ export function ImportShowsSheet() {
       </div>
 
       {fixIndex !== null && resolved && (
-        <TitleSearchSheet
+        <TitleSearchOverlay
           type={resolved[fixIndex]!.input.type}
           initialQuery={parseTitleYear(resolved[fixIndex]!.input.title).title}
           yearHint={parseTitleYear(resolved[fixIndex]!.input.title).year}

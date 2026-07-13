@@ -8,7 +8,7 @@ import { foodMatchScore } from '../lib/food-search'
 
 type SearchError = 'failed' | null
 
-interface FoodSearchSheetProps {
+interface FoodSearchOverlayProps {
   onSelect: (result: ExternalFood) => void
   onClose: () => void
   /** Seed the search box (e.g. the importer row's food name) so results show on open. */
@@ -36,11 +36,11 @@ function rankFoods(results: ExternalFood[], query: string): ExternalFood[] {
  * (name + "{N} nutrients · {serving}"); selecting a row hands the `ExternalFood` back via
  * `onSelect`. Used by the food importer's "Change" action.
  */
-export function FoodSearchSheet({
+export function FoodSearchOverlay({
   onSelect,
   onClose,
   initialQuery = '',
-}: FoodSearchSheetProps) {
+}: FoodSearchOverlayProps) {
   const [query, setQuery] = useState(initialQuery)
   const [debounced, setDebounced] = useState(initialQuery)
   const [results, setResults] = useState<ExternalFood[]>([])

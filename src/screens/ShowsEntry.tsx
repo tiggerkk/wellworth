@@ -50,7 +50,7 @@ import { EntryHeaderActions } from '../components/EntryHeaderActions'
 import { SegmentedTabs } from '../components/SegmentedTabs'
 import { SelectMenu } from '../components/SelectMenu'
 import { StarRating } from '../components/StarRating'
-import { TitleSearchSheet } from '../components/TitleSearchSheet'
+import { TitleSearchOverlay } from '../components/TitleSearchOverlay'
 
 interface ShowDraft {
   type: ShowType
@@ -758,7 +758,7 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
       )}
 
       {searchOpen && (
-        <TitleSearchSheet
+        <TitleSearchOverlay
           type={draft.type}
           initialQuery={draft.title}
           yearHint={Number.parseInt(draft.year, 10) || null}

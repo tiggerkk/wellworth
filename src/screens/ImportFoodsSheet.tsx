@@ -5,7 +5,7 @@ import { SheetCloseButton } from '../components/SheetCloseButton'
 import { Sheet } from '../components/Sheet'
 import { PrimaryButton } from '../components/PrimaryButton'
 import { ImportPreviewList } from '../components/ImportPreviewList'
-import { FoodSearchSheet } from '../components/FoodSearchSheet'
+import { FoodSearchOverlay } from '../components/FoodSearchOverlay'
 import { useAuth } from '../auth/AuthProvider'
 import { useNutrientReference } from '../hooks/useNutrientReference'
 import { parseCsv } from '../lib/csv'
@@ -385,7 +385,7 @@ export function ImportFoodsSheet() {
       </div>
 
       {fixIndex !== null && resolved && (
-        <FoodSearchSheet
+        <FoodSearchOverlay
           initialQuery={resolved[fixIndex]!.input.name}
           onSelect={(food) => void applyFix(fixIndex, food)}
           onClose={() => setFixIndex(null)}

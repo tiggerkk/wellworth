@@ -21,11 +21,11 @@ import { SecondaryButton } from '../components/SecondaryButton'
 import { EntryHeaderActions } from '../components/EntryHeaderActions'
 import { ConfirmDeleteAction } from '../components/ConfirmDeleteAction'
 import { IconAction } from '../components/IconAction'
-import { StopEditorSheet } from '../components/StopEditorSheet'
+import { StopEditorOverlay } from '../components/StopEditorOverlay'
 import { StopTypeIcon } from '../components/StopTypeIcon'
 import { Collapsible } from '../components/Collapsible'
 import { TravelExpensesPanel } from '../components/TravelExpensesPanel'
-import { DayExpensesSheet } from '../components/DayExpensesSheet'
+import { DayExpensesOverlay } from '../components/DayExpensesOverlay'
 import type { ExpenseDraft } from '../components/ExpenseRowsEditor'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
@@ -890,7 +890,7 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
       )}
 
       {stopEditor && userId && (
-        <StopEditorSheet
+        <StopEditorOverlay
           userId={userId}
           dayId={stopEditor.dayId}
           stop={stopEditor.stop}
@@ -924,7 +924,7 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
       )}
 
       {dayExpensesFor && (
-        <DayExpensesSheet
+        <DayExpensesOverlay
           dayLabel={`Day ${days.findIndex((d) => d.id === dayExpensesFor.id) + 1}`}
           date={dayExpensesFor.day_date}
           defaultDate={dayExpensesFor.day_date ?? trip.start_date ?? todayLocal()}

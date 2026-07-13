@@ -13,7 +13,7 @@ import {
 
 type SearchError = 'rate' | 'quota' | 'failed' | null
 
-interface BookSearchSheetProps {
+interface BookSearchOverlayProps {
   onSelect: (result: BookSearchResult) => void
   onClose: () => void
   /** Seed the search box (e.g. the Entry form's current Title) so results show on open. */
@@ -28,12 +28,12 @@ interface BookSearchSheetProps {
  * draft). Selecting a result hands it back via `onSelect` to populate the live form.
  * The Google key is optional, so a failure is network/quota — not a missing key.
  */
-export function BookSearchSheet({
+export function BookSearchOverlay({
   onSelect,
   onClose,
   initialQuery = '',
   authorHint = null,
-}: BookSearchSheetProps) {
+}: BookSearchOverlayProps) {
   const [query, setQuery] = useState(initialQuery)
   const [debounced, setDebounced] = useState(initialQuery)
   const [results, setResults] = useState<BookSearchResult[]>([])

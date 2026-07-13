@@ -5,7 +5,7 @@ import type { ExpenseRow, ExpenseUpdate } from '../lib/travel-expenses'
 import type { TravelCategoryConfig } from '../lib/travel-config'
 import { formatFullDate } from '../lib/date'
 
-interface DayExpensesSheetProps {
+interface DayExpensesOverlayProps {
   dayLabel: string
   /** The day's date (drives the title + new-row default); null for an undated day. */
   date: string | null
@@ -29,7 +29,7 @@ interface DayExpensesSheetProps {
  * expenses as they're incurred. Shows only the expenses whose `expense_date` matches the day; new
  * rows prefill that date. Expenses stay decoupled from stops — this is a date-matched convenience view.
  */
-export function DayExpensesSheet({
+export function DayExpensesOverlay({
   dayLabel,
   date,
   defaultDate,
@@ -43,7 +43,7 @@ export function DayExpensesSheet({
   onDelete,
   onReorder,
   onClose,
-}: DayExpensesSheetProps) {
+}: DayExpensesOverlayProps) {
   useEscapeKey(onClose)
   return (
     <div className="fixed inset-0 z-30">

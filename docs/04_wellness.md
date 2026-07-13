@@ -229,7 +229,7 @@ and the nutrient columns). Uses `ImportPreviewList`:
   request, no cache), resolves straight to a **custom** food (`status='manual'`), and needs no review —
   for foods the owner already knows USDA doesn't have.
 - Preview rows show the USDA **name + "{N} nutrients · {serving}"** (like the live USDA list); \*\*No-match
-  - review sort to the top** (danger/accent). **Change** opens the `FoodSearchSheet` USDA overlay;
+  - review sort to the top** (danger/accent). **Change** opens the `FoodSearchOverlay` USDA overlay;
     **Manual\*\* keeps the row as a custom food. Concurrency `POOL` ≈ 6 (USDA ~1,000 req/hr).
 - **Match cache** (`src/lib/food-match-cache.ts`, a `match-cache.ts` instance; key `normMatch(name)`,
   value = the resolved `ExternalFood`): re-importing the same file (after `supabase db reset --linked`)

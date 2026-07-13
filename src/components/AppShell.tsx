@@ -3,6 +3,7 @@ import { useLocation, useOutlet, type Location } from 'react-router'
 import { BottomNav } from './BottomNav'
 import { MedicalLockProvider, useMedicalLock } from './MedicalLockProvider'
 import { MedicalLockScreen } from './MedicalLockScreen'
+import { Onboarding } from './Onboarding'
 import { Splash } from './Splash'
 import { Toaster } from './Toaster'
 import { useAuth } from '../auth/AuthProvider'
@@ -22,7 +23,6 @@ import {
   Library,
   NetWorthDashboard,
   NetWorthEntry,
-  Onboarding,
   QuotesEntry,
   QuotesLibrary,
   QuotesSettings,

@@ -7,7 +7,7 @@ import { MEDICAL_CATEGORY_LABELS, type MedicalLabTestSeed } from '../constants/m
 import { medicalTestsByCategory } from '../lib/medical'
 import { foldZh } from '../lib/zh-fold'
 
-interface MedicalTestPickerSheetProps {
+interface MedicalTestPickerOverlayProps {
   onSelect: (test: MedicalLabTestSeed) => void
   onAddCustom: () => void
   onClose: () => void
@@ -19,11 +19,11 @@ interface MedicalTestPickerSheetProps {
  * `MEDICAL_LAB_TESTS` reference grouped by category; selecting one prefills a result row, or
  * "Add custom test" creates an ad-hoc row (test_key null).
  */
-export function MedicalTestPickerSheet({
+export function MedicalTestPickerOverlay({
   onSelect,
   onAddCustom,
   onClose,
-}: MedicalTestPickerSheetProps) {
+}: MedicalTestPickerOverlayProps) {
   const [query, setQuery] = useState('')
 
   const term = foldZh(query.trim())

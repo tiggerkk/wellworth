@@ -17,7 +17,7 @@ import { CHINA_PROVINCES } from '../constants/travel'
 import type { ResolvedCity } from '../lib/travel'
 import { foldZh } from '../lib/zh-fold'
 
-interface CitySearchSheetProps {
+interface CitySearchOverlayProps {
   userId: string
   initialQuery?: string
   onSelect: (city: ResolvedCity) => void
@@ -35,12 +35,12 @@ const isChina = (country: string) => CHINA_NAMES.has(country.trim().toLowerCase(
  * auto-expanded when search finds nothing. Province is snapped to a canonical `CHINA_PROVINCES` value
  * before saving so the shaded map stays consistent. Confirming a city upserts it into the cache.
  */
-export function CitySearchSheet({
+export function CitySearchOverlay({
   userId,
   initialQuery = '',
   onSelect,
   onClose,
-}: CitySearchSheetProps) {
+}: CitySearchOverlayProps) {
   const [query, setQuery] = useState(initialQuery)
   const [debounced, setDebounced] = useState(initialQuery)
   const [country, setCountry] = useState('中国')

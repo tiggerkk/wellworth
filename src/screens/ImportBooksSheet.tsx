@@ -8,7 +8,7 @@ import { CoverThumb } from '../components/CoverThumb'
 import { StatusChip } from '../components/StatusChip'
 import { StarRating } from '../components/StarRating'
 import { ImportPreviewList } from '../components/ImportPreviewList'
-import { BookSearchSheet } from '../components/BookSearchSheet'
+import { BookSearchOverlay } from '../components/BookSearchOverlay'
 import { useAuth } from '../auth/AuthProvider'
 import { parseCsv } from '../lib/csv'
 import {
@@ -528,7 +528,7 @@ export function ImportBooksSheet() {
       </div>
 
       {fixIndex !== null && resolved && (
-        <BookSearchSheet
+        <BookSearchOverlay
           initialQuery={`${resolved[fixIndex]!.input.title} ${resolved[fixIndex]!.input.author}`}
           authorHint={resolved[fixIndex]!.input.author}
           onSelect={(r) => void applyFix(fixIndex, r)}

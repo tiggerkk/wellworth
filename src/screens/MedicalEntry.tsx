@@ -41,7 +41,7 @@ import { SecondaryButton } from '../components/SecondaryButton'
 import { SelectMenu } from '../components/SelectMenu'
 import { MedicalResultCard } from '../components/MedicalResultCard'
 import { Collapsible } from '../components/Collapsible'
-import { MedicalTestPickerSheet } from '../components/MedicalTestPickerSheet'
+import { MedicalTestPickerOverlay } from '../components/MedicalTestPickerOverlay'
 import { EyeRefractionFields } from '../components/EyeRefractionFields'
 import { NotesEditorModal } from '../components/NotesEditorModal'
 
@@ -408,7 +408,7 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
       )}
 
       {pickerOpen && (
-        <MedicalTestPickerSheet
+        <MedicalTestPickerOverlay
           onSelect={addFromTest}
           onAddCustom={addCustom}
           onClose={() => setPickerOpen(false)}

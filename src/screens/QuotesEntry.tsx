@@ -45,7 +45,7 @@ import { EntryHeaderActions } from '../components/EntryHeaderActions'
 import { SegmentedTabs } from '../components/SegmentedTabs'
 import { SelectMenu } from '../components/SelectMenu'
 import { TagInput } from '../components/TagInput'
-import { QuoteSourceLinkSheet } from '../components/QuoteSourceLinkSheet'
+import { QuoteSourceLinkOverlay } from '../components/QuoteSourceLinkOverlay'
 
 interface QuoteDraft {
   text: string
@@ -101,7 +101,7 @@ function draftFromRow(row: QuoteRow): QuoteDraft {
  * Quotes — Add / Edit (manual). Outer loader fetches the quote (edit) + the owner's profile (for the
  * configurable Source Type / Category lists + field visibility), then mounts the inner form keyed by id
  * so a stale `useAsync` result never mounts under the wrong quote. A new quote can be prefilled from
- * `?text=&author=&title=`. The Show/Book linker is `QuoteSourceLinkSheet`.
+ * `?text=&author=&title=`. The Show/Book linker is `QuoteSourceLinkOverlay`.
  */
 export function QuotesEntry() {
   const { id } = useParams()
@@ -449,7 +449,7 @@ function QuoteForm({
       </div>
 
       {linkOpen && (
-        <QuoteSourceLinkSheet
+        <QuoteSourceLinkOverlay
           initialQuery={draft.title}
           onSelect={selectLink}
           onClose={() => setLinkOpen(false)}

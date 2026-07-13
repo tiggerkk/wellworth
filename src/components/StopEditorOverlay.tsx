@@ -5,13 +5,13 @@ import { OverlayCloseButton } from './OverlayCloseButton'
 import { SegmentedTabs } from './SegmentedTabs'
 import { SelectMenu } from './SelectMenu'
 import { EntryHeaderActions } from './EntryHeaderActions'
-import { CitySearchSheet } from './CitySearchSheet'
+import { CitySearchOverlay } from './CitySearchOverlay'
 import { createStop, nextStopSortOrder, updateStop } from '../data/travel'
 import { type ResolvedCity, type StopRow } from '../lib/travel'
 import { STOP_TYPES, STOP_TYPE_LABELS, type StopType } from '../constants/travel'
 import { FIELD_CLASS as inputClass } from '../constants/forms'
 
-interface StopEditorSheetProps {
+interface StopEditorOverlayProps {
   userId: string
   /** Day this stop belongs to (the default for a new stop / current for an edit). */
   dayId: string
@@ -35,7 +35,7 @@ interface StopEditorSheetProps {
 type CompletionValue = '' | 'done' | 'skipped'
 
 /** A **local** overlay editing one stop (not a route sheet, so the Builder draft survives). */
-export function StopEditorSheet({
+export function StopEditorOverlay({
   userId,
   dayId,
   days,
@@ -47,7 +47,7 @@ export function StopEditorSheet({
   onClose,
   onSaved,
   onDelete,
-}: StopEditorSheetProps) {
+}: StopEditorOverlayProps) {
   const [saving, setSaving] = useState(false)
   const [cityOpen, setCityOpen] = useState(false)
 
@@ -251,7 +251,7 @@ export function StopEditorSheet({
       </LocalOverlay>
 
       {cityOpen && (
-        <CitySearchSheet
+        <CitySearchOverlay
           userId={userId}
           initialQuery={city}
           onSelect={pickCity}

@@ -27,7 +27,7 @@ import { useProfile } from '../hooks/useProfile'
 import { bumpBooks } from '../lib/books-refresh'
 import { formatFullDate, todayLocal, type IsoDate } from '../lib/date'
 import { Calendar } from '../components/Calendar'
-import { BookSearchSheet } from '../components/BookSearchSheet'
+import { BookSearchOverlay } from '../components/BookSearchOverlay'
 import { CoverThumb } from '../components/CoverThumb'
 import { EntryHeaderActions } from '../components/EntryHeaderActions'
 import { NotesEditorModal } from '../components/NotesEditorModal'
@@ -511,7 +511,7 @@ function BookForm({ id, initial }: { id: string | undefined; initial: BookDraft 
       )}
 
       {searchOpen && (
-        <BookSearchSheet
+        <BookSearchOverlay
           initialQuery={draft.title}
           authorHint={draft.authors}
           onSelect={(r) => void selectBook(r)}

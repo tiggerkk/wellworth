@@ -7,7 +7,7 @@ import { Calendar } from '../components/Calendar'
 import { PrimaryButton } from '../components/PrimaryButton'
 import { SelectMenu } from '../components/SelectMenu'
 import { MedicalResultCard } from '../components/MedicalResultCard'
-import { MedicalTestPickerSheet } from '../components/MedicalTestPickerSheet'
+import { MedicalTestPickerOverlay } from '../components/MedicalTestPickerOverlay'
 import { useAuth } from '../auth/AuthProvider'
 import { saveImportedReport } from '../data/medical'
 import { bumpMedical } from '../lib/medical-refresh'
@@ -390,7 +390,7 @@ export function ImportMedicalSheet() {
       )}
 
       {pickerOpen && (
-        <MedicalTestPickerSheet
+        <MedicalTestPickerOverlay
           onSelect={addFromTest}
           onAddCustom={addCustom}
           onClose={() => setPickerOpen(false)}

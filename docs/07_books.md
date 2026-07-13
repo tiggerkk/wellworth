@@ -101,7 +101,7 @@ Full guide: `templates/books-import-guide.md`.
 - `getBookDetails` **honors the author/year/cover of the selected result** (Google's full volume record can list a different, mis-attributed author than the displayed search snippet); the detail only enriches description/genres/page-count/ISBN/language. Follows the Open Library path.
 - `normMatch` is the canonical match key: `foldZh` (Traditional→Simplified + lowercase) then strip all whitespace + ASCII/CJK punctuation, **keeping** CJK ideographs (an earlier ASCII-only normalizer collapsed every Chinese title to '', so every CJK match looked exact).
 - The importer's ok/`review` flag uses `isConfidentMatch` (title exact/prefix **and** the CSV author matches when present) — wrong-author or weak-title rows are flagged `review`, not silently accepted.
-- The search box ranks with an optional **author hint** (the Entry form's draft author; the importer's "Change" seeds the box with `title author` + the row's author) — `BookSearchSheet`'s `authorHint` prop.
+- The search box ranks with an optional **author hint** (the Entry form's draft author; the importer's "Change" seeds the box with `title author` + the row's author) — `BookSearchOverlay`'s `authorHint` prop.
 
 ---
 
