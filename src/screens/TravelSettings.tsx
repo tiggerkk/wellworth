@@ -73,7 +73,7 @@ function ImportSection({
       {profile.travel_importer_enabled ? (
         <>
           <button
-            onClick={() => openSheet(routes.travel.importTrips)}
+            onClick={() => openSheet(routes.travel.importTravel)}
             className="flex w-full items-center gap-2 border-b border-border px-4 py-2 text-body text-accent last:border-b-0 active:bg-input/40"
           >
             <IconUpload size={18} /> Import JSON Trips

@@ -854,14 +854,14 @@ spend. No API key is needed (the map + geocode + FX are all keyless).
    automatically, type its rate in the trip's **Conversion to HKD** card.
 4. **Bulk-load old trips (one-time):** prefix each trip's text with
    `=== TRIP: <name> | <YYYY-MM> | <status> ===`, paste them all into any AI tool with
-   `templates/travel-itinerary-prompt.md`, save the JSON array, then **Settings → Import JSON Trips** →
+   `templates/travel-prompt.md`, save the JSON array, then **Settings → Import JSON Trips** →
    review (confirm any new cities once) → **Import**. The result is drafts you finish in the Trip Builder;
    expenses import separately.
 5. The **Dashboard** counts (provinces / cities / countries) and the **Map** update automatically from
    your **Visited** trips.
 
 > **Privacy:** your real trip/expense files (`travel-expenses*.csv`) are **gitignored**; only the
-> sanitized templates + the itinerary prompt/schema are tracked.
+> sanitized templates + the travel prompt/schema are tracked.
 
 ---
 

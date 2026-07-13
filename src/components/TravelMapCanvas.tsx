@@ -4,7 +4,7 @@ import 'leaflet/dist/leaflet.css'
 import 'leaflet.markercluster'
 import 'leaflet.markercluster/dist/MarkerCluster.css'
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
-import { snapProvince } from '../lib/places'
+import { snapProvince } from '../lib/travel-places'
 import {
   CHINA_GEOJSON_URL,
   WORLD_GEOJSON_URL,

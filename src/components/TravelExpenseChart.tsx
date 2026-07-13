@@ -1,5 +1,5 @@
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
-import { formatHkd } from '../lib/expenses'
+import { formatHkd } from '../lib/travel-expenses'
 
 export interface ExpenseSlice {
   label: string

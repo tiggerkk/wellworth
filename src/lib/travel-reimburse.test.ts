@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { evalReimbursement } from './reimburse'
+import { evalReimbursement } from './travel-reimburse'
 
 describe('evalReimbursement', () => {
   it('evaluates amount expressions', () => {

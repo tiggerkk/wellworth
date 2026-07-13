@@ -12,7 +12,7 @@ import {
   type TripStatus,
 } from '../constants/travel'
 import { foldZh } from './zh-fold'
-import type { ExpenseRow } from './expenses'
+import type { ExpenseRow } from './travel-expenses'
 
 export type TripRow = Tables<'trip'>
 export type TripInsert = TablesInsert<'trip'>

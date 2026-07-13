@@ -58,7 +58,7 @@ interface CollapsibleProps {
 /**
  * Standard collapsible section header, shared by Wellness, Literature, Medical, Net Worth, and
  * Travel (replaces the former `CollapsibleSection`, `CollapsibleColorSection`, and
- * `MedicalSection`, plus the inline patterns in `Diary.tsx` / `NetWorthEntry.tsx` / `TripBuilder.tsx`).
+ * `MedicalSection`, plus the inline patterns in `Diary.tsx` / `NetWorthEntry.tsx` / `TravelEntry.tsx`).
  *
  * The click target is always the chevron + title button, which is `flex-1`: with no `actions` it
  * fills the entire header row, so click-anywhere is preserved automatically for sections with no

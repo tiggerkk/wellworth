@@ -1,4 +1,4 @@
-# Trip Itinerary → JSON Extraction Prompt (model-agnostic, ALL trips at once)
+# Travel → JSON Extraction Prompt (model-agnostic, ALL trips at once)
 
 Prefix each trip's text with a delimiter line, paste them all, then the prompt below.
 

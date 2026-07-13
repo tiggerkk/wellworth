@@ -63,7 +63,7 @@ src/
                      # match-cache (shared importer match-cache factory), quotes, quotes-refresh,
                      # quotes-import, travel, travel-config, travel-refresh, travel-stats,
                      # travel-geo, places, trip-fx, expenses, reimburse, travel-expense-import,
-                     # itinerary-import, last-module helpers
+                     # travel-import, last-module helpers
   constants/         # global constants (groups, effort-levels, nutrient-sections, ranges,
                      # profile-defaults, seed-activities, routes, modules)
                      # routes.ts = all route paths (one source of truth); modules.ts = the

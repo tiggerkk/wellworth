@@ -1,7 +1,7 @@
 /**
  * Travel module enums + display labels (the source of truth for the CHECK columns, which the
  * generated DB types surface as plain `string`) plus the shared place vocabulary. Pure constants
- * only — runtime helpers live in `src/lib/travel.ts` / `src/lib/travel-config.ts` / `src/lib/places.ts`.
+ * only — runtime helpers live in `src/lib/travel*.ts`.
  */
 
 /** Trip lifecycle status. */
@@ -28,7 +28,7 @@ export const STOP_TYPE_LABELS: Record<StopType, string> = {
 }
 
 /**
- * Per-stop-type icon accent colour (CSS custom-property refs), so the itinerary stop icons read apart by kind.
+ * Per-stop-type icon accent colour (CSS custom-property refs), so the stop icons read apart by kind.
  * Hues jump across the wheel — no two adjacent types share a warm/cool band. Consumed by `StopTypeIcon`.
  * travel(plane)=green · visit(camera)=gold · eat(chopsticks)=red · shop(shopee)=blue ·
  * stay(bed)=purple · other(map-pin)=grey.
@@ -176,3 +176,9 @@ export const CHINA_PROVINCES = [
   '澳门',
 ] as const
 export type ChinaProvince = (typeof CHINA_PROVINCES)[number]
+
+export const REIMBURSE_PRESETS: { label: string; formula: string }[] = [
+  { label: '½', formula: 'amount/2' },
+  { label: '⅖', formula: 'amount/5*2' },
+  { label: 'Full', formula: 'amount' },
+]

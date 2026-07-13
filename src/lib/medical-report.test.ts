@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { aggregateEntries, averageNutrients, perDay } from './report'
+import { aggregateEntries, averageNutrients, perDay } from './medical-report'
 import type { Tables } from '../types/database'
 
 // Minimal factory — aggregateEntries only reads day/kind/energy_kcal/nutrients.

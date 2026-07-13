@@ -24,7 +24,7 @@ import { IconAction } from '../components/IconAction'
 import { StopEditorSheet } from '../components/StopEditorSheet'
 import { StopTypeIcon } from '../components/StopTypeIcon'
 import { Collapsible } from '../components/Collapsible'
-import { TripExpensesPanel } from '../components/TripExpensesPanel'
+import { TravelExpensesPanel } from '../components/TravelExpensesPanel'
 import { DayExpensesSheet } from '../components/DayExpensesSheet'
 import type { ExpenseDraft } from '../components/ExpenseRowsEditor'
 import { useAuth } from '../auth/AuthProvider'
@@ -59,13 +59,13 @@ import {
   type TripBundle,
   type TripDayRow,
 } from '../lib/travel'
-import type { ExpenseRow, ExpenseUpdate } from '../lib/expenses'
+import type { ExpenseRow, ExpenseUpdate } from '../lib/travel-expenses'
 import { effectiveCategories } from '../lib/travel-config'
 import { useProfile } from '../hooks/useProfile'
 import { routes } from '../constants/routes'
 import { addDays, formatFullDate, todayLocal } from '../lib/date'
 
-export function TripBuilder() {
+export function TravelEntry() {
   const { id } = useParams()
   return id ? <EditTrip id={id} /> : <NewTrip />
 }
@@ -850,7 +850,7 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
             </div>
           </section>
         ) : userId ? (
-          <TripExpensesPanel
+          <TravelExpensesPanel
             trip={trip}
             expenses={expenses}
             categories={categories}

@@ -21,7 +21,7 @@ import type {
   TripUpdate,
 } from '../lib/travel'
 import type { ResolvedCity } from '../lib/travel'
-import type { ExpenseInsert, ExpenseRow, ExpenseUpdate } from '../lib/expenses'
+import type { ExpenseInsert, ExpenseRow, ExpenseUpdate } from '../lib/travel-expenses'
 
 // --- Trips ---
 

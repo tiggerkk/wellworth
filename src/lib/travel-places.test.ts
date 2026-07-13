@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { cityFromAddress, snapProvince, toSuggestion } from './places'
+import { cityFromAddress, snapProvince, toSuggestion } from './travel-places'
 
 describe('snapProvince', () => {
   it('passes through canonical names', () => {

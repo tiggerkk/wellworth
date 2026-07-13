@@ -27,14 +27,14 @@
 
 ### Trips (`/travel/trips`)
 
-- A **Search bar** (placeholder "Search trip name, city, companion" — matches trip name, itinerary
+- A **Search bar** (placeholder "Search trip name, city, companion" — matches trip name,
   city, and companions) with an **icon-only Filter button** flush at the right edge (see
   `docs/01_design_system.md` → FilterToggleButton). Shared **FilterPanel** (label-free): **Any
   Country**, **Any Province**, **Any Status**, **Any Rating** (minimum: Any / 1★+ … / 5★), **Any
   Year** — footer: **SortControl** next to **Clear Filters**. Sort over { Date, Country, Province,
   City, Status, Trip Name } with **asc/desc** toggle (country/province/city use the trip's
-  alphabetically-first itinerary value; undated trips last); default: **Date** descending.
-- Row: cover thumbnail · name · status chip · date range · primary region. Tap → Trip Builder;
+  alphabetically-first value; undated trips last); default: **Date** descending.
+- Row: cover thumbnail · name · status chip · date range · primary region. Tap → Travel Entry;
   **swipe-left → Delete** (hard; tapping the revealed Delete acts immediately — no browser dialog;
   cascades days/stops/expenses).
 - _Search, filter, and sort persist for the **browser-tab session** (`useSessionState`)._
@@ -185,7 +185,7 @@ ledger — replaces the old one-at-a-time `ExpenseEditorSheet`):
   Visit = `IconCamera`, Eat = `IconBowlChopsticks`, Shop = `IconBrandShopee`, Stay = `IconBed`,
   Other = `IconMapPin`. Each is **tinted per kind** from `STOP_TYPE_COLORS` (`constants/travel.ts`,
   the Net-Worth `ASSET_TYPE_COLORS` pattern — design-token CSS vars). `StopTypeIcon` sets the color itself
-  (callers pass layout classes only). In the Edit-Trip itinerary, each stop row leads with this icon
+  (callers pass layout classes only). In the Edit-Travel Entry, each stop row leads with this icon
   (replacing the type **text**), followed by the description; the type still names the row via `aria-label`.
 - **Completion**: Done = a teal fill (`positive`); Skipped = a solid grey fill (`bg-text-secondary`)
   with the struck-through stop row.
@@ -353,6 +353,4 @@ Real trip/expense data stays **out of the repo**; only sanitized templates are t
 
 - `templates/travel-expenses-template.csv` + `travel-expenses-import-guide.md` — wide expenses CSV
   (tracked). Real `travel-expenses*.csv` are **gitignored**.
-- `templates/travel-itinerary.schema.json` + `travel-itinerary-prompt.md` — the itinerary JSON
-  array shape + model-agnostic extraction prompt (tracked). Produced outside the app from freeform
-  itinerary text by any AI tool; imported as drafts.
+- `templates/travel.schema.json` + `travel-prompt.md` — the travel JSON array shape + model-agnostic extraction prompt (tracked). Produced outside the app from freeform text by any AI tool; imported as drafts.

@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import {
   distinctCities,
-  parseItineraryJson,
+  parseTravelJson,
   tripSummary,
   type TripDraft,
-} from './itinerary-import'
+} from './travel-import'
 
-describe('parseItineraryJson', () => {
+describe('parseTravelJson', () => {
   it('parses a valid trip array, mapping fields and snapping China provinces', () => {
     const json = JSON.stringify([
       {
@@ -30,7 +30,7 @@ describe('parseItineraryJson', () => {
         ],
       },
     ])
-    const r = parseItineraryJson(json)
+    const r = parseTravelJson(json)
     expect(r.ok).toBe(true)
     if (!r.ok) return
     expect(r.trips).toHaveLength(1)
@@ -52,7 +52,7 @@ describe('parseItineraryJson', () => {
         days: [{ stops: [{ type: 'weird', time: 'bad', cost: 12 }] }],
       },
     ])
-    const r = parseItineraryJson(json)
+    const r = parseTravelJson(json)
     expect(r.ok).toBe(true)
     if (!r.ok) return
     expect(r.trips[0]!.status).toBe('visited')
@@ -81,12 +81,12 @@ describe('parseItineraryJson', () => {
         ],
       },
     ])
-    const r = parseItineraryJson(json)
+    const r = parseTravelJson(json)
     expect(r.ok && r.trips[0]!.days[0]!.stops[0]!.province).toBe('Île-de-France')
   })
 
   it('skips a trip with no name, warning', () => {
-    const r = parseItineraryJson(
+    const r = parseTravelJson(
       JSON.stringify([{ days: [] }, { trip_name: 'Y', days: [] }]),
     )
     expect(r.ok).toBe(true)
@@ -98,7 +98,7 @@ describe('parseItineraryJson', () => {
   it('repairs a stray quote after a number', () => {
     const broken =
       '[{"trip_name":"X","days":[{"date":null,"stops":[{"type":"visit","sort":58"}]}]}]'
-    const r = parseItineraryJson(broken)
+    const r = parseTravelJson(broken)
     expect(r.ok).toBe(true)
     if (!r.ok) return
     expect(r.trips[0]!.days[0]!.stops[0]!.type).toBe('visit')
@@ -106,7 +106,7 @@ describe('parseItineraryJson', () => {
 
   it('repairs a missing comma before a new key', () => {
     const broken = '[{"trip_name":"X"\n"days":[]}]'
-    const r = parseItineraryJson(broken)
+    const r = parseTravelJson(broken)
     expect(r.ok).toBe(true)
   })
 
@@ -119,7 +119,7 @@ describe('parseItineraryJson', () => {
         days: [{ stops: [{ type: 'visit' }] }],
       },
     ])
-    const r = parseItineraryJson(json)
+    const r = parseTravelJson(json)
     expect(r.ok).toBe(true)
     if (!r.ok) return
     expect(r.trips[0]!.notes).toBe(
@@ -133,7 +133,7 @@ describe('parseItineraryJson', () => {
       { trip_name: 'A', notes: null, url: null, days: [{ stops: [{ type: 'visit' }] }] },
       { trip_name: 'B', days: [{ stops: [{ type: 'visit' }] }] },
     ])
-    const r = parseItineraryJson(json)
+    const r = parseTravelJson(json)
     expect(r.ok).toBe(true)
     if (!r.ok) return
     expect(r.trips[0]!.notes).toBeNull()
@@ -143,9 +143,9 @@ describe('parseItineraryJson', () => {
   })
 
   it('rejects non-array and empty input', () => {
-    expect(parseItineraryJson('{"trip_name":"X"}').ok).toBe(false)
-    expect(parseItineraryJson('   ').ok).toBe(false)
-    expect(parseItineraryJson('not json').ok).toBe(false)
+    expect(parseTravelJson('{"trip_name":"X"}').ok).toBe(false)
+    expect(parseTravelJson('   ').ok).toBe(false)
+    expect(parseTravelJson('not json').ok).toBe(false)
   })
 })
 

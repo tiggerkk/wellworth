@@ -6,7 +6,7 @@
  */
 import { fetchRateToHkdOn } from './fx'
 import { todayLocal, type IsoDate } from './date'
-import type { RateMap } from './expenses'
+import type { RateMap } from './travel-expenses'
 import type { TripRow } from './travel'
 
 /** The date all of a trip's rates are taken at: the cached start date, else the earliest dated expense,

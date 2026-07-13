@@ -7,7 +7,7 @@ import {
   perCurrencyTotals,
   rateFor,
   type ExpenseRow,
-} from './expenses'
+} from './travel-expenses'
 
 function exp(p: Partial<ExpenseRow>): ExpenseRow {
   return {

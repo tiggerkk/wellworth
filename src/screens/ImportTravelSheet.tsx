@@ -18,15 +18,15 @@ import {
 } from '../data/travel'
 import { bumpTravel } from '../lib/travel-refresh'
 import { errorMessage } from '../lib/errors'
-import { geocodeCity } from '../lib/places'
+import { geocodeCity } from '../lib/travel-places'
 import { TRIP_STATUS_CHIP, tripStatusLabel } from '../lib/travel'
 import {
   distinctCities,
-  parseItineraryJson,
+  parseTravelJson,
   tripSummary,
   type DistinctCity,
   type TripDraft,
-} from '../lib/itinerary-import'
+} from '../lib/travel-import'
 import { STOP_TYPE_LABELS, type StopType } from '../constants/travel'
 
 const norm = (s: string) => s.trim().toLowerCase()
@@ -37,7 +37,7 @@ interface Pending {
   province: string | null
 }
 
-export function ImportTravelTripsSheet() {
+export function ImportTravelSheet() {
   const navigate = useNavigate()
   const { session } = useAuth()
   const userId = session?.user.id
@@ -86,7 +86,7 @@ export function ImportTravelTripsSheet() {
     setError(null)
     setDone(null)
     setPending({})
-    const result = parseItineraryJson(await file.text())
+    const result = parseTravelJson(await file.text())
     setFileName(file.name)
     if (result.ok) {
       setTrips(result.trips)
@@ -203,9 +203,7 @@ export function ImportTravelTripsSheet() {
           <>
             <p className="text-body text-text-secondary">
               Upload a JSON array of trips (see{' '}
-              <code className="text-text-primary">
-                templates/travel-itinerary-prompt.md
-              </code>
+              <code className="text-text-primary">templates/travel-prompt.md</code>
               ). It’s a one-time back-catalogue load — the result is drafts you finish in
               the Trip Builder.
             </p>

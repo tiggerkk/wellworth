@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { tripFirstDay } from './trip-fx'
+import { tripFirstDay } from './travel-fx'
 import { todayLocal } from './date'
 
 describe('tripFirstDay', () => {

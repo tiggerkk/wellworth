@@ -1,7 +1,7 @@
 import { IconX } from '@tabler/icons-react'
 import { ExpenseRowsEditor, type ExpenseDraft } from './ExpenseRowsEditor'
 import { useEscapeKey } from '../hooks/useEscapeKey'
-import type { ExpenseRow, ExpenseUpdate } from '../lib/expenses'
+import type { ExpenseRow, ExpenseUpdate } from '../lib/travel-expenses'
 import type { TravelCategoryConfig } from '../lib/travel-config'
 import { formatFullDate } from '../lib/date'
 

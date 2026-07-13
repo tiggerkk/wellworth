@@ -11,7 +11,7 @@ import type { ComponentType } from 'react'
 import { STOP_TYPE_COLORS, type StopType } from '../constants/travel'
 
 /** Stop-type → Tabler icon. Travel=plane-tilt, Visit=camera, Eat=bowl-chopsticks, Shop=brand-shopee,
- *  Stay=bed, Other=map-pin. Used in the Edit-Trip itinerary stop rows in place of the type text. */
+ *  Stay=bed, Other=map-pin. Used in the Travel Entry stop rows in place of the type text. */
 const STOP_TYPE_ICONS: Record<StopType, ComponentType<IconProps>> = {
   travel: IconPlaneTilt,
   visit: IconCamera,

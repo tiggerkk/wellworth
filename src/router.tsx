@@ -18,11 +18,12 @@ import {
   HighlightedNutrientsSheet,
   Home,
   ImportBooksSheet,
-  ImportTravelExpensesSheet,
-  ImportTravelTripsSheet,
   ImportFoodsSheet,
   ImportNetWorthSheet,
   ImportQuotesSheet,
+  ImportShowsSheet,
+  ImportTravelExpensesSheet,
+  ImportTravelSheet,
   Library,
   LiteratureHome,
   LiteraturePoemDetail,
@@ -57,7 +58,6 @@ import {
   InsurancePolicyDetailSheet,
   NewActivitySheet,
   NewFoodSheet,
-  ImportShowsSheet,
   QuoteCategoriesSheet,
   QuotesEntry,
   QuotesFieldsSheet,
@@ -78,7 +78,7 @@ import {
   TravelMap,
   TravelSettings,
   TravelTrips,
-  TripBuilder,
+  TravelEntry,
   VisibleNutrientsSheet,
   WellnessSettings,
 } from './screens'
@@ -156,7 +156,7 @@ export const router = createBrowserRouter([
           { path: 'shows/import', element: <ImportShowsSheet /> },
           { path: 'shows/:id', element: <ShowsEntry /> },
 
-          // Books module (the importer route lands in M7)
+          // Books module
           { path: 'books', element: <BooksDashboard /> },
           { path: 'books/library', element: <BooksLibrary /> },
           { path: 'books/entry', element: <BooksEntry /> },
@@ -165,7 +165,7 @@ export const router = createBrowserRouter([
           { path: 'books/import', element: <ImportBooksSheet /> },
           { path: 'books/:id', element: <BooksEntry /> },
 
-          // Quotes module (the importer route lands in M7)
+          // Quotes module
           { path: 'quotes', element: <QuotesZen /> },
           { path: 'quotes/library', element: <QuotesLibrary /> },
           { path: 'quotes/entry', element: <QuotesEntry /> },
@@ -192,7 +192,7 @@ export const router = createBrowserRouter([
           { path: 'literature/poet/:id', element: <LiteraturePoetDetail /> },
           { path: 'literature/poem/:id', element: <LiteraturePoemDetail /> },
 
-          // Medical module (Dashboard M4, tracked/reorder/lock M4–M6)
+          // Medical module
           { path: 'medical', element: <MedicalDashboard /> },
           { path: 'medical/reports', element: <MedicalReports /> },
           { path: 'medical/entry', element: <MedicalEntry /> },
@@ -208,17 +208,17 @@ export const router = createBrowserRouter([
           { path: 'medical/:id', element: <MedicalReportDetail /> },
           { path: 'medical/:id/edit', element: <MedicalEntry /> },
 
-          // Travel module (Map M4, Expenses + imports M5–M7)
+          // Travel module
           { path: 'travel', element: <TravelDashboard /> },
           { path: 'travel/map', element: <TravelMap /> },
           { path: 'travel/trips', element: <TravelTrips /> },
-          { path: 'travel/entry', element: <TripBuilder /> },
-          { path: 'travel/trip/:id', element: <TripBuilder /> },
+          { path: 'travel/entry', element: <TravelEntry /> },
+          { path: 'travel/trip/:id', element: <TravelEntry /> },
           { path: 'travel/settings', element: <TravelSettings /> },
           { path: 'travel/settings/visible', element: <TravelFieldsSheet /> },
           { path: 'travel/settings/categories', element: <TravelCategoriesSheet /> },
           { path: 'travel/import-expenses', element: <ImportTravelExpensesSheet /> },
-          { path: 'travel/import-trips', element: <ImportTravelTripsSheet /> },
+          { path: 'travel/import-travel', element: <ImportTravelSheet /> },
         ],
       },
     ],

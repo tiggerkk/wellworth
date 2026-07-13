@@ -10,12 +10,6 @@
  *   factor = number | 'amount' | '(' expr ')' | '-' factor
  */
 
-export const REIMBURSE_PRESETS: { label: string; formula: string }[] = [
-  { label: '½', formula: 'amount/2' },
-  { label: '⅖', formula: 'amount/5*2' },
-  { label: 'Full', formula: 'amount' },
-]
-
 type Token =
   | { t: 'num'; v: number }
   | { t: 'amount' }

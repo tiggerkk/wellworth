@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 import chinaRaw from '../../public/geo/china-provinces.geojson?raw'
 import worldRaw from '../../public/geo/world-countries.geojson?raw'
 import { CHINA_PROVINCES } from '../constants/travel'
-import { snapProvince } from './places'
+import { snapProvince } from './travel-places'
 import { COUNTRY_ALIASES, resolveCountryName } from './travel-geo'
 
 /**

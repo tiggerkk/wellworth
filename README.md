@@ -21,7 +21,7 @@ Hand-off package for building **WellWorth** (a wellness + net-worth tracker PWA)
   - **Books** — `books-import-template.csv` + `books-import-guide.md`.
   - **Quotes** — `quotes-import-template.csv` + `quotes-import-guide.md`.
   - **Medical** — `medical-extraction-prompt.md` (model-agnostic AI prompt), `medical-import.schema.json` (JSON shape + CSV header), and a sanitized `medical-import-template.json`.
-  - **Travel** — `travel-expenses-template.csv` + `travel-expenses-import-guide.md` (wide expenses CSV); `travel-itinerary.schema.json` + `travel-itinerary-prompt.md` (itinerary JSON).
+  - **Travel** — `travel-expenses-template.csv` + `travel-expenses-import-guide.md` (wide expenses CSV); `travel.schema.json` + `travel-prompt.md` (travel JSON).
 
 ## Project documentation
 
@@ -78,7 +78,7 @@ and is reached from the Home hub. All eight have shipped (feature-complete):
   countries/cities) with an "N / 34" province progress; a Leaflet map with a layered shaded-region fill
   (China by province via DataV, other countries whole via Natural Earth); a per-trip Expenses layer
   (owner-configurable categories, a safe reimbursement-formula parser, per-currency + HKD totals via
-  Frankfurter); field-visibility settings; two Settings importers (wide CSV expenses, itinerary JSON trips).
+  Frankfurter); field-visibility settings; two Settings importers (wide CSV expenses, travel JSON).
 - **Medical** — multi-year lab results + narrative reports; a trend Dashboard (inline-SVG sparklines + a
   lazy-recharts expanded chart, tracked-test picker, latest values by category); a
   searchable/filterable/sortable reports list; structured JSON/CSV import (no in-app OCR) with

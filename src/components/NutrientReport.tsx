@@ -1,6 +1,6 @@
 import { useProfile } from '../hooks/useProfile'
 import { useNutrientReference } from '../hooks/useNutrientReference'
-import { aggregateEntries, averageNutrients, perDay } from '../lib/report'
+import { aggregateEntries, averageNutrients, perDay } from '../lib/medical-report'
 import { computeTargets } from '../lib/targets'
 import { isOverUpperLimit } from '../lib/nutrients'
 import { NUTRIENT_SECTIONS } from '../constants/nutrient-sections'

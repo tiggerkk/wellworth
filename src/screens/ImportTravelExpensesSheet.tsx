@@ -154,7 +154,7 @@ export function ImportTravelExpensesSheet() {
             <p className="text-body text-text-secondary">
               Upload a wide CSV (
               <code className="text-text-primary">
-                Trip, Date, Restaurant… Flight/Train, Cost, Re-imbursed
+                Trip, Date, Restaurant…Flight/Train, Cost, Re-imbursed
               </code>
               ). Each filled category column becomes an expense; rows attribute to trips
               by name (created if missing).

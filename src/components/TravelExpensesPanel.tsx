@@ -16,10 +16,10 @@ import {
   type ExpenseRow,
   type ExpenseUpdate,
   type RateMap,
-} from '../lib/expenses'
+} from '../lib/travel-expenses'
 import { categoryColor, categoryLabel } from '../lib/travel-config'
 import type { TravelCategoryConfig } from '../lib/travel-config'
-import { fetchTripRates, tripFirstDay } from '../lib/trip-fx'
+import { fetchTripRates, tripFirstDay } from '../lib/travel-fx'
 import { todayLocal } from '../lib/date'
 import { CURRENCIES } from '../constants/travel'
 import type { TripRow } from '../lib/travel'
@@ -30,7 +30,7 @@ const TravelExpenseChart = lazyWithReload(() =>
 
 interface Props {
   trip: TripRow
-  /** The trip's expenses (lifted to TripBuilder; ordered by expense_date, sort_order). */
+  /** The trip's expenses (lifted to TravelEntry; ordered by expense_date, sort_order). */
   expenses: ExpenseRow[]
   categories: TravelCategoryConfig[]
   defaultCurrency: string
@@ -43,10 +43,10 @@ interface Props {
 /**
  * The trip-level Expenses hub: per-currency + HKD totals, FX rates, the By-Category donut, and the
  * full ledger grouped by date (inline add/edit/reorder via the shared `ExpenseRowsEditor`). The expense
- * list itself lives in TripBuilder's optimistic state — the same source the per-day modal edits — so
+ * list itself lives in TravelEntry's optimistic state — the same source the per-day modal edits — so
  * the two stay in sync without a refetch. FX-rate edits stay local here (optimistic on `trip.fx_rates`).
  */
-export function TripExpensesPanel({
+export function TravelExpensesPanel({
   trip,
   expenses,
   categories,

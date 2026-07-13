@@ -1,14 +1,14 @@
 /**
- * Itinerary AI-import (M7) — accepts a **JSON array of trips** (shape =
- * `templates/travel-itinerary.schema.json`, produced outside the app by any AI tool from freeform
- * itinerary text via `templates/travel-itinerary-prompt.md`). Pure: no I/O. Applies tolerant JSON
+ * Travel AI-import (M7) — accepts a **JSON array of trips** (shape =
+ * `templates/travel.schema.json`, produced outside the app by any AI tool from freeform
+ * text via `templates/travel-prompt.md`). Pure: no I/O. Applies tolerant JSON
  * repair (stray quote after a number; a missing comma before a new key), then validates each trip
  * into a draft (days preserve null dates; stops keep order; enums fall back safely; province is
  * snapped to a canonical `CHINA_PROVINCES` value for Chinese stops). The review screen
  * (`ImportTravelTripsSheet`) confirms trip/day/stop counts + pooled new cities before writing drafts the
  * owner finishes in the Trip Builder.
  */
-import { snapProvince } from './places'
+import { snapProvince } from './travel-places'
 import { isChinaCountry } from './travel-stats'
 import {
   STOP_TYPES,
@@ -43,7 +43,7 @@ export interface TripDraft {
   days: DayDraft[]
 }
 
-export type ItineraryParse =
+export type TravelParse =
   | { ok: true; trips: TripDraft[]; warnings: string[] }
   | { ok: false; error: string }
 
@@ -135,7 +135,7 @@ function toStop(raw: unknown): StopDraft {
   }
 }
 
-export function parseItineraryJson(raw: string): ItineraryParse {
+export function parseTravelJson(raw: string): TravelParse {
   if (!raw.trim()) return { ok: false, error: 'The file is empty.' }
   const parsed = tolerantParse(raw)
   if ('error' in parsed) return { ok: false, error: parsed.error }
