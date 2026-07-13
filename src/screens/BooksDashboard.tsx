@@ -1,6 +1,6 @@
 import { useCallback, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router'
-import { IconBook, IconHeartFilled } from '@tabler/icons-react'
+import { IconBook } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useBooksVersion, bumpBooks } from '../lib/books-refresh'
@@ -16,13 +16,10 @@ import {
   type BookRow,
   type BookUpdate,
 } from '../lib/books'
-import { type BookStatus, BOOK_STATUS_LABELS, BOOK_STATUS_CHIP } from '../constants/books'
-import { formatMonthDay, todayLocal } from '../lib/date'
-import { DYNASTY_CHIP } from '../constants/dynasty'
+import { todayLocal } from '../lib/date'
 import { routes } from '../constants/routes'
 import { SectionCard } from '../components/SectionCard'
-import { StarRating } from '../components/StarRating'
-import { StatusChip } from '../components/StatusChip'
+import { BookRowHeader } from '../components/BookRowHeader'
 import { CoverThumb } from '../components/CoverThumb'
 import { EmptyState } from '../components/EmptyState'
 
@@ -106,12 +103,7 @@ export function BooksDashboard() {
           {favorites.length > 0 && (
             <SectionCard title="Favourites">
               {favorites.map((b) => (
-                <DashRow
-                  key={b.id}
-                  book={b}
-                  onEdit={() => editBook(b.id)}
-                  secondary={<BookStatusChip status={b.status} />}
-                />
+                <DashRow key={b.id} book={b} onEdit={() => editBook(b.id)} />
               ))}
             </SectionCard>
           )}
@@ -123,14 +115,6 @@ export function BooksDashboard() {
                   key={b.id}
                   book={b}
                   onEdit={() => editBook(b.id)}
-                  secondary={
-                    <>
-                      <BookStatusChip status={b.status} />
-                      {b.authors?.length ? (
-                        <span className="min-w-0 truncate">{b.authors.join(', ')}</span>
-                      ) : null}
-                    </>
-                  }
                   action={
                     <ActionButton
                       label="Mark Read"
@@ -146,18 +130,7 @@ export function BooksDashboard() {
           {recent.length > 0 && (
             <SectionCard title="Recently Read">
               {recent.map((b) => (
-                <DashRow
-                  key={b.id}
-                  book={b}
-                  onEdit={() => editBook(b.id)}
-                  secondary={
-                    <>
-                      <BookStatusChip status={b.status} />
-                      {b.rating ? <StarRating value={b.rating} size={12} /> : null}
-                      {b.end_date && <span>{formatMonthDay(b.end_date)}</span>}
-                    </>
-                  }
-                />
+                <DashRow key={b.id} book={b} onEdit={() => editBook(b.id)} />
               ))}
             </SectionCard>
           )}
@@ -169,14 +142,6 @@ export function BooksDashboard() {
                   key={b.id}
                   book={b}
                   onEdit={() => editBook(b.id)}
-                  secondary={
-                    <>
-                      <BookStatusChip status={b.status} />
-                      {b.authors?.length ? (
-                        <span className="min-w-0 truncate">{b.authors.join(', ')}</span>
-                      ) : null}
-                    </>
-                  }
                   action={
                     <ActionButton
                       label="Start Reading"
@@ -197,51 +162,20 @@ export function BooksDashboard() {
 function DashRow({
   book,
   onEdit,
-  secondary,
   action,
 }: {
   book: BookRow
   onEdit: () => void
-  secondary: ReactNode
   action?: ReactNode
 }) {
   return (
     <div className="flex items-center gap-3 border-b border-border px-3 py-2.5 last:border-b-0">
       <CoverThumb url={book.cover_url} className="h-14 w-10" />
       <button onClick={onEdit} className="min-w-0 flex-1 text-left">
-        <span className="flex items-center gap-1.5 text-body text-text-primary">
-          {book.is_favorite && (
-            <IconHeartFilled
-              size={13}
-              className="shrink-0 text-favorite"
-              aria-label="Favourite"
-            />
-          )}
-          <span className="min-w-0 truncate">
-            {book.title}
-            {book.year ? ` (${book.year})` : ''}
-          </span>
-          {book.dynasty && (
-            <StatusChip label={book.dynasty} className={`shrink-0 ${DYNASTY_CHIP}`} />
-          )}
-        </span>
-        <span className="mt-0.5 flex items-center gap-2 text-caption text-text-secondary">
-          {secondary}
-        </span>
+        <BookRowHeader book={book} />
       </button>
       {action}
     </div>
-  )
-}
-
-/** The status pill (Want to Read / Reading / Read / Dropped) — shown on every dashboard row so the
- * status reads the same here as in the Library, not just implied by the shelf title. */
-function BookStatusChip({ status }: { status: string }) {
-  return (
-    <StatusChip
-      label={BOOK_STATUS_LABELS[status as BookStatus]}
-      className={BOOK_STATUS_CHIP[status as BookStatus]}
-    />
   )
 }
 

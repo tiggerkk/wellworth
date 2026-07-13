@@ -1,37 +1,26 @@
 import { useCallback, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router'
-import { IconDeviceTv, IconHeartFilled } from '@tabler/icons-react'
+import { IconDeviceTv } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useShowsVersion, bumpShows } from '../lib/shows-refresh'
 import { listShows, updateShow } from '../data/show'
-import {
-  type ShowType,
-  type ShowStatus,
-  SHOW_STATUS_LABELS,
-  SHOW_STATUS_CHIP,
-} from '../constants/shows'
+import { type ShowType } from '../constants/shows'
 import {
   countWatchedThisYear,
   favoriteShows,
   isUpNext,
-  lengthHint,
   markWatched,
-  progressLabel,
   recentlyWatched,
   startWatching,
-  usesEpisodes,
   type ShowRow,
   type ShowUpdate,
 } from '../lib/shows'
-import { formatMonthDay, todayLocal } from '../lib/date'
-import { DYNASTY_CHIP } from '../constants/dynasty'
+import { todayLocal } from '../lib/date'
 import { routes } from '../constants/routes'
 import { SectionCard } from '../components/SectionCard'
 import { SegmentedTabs } from '../components/SegmentedTabs'
-import { ShowTypeBadge } from '../components/ShowTypeBadge'
-import { StatusChip } from '../components/StatusChip'
-import { StarRating } from '../components/StarRating'
+import { ShowRowHeader } from '../components/ShowRowHeader'
 import { PosterThumb } from '../components/PosterThumb'
 import { EmptyState } from '../components/EmptyState'
 
@@ -136,17 +125,7 @@ export function ShowsDashboard() {
           {favorites.length > 0 && (
             <SectionCard title="Favourites">
               {favorites.map((s) => (
-                <DashRow
-                  key={s.id}
-                  show={s}
-                  onEdit={() => editShow(s.id)}
-                  secondary={
-                    <>
-                      <ShowStatusChip status={s.status} />
-                      {s.rating ? <StarRating value={s.rating} size={12} /> : null}
-                    </>
-                  }
-                />
+                <DashRow key={s.id} show={s} onEdit={() => editShow(s.id)} />
               ))}
             </SectionCard>
           )}
@@ -158,7 +137,6 @@ export function ShowsDashboard() {
                   key={s.id}
                   show={s}
                   onEdit={() => editShow(s.id)}
-                  secondary={<WatchingSecondary show={s} />}
                   action={
                     <ActionButton
                       label="Mark Watched"
@@ -178,7 +156,6 @@ export function ShowsDashboard() {
                   key={s.id}
                   show={s}
                   onEdit={() => editShow(s.id)}
-                  secondary={<WatchingSecondary show={s} />}
                   action={
                     <ActionButton
                       label="Mark Watched"
@@ -198,15 +175,6 @@ export function ShowsDashboard() {
                   key={s.id}
                   show={s}
                   onEdit={() => editShow(s.id)}
-                  secondary={
-                    <>
-                      <ShowStatusChip status={s.status} />
-                      {s.genres?.[0] ? (
-                        <span className="min-w-0 truncate">{s.genres[0]}</span>
-                      ) : null}
-                      {lengthHint(s) && <span>{lengthHint(s)}</span>}
-                    </>
-                  }
                   action={
                     <ActionButton
                       label="Start Watching"
@@ -222,18 +190,7 @@ export function ShowsDashboard() {
           {recent.length > 0 && (
             <SectionCard title="Recently Watched">
               {recent.map((s) => (
-                <DashRow
-                  key={s.id}
-                  show={s}
-                  onEdit={() => editShow(s.id)}
-                  secondary={
-                    <>
-                      <ShowStatusChip status={s.status} />
-                      {s.rating ? <StarRating value={s.rating} size={12} /> : null}
-                      {s.end_date && <span>{formatMonthDay(s.end_date)}</span>}
-                    </>
-                  }
-                />
+                <DashRow key={s.id} show={s} onEdit={() => editShow(s.id)} />
               ))}
             </SectionCard>
           )}
@@ -246,72 +203,20 @@ export function ShowsDashboard() {
 function DashRow({
   show,
   onEdit,
-  secondary,
   action,
 }: {
   show: ShowRow
   onEdit: () => void
-  secondary: ReactNode
   action?: ReactNode
 }) {
   return (
     <div className="flex items-center gap-3 border-b border-border px-3 py-2.5 last:border-b-0">
       <PosterThumb path={show.poster_path} size="w92" className="h-14 w-10" />
       <button onClick={onEdit} className="min-w-0 flex-1 text-left">
-        <span className="flex items-center gap-1.5 text-body text-text-primary">
-          {show.is_favorite && (
-            <IconHeartFilled
-              size={13}
-              className="shrink-0 text-favorite"
-              aria-label="Favourite"
-            />
-          )}
-          <span className="min-w-0 truncate">
-            {show.title}
-            {show.year ? ` (${show.year})` : ''}
-          </span>
-          {show.dynasty && (
-            <StatusChip label={show.dynasty} className={`shrink-0 ${DYNASTY_CHIP}`} />
-          )}
-        </span>
-        <span className="mt-0.5 flex items-center gap-2 text-caption text-text-secondary">
-          <ShowTypeBadge type={show.type as ShowType} />
-          {secondary}
-        </span>
+        <ShowRowHeader show={show} />
       </button>
       {action}
     </div>
-  )
-}
-
-/** The status pill (Want / Watching / Watched / Dropped) — shown on every dashboard row so the
- * status reads the same here as in the Library, not just implied by the shelf title. */
-function ShowStatusChip({ status }: { status: string }) {
-  return (
-    <StatusChip
-      label={SHOW_STATUS_LABELS[status as ShowStatus]}
-      className={SHOW_STATUS_CHIP[status as ShowStatus]}
-    />
-  )
-}
-
-/** Secondary line for a watching row: the "Watching" chip + the most useful progress cue —
- * season/episode progress for an episodic title with a known total, otherwise the start date so a
- * watching movie (or a total-less title) isn't a dead end. */
-function WatchingSecondary({ show }: { show: ShowRow }) {
-  const hasProgress = usesEpisodes(show.type) && (show.total_episodes ?? 0) > 0
-  return (
-    <>
-      <StatusChip
-        label={SHOW_STATUS_LABELS.watching}
-        className={SHOW_STATUS_CHIP.watching}
-      />
-      {hasProgress ? (
-        <span>{progressLabel(show)}</span>
-      ) : show.start_date ? (
-        <span>Started {formatMonthDay(show.start_date)}</span>
-      ) : null}
-    </>
   )
 }
 

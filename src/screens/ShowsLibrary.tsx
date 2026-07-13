@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { IconDeviceTv, IconHeartFilled } from '@tabler/icons-react'
+import { IconDeviceTv } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useSessionState } from '../hooks/useSessionState'
@@ -11,7 +11,6 @@ import {
   SHOW_STATUSES,
   type ShowStatus,
   SHOW_STATUS_LABELS,
-  SHOW_STATUS_CHIP,
 } from '../constants/shows'
 import { LGBTQ_REPS, LGBTQ_REP_LABELS } from '../constants/lgbtq'
 import {
@@ -21,8 +20,8 @@ import {
   type LibraryCriteria,
   type SortField,
 } from '../lib/shows'
-import { DYNASTIES, DYNASTY_CHIP } from '../constants/dynasty'
-import { formatMonthDay, todayLocal, type IsoDate } from '../lib/date'
+import { DYNASTIES } from '../constants/dynasty'
+import { todayLocal, type IsoDate } from '../lib/date'
 import { routes } from '../constants/routes'
 import { SwipeRow } from '../components/SwipeRow'
 import { SegmentedTabs } from '../components/SegmentedTabs'
@@ -34,9 +33,7 @@ import { FilterPanel } from '../components/FilterPanel'
 import { FilterPanelFooter } from '../components/FilterPanelFooter'
 import { ResultCount } from '../components/ResultCount'
 import { DateRangeRow } from '../components/DateRangeRow'
-import { ShowTypeBadge } from '../components/ShowTypeBadge'
-import { StatusChip } from '../components/StatusChip'
-import { StarRating } from '../components/StarRating'
+import { ShowRowHeader } from '../components/ShowRowHeader'
 import { PosterThumb } from '../components/PosterThumb'
 import { EmptyState } from '../components/EmptyState'
 
@@ -278,41 +275,7 @@ export function ShowsLibrary() {
                 >
                   <PosterThumb path={s.poster_path} size="w92" />
                   <span className="min-w-0 flex-1">
-                    <span className="flex items-center gap-1.5 text-body text-text-primary">
-                      {s.is_favorite && (
-                        <IconHeartFilled
-                          size={13}
-                          className="shrink-0 text-favorite"
-                          aria-label="Favourite"
-                        />
-                      )}
-                      <span className="min-w-0 truncate">
-                        {s.title}
-                        {s.year ? ` (${s.year})` : ''}
-                      </span>
-                      {s.dynasty && (
-                        <StatusChip
-                          label={s.dynasty}
-                          className={`shrink-0 ${DYNASTY_CHIP}`}
-                        />
-                      )}
-                    </span>
-                    <span className="mt-1 flex flex-wrap items-center gap-2 text-caption text-text-secondary">
-                      <ShowTypeBadge type={s.type as ShowType} />
-                      <StatusChip
-                        label={SHOW_STATUS_LABELS[s.status as ShowStatus]}
-                        className={SHOW_STATUS_CHIP[s.status as ShowStatus]}
-                      />
-                      {s.rating ? <StarRating value={s.rating} size={13} /> : null}
-                    </span>
-                    {(s.genres?.[0] || s.end_date || s.start_date) && (
-                      <span className="mt-0.5 flex items-center gap-2 text-caption text-text-tertiary">
-                        {s.genres?.[0] && <span>{s.genres[0]}</span>}
-                        {(s.end_date ?? s.start_date) && (
-                          <span>{formatMonthDay((s.end_date ?? s.start_date)!)}</span>
-                        )}
-                      </span>
-                    )}
+                    <ShowRowHeader show={s} />
                   </span>
                 </button>
               </SwipeRow>

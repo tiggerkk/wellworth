@@ -1,19 +1,14 @@
 import { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { IconBook, IconHeartFilled } from '@tabler/icons-react'
+import { IconBook } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useSessionState } from '../hooks/useSessionState'
 import { useBooksVersion, bumpBooks } from '../lib/books-refresh'
 import { deleteBook, listBooks } from '../data/book'
-import {
-  BOOK_STATUSES,
-  type BookStatus,
-  BOOK_STATUS_LABELS,
-  BOOK_STATUS_CHIP,
-} from '../constants/books'
+import { BOOK_STATUSES, type BookStatus, BOOK_STATUS_LABELS } from '../constants/books'
 import { LGBTQ_REPS, LGBTQ_REP_LABELS } from '../constants/lgbtq'
-import { DYNASTIES, DYNASTY_CHIP } from '../constants/dynasty'
+import { DYNASTIES } from '../constants/dynasty'
 import {
   applyLibraryView,
   bookGenres,
@@ -21,7 +16,7 @@ import {
   type LibraryCriteria,
   type SortField,
 } from '../lib/books'
-import { formatMonthDay, todayLocal, type IsoDate } from '../lib/date'
+import { todayLocal, type IsoDate } from '../lib/date'
 import { routes } from '../constants/routes'
 import { SwipeRow } from '../components/SwipeRow'
 import { SelectMenu } from '../components/SelectMenu'
@@ -32,8 +27,7 @@ import { FilterPanel } from '../components/FilterPanel'
 import { FilterPanelFooter } from '../components/FilterPanelFooter'
 import { ResultCount } from '../components/ResultCount'
 import { DateRangeRow } from '../components/DateRangeRow'
-import { StatusChip } from '../components/StatusChip'
-import { StarRating } from '../components/StarRating'
+import { BookRowHeader } from '../components/BookRowHeader'
 import { CoverThumb } from '../components/CoverThumb'
 import { EmptyState } from '../components/EmptyState'
 
@@ -262,45 +256,7 @@ export function BooksLibrary() {
                 >
                   <CoverThumb url={b.cover_url} />
                   <span className="min-w-0 flex-1">
-                    <span className="flex items-center gap-1.5 text-body text-text-primary">
-                      {b.is_favorite && (
-                        <IconHeartFilled
-                          size={13}
-                          className="shrink-0 text-favorite"
-                          aria-label="Favourite"
-                        />
-                      )}
-                      <span className="min-w-0 truncate">
-                        {b.title}
-                        {b.year ? ` (${b.year})` : ''}
-                      </span>
-                      {b.dynasty && (
-                        <StatusChip
-                          label={b.dynasty}
-                          className={`shrink-0 ${DYNASTY_CHIP}`}
-                        />
-                      )}
-                    </span>
-                    {b.authors?.length ? (
-                      <span className="block truncate text-caption text-text-secondary">
-                        {b.authors.join(', ')}
-                      </span>
-                    ) : null}
-                    <span className="mt-1 flex flex-wrap items-center gap-2 text-caption text-text-secondary">
-                      <StatusChip
-                        label={BOOK_STATUS_LABELS[b.status as BookStatus]}
-                        className={BOOK_STATUS_CHIP[b.status as BookStatus]}
-                      />
-                      {b.rating ? <StarRating value={b.rating} size={13} /> : null}
-                    </span>
-                    {(b.genres?.[0] || b.end_date || b.start_date) && (
-                      <span className="mt-0.5 flex items-center gap-2 text-caption text-text-tertiary">
-                        {b.genres?.[0] && <span>{b.genres[0]}</span>}
-                        {(b.end_date ?? b.start_date) && (
-                          <span>{formatMonthDay((b.end_date ?? b.start_date)!)}</span>
-                        )}
-                      </span>
-                    )}
+                    <BookRowHeader book={b} />
                   </span>
                 </button>
               </SwipeRow>
