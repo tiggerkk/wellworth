@@ -1,12 +1,12 @@
 import { supabase } from '../lib/supabase'
 import type { Tables, TablesInsert } from '../types/database'
+import { type AssetType } from '../constants/networth'
 import {
   ageForYear,
   insuranceRowDetails,
   originalCashValueAtAge,
   resolvePolicyAtAge,
   varianceAtAge,
-  type AssetType,
 } from '../lib/networth'
 import { startOfMonth } from '../lib/date'
 import {

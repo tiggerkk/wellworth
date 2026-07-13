@@ -7,7 +7,11 @@
  * Column spec: `asset_type,name,currency,value_native,detail1_key,detail1_value,…` — any number of
  * `detailN_key`/`detailN_value` pairs are accepted and stored as-is in `details`.
  */
-import { CURRENCIES, type AssetType, type Currency } from './networth'
+import {
+  NETWORTH_CURRENCIES,
+  type AssetType,
+  type NetworthCurrency,
+} from '../constants/networth'
 
 const REQUIRED_COLUMNS = ['asset_type', 'name', 'currency', 'value_native']
 
@@ -27,7 +31,7 @@ const MANUAL_ASSET_TYPES = [
 export interface ParsedAssetRow {
   asset_type: AssetType
   name: string
-  currency: Currency
+  currency: NetworthCurrency
   value_native: number
   details: Record<string, string>
 }
@@ -78,7 +82,7 @@ export function parseNetWorthCsv(rows: string[][]): NetWorthImportResult {
   }
 
   const assetSet = new Set<string>(MANUAL_ASSET_TYPES)
-  const currencySet = new Set<string>(CURRENCIES)
+  const currencySet = new Set<string>(NETWORTH_CURRENCIES)
 
   for (let r = 1; r < rows.length; r++) {
     const cells = rows[r]!
@@ -132,7 +136,7 @@ export function parseNetWorthCsv(rows: string[][]): NetWorthImportResult {
     out.push({
       asset_type: assetType as AssetType,
       name,
-      currency: currency as Currency,
+      currency: currency as NetworthCurrency,
       value_native: value,
       details,
     })

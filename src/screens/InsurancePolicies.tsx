@@ -14,7 +14,8 @@ import {
   type InsuranceSortField,
   type InsuranceStatusFilter,
 } from '../lib/insurance-view'
-import { ageForYear, DEFAULT_BIRTH_YEAR, hasBrokenEven } from '../lib/networth'
+import { DEFAULT_BIRTH_YEAR } from '../constants/networth'
+import { ageForYear, hasBrokenEven } from '../lib/networth'
 import { effectiveProviders, providerLabel } from '../lib/insurance-config'
 import { todayLocal } from '../lib/date'
 import { StatusChip } from '../components/StatusChip'

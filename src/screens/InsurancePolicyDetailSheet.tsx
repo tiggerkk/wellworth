@@ -3,22 +3,23 @@ import { useNavigate, useParams, useSearchParams } from 'react-router'
 import { IconPencil } from '@tabler/icons-react'
 import { SheetCloseButton } from '../components/SheetCloseButton'
 import { Sheet } from '../components/Sheet'
-import { PolicyDetail } from '../components/PolicyDetail'
+import { InsurancePolicyDetail } from '../components/InsurancePolicyDetail'
 import { useAsync } from '../hooks/useAsync'
 import { useAuth } from '../auth/AuthProvider'
 import { useProfile } from '../hooks/useProfile'
 import { getPolicyWithSchedules } from '../data/insurance'
-import { ageForYear, DEFAULT_BIRTH_YEAR } from '../lib/networth'
+import { DEFAULT_BIRTH_YEAR } from '../constants/networth'
+import { ageForYear } from '../lib/networth'
 import { effectiveProviders, providerLabel } from '../lib/insurance-config'
 import { todayLocal } from '../lib/date'
 import { routes } from '../constants/routes'
 
 /**
- * Routed Policy detail (read-only) — opened from a Monthly Entry insurance row or a dashboard
+ * Routed Insurance Policy detail (read-only) — opened from a Monthly Entry insurance row or a dashboard
  * drill-in. Resolves the policy's figures at the month's age (defaults to the current year). An
  * Edit shortcut opens the New/Edit Insurance screen.
  */
-export function PolicyDetailSheet() {
+export function InsurancePolicyDetailSheet() {
   const navigate = useNavigate()
   const { id = '' } = useParams()
   const [params] = useSearchParams()
@@ -62,7 +63,7 @@ export function PolicyDetailSheet() {
           <p className="text-body text-danger">Couldn’t load this policy.</p>
         )}
         {data && (
-          <PolicyDetail
+          <InsurancePolicyDetail
             policy={data.policy}
             schedules={data.schedules}
             age={age}

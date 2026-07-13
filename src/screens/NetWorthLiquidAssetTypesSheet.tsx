@@ -3,12 +3,8 @@ import { SheetCloseButton } from '../components/SheetCloseButton'
 import { Sheet } from '../components/Sheet'
 import { Toggle } from '../components/Toggle'
 import { useProfileEditor } from '../hooks/useProfileEditor'
-import {
-  ASSET_TYPES,
-  ASSET_TYPE_LABELS,
-  liquidAssetTypes,
-  type AssetType,
-} from '../lib/networth'
+import { ASSET_TYPES, ASSET_TYPE_LABELS, type AssetType } from '../constants/networth'
+import { liquidAssetTypes } from '../lib/networth'
 import type { Tables, TablesUpdate } from '../types/database'
 
 /**

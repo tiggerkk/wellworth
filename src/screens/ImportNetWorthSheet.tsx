@@ -13,7 +13,8 @@ import type { AssetEntryInput } from '../data/asset-entry'
 import { fetchRatesToHkd } from '../lib/fx'
 import { bumpNetWorth } from '../lib/networth-refresh'
 import { errorMessage } from '../lib/errors'
-import { DEFAULT_BIRTH_YEAR, formatHkd, valueBase, type Currency } from '../lib/networth'
+import { DEFAULT_BIRTH_YEAR, type NetworthCurrency } from '../constants/networth'
+import { formatHkd, valueBase } from '../lib/networth'
 import { formatMonthLabel, startOfMonth, todayLocal } from '../lib/date'
 
 const MAX_MESSAGES = 20
@@ -71,7 +72,8 @@ export function ImportNetWorthSheet() {
     }
   }
 
-  const rateOf = (c: Currency): number | null => (c === 'HKD' ? 1 : (rates?.[c] ?? null))
+  const rateOf = (c: NetworthCurrency): number | null =>
+    c === 'HKD' ? 1 : (rates?.[c] ?? null)
   const usedCurrencies = [...new Set((result?.rows ?? []).map((r) => r.currency))]
   const missingRate = usedCurrencies.some((c) => rateOf(c) == null)
   const total = (result?.rows ?? []).reduce((sum, r) => {

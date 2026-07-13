@@ -11,10 +11,9 @@ import {
 import {
   ASSET_TYPE_COLORS,
   ASSET_TYPE_LABELS,
-  formatHkd,
-  formatHkdCompact,
   type AssetType,
-} from '../lib/networth'
+} from '../constants/networth'
+import { formatHkd, formatHkdCompact } from '../lib/networth'
 import { formatMonthShort } from '../lib/date'
 
 /** A chart row keyed by `month` (ISO) plus numeric series (`total`, or one per asset type). */

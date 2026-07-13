@@ -10,10 +10,10 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+import { type NetworthCurrency } from '../constants/networth'
 import {
   formatNative,
   formatNativeCompact,
-  type Currency,
   type ScheduleComparisonRow,
 } from '../lib/networth'
 
@@ -37,7 +37,7 @@ export function InsuranceCompareCharts({
   labelB,
 }: {
   rows: ScheduleComparisonRow[]
-  currency: Currency
+  currency: NetworthCurrency
   labelA: string
   labelB: string
 }) {

@@ -2,7 +2,8 @@
  * Presentational Fund detail body — the read-only fields from a fund holding's `details`. Reused by
  * the routed FundDetailSheet (dashboard drill-in) and the local fund modal in Monthly Entry.
  */
-import { ASSET_TYPE_COLORS, formatHkd, gainLossClass } from '../lib/networth'
+import { ASSET_TYPE_COLORS } from '../constants/networth'
+import { formatHkd, gainLossClass } from '../lib/networth'
 import { formatFullDate } from '../lib/date'
 
 export interface FundDetailData {

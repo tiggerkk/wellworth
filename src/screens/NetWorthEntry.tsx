@@ -22,12 +22,16 @@ import {
 import { deleteSnapshot, getLatestSnapshotBefore } from '../data/networth-snapshot'
 import { listCatalogue, type PolicyWithSchedules } from '../data/insurance'
 import {
-  ageForYear,
   ASSET_TYPE_COLORS,
+  type AssetType,
   ASSET_TYPE_LABELS,
-  CURRENCIES,
+  NETWORTH_CURRENCIES,
+  type NetworthCurrency,
   DEFAULT_BIRTH_YEAR,
   ASSET_DETAIL_FIELDS,
+} from '../constants/networth'
+import {
+  ageForYear,
   formatHkd,
   gainLossClass,
   insuranceRowDetails,
@@ -38,8 +42,6 @@ import {
   valueBase,
   varianceAtAge,
   visibleAssetTypes,
-  type AssetType,
-  type Currency,
 } from '../lib/networth'
 import {
   effectiveProviders,
@@ -69,11 +71,11 @@ interface EntryDraft {
   clientId: string
   asset_type: AssetType
   name: string
-  currency: Currency
+  currency: NetworthCurrency
   valueNative: string
   details: Record<string, string>
 }
-type RateDraft = Record<Currency, string>
+type RateDraft = Record<NetworthCurrency, string>
 interface MonthDraft {
   rows: EntryDraft[]
   fxRates: RateDraft
@@ -107,7 +109,7 @@ function draftFromEntries(entries: Tables<'asset_entry'>[]): MonthDraft {
       clientId: nextId(),
       asset_type: e.asset_type as AssetType,
       name: e.name,
-      currency: e.currency as Currency,
+      currency: e.currency as NetworthCurrency,
       valueNative: e.value_native == null ? '' : String(e.value_native),
       details: detailsToStrings(e.details),
     })),
@@ -139,7 +141,7 @@ function resolveInsuranceRows(
       clientId: nextId(),
       asset_type: 'insurance',
       name: policy.policy_name || policy.policy_number,
-      currency: (policy.currency as Currency) ?? 'HKD',
+      currency: (policy.currency as NetworthCurrency) ?? 'HKD',
       valueNative: String(r.cashValue),
       details: insuranceRowDetails(policy, r, original, variance),
     })
@@ -383,7 +385,7 @@ function EntryForm({
     }
   }
 
-  const rateOf = (currency: Currency) =>
+  const rateOf = (currency: NetworthCurrency) =>
     currency === 'HKD' ? 1 : draftAmount(fxRates[currency], 0)
   const rowBase = (r: EntryDraft) =>
     valueBase(draftAmount(r.valueNative, 0), rateOf(r.currency))
@@ -785,10 +787,10 @@ function ManualRow({
         />
         <select
           value={row.currency}
-          onChange={(e) => onChange({ currency: e.target.value as Currency })}
+          onChange={(e) => onChange({ currency: e.target.value as NetworthCurrency })}
           className={`shrink-0 ${inputCls}`}
         >
-          {CURRENCIES.map((c) => (
+          {NETWORTH_CURRENCIES.map((c) => (
             <option key={c} value={c}>
               {c}
             </option>

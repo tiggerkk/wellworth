@@ -39,7 +39,6 @@ export function MedicalReportDetail() {
   const navigate = useNavigate()
   const version = useMedicalVersion()
   // Drill-in detail closes back to wherever it was opened from (Reports list or Dashboard) — same
-  // X + Esc + browser-back convention as PolicyDetailSheet and the Add/Edit screens.
   useEscapeKey(() => navigate(-1))
 
   const loadFn = useCallback((): Promise<ReportWithResults | null> => {

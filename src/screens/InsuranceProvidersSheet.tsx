@@ -6,7 +6,7 @@ import { useAuth } from '../auth/AuthProvider'
 import { useProfileEditor } from '../hooks/useProfileEditor'
 import { countPoliciesByProvider, reassignProvider } from '../data/insurance'
 import { bumpNetWorth } from '../lib/networth-refresh'
-import { CURRENCIES, type Currency } from '../lib/networth'
+import { NETWORTH_CURRENCIES, type NetworthCurrency } from '../constants/networth'
 import {
   addProvider,
   effectiveProviders,
@@ -16,7 +16,7 @@ import {
   type InsuranceProviderConfig,
 } from '../lib/insurance-config'
 
-const CCY_OPTIONS = CURRENCIES.map((c) => ({ value: c, label: c }))
+const CCY_OPTIONS = NETWORTH_CURRENCIES.map((c) => ({ value: c, label: c }))
 
 /**
  * Net Worth → Manage Providers: add / rename / delete / reorder the owner's insurance-provider list,
@@ -58,7 +58,7 @@ export function InsuranceProvidersSheet() {
               <SelectMenu
                 value={entry.defaultCurrency}
                 options={CCY_OPTIONS}
-                onChange={(v) => update({ defaultCurrency: v as Currency })}
+                onChange={(v) => update({ defaultCurrency: v as NetworthCurrency })}
                 ariaLabel={`Default currency for ${entry.label}`}
               />
             </div>

@@ -28,9 +28,8 @@ export const STOP_TYPE_LABELS: Record<StopType, string> = {
 }
 
 /**
- * Per-stop-type icon accent colour (CSS custom-property refs, à la Net Worth's `ASSET_TYPE_COLORS`),
- * so the itinerary stop icons read apart by kind. Hues jump across the wheel — no two adjacent types
- * share a warm/cool band. Consumed by `StopTypeIcon`.
+ * Per-stop-type icon accent colour (CSS custom-property refs), so the itinerary stop icons read apart by kind.
+ * Hues jump across the wheel — no two adjacent types share a warm/cool band. Consumed by `StopTypeIcon`.
  * travel(plane)=green · visit(camera)=gold · eat(chopsticks)=red · shop(shopee)=blue ·
  * stay(bed)=purple · other(map-pin)=grey.
  */

@@ -4,12 +4,8 @@ import { Sheet } from '../components/Sheet'
 import { Toggle } from '../components/Toggle'
 import { ReorderList } from '../components/ReorderList'
 import { useProfileEditor } from '../hooks/useProfileEditor'
-import {
-  ASSET_TYPE_LABELS,
-  orderedAssetTypes,
-  visibleAssetTypes,
-  type AssetType,
-} from '../lib/networth'
+import { ASSET_TYPE_LABELS, type AssetType } from '../constants/networth'
+import { orderedAssetTypes, visibleAssetTypes } from '../lib/networth'
 import { showToast } from '../lib/toast'
 import type { Tables, TablesUpdate } from '../types/database'
 

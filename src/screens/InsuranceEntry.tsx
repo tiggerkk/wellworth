@@ -26,12 +26,11 @@ import { bumpNetWorth } from '../lib/networth-refresh'
 import { errorMessage } from '../lib/errors'
 import { parseCsv } from '../lib/csv'
 import { parseInsuranceSingleCsv, type ParsedSinglePolicy } from '../lib/insurance-import'
+import { NETWORTH_CURRENCIES, type NetworthCurrency } from '../constants/networth'
 import {
-  CURRENCIES,
   gainLossClass,
   sortSchedulesDesc,
   surrenderGainPctPerYear,
-  type Currency,
   type ScheduleVersion,
 } from '../lib/networth'
 import { effectiveProviders, type InsuranceProviderConfig } from '../lib/insurance-config'
@@ -53,7 +52,7 @@ interface PolicyDraft {
   policy_number: string
   policy_name: string
   start_date: string | null
-  currency: Currency
+  currency: NetworthCurrency
   notes: string
   // Termination = surrender OR maturity (mutually exclusive). null kind = active policy.
   termination_kind: TerminationKind | null
@@ -78,7 +77,7 @@ function blankDraft(providers: InsuranceProviderConfig[]): PolicyDraft {
   }
 }
 
-const CCY_OPTIONS = CURRENCIES.map((c) => ({ value: c, label: c }))
+const CCY_OPTIONS = NETWORTH_CURRENCIES.map((c) => ({ value: c, label: c }))
 
 function scheduleLabel(v: ScheduleVersion): string {
   const prefix = v.kind === 'original' ? '(O)' : '(U)'
@@ -115,7 +114,7 @@ export function InsuranceEntry() {
         policy_number: p.policy_number,
         policy_name: p.policy_name,
         start_date: p.start_date,
-        currency: (p.currency as Currency) ?? 'USD',
+        currency: (p.currency as NetworthCurrency) ?? 'USD',
         notes: p.notes ?? '',
         termination_kind: (p.termination_kind as TerminationKind | null) ?? null,
         termination_date: p.termination_date,
@@ -446,7 +445,7 @@ function PolicyForm({
             <SegmentedTabs
               value={draft.currency}
               options={CCY_OPTIONS}
-              onChange={(v) => update({ currency: v as Currency })}
+              onChange={(v) => update({ currency: v as NetworthCurrency })}
               size="field"
             />
           </div>

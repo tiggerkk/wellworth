@@ -3,11 +3,11 @@ import { IconX } from '@tabler/icons-react'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 import { lazyWithReload } from '../lib/lazy-with-reload'
 import { SelectMenu } from './SelectMenu'
+import { type NetworthCurrency } from '../constants/networth'
 import {
   buildScheduleComparisonRows,
   gainLossClass,
   sortSchedulesDesc,
-  type Currency,
   type ScheduleVersion,
 } from '../lib/networth'
 import { formatFullDate } from '../lib/date'
@@ -47,7 +47,7 @@ export function InsuranceCompareOverlay({
   providerLabel: string
   policyName: string
   schedules: ScheduleVersion[]
-  currency: Currency
+  currency: NetworthCurrency
   initialAId: string
   initialBId: string
   onClose: () => void

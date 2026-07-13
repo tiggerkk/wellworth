@@ -10,13 +10,13 @@
  * (Avg Unit Cost, NAV) are in the fund's Base Currency, while Total Cost / Total Value / P&L are
  * already in HKD. The export ends with a blank row + a "Downloaded on:" / disclaimer footer.
  */
-import { CURRENCIES, type Currency } from './networth'
+import { NETWORTH_CURRENCIES, type NetworthCurrency } from '../constants/networth'
 
 export interface ParsedFundRow {
   name: string
   asset_class: string
   /** Base Currency of the fund (per-unit figures are in this currency; the holding value is HKD). */
-  currency: Currency
+  currency: NetworthCurrency
   units: number // Total Holdings
   avg_cost: number // base currency
   nav: number // base currency
@@ -77,13 +77,13 @@ export function parseFundCsv(rows: string[][]): FundImportResult {
     const line = r + 1
 
     const currencyRaw = cell(cells, 'Base Currency').toUpperCase()
-    if (!(CURRENCIES as readonly string[]).includes(currencyRaw)) {
+    if (!(NETWORTH_CURRENCIES as readonly string[]).includes(currencyRaw)) {
       errors.push(
         `Row ${line} ("${name}"): Base Currency "${currencyRaw}" must be HKD, CNY, or USD.`,
       )
       continue
     }
-    const currency = currencyRaw as Currency
+    const currency = currencyRaw as NetworthCurrency
 
     const value = num(cell(cells, 'Total Value'))
     if (!Number.isFinite(value)) {

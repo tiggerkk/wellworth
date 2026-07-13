@@ -1,53 +1,21 @@
 /**
- * Net Worth domain constants + pure calc helpers. All values are stored in HKD
- * (`value_base`); native currency values convert via a per-entry `fx_rate_to_base`.
+ * Net Worth domain helpers — UI-framework-free so they're unit-tested and shared by Net Worth functions.
+ * DB access lives in `src/data/networth.ts`; enums + labels live in `src/constants/networth.ts`.
+ * All values are stored in HKD (`value_base`); native currency values convert via a per-entry `fx_rate_to_base`.
  */
+import { addMonths, startOfMonth, type IsoDate } from '../lib/date'
+import {
+  ASSET_TYPES,
+  type AssetType,
+  type NetworthCurrency,
+  DEFAULT_LIQUID_ASSET_TYPES,
+  DEFAULT_BIRTH_YEAR,
+} from '../constants/networth'
 
-export const ASSET_TYPES = [
-  'cash',
-  'time_deposit',
-  'stock',
-  'fund',
-  'retirement',
-  'insurance',
-  'property',
-] as const
-export type AssetType = (typeof ASSET_TYPES)[number]
-
-export const ASSET_TYPE_LABELS: Record<AssetType, string> = {
-  cash: 'Cash',
-  time_deposit: 'Time Deposit',
-  stock: 'Stock',
-  fund: 'Fund',
-  retirement: 'Retirement',
-  insurance: 'Insurance',
-  property: 'Property',
-}
-
-export const CURRENCIES = ['HKD', 'CNY', 'USD'] as const
-export type Currency = (typeof CURRENCIES)[number]
-export const BASE_CURRENCY: Currency = 'HKD'
-
-/** Type-specific, informational detail fields (stored as-is in `details` JSONB). */
-export interface DetailField {
-  key: string
-  label: string
-}
-export const ASSET_DETAIL_FIELDS: Record<AssetType, DetailField[]> = {
-  cash: [],
-  time_deposit: [{ key: 'maturity_date', label: 'Maturity Date' }],
-  stock: [
-    { key: 'ticker', label: 'Ticker' },
-    { key: 'shares', label: 'Shares' },
-  ],
-  // Fund rows are populated by the JPM CSV importer (not the generic detail editor); their
-  // detail fields are surfaced read-only in the Fund detail modal.
-  fund: [],
-  retirement: [],
-  // Insurance rows are auto-generated from the policy catalogue (no manual detail editing);
-  // their resolved figures are shown read-only in the Policy detail modal.
-  insurance: [],
-  property: [],
+/** Inclusive lower-bound month for a window relative to `today`, or null for All. */
+export function rangeCutoff(months: number | null, today: IsoDate): IsoDate | null {
+  if (months == null) return null
+  return startOfMonth(addMonths(today, -(months - 1)))
 }
 
 /** value in base currency (HKD) = native value × native→HKD rate (1 for HKD). */
@@ -97,18 +65,22 @@ export function formatHkdCompact(n: number): string {
   return `HK$${Math.round(n)}`
 }
 
-const CURRENCY_PREFIX: Record<Currency, string> = { HKD: 'HK$', CNY: 'CN¥', USD: 'US$' }
+const CURRENCY_PREFIX: Record<NetworthCurrency, string> = {
+  HKD: 'HK$',
+  CNY: 'CN¥',
+  USD: 'US$',
+}
 
 /** Like `formatHkd`, but in the given (native, unconverted) currency — e.g. `US$12,345`. Used
  *  wherever a figure must stay in a policy's own currency rather than being converted to HKD
  *  (the Insurance Compare Schedules table/charts; the Dashboard's aggregate views convert to
  *  HKD instead and use `formatHkd`). */
-export function formatNative(n: number, currency: Currency): string {
+export function formatNative(n: number, currency: NetworthCurrency): string {
   return `${CURRENCY_PREFIX[currency]}${Math.round(n).toLocaleString('en-US')}`
 }
 
 /** Compact native-currency form for chart axes/ticks, e.g. `US$1.2M` / `CN¥450K`. */
-export function formatNativeCompact(n: number, currency: Currency): string {
+export function formatNativeCompact(n: number, currency: NetworthCurrency): string {
   const prefix = CURRENCY_PREFIX[currency]
   const abs = Math.abs(n)
   if (abs >= 1_000_000)
@@ -198,15 +170,6 @@ export function orderedAssetTypes(order: string[] | null | undefined): AssetType
   return [...known, ...missing]
 }
 
-/** Asset types treated as liquid by default — cash, time deposit, stock, fund (the owner can
- *  re-classify in Net Worth Settings → Liquid Assets, stored on `networth_liquid_asset_types`). */
-export const DEFAULT_LIQUID_ASSET_TYPES: AssetType[] = [
-  'cash',
-  'time_deposit',
-  'stock',
-  'fund',
-]
-
 /** The owner's liquid asset-type set — NULL = the defaults above; otherwise the stored keys
  *  filtered to known types, returned in canonical order. Drives the "Liquid Only" view toggle. */
 export function liquidAssetTypes(value: string[] | null | undefined): AssetType[] {
@@ -238,53 +201,6 @@ export function visibleAssetTypes(
   const seen = new Set(order ?? [])
   return ordered.filter((k) => visible.includes(k) || !seen.has(k))
 }
-
-/**
- * Chart/legend/summary + section-accent color per asset type — CSS vars from the @theme palette
- * (index.css). Shared by the Dashboard "By asset type" dots, the Monthly-Entry section stripes/tints,
- * and the trend chart, so every surface reads the same hue per type. Hues are picked so that
- * *consecutive* types in `ASSET_TYPES` jump across the colour wheel (green → blue → gold → purple →
- * orange → rose → grey) — no two adjacent sections share a warm/cool band, so they read clearly apart.
- */
-export const ASSET_TYPE_COLORS: Record<AssetType, string> = {
-  cash: 'var(--color-lit-original)', // gold
-  time_deposit: 'var(--color-lit-translation)', // blue
-  stock: 'var(--color-lit-remark)', // green
-  fund: 'var(--color-lit-shangxi)', // magenta
-  retirement: 'var(--color-lit-bio)', // cyan
-  insurance: 'var(--color-danger)', // red
-  property: 'var(--color-text-muted)', // grey
-}
-
-// =====================================================================================
-// Insurance — provider catalogue + age-based schedule resolution (pure helpers).
-// A policy has one or more schedule VERSIONS (an Original baseline + later anniversary
-// updates); each version is a set of per-age points carrying only real (printed) values.
-// For a given age, the resolved figure comes from the newest-effective version whose
-// first_year ≤ age, using the value at that age or the nearest earlier real point ("as of
-// yr N"). Variance is measured against the Original (baseline) version. See docs/05_networth.md.
-// =====================================================================================
-
-// Seed defaults only — the live provider list is owner-configurable (the Quotes pattern), stored on
-// `profile.insurance_providers` and resolved by src/lib/insurance-config.ts. These three feed the NULL
-// fallback (`defaultProviders()`); `InsuranceProvider` describes the seeds' keys, but stored values are
-// plain string keys (insurance_policy.provider has no CHECK).
-export const INSURANCE_PROVIDERS = ['chubb', 'boc', 'manulife'] as const
-export type InsuranceProvider = (typeof INSURANCE_PROVIDERS)[number]
-export const INSURANCE_PROVIDER_LABELS: Record<InsuranceProvider, string> = {
-  chubb: 'CHUBB',
-  boc: 'BOC',
-  manulife: 'Manulife',
-}
-/** Seed default currency per provider (the bulk-import per-provider currency starts here). */
-export const PROVIDER_DEFAULT_CURRENCY: Record<InsuranceProvider, Currency> = {
-  chubb: 'USD',
-  boc: 'USD',
-  manulife: 'HKD',
-}
-
-/** The user's birth year — insurance ages are computed as `entry_year − BIRTH_YEAR`. */
-export const DEFAULT_BIRTH_YEAR = 1974
 
 export interface SchedulePoint {
   age: number

@@ -36,7 +36,7 @@ Tracked tests are chosen in Medical Settings → Tracked Tests (seeded from `def
 
 ### Report detail (`/medical/:id`)
 
-- Read-only. Header: a top-left **X** (`navigate(-1)` + **Esc** — closes back to wherever it was opened from, Reports list **or** Dashboard; same convention as `PolicyDetailSheet`/the Add-Edit screens, not a back-arrow); **Date - Type** (e.g. `May 4, 2026 - Health Screening`, with `· body part` when relevant) on line 1; **Provider** as secondary text on line 2; an **Edit** (pencil icon) action.
+- Read-only. Header: a top-left **X** (`navigate(-1)` + **Esc** — closes back to wherever it was opened from, Reports list **or** Dashboard; **Date - Type** (e.g. `May 4, 2026 - Health Screening`, with `· body part` when relevant) on line 1; **Provider** as secondary text on line 2; an **Edit** (pencil icon) action.
 - Below: **Open original** link(s) for each Google Drive URL (`target="_blank" rel="noreferrer"`); a **Narrative** block when present; then **results grouped under collapsible, color-accented category sections** in the seeded section + sort order (filtered to the tests this report contains).
 - Each result row: `test name · reference range` on the left, `value (+ unit)` on the right — value **coloured by flag** (high/abnormal = `danger` red, low = `info` blue).
 - A "normalized from …" note when the value was unit-converted on import; a still-flagged row is **accent-tinted** with a **`Review – <reason>`** marker (`text-label font-medium text-warning`, the **same size + colour as the editor's marker**, read-only — no button here); see the review lifecycle under Add / Edit Report.

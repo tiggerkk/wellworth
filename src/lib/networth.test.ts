@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
+import { ASSET_TYPES } from '../constants/networth'
 import {
   ageForYear,
-  ASSET_TYPES,
   breakEven,
   foldMonthlyTotals,
   formatHkd,

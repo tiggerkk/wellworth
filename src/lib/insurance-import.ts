@@ -17,7 +17,8 @@
  * current age is a matured policy (proceeds = last cash value; date from start + last policy year).
  * No I/O. Only real (printed) premium+cash points are emitted — carry-forward is a display rule.
  */
-import { type Currency, type SchedulePoint } from './networth'
+import { type NetworthCurrency } from '../constants/networth'
+import { type SchedulePoint } from './networth'
 import {
   defaultCurrencyFor,
   matchKeyOrLabel,
@@ -44,7 +45,7 @@ export interface ParsedPolicy extends TerminationFields {
   policy_number: string
   policy_name: string
   start_date: string | null // ISO yyyy-mm-dd
-  currency: Currency
+  currency: NetworthCurrency
   first_year: number
   points: SchedulePoint[]
   notes: string | null
@@ -136,7 +137,7 @@ function splitNumberDate(cell: string): { number: string; startDate: string | nu
 export function parseInsuranceBulkCsv(
   rows: string[][],
   providers: InsuranceProviderConfig[],
-  currencyByProvider: Record<string, Currency> = {},
+  currencyByProvider: Record<string, NetworthCurrency> = {},
   currentAge: number = NaN,
 ): InsuranceBulkResult {
   const errors: string[] = []

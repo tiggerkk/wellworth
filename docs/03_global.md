@@ -156,7 +156,7 @@ components Onboarding renders**, so the screens stay identical.
   manual, fund-monthly, and single-policy importers are always enabled.
 - `insurance_providers` JSONB NULL — owner's configurable insurance-provider list,
   `{key, label, defaultCurrency}[]` in display order (Net Worth Settings → Manage Providers). **NULL =
-  the seed defaults** (CHUBB/BOC/Manulife in `src/lib/networth.ts`), resolved by
+  the seed defaults** (CHUBB/BOC/Manulife in `src/constants/networth.ts`), resolved by
   `src/lib/insurance-config.ts`. `insurance_policy.provider` stores the stable `key` (no DB CHECK).
   (all added by `supabase/migrations/04_networth_profile_settings.sql`)
 - `show_visible_fields` TEXT[] NULL — Shows Entry-form field visibility; **NULL = all visible**

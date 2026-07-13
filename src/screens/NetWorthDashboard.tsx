@@ -13,11 +13,17 @@ import { listSnapshots } from '../data/networth-snapshot'
 import { listCatalogue, type PolicyWithSchedules } from '../data/insurance'
 import { fetchRatesToHkd } from '../lib/fx'
 import {
-  ageForYear,
   ASSET_TYPES,
+  type AssetType,
   ASSET_TYPE_COLORS,
   ASSET_TYPE_LABELS,
   DEFAULT_BIRTH_YEAR,
+  NETWORTH_RANGES,
+  NETWORTH_RANGE_DEFAULT,
+} from '../constants/networth'
+import {
+  rangeCutoff,
+  ageForYear,
   foldMonthlyTotals,
   formatHkd,
   gainLossClass,
@@ -27,13 +33,7 @@ import {
   restrictTotals,
   sumTotals,
   typeBreakdownFromTotals,
-  type AssetType,
 } from '../lib/networth'
-import {
-  NETWORTH_RANGES,
-  NETWORTH_RANGE_DEFAULT,
-  rangeCutoff,
-} from '../constants/networth-ranges'
 import { formatMonthLabel, startOfMonth, todayLocal } from '../lib/date'
 import { SectionCard } from '../components/SectionCard'
 import { SegmentedTabs } from '../components/SegmentedTabs'

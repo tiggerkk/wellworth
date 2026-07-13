@@ -1,6 +1,6 @@
 /**
- * Presentational Policy detail body — resolved figures at a given age + the full resolved schedule.
- * Reused by the routed PolicyDetailSheet (Monthly Entry tap + dashboard drill-in). Amounts are in
+ * Presentational Insurance Policy detail body — resolved figures at a given age + the full resolved schedule.
+ * Reused by the routed InsurancePolicyDetailSheet (Monthly Entry tap + dashboard drill-in). Amounts are in
  * the policy's own currency.
  */
 import {
@@ -15,7 +15,7 @@ import {
 } from '../lib/networth'
 import { InsurancePolicyHeader } from './InsurancePolicyHeader'
 
-export interface PolicyDetailData {
+export interface InsurancePolicyDetailData {
   provider: string
   policy_number: string
   policy_name: string
@@ -27,13 +27,13 @@ function money(currency: string, v: number | null): string {
   return v == null ? '—' : `${currency} ${Math.round(v).toLocaleString('en-US')}`
 }
 
-export function PolicyDetail({
+export function InsurancePolicyDetail({
   policy,
   schedules,
   age,
   providerLabel,
 }: {
-  policy: PolicyDetailData
+  policy: InsurancePolicyDetailData
   schedules: ScheduleVersion[]
   age: number
   /** Resolved provider label (from the configured list); falls back to the raw key. */

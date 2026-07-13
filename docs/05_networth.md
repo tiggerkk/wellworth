@@ -171,7 +171,7 @@
 
 All values are entered manually. `details` are preserved for reference only; they do **not** drive the net-worth math.
 
-**Liquid vs non-liquid** — for the "Liquid Only" view toggle (Dashboard + Monthly Entry). Defaults (`DEFAULT_LIQUID_ASSET_TYPES` in `src/lib/networth.ts`): liquid = `cash, time_deposit, stock, fund`; non-liquid = `retirement, insurance, property`. Owner-reclassifiable in Settings → Liquid Assets (`profile.networth_liquid_asset_types`; NULL = the defaults). Classification is independent of manual-vs-auto editability — `fund` is liquid though auto-managed.
+**Liquid vs non-liquid** — for the "Liquid Only" view toggle (Dashboard + Monthly Entry). Defaults (`DEFAULT_LIQUID_ASSET_TYPES` in `src/constants/networth.ts`): liquid = `cash, time_deposit, stock, fund`; non-liquid = `retirement, insurance, property`. Owner-reclassifiable in Settings → Liquid Assets (`profile.networth_liquid_asset_types`; NULL = the defaults). Classification is independent of manual-vs-auto editability — `fund` is liquid though auto-managed.
 
 ### In-app CSV importer
 

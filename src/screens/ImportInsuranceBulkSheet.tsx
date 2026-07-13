@@ -17,12 +17,12 @@ import {
 } from '../data/insurance'
 import { bumpNetWorth } from '../lib/networth-refresh'
 import { errorMessage } from '../lib/errors'
-import { CURRENCIES, type Currency } from '../lib/networth'
+import { NETWORTH_CURRENCIES, type NetworthCurrency } from '../constants/networth'
 import { effectiveProviders } from '../lib/insurance-config'
 import { todayLocal } from '../lib/date'
 
 const MAX_MESSAGES = 20
-const CCY_OPTIONS = CURRENCIES.map((c) => ({ value: c, label: c }))
+const CCY_OPTIONS = NETWORTH_CURRENCIES.map((c) => ({ value: c, label: c }))
 
 type BucketKey = 'created' | 'added' | 'untouched'
 
@@ -51,7 +51,7 @@ export function ImportInsuranceBulkSheet() {
   const [fileName, setFileName] = useState<string | null>(null)
   const [raw, setRaw] = useState<string[][] | null>(null)
   // Per-provider currency override (keyed by provider key); empty = use each provider's defaultCurrency.
-  const [currencies, setCurrencies] = useState<Record<string, Currency>>({})
+  const [currencies, setCurrencies] = useState<Record<string, NetworthCurrency>>({})
   const [importing, setImporting] = useState(false)
   const [importError, setImportError] = useState<string | null>(null)
   const [doneStats, setDoneStats] = useState<DoneStats | null>(null)
@@ -262,7 +262,10 @@ export function ImportInsuranceBulkSheet() {
                             value={currencies[p.key] ?? p.defaultCurrency}
                             options={CCY_OPTIONS}
                             onChange={(v) =>
-                              setCurrencies((c) => ({ ...c, [p.key]: v as Currency }))
+                              setCurrencies((c) => ({
+                                ...c,
+                                [p.key]: v as NetworthCurrency,
+                              }))
                             }
                           />
                         </div>

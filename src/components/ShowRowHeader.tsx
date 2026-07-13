@@ -45,8 +45,7 @@ type ShowRowHeaderProps = {
 }
 
 /** Presentational: renders the 3 lines only. Each caller wraps this in its own sizing element
- * (a `min-w-0 flex-1` span/button) so truncation is governed by the caller's layout, not this
- * component — the same split `InsurancePolicyHeader` uses. */
+ * (a `min-w-0 flex-1` span/button) so truncation is governed by the caller's layout, not this component. */
 export function ShowRowHeader({ show }: ShowRowHeaderProps) {
   const status = show.status as ShowStatus
   const progress = showProgressInfo(show, status)

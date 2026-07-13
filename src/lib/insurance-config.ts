@@ -9,22 +9,22 @@
  * to the raw key (orphan tolerance, like `quotes-config`) so a policy whose provider was deleted still
  * renders + edits.
  *
- * NULL/empty/invalid override ⇒ the canonical seed defaults in `src/lib/networth.ts`. A non-null override
+ * NULL/empty/invalid override ⇒ the canonical seed defaults in `src/constants/networth.ts`. A non-null override
  * is **authoritative and complete** (we do NOT re-append missing canonical defaults) — otherwise a deleted
  * default would resurrect on next load.*/
 import {
   INSURANCE_PROVIDERS,
   INSURANCE_PROVIDER_LABELS,
   PROVIDER_DEFAULT_CURRENCY,
-  CURRENCIES,
+  NETWORTH_CURRENCIES,
   BASE_CURRENCY,
-  type Currency,
-} from './networth'
+  type NetworthCurrency,
+} from '../constants/networth'
 
 export type InsuranceProviderConfig = {
   key: string
   label: string
-  defaultCurrency: Currency
+  defaultCurrency: NetworthCurrency
 }
 
 /** The canonical provider defaults (seed + NULL fallback), in their display order. */
@@ -38,8 +38,8 @@ export function defaultProviders(): InsuranceProviderConfig[] {
 
 const asArray = (v: unknown): unknown[] => (Array.isArray(v) ? v : [])
 
-const isCurrency = (v: unknown): v is Currency =>
-  typeof v === 'string' && (CURRENCIES as readonly string[]).includes(v)
+const isCurrency = (v: unknown): v is NetworthCurrency =>
+  typeof v === 'string' && (NETWORTH_CURRENCIES as readonly string[]).includes(v)
 
 function readEntry(v: unknown): InsuranceProviderConfig | null {
   if (typeof v !== 'object' || v === null) return null
@@ -76,7 +76,7 @@ export function providerLabel(list: InsuranceProviderConfig[], key: string): str
 export function defaultCurrencyFor(
   list: InsuranceProviderConfig[],
   key: string,
-): Currency {
+): NetworthCurrency {
   return list.find((e) => e.key === key)?.defaultCurrency ?? BASE_CURRENCY
 }
 
@@ -134,7 +134,7 @@ export function renameProvider(
 export function setProviderCurrency(
   list: InsuranceProviderConfig[],
   key: string,
-  defaultCurrency: Currency,
+  defaultCurrency: NetworthCurrency,
 ): InsuranceProviderConfig[] {
   return list.map((e) => (e.key === key ? { ...e, defaultCurrency } : e))
 }
