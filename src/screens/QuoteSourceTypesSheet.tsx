@@ -1,5 +1,4 @@
-import { useNavigate } from 'react-router'
-import { IconX } from '@tabler/icons-react'
+import { SheetCloseButton } from '../components/SheetCloseButton'
 import { Sheet } from '../components/Sheet'
 import { ConfigListEditor } from '../components/ConfigListEditor'
 import { useAuth } from '../auth/AuthProvider'
@@ -21,16 +20,13 @@ import {
  * deletion so cross-module linking keeps working; deleting an in-use value reassigns its quotes first.
  */
 export function QuoteSourceTypesSheet() {
-  const navigate = useNavigate()
   const { session } = useAuth()
   const { profile, loading, save } = useProfileEditor()
 
   return (
     <Sheet variant="full" label="Source Types">
       <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <button onClick={() => navigate(-1)} aria-label="Close">
-          <IconX size={22} className="text-text-secondary" />
-        </button>
+        <SheetCloseButton />
         <h1 className="text-heading font-medium text-text-primary">Source Types</h1>
       </header>
       {loading && <p className="p-4 text-body text-text-secondary">Loading…</p>}

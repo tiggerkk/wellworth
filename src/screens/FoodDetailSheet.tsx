@@ -6,10 +6,10 @@ import {
   IconPlus,
   IconStar,
   IconStarFilled,
-  IconTrash,
-  IconX,
 } from '@tabler/icons-react'
+import { SheetCloseButton } from '../components/SheetCloseButton'
 import { Sheet } from '../components/Sheet'
+import { RemoveRowButton } from '../components/RemoveRowButton'
 import { NutrientBar } from '../components/NutrientBar'
 import { PrimaryButton } from '../components/PrimaryButton'
 import { EntryHeaderActions } from '../components/EntryHeaderActions'
@@ -394,9 +394,7 @@ export function FoodDetailSheet() {
   return (
     <Sheet variant="full" label="Food detail">
       <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <button onClick={() => navigate(-1)} aria-label="Close">
-          <IconX size={22} className="text-text-secondary" />
-        </button>
+        <SheetCloseButton />
         <h1 className="line-clamp-2 flex-1 text-heading font-medium text-text-primary">
           {food?.name ?? 'Food'}
         </h1>
@@ -516,13 +514,10 @@ export function FoodDetailSheet() {
                       }
                       className="field-control w-20"
                     />
-                    <button
+                    <RemoveRowButton
                       onClick={() => deleteServingAt(i)}
-                      aria-label="Remove serving"
-                      className="shrink-0 text-text-tertiary"
-                    >
-                      <IconTrash size={18} />
-                    </button>
+                      label="Remove serving"
+                    />
                   </div>
                 ))}
                 <button

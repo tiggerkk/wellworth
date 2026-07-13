@@ -20,6 +20,7 @@ import { FIELD_CLASS as inputClass } from '../constants/forms'
 import { SecondaryButton } from '../components/SecondaryButton'
 import { EntryHeaderActions } from '../components/EntryHeaderActions'
 import { ConfirmDeleteAction } from '../components/ConfirmDeleteAction'
+import { IconAction } from '../components/IconAction'
 import { StopEditorSheet } from '../components/StopEditorSheet'
 import { StopTypeIcon } from '../components/StopTypeIcon'
 import { Collapsible } from '../components/Collapsible'
@@ -718,13 +719,11 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
                         label="Delete day"
                         onDelete={() => void removeDay(day.id)}
                       />
-                      <button
+                      <IconAction
+                        Icon={IconCopy}
+                        label="Duplicate day"
                         onClick={() => void duplicateDay(day)}
-                        aria-label="Duplicate day"
-                        className="p-1 text-text-secondary"
-                      >
-                        <IconCopy size={18} />
-                      </button>
+                      />
                       <button
                         onClick={() => setDayExpensesFor(day)}
                         aria-label={`Expenses for Day ${i + 1}`}

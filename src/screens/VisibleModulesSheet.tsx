@@ -1,6 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router'
-import { IconX } from '@tabler/icons-react'
+import { SheetCloseButton } from '../components/SheetCloseButton'
 import { Sheet } from '../components/Sheet'
 import { Toggle } from '../components/Toggle'
 import { ReorderGrid } from '../components/ReorderGrid'
@@ -19,15 +18,12 @@ import type { Tables, TablesUpdate } from '../types/database'
  * (same as `ConfigListEditor` refusing to delete the last value).
  */
 export function VisibleModulesSheet() {
-  const navigate = useNavigate()
   const { profile, loading, save } = useProfileEditor()
 
   return (
     <Sheet variant="full" label="Visible modules">
       <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <button onClick={() => navigate(-1)} aria-label="Close">
-          <IconX size={22} className="text-text-secondary" />
-        </button>
+        <SheetCloseButton />
         <h1 className="text-heading font-medium text-text-primary">Visible Modules</h1>
       </header>
       {loading && <p className="p-4 text-body text-text-secondary">Loading…</p>}

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { IconWorldSearch, IconX } from '@tabler/icons-react'
-import { useEscapeKey } from '../hooks/useEscapeKey'
+import { IconWorldSearch } from '@tabler/icons-react'
+import { LocalOverlay } from './LocalOverlay'
+import { OverlayCloseButton } from './OverlayCloseButton'
 import { SearchBar } from './SearchBar'
 import { CoverThumb } from './CoverThumb'
 import {
@@ -80,90 +81,78 @@ export function BookSearchSheet({
     }
   }, [debounced, authorHint])
 
-  useEscapeKey(onClose)
-
   return (
-    <div className="fixed inset-0 z-30">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} aria-hidden />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label="Search books"
-        className="absolute inset-0 flex flex-col bg-surface pt-[env(safe-area-inset-top)]"
-      >
-        <div className="flex items-center gap-3 border-b border-border px-4 py-3">
-          <button onClick={onClose} aria-label="Close" className="shrink-0">
-            <IconX size={22} className="text-text-secondary" />
-          </button>
-          <div className="flex-1">
-            <SearchBar
-              value={query}
-              onChange={setQuery}
-              placeholder="Search by title or author"
-              icon={IconWorldSearch}
-            />
-          </div>
-        </div>
-
-        <div className="min-h-0 flex-1 overflow-y-auto p-4">
-          <div className="divide-y divide-border overflow-hidden rounded-card border border-border bg-surface">
-            {results.map((r) => (
-              <button
-                key={`${r.source}-${r.sourceId}`}
-                onClick={() => onSelect(r)}
-                className="flex w-full items-center gap-3 px-3 py-2.5 text-left active:bg-input/40"
-              >
-                <CoverThumb url={r.coverUrl} />
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-body text-text-primary">
-                    {r.title}
-                    {r.year ? ` (${r.year})` : ''}
-                  </span>
-                  {r.authors?.length ? (
-                    <span className="mt-0.5 block truncate text-caption text-text-secondary">
-                      {r.authors.join(', ')}
-                    </span>
-                  ) : null}
-                </span>
-              </button>
-            ))}
-
-            {results.length === 0 && (
-              <p className="px-4 py-6 text-center text-body text-text-tertiary">
-                {!debounced.trim()
-                  ? 'Search Google Books by title or author.'
-                  : loading
-                    ? 'Searching…'
-                    : error === 'rate'
-                      ? 'Too many searches — pause a moment.'
-                      : error === 'quota'
-                        ? 'Daily Google Books quota reached.'
-                        : error === 'failed'
-                          ? 'Search failed.'
-                          : 'No matches.'}
-              </p>
-            )}
-          </div>
-
-          {error === 'rate' && (
-            <p className="mt-3 text-caption text-danger">
-              Rate-limited by Google Books — pause a moment, or add a (free) Google Books
-              API key for higher limits.
-            </p>
-          )}
-          {error === 'quota' && (
-            <p className="mt-3 text-caption text-danger">
-              Daily Google Books quota exhausted — it resets at midnight US-Pacific. Raise
-              the project’s “Queries per day” limit in Google Cloud for more.
-            </p>
-          )}
-          {error === 'failed' && (
-            <p className="mt-3 text-caption text-danger">
-              Book search unavailable — please try again.
-            </p>
-          )}
+    <LocalOverlay onClose={onClose} label="Search books">
+      <div className="flex items-center gap-3 border-b border-border px-4 py-3">
+        <OverlayCloseButton onClick={onClose} />
+        <div className="flex-1">
+          <SearchBar
+            value={query}
+            onChange={setQuery}
+            placeholder="Search by title or author"
+            icon={IconWorldSearch}
+          />
         </div>
       </div>
-    </div>
+
+      <div className="min-h-0 flex-1 overflow-y-auto p-4">
+        <div className="divide-y divide-border overflow-hidden rounded-card border border-border bg-surface">
+          {results.map((r) => (
+            <button
+              key={`${r.source}-${r.sourceId}`}
+              onClick={() => onSelect(r)}
+              className="flex w-full items-center gap-3 px-3 py-2.5 text-left active:bg-input/40"
+            >
+              <CoverThumb url={r.coverUrl} />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-body text-text-primary">
+                  {r.title}
+                  {r.year ? ` (${r.year})` : ''}
+                </span>
+                {r.authors?.length ? (
+                  <span className="mt-0.5 block truncate text-caption text-text-secondary">
+                    {r.authors.join(', ')}
+                  </span>
+                ) : null}
+              </span>
+            </button>
+          ))}
+
+          {results.length === 0 && (
+            <p className="px-4 py-6 text-center text-body text-text-tertiary">
+              {!debounced.trim()
+                ? 'Search Google Books by title or author.'
+                : loading
+                  ? 'Searching…'
+                  : error === 'rate'
+                    ? 'Too many searches — pause a moment.'
+                    : error === 'quota'
+                      ? 'Daily Google Books quota reached.'
+                      : error === 'failed'
+                        ? 'Search failed.'
+                        : 'No matches.'}
+            </p>
+          )}
+        </div>
+
+        {error === 'rate' && (
+          <p className="mt-3 text-caption text-danger">
+            Rate-limited by Google Books — pause a moment, or add a (free) Google Books
+            API key for higher limits.
+          </p>
+        )}
+        {error === 'quota' && (
+          <p className="mt-3 text-caption text-danger">
+            Daily Google Books quota exhausted — it resets at midnight US-Pacific. Raise
+            the project's "Queries per day" limit in Google Cloud for more.
+          </p>
+        )}
+        {error === 'failed' && (
+          <p className="mt-3 text-caption text-danger">
+            Book search unavailable — please try again.
+          </p>
+        )}
+      </div>
+    </LocalOverlay>
   )
 }

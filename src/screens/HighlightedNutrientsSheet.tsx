@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router'
-import { IconCheck, IconX } from '@tabler/icons-react'
+import { IconCheck } from '@tabler/icons-react'
+import { SheetCloseButton } from '../components/SheetCloseButton'
 import { Sheet } from '../components/Sheet'
 import { useProfileEditor } from '../hooks/useProfileEditor'
 import { useNutrientReference } from '../hooks/useNutrientReference'
@@ -10,16 +10,13 @@ import type { Tables } from '../types/database'
 const MAX = 8
 
 export function HighlightedNutrientsSheet() {
-  const navigate = useNavigate()
   const { profile, loading, save } = useProfileEditor()
   const { nutrients } = useNutrientReference()
 
   return (
     <Sheet variant="full" label="Highlighted nutrients">
       <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <button onClick={() => navigate(-1)} aria-label="Close">
-          <IconX size={22} className="text-text-secondary" />
-        </button>
+        <SheetCloseButton />
         <h1 className="text-heading font-medium text-text-primary">
           Highlighted Nutrients
         </h1>

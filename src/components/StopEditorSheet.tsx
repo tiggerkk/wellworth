@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { IconWorldSearch, IconX } from '@tabler/icons-react'
+import { IconWorldSearch } from '@tabler/icons-react'
+import { LocalOverlay } from './LocalOverlay'
+import { OverlayCloseButton } from './OverlayCloseButton'
 import { SegmentedTabs } from './SegmentedTabs'
 import { SelectMenu } from './SelectMenu'
 import { EntryHeaderActions } from './EntryHeaderActions'
 import { CitySearchSheet } from './CitySearchSheet'
-import { useEscapeKey } from '../hooks/useEscapeKey'
 import { createStop, nextStopSortOrder, updateStop } from '../data/travel'
 import { type ResolvedCity, type StopRow } from '../lib/travel'
 import { STOP_TYPES, STOP_TYPE_LABELS, type StopType } from '../constants/travel'
@@ -47,7 +48,6 @@ export function StopEditorSheet({
   onSaved,
   onDelete,
 }: StopEditorSheetProps) {
-  useEscapeKey(onClose)
   const [saving, setSaving] = useState(false)
   const [cityOpen, setCityOpen] = useState(false)
 
@@ -132,18 +132,10 @@ export function StopEditorSheet({
   }
 
   return (
-    <div className="fixed inset-0 z-30">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} aria-hidden />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={stop ? 'Edit stop' : 'Add stop'}
-        className="absolute inset-0 flex flex-col bg-surface pt-[env(safe-area-inset-top)]"
-      >
+    <>
+      <LocalOverlay onClose={onClose} label={stop ? 'Edit stop' : 'Add stop'}>
         <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-          <button onClick={onClose} aria-label="Close" className="text-text-secondary">
-            <IconX size={22} />
-          </button>
+          <OverlayCloseButton onClick={onClose} />
           <h1 className="flex-1 text-heading font-medium text-text-primary">
             {stop ? 'Edit Stop' : 'Add Stop'}
           </h1>
@@ -256,7 +248,7 @@ export function StopEditorSheet({
             )}
           </div>
         </div>
-      </div>
+      </LocalOverlay>
 
       {cityOpen && (
         <CitySearchSheet
@@ -266,6 +258,6 @@ export function StopEditorSheet({
           onClose={() => setCityOpen(false)}
         />
       )}
-    </div>
+    </>
   )
 }

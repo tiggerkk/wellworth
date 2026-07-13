@@ -1,6 +1,7 @@
 import { useCallback } from 'react'
-import { useNavigate, useSearchParams } from 'react-router'
-import { IconPlus, IconX } from '@tabler/icons-react'
+import { useSearchParams } from 'react-router'
+import { IconPlus } from '@tabler/icons-react'
+import { SheetCloseButton } from '../components/SheetCloseButton'
 import { Sheet } from '../components/Sheet'
 import { ListRow } from '../components/ListRow'
 import { useAsync } from '../hooks/useAsync'
@@ -11,7 +12,6 @@ import { routes } from '../constants/routes'
 import { todayLocal } from '../lib/date'
 
 export function AddActivitySheet() {
-  const navigate = useNavigate()
   const openSheet = useSheetNavigate()
   const [params] = useSearchParams()
   const day = params.get('day') ?? todayLocal()
@@ -22,9 +22,7 @@ export function AddActivitySheet() {
   return (
     <Sheet variant="full" label="Add activity">
       <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <button onClick={() => navigate(-1)} aria-label="Close">
-          <IconX size={22} className="text-text-secondary" />
-        </button>
+        <SheetCloseButton />
         <h1 className="flex-1 text-heading font-medium text-text-primary">
           Add Activity
         </h1>

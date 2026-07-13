@@ -6,8 +6,9 @@ import {
   IconPlus,
   IconRefresh,
   IconUpload,
-  IconX,
 } from '@tabler/icons-react'
+import { LocalOverlay } from '../components/LocalOverlay'
+import { OverlayCloseButton } from '../components/OverlayCloseButton'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useProfile } from '../hooks/useProfile'
@@ -731,11 +732,9 @@ function EntryForm({
       )}
 
       {fundModal && (
-        <div className="fixed inset-0 z-50 flex flex-col bg-bg pt-[env(safe-area-inset-top)]">
+        <LocalOverlay onClose={() => setFundModal(null)} label={fundModal.name}>
           <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-            <button onClick={() => setFundModal(null)} aria-label="Close">
-              <IconX size={22} className="text-text-secondary" />
-            </button>
+            <OverlayCloseButton onClick={() => setFundModal(null)} />
             <h1 className="line-clamp-2 flex-1 text-heading font-medium text-text-primary">
               {fundModal.name}
             </h1>
@@ -749,7 +748,7 @@ function EntryForm({
               }}
             />
           </div>
-        </div>
+        </LocalOverlay>
       )}
     </>
   )

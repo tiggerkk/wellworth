@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { IconPlus, IconUpload, IconX } from '@tabler/icons-react'
+import { SheetCloseButton } from '../components/SheetCloseButton'
 import { Sheet } from '../components/Sheet'
 import { Calendar } from '../components/Calendar'
 import { PrimaryButton } from '../components/PrimaryButton'
@@ -164,9 +165,7 @@ export function ImportMedicalSheet() {
   return (
     <Sheet variant="full" label="Import Medical report">
       <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <button onClick={() => navigate(-1)} aria-label="Close">
-          <IconX size={22} className="text-text-secondary" />
-        </button>
+        <SheetCloseButton />
         <h1 className="text-heading font-medium text-text-primary">
           Import Medical Report
         </h1>

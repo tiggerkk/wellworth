@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { IconWorldSearch, IconX } from '@tabler/icons-react'
-import { useEscapeKey } from '../hooks/useEscapeKey'
+import { IconWorldSearch } from '@tabler/icons-react'
+import { LocalOverlay } from './LocalOverlay'
+import { OverlayCloseButton } from './OverlayCloseButton'
 import { SearchBar } from './SearchBar'
 import { externalFoodServing, searchFoods, type ExternalFood } from '../lib/food-api'
 import { foodMatchScore } from '../lib/food-search'
@@ -79,67 +80,55 @@ export function FoodSearchSheet({
     }
   }, [debounced])
 
-  useEscapeKey(onClose)
-
   return (
-    <div className="fixed inset-0 z-30">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} aria-hidden />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label="Search foods"
-        className="absolute inset-0 flex flex-col bg-surface pt-[env(safe-area-inset-top)]"
-      >
-        <div className="flex items-center gap-3 border-b border-border px-4 py-3">
-          <button onClick={onClose} aria-label="Close" className="shrink-0">
-            <IconX size={22} className="text-text-secondary" />
-          </button>
-          <div className="flex-1">
-            <SearchBar
-              value={query}
-              onChange={setQuery}
-              placeholder="Search USDA by name"
-              icon={IconWorldSearch}
-            />
-          </div>
+    <LocalOverlay onClose={onClose} label="Search foods">
+      <div className="flex items-center gap-3 border-b border-border px-4 py-3">
+        <OverlayCloseButton onClick={onClose} />
+        <div className="flex-1">
+          <SearchBar
+            value={query}
+            onChange={setQuery}
+            placeholder="Search USDA by name"
+            icon={IconWorldSearch}
+          />
         </div>
+      </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto p-4">
-          <div className="divide-y divide-border overflow-hidden rounded-card border border-border bg-surface">
-            {results.map((f) => (
-              <button
-                key={`${f.source}-${f.externalId}`}
-                onClick={() => onSelect(f)}
-                className="flex w-full flex-col items-start px-3 py-2.5 text-left active:bg-input/40"
-              >
-                <span className="break-words text-body text-text-primary">{f.name}</span>
-                <span className="mt-0.5 text-caption text-text-secondary">
-                  {Object.keys(f.nutrients).length} nutrients · {externalFoodServing(f)}
-                  {f.brand ? ` · ${f.brand}` : ''}
-                </span>
-              </button>
-            ))}
+      <div className="min-h-0 flex-1 overflow-y-auto p-4">
+        <div className="divide-y divide-border overflow-hidden rounded-card border border-border bg-surface">
+          {results.map((f) => (
+            <button
+              key={`${f.source}-${f.externalId}`}
+              onClick={() => onSelect(f)}
+              className="flex w-full flex-col items-start px-3 py-2.5 text-left active:bg-input/40"
+            >
+              <span className="break-words text-body text-text-primary">{f.name}</span>
+              <span className="mt-0.5 text-caption text-text-secondary">
+                {Object.keys(f.nutrients).length} nutrients · {externalFoodServing(f)}
+                {f.brand ? ` · ${f.brand}` : ''}
+              </span>
+            </button>
+          ))}
 
-            {results.length === 0 && (
-              <p className="px-4 py-6 text-center text-body text-text-tertiary">
-                {!debounced.trim()
-                  ? 'Search USDA by name.'
-                  : loading
-                    ? 'Searching…'
-                    : error === 'failed'
-                      ? 'Search failed.'
-                      : 'No matches.'}
-              </p>
-            )}
-          </div>
-
-          {error === 'failed' && (
-            <p className="mt-3 text-caption text-danger">
-              Food search unavailable — is <code>VITE_USDA_API_KEY</code> set?
+          {results.length === 0 && (
+            <p className="px-4 py-6 text-center text-body text-text-tertiary">
+              {!debounced.trim()
+                ? 'Search USDA by name.'
+                : loading
+                  ? 'Searching…'
+                  : error === 'failed'
+                    ? 'Search failed.'
+                    : 'No matches.'}
             </p>
           )}
         </div>
+
+        {error === 'failed' && (
+          <p className="mt-3 text-caption text-danger">
+            Food search unavailable — is <code>VITE_USDA_API_KEY</code> set?
+          </p>
+        )}
       </div>
-    </div>
+    </LocalOverlay>
   )
 }

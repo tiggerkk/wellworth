@@ -10,6 +10,7 @@ import { EntryLoader } from '../components/EntryLoader'
 import { IconAction } from '../components/IconAction'
 import { InsuranceCompareOverlay } from '../components/InsuranceCompareOverlay'
 import { InsurancePolicyHeader } from '../components/InsurancePolicyHeader'
+import { SecondaryButton } from '../components/SecondaryButton'
 import {
   addScheduleVersion,
   createPolicy,
@@ -76,11 +77,6 @@ function blankDraft(providers: InsuranceProviderConfig[]): PolicyDraft {
     termination_proceeds: '',
   }
 }
-
-const pillBtn =
-  'rounded-pill border border-border bg-input px-3 py-1.5 text-caption font-medium'
-const greyPill = `${pillBtn} text-text-secondary` // Mark Surrendered · Cancel · Un-mark
-const bluePill = `${pillBtn} text-accent` // Mark Matured
 
 const CCY_OPTIONS = CURRENCIES.map((c) => ({ value: c, label: c }))
 
@@ -526,14 +522,14 @@ function PolicyForm({
                       </button>
                     </div>
                   ) : (
-                    <button onClick={() => setConfirmUnmark(true)} className={greyPill}>
+                    <SecondaryButton size="sm" onClick={() => setConfirmUnmark(true)}>
                       {isMaturity ? 'Un-Mature' : 'Un-Surrender'}
-                    </button>
+                    </SecondaryButton>
                   )
                 ) : (
-                  <button onClick={cancelMarking} className={greyPill}>
+                  <SecondaryButton size="sm" onClick={cancelMarking}>
                     Cancel
-                  </button>
+                  </SecondaryButton>
                 )}
               </div>
               <div className="flex flex-col gap-3 rounded-card border border-border bg-surface p-3">
@@ -594,12 +590,12 @@ function PolicyForm({
                 Termination
               </p>
               <div className="flex items-center gap-2">
-                <button onClick={() => startMarking('surrendered')} className={greyPill}>
+                <SecondaryButton size="sm" onClick={() => startMarking('surrendered')}>
                   Mark Surrendered
-                </button>
-                <button onClick={() => startMarking('matured')} className={bluePill}>
+                </SecondaryButton>
+                <SecondaryButton size="sm" onClick={() => startMarking('matured')}>
                   Mark Matured
-                </button>
+                </SecondaryButton>
               </div>
             </div>
           )}

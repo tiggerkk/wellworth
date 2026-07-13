@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
-import { useNavigate, useParams } from 'react-router'
-import { IconX } from '@tabler/icons-react'
+import { useParams } from 'react-router'
+import { SheetCloseButton } from '../components/SheetCloseButton'
 import { Sheet } from '../components/Sheet'
 import { NutrientReport } from '../components/NutrientReport'
 import { useAuth } from '../auth/AuthProvider'
@@ -9,7 +9,6 @@ import { listEntriesByDay } from '../data/diary-entry'
 import { formatFullDate, todayLocal } from '../lib/date'
 
 export function DailyReportSheet() {
-  const navigate = useNavigate()
   const { session } = useAuth()
   const userId = session?.user.id
   const { day = todayLocal() } = useParams()
@@ -23,9 +22,7 @@ export function DailyReportSheet() {
   return (
     <Sheet variant="full" label="Daily report">
       <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <button onClick={() => navigate(-1)} aria-label="Close">
-          <IconX size={22} className="text-text-secondary" />
-        </button>
+        <SheetCloseButton />
         <h1 className="text-heading font-medium text-text-primary">
           Daily Report · {formatFullDate(day)}
         </h1>

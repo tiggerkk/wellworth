@@ -1,7 +1,9 @@
 import { useCallback, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
-import { IconPlus, IconTrash, IconX } from '@tabler/icons-react'
+import { IconPlus } from '@tabler/icons-react'
+import { SheetCloseButton } from '../components/SheetCloseButton'
 import { Sheet } from '../components/Sheet'
+import { RemoveRowButton } from '../components/RemoveRowButton'
 import { EntryHeaderActions } from '../components/EntryHeaderActions'
 import { SegmentedTabs } from '../components/SegmentedTabs'
 import { Collapsible } from '../components/Collapsible'
@@ -160,9 +162,7 @@ function FoodForm({ id, initial }: { id: string | undefined; initial: FoodInitia
   return (
     <>
       <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <button onClick={() => navigate(-1)} aria-label="Close">
-          <IconX size={22} className="text-text-secondary" />
-        </button>
+        <SheetCloseButton />
         <h1 className="flex-1 truncate text-heading font-medium text-text-primary">
           {id ? 'Edit Food' : 'New Food'}
         </h1>
@@ -225,13 +225,10 @@ function FoodForm({ id, initial }: { id: string | undefined; initial: FoodInitia
                   }
                   className="field-control w-20"
                 />
-                <button
+                <RemoveRowButton
                   onClick={() => setServings((prev) => prev.filter((_, j) => j !== i))}
-                  aria-label="Remove serving"
-                  className="text-text-tertiary"
-                >
-                  <IconTrash size={18} />
-                </button>
+                  label="Remove serving"
+                />
               </div>
             ))}
           </div>

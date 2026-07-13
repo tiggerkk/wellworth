@@ -1,5 +1,4 @@
-import { useNavigate } from 'react-router'
-import { IconX } from '@tabler/icons-react'
+import { SheetCloseButton } from '../components/SheetCloseButton'
 import { Sheet } from '../components/Sheet'
 import { ConfigListEditor } from '../components/ConfigListEditor'
 import { ColorPicker } from '../components/ColorPicker'
@@ -23,7 +22,6 @@ import {
  * last value can't be deleted; deleting an in-use value reassigns its expenses to a chosen value first.
  */
 export function TravelCategoriesSheet() {
-  const navigate = useNavigate()
   const { session } = useAuth()
   const { profile, loading, save } = useProfileEditor()
   const userId = session?.user.id
@@ -31,9 +29,7 @@ export function TravelCategoriesSheet() {
   return (
     <Sheet variant="full" label="Expense Categories">
       <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <button onClick={() => navigate(-1)} aria-label="Close">
-          <IconX size={22} className="text-text-secondary" />
-        </button>
+        <SheetCloseButton />
         <h1 className="text-heading font-medium text-text-primary">Expense Categories</h1>
       </header>
       {loading && <p className="p-4 text-body text-text-secondary">Loading…</p>}

@@ -4,13 +4,13 @@ import {
   IconChevronRight,
   IconMapPin,
   IconWorldSearch,
-  IconX,
 } from '@tabler/icons-react'
+import { LocalOverlay } from './LocalOverlay'
+import { OverlayCloseButton } from './OverlayCloseButton'
 import { SearchBar } from './SearchBar'
 import { SelectMenu } from './SelectMenu'
 import { PrimaryButton } from './PrimaryButton'
 import { useAsync } from '../hooks/useAsync'
-import { useEscapeKey } from '../hooks/useEscapeKey'
 import { listRememberedCities, rememberCity } from '../data/travel'
 import { geocodeCity, snapProvince, type GeocodeSuggestion } from '../lib/places'
 import { CHINA_PROVINCES } from '../constants/travel'
@@ -41,8 +41,6 @@ export function CitySearchSheet({
   onSelect,
   onClose,
 }: CitySearchSheetProps) {
-  useEscapeKey(onClose)
-
   const [query, setQuery] = useState(initialQuery)
   const [debounced, setDebounced] = useState(initialQuery)
   const [country, setCountry] = useState('中国')
@@ -129,156 +127,145 @@ export function CitySearchSheet({
   }
 
   return (
-    <div className="fixed inset-0 z-30">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} aria-hidden />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label="Pick a city"
-        className="absolute inset-0 flex flex-col bg-surface pt-[env(safe-area-inset-top)]"
-      >
-        <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-          <button onClick={onClose} aria-label="Close" className="text-text-secondary">
-            <IconX size={22} />
-          </button>
-          <div className="flex-1">
-            <SearchBar
-              value={query}
-              onChange={setQuery}
-              placeholder="City name"
-              icon={IconWorldSearch}
-            />
-          </div>
-        </header>
+    <LocalOverlay onClose={onClose} label="Pick a city">
+      <header className="flex items-center gap-3 border-b border-border px-4 py-3">
+        <OverlayCloseButton onClick={onClose} />
+        <div className="flex-1">
+          <SearchBar
+            value={query}
+            onChange={setQuery}
+            placeholder="City name"
+            icon={IconWorldSearch}
+          />
+        </div>
+      </header>
 
-        <div className="min-h-0 flex-1 overflow-y-auto p-4">
-          {/* Remembered cities (instant, no network) */}
-          {matches.length > 0 && (
-            <section className="mb-4">
-              <h2 className="mb-2 px-1 text-section font-medium uppercase tracking-[0.08em] text-text-secondary">
-                Remembered
-              </h2>
-              <div className="overflow-hidden rounded-card border border-border">
-                {matches.map((c) => (
-                  <button
-                    key={c.id}
-                    onClick={() =>
-                      void confirm({
-                        city: c.city,
-                        country: c.country,
-                        province: c.province,
-                        lat: c.lat,
-                        lng: c.lng,
-                      })
-                    }
-                    className="flex w-full items-center gap-2 border-b border-border px-3 py-2.5 text-left last:border-b-0 active:bg-input/40"
-                  >
-                    <IconMapPin size={16} className="shrink-0 text-text-tertiary" />
-                    <span className="flex-1 truncate text-body text-text-primary">
-                      {c.city}
-                    </span>
-                    <span className="shrink-0 text-caption text-text-secondary">
-                      {[c.province, c.country].filter(Boolean).join(' · ')}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* Geocode results (auto) */}
+      <div className="min-h-0 flex-1 overflow-y-auto p-4">
+        {/* Remembered cities (instant, no network) */}
+        {matches.length > 0 && (
           <section className="mb-4">
             <h2 className="mb-2 px-1 text-section font-medium uppercase tracking-[0.08em] text-text-secondary">
-              Search results
+              Remembered
             </h2>
             <div className="overflow-hidden rounded-card border border-border">
-              {suggestions.map((s, i) => (
+              {matches.map((c) => (
                 <button
-                  key={`${s.lat},${s.lng},${i}`}
-                  onClick={() => selectSuggestion(s)}
-                  className="flex w-full items-start gap-2 border-b border-border px-3 py-2.5 text-left last:border-b-0 active:bg-input/40"
+                  key={c.id}
+                  onClick={() =>
+                    void confirm({
+                      city: c.city,
+                      country: c.country,
+                      province: c.province,
+                      lat: c.lat,
+                      lng: c.lng,
+                    })
+                  }
+                  className="flex w-full items-center gap-2 border-b border-border px-3 py-2.5 text-left last:border-b-0 active:bg-input/40"
                 >
-                  <IconMapPin size={16} className="mt-0.5 shrink-0 text-text-tertiary" />
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-body text-text-primary">
-                      {s.city || s.displayName}
-                    </span>
-                    <span className="mt-0.5 block truncate text-caption text-text-secondary">
-                      {[s.province, s.country].filter(Boolean).join(' · ') ||
-                        s.displayName}
-                    </span>
+                  <IconMapPin size={16} className="shrink-0 text-text-tertiary" />
+                  <span className="flex-1 truncate text-body text-text-primary">
+                    {c.city}
+                  </span>
+                  <span className="shrink-0 text-caption text-text-secondary">
+                    {[c.province, c.country].filter(Boolean).join(' · ')}
                   </span>
                 </button>
               ))}
-              {suggestions.length === 0 && (
-                <p className="px-4 py-6 text-center text-body text-text-tertiary">
-                  {!debounced.trim()
-                    ? 'Type a city to search.'
-                    : geoState === 'loading'
-                      ? 'Searching…'
-                      : 'No matches — enter the details manually below.'}
-                </p>
-              )}
             </div>
           </section>
+        )}
 
-          {/* Manual entry / confirmation — collapsed by default; auto-expands on zero results */}
-          <section className="flex flex-col gap-3">
-            <button
-              onClick={() => setManualOpen((v) => !v)}
-              className="flex items-center gap-1 px-1 text-label text-text-secondary"
-            >
-              {manualOpen ? (
-                <IconChevronDown size={14} className="shrink-0" />
-              ) : (
-                <IconChevronRight size={14} className="shrink-0" />
-              )}
-              Enter manually…
-            </button>
-            {manualOpen && (
-              <>
-                <label className="text-caption text-text-secondary">
-                  Country
+        {/* Geocode results (auto) */}
+        <section className="mb-4">
+          <h2 className="mb-2 px-1 text-section font-medium uppercase tracking-[0.08em] text-text-secondary">
+            Search results
+          </h2>
+          <div className="overflow-hidden rounded-card border border-border">
+            {suggestions.map((s, i) => (
+              <button
+                key={`${s.lat},${s.lng},${i}`}
+                onClick={() => selectSuggestion(s)}
+                className="flex w-full items-start gap-2 border-b border-border px-3 py-2.5 text-left last:border-b-0 active:bg-input/40"
+              >
+                <IconMapPin size={16} className="mt-0.5 shrink-0 text-text-tertiary" />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-body text-text-primary">
+                    {s.city || s.displayName}
+                  </span>
+                  <span className="mt-0.5 block truncate text-caption text-text-secondary">
+                    {[s.province, s.country].filter(Boolean).join(' · ') || s.displayName}
+                  </span>
+                </span>
+              </button>
+            ))}
+            {suggestions.length === 0 && (
+              <p className="px-4 py-6 text-center text-body text-text-tertiary">
+                {!debounced.trim()
+                  ? 'Type a city to search.'
+                  : geoState === 'loading'
+                    ? 'Searching…'
+                    : 'No matches — enter the details manually below.'}
+              </p>
+            )}
+          </div>
+        </section>
+
+        {/* Manual entry / confirmation — collapsed by default; auto-expands on zero results */}
+        <section className="flex flex-col gap-3">
+          <button
+            onClick={() => setManualOpen((v) => !v)}
+            className="flex items-center gap-1 px-1 text-label text-text-secondary"
+          >
+            {manualOpen ? (
+              <IconChevronDown size={14} className="shrink-0" />
+            ) : (
+              <IconChevronRight size={14} className="shrink-0" />
+            )}
+            Enter manually…
+          </button>
+          {manualOpen && (
+            <>
+              <label className="text-caption text-text-secondary">
+                Country
+                <input
+                  value={country}
+                  onChange={(e) => setCountry(e.target.value)}
+                  className="mt-1 field-control w-full"
+                />
+              </label>
+              <div className="text-caption text-text-secondary">
+                Province / Region
+                {isChina(country) ? (
+                  <div className="mt-1">
+                    <SelectMenu
+                      value={province}
+                      onChange={setProvince}
+                      ariaLabel="Province"
+                      placeholder="Select a province"
+                      options={[
+                        { value: '', label: '—' },
+                        ...CHINA_PROVINCES.map((p) => ({ value: p, label: p })),
+                      ]}
+                    />
+                  </div>
+                ) : (
                   <input
-                    value={country}
-                    onChange={(e) => setCountry(e.target.value)}
+                    value={province}
+                    onChange={(e) => setProvince(e.target.value)}
                     className="mt-1 field-control w-full"
                   />
-                </label>
-                <div className="text-caption text-text-secondary">
-                  Province / Region
-                  {isChina(country) ? (
-                    <div className="mt-1">
-                      <SelectMenu
-                        value={province}
-                        onChange={setProvince}
-                        ariaLabel="Province"
-                        placeholder="Select a province"
-                        options={[
-                          { value: '', label: '—' },
-                          ...CHINA_PROVINCES.map((p) => ({ value: p, label: p })),
-                        ]}
-                      />
-                    </div>
-                  ) : (
-                    <input
-                      value={province}
-                      onChange={(e) => setProvince(e.target.value)}
-                      className="mt-1 field-control w-full"
-                    />
-                  )}
-                </div>
-                <PrimaryButton
-                  onClick={useManual}
-                  disabled={!query.trim() || !country.trim()}
-                >
-                  {'Use "' + (query.trim() || 'city') + '"'}
-                </PrimaryButton>
-              </>
-            )}
-          </section>
-        </div>
+                )}
+              </div>
+              <PrimaryButton
+                onClick={useManual}
+                disabled={!query.trim() || !country.trim()}
+              >
+                {'Use "' + (query.trim() || 'city') + '"'}
+              </PrimaryButton>
+            </>
+          )}
+        </section>
       </div>
-    </div>
+    </LocalOverlay>
   )
 }

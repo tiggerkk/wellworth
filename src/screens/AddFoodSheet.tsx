@@ -1,7 +1,8 @@
 import { Suspense, useEffect, useState } from 'react'
-import { useLocation, useNavigate, useSearchParams, type Location } from 'react-router'
-import { IconHeart, IconHeartFilled, IconX } from '@tabler/icons-react'
+import { useLocation, useSearchParams, type Location } from 'react-router'
+import { IconHeart, IconHeartFilled } from '@tabler/icons-react'
 import { lazyWithReload } from '../lib/lazy-with-reload'
+import { SheetCloseButton } from '../components/SheetCloseButton'
 import { Sheet } from '../components/Sheet'
 import { SearchBar } from '../components/SearchBar'
 import { SegmentedTabs } from '../components/SegmentedTabs'
@@ -51,7 +52,6 @@ function parseTab(value: string | null): Tab {
 }
 
 export function AddFoodSheet() {
-  const navigate = useNavigate()
   const openSheet = useSheetNavigate()
   const location = useLocation()
   const [params, setParams] = useSearchParams()
@@ -72,7 +72,7 @@ export function AddFoodSheet() {
   }, [query])
 
   // Follow tab + search into the URL (replace, so keystrokes don't pile up history). The
-  // entry left behind when opening Food Detail then carries them, so navigate(-1) restores
+  // entry left behind when opening Food Detail then carries them, so SheetCloseButton restores
   // them. We keep `location.state` (the painted background) intact across the replace.
   useEffect(() => {
     const desiredTab = tab === 'favorites' ? null : tab
@@ -219,9 +219,7 @@ export function AddFoodSheet() {
       {/* Pinned top pane: close, search, and tabs stay visible while results scroll. */}
       <div className="flex flex-col gap-3 border-b border-border px-4 py-3">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate(-1)} aria-label="Close" className="shrink-0">
-            <IconX size={22} className="text-text-secondary" />
-          </button>
+          <SheetCloseButton />
           <div className="flex-1">
             <SearchBar
               value={query}
