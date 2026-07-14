@@ -4,7 +4,7 @@ import { OverlayCloseButton } from './OverlayCloseButton'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 import { lazyWithReload } from '../lib/lazy-with-reload'
 import { SelectMenu } from './SelectMenu'
-import { type NetworthCurrency } from '../constants/networth'
+import { type NetWorthCurrency } from '../constants/networth'
 import {
   buildScheduleComparisonRows,
   gainLossClass,
@@ -48,7 +48,7 @@ export function InsuranceCompareOverlay({
   providerLabel: string
   policyName: string
   schedules: ScheduleVersion[]
-  currency: NetworthCurrency
+  currency: NetWorthCurrency
   initialAId: string
   initialBId: string
   onClose: () => void

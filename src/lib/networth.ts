@@ -7,7 +7,7 @@ import { addMonths, startOfMonth, type IsoDate } from '../lib/date'
 import {
   ASSET_TYPES,
   type AssetType,
-  type NetworthCurrency,
+  type NetWorthCurrency,
   DEFAULT_LIQUID_ASSET_TYPES,
   DEFAULT_BIRTH_YEAR,
 } from '../constants/networth'
@@ -65,7 +65,7 @@ export function formatHkdCompact(n: number): string {
   return `HK$${Math.round(n)}`
 }
 
-const CURRENCY_PREFIX: Record<NetworthCurrency, string> = {
+const CURRENCY_PREFIX: Record<NetWorthCurrency, string> = {
   HKD: 'HK$',
   CNY: 'CN¥',
   USD: 'US$',
@@ -75,12 +75,12 @@ const CURRENCY_PREFIX: Record<NetworthCurrency, string> = {
  *  wherever a figure must stay in a policy's own currency rather than being converted to HKD
  *  (the Insurance Compare Schedules table/charts; the Dashboard's aggregate views convert to
  *  HKD instead and use `formatHkd`). */
-export function formatNative(n: number, currency: NetworthCurrency): string {
+export function formatNative(n: number, currency: NetWorthCurrency): string {
   return `${CURRENCY_PREFIX[currency]}${Math.round(n).toLocaleString('en-US')}`
 }
 
 /** Compact native-currency form for chart axes/ticks, e.g. `US$1.2M` / `CN¥450K`. */
-export function formatNativeCompact(n: number, currency: NetworthCurrency): string {
+export function formatNativeCompact(n: number, currency: NetWorthCurrency): string {
   const prefix = CURRENCY_PREFIX[currency]
   const abs = Math.abs(n)
   if (abs >= 1_000_000)

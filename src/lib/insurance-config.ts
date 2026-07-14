@@ -18,13 +18,13 @@ import {
   PROVIDER_DEFAULT_CURRENCY,
   NETWORTH_CURRENCIES,
   BASE_CURRENCY,
-  type NetworthCurrency,
+  type NetWorthCurrency,
 } from '../constants/networth'
 
 export type InsuranceProviderConfig = {
   key: string
   label: string
-  defaultCurrency: NetworthCurrency
+  defaultCurrency: NetWorthCurrency
 }
 
 /** The canonical provider defaults (seed + NULL fallback), in their display order. */
@@ -38,7 +38,7 @@ export function defaultProviders(): InsuranceProviderConfig[] {
 
 const asArray = (v: unknown): unknown[] => (Array.isArray(v) ? v : [])
 
-const isCurrency = (v: unknown): v is NetworthCurrency =>
+const isCurrency = (v: unknown): v is NetWorthCurrency =>
   typeof v === 'string' && (NETWORTH_CURRENCIES as readonly string[]).includes(v)
 
 function readEntry(v: unknown): InsuranceProviderConfig | null {
@@ -76,7 +76,7 @@ export function providerLabel(list: InsuranceProviderConfig[], key: string): str
 export function defaultCurrencyFor(
   list: InsuranceProviderConfig[],
   key: string,
-): NetworthCurrency {
+): NetWorthCurrency {
   return list.find((e) => e.key === key)?.defaultCurrency ?? BASE_CURRENCY
 }
 
@@ -134,7 +134,7 @@ export function renameProvider(
 export function setProviderCurrency(
   list: InsuranceProviderConfig[],
   key: string,
-  defaultCurrency: NetworthCurrency,
+  defaultCurrency: NetWorthCurrency,
 ): InsuranceProviderConfig[] {
   return list.map((e) => (e.key === key ? { ...e, defaultCurrency } : e))
 }

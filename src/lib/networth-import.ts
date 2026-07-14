@@ -10,7 +10,7 @@
 import {
   NETWORTH_CURRENCIES,
   type AssetType,
-  type NetworthCurrency,
+  type NetWorthCurrency,
 } from '../constants/networth'
 
 const REQUIRED_COLUMNS = ['asset_type', 'name', 'currency', 'value_native']
@@ -31,7 +31,7 @@ const MANUAL_ASSET_TYPES = [
 export interface ParsedAssetRow {
   asset_type: AssetType
   name: string
-  currency: NetworthCurrency
+  currency: NetWorthCurrency
   value_native: number
   details: Record<string, string>
 }
@@ -136,7 +136,7 @@ export function parseNetWorthCsv(rows: string[][]): NetWorthImportResult {
     out.push({
       asset_type: assetType as AssetType,
       name,
-      currency: currency as NetworthCurrency,
+      currency: currency as NetWorthCurrency,
       value_native: value,
       details,
     })

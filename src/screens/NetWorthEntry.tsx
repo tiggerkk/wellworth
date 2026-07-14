@@ -26,7 +26,7 @@ import {
   type AssetType,
   ASSET_TYPE_LABELS,
   NETWORTH_CURRENCIES,
-  type NetworthCurrency,
+  type NetWorthCurrency,
   DEFAULT_BIRTH_YEAR,
   ASSET_DETAIL_FIELDS,
 } from '../constants/networth'
@@ -71,11 +71,11 @@ interface EntryDraft {
   clientId: string
   asset_type: AssetType
   name: string
-  currency: NetworthCurrency
+  currency: NetWorthCurrency
   valueNative: string
   details: Record<string, string>
 }
-type RateDraft = Record<NetworthCurrency, string>
+type RateDraft = Record<NetWorthCurrency, string>
 interface MonthDraft {
   rows: EntryDraft[]
   fxRates: RateDraft
@@ -109,7 +109,7 @@ function draftFromEntries(entries: Tables<'asset_entry'>[]): MonthDraft {
       clientId: nextId(),
       asset_type: e.asset_type as AssetType,
       name: e.name,
-      currency: e.currency as NetworthCurrency,
+      currency: e.currency as NetWorthCurrency,
       valueNative: e.value_native == null ? '' : String(e.value_native),
       details: detailsToStrings(e.details),
     })),
@@ -141,7 +141,7 @@ function resolveInsuranceRows(
       clientId: nextId(),
       asset_type: 'insurance',
       name: policy.policy_name || policy.policy_number,
-      currency: (policy.currency as NetworthCurrency) ?? 'HKD',
+      currency: (policy.currency as NetWorthCurrency) ?? 'HKD',
       valueNative: String(r.cashValue),
       details: insuranceRowDetails(policy, r, original, variance),
     })
@@ -385,7 +385,7 @@ function EntryForm({
     }
   }
 
-  const rateOf = (currency: NetworthCurrency) =>
+  const rateOf = (currency: NetWorthCurrency) =>
     currency === 'HKD' ? 1 : draftAmount(fxRates[currency], 0)
   const rowBase = (r: EntryDraft) =>
     valueBase(draftAmount(r.valueNative, 0), rateOf(r.currency))
@@ -787,7 +787,7 @@ function ManualRow({
         />
         <select
           value={row.currency}
-          onChange={(e) => onChange({ currency: e.target.value as NetworthCurrency })}
+          onChange={(e) => onChange({ currency: e.target.value as NetWorthCurrency })}
           className={`shrink-0 ${inputCls}`}
         >
           {NETWORTH_CURRENCIES.map((c) => (

@@ -17,7 +17,7 @@ import {
 } from '../data/insurance'
 import { bumpNetWorth } from '../lib/networth-refresh'
 import { errorMessage } from '../lib/errors'
-import { NETWORTH_CURRENCIES, type NetworthCurrency } from '../constants/networth'
+import { NETWORTH_CURRENCIES, type NetWorthCurrency } from '../constants/networth'
 import { effectiveProviders } from '../lib/insurance-config'
 import { todayLocal } from '../lib/date'
 
@@ -51,7 +51,7 @@ export function ImportInsuranceBulkSheet() {
   const [fileName, setFileName] = useState<string | null>(null)
   const [raw, setRaw] = useState<string[][] | null>(null)
   // Per-provider currency override (keyed by provider key); empty = use each provider's defaultCurrency.
-  const [currencies, setCurrencies] = useState<Record<string, NetworthCurrency>>({})
+  const [currencies, setCurrencies] = useState<Record<string, NetWorthCurrency>>({})
   const [importing, setImporting] = useState(false)
   const [importError, setImportError] = useState<string | null>(null)
   const [doneStats, setDoneStats] = useState<DoneStats | null>(null)
@@ -264,7 +264,7 @@ export function ImportInsuranceBulkSheet() {
                             onChange={(v) =>
                               setCurrencies((c) => ({
                                 ...c,
-                                [p.key]: v as NetworthCurrency,
+                                [p.key]: v as NetWorthCurrency,
                               }))
                             }
                           />

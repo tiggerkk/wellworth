@@ -6,7 +6,7 @@ import { useAuth } from '../auth/AuthProvider'
 import { useProfileEditor } from '../hooks/useProfileEditor'
 import { countPoliciesByProvider, reassignProvider } from '../data/insurance'
 import { bumpNetWorth } from '../lib/networth-refresh'
-import { NETWORTH_CURRENCIES, type NetworthCurrency } from '../constants/networth'
+import { NETWORTH_CURRENCIES, type NetWorthCurrency } from '../constants/networth'
 import {
   addProvider,
   effectiveProviders,
@@ -58,7 +58,7 @@ export function InsuranceProvidersSheet() {
               <SelectMenu
                 value={entry.defaultCurrency}
                 options={CCY_OPTIONS}
-                onChange={(v) => update({ defaultCurrency: v as NetworthCurrency })}
+                onChange={(v) => update({ defaultCurrency: v as NetWorthCurrency })}
                 ariaLabel={`Default currency for ${entry.label}`}
               />
             </div>

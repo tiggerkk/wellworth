@@ -25,7 +25,7 @@ import { bumpNetWorth } from '../lib/networth-refresh'
 import { errorMessage } from '../lib/errors'
 import { parseCsv } from '../lib/csv'
 import { parseInsuranceSingleCsv, type ParsedSinglePolicy } from '../lib/insurance-import'
-import { NETWORTH_CURRENCIES, type NetworthCurrency } from '../constants/networth'
+import { NETWORTH_CURRENCIES, type NetWorthCurrency } from '../constants/networth'
 import {
   gainLossClass,
   sortSchedulesDesc,
@@ -54,7 +54,7 @@ interface PolicyDraft {
   policy_number: string
   policy_name: string
   start_date: string | null
-  currency: NetworthCurrency
+  currency: NetWorthCurrency
   notes: string
   // Termination = surrender OR maturity (mutually exclusive). null kind = active policy.
   termination_kind: TerminationKind | null
@@ -116,7 +116,7 @@ export function InsuranceEntry() {
         policy_number: p.policy_number,
         policy_name: p.policy_name,
         start_date: p.start_date,
-        currency: (p.currency as NetworthCurrency) ?? 'USD',
+        currency: (p.currency as NetWorthCurrency) ?? 'USD',
         notes: p.notes ?? '',
         termination_kind: (p.termination_kind as TerminationKind | null) ?? null,
         termination_date: p.termination_date,
@@ -447,7 +447,7 @@ function PolicyForm({
             <SegmentedTabs
               value={draft.currency}
               options={CCY_OPTIONS}
-              onChange={(v) => update({ currency: v as NetworthCurrency })}
+              onChange={(v) => update({ currency: v as NetWorthCurrency })}
               size="field"
             />
           </div>

@@ -42,8 +42,8 @@ export const ASSET_TYPE_COLORS: Record<AssetType, string> = {
 }
 
 export const NETWORTH_CURRENCIES = ['HKD', 'CNY', 'USD'] as const
-export type NetworthCurrency = (typeof NETWORTH_CURRENCIES)[number]
-export const BASE_CURRENCY: NetworthCurrency = 'HKD'
+export type NetWorthCurrency = (typeof NETWORTH_CURRENCIES)[number]
+export const BASE_CURRENCY: NetWorthCurrency = 'HKD'
 
 /** Type-specific, informational detail fields (stored as-is in `details` JSONB). */
 export interface DetailField {
@@ -97,7 +97,7 @@ export const INSURANCE_PROVIDER_LABELS: Record<InsuranceProvider, string> = {
   manulife: 'Manulife',
 }
 /** Seed default currency per provider (the bulk-import per-provider currency starts here). */
-export const PROVIDER_DEFAULT_CURRENCY: Record<InsuranceProvider, NetworthCurrency> = {
+export const PROVIDER_DEFAULT_CURRENCY: Record<InsuranceProvider, NetWorthCurrency> = {
   chubb: 'USD',
   boc: 'USD',
   manulife: 'HKD',
