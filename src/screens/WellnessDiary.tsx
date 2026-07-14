@@ -44,7 +44,7 @@ import { ConfirmDeleteAction } from '../components/ConfirmDeleteAction'
 import { NutrientBar } from '../components/NutrientBar'
 import { ReorderList } from '../components/ReorderList'
 
-export function Diary() {
+export function WellnessDiary() {
   const { session } = useAuth()
   const userId = session?.user.id
 

@@ -100,7 +100,7 @@ async function writeServings(
   })
 }
 
-export function FoodDetailSheet() {
+export function WellnessFoodSheet() {
   const navigate = useNavigate()
   const returnAfterLog = useReturnAfterLog()
   const { session } = useAuth()

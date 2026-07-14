@@ -36,7 +36,7 @@ const BLANK: FoodInitial = {
   nutrients: {},
 }
 
-export function NewFoodSheet() {
+export function WellnessFoodNewSheet() {
   const { id } = useParams()
   const isEdit = !!id
 

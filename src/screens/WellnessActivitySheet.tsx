@@ -54,7 +54,7 @@ function groupSets(
   return out.length > 0 ? out : blankExercises()
 }
 
-export function ActivityLogSheet() {
+export function WellnessActivitySheet() {
   const navigate = useNavigate()
   const returnAfterLog = useReturnAfterLog()
   const { session } = useAuth()

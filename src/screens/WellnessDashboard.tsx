@@ -9,7 +9,7 @@ import { WELLNESS_RANGES, WELLNESS_RANGE_DEFAULT } from '../constants/wellness'
 import { routes } from '../constants/routes'
 import { todayLocal } from '../lib/date'
 
-export function Dashboard() {
+export function WellnessDashboard() {
   const { session } = useAuth()
   const userId = session?.user.id
   const [rangeKey, setRangeKey] = useState(WELLNESS_RANGE_DEFAULT)

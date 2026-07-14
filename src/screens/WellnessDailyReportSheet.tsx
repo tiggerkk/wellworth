@@ -8,7 +8,7 @@ import { useAsync } from '../hooks/useAsync'
 import { listEntriesByDay } from '../data/diary-entry'
 import { formatFullDate, todayLocal } from '../lib/date'
 
-export function DailyReportSheet() {
+export function WellnessDailyReportSheet() {
   const { session } = useAuth()
   const userId = session?.user.id
   const { day = todayLocal() } = useParams()

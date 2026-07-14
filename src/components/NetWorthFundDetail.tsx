@@ -1,12 +1,12 @@
 /**
  * Presentational Fund detail body — the read-only fields from a fund holding's `details`. Reused by
- * the routed FundDetailSheet (dashboard drill-in) and the local fund modal in Monthly Entry.
+ * the routed NetWorthFundDetailSheet (dashboard drill-in) and the local fund modal in Monthly Entry.
  */
 import { ASSET_TYPE_COLORS } from '../constants/networth'
 import { formatHkd, gainLossClass } from '../lib/networth'
 import { formatFullDate } from '../lib/date'
 
-export interface FundDetailData {
+export interface NetWorthFundDetailData {
   name: string
   /** Net-worth value in HKD (Total Value from the export). */
   valueHkd: number
@@ -21,7 +21,7 @@ function str(v: unknown): string {
   return v == null ? '' : String(v)
 }
 
-export function FundDetail({ data }: { data: FundDetailData }) {
+export function NetWorthFundDetail({ data }: { data: NetWorthFundDetailData }) {
   const d = data.details
   const ccy = str(d.currency) || 'HKD'
   // HKD amounts read `HK$1,234` (matching the Dashboard / Monthly Entry via `formatHkd`); a non-HKD

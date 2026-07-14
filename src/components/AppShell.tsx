@@ -14,35 +14,35 @@ import { needsOnboarding } from '../lib/access'
 import { moduleForPath } from '../constants/modules'
 import { setLastModule } from '../lib/last-module'
 import {
-  BooksDashboard,
-  BooksEntry,
-  BooksLibrary,
-  BooksSettings,
-  Dashboard,
-  Diary,
-  Library,
+  Settings,
+  WellnessDashboard,
+  WellnessDiary,
+  WellnessLibrary,
+  WellnessSettings,
   NetWorthDashboard,
   NetWorthEntry,
-  QuotesEntry,
-  QuotesLibrary,
-  QuotesSettings,
   QuotesZen,
-  Settings,
-  TravelSettings,
+  QuotesLibrary,
+  QuotesEntry,
+  QuotesSettings,
   ShowsDashboard,
-  ShowsEntry,
   ShowsLibrary,
+  ShowsEntry,
   ShowsSettings,
-  WellnessSettings,
+  BooksDashboard,
+  BooksLibrary,
+  BooksEntry,
+  BooksSettings,
+  TravelSettings,
 } from '../screens'
 
 // Background-location pattern (data-router): when a sheet route is open, `location.state
 // .background` names the tab to keep painted behind it. We render that tab in <main> and
 // the matched sheet (the Outlet) as an overlay on top. Keyed by the new namespaced paths.
 const TAB_FOR_PATH: Record<string, React.ReactNode> = {
-  '/wellness': <Diary />,
-  '/wellness/dashboard': <Dashboard />,
-  '/wellness/library': <Library />,
+  '/wellness': <WellnessDiary />,
+  '/wellness/dashboard': <WellnessDashboard />,
+  '/wellness/library': <WellnessLibrary />,
   '/wellness/settings': <WellnessSettings />,
   '/settings': <Settings />,
   '/networth': <NetWorthDashboard />,

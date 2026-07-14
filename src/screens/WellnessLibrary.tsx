@@ -18,7 +18,7 @@ import { foldZh } from '../lib/zh-fold'
 
 type Tab = 'foods' | 'activities'
 
-export function Library() {
+export function WellnessLibrary() {
   const openSheet = useSheetNavigate()
   const version = useDiaryVersion()
   // Tab lives in the URL so returning from a sheet (New/Edit Food or Activity) restores it

@@ -37,7 +37,7 @@ const BLANK: ActivityInitial = {
   icon: null,
 }
 
-export function NewActivitySheet() {
+export function WellnessActivityNewSheet() {
   const { id } = useParams()
   const isEdit = !!id
 

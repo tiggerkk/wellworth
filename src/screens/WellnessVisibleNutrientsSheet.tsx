@@ -21,7 +21,7 @@ function isLimitedData(n: Tables<'nutrient'>): boolean {
   )
 }
 
-export function VisibleNutrientsSheet() {
+export function WellnessVisibleNutrientsSheet() {
   const { profile, loading, save } = useProfileEditor()
   const { nutrients } = useNutrientReference()
 

@@ -2,12 +2,12 @@ import { useCallback } from 'react'
 import { useParams } from 'react-router'
 import { SheetCloseButton } from '../components/SheetCloseButton'
 import { Sheet } from '../components/Sheet'
-import { FundDetail } from '../components/FundDetail'
+import { NetWorthFundDetail } from '../components/NetWorthFundDetail'
 import { useAsync } from '../hooks/useAsync'
 import { getAssetEntry } from '../data/asset-entry'
 
 /** Routed Fund detail drill-in — loads a fund holding by its asset_entry id and shows its fields. */
-export function FundDetailSheet() {
+export function NetWorthFundDetailSheet() {
   const { id = '' } = useParams()
   const loadFn = useCallback(() => getAssetEntry(id), [id])
   const { data: entry, loading, error } = useAsync(loadFn)
@@ -26,7 +26,7 @@ export function FundDetailSheet() {
           <p className="text-body text-danger">Couldn’t load this fund.</p>
         )}
         {entry && (
-          <FundDetail
+          <NetWorthFundDetail
             data={{
               name: entry.name,
               valueHkd: Number(entry.value_base),

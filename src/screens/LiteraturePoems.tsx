@@ -49,7 +49,7 @@ const PAGE = 60
  * collapsible filter panel (朝代 single-select · 主題/時令/選集 multi-select · Favorites Only) over the
  * static corpus index. Tapping a card opens the poem; the heart toggles a (Supabase) favourite.
  */
-export function LiteratureHome() {
+export function LiteraturePoems() {
   const navigate = useNavigate()
   const { favoriteIds, toggle } = useLiteratureFavorites()
 

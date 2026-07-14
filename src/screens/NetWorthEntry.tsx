@@ -57,7 +57,7 @@ import { useEscapeKey } from '../hooks/useEscapeKey'
 import { useSessionState } from '../hooks/useSessionState'
 import { useLiquidOnly } from '../hooks/useLiquidOnly'
 import { Toggle } from '../components/Toggle'
-import { FundDetail } from '../components/FundDetail'
+import { NetWorthFundDetail } from '../components/NetWorthFundDetail'
 import { EntryHeaderActions } from '../components/EntryHeaderActions'
 import { ConfirmDeleteAction } from '../components/ConfirmDeleteAction'
 import { MonthPicker } from '../components/MonthPicker'
@@ -742,7 +742,7 @@ function EntryForm({
             </h1>
           </header>
           <div className="flex-1 overflow-y-auto p-4">
-            <FundDetail
+            <NetWorthFundDetail
               data={{
                 name: fundModal.name,
                 valueHkd: rowBase(fundModal),

@@ -11,7 +11,7 @@ import { resolveActivityIcon } from '../constants/wellness'
 import { routes } from '../constants/routes'
 import { todayLocal } from '../lib/date'
 
-export function AddActivitySheet() {
+export function WellnessActivityAddSheet() {
   const openSheet = useSheetNavigate()
   const [params] = useSearchParams()
   const day = params.get('day') ?? todayLocal()

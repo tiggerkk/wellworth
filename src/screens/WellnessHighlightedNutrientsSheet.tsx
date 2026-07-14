@@ -9,7 +9,7 @@ import type { Tables } from '../types/database'
 
 const MAX = 8
 
-export function HighlightedNutrientsSheet() {
+export function WellnessHighlightedNutrientsSheet() {
   const { profile, loading, save } = useProfileEditor()
   const { nutrients } = useNutrientReference()
 
