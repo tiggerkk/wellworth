@@ -4,8 +4,7 @@
 
 ### Dashboard (`/medical`)
 
-No screen-title header. Explicit loading / empty / error states; empty (no reports yet) → the shared
-**EmptyState** (see `docs/01_design_system.md`): "No medical reports yet" · "+ New Medical Report".
+No screen-title header. Explicit loading / empty / error states; empty (no reports yet) → the shared **EmptyState** (see `docs/01_design_system.md`): "No medical reports yet" · "+ New Medical Report".
 
 When there is data, three sections:
 

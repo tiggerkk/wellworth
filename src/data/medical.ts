@@ -14,14 +14,23 @@ import type {
  * `MEDICAL_LAB_TESTS` in `src/constants/medical.ts` (identical to the seeded rows) is the read-only source.
  */
 
-/** All of a user's reports, newest report-date first (Reports list order). */
-export async function listReports(userId: string): Promise<MedicalReportRow[]> {
-  const { data, error } = await supabase
+/**
+ * All of a user's reports, newest report-date first (Reports list order). Pass `limit` for a
+ * bounded fetch (the Dashboard timeline only ever shows the 5 most recent + a "view all" nudge —
+ * see `useMedicalTrends`); omit it for the full Reports list, which needs every row to search/filter.
+ */
+export async function listReports(
+  userId: string,
+  limit?: number,
+): Promise<MedicalReportRow[]> {
+  let query = supabase
     .from('medical_report')
     .select('*')
     .eq('user_id', userId)
     .order('report_date', { ascending: false })
     .order('created_at', { ascending: false })
+  if (limit != null) query = query.limit(limit)
+  const { data, error } = await query
   if (error) throw error
   return data
 }
@@ -79,26 +88,28 @@ export async function listTrackedResultSeries(
   }))
 }
 
-/** A report together with its result rows, or null if the id doesn't resolve (RLS-scoped). */
+/**
+ * A report together with its result rows, or null if the id doesn't resolve (RLS-scoped). The two
+ * queries are independent (the results query only needs `reportId`, not anything from the report
+ * row), so they're fired together with `Promise.all` instead of one waiting on the other — this
+ * halves the network latency on Report Detail / Edit Report, both of which load through here.
+ */
 export async function getReportWithResults(
   reportId: string,
 ): Promise<ReportWithResults | null> {
-  const { data: report, error: reportError } = await supabase
-    .from('medical_report')
-    .select('*')
-    .eq('id', reportId)
-    .maybeSingle()
-  if (reportError) throw reportError
-  if (!report) return null
+  const [reportRes, resultsRes] = await Promise.all([
+    supabase.from('medical_report').select('*').eq('id', reportId).maybeSingle(),
+    supabase
+      .from('medical_result')
+      .select('*')
+      .eq('report_id', reportId)
+      .order('created_at', { ascending: true }),
+  ])
+  if (reportRes.error) throw reportRes.error
+  if (resultsRes.error) throw resultsRes.error
+  if (!reportRes.data) return null
 
-  const { data: results, error: resultsError } = await supabase
-    .from('medical_result')
-    .select('*')
-    .eq('report_id', reportId)
-    .order('created_at', { ascending: true })
-  if (resultsError) throw resultsError
-
-  return { report, results: results ?? [] }
+  return { report: reportRes.data, results: resultsRes.data ?? [] }
 }
 
 export async function createReport(
