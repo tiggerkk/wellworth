@@ -981,7 +981,7 @@ function ReorderDaysSheet({
           Reorder Days
         </h1>
       </header>
-      <div className="p-4">
+      <div className="min-h-0 flex-1 overflow-y-auto p-4">
         <ReorderList
           ids={days.map((d) => d.id)}
           onReorder={onReorder}

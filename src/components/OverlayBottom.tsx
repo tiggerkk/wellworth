@@ -15,6 +15,13 @@ interface OverlayBottomProps {
  * supplies its own header/body content (typically an `OverlayCloseButton` alongside a title) and
  * any of its own padding.
  *
+ * Caps at 85% of the viewport height and clips overflow (`max-h-[85vh] flex flex-col`) so content
+ * that can grow unboundedly (a long reorder list, a long trend) never pushes past the top of the
+ * screen. Short, fixed-height content (a calendar grid, a month picker) is unaffected since it
+ * never approaches the cap. Callers with content that can exceed the cap should make their
+ * scrollable region `min-h-0 flex-1 overflow-y-auto` so the header stays pinned and only the body
+ * scrolls; callers with short content need no changes.
+ *
  * Sibling to `OverlayTop`, which anchors full-screen from the top instead of as a bottom sheet.
  */
 export function OverlayBottom({ children, onClose, label }: OverlayBottomProps) {
@@ -26,7 +33,7 @@ export function OverlayBottom({ children, onClose, label }: OverlayBottomProps) 
         role="dialog"
         aria-modal="true"
         aria-label={label}
-        className="absolute inset-x-0 bottom-0 mx-auto max-w-md rounded-t-card bg-surface pb-[env(safe-area-inset-bottom)]"
+        className="absolute inset-x-0 bottom-0 mx-auto flex max-h-[90vh] w-full max-w-md flex-col rounded-t-card bg-surface pb-[env(safe-area-inset-bottom)]"
       >
         {children}
       </div>
