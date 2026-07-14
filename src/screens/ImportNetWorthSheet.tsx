@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router'
 import { IconUpload } from '@tabler/icons-react'
 import { SheetCloseButton } from '../components/SheetCloseButton'
 import { Sheet } from '../components/Sheet'
-import { PrimaryButton } from '../components/PrimaryButton'
+import { ImportSheetFooter } from '../components/ImportSheetFooter'
 import { useAuth } from '../auth/AuthProvider'
 import { useProfile } from '../hooks/useProfile'
 import { parseCsv } from '../lib/csv'
@@ -258,25 +258,15 @@ export function ImportNetWorthSheet() {
         )}
       </div>
 
-      <div className="border-t border-border p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
-        {doneCount !== null ? (
-          <PrimaryButton onClick={() => navigate(-1)} className="w-full">
-            DONE
-          </PrimaryButton>
-        ) : (
-          <PrimaryButton
-            onClick={() => void runImport()}
-            disabled={importing || rowCount === 0 || missingRate}
-            className="w-full"
-          >
-            {importing
-              ? 'Importing…'
-              : rowCount > 0
-                ? `IMPORT ${rowCount} ENTR${rowCount === 1 ? 'Y' : 'IES'}`
-                : 'IMPORT'}
-          </PrimaryButton>
-        )}
-      </div>
+      <ImportSheetFooter
+        count={rowCount}
+        importing={importing}
+        disabled={missingRate}
+        onSubmit={() => void runImport()}
+        submitLabel={(n) => `IMPORT ${n} ENTR${n === 1 ? '' : 'IES'}`}
+        done={doneCount}
+        onDone={() => navigate(-1)}
+      />
     </Sheet>
   )
 }

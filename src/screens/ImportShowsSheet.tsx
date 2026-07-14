@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router'
 import { IconUpload } from '@tabler/icons-react'
 import { SheetCloseButton } from '../components/SheetCloseButton'
 import { Sheet } from '../components/Sheet'
-import { PrimaryButton } from '../components/PrimaryButton'
+import { ImportSheetFooter } from '../components/ImportSheetFooter'
 import { PosterThumb } from '../components/PosterThumb'
 import { ShowTypeBadge } from '../components/ShowTypeBadge'
 import { StatusChip } from '../components/StatusChip'
@@ -328,25 +328,15 @@ export function ImportShowsSheet() {
         )}
       </div>
 
-      <div className="border-t border-border p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
-        {done !== null ? (
-          <PrimaryButton onClick={() => navigate(-1)} className="w-full">
-            DONE
-          </PrimaryButton>
-        ) : (
-          <PrimaryButton
-            onClick={() => void runImport()}
-            disabled={importing || !resolved || rowCount === 0 || progress !== null}
-            className="w-full"
-          >
-            {importing
-              ? 'Importing…'
-              : rowCount > 0
-                ? `IMPORT ${rowCount} TITLE${rowCount === 1 ? '' : 'S'}`
-                : 'IMPORT'}
-          </PrimaryButton>
-        )}
-      </div>
+      <ImportSheetFooter
+        count={rowCount}
+        importing={importing}
+        disabled={!resolved || progress !== null}
+        onSubmit={() => void runImport()}
+        submitLabel={(n) => `IMPORT ${n} TITLE${n === 1 ? '' : 'S'}`}
+        done={done}
+        onDone={() => navigate(-1)}
+      />
 
       {fixIndex !== null && resolved && (
         <TitleSearchOverlay

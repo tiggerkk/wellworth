@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router'
 import { IconMapPin, IconUpload } from '@tabler/icons-react'
 import { SheetCloseButton } from '../components/SheetCloseButton'
 import { Sheet } from '../components/Sheet'
-import { PrimaryButton } from '../components/PrimaryButton'
+import { ImportSheetFooter } from '../components/ImportSheetFooter'
 import { SectionCard } from '../components/SectionCard'
 import { StatusChip } from '../components/StatusChip'
 import { useAuth } from '../auth/AuthProvider'
@@ -323,25 +323,14 @@ export function ImportTravelSheet() {
         )}
       </div>
 
-      <div className="border-t border-border p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
-        {done !== null ? (
-          <PrimaryButton onClick={() => navigate(-1)} className="w-full">
-            DONE
-          </PrimaryButton>
-        ) : (
-          <PrimaryButton
-            onClick={() => void runImport()}
-            disabled={importing || tripCount === 0}
-            className="w-full"
-          >
-            {importing
-              ? 'Importing…'
-              : tripCount > 0
-                ? `IMPORT ${tripCount} TRIP${tripCount === 1 ? '' : 'S'}`
-                : 'IMPORT'}
-          </PrimaryButton>
-        )}
-      </div>
+      <ImportSheetFooter
+        count={tripCount}
+        importing={importing}
+        onSubmit={() => void runImport()}
+        submitLabel={(n) => `IMPORT ${n} TRIP${n === 1 ? '' : 'S'}`}
+        done={done}
+        onDone={() => navigate(-1)}
+      />
     </Sheet>
   )
 }

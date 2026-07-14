@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router'
 import { IconUpload } from '@tabler/icons-react'
 import { SheetCloseButton } from '../components/SheetCloseButton'
 import { Sheet } from '../components/Sheet'
-import { PrimaryButton } from '../components/PrimaryButton'
+import { ImportSheetFooter } from '../components/ImportSheetFooter'
 import { useAuth } from '../auth/AuthProvider'
 import { parseCsv } from '../lib/csv'
 import { parseFundCsv, type FundImportResult } from '../lib/networth-fund-import'
@@ -216,25 +216,14 @@ export function ImportFundSheet() {
         )}
       </div>
 
-      <div className="border-t border-border p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
-        {doneCount !== null ? (
-          <PrimaryButton onClick={() => navigate(-1)} className="w-full">
-            DONE
-          </PrimaryButton>
-        ) : (
-          <PrimaryButton
-            onClick={() => void runImport()}
-            disabled={importing || rows.length === 0}
-            className="w-full"
-          >
-            {importing
-              ? 'Importing…'
-              : rows.length > 0
-                ? `IMPORT ${rows.length} FUND${rows.length === 1 ? '' : 'S'}`
-                : 'IMPORT'}
-          </PrimaryButton>
-        )}
-      </div>
+      <ImportSheetFooter
+        count={rows.length}
+        importing={importing}
+        onSubmit={() => void runImport()}
+        submitLabel={(n) => `IMPORT ${n} FUND${n === 1 ? '' : 'S'}`}
+        done={doneCount}
+        onDone={() => navigate(-1)}
+      />
     </Sheet>
   )
 }

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router'
 import { IconUpload } from '@tabler/icons-react'
 import { SheetCloseButton } from '../components/SheetCloseButton'
 import { Sheet } from '../components/Sheet'
-import { PrimaryButton } from '../components/PrimaryButton'
+import { ImportSheetFooter } from '../components/ImportSheetFooter'
 import { SelectMenu } from '../components/SelectMenu'
 import { Toggle } from '../components/Toggle'
 import { SectionCard } from '../components/SectionCard'
@@ -298,25 +298,14 @@ export function ImportTravelExpensesSheet() {
         )}
       </div>
 
-      <div className="border-t border-border p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
-        {done !== null ? (
-          <PrimaryButton onClick={() => navigate(-1)} className="w-full">
-            DONE
-          </PrimaryButton>
-        ) : (
-          <PrimaryButton
-            onClick={() => void runImport()}
-            disabled={importing || count === 0}
-            className="w-full"
-          >
-            {importing
-              ? 'Importing…'
-              : count > 0
-                ? `IMPORT ${count} EXPENSE${count === 1 ? '' : 'S'}`
-                : 'IMPORT'}
-          </PrimaryButton>
-        )}
-      </div>
+      <ImportSheetFooter
+        count={count}
+        importing={importing}
+        onSubmit={() => void runImport()}
+        submitLabel={(n) => `IMPORT ${n} EXPENSE${n === 1 ? '' : 'S'}`}
+        done={done}
+        onDone={() => navigate(-1)}
+      />
     </Sheet>
   )
 }

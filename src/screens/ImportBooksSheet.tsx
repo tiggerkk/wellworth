@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router'
 import { IconUpload } from '@tabler/icons-react'
 import { SheetCloseButton } from '../components/SheetCloseButton'
 import { Sheet } from '../components/Sheet'
-import { PrimaryButton } from '../components/PrimaryButton'
+import { ImportSheetFooter } from '../components/ImportSheetFooter'
 import { CoverThumb } from '../components/CoverThumb'
 import { StatusChip } from '../components/StatusChip'
 import { StarRating } from '../components/StarRating'
@@ -507,25 +507,15 @@ export function ImportBooksSheet() {
         )}
       </div>
 
-      <div className="border-t border-border p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
-        {done !== null ? (
-          <PrimaryButton onClick={() => navigate(-1)} className="w-full">
-            DONE
-          </PrimaryButton>
-        ) : (
-          <PrimaryButton
-            onClick={() => void runImport()}
-            disabled={importing || !resolved || rowCount === 0 || progress !== null}
-            className="w-full"
-          >
-            {importing
-              ? 'Importing…'
-              : rowCount > 0
-                ? `IMPORT ${rowCount} BOOK${rowCount === 1 ? '' : 'S'}`
-                : 'IMPORT'}
-          </PrimaryButton>
-        )}
-      </div>
+      <ImportSheetFooter
+        count={rowCount}
+        importing={importing}
+        disabled={!resolved || progress !== null}
+        onSubmit={() => void runImport()}
+        submitLabel={(n) => `IMPORT ${n} BOOK${n === 1 ? '' : 'S'}`}
+        done={done}
+        onDone={() => navigate(-1)}
+      />
 
       {fixIndex !== null && resolved && (
         <BookSearchOverlay

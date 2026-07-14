@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router'
 import { IconPlus, IconUpload, IconX } from '@tabler/icons-react'
 import { SheetCloseButton } from '../components/SheetCloseButton'
 import { Sheet } from '../components/Sheet'
+import { ImportSheetFooter } from '../components/ImportSheetFooter'
 import { Calendar } from '../components/Calendar'
-import { PrimaryButton } from '../components/PrimaryButton'
 import { SelectMenu } from '../components/SelectMenu'
 import { MedicalResultCard } from '../components/MedicalResultCard'
 import { MedicalTestPickerOverlay } from '../components/MedicalTestPickerOverlay'
@@ -364,19 +364,15 @@ export function ImportMedicalSheet() {
         )}
       </div>
 
-      <div className="border-t border-border p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
-        <PrimaryButton
-          onClick={() => void runImport()}
-          disabled={importing || !draft}
-          className="w-full"
-        >
-          {importing
-            ? 'Saving…'
-            : total > 0
-              ? `SAVE ${total} RESULT${total === 1 ? '' : 'S'}`
-              : 'SAVE REPORT'}
-        </PrimaryButton>
-      </div>
+      <ImportSheetFooter
+        count={total}
+        importing={importing}
+        disabled={!draft}
+        onSubmit={() => void runImport()}
+        submitLabel={(n) => `SAVE ${n} RESULT${n === 1 ? '' : 'S'}`}
+        emptyLabel="SAVE REPORT"
+        importingLabel="Saving…"
+      />
 
       {datePicker && draft && (
         <Calendar
