@@ -1,6 +1,6 @@
 -- WellWorth Quotes (favourite quotes) schema.
 --
--- Conventions (identical to 06_books_schema.sql):
+-- Conventions:
 --   * Table name singular, snake_case. One row per quote.
 --   * RLS is ON from creation; `quote` carries its own user_id, so it isolates rows
 --     directly with (select auth.uid()) = user_id (like book / show / asset_entry).
@@ -13,6 +13,10 @@
 -- Cross-module links: show_id / book_id are OPTIONAL enrichment with ON DELETE SET NULL.
 -- Because author / title / source_type are denormalised onto the quote, a quote stays complete
 -- (Library/Zen still render it) after a linked Show or Book is hard-deleted — the FK just nulls.
+-- Both columns are indexed below (`quote_show_id_idx` / `quote_book_id_idx`): without an index on
+-- the referencing side of an ON DELETE SET NULL FK, Postgres has to sequentially scan `quote` to
+-- find rows to null out every time a Show or Book is deleted — this keeps that delete fast as the
+-- quote table grows, independent of how many shows/books there are.
 
 -- =====================================================================================
 -- quote — one row per quote. Exactly one category (required); tags optional. source_type is
@@ -46,6 +50,9 @@ create table public.quote (
 
 create index on public.quote (user_id, category);
 create index on public.quote (user_id, is_favorite);
+create index on public.quote (user_id, updated_at desc);  -- covers listQuotes' default sort order
+create index quote_show_id_idx on public.quote (show_id);  -- ON DELETE SET NULL lookup when a show is deleted
+create index quote_book_id_idx on public.quote (book_id);  -- ON DELETE SET NULL lookup when a book is deleted
 
 alter table public.quote enable row level security;
 

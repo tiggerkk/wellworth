@@ -276,10 +276,23 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
       return next
     })
 
-  const stopsByDay = (dayId: string) =>
-    stops
-      .filter((s) => s.trip_day_id === dayId)
-      .sort((a, b) => a.sort_order - b.sort_order)
+  // Grouped once per `stops` change (a single pass + per-group sort) instead of re-filtering and
+  // re-sorting the WHOLE trip's stops for every day on every render — `days.map` below calls
+  // `stopsByDay` once per day, so that was O(days × stops); this is O(stops log stops) total, then
+  // an O(1) lookup per day. Matters once a trip accumulates many days/stops, and this component
+  // re-renders on every keystroke in the header fields (name/notes/companions/etc), not just on
+  // itinerary edits.
+  const stopsByDayId = useMemo(() => {
+    const map = new Map<string, StopRow[]>()
+    for (const s of stops) {
+      const arr = map.get(s.trip_day_id)
+      if (arr) arr.push(s)
+      else map.set(s.trip_day_id, [s])
+    }
+    for (const arr of map.values()) arr.sort((a, b) => a.sort_order - b.sort_order)
+    return map
+  }, [stops])
+  const stopsByDay = (dayId: string) => stopsByDayId.get(dayId) ?? []
 
   const dayLabel = (day: TripDayRow, index: number) =>
     `Day ${index + 1}${day.day_date ? ` · ${formatFullDate(day.day_date)}` : ''}`

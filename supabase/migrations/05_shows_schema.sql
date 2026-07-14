@@ -1,6 +1,6 @@
 -- WellWorth Shows (TV shows, movies & documentaries) schema.
 --
--- Conventions (identical to 03_networth_schema.sql):
+-- Conventions:
 --   * Table name singular, snake_case. One row per tracked title.
 --   * RLS is ON from creation; `show` carries its own user_id, so it isolates rows
 --     directly with (select auth.uid()) = user_id (like diary_entry / asset_entry).
@@ -62,6 +62,7 @@ create table public.show (
 
 create index on public.show (user_id, status);
 create index on public.show (user_id, is_favorite);  -- favourites-first / favourites filter
+create index on public.show (user_id, updated_at desc);  -- covers listShows' default sort order
 
 alter table public.show enable row level security;
 

@@ -7,15 +7,33 @@ import { dedupKey, type ImportBookRow } from '../lib/books-import'
  * Supabase directly — they go through here. RLS enforces `user_id = auth.uid()` server-side.
  */
 
+/**
+ * Columns the list screens need: Dashboard shelves + Library row rendering (`BookRowHeader`),
+ * search (`bookSearchText`: title/authors), and filter/sort (`matchesCriteria`/`sortKey`:
+ * status/favorite/lgbtq/dynasty/genre/rating/dates/year/author). Deliberately omits
+ * `description`, `page_count`, `language`, `isbn`, `google_books_id`, `open_library_id`,
+ * `created_at` — none of those are read, searched, filtered, or sorted on by any list screen;
+ * they're only used by Entry/Edit, which loads the full row via `getBook`. Trims payload as the
+ * library grows (mirrors the same change in `data/show.ts`). If a list screen ever needs one of
+ * these back, add it here first.
+ */
+const BOOK_LIST_COLUMNS =
+  'id, user_id, status, title, authors, year, cover_url, genres, rating, lgbtq_rep, dynasty, ' +
+  'is_favorite, start_date, end_date, updated_at'
+
 /** All of a user's books, newest-touched first (Library default order; full sort is M5). */
 export async function listBooks(userId: string): Promise<BookRow[]> {
   const { data, error } = await supabase
     .from('book')
-    .select('*')
+    .select(BOOK_LIST_COLUMNS)
     .eq('user_id', userId)
     .order('updated_at', { ascending: false })
   if (error) throw error
-  return data
+  // Cast: the narrowed select is a subset of `book`'s columns, and every list-screen consumer
+  // only reads fields within BOOK_LIST_COLUMNS (see comment above) — so BookRow is safe here even
+  // though description/page_count/language/isbn/google_books_id/open_library_id/created_at are
+  // `undefined` at runtime.
+  return data as unknown as BookRow[]
 }
 
 export async function getBook(id: string): Promise<BookRow | null> {

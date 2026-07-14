@@ -5,7 +5,7 @@
 -- reads fully offline at zero DB cost (see docs/11_literature.md + docs/02_tech_spec.md). The only
 -- user-owned, sync-worthy state is the per-user favourite, which lives here.
 --
--- Conventions (identical to 09_quotes_schema.sql):
+-- Conventions:
 --   * Table name singular, snake_case. One row per (user, favourited poem).
 --   * RLS is ON from creation; `poem_favorite` carries its own user_id, so it isolates rows
 --     directly with (select auth.uid()) = user_id (like quote / book / show).

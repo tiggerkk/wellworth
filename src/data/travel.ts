@@ -25,15 +25,30 @@ import type { ExpenseInsert, ExpenseRow, ExpenseUpdate } from '../lib/travel-exp
 
 // --- Trips ---
 
+/**
+ * Columns the Dashboard + Trips list screens need: row rendering (name/status/cover_url/dates),
+ * `computeTravelStats` (status/start_date/end_date), search (`applyTripList`: name/companions),
+ * and sort (`compareTrips`/`compareTripsByDateDesc`: start_date/updated_at/status/name/rating).
+ * Deliberately omits `base_currency`, `notes`, `track_reimbursement`, `fx_rates`, `created_at` —
+ * none of those are read, searched, filtered, or sorted on by either list screen; they're only
+ * used by Entry/Edit and the Trip Builder, which load the full row via `getTrip` / `getTripBundle`.
+ * Mirrors the same trim in `data/show.ts` / `data/book.ts` / `data/quote.ts`.
+ */
+const TRIP_LIST_COLUMNS =
+  'id, user_id, name, status, cover_url, companions, rating, start_date, end_date, updated_at'
+
 export async function listTrips(userId: string): Promise<TripRow[]> {
   const { data, error } = await supabase
     .from('trip')
-    .select('*')
+    .select(TRIP_LIST_COLUMNS)
     .eq('user_id', userId)
     .order('start_date', { ascending: false, nullsFirst: false })
     .order('updated_at', { ascending: false })
   if (error) throw error
-  return data
+  // Cast: the narrowed select is a subset of `trip`'s columns, and every list-screen consumer
+  // only reads fields within TRIP_LIST_COLUMNS (see comment above) — so TripRow is safe here even
+  // though base_currency/notes/track_reimbursement/fx_rates/created_at are `undefined` at runtime.
+  return data as unknown as TripRow[]
 }
 
 export async function getTrip(id: string): Promise<TripRow | null> {

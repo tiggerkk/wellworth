@@ -7,15 +7,32 @@ import type { QuoteImportPayload } from '../lib/quotes-import'
  * directly — they go through here. RLS enforces `user_id = auth.uid()` server-side.
  */
 
+/**
+ * Columns the list screens need: Library row rendering + search (`quoteSearchText`: text/author/
+ * title/tags), filter/sort (`applyLibraryView`: category/tags/favorite/linkedOnly/sourceType/
+ * language/showId/bookId/date), and Zen (source link via show_id/book_id, favourite toggle).
+ * Deliberately omits `text_norm` — it's a generated, lower+trimmed duplicate of `text` that only
+ * backs the server-side UNIQUE constraint and import idempotency; no screen reads it (the
+ * importer recomputes its own normalized text from `text` client-side). Mirrors the same trim in
+ * `data/show.ts` / `data/book.ts`; since `quote` has no unused free-text columns the way
+ * show/book did (overview/notes), this is the only column worth dropping here.
+ */
+const QUOTE_LIST_COLUMNS =
+  'id, user_id, text, author, source_type, title, category, tags, language, is_favorite, ' +
+  'show_id, book_id, created_at, updated_at'
+
 /** All of a user's quotes, newest-touched first (Library default order; full sort is M5). */
 export async function listQuotes(userId: string): Promise<QuoteRow[]> {
   const { data, error } = await supabase
     .from('quote')
-    .select('*')
+    .select(QUOTE_LIST_COLUMNS)
     .eq('user_id', userId)
     .order('updated_at', { ascending: false })
   if (error) throw error
-  return data
+  // Cast: the narrowed select is a subset of `quote`'s columns, and every list-screen consumer
+  // only reads fields within QUOTE_LIST_COLUMNS (see comment above) — so QuoteRow is safe here
+  // even though `text_norm` is `undefined` at runtime.
+  return data as unknown as QuoteRow[]
 }
 
 export async function getQuote(id: string): Promise<QuoteRow | null> {

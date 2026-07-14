@@ -1,6 +1,6 @@
 -- WellWorth Travel module schema (docs/travel.md → 03-data-model.md).
 --
--- Conventions (identical to 10_medical_schema.sql):
+-- Conventions:
 --   * Table names singular, snake_case. RLS ON from creation.
 --   * User-owned tables carry their own user_id and isolate rows with
 --     (select auth.uid()) = user_id; four policies each (select/insert/update/delete).
@@ -121,6 +121,9 @@ create table public.stop (
 );
 
 create index on public.stop (trip_day_id, sort_order);
+-- Covers `listTripFacetRows` (Dashboard stats + Trips list filters/search), which queries `stop`
+-- directly by `user_id` across every trip — without this, that's a sequential scan of all stops.
+create index on public.stop (user_id);
 
 alter table public.stop enable row level security;
 

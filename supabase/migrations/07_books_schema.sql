@@ -1,6 +1,6 @@
 -- WellWorth Books (books read / to read) schema.
 --
--- Conventions (identical to 05_shows_schema.sql):
+-- Conventions:
 --   * Table name singular, snake_case. One row per tracked book.
 --   * RLS is ON from creation; `book` carries its own user_id, so it isolates rows
 --     directly with (select auth.uid()) = user_id (like show / asset_entry / diary_entry).
@@ -57,6 +57,7 @@ create table public.book (
 
 create index on public.book (user_id, status);
 create index on public.book (user_id, is_favorite);  -- favourites-first / favourites filter
+create index on public.book (user_id, updated_at desc);  -- covers listBooks' default sort order
 
 alter table public.book enable row level security;
 

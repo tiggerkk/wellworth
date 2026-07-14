@@ -7,15 +7,33 @@ import { dedupKey, type ImportShowRow } from '../lib/shows-import'
  * Supabase directly — they go through here. RLS enforces `user_id = auth.uid()` server-side.
  */
 
+/**
+ * Columns the list screens need: Dashboard shelves + Library row rendering (`ShowRowHeader`),
+ * search (`searchableText`: title/original_title/director/cast), and filter/sort
+ * (`matchesCriteria`/`sortKey`: type/status/favorite/lgbtq/dynasty/genre/rating/dates/year).
+ * Deliberately omits `overview`, `notes`, `imdb_id`, `tmdb_id`, `original_language`, `created_at`
+ * — none of those are read, searched, filtered, or sorted on by any list screen; they're only
+ * used by Entry/Edit and the per-show TMDB Refresh, both of which load the full row via
+ * `getShow`. Trims payload as the library grows. If a list screen ever needs one of these back,
+ * add it here first.
+ */
+const SHOW_LIST_COLUMNS =
+  'id, user_id, type, status, title, original_title, year, poster_path, genres, director, ' +
+  '"cast", runtime_min, total_seasons, total_episodes, watched_seasons, watched_episodes, ' +
+  'rating, lgbtq_rep, dynasty, is_favorite, start_date, end_date, updated_at'
+
 /** All of a user's shows, newest-touched first (Library default order; full sort is M5). */
 export async function listShows(userId: string): Promise<ShowRow[]> {
   const { data, error } = await supabase
     .from('show')
-    .select('*')
+    .select(SHOW_LIST_COLUMNS)
     .eq('user_id', userId)
     .order('updated_at', { ascending: false })
   if (error) throw error
-  return data
+  // Cast: the narrowed select is a subset of `show`'s columns, and every list-screen consumer
+  // only reads fields within SHOW_LIST_COLUMNS (see comment above) — so ShowRow is safe here even
+  // though overview/notes/imdb_id/tmdb_id/original_language/created_at are `undefined` at runtime.
+  return data as unknown as ShowRow[]
 }
 
 export async function getShow(id: string): Promise<ShowRow | null> {
