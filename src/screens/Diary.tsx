@@ -24,17 +24,17 @@ import {
 } from '../data/diary-entry'
 import { listSetsForEntries } from '../data/strength-set'
 import { addDays, formatDayLabel, todayLocal, type IsoDate } from '../lib/date'
-import { bumpDiary, useDiaryVersion } from '../lib/diary-refresh'
-import { setDiaryClipboard, useDiaryClipboard } from '../lib/diary-clipboard'
+import { bumpDiary, useDiaryVersion } from '../lib/wellness-diary-refresh'
+import { setDiaryClipboard, useDiaryClipboard } from '../lib/wellness-diary-clipboard'
 import { showToast } from '../lib/toast'
-import { computeTargets } from '../lib/targets'
+import { computeTargets } from '../lib/wellness-targets'
 import {
   asNutrientMap,
   deriveNetCarbs,
   isOverUpperLimit,
   sumNutrients,
-} from '../lib/nutrients'
-import { DIARY_GROUPS, type DiaryGroup, type GroupName } from '../constants/groups'
+} from '../lib/wellness-nutrients'
+import { DIARY_GROUPS, type DiaryGroup, type GroupName } from '../constants/wellness'
 import { routes } from '../constants/routes'
 import type { Tables } from '../types/database'
 import { Calendar, type DayCue } from '../components/Calendar'

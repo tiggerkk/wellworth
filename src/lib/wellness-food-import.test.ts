@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { parseCsv } from './csv'
-import { parseFoodCsv } from './food-import'
+import { parseFoodCsv } from './wellness-food-import'
 
 const KNOWN = new Set([
   'energy',

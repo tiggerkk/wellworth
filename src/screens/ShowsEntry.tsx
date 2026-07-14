@@ -16,7 +16,7 @@ import { useDirty } from '../hooks/useDirty'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 import { EntryLoader } from '../components/EntryLoader'
 import { createShow, deleteShow, getShow, updateShow } from '../data/show'
-import { numStr } from '../lib/quantity'
+import { numStr } from '../lib/wellness-quantity'
 import { FIELD_CLASS as inputClass } from '../constants/forms'
 import {
   SHOW_TYPES,

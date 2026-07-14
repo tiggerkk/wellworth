@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { ensureOwnerProfile } from '../data/profile'
 import { ensureOwnerActivities } from '../data/activity'
-import { bumpDiary } from '../lib/diary-refresh'
+import { bumpDiary } from '../lib/wellness-diary-refresh'
 
 /**
  * On first login, seed the user's profile and starter activity library. Runs once per

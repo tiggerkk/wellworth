@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { mapUsdaNutrients } from './food-api'
+import { mapUsdaNutrients } from './wellness-food-api'
 
 describe('mapUsdaNutrients', () => {
   it('maps the detail shape (nutrient.number + amount)', () => {

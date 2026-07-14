@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { ageFromBirthday, bmrMifflinStJeor, energyTarget, netEnergy } from './energy'
+import {
+  ageFromBirthday,
+  bmrMifflinStJeor,
+  energyTarget,
+  netEnergy,
+} from './wellness-energy'
 
 describe('ageFromBirthday', () => {
   it('counts whole years and respects the month/day boundary', () => {

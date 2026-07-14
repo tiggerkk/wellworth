@@ -5,7 +5,7 @@
  * non-blocking warnings for a preview. No I/O. NB: `is_favorite` is parsed but the importer saves
  * **every** row as a favorite (USDA foods only persist when favorited), so the column is informational.
  */
-import type { NutrientMap } from './nutrients'
+import type { NutrientMap } from './wellness-nutrients'
 
 const CORE_COLUMNS = new Set([
   'name',

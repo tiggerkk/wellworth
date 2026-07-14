@@ -8,9 +8,13 @@ import { SearchBar } from '../components/SearchBar'
 import { SegmentedTabs } from '../components/SegmentedTabs'
 import { useSheetNavigate } from '../hooks/useSheetNavigate'
 import { listFoods, setFavorite } from '../data/food'
-import { externalFoodServing, searchFoods, type ExternalFood } from '../lib/food-api'
-import { foodMatchScore } from '../lib/food-search'
-import { asNutrientMap } from '../lib/nutrients'
+import {
+  externalFoodServing,
+  searchFoods,
+  type ExternalFood,
+} from '../lib/wellness-food-api'
+import { foodMatchScore } from '../lib/wellness-food-search'
+import { asNutrientMap } from '../lib/wellness-nutrients'
 import { todayLocal } from '../lib/date'
 import { routes } from '../constants/routes'
 

@@ -27,18 +27,18 @@ import {
   updateFood,
 } from '../data/food'
 import { listServings, replaceServings } from '../data/serving'
-import { getUsdaFood } from '../lib/food-api'
-import { lookupBarcode } from '../lib/off-api'
+import { getUsdaFood } from '../lib/wellness-food-api'
+import { lookupBarcode } from '../lib/wellness-off-api'
 import {
   asNutrientMap,
   basisGrams,
   deriveNetCarbs,
   isOverUpperLimit,
   scaleNutrients,
-} from '../lib/nutrients'
-import { computeTargets } from '../lib/targets'
-import { draftAmount } from '../lib/quantity'
-import { bumpDiary } from '../lib/diary-refresh'
+} from '../lib/wellness-nutrients'
+import { computeTargets } from '../lib/wellness-targets'
+import { draftAmount } from '../lib/wellness-quantity'
+import { bumpDiary } from '../lib/wellness-diary-refresh'
 import { todayLocal } from '../lib/date'
 
 interface Serving {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { activityEnergyKcal, resolveMet } from './met'
+import { activityEnergyKcal, resolveMet } from './wellness-met'
 
 describe('resolveMet', () => {
   it('selects the MET for the chosen effort', () => {

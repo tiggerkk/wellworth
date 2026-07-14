@@ -1,7 +1,7 @@
-import type { NutrientMap } from './nutrients'
-import { toUsdaWildcardQuery } from './food-search'
+import type { NutrientMap } from './wellness-nutrients'
+import { toUsdaWildcardQuery } from './wellness-food-search'
 import { searchZhVariants } from './zh-query'
-import { GRAMS_PER_OZ, GRAMS_PER_LB } from './units'
+import { GRAMS_PER_OZ, GRAMS_PER_LB } from './wellness-units'
 
 /**
  * USDA FoodData Central client + nutrient mapping. Called directly from the browser with

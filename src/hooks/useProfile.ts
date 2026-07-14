@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react'
 import { useAuth } from '../auth/AuthProvider'
 import { getProfile } from '../data/profile'
-import { useDiaryVersion } from '../lib/diary-refresh'
+import { useDiaryVersion } from '../lib/wellness-diary-refresh'
 import { getCachedProfile, setCachedProfile } from '../lib/profile-cache'
 import { useAsync } from './useAsync'
 

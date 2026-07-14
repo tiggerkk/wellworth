@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { parseCsv } from './csv'
-import { parseFundCsv } from './fund-import'
+import { parseFundCsv } from './networth-fund-import'
 
 const HEADER =
   'Fund Name,Account,Asset Class,Total Holdings,Base Currency,Avg. Unit Cost,NAV Per Unit (As of Date),Total Cost,Total Value,Return Rate%,Profit/Loss'

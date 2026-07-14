@@ -7,7 +7,7 @@ import { ListRow } from '../components/ListRow'
 import { useAsync } from '../hooks/useAsync'
 import { useSheetNavigate } from '../hooks/useSheetNavigate'
 import { listActivities } from '../data/activity'
-import { resolveActivityIcon } from '../constants/activity-icons'
+import { resolveActivityIcon } from '../constants/wellness'
 import { routes } from '../constants/routes'
 import { todayLocal } from '../lib/date'
 

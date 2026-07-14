@@ -13,21 +13,21 @@ import {
   parseFoodCsv,
   type ImportFoodRecord,
   type ImportParseResult,
-} from '../lib/food-import'
+} from '../lib/wellness-food-import'
 import {
   externalFoodServing,
   getUsdaFood,
   searchFoods,
   type ExternalFood,
-} from '../lib/food-api'
-import { foodMatchScore, foodMatchStatus } from '../lib/food-search'
+} from '../lib/wellness-food-api'
+import { foodMatchScore, foodMatchStatus } from '../lib/wellness-food-search'
 import {
   getCachedFoodMatch,
   removeCachedFoodMatch,
   setCachedFoodMatch,
-} from '../lib/food-match-cache'
+} from '../lib/wellness-food-match-cache'
 import { saveImportedFoods } from '../data/food'
-import { bumpDiary } from '../lib/diary-refresh'
+import { bumpDiary } from '../lib/wellness-diary-refresh'
 import { errorMessage } from '../lib/errors'
 
 const MAX_MESSAGES = 20

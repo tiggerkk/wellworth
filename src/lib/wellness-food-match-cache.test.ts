@@ -6,8 +6,8 @@ import {
   getCachedFoodMatch,
   removeCachedFoodMatch,
   setCachedFoodMatch,
-} from './food-match-cache'
-import type { ExternalFood } from './food-api'
+} from './wellness-food-match-cache'
+import type { ExternalFood } from './wellness-food-api'
 
 const food = (name: string): ExternalFood => ({
   source: 'usda',

@@ -13,11 +13,11 @@ import { useReturnAfterLog } from '../hooks/useReturnAfterLog'
 import { getActivity } from '../data/activity'
 import { createEntry, deleteEntry, getEntry, updateEntry } from '../data/diary-entry'
 import { createSets, listSetsByEntry, replaceSets } from '../data/strength-set'
-import { activityEnergyKcal, resolveMet } from '../lib/met'
-import { draftAmount } from '../lib/quantity'
-import { bumpDiary } from '../lib/diary-refresh'
+import { activityEnergyKcal, resolveMet } from '../lib/wellness-met'
+import { draftAmount } from '../lib/wellness-quantity'
+import { bumpDiary } from '../lib/wellness-diary-refresh'
 import { todayLocal } from '../lib/date'
-import type { Effort } from '../constants/effort-levels'
+import type { Effort } from '../constants/wellness'
 
 // reps/weight are string drafts (like Duration) so a field can be emptied while typing; they
 // resolve to numbers only at save, where both must be > 0 (see strengthError).

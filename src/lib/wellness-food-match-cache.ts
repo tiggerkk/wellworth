@@ -1,4 +1,4 @@
-import type { ExternalFood } from './food-api'
+import type { ExternalFood } from './wellness-food-api'
 import { normMatch } from './title-match'
 import { createMatchCache } from './match-cache'
 

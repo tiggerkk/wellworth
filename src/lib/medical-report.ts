@@ -3,7 +3,7 @@ import {
   deriveNetCarbs,
   sumNutrients,
   type NutrientMap,
-} from './nutrients'
+} from './wellness-nutrients'
 import type { Tables } from '../types/database'
 
 export interface Aggregate {

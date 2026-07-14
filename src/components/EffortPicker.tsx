@@ -1,4 +1,4 @@
-import { EFFORT_LEVELS, type Effort } from '../constants/effort-levels'
+import { EFFORT_LEVELS, type Effort } from '../constants/wellness'
 
 interface EffortPickerProps {
   value: Effort

@@ -7,8 +7,8 @@ import {
   percentOfTarget,
   scaleNutrients,
   sumNutrients,
-} from './nutrients'
-import type { NutrientDri } from './dri'
+} from './wellness-nutrients'
+import type { NutrientDri } from './wellness-dri'
 
 describe('basisGrams', () => {
   it('is 100 for per_100g and the serving grams for per_serving', () => {

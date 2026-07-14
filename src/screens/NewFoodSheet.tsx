@@ -12,9 +12,9 @@ import { useAsync } from '../hooks/useAsync'
 import { useNutrientReference } from '../hooks/useNutrientReference'
 import { createFood, getFood, softDeleteFood, updateFood } from '../data/food'
 import { listServings, replaceServings } from '../data/serving'
-import { asNutrientMap, type NutrientMap } from '../lib/nutrients'
-import { NUTRIENT_SECTIONS } from '../constants/nutrient-sections'
-import { bumpDiary } from '../lib/diary-refresh'
+import { asNutrientMap, type NutrientMap } from '../lib/wellness-nutrients'
+import { NUTRIENT_SECTIONS } from '../constants/wellness'
+import { bumpDiary } from '../lib/wellness-diary-refresh'
 
 interface ServingDraft {
   name: string

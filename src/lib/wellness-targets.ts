@@ -1,5 +1,10 @@
-import { ageFromBirthday, bmrMifflinStJeor, energyTarget, type Sex } from './energy'
-import { getDriForProfile, type NutrientDri } from './dri'
+import {
+  ageFromBirthday,
+  bmrMifflinStJeor,
+  energyTarget,
+  type Sex,
+} from './wellness-energy'
+import { getDriForProfile, type NutrientDri } from './wellness-dri'
 import type { Tables } from '../types/database'
 
 export interface Targets {

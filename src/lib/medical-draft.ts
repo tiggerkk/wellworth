@@ -17,7 +17,7 @@ import {
   usesBodyPart,
 } from './medical'
 import { todayLocal, type IsoDate } from './date'
-import { numStr } from './quantity'
+import { numStr } from './wellness-quantity'
 import type { ParsedReport } from './medical-import'
 
 export interface ResultDraft {

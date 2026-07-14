@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { getDriForProfile, type DriProfile } from './dri'
-import { isOverUpperLimit } from './nutrients'
+import { getDriForProfile, type DriProfile } from './wellness-dri'
+import { isOverUpperLimit } from './wellness-nutrients'
 
 const owner: DriProfile = { sex: 'female', birthdayAge: 51, proteinTargetG: 90 }
 const energyKcal = 1700

@@ -7,7 +7,7 @@ import {
   kgToPounds,
   ouncesToGrams,
   poundsToKg,
-} from './units'
+} from './wellness-units'
 
 describe('units conversion', () => {
   it('converts grams and ounces symmetrically', () => {

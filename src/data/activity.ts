@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase'
 import type { Tables, TablesInsert, TablesUpdate } from '../types/database'
-import { OWNER_SEED_ACTIVITIES } from '../constants/seed-activities'
+import { OWNER_SEED_ACTIVITIES } from '../constants/wellness'
 
 /**
  * Seed the owner's starter activity library on first login. No-op if the user already

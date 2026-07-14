@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { mapOffNutriments } from './off-api'
+import { mapOffNutriments } from './wellness-off-api'
 
 describe('mapOffNutriments', () => {
   it('keeps gram macros as-is and scales minerals/vitamins to our units', () => {

@@ -12,10 +12,10 @@ import {
   softDeleteActivity,
   updateActivity,
 } from '../data/activity'
-import { draftAmount } from '../lib/quantity'
-import { bumpDiary } from '../lib/diary-refresh'
-import { EFFORT_LEVELS, type Effort } from '../constants/effort-levels'
-import { ACTIVITY_ICONS, resolveActivityIcon } from '../constants/activity-icons'
+import { draftAmount } from '../lib/wellness-quantity'
+import { bumpDiary } from '../lib/wellness-diary-refresh'
+import { EFFORT_LEVELS, type Effort } from '../constants/wellness'
+import { ACTIVITY_ICONS, resolveActivityIcon } from '../constants/wellness'
 
 interface ActivityInitial {
   name: string

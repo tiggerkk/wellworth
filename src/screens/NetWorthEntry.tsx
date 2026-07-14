@@ -51,7 +51,7 @@ import {
 import { bumpNetWorth, useNetWorthVersion } from '../lib/networth-refresh'
 import { fetchRateToHkd, fetchRatesToHkd, type FetchableCurrency } from '../lib/fx'
 import { addMonths, formatMonthLabel, startOfMonth, todayLocal } from '../lib/date'
-import { draftAmount } from '../lib/quantity'
+import { draftAmount } from '../lib/wellness-quantity'
 import { routes } from '../constants/routes'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 import { useSessionState } from '../hooks/useSessionState'

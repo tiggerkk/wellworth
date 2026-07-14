@@ -2,7 +2,7 @@ import { useCallback } from 'react'
 import { useAuth } from '../auth/AuthProvider'
 import { useProfile } from './useProfile'
 import { updateProfile } from '../data/profile'
-import { bumpDiary } from '../lib/diary-refresh'
+import { bumpDiary } from '../lib/wellness-diary-refresh'
 import type { Tables, TablesUpdate } from '../types/database'
 
 /**

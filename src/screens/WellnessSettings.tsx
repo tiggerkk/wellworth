@@ -6,7 +6,7 @@ import { useSheetNavigate } from '../hooks/useSheetNavigate'
 import { SectionCard } from '../components/SectionCard'
 import { FieldRow } from '../components/FieldRow'
 import { Toggle } from '../components/Toggle'
-import { clearFoodMatchCache, foodMatchCacheSize } from '../lib/food-match-cache'
+import { clearFoodMatchCache, foodMatchCacheSize } from '../lib/wellness-food-match-cache'
 import { routes } from '../constants/routes'
 import type { Tables, TablesUpdate } from '../types/database'
 

@@ -4,7 +4,7 @@ import {
   foodMatchStatus,
   singularize,
   toUsdaWildcardQuery,
-} from './food-search'
+} from './wellness-food-search'
 
 describe('singularize', () => {
   it('handles -ies, -es, and -s plurals', () => {

@@ -3,7 +3,7 @@ import { SectionCard } from './SectionCard'
 import { FieldRow } from './FieldRow'
 import { SegmentedTabs } from './SegmentedTabs'
 import { Calendar } from './Calendar'
-import { cmToInches, inchesToCm, kgToPounds, poundsToKg } from '../lib/units'
+import { cmToInches, inchesToCm, kgToPounds, poundsToKg } from '../lib/wellness-units'
 import { formatFullDate, todayLocal, type IsoDate } from '../lib/date'
 
 const round1 = (n: number) => Math.round(n * 10) / 10

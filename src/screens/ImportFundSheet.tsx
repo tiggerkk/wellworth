@@ -6,7 +6,7 @@ import { Sheet } from '../components/Sheet'
 import { PrimaryButton } from '../components/PrimaryButton'
 import { useAuth } from '../auth/AuthProvider'
 import { parseCsv } from '../lib/csv'
-import { parseFundCsv, type FundImportResult } from '../lib/fund-import'
+import { parseFundCsv, type FundImportResult } from '../lib/networth-fund-import'
 import {
   getSnapshotWithEntries,
   replaceAssetTypeEntries,

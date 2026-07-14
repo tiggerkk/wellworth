@@ -1,5 +1,5 @@
-import type { NutrientMap } from './nutrients'
-import type { ExternalFood } from './food-api'
+import type { NutrientMap } from './wellness-nutrients'
+import type { ExternalFood } from './wellness-food-api'
 
 /**
  * Open Food Facts barcode lookup + nutrient mapping. Called directly from the browser.

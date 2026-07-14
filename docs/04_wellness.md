@@ -382,7 +382,7 @@ Shared external APIs).
   Resolved MET for a session = `met_by_effort[session_effort]`. The default_effort must be a key in
   this map.
 - `icon` TEXT NULL — Tabler icon component name (e.g. 'IconKarate'). Resolved at render time via
-  `ACTIVITY_ICONS[icon]` in `src/constants/activity-icons.ts` (named imports only — do NOT use
+  `ACTIVITY_ICONS[icon]` in `src/constants/wellness.ts` (named imports only — do NOT use
   `import * as TablerIcons`). Null/unknown falls back to `IconRun`.
 - `deleted_at` TIMESTAMPTZ NULL — **soft delete**. Never hard-delete an activity referenced by a
   diary entry.

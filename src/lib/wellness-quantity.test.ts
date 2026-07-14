@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { draftAmount } from './quantity'
+import { draftAmount } from './wellness-quantity'
 
 describe('draftAmount', () => {
   it('returns the parsed number for valid input', () => {

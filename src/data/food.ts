@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase'
-import type { ImportFoodRecord } from '../lib/food-import'
-import type { ExternalFood } from '../lib/food-api'
+import type { ImportFoodRecord } from '../lib/wellness-food-import'
+import type { ExternalFood } from '../lib/wellness-food-api'
 import { replaceServings } from './serving'
 import { foodHasEntries } from './diary-entry'
 import type { Tables, TablesInsert, TablesUpdate } from '../types/database'

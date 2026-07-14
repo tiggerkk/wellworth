@@ -3,8 +3,12 @@ import { IconWorldSearch } from '@tabler/icons-react'
 import { OverlayTop } from './OverlayTop'
 import { OverlayCloseButton } from './OverlayCloseButton'
 import { SearchBar } from './SearchBar'
-import { externalFoodServing, searchFoods, type ExternalFood } from '../lib/food-api'
-import { foodMatchScore } from '../lib/food-search'
+import {
+  externalFoodServing,
+  searchFoods,
+  type ExternalFood,
+} from '../lib/wellness-food-api'
+import { foodMatchScore } from '../lib/wellness-food-search'
 
 type SearchError = 'failed' | null
 

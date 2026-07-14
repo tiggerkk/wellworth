@@ -1,4 +1,4 @@
-import type { NutrientDri } from './dri'
+import type { NutrientDri } from './wellness-dri'
 
 /**
  * Nutrient-map math (docs/02-tech-spec.md). A NutrientMap is `{ nutrient_key: amount }`

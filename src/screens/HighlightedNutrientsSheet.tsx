@@ -4,7 +4,7 @@ import { SheetCloseButton } from '../components/SheetCloseButton'
 import { Sheet } from '../components/Sheet'
 import { useProfileEditor } from '../hooks/useProfileEditor'
 import { useNutrientReference } from '../hooks/useNutrientReference'
-import { NUTRIENT_SECTIONS } from '../constants/nutrient-sections'
+import { NUTRIENT_SECTIONS } from '../constants/wellness'
 import type { Tables } from '../types/database'
 
 const MAX = 8

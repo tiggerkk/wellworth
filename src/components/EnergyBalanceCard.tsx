@@ -1,4 +1,4 @@
-import { netEnergy } from '../lib/energy'
+import { netEnergy } from '../lib/wellness-energy'
 
 interface EnergyBalanceCardProps {
   consumed: number
