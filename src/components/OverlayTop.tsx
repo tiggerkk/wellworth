@@ -1,7 +1,7 @@
 import { type ReactNode } from 'react'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 
-interface LocalOverlayProps {
+interface OverlayTopProps {
   children: ReactNode
   onClose: () => void
   label: string
@@ -15,7 +15,7 @@ interface LocalOverlayProps {
  * caller doesn't have to re-type them; the caller supplies its own header/body content (typically
  * an `OverlayCloseButton` alongside a `SearchBar` or title).
  */
-export function LocalOverlay({ children, onClose, label }: LocalOverlayProps) {
+export function OverlayTop({ children, onClose, label }: OverlayTopProps) {
   useEscapeKey(onClose)
   return (
     <div className="fixed inset-0 z-30">

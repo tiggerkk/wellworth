@@ -6,7 +6,7 @@ import { listBooks } from '../data/book'
 import { posterUrl } from '../lib/shows'
 import { filterLinkCandidates, type LinkCandidate } from '../lib/quotes'
 import type { QuoteSourceType } from '../constants/quotes'
-import { LocalOverlay } from './LocalOverlay'
+import { OverlayTop } from './OverlayTop'
 import { OverlayCloseButton } from './OverlayCloseButton'
 import { SearchBar } from './SearchBar'
 import { Thumb } from './Thumb'
@@ -71,7 +71,7 @@ export function QuoteSourceLinkOverlay({
   const results = filterLinkCandidates(all, query)
 
   return (
-    <LocalOverlay onClose={onClose} label="Link a Show or Book">
+    <OverlayTop onClose={onClose} label="Link a Show or Book">
       <div className="flex items-center gap-3 border-b border-border px-4 py-3">
         <OverlayCloseButton onClick={onClose} />
         <div className="flex-1">
@@ -125,6 +125,6 @@ export function QuoteSourceLinkOverlay({
           )}
         </div>
       </div>
-    </LocalOverlay>
+    </OverlayTop>
   )
 }

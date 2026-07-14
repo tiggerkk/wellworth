@@ -1,7 +1,7 @@
 import { IconX } from '@tabler/icons-react'
 
 /**
- * Shared `X` close button for a `LocalOverlay`'s header row. Unlike `SheetCloseButton` (which is
+ * Shared `X` close button for a `OverlayTop`'s header row. Unlike `SheetCloseButton` (which is
  * wired to `navigate(-1)` for routed sheets), this takes a plain `onClick` since a local overlay
  * has no route of its own to go back from.
  */

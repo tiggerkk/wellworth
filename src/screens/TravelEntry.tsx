@@ -24,6 +24,8 @@ import { IconAction } from '../components/IconAction'
 import { StopEditorOverlay } from '../components/StopEditorOverlay'
 import { StopTypeIcon } from '../components/StopTypeIcon'
 import { Collapsible } from '../components/Collapsible'
+import { OverlayBottom } from '../components/OverlayBottom'
+import { OverlayCloseButton } from '../components/OverlayCloseButton'
 import { TravelExpensesPanel } from '../components/TravelExpensesPanel'
 import { DayExpensesOverlay } from '../components/DayExpensesOverlay'
 import type { ExpenseDraft } from '../components/ExpenseRowsEditor'
@@ -957,36 +959,25 @@ function ReorderDaysSheet({
   onReorder: (ids: string[]) => void
   onClose: () => void
 }) {
-  useEscapeKey(onClose)
   const indexById = new Map(days.map((d, i) => [d.id, i]))
   return (
-    <div className="fixed inset-0 z-30">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} aria-hidden />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label="Reorder days"
-        className="absolute inset-x-0 bottom-0 mx-auto max-w-md rounded-t-card bg-surface pb-[env(safe-area-inset-bottom)]"
-      >
-        <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-          <h1 className="flex-1 text-heading font-medium text-text-primary">
-            Reorder Days
-          </h1>
-          <button onClick={onClose} aria-label="Done" className="text-text-secondary">
-            <IconX size={22} />
-          </button>
-        </header>
-        <div className="p-4">
-          <ReorderList
-            ids={days.map((d) => d.id)}
-            onReorder={onReorder}
-            renderLabel={(id) => {
-              const d = days.find((x) => x.id === id)!
-              return label(d, indexById.get(id) ?? 0)
-            }}
-          />
-        </div>
+    <OverlayBottom onClose={onClose} label="Reorder days">
+      <header className="flex items-center gap-3 border-b border-border px-4 py-3">
+        <OverlayCloseButton onClick={onClose} />
+        <h1 className="flex-1 text-heading font-medium text-text-primary">
+          Reorder Days
+        </h1>
+      </header>
+      <div className="p-4">
+        <ReorderList
+          ids={days.map((d) => d.id)}
+          onReorder={onReorder}
+          renderLabel={(id) => {
+            const d = days.find((x) => x.id === id)!
+            return label(d, indexById.get(id) ?? 0)
+          }}
+        />
       </div>
-    </div>
+    </OverlayBottom>
   )
 }

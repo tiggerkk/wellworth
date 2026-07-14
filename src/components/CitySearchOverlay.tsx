@@ -5,7 +5,7 @@ import {
   IconMapPin,
   IconWorldSearch,
 } from '@tabler/icons-react'
-import { LocalOverlay } from './LocalOverlay'
+import { OverlayTop } from './OverlayTop'
 import { OverlayCloseButton } from './OverlayCloseButton'
 import { SearchBar } from './SearchBar'
 import { SelectMenu } from './SelectMenu'
@@ -127,7 +127,7 @@ export function CitySearchOverlay({
   }
 
   return (
-    <LocalOverlay onClose={onClose} label="Pick a city">
+    <OverlayTop onClose={onClose} label="Pick a city">
       <header className="flex items-center gap-3 border-b border-border px-4 py-3">
         <OverlayCloseButton onClick={onClose} />
         <div className="flex-1">
@@ -266,6 +266,6 @@ export function CitySearchOverlay({
           )}
         </section>
       </div>
-    </LocalOverlay>
+    </OverlayTop>
   )
 }

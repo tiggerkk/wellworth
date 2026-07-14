@@ -1,6 +1,7 @@
+import { OverlayBottom } from '../components/OverlayBottom'
+import { OverlayCloseButton } from '../components/OverlayCloseButton'
 import { useState } from 'react'
-import { IconChevronLeft, IconChevronRight, IconX } from '@tabler/icons-react'
-import { useEscapeKey } from '../hooks/useEscapeKey'
+import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react'
 import {
   fromIsoDate,
   startOfMonth,
@@ -40,28 +41,16 @@ export function MonthPicker({ month, onSelect, onClose }: MonthPickerProps) {
   const today = fromIsoDate(todayLocal())
   const todayYear = today.getFullYear()
   const todayMonth = today.getMonth()
-  // Esc cancels (close without committing).
-  useEscapeKey(onClose)
 
   return (
-    <div className="fixed inset-0 z-30">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} aria-hidden />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label="Choose a month"
-        className="absolute inset-x-0 bottom-0 mx-auto max-w-md rounded-t-card bg-surface p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]"
-      >
+    <OverlayBottom onClose={onClose} label="Choose a month">
+      <div className="p-4">
         {/* X (cancel) hugs the top-left; the ‹ year › cluster is centered with the arrows pulled in
             tight against the label, matching Calendar. */}
         <div className="relative mb-3 flex items-center justify-center">
-          <button
-            onClick={onClose}
-            aria-label="Close"
-            className="absolute left-0 p-1 text-text-secondary"
-          >
-            <IconX size={22} />
-          </button>
+          <div className="absolute left-0">
+            <OverlayCloseButton onClick={onClose} />
+          </div>
           <div className="flex items-center gap-1">
             <button
               onClick={() => setViewYear((y) => y - 1)}
@@ -112,6 +101,6 @@ export function MonthPicker({ month, onSelect, onClose }: MonthPickerProps) {
           </button>
         </div>
       </div>
-    </div>
+    </OverlayBottom>
   )
 }

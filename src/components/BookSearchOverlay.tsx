@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { IconWorldSearch } from '@tabler/icons-react'
-import { LocalOverlay } from './LocalOverlay'
+import { OverlayTop } from './OverlayTop'
 import { OverlayCloseButton } from './OverlayCloseButton'
 import { SearchBar } from './SearchBar'
 import { CoverThumb } from './CoverThumb'
@@ -82,7 +82,7 @@ export function BookSearchOverlay({
   }, [debounced, authorHint])
 
   return (
-    <LocalOverlay onClose={onClose} label="Search books">
+    <OverlayTop onClose={onClose} label="Search books">
       <div className="flex items-center gap-3 border-b border-border px-4 py-3">
         <OverlayCloseButton onClick={onClose} />
         <div className="flex-1">
@@ -153,6 +153,6 @@ export function BookSearchOverlay({
           </p>
         )}
       </div>
-    </LocalOverlay>
+    </OverlayTop>
   )
 }

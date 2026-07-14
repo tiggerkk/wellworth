@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { IconWorldSearch } from '@tabler/icons-react'
-import { LocalOverlay } from './LocalOverlay'
+import { OverlayTop } from './OverlayTop'
 import { OverlayCloseButton } from './OverlayCloseButton'
 import { SegmentedTabs } from './SegmentedTabs'
 import { SelectMenu } from './SelectMenu'
@@ -133,7 +133,7 @@ export function StopEditorOverlay({
 
   return (
     <>
-      <LocalOverlay onClose={onClose} label={stop ? 'Edit stop' : 'Add stop'}>
+      <OverlayTop onClose={onClose} label={stop ? 'Edit stop' : 'Add stop'}>
         <header className="flex items-center gap-3 border-b border-border px-4 py-3">
           <OverlayCloseButton onClick={onClose} />
           <h1 className="flex-1 text-heading font-medium text-text-primary">
@@ -248,7 +248,7 @@ export function StopEditorOverlay({
             )}
           </div>
         </div>
-      </LocalOverlay>
+      </OverlayTop>
 
       {cityOpen && (
         <CitySearchOverlay

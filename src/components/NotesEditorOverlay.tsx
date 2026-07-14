@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { IconClipboard, IconX } from '@tabler/icons-react'
+import { IconClipboard } from '@tabler/icons-react'
+import { OverlayTop } from './OverlayTop'
+import { OverlayCloseButton } from './OverlayCloseButton'
 import { EntryHeaderActions } from './EntryHeaderActions'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 
@@ -93,59 +95,49 @@ export function NotesEditorOverlay({
   }
 
   return (
-    <div className="fixed inset-0 z-40">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} aria-hidden />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={`Edit ${fieldLabel.toLowerCase()}`}
-        className="absolute inset-0 flex flex-col bg-surface pt-[env(safe-area-inset-top)] motion-reduce:animate-none animate-[slideUp_200ms_ease-out]"
-      >
-        <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-          <button onClick={onClose} aria-label="Close" className="text-text-secondary">
-            <IconX size={22} />
-          </button>
-          <div className="min-w-0 flex-1">
-            <h1 className="truncate text-heading font-medium text-text-primary">
-              {headerTitle}
-            </h1>
-            {subtitle && (
-              <p className="truncate text-caption text-text-secondary">{subtitle}</p>
-            )}
-          </div>
-          <EntryHeaderActions
-            editing
-            dirty={dirty}
-            saving={false}
-            onReset={() => setBuffer(value)}
-            onDelete={() => setBuffer('')}
-            onSubmit={() => {
-              onSave(buffer)
-              onClose()
-            }}
-          />
-        </header>
-
-        <div className="flex flex-1 flex-col overflow-hidden p-4">
-          <div className="flex items-center justify-between">
-            <span className="text-caption text-text-secondary">{fieldLabel}</span>
-            {canPaste && (
-              <button
-                onClick={() => void pasteAtCursor()}
-                className="flex items-center gap-1 text-caption text-accent"
-              >
-                <IconClipboard size={14} /> Paste
-              </button>
-            )}
-          </div>
-          <textarea
-            ref={taRef}
-            value={buffer}
-            onChange={(e) => setBuffer(e.target.value)}
-            className="field-control mt-1 w-full flex-1 resize-none overflow-y-auto"
-          />
+    <OverlayTop onClose={onClose} label="Edit ${fieldLabel.toLowerCase()}">
+      <header className="flex items-center gap-3 border-b border-border px-4 py-3">
+        <OverlayCloseButton onClick={onClose} />
+        <div className="min-w-0 flex-1">
+          <h1 className="truncate text-heading font-medium text-text-primary">
+            {headerTitle}
+          </h1>
+          {subtitle && (
+            <p className="truncate text-caption text-text-secondary">{subtitle}</p>
+          )}
         </div>
+        <EntryHeaderActions
+          editing
+          dirty={dirty}
+          saving={false}
+          onReset={() => setBuffer(value)}
+          onDelete={() => setBuffer('')}
+          onSubmit={() => {
+            onSave(buffer)
+            onClose()
+          }}
+        />
+      </header>
+
+      <div className="flex flex-1 flex-col overflow-hidden p-4">
+        <div className="flex items-center justify-between">
+          <span className="text-caption text-text-secondary">{fieldLabel}</span>
+          {canPaste && (
+            <button
+              onClick={() => void pasteAtCursor()}
+              className="flex items-center gap-1 text-caption text-accent"
+            >
+              <IconClipboard size={14} /> Paste
+            </button>
+          )}
+        </div>
+        <textarea
+          ref={taRef}
+          value={buffer}
+          onChange={(e) => setBuffer(e.target.value)}
+          className="field-control mt-1 w-full flex-1 resize-none overflow-y-auto"
+        />
       </div>
-    </div>
+    </OverlayTop>
   )
 }

@@ -1,4 +1,5 @@
-import { IconX } from '@tabler/icons-react'
+import { OverlayTop } from './OverlayTop'
+import { OverlayCloseButton } from './OverlayCloseButton'
 import { ExpenseRowsEditor, type ExpenseDraft } from './ExpenseRowsEditor'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 import type { ExpenseRow, ExpenseUpdate } from '../lib/travel-expenses'
@@ -46,42 +47,32 @@ export function DayExpensesOverlay({
 }: DayExpensesOverlayProps) {
   useEscapeKey(onClose)
   return (
-    <div className="fixed inset-0 z-30">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} aria-hidden />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={`Expenses for ${dayLabel}`}
-        className="absolute inset-0 flex flex-col bg-bg pt-[env(safe-area-inset-top)]"
-      >
-        <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-          <button onClick={onClose} aria-label="Close" className="text-text-secondary">
-            <IconX size={22} />
-          </button>
-          <div className="flex-1">
-            <h1 className="text-heading font-medium text-text-primary">Expenses</h1>
-            <p className="text-caption text-text-secondary">
-              {dayLabel}
-              {date ? ` · ${formatFullDate(date)}` : ''}
-            </p>
-          </div>
-        </header>
-
-        <div className="min-h-0 flex-1 overflow-y-auto p-4">
-          <ExpenseRowsEditor
-            expenses={expenses}
-            categories={categories}
-            currencies={currencies}
-            defaultCurrency={defaultCurrency}
-            defaultDate={defaultDate}
-            trackReimbursement={trackReimbursement}
-            onAdd={onAdd}
-            onUpdate={onUpdate}
-            onDelete={onDelete}
-            onReorder={onReorder}
-          />
+    <OverlayTop onClose={onClose} label="Expenses for ${dayLabel}">
+      <header className="flex items-center gap-3 border-b border-border px-4 py-3">
+        <OverlayCloseButton onClick={onClose} />
+        <div className="flex-1">
+          <h1 className="text-heading font-medium text-text-primary">Expenses</h1>
+          <p className="text-caption text-text-secondary">
+            {dayLabel}
+            {date ? ` · ${formatFullDate(date)}` : ''}
+          </p>
         </div>
+      </header>
+
+      <div className="min-h-0 flex-1 overflow-y-auto p-4">
+        <ExpenseRowsEditor
+          expenses={expenses}
+          categories={categories}
+          currencies={currencies}
+          defaultCurrency={defaultCurrency}
+          defaultDate={defaultDate}
+          trackReimbursement={trackReimbursement}
+          onAdd={onAdd}
+          onUpdate={onUpdate}
+          onDelete={onDelete}
+          onReorder={onReorder}
+        />
       </div>
-    </div>
+    </OverlayTop>
   )
 }

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { IconPlus } from '@tabler/icons-react'
-import { LocalOverlay } from './LocalOverlay'
+import { OverlayTop } from './OverlayTop'
 import { OverlayCloseButton } from './OverlayCloseButton'
 import { SearchBar } from './SearchBar'
 import { MEDICAL_CATEGORY_LABELS, type MedicalLabTestSeed } from '../constants/medical'
@@ -39,7 +39,7 @@ export function MedicalTestPickerOverlay({
     .filter((g) => g.tests.length > 0)
 
   return (
-    <LocalOverlay onClose={onClose} label="Add a test">
+    <OverlayTop onClose={onClose} label="Add a test">
       <div className="flex items-center gap-3 border-b border-border px-4 py-3">
         <OverlayCloseButton onClick={onClose} />
         <div className="flex-1">
@@ -87,6 +87,6 @@ export function MedicalTestPickerOverlay({
           </p>
         )}
       </div>
-    </LocalOverlay>
+    </OverlayTop>
   )
 }

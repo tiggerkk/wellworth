@@ -1,7 +1,8 @@
+import { OverlayBottom } from '../components/OverlayBottom'
+import { OverlayCloseButton } from '../components/OverlayCloseButton'
 import { useCallback, useState } from 'react'
-import { IconChevronLeft, IconChevronRight, IconX } from '@tabler/icons-react'
+import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react'
 import { useAsync } from '../hooks/useAsync'
-import { useEscapeKey } from '../hooks/useEscapeKey'
 import {
   addDays,
   addMonths,
@@ -56,8 +57,6 @@ export function Calendar({ day, onSelect, onClose, loadCues }: CalendarProps) {
   // Top-left year of the current year-grid page (only meaningful in 'years' mode).
   const [yearBase, setYearBase] = useState(() => pickYear - Math.floor(YEAR_PAGE / 2))
   const today = todayLocal()
-  // Esc cancels (close without committing).
-  useEscapeKey(onClose)
 
   const monthStart = fromIsoDate(viewMonth)
   const year = monthStart.getFullYear()
@@ -78,24 +77,14 @@ export function Calendar({ day, onSelect, onClose, loadCues }: CalendarProps) {
   }).format(monthStart)
 
   return (
-    <div className="fixed inset-0 z-30">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} aria-hidden />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label="Choose a date"
-        className="absolute inset-x-0 bottom-0 mx-auto max-w-md rounded-t-card bg-surface p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]"
-      >
+    <OverlayBottom onClose={onClose} label="Choose a date">
+      <div className="p-4">
         {/* X (cancel) hugs the top-left; the ‹ label › cluster is centered with the arrows pulled in
             tight against the label. */}
         <div className="relative mb-3 flex items-center justify-center">
-          <button
-            onClick={onClose}
-            aria-label="Close"
-            className="absolute left-0 p-1 text-text-secondary"
-          >
-            <IconX size={22} />
-          </button>
+          <div className="absolute left-0">
+            <OverlayCloseButton onClick={onClose} />
+          </div>
           <div className="flex items-center gap-1">
             <button
               onClick={() =>
@@ -271,6 +260,6 @@ export function Calendar({ day, onSelect, onClose, loadCues }: CalendarProps) {
           </button>
         </div>
       </div>
-    </div>
+    </OverlayBottom>
   )
 }

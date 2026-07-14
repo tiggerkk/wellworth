@@ -10,7 +10,6 @@ import { EntryLoader } from '../components/EntryLoader'
 import { IconAction } from '../components/IconAction'
 import { InsuranceCompareOverlay } from '../components/InsuranceCompareOverlay'
 import { InsurancePolicyHeader } from '../components/InsurancePolicyHeader'
-import { SecondaryButton } from '../components/SecondaryButton'
 import {
   addScheduleVersion,
   createPolicy,
@@ -44,6 +43,9 @@ import { SegmentedTabs } from '../components/SegmentedTabs'
 import { EntryHeaderActions } from '../components/EntryHeaderActions'
 import { ConfirmDeleteAction } from '../components/ConfirmDeleteAction'
 import { PrimaryButton } from '../components/PrimaryButton'
+import { SecondaryButton } from '../components/SecondaryButton'
+import { OverlayTop } from '../components/OverlayTop'
+import { OverlayCloseButton } from '../components/OverlayCloseButton'
 
 type TerminationKind = 'surrendered' | 'matured'
 
@@ -819,11 +821,9 @@ function ImportScheduleOverlay({
   const canApply = parsed != null && parseErrors.length === 0 && !mismatch && !busy
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-bg pt-[env(safe-area-inset-top)]">
+    <OverlayTop onClose={onClose} label="Import Policy Schedule">
       <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <button onClick={onClose} aria-label="Close">
-          <IconX size={22} className="text-text-secondary" />
-        </button>
+        <OverlayCloseButton onClick={onClose} />
         <h1 className="text-heading font-medium text-text-primary">
           Import Policy Schedule
         </h1>
@@ -919,6 +919,6 @@ function ImportScheduleOverlay({
           {busy ? 'Importing…' : 'IMPORT SCHEDULE'}
         </PrimaryButton>
       </div>
-    </div>
+    </OverlayTop>
   )
 }

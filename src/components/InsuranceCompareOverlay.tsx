@@ -1,5 +1,6 @@
 import { Suspense, useMemo, useState } from 'react'
-import { IconX } from '@tabler/icons-react'
+import { OverlayTop } from './OverlayTop'
+import { OverlayCloseButton } from './OverlayCloseButton'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 import { lazyWithReload } from '../lib/lazy-with-reload'
 import { SelectMenu } from './SelectMenu'
@@ -72,11 +73,9 @@ export function InsuranceCompareOverlay({
   }))
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-bg pt-[env(safe-area-inset-top)]">
+    <OverlayTop onClose={onClose} label="Compare Schedules">
       <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <button onClick={onClose} aria-label="Close">
-          <IconX size={22} className="text-text-secondary" />
-        </button>
+        <OverlayCloseButton onClick={onClose} />
         <h1 className="text-heading font-medium text-text-primary">Compare Schedules</h1>
       </header>
 
@@ -182,6 +181,6 @@ export function InsuranceCompareOverlay({
           </>
         )}
       </div>
-    </div>
+    </OverlayTop>
   )
 }

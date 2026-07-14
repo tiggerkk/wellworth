@@ -5,7 +5,6 @@ import {
   IconChevronRight,
   IconHeartbeat,
   IconReportMedical,
-  IconX,
 } from '@tabler/icons-react'
 import { lazyWithReload } from '../lib/lazy-with-reload'
 import { useMedicalTrends } from '../hooks/useMedicalTrends'
@@ -27,9 +26,10 @@ import { asFlag, latestPoint, type TrackedTrend } from '../lib/medical-trends'
 import { formatRefRange, formatResultValue, type MedicalReportRow } from '../lib/medical'
 import type { ResultWithReportMeta } from '../data/medical'
 import { formatFullDate, todayLocal } from '../lib/date'
-import { useEscapeKey } from '../hooks/useEscapeKey'
 import { MedicalValueRow } from '../components/MedicalValueRow'
 import { Collapsible } from '../components/Collapsible'
+import { OverlayBottom } from '../components/OverlayBottom'
+import { OverlayCloseButton } from '../components/OverlayCloseButton'
 import { routes } from '../constants/routes'
 
 // Lazy so recharts is fetched only when a sparkline is expanded (its own chunk). The grid itself
@@ -231,7 +231,6 @@ function ExpandedTrend({
 }) {
   const [rangeKey, setRangeKey] = useState(MEDICAL_RANGE_DEFAULT)
   const [menuOpen, setMenuOpen] = useState(false)
-  useEscapeKey(onClose)
 
   const range =
     MEDICAL_RANGES.find((r) => r.key === rangeKey) ??
@@ -242,85 +241,71 @@ function ExpandedTrend({
   ).map((p) => ({ date: p.date, value: p.value, flag: p.flag }))
 
   return (
-    <div className="fixed inset-0 z-30">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} aria-hidden />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={`${trend.name} trend`}
-        className="absolute inset-x-0 bottom-0 rounded-t-2xl border-t border-border bg-surface pb-[env(safe-area-inset-bottom)]"
-      >
-        <div className="flex items-center gap-3 border-b border-border px-4 py-3">
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-body font-medium text-text-primary">
-              {trend.name}
-            </p>
-            {trend.unit && (
-              <p className="text-caption text-text-secondary">{trend.unit}</p>
-            )}
-          </div>
-          <div className="relative">
-            <button
-              onClick={() => setMenuOpen((o) => !o)}
-              className="flex items-center gap-1 rounded-input bg-input px-2.5 py-1.5 text-body text-text-primary"
-            >
-              {range.label}
-              <IconChevronDown size={15} className="text-text-secondary" />
-            </button>
-            {menuOpen && (
-              <>
-                <div
-                  className="fixed inset-0 z-10"
-                  onClick={() => setMenuOpen(false)}
-                  aria-hidden
-                />
-                <div className="absolute right-0 z-20 mt-1 w-24 overflow-hidden rounded-card border border-border bg-surface text-body shadow-lg">
-                  {MEDICAL_RANGES.map((r) => (
-                    <button
-                      key={r.key}
-                      onClick={() => {
-                        setRangeKey(r.key)
-                        setMenuOpen(false)
-                      }}
-                      className={`block w-full px-4 py-2 text-left active:bg-input/40 ${
-                        r.key === rangeKey ? 'text-accent' : 'text-text-primary'
-                      }`}
-                    >
-                      {r.label}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-          <button onClick={onClose} aria-label="Close" className="shrink-0">
-            <IconX size={22} className="text-text-secondary" />
-          </button>
+    <OverlayBottom onClose={onClose} label="${trend.name} trend">
+      <div className="flex items-center gap-3 border-b border-border px-4 py-3">
+        <OverlayCloseButton onClick={onClose} />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-body font-medium text-text-primary">{trend.name}</p>
+          {trend.unit && <p className="text-caption text-text-secondary">{trend.unit}</p>}
         </div>
-
-        <div className="px-2 py-4">
-          {points.length === 0 ? (
-            <p className="py-10 text-center text-body text-text-secondary">
-              No readings in this window.
-            </p>
-          ) : (
-            <Suspense
-              fallback={
-                <p className="py-10 text-center text-body text-text-secondary">
-                  Loading chart…
-                </p>
-              }
-            >
-              <MedicalTrendChart
-                points={points}
-                unit={trend.unit}
-                refLow={refLow}
-                refHigh={refHigh}
+        <div className="relative">
+          <button
+            onClick={() => setMenuOpen((o) => !o)}
+            className="flex items-center gap-1 rounded-input bg-input px-2.5 py-1.5 text-body text-text-primary"
+          >
+            {range.label}
+            <IconChevronDown size={15} className="text-text-secondary" />
+          </button>
+          {menuOpen && (
+            <>
+              <div
+                className="fixed inset-0 z-10"
+                onClick={() => setMenuOpen(false)}
+                aria-hidden
               />
-            </Suspense>
+              <div className="absolute right-0 z-20 mt-1 w-24 overflow-hidden rounded-card border border-border bg-surface text-body shadow-lg">
+                {MEDICAL_RANGES.map((r) => (
+                  <button
+                    key={r.key}
+                    onClick={() => {
+                      setRangeKey(r.key)
+                      setMenuOpen(false)
+                    }}
+                    className={`block w-full px-4 py-2 text-left active:bg-input/40 ${
+                      r.key === rangeKey ? 'text-accent' : 'text-text-primary'
+                    }`}
+                  >
+                    {r.label}
+                  </button>
+                ))}
+              </div>
+            </>
           )}
         </div>
       </div>
-    </div>
+
+      <div className="px-2 py-4">
+        {points.length === 0 ? (
+          <p className="py-10 text-center text-body text-text-secondary">
+            No readings in this window.
+          </p>
+        ) : (
+          <Suspense
+            fallback={
+              <p className="py-10 text-center text-body text-text-secondary">
+                Loading chart…
+              </p>
+            }
+          >
+            <MedicalTrendChart
+              points={points}
+              unit={trend.unit}
+              refLow={refLow}
+              refHigh={refHigh}
+            />
+          </Suspense>
+        )}
+      </div>
+    </OverlayBottom>
   )
 }
