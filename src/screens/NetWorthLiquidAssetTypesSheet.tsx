@@ -6,6 +6,7 @@ import { useProfileEditor } from '../hooks/useProfileEditor'
 import { ASSET_TYPES, ASSET_TYPE_LABELS, type AssetType } from '../constants/networth'
 import { liquidAssetTypes } from '../lib/networth'
 import type { Tables, TablesUpdate } from '../types/database'
+import { EntryLoader } from '../components/EntryLoader'
 
 /**
  * Net Worth Settings → Display → Liquid Assets: classify each asset type as liquid or non-liquid.
@@ -22,8 +23,10 @@ export function NetWorthLiquidAssetTypesSheet() {
         <SheetCloseButton />
         <h1 className="text-heading font-medium text-text-primary">Liquid Assets</h1>
       </header>
-      {loading && <p className="p-4 text-body text-text-secondary">Loading…</p>}
-      {profile && <Editor profile={profile} save={save} />}
+
+      <EntryLoader loading={loading} data={profile} errorText="Couldn’t load settings.">
+        {(prof) => <Editor profile={prof} save={save} />}
+      </EntryLoader>
     </Sheet>
   )
 }

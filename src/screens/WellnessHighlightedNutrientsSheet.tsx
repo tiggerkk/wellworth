@@ -6,6 +6,7 @@ import { useProfileEditor } from '../hooks/useProfileEditor'
 import { useNutrientReference } from '../hooks/useNutrientReference'
 import { NUTRIENT_SECTIONS } from '../constants/wellness'
 import type { Tables } from '../types/database'
+import { EntryLoader } from '../components/EntryLoader'
 
 const MAX = 8
 
@@ -21,14 +22,20 @@ export function WellnessHighlightedNutrientsSheet() {
           Highlighted Nutrients
         </h1>
       </header>
-      {loading && <p className="p-4 text-body text-text-secondary">Loading…</p>}
-      {profile && nutrients && (
-        <Picker
-          initial={profile.highlighted_nutrients}
-          nutrients={nutrients}
-          onChange={(next) => void save({ highlighted_nutrients: next })}
-        />
-      )}
+
+      <EntryLoader
+        loading={loading || !nutrients}
+        data={profile}
+        errorText="Couldn’t load highlighted nutrients."
+      >
+        {(prof) => (
+          <Picker
+            initial={prof.highlighted_nutrients}
+            nutrients={nutrients!}
+            onChange={(next) => void save({ highlighted_nutrients: next })}
+          />
+        )}
+      </EntryLoader>
     </Sheet>
   )
 }

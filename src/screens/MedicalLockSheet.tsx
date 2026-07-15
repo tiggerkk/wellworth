@@ -25,6 +25,7 @@ import {
   registerPlatformCredential,
 } from '../lib/medical-webauthn'
 import type { Tables, TablesUpdate } from '../types/database'
+import { EntryLoader } from '../components/EntryLoader'
 
 type SaveFn = (patch: TablesUpdate<'profile'>) => Promise<void>
 
@@ -43,8 +44,14 @@ export function MedicalLockSheet() {
         <SheetCloseButton />
         <h1 className="text-heading font-medium text-text-primary">Lock</h1>
       </header>
-      {loading && <p className="p-4 text-body text-text-secondary">Loading…</p>}
-      {profile && <Body profile={profile} save={save} />}
+
+      <EntryLoader
+        loading={loading}
+        data={profile}
+        errorText="Couldn’t load security settings."
+      >
+        {(prof) => <Body profile={prof} save={save} />}
+      </EntryLoader>
     </Sheet>
   )
 }

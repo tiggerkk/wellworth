@@ -15,6 +15,7 @@ import {
   renameCategory,
   reorderCategories,
 } from '../lib/travel-config'
+import { EntryLoader } from '../components/EntryLoader'
 
 /**
  * Travel → Expense Categories: add / rename / delete / reorder the owner's category list, stored on
@@ -32,10 +33,14 @@ export function TravelCategoriesSheet() {
         <SheetCloseButton />
         <h1 className="text-heading font-medium text-text-primary">Expense Categories</h1>
       </header>
-      {loading && <p className="p-4 text-body text-text-secondary">Loading…</p>}
-      {profile &&
-        (() => {
-          const list = effectiveCategories(profile.travel_expense_categories)
+
+      <EntryLoader
+        loading={loading}
+        data={profile}
+        errorText="Couldn’t load expense categories."
+      >
+        {(prof) => {
+          const list = effectiveCategories(prof.travel_expense_categories)
           return (
             <ConfigListEditor
               list={list}
@@ -60,7 +65,8 @@ export function TravelCategoriesSheet() {
               )}
             />
           )
-        })()}
+        }}
+      </EntryLoader>
     </Sheet>
   )
 }

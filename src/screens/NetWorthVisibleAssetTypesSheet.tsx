@@ -8,6 +8,7 @@ import { ASSET_TYPE_LABELS, type AssetType } from '../constants/networth'
 import { orderedAssetTypes, visibleAssetTypes } from '../lib/networth'
 import { showToast } from '../lib/toast'
 import type { Tables, TablesUpdate } from '../types/database'
+import { EntryLoader } from '../components/EntryLoader'
 
 /**
  * Net Worth Settings → Display → Visible Asset Types: a combined reorder + visibility list. Drag to
@@ -25,8 +26,10 @@ export function NetWorthVisibleAssetTypesSheet() {
           Visible Asset Types
         </h1>
       </header>
-      {loading && <p className="p-4 text-body text-text-secondary">Loading…</p>}
-      {profile && <Editor profile={profile} save={save} />}
+
+      <EntryLoader loading={loading} data={profile} errorText="Couldn’t load settings.">
+        {(prof) => <Editor profile={prof} save={save} />}
+      </EntryLoader>
     </Sheet>
   )
 }

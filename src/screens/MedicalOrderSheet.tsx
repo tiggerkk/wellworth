@@ -7,6 +7,7 @@ import { useProfileEditor } from '../hooks/useProfileEditor'
 import { MEDICAL_CATEGORY_LABELS, type MedicalCategory } from '../constants/medical'
 import { buildOrderModel, flattenTestOrder, testDisplayName } from '../lib/medical-order'
 import type { Tables, TablesUpdate } from '../types/database'
+import { EntryLoader } from '../components/EntryLoader'
 
 /**
  * Medical → Display Order (M5): drag-to-reorder the category **sections** and the **tests within a
@@ -23,8 +24,14 @@ export function MedicalOrderSheet() {
         <SheetCloseButton />
         <h1 className="text-heading font-medium text-text-primary">Display Order</h1>
       </header>
-      {loading && <p className="p-4 text-body text-text-secondary">Loading…</p>}
-      {profile && <Editor profile={profile} save={save} />}
+
+      <EntryLoader
+        loading={loading}
+        data={profile}
+        errorText="Couldn’t load display order settings."
+      >
+        {(prof) => <Editor profile={prof} save={save} />}
+      </EntryLoader>
     </Sheet>
   )
 }

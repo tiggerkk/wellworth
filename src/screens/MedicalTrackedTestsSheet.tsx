@@ -6,6 +6,7 @@ import { useProfileEditor } from '../hooks/useProfileEditor'
 import { MEDICAL_CATEGORY_LABELS } from '../constants/medical'
 import { defaultTrackedTestKeys, medicalTestsByCategory } from '../lib/medical'
 import type { Tables, TablesUpdate } from '../types/database'
+import { EntryLoader } from '../components/EntryLoader'
 
 /**
  * Medical → Tracked Tests: which tests trend on the Dashboard (the sparkline grid). Grouped by
@@ -21,8 +22,14 @@ export function MedicalTrackedTestsSheet() {
         <SheetCloseButton />
         <h1 className="text-heading font-medium text-text-primary">Tracked Tests</h1>
       </header>
-      {loading && <p className="p-4 text-body text-text-secondary">Loading…</p>}
-      {profile && <Picker profile={profile} save={save} />}
+
+      <EntryLoader
+        loading={loading}
+        data={profile}
+        errorText="Couldn’t load tracked tests."
+      >
+        {(prof) => <Picker profile={prof} save={save} />}
+      </EntryLoader>
     </Sheet>
   )
 }

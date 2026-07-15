@@ -13,11 +13,12 @@ import {
   renameSourceType,
   reorderSourceTypes,
 } from '../lib/quotes-config'
+import { EntryLoader } from '../components/EntryLoader'
 
 /**
  * Quotes → Source Types (M8): add / rename / delete / reorder the owner's Source Type list, stored on
  * `profile.quote_source_types`. The Show/Book-linking sources (TV / Movie / Book) are protected from
- * deletion so cross-module linking keeps working; deleting an in-use value reassigns its quotes first.
+ * deletion so cross-module linking keeps working; deleting an in-use value reassigns its quotes first.[cite: 9]
  */
 export function QuoteSourceTypesSheet() {
   const { session } = useAuth()
@@ -29,33 +30,39 @@ export function QuoteSourceTypesSheet() {
         <SheetCloseButton />
         <h1 className="text-heading font-medium text-text-primary">Source Types</h1>
       </header>
-      {loading && <p className="p-4 text-body text-text-secondary">Loading…</p>}
-      {profile && (
-        <ConfigListEditor
-          list={effectiveSourceTypes(profile.quote_source_types)}
-          noun="source type"
-          itemNoun="quote"
-          userId={session?.user.id}
-          persist={(next) => void save({ quote_source_types: next })}
-          add={addSourceType}
-          rename={renameSourceType}
-          remove={removeSourceType}
-          reorder={reorderSourceTypes}
-          count={(key) => countQuotesByField(session!.user.id, 'source_type', key)}
-          reassign={(from, to) =>
-            reassignQuoteField(session!.user.id, 'source_type', from, to)
-          }
-          onChanged={bumpQuotes}
-          isProtected={isProtectedSourceKey}
-          hint={(e) =>
-            e.linkKind === 'show'
-              ? 'links to Shows'
-              : e.linkKind === 'book'
-                ? 'links to Books'
-                : null
-          }
-        />
-      )}
+
+      <EntryLoader
+        loading={loading}
+        data={profile}
+        errorText="Couldn’t load source types."
+      >
+        {(prof) => (
+          <ConfigListEditor
+            list={effectiveSourceTypes(prof.quote_source_types)}
+            noun="source type"
+            itemNoun="quote"
+            userId={session?.user.id}
+            persist={(next) => void save({ quote_source_types: next })}
+            add={addSourceType}
+            rename={renameSourceType}
+            remove={removeSourceType}
+            reorder={reorderSourceTypes}
+            count={(key) => countQuotesByField(session!.user.id, 'source_type', key)}
+            reassign={(from, to) =>
+              reassignQuoteField(session!.user.id, 'source_type', from, to)
+            }
+            onChanged={bumpQuotes}
+            isProtected={isProtectedSourceKey}
+            hint={(e) =>
+              e.linkKind === 'show'
+                ? 'links to Shows'
+                : e.linkKind === 'book'
+                  ? 'links to Books'
+                  : null
+            }
+          />
+        )}
+      </EntryLoader>
     </Sheet>
   )
 }

@@ -12,6 +12,7 @@ import {
   renameCategory,
   reorderCategories,
 } from '../lib/quotes-config'
+import { EntryLoader } from '../components/EntryLoader'
 
 /**
  * Quotes → Categories (M8): add / rename / delete / reorder the owner's Category list, stored on
@@ -28,25 +29,27 @@ export function QuoteCategoriesSheet() {
         <SheetCloseButton />
         <h1 className="text-heading font-medium text-text-primary">Categories</h1>
       </header>
-      {loading && <p className="p-4 text-body text-text-secondary">Loading…</p>}
-      {profile && (
-        <ConfigListEditor
-          list={effectiveCategories(profile.quote_categories)}
-          noun="category"
-          itemNoun="quote"
-          userId={session?.user.id}
-          persist={(next) => void save({ quote_categories: next })}
-          add={addCategory}
-          rename={renameCategory}
-          remove={removeCategory}
-          reorder={reorderCategories}
-          count={(key) => countQuotesByField(session!.user.id, 'category', key)}
-          reassign={(from, to) =>
-            reassignQuoteField(session!.user.id, 'category', from, to)
-          }
-          onChanged={bumpQuotes}
-        />
-      )}
+
+      <EntryLoader loading={loading} data={profile} errorText="Couldn’t load categories.">
+        {(prof) => (
+          <ConfigListEditor
+            list={effectiveCategories(prof.quote_categories)}
+            noun="category"
+            itemNoun="quote"
+            userId={session?.user.id}
+            persist={(next) => void save({ quote_categories: next })}
+            add={addCategory}
+            rename={renameCategory}
+            remove={removeCategory}
+            reorder={reorderCategories}
+            count={(key) => countQuotesByField(session!.user.id, 'category', key)}
+            reassign={(from, to) =>
+              reassignQuoteField(session!.user.id, 'category', from, to)
+            }
+            onChanged={bumpQuotes}
+          />
+        )}
+      </EntryLoader>
     </Sheet>
   )
 }

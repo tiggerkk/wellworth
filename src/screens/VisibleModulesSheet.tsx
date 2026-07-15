@@ -8,6 +8,7 @@ import { MODULES } from '../constants/modules'
 import { homeModules, orderedModuleKeys } from '../lib/modules-display'
 import { showToast } from '../lib/toast'
 import type { Tables, TablesUpdate } from '../types/database'
+import { EntryLoader } from '../components/EntryLoader'
 
 /**
  * Global Settings → DISPLAY → Visible Modules: a 2-up combined grid (`ReorderGrid`, following the
@@ -26,8 +27,14 @@ export function VisibleModulesSheet() {
         <SheetCloseButton />
         <h1 className="text-heading font-medium text-text-primary">Visible Modules</h1>
       </header>
-      {loading && <p className="p-4 text-body text-text-secondary">Loading…</p>}
-      {profile && <Editor profile={profile} save={save} />}
+
+      <EntryLoader
+        loading={loading}
+        data={profile}
+        errorText="Couldn’t load visible modules settings."
+      >
+        {(prof) => <Editor profile={prof} save={save} />}
+      </EntryLoader>
     </Sheet>
   )
 }
