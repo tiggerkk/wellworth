@@ -113,6 +113,7 @@ function draftFromRow(row: BookRow): BookDraft {
  */
 export function BooksEntry() {
   const { id } = useParams()
+  const navigate = useNavigate()
 
   const loadFn = useCallback(async (): Promise<BookDraft | null> => {
     if (!id) return blankDraft()
@@ -121,15 +122,38 @@ export function BooksEntry() {
   }, [id])
   const { data: initial, loading, error } = useAsync(loadFn)
 
+  useEscapeKey(() => navigate(-1))
+
   return (
-    <EntryLoader
-      loading={loading}
-      error={error}
-      data={initial}
-      errorText="Couldn’t load this book."
-    >
-      {(d) => <BookForm key={id ?? 'new'} id={id} initial={d} />}
-    </EntryLoader>
+    <div className="relative flex h-full min-h-0 flex-col">
+      {/* 
+        This outer header is always mounted! 
+        It displays "Loading..." gracefully with the header structure perfectly intact.
+      */}
+      <header className="flex h-14 items-center gap-3 border-b border-border px-4 py-3">
+        <button
+          onClick={() => navigate(-1)}
+          aria-label="Close"
+          className="text-text-secondary"
+        >
+          <IconX size={22} />
+        </button>
+        <h1 className="flex-1 truncate text-heading font-medium text-text-primary">
+          {id ? 'Edit Book' : 'New Book'}
+        </h1>
+        {/* We leave horizontal space on the right of the header title for actions to overlay safely */}
+        <div className="w-24 shrink-0" />
+      </header>
+
+      <EntryLoader
+        loading={loading}
+        error={error}
+        data={initial}
+        errorText="Couldn’t load this book."
+      >
+        {(d) => <BookForm key={id ?? 'new'} id={id} initial={d} />}
+      </EntryLoader>
+    </div>
   )
 }
 
@@ -148,7 +172,6 @@ function BookForm({ id, initial }: { id: string | undefined; initial: BookDraft 
   const [notesOpen, setNotesOpen] = useState(false)
   const [metaLoading, setMetaLoading] = useState(false)
   const [metaError, setMetaError] = useState(false)
-  useEscapeKey(() => navigate(-1))
 
   const update = (patch: Partial<BookDraft>) => setDraft((d) => ({ ...d, ...patch }))
   const dirty = useDirty(draft, initial)
@@ -266,20 +289,15 @@ function BookForm({ id, initial }: { id: string | undefined; initial: BookDraft 
 
   return (
     <>
-      <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <button
-          onClick={() => navigate(-1)}
-          aria-label="Close"
-          className="text-text-secondary"
-        >
-          <IconX size={22} />
-        </button>
-        <h1 className="flex-1 truncate text-heading font-medium text-text-primary">
-          {id ? 'Edit Book' : 'New Book'}
-        </h1>
+      {/* 
+        This floats actions perfectly over the empty right side of the outer mounted header.
+        Because it is absolute positioned relative to the outer boundary, it stays secure on mobile viewports.
+      */}
+      <div className="absolute top-3 right-4 z-10 flex items-center gap-3">
         <button
           onClick={() => update({ is_favorite: !draft.is_favorite })}
           aria-label="Favourite"
+          className="flex shrink-0 items-center justify-center p-1"
         >
           {draft.is_favorite ? (
             <IconHeartFilled size={20} className="text-favorite" />
@@ -296,7 +314,7 @@ function BookForm({ id, initial }: { id: string | undefined; initial: BookDraft 
           onSubmit={() => void save()}
           onDelete={id ? () => void remove() : undefined}
         />
-      </header>
+      </div>
 
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
         <div>
