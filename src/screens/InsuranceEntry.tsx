@@ -89,6 +89,7 @@ function scheduleLabel(v: ScheduleVersion): string {
 
 export function InsuranceEntry() {
   const { id } = useParams()
+  const navigate = useNavigate()
   const { session } = useAuth()
   const userId = session?.user.id
   const { data: profile } = useProfile()
@@ -131,25 +132,48 @@ export function InsuranceEntry() {
   }, [id, userId, providers])
   const { data: initial, loading, error } = useAsync(loadFn)
 
+  useEscapeKey(() => navigate(-1))
+
   return (
-    <EntryLoader
-      loading={loading}
-      error={error}
-      data={initial}
-      errorText="Couldn’t load this policy."
-    >
-      {(d) => (
-        <PolicyForm
-          key={id ?? 'new'}
-          id={id}
-          userId={userId ?? ''}
-          initialDraft={d.draft}
-          initialSchedules={d.schedules}
-          providers={providers}
-          currentAge={currentAge}
-        />
-      )}
-    </EntryLoader>
+    <div className="relative flex h-full min-h-0 flex-col">
+      {/* 
+        This outer header is always mounted! 
+        It displays "Loading..." gracefully with the header structure perfectly intact.
+      */}
+      <header className="flex h-14 items-center gap-3 border-b border-border px-4 py-3">
+        <button
+          onClick={() => navigate(-1)}
+          aria-label="Close"
+          className="text-text-secondary"
+        >
+          <IconX size={22} />
+        </button>
+        <h1 className="flex-1 truncate text-heading font-medium text-text-primary">
+          {id ? 'Edit Insurance' : 'New Insurance'}
+        </h1>
+        {/* We leave horizontal space on the right of the header title for actions to overlay safely */}
+        <div className="w-24 shrink-0" />
+      </header>
+
+      <EntryLoader
+        loading={loading}
+        error={error}
+        data={initial}
+        errorText="Couldn’t load this policy."
+      >
+        {(d) => (
+          <PolicyForm
+            key={id ?? 'new'}
+            id={id}
+            userId={userId ?? ''}
+            initialDraft={d.draft}
+            initialSchedules={d.schedules}
+            providers={providers}
+            currentAge={currentAge}
+          />
+        )}
+      </EntryLoader>
+    </div>
   )
 }
 
@@ -169,9 +193,6 @@ function PolicyForm({
   currentAge: number
 }) {
   const navigate = useNavigate()
-  // Laptop Esc closes the form; an open Calendar / SelectMenu / import overlay sits above it on the
-  // shared LIFO stack and consumes Esc first (per the dismiss convention in 01_design_system.md).
-  useEscapeKey(() => navigate(-1))
   const providerOptions = providers.map((p) => ({ value: p.key, label: p.label }))
   const [draft, setDraft] = useState<PolicyDraft>(initialDraft)
   // Baseline for dirty / RESET; re-seeded after a schedule import changes policy fields.
@@ -413,17 +434,11 @@ function PolicyForm({
 
   return (
     <>
-      <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <button
-          onClick={() => navigate(-1)}
-          aria-label="Close"
-          className="text-text-secondary"
-        >
-          <IconX size={22} />
-        </button>
-        <h1 className="flex-1 truncate text-heading font-medium text-text-primary">
-          {id ? 'Edit Insurance' : 'New Insurance'}
-        </h1>
+      {/* 
+        This floats actions perfectly over the empty right side of the outer mounted header.
+        Because it is absolute positioned relative to the outer boundary, it stays secure on mobile viewports.
+      */}
+      <div className="absolute top-3 right-4 z-10 flex items-center gap-3">
         <EntryHeaderActions
           editing={!!id}
           dirty={dirty}
@@ -432,7 +447,7 @@ function PolicyForm({
           onSubmit={() => void save()}
           onDelete={id ? () => void remove() : undefined}
         />
-      </header>
+      </div>
 
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
         <div className="flex gap-3">

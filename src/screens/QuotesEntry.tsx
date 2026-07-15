@@ -106,6 +106,7 @@ function draftFromRow(row: QuoteRow): QuoteDraft {
 export function QuotesEntry() {
   const { id } = useParams()
   const [params] = useSearchParams()
+  const navigate = useNavigate()
   const text = params.get('text') ?? ''
   const author = params.get('author') ?? ''
   const title = params.get('title') ?? ''
@@ -133,24 +134,47 @@ export function QuotesEntry() {
 
   const loading = profileLoading || rowLoading
 
+  useEscapeKey(() => navigate(-1))
+
   return (
-    <EntryLoader
-      loading={loading}
-      error={error}
-      data={initial}
-      errorText="Couldn’t load this quote."
-    >
-      {(d) => (
-        <QuoteForm
-          key={id ?? 'new'}
-          id={id}
-          initial={d}
-          profile={profile ?? null}
-          sourceTypes={sourceTypes}
-          categories={categories}
-        />
-      )}
-    </EntryLoader>
+    <div className="relative flex h-full min-h-0 flex-col">
+      {/* 
+        Outer structural header remains statically mounted during data retrieval,
+        rendering "Loading..." elegantly under a unified layout frame.
+      */}
+      <header className="flex h-14 items-center gap-3 border-b border-border px-4 py-3">
+        <button
+          onClick={() => navigate(-1)}
+          aria-label="Close"
+          className="text-text-secondary"
+        >
+          <IconX size={22} />
+        </button>
+        <h1 className="flex-1 truncate text-heading font-medium text-text-primary">
+          {id ? 'Edit Quote' : 'New Quote'}
+        </h1>
+        {/* Reservation slot matching absolute actions width to guard structural boundaries */}
+        <div className="w-32 shrink-0" />
+      </header>
+
+      <EntryLoader
+        loading={loading}
+        error={error}
+        data={initial}
+        errorText="Couldn’t load this quote."
+      >
+        {(d) => (
+          <QuoteForm
+            key={id ?? 'new'}
+            id={id}
+            initial={d}
+            profile={profile ?? null}
+            sourceTypes={sourceTypes}
+            categories={categories}
+          />
+        )}
+      </EntryLoader>
+    </div>
   )
 }
 
@@ -188,7 +212,6 @@ function QuoteForm({
   const [languageTouched, setLanguageTouched] = useState(!!id)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [linkOpen, setLinkOpen] = useState(false)
-  useEscapeKey(() => navigate(-1))
 
   const update = (patch: Partial<QuoteDraft>) => setDraft((d) => ({ ...d, ...patch }))
   const dirty = useDirty(draft, initial)
@@ -294,20 +317,15 @@ function QuoteForm({
 
   return (
     <>
-      <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <button
-          onClick={() => navigate(-1)}
-          aria-label="Close"
-          className="text-text-secondary"
-        >
-          <IconX size={22} />
-        </button>
-        <h1 className="flex-1 truncate text-heading font-medium text-text-primary">
-          {id ? 'Edit Quote' : 'New Quote'}
-        </h1>
+      {/* 
+        Anchors functional header interface exactly over the pre-allocated top layout bracket.
+        Absolute alignment coordinates prevent breaking context boxes across compact resolutions.
+      */}
+      <div className="absolute top-3 right-4 z-10 flex items-center gap-3">
         <button
           onClick={() => update({ is_favorite: !draft.is_favorite })}
           aria-label="Favourite"
+          className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-muted"
         >
           {draft.is_favorite ? (
             <IconHeartFilled size={20} className="text-favorite" />
@@ -324,7 +342,7 @@ function QuoteForm({
           onSubmit={() => void save()}
           onDelete={id ? () => void remove() : undefined}
         />
-      </header>
+      </div>
 
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
         <div>

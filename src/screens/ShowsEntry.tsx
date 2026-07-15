@@ -159,6 +159,7 @@ function draftFromRow(row: ShowRow): ShowDraft {
 export function ShowsEntry() {
   const { id } = useParams()
   const [params] = useSearchParams()
+  const navigate = useNavigate()
   const title = params.get('title') ?? ''
   const poster = params.get('poster') ?? ''
   const overview = params.get('overview') ?? ''
@@ -174,15 +175,34 @@ export function ShowsEntry() {
   }, [id, title, poster, overview, type])
   const { data: initial, loading, error } = useAsync(loadFn)
 
+  useEscapeKey(() => navigate(-1))
+
   return (
-    <EntryLoader
-      loading={loading}
-      error={error}
-      data={initial}
-      errorText="Couldn’t load this show."
-    >
-      {(d) => <ShowForm key={id ?? 'new'} id={id} initial={d} />}
-    </EntryLoader>
+    <div className="relative flex h-full min-h-0 flex-col">
+      <header className="flex h-14 items-center gap-3 border-b border-border px-4 py-3">
+        <button
+          onClick={() => navigate(-1)}
+          aria-label="Close"
+          className="text-text-secondary"
+        >
+          <IconX size={22} />
+        </button>
+        <h1 className="flex-1 truncate text-heading font-medium text-text-primary">
+          {id ? 'Edit Show' : 'New Show'}
+        </h1>
+        {/* Reservation slot matching header actions width to guard absolute composition */}
+        <div className="w-32 shrink-0" />
+      </header>
+
+      <EntryLoader
+        loading={loading}
+        error={error}
+        data={initial}
+        errorText="Couldn’t load this show."
+      >
+        {(d) => <ShowForm key={id ?? 'new'} id={id} initial={d} />}
+      </EntryLoader>
+    </div>
   )
 }
 
@@ -205,8 +225,6 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
   const [refreshResult, setRefreshResult] = useState<
     null | 'updated' | 'nochange' | 'error'
   >(null)
-
-  useEscapeKey(() => navigate(-1))
 
   const update = (patch: Partial<ShowDraft>) => setDraft((d) => ({ ...d, ...patch }))
   const dirty = useDirty(draft, initial)
@@ -411,20 +429,11 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
 
   return (
     <>
-      <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <button
-          onClick={() => navigate(-1)}
-          aria-label="Close"
-          className="text-text-secondary"
-        >
-          <IconX size={22} />
-        </button>
-        <h1 className="flex-1 truncate text-heading font-medium text-text-primary">
-          {id ? 'Edit Show' : 'New Show'}
-        </h1>
+      <div className="absolute top-3 right-4 z-10 flex items-center gap-3">
         <button
           onClick={() => update({ is_favorite: !draft.is_favorite })}
           aria-label="Favourite"
+          className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-muted"
         >
           {draft.is_favorite ? (
             <IconHeartFilled size={20} className="text-favorite" />
@@ -441,7 +450,7 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
           onSubmit={() => void save()}
           onDelete={id ? () => void remove() : undefined}
         />
-      </header>
+      </div>
 
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
         <SegmentedTabs

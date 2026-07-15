@@ -54,6 +54,10 @@ const EYE_KEY_SET = new Set(EYE_REFRACTION_KEYS)
  */
 export function MedicalEntry() {
   const { id } = useParams()
+  const navigate = useNavigate()
+  const openSheet = useSheetNavigate()
+  const { data: profile } = useProfile()
+
   const loadFn = useCallback(async (): Promise<ReportDraft | null> => {
     if (!id) return blankReportDraft()
     const data = await getReportWithResults(id)
@@ -61,21 +65,51 @@ export function MedicalEntry() {
   }, [id])
   const { data: initial, loading, error } = useAsync(loadFn)
 
+  useEscapeKey(() => navigate(-1))
+
   return (
-    <EntryLoader
-      loading={loading}
-      error={error}
-      data={initial}
-      errorText="Couldn’t load this report."
-    >
-      {(d) => <ReportForm key={id ?? 'new'} id={id} initial={d} />}
-    </EntryLoader>
+    <div className="relative flex h-full min-h-0 flex-col">
+      {/* 
+        Outer structural header remains statically mounted during data retrieval,
+        rendering "Loading..." elegantly under a unified structure.
+      */}
+      <header className="flex h-14 items-center gap-3 border-b border-border px-4 py-3">
+        <button
+          onClick={() => navigate(-1)}
+          aria-label="Close"
+          className="text-text-secondary"
+        >
+          <IconX size={22} />
+        </button>
+        <h1 className="flex-1 truncate text-heading font-medium text-text-primary">
+          {id ? 'Edit Report' : 'New Report'}
+        </h1>
+        {!id && profile?.medical_importer_enabled && (
+          <button
+            onClick={() => openSheet(routes.medical.import)}
+            className="flex shrink-0 items-center gap-1.5 pl-2 text-body text-accent"
+          >
+            <IconUpload size={16} /> Import JSON
+          </button>
+        )}
+        {/* Reservation slot matching header actions width to guard absolute composition */}
+        <div className="w-24 shrink-0" />
+      </header>
+
+      <EntryLoader
+        loading={loading}
+        error={error}
+        data={initial}
+        errorText="Couldn’t load this report."
+      >
+        {(d) => <ReportForm key={id ?? 'new'} id={id} initial={d} />}
+      </EntryLoader>
+    </div>
   )
 }
 
 function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDraft }) {
   const navigate = useNavigate()
-  const openSheet = useSheetNavigate()
   const { session } = useAuth()
   const userId = session?.user.id
   const { data: profile } = useProfile()
@@ -87,8 +121,6 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
   const [datePicker, setDatePicker] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [narrativeOpen, setNarrativeOpen] = useState(false)
-
-  useEscapeKey(() => navigate(-1))
 
   const update = (patch: Partial<ReportDraft>) => setDraft((d) => ({ ...d, ...patch }))
   const dirty = useDirty(draft, initial)
@@ -212,25 +244,11 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
 
   return (
     <>
-      <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <button
-          onClick={() => navigate(-1)}
-          aria-label="Close"
-          className="text-text-secondary"
-        >
-          <IconX size={22} />
-        </button>
-        <h1 className="flex-1 truncate text-heading font-medium text-text-primary">
-          {id ? 'Edit Report' : 'New Report'}
-        </h1>
-        {!id && profile?.medical_importer_enabled && (
-          <button
-            onClick={() => openSheet(routes.medical.import)}
-            className="flex shrink-0 items-center gap-1.5 pl-2 text-body text-accent"
-          >
-            <IconUpload size={16} /> Import JSON
-          </button>
-        )}
+      {/* 
+        Anchors action interface exactly over the pre-allocated header width segment.
+        Absolute layout configuration securely matches bounds without escaping responsive constraints.
+      */}
+      <div className="absolute top-3 right-4 z-10 flex items-center gap-3">
         <EntryHeaderActions
           editing={!!id}
           dirty={dirty}
@@ -239,7 +257,7 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
           onSubmit={() => void save()}
           onDelete={id ? () => void remove() : undefined}
         />
-      </header>
+      </div>
 
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
         <div className="flex gap-3">
