@@ -6,6 +6,7 @@ import { Sheet } from '../components/Sheet'
 import { InsurancePolicyDetail } from '../components/InsurancePolicyDetail'
 import { useAsync } from '../hooks/useAsync'
 import { useAuth } from '../auth/AuthProvider'
+import { EntryLoader } from '../components/EntryLoader'
 import { useProfile } from '../hooks/useProfile'
 import { getPolicyWithSchedules } from '../data/insurance'
 import { DEFAULT_BIRTH_YEAR } from '../constants/networth'
@@ -58,21 +59,24 @@ export function InsurancePolicyDetailSheet() {
         )}
       </header>
       <div className="flex-1 overflow-y-auto p-4">
-        {loading && <p className="text-body text-text-secondary">Loading…</p>}
-        {(error || (!loading && !data)) && (
-          <p className="text-body text-danger">Couldn’t load this policy.</p>
-        )}
-        {data && (
-          <InsurancePolicyDetail
-            policy={data.policy}
-            schedules={data.schedules}
-            age={age}
-            providerLabel={providerLabel(
-              effectiveProviders(profile?.insurance_providers),
-              data.policy.provider,
-            )}
-          />
-        )}
+        <EntryLoader
+          loading={loading}
+          error={error}
+          data={data}
+          errorText="Couldn’t load this policy."
+        >
+          {(d) => (
+            <InsurancePolicyDetail
+              policy={d.policy}
+              schedules={d.schedules}
+              age={age}
+              providerLabel={providerLabel(
+                effectiveProviders(profile?.insurance_providers),
+                d.policy.provider,
+              )}
+            />
+          )}
+        </EntryLoader>
       </div>
     </Sheet>
   )

@@ -25,6 +25,7 @@ import {
 import { groupResultsByCategory } from '../lib/medical-order'
 import { formatFullDate } from '../lib/date'
 import { routes } from '../constants/routes'
+import { EntryLoader } from '../components/EntryLoader'
 import { PrimaryButton } from '../components/PrimaryButton'
 import { MedicalValueRow } from '../components/MedicalValueRow'
 import { Collapsible } from '../components/Collapsible'
@@ -91,11 +92,14 @@ export function MedicalReportDetail() {
       </header>
 
       <div className="flex-1 overflow-y-auto p-4">
-        {loading && <p className="text-body text-text-secondary">Loading…</p>}
-        {(error || (!loading && !data)) && (
-          <p className="text-body text-danger">Couldn’t load this report.</p>
-        )}
-        {data && <Body data={data} />}
+        <EntryLoader
+          loading={loading}
+          error={error}
+          data={data}
+          errorText="Couldn’t load this report."
+        >
+          {(d) => <Body data={d} />}
+        </EntryLoader>
       </div>
     </div>
   )

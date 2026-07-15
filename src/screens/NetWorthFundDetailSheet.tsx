@@ -1,5 +1,6 @@
 import { useCallback } from 'react'
 import { useParams } from 'react-router'
+import { EntryLoader } from '../components/EntryLoader'
 import { SheetCloseButton } from '../components/SheetCloseButton'
 import { Sheet } from '../components/Sheet'
 import { NetWorthFundDetail } from '../components/NetWorthFundDetail'
@@ -21,19 +22,22 @@ export function NetWorthFundDetailSheet() {
         </h1>
       </header>
       <div className="flex-1 overflow-y-auto p-4">
-        {loading && <p className="text-body text-text-secondary">Loading…</p>}
-        {(error || (!loading && !entry)) && (
-          <p className="text-body text-danger">Couldn’t load this fund.</p>
-        )}
-        {entry && (
-          <NetWorthFundDetail
-            data={{
-              name: entry.name,
-              valueHkd: Number(entry.value_base),
-              details: (entry.details ?? {}) as Record<string, unknown>,
-            }}
-          />
-        )}
+        <EntryLoader
+          loading={loading}
+          error={error}
+          data={entry}
+          errorText="Couldn’t load this fund."
+        >
+          {(d) => (
+            <NetWorthFundDetail
+              data={{
+                name: d.name,
+                valueHkd: Number(d.value_base),
+                details: (d.details ?? {}) as Record<string, unknown>,
+              }}
+            />
+          )}
+        </EntryLoader>
       </div>
     </Sheet>
   )

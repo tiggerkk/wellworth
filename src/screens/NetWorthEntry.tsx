@@ -8,6 +8,7 @@ import {
   IconUpload,
 } from '@tabler/icons-react'
 import { OverlayTop } from '../components/OverlayTop'
+import { EntryLoader } from '../components/EntryLoader'
 import { OverlayCloseButton } from '../components/OverlayCloseButton'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
@@ -300,24 +301,28 @@ export function NetWorthEntry() {
           </div>
         </header>
       )}
-      {loading && <p className="px-4 py-6 text-body text-text-secondary">Loading…</p>}
-      {error && (
-        <p className="px-4 py-6 text-body text-danger">Couldn’t load this month.</p>
-      )}
-      {!loading && !error && initial && (
-        <EntryForm
-          key={month}
-          userId={userId ?? ''}
-          month={month}
-          setMonth={setMonth}
-          initial={initial}
-          initialSnapshotId={initial.snapshotId}
-          initialNeedsFreeze={initial.needsFreeze}
-          visibleTypes={visibleTypes}
-          liquidTypes={liquidTypes}
-          providers={providers}
-        />
-      )}
+
+      <EntryLoader
+        loading={loading}
+        error={error}
+        data={initial}
+        errorText="Couldn’t load this month."
+      >
+        {(d) => (
+          <EntryForm
+            key={month}
+            userId={userId ?? ''}
+            month={month}
+            setMonth={setMonth}
+            initial={d}
+            initialSnapshotId={d.snapshotId}
+            initialNeedsFreeze={d.needsFreeze}
+            visibleTypes={visibleTypes}
+            liquidTypes={liquidTypes}
+            providers={providers}
+          />
+        )}
+      </EntryLoader>
     </div>
   )
 }

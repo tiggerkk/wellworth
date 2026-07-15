@@ -9,6 +9,7 @@ import {
 } from '@tabler/icons-react'
 import { SheetCloseButton } from '../components/SheetCloseButton'
 import { Sheet } from '../components/Sheet'
+import { EntryLoader } from '../components/EntryLoader'
 import { RemoveRowButton } from '../components/RemoveRowButton'
 import { NutrientBar } from '../components/NutrientBar'
 import { PrimaryButton } from '../components/PrimaryButton'
@@ -431,129 +432,131 @@ export function WellnessFoodSheet() {
       </header>
 
       <div className="flex-1 overflow-y-auto p-4">
-        {loading && <p className="text-body text-text-secondary">Loading…</p>}
-        {(error || (!loading && !food)) && (
-          <p className="text-body text-danger">Couldn’t load this item.</p>
-        )}
-
-        {food && serving && (
-          <>
-            <div className="mb-2 flex gap-3">
-              <label className="flex-1 text-caption text-text-secondary">
-                Amount
-                <input
-                  type="number"
-                  min={0}
-                  step="any"
-                  value={amount}
-                  onFocus={(e) => e.target.select()}
-                  onChange={(e) => setAmount(e.target.value)}
-                  onBlur={(e) => {
-                    if (e.target.value.trim() === '') setAmount('1')
-                  }}
-                  className="mt-1 field-control no-spinner w-full"
-                />
-              </label>
-              <label className="flex-1 text-caption text-text-secondary">
-                Serving Size
-                <select
-                  value={servingIndex}
-                  onChange={(e) => setServingIndex(Number(e.target.value))}
-                  className="mt-1 field-control w-full"
-                >
-                  {effectiveServings.map((s, i) => (
-                    <option key={i} value={i}>
-                      {s.name} ({s.grams} g){i === defaultIndex ? ' · default' : ''}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-
-            {/* Manage servings: add/edit/delete custom measures + pick the default. These are the
-                food's reusable measures (persisted on ADD/heart/SAVE); the Amount above is the
-                per-log quantity and never changes them. */}
-            <button
-              onClick={() => setManageOpen((o) => !o)}
-              className="mb-4 text-body text-accent"
-            >
-              {manageOpen ? 'Hide Servings' : 'Manage Servings'}
-            </button>
-            {manageOpen && (
-              <div className="mb-4 flex flex-col gap-2 rounded-card border border-border bg-surface p-3">
-                {servings.map((s, i) => (
-                  <div key={i} className="flex items-center gap-2">
-                    <button
-                      onClick={() => setDefaultIndex(i)}
-                      aria-label={
-                        i === defaultIndex ? 'Default serving' : 'Set as default'
-                      }
-                      title="Set as default"
-                      className="shrink-0"
-                    >
-                      {i === defaultIndex ? (
-                        <IconStarFilled size={18} className="text-favorite" />
-                      ) : (
-                        <IconStar size={18} className="text-text-tertiary" />
-                      )}
-                    </button>
-                    <input
-                      value={s.name}
-                      placeholder="e.g. 1 cup"
-                      onChange={(e) => updateServing(i, { name: e.target.value })}
-                      className="field-control flex-1"
-                    />
-                    <input
-                      type="number"
-                      min={0}
-                      step="any"
-                      value={s.grams || ''}
-                      placeholder="g"
-                      onChange={(e) =>
-                        updateServing(i, { grams: Number(e.target.value) })
-                      }
-                      className="field-control w-20"
-                    />
-                    <RemoveRowButton
-                      onClick={() => deleteServingAt(i)}
-                      label="Remove serving"
-                    />
-                  </div>
-                ))}
-                <button
-                  onClick={addServing}
-                  className="flex items-center gap-1 text-body text-positive"
-                >
-                  <IconPlus size={16} /> Add Serving
-                </button>
-              </div>
-            )}
-
-            <h2 className="mb-1 text-section font-medium uppercase tracking-[0.08em] text-text-secondary">
-              Complete Nutrient Summary
-            </h2>
-            <div className="rounded-card border border-border bg-surface px-4 py-1">
-              {summaryKeys.length === 0 && (
-                <p className="py-3 text-body text-text-tertiary">No nutrient data.</p>
-              )}
-              {summaryKeys.map((key) => {
-                const ref = byKey.get(key)
-                const dri = targets?.dri[key]
-                const value = scaled[key] ?? 0
-                return (
-                  <NutrientBar
-                    key={key}
-                    label={ref?.display_name ?? key}
-                    value={value}
-                    target={dri?.target ?? null}
-                    unit={ref?.unit ?? ''}
-                    over={dri ? isOverUpperLimit(value, dri) : false}
+        <EntryLoader
+          loading={loading}
+          error={error}
+          data={food && serving ? { food, serving } : null}
+          errorText="Couldn’t load this item."
+        >
+          {() => (
+            <>
+              <div className="mb-2 flex gap-3">
+                <label className="flex-1 text-caption text-text-secondary">
+                  Amount
+                  <input
+                    type="number"
+                    min={0}
+                    step="any"
+                    value={amount}
+                    onFocus={(e) => e.target.select()}
+                    onChange={(e) => setAmount(e.target.value)}
+                    onBlur={(e) => {
+                      if (e.target.value.trim() === '') setAmount('1')
+                    }}
+                    className="mt-1 field-control no-spinner w-full"
                   />
-                )
-              })}
-            </div>
-          </>
-        )}
+                </label>
+                <label className="flex-1 text-caption text-text-secondary">
+                  Serving Size
+                  <select
+                    value={servingIndex}
+                    onChange={(e) => setServingIndex(Number(e.target.value))}
+                    className="mt-1 field-control w-full"
+                  >
+                    {effectiveServings.map((sv, i) => (
+                      <option key={i} value={i}>
+                        {sv.name} ({sv.grams} g){i === defaultIndex ? ' · default' : ''}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              {/* Manage servings: add/edit/delete custom measures + pick the default. These are the
+                  food's reusable measures (persisted on ADD/heart/SAVE); the Amount above is the
+                  per-log quantity and never changes them. */}
+              <button
+                onClick={() => setManageOpen((o) => !o)}
+                className="mb-4 text-body text-accent"
+              >
+                {manageOpen ? 'Hide Servings' : 'Manage Servings'}
+              </button>
+              {manageOpen && (
+                <div className="mb-4 flex flex-col gap-2 rounded-card border border-border bg-surface p-3">
+                  {servings.map((sv, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <button
+                        onClick={() => setDefaultIndex(i)}
+                        aria-label={
+                          i === defaultIndex ? 'Default serving' : 'Set as default'
+                        }
+                        title="Set as default"
+                        className="shrink-0"
+                      >
+                        {i === defaultIndex ? (
+                          <IconStarFilled size={18} className="text-favorite" />
+                        ) : (
+                          <IconStar size={18} className="text-text-tertiary" />
+                        )}
+                      </button>
+                      <input
+                        value={sv.name}
+                        placeholder="e.g. 1 cup"
+                        onChange={(e) => updateServing(i, { name: e.target.value })}
+                        className="field-control flex-1"
+                      />
+                      <input
+                        type="number"
+                        min={0}
+                        step="any"
+                        value={sv.grams || ''}
+                        placeholder="g"
+                        onChange={(e) =>
+                          updateServing(i, { grams: Number(e.target.value) })
+                        }
+                        className="field-control w-20"
+                      />
+                      <RemoveRowButton
+                        onClick={() => deleteServingAt(i)}
+                        label="Remove serving"
+                      />
+                    </div>
+                  ))}
+                  <button
+                    onClick={addServing}
+                    className="flex items-center gap-1 text-body text-positive"
+                  >
+                    <IconPlus size={16} /> Add Serving
+                  </button>
+                </div>
+              )}
+
+              <h2 className="mb-1 text-section font-medium uppercase tracking-[0.08em] text-text-secondary">
+                Complete Nutrient Summary
+              </h2>
+              <div className="rounded-card border border-border bg-surface px-4 py-1">
+                {summaryKeys.length === 0 && (
+                  <p className="py-3 text-body text-text-tertiary">No nutrient data.</p>
+                )}
+                {summaryKeys.map((key) => {
+                  const ref = byKey.get(key)
+                  const dri = targets?.dri[key]
+                  const value = scaled[key] ?? 0
+                  return (
+                    <NutrientBar
+                      key={key}
+                      label={ref?.display_name ?? key}
+                      value={value}
+                      target={dri?.target ?? null}
+                      unit={ref?.unit ?? ''}
+                      over={dri ? isOverUpperLimit(value, dri) : false}
+                    />
+                  )
+                })}
+              </div>
+            </>
+          )}
+        </EntryLoader>
       </div>
     </Sheet>
   )

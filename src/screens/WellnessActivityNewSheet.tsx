@@ -16,6 +16,7 @@ import { draftAmount } from '../lib/wellness-quantity'
 import { bumpDiary } from '../lib/wellness-diary-refresh'
 import { EFFORT_LEVELS, type Effort } from '../constants/wellness'
 import { ACTIVITY_ICONS, resolveActivityIcon } from '../constants/wellness'
+import { EntryLoader } from '../components/EntryLoader'
 
 interface ActivityInitial {
   name: string
@@ -62,11 +63,14 @@ export function WellnessActivityNewSheet() {
 
   return (
     <Sheet variant="full" label={isEdit ? 'Edit activity' : 'New activity'}>
-      {loading && <p className="p-4 text-body text-text-secondary">Loading…</p>}
-      {(error || (!loading && !initial)) && (
-        <p className="p-4 text-body text-danger">Couldn’t load this item.</p>
-      )}
-      {initial && <ActivityForm id={id} initial={initial} />}
+      <EntryLoader
+        loading={loading}
+        error={error}
+        data={initial}
+        errorText="Couldn’t load this item."
+      >
+        {(d) => <ActivityForm id={id} initial={d} />}
+      </EntryLoader>
     </Sheet>
   )
 }

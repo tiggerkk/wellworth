@@ -15,6 +15,7 @@ import { listServings, replaceServings } from '../data/serving'
 import { asNutrientMap, type NutrientMap } from '../lib/wellness-nutrients'
 import { NUTRIENT_SECTIONS } from '../constants/wellness'
 import { bumpDiary } from '../lib/wellness-diary-refresh'
+import { EntryLoader } from '../components/EntryLoader'
 
 interface ServingDraft {
   name: string
@@ -64,11 +65,14 @@ export function WellnessFoodNewSheet() {
 
   return (
     <Sheet variant="full" label={isEdit ? 'Edit food' : 'New food'}>
-      {loading && <p className="p-4 text-body text-text-secondary">Loading…</p>}
-      {(error || (!loading && !initial)) && (
-        <p className="p-4 text-body text-danger">Couldn’t load this item.</p>
-      )}
-      {initial && <FoodForm id={id} initial={initial} />}
+      <EntryLoader
+        loading={loading}
+        error={error}
+        data={initial}
+        errorText="Couldn’t load this item."
+      >
+        {(d) => <FoodForm id={id} initial={d} />}
+      </EntryLoader>
     </Sheet>
   )
 }
@@ -160,10 +164,10 @@ function FoodForm({ id, initial }: { id: string | undefined; initial: FoodInitia
   }
 
   return (
-    <>
+    <div className="flex h-full min-h-0 flex-col">
       <header className="flex items-center gap-3 border-b border-border px-4 py-3">
         <SheetCloseButton />
-        <h1 className="flex-1 truncate text-heading font-medium text-text-primary">
+        <h1 className="min-w-0 flex-1 truncate text-heading font-medium text-text-primary">
           {id ? 'Edit Food' : 'New Food'}
         </h1>
         <EntryHeaderActions
@@ -301,6 +305,6 @@ function FoodForm({ id, initial }: { id: string | undefined; initial: FoodInitia
           </div>
         </div>
       </div>
-    </>
+    </div>
   )
 }
