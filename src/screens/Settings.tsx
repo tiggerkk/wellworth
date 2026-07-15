@@ -6,6 +6,7 @@ import { SectionCard } from '../components/SectionCard'
 import { FieldRow } from '../components/FieldRow'
 import { DisplaySettingsCard } from '../components/DisplaySettingsCard'
 import { SettingsLayout } from '../components/SettingsLayout'
+import { EntryLoader } from '../components/EntryLoader'
 import {
   ProfileMetricsFields,
   type ProfileMetrics,
@@ -21,18 +22,24 @@ type SaveFn = (patch: TablesUpdate<'profile'>) => Promise<void>
  * nutrient display) live in the Wellness module's own `WellnessSettings` screen.
  */
 export function Settings() {
-  const { profile, loading, save } = useProfileEditor()
+  const { profile, loading, error, save } = useProfileEditor()
 
   return (
     <SettingsLayout title="Settings">
-      {loading && <p className="text-body text-text-secondary">Loading…</p>}
-      {!loading && !profile && (
-        <p className="text-body text-danger">
-          Couldn’t load your profile. If you just reset the database, sign out below and
-          sign back in to recreate it.
-        </p>
-      )}
-      {profile && <SettingsBody profile={profile} save={save} />}
+      <EntryLoader
+        loading={loading}
+        error={error}
+        data={profile}
+        errorText={
+          <>
+            Couldn’t load your profile. If you just reset the database, sign out below and
+            sign back in to recreate it.
+          </>
+        }
+        className="contents"
+      >
+        {(profile) => <SettingsBody profile={profile} save={save} />}
+      </EntryLoader>
       {/* Account/sign-out is driven by the session, not the profile, so it stays usable
           even when the profile fails to load (e.g. after a DB reset deletes the user). */}
       {!loading && <AccountCard />}

@@ -7,10 +7,16 @@ interface EntryLoaderProps<T> {
   error?: unknown
   /** The loaded value, or null/undefined when missing (treated as "not found"). */
   data: T | null | undefined
-  /** Message shown on error / not-found, e.g. "Couldn't load this show." */
-  errorText: string
+  /** Message shown on error / not-found, e.g. "Couldn’t load this show." */
+  errorText: ReactNode
   /** Renders the form once the data is present (narrowed to non-null). */
   children: (data: T) => ReactNode
+  /**
+   * Outer wrapper classes. Defaults to a full-height flex column for viewport-filling screens
+   * (Sheet / New-Edit forms). Pass `"contents"` when nesting inside a normal, auto-height layout
+   * (e.g. SettingsLayout) so the wrapper doesn't collapse to zero height.
+   */
+  className?: string
 }
 
 /**
@@ -25,9 +31,10 @@ export function EntryLoader<T>({
   data,
   errorText,
   children,
+  className = 'flex h-full min-h-0 flex-col',
 }: EntryLoaderProps<T>) {
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div className={className}>
       {loading && <p className="p-4 text-body text-text-secondary">Loading…</p>}
       {(error || (!loading && data == null)) && (
         <p className="p-4 text-body text-danger">{errorText}</p>

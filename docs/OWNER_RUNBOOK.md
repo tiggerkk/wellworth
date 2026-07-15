@@ -573,7 +573,7 @@ up automatically.)
 
 > **You must sign out first.** A full reset deletes the auth users too, but the browser still holds the
 > old login (a cached token in `localStorage`), so reloading — even after closing/reopening the browser
-> — keeps you "logged in" against a user that no longer exists, and the app shows **"Couldn't load your
+> — keeps you "logged in" against a user that no longer exists, and the app shows **"Couldn’t load your
 > profile."** Go to the Home-hub **gear → Settings → Account → Sign out** (that card is always
 > available, even when the profile fails to load), which clears the cached token and reloads to the
 > login screen. Then sign in with Google — a fresh profile + activities are created on first login. (If

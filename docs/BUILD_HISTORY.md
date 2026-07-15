@@ -281,7 +281,7 @@ Goal: replace M3's manual-only rate entry with an auto-fetch, keeping a manual o
   (= 1). Network fetch isn't unit-tested (only the pure URL/parse helpers are, matching off-api).
 - **`NetWorthEntry`**: `loadFn` auto-fetches **only for a new month** (no existing snapshot) and
   overrides the copied/blank CNY/USD rates — existing months keep their **frozen stored** rates. The
-  FX bar gains a per-currency **refresh ↻** (force-bypasses the cache) + "Fetching…/Couldn't fetch"
+  FX bar gains a per-currency **refresh ↻** (force-bypasses the cache) + "Fetching…/Couldn’t fetch"
   status; a manual edit overrides and clears the error. `save()` is unchanged (already freezes the
   rate + `value_base` per row).
 
@@ -2465,7 +2465,7 @@ No schema/migration — the `uncertain` boolean is unchanged; only how it's rais
   `medical.ts`) — works on parsed/draft and saved rows alike, so nothing extra is persisted. Import
   review counts now read **"· N to review"**.
 - **Delete-nav fix:** deleting a report from Edit Report `navigate(-1)`'d back onto its own now-deleted
-  read-only detail ("Couldn't load this report"); it now lands on the **Reports list**
+  read-only detail ("Couldn’t load this report"); it now lands on the **Reports list**
   (`routes.medical.reports`).
 - Verified by `npm run check` (**566 tests** — +9 for `groupResultsByCategory`, `medicalReviewReason`,
   and the import app-side review rule).

@@ -202,7 +202,7 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
     try {
       await deleteReport(id)
       bumpMedical()
-      // Don't navigate(-1) — that returns to this report's now-deleted read-only detail ("Couldn't
+      // Don't navigate(-1) — that returns to this report's now-deleted read-only detail ("Couldn’t
       // load this report"). Land on the Reports list instead.
       navigate(routes.medical.reports)
     } finally {

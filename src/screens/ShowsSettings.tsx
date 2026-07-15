@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { IconChevronRight, IconTrash, IconUpload } from '@tabler/icons-react'
 import { SettingsLayout } from '../components/SettingsLayout'
+import { EntryLoader } from '../components/EntryLoader'
 import { useProfileEditor } from '../hooks/useProfileEditor'
 import { useSheetNavigate } from '../hooks/useSheetNavigate'
 import { SectionCard } from '../components/SectionCard'
@@ -17,15 +18,19 @@ type SaveFn = (patch: TablesUpdate<'profile'>) => Promise<void>
  * gear in the Shows headers. App-wide settings live in the global Settings screen at the Home level.
  */
 export function ShowsSettings() {
-  const { profile, loading, save } = useProfileEditor()
+  const { profile, loading, error, save } = useProfileEditor()
 
   return (
     <SettingsLayout title="Shows Settings">
-      {loading && <p className="text-body text-text-secondary">Loading…</p>}
-      {!loading && !profile && (
-        <p className="text-body text-danger">Couldn’t load your profile.</p>
-      )}
-      {profile && <Body profile={profile} save={save} />}
+      <EntryLoader
+        loading={loading}
+        error={error}
+        data={profile}
+        errorText="Couldn’t load your profile."
+        className="contents"
+      >
+        {(profile) => <Body profile={profile} save={save} />}
+      </EntryLoader>
     </SettingsLayout>
   )
 }

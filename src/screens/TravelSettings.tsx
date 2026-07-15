@@ -1,6 +1,7 @@
 import { IconChevronRight, IconUpload } from '@tabler/icons-react'
 import { SectionCard } from '../components/SectionCard'
 import { SettingsLayout } from '../components/SettingsLayout'
+import { EntryLoader } from '../components/EntryLoader'
 import { FieldRow } from '../components/FieldRow'
 import { Toggle } from '../components/Toggle'
 import { useProfileEditor } from '../hooks/useProfileEditor'
@@ -18,7 +19,7 @@ type SaveFn = (patch: TablesUpdate<'profile'>) => Promise<void>
  */
 export function TravelSettings() {
   const openSheet = useSheetNavigate()
-  const { profile, loading, save } = useProfileEditor()
+  const { profile, loading, error, save } = useProfileEditor()
 
   return (
     <SettingsLayout title="Travel Settings">
@@ -43,11 +44,17 @@ export function TravelSettings() {
         </button>
       </SectionCard>
 
-      {loading && <p className="text-body text-text-secondary">Loading…</p>}
-      {!loading && !profile && (
-        <p className="text-body text-danger">Couldn’t load your profile.</p>
-      )}
-      {profile && <ImportSection profile={profile} save={save} openSheet={openSheet} />}
+      <EntryLoader
+        loading={loading}
+        error={error}
+        data={profile}
+        errorText="Couldn’t load your profile."
+        className="contents"
+      >
+        {(profile) => (
+          <ImportSection profile={profile} save={save} openSheet={openSheet} />
+        )}
+      </EntryLoader>
     </SettingsLayout>
   )
 }
