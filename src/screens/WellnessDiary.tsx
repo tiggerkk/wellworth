@@ -19,7 +19,7 @@ import {
   deleteEntriesByGroup,
   deleteEntry,
   listEntriesByDay,
-  listEntriesByRange,
+  listEntryDayKinds,
   reorderEntries,
 } from '../data/diary-entry'
 import { listSetsForEntries } from '../data/strength-set'
@@ -76,11 +76,11 @@ export function WellnessDiary() {
     async (monthStart: IsoDate, monthEnd: IsoDate): Promise<Map<IsoDate, DayCue>> => {
       const map = new Map<IsoDate, DayCue>()
       if (!userId) return map
-      for (const e of await listEntriesByRange(userId, monthStart, monthEnd)) {
-        const cur = map.get(e.day) ?? {}
+      for (const e of await listEntryDayKinds(userId, monthStart, monthEnd)) {
+        const cur = map.get(e.day as IsoDate) ?? {}
         if (e.kind === 'activity') cur.activity = true
         else cur.food = true
-        map.set(e.day, cur)
+        map.set(e.day as IsoDate, cur)
       }
       return map
     },
@@ -402,7 +402,10 @@ export function WellnessDiary() {
                     containerClassName="divide-y divide-border"
                     onReorder={(nextIds) => {
                       setOrderOverride((prev) => ({ ...prev, [group.key]: nextIds }))
-                      void reorderEntries(nextIds).catch(() => bumpDiary())
+                      const reordered = nextIds
+                        .map((id) => byId.get(id))
+                        .filter((e): e is Tables<'diary_entry'> => e != null)
+                      void reorderEntries(reordered).catch(() => bumpDiary())
                     }}
                     onDelete={(id) => void handleDelete(id)}
                     handleLabel={() => `Drag to reorder in ${group.label}`}

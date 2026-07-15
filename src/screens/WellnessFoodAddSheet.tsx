@@ -269,13 +269,20 @@ export function WellnessFoodAddSheet() {
           <>
             <div className="divide-y divide-border overflow-hidden rounded-card border border-border bg-surface">
               {results.map((r) => (
-                <button
+                <div
                   key={r.key}
                   onClick={r.onOpen}
-                  className="flex w-full items-start gap-3 px-4 py-3 text-left active:bg-input/40"
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      r.onOpen()
+                    }
+                  }}
+                  className="flex w-full items-start gap-3 px-4 py-3 text-left active:bg-input/40 cursor-pointer"
                 >
                   <span className="min-w-0 flex-1">
-                    {/* Line 1: name (wraps) · heart */}
                     <span className="flex items-start gap-2">
                       <span className="min-w-0 flex-1 break-words text-body text-text-primary">
                         {r.name}
@@ -299,7 +306,6 @@ export function WellnessFoodAddSheet() {
                         <IconHeart size={18} className="shrink-0 text-text-tertiary" />
                       )}
                     </span>
-                    {/* Line 2: nutrient count · serving (left) — source (right) */}
                     <span className="mt-0.5 flex items-baseline justify-between gap-2 text-caption text-text-secondary">
                       <span className="min-w-0 truncate">
                         {r.nutrientCount} nutrients · {r.serving}
@@ -307,7 +313,7 @@ export function WellnessFoodAddSheet() {
                       <span className="shrink-0 text-text-tertiary">{r.source}</span>
                     </span>
                   </span>
-                </button>
+                </div>
               ))}
 
               {results.length === 0 && (

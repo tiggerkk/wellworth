@@ -4,7 +4,7 @@ import {
   sumNutrients,
   type NutrientMap,
 } from './wellness-nutrients'
-import type { Tables } from '../types/database'
+import type { DiaryEntrySummary } from '../data/diary-entry'
 
 export interface Aggregate {
   /** Distinct days with at least one entry — the averaging denominator. */
@@ -17,9 +17,11 @@ export interface Aggregate {
 /**
  * Aggregate diary entries: summed nutrients (+ derived net carbs), total consumed energy
  * (food, positive) and activity energy (the magnitude of negative activity entries), and
- * the number of distinct logged days.
+ * the number of distinct logged days. Only reads `day`/`kind`/`energy_kcal`/`nutrients`, so
+ * callers can pass either a full `Tables<'diary_entry'>[]` or the lighter
+ * `listEntrySummariesByRange` result — see `DiaryEntrySummary`.
  */
-export function aggregateEntries(entries: Tables<'diary_entry'>[]): Aggregate {
+export function aggregateEntries(entries: DiaryEntrySummary[]): Aggregate {
   const days = new Set<string>()
   let consumedKcal = 0
   let activityKcal = 0

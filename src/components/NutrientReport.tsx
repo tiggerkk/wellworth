@@ -1,15 +1,19 @@
 import { useProfile } from '../hooks/useProfile'
 import { useNutrientReference } from '../hooks/useNutrientReference'
-import { aggregateEntries, averageNutrients, perDay } from '../lib/medical-report'
+import {
+  aggregateEntries,
+  averageNutrients,
+  perDay,
+} from '../lib/wellness-nutrient-report'
 import { computeTargets } from '../lib/wellness-targets'
 import { isOverUpperLimit } from '../lib/wellness-nutrients'
 import { NUTRIENT_SECTIONS } from '../constants/wellness'
 import { EnergyBalanceCard } from './EnergyBalanceCard'
 import { NutrientBar } from './NutrientBar'
-import type { Tables } from '../types/database'
+import type { DiaryEntrySummary } from '../data/diary-entry'
 
 interface NutrientReportProps {
-  entries: Tables<'diary_entry'>[] | undefined
+  entries: DiaryEntrySummary[] | undefined
   loading: boolean
   error: Error | undefined
 }

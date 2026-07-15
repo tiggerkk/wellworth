@@ -102,6 +102,11 @@ create table public.food (
 );
 
 create index on public.food (user_id);
+create index on public.food (user_id, created_at desc);  -- covers listFoods' default sort order
+-- getFoodByExternal(source, external_id) — hit on every USDA/Open Food Facts food view and
+-- during import dedup checks; previously only the bare user_id index applied.
+create index on public.food (user_id, source, external_id)
+  where external_id is not null;
 
 alter table public.food enable row level security;
 
@@ -187,6 +192,7 @@ create table public.activity (
 );
 
 create index on public.activity (user_id);
+create index on public.activity (user_id, name);  -- covers listActivities' name sort order
 
 alter table public.activity enable row level security;
 

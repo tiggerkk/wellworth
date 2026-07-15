@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react'
 import { IconChevronDown, IconNotebook } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
-import { listEntriesByRange } from '../data/diary-entry'
+import { listEntrySummariesByRange } from '../data/diary-entry'
 import { NutrientReport } from '../components/NutrientReport'
 import { EmptyState } from '../components/EmptyState'
 import { WELLNESS_RANGES, WELLNESS_RANGE_DEFAULT } from '../constants/wellness'
@@ -20,7 +20,7 @@ export function WellnessDashboard() {
 
   const fn = useCallback(() => {
     if (!userId) return Promise.resolve([])
-    return listEntriesByRange(userId, from, to)
+    return listEntrySummariesByRange(userId, from, to)
   }, [userId, from, to])
   const { data: entries, loading, error } = useAsync(fn)
 

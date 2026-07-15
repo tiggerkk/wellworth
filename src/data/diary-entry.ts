@@ -22,19 +22,51 @@ export async function listEntriesByDay(
   return data
 }
 
-/** Entries across an inclusive date range — used by the Dashboard's averaged views. */
-export async function listEntriesByRange(
+/**
+ * The columns `NutrientReport`'s aggregation actually reads (see `aggregateEntries` in
+ * `lib/medical-report.ts`). A range can span up to a year of logging, so `listEntrySummariesByRange`
+ * selects just these instead of `select('*')` — skipping `label`, `sort_order`, the FK columns, etc.
+ * for every row in the range.
+ */
+export type DiaryEntrySummary = Pick<
+  Tables<'diary_entry'>,
+  'day' | 'kind' | 'energy_kcal' | 'nutrients'
+>
+
+/** Nutrient-report totals across an inclusive date range — used by the Dashboard's averaged views. */
+export async function listEntrySummariesByRange(
   userId: string,
   from: string,
   to: string,
-): Promise<Tables<'diary_entry'>[]> {
+): Promise<DiaryEntrySummary[]> {
   const { data, error } = await supabase
     .from('diary_entry')
-    .select('*')
+    .select('day, kind, energy_kcal, nutrients')
     .eq('user_id', userId)
     .gte('day', from)
     .lte('day', to)
-    .order('day')
+  if (error) throw error
+  return data
+}
+
+/** Just enough per-entry data to draw the Diary calendar's food/activity cue dots for a month. */
+export interface EntryDayKind {
+  day: string
+  kind: string
+}
+
+/** Which days in a range have a food vs. activity entry — used by the Diary's month calendar. */
+export async function listEntryDayKinds(
+  userId: string,
+  from: string,
+  to: string,
+): Promise<EntryDayKind[]> {
+  const { data, error } = await supabase
+    .from('diary_entry')
+    .select('day, kind')
+    .eq('user_id', userId)
+    .gte('day', from)
+    .lte('day', to)
   if (error) throw error
   return data
 }
@@ -56,9 +88,21 @@ export async function createEntry(
   return data
 }
 
-/** Persist a new order for a group's entries (sort_order = array index). */
-export async function reorderEntries(ids: string[]): Promise<void> {
-  await Promise.all(ids.map((id, i) => updateEntry(id, { sort_order: i })))
+/**
+ * Persist a new order for a group's entries (sort_order = array index) in ONE round trip. Callers
+ * pass the already-fetched rows in their new order (the Diary already holds them for rendering) —
+ * `upsert` resends each full row so its NOT NULL columns stay satisfied; only `sort_order` actually
+ * changes. Previously this issued one `update` per row via `Promise.all`, an N-request fan-out for
+ * what a drag-to-reorder is really just one statement.
+ */
+export async function reorderEntries(entries: Tables<'diary_entry'>[]): Promise<void> {
+  if (entries.length === 0) return
+  const rows: TablesInsert<'diary_entry'>[] = entries.map((e, i) => ({
+    ...e,
+    sort_order: i,
+  }))
+  const { error } = await supabase.from('diary_entry').upsert(rows, { onConflict: 'id' })
+  if (error) throw error
 }
 
 export async function getEntry(id: string): Promise<Tables<'diary_entry'> | null> {
