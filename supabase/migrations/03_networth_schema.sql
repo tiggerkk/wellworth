@@ -25,8 +25,6 @@ create table public.networth_snapshot (
   unique (user_id, month)
 );
 
-create index on public.networth_snapshot (user_id);
-
 alter table public.networth_snapshot enable row level security;
 
 create policy "select own networth_snapshot" on public.networth_snapshot
@@ -69,7 +67,7 @@ create table public.asset_entry (
   updated_at      timestamptz not null default now()
 );
 
-create index on public.asset_entry (user_id, snapshot_id);
+create index on public.asset_entry (snapshot_id, user_id);
 
 alter table public.asset_entry enable row level security;
 

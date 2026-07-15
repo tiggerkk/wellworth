@@ -1,4 +1,4 @@
-import { Suspense, useCallback, useState } from 'react'
+import { Suspense, useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { IconCalendarPlus, IconChevronDown } from '@tabler/icons-react'
 import { lazyWithReload } from '../lib/lazy-with-reload'
@@ -9,7 +9,7 @@ import { useAsync } from '../hooks/useAsync'
 import { useProfile } from '../hooks/useProfile'
 import { useNetWorthVersion } from '../lib/networth-refresh'
 import { listMonthlyTypeTotals, listEntriesBySnapshot } from '../data/asset-entry'
-import { listSnapshots } from '../data/networth-snapshot'
+import { getLatestSnapshot } from '../data/networth-snapshot'
 import { listCatalogue, type PolicyWithSchedules } from '../data/insurance'
 import { fetchRatesToHkd } from '../lib/fx'
 import {
@@ -140,72 +140,99 @@ export function NetWorthDashboard() {
   const { data: rows, loading, error } = useAsync(fn)
 
   // Secondary load: latest funds (return %/P&L) + insurance catalogue + USD rate (for HKD agg).
+  // Only the LATEST snapshot is needed here, so fetch it directly rather than every snapshot row
+  // (`listSnapshots`) — that grows unbounded with months of history for a value we'd discard down
+  // to one row anyway. Its entries, the insurance catalogue, and this month's FX are independent →
+  // fetch them concurrently once the latest snapshot is known.
   const extraFn = useCallback(async () => {
     void version
     if (!userId) return null
-    const snaps = await listSnapshots(userId)
-    const latestSnap = snaps[snaps.length - 1] ?? null
-    const funds: FundPerfRow[] = latestSnap
-      ? (await listEntriesBySnapshot(latestSnap.id))
-          .filter((e) => e.asset_type === 'fund')
-          .map((e) => {
-            const d = (e.details ?? {}) as Record<string, unknown>
-            const rr = Number(d.return_rate)
-            const pl = Number(d.pnl)
-            return {
-              id: e.id,
-              name: e.name,
-              valueHkd: Number(e.value_base),
-              returnRate: Number.isFinite(rr) ? rr : null,
-              pnl: Number.isFinite(pl) ? pl : null,
-            }
-          })
-          .sort((a, b) => b.valueHkd - a.valueHkd)
-      : []
-    const catalogue = await listCatalogue(userId)
-    const fx = latestSnap ? await fetchRatesToHkd(latestSnap.month) : null
+    const latestSnap = await getLatestSnapshot(userId)
+    const [entries, catalogue, fx] = await Promise.all([
+      latestSnap ? listEntriesBySnapshot(latestSnap.id) : Promise.resolve([]),
+      listCatalogue(userId),
+      latestSnap ? fetchRatesToHkd(latestSnap.month) : Promise.resolve(null),
+    ])
+    const funds: FundPerfRow[] = entries
+      .filter((e) => e.asset_type === 'fund')
+      .map((e) => {
+        const d = (e.details ?? {}) as Record<string, unknown>
+        const rr = Number(d.return_rate)
+        const pl = Number(d.pnl)
+        return {
+          id: e.id,
+          name: e.name,
+          valueHkd: Number(e.value_base),
+          returnRate: Number.isFinite(rr) ? rr : null,
+          pnl: Number.isFinite(pl) ? pl : null,
+        }
+      })
+      .sort((a, b) => b.valueHkd - a.valueHkd)
     const rates = { usd: fx?.USD ?? 1, cny: fx?.CNY ?? 1 }
     return { funds, catalogue, rates }
   }, [userId, version])
   const { data: extra } = useAsync(extraFn)
 
   // Fold the flat per-(month, type) view rows into one totals record per month (oldest first).
-  const all = foldMonthlyTotals(rows ?? [])
+  // Only depends on the fetched rows — recomputing it for an unrelated render (e.g. the range-menu
+  // toggle) would re-walk every month for nothing.
+  const all = useMemo(() => foldMonthlyTotals(rows ?? []), [rows])
   // "Liquid Only" view: zero out non-liquid types so every figure below (current total, trend, the
   // By-Type breakdown + its percentages) recomputes against the liquid subset. `all` stays raw for
   // the empty-state check. The liquid classification is the owner's profile setting.
   const liquid = liquidAssetTypes(profile?.networth_liquid_asset_types)
-  const months = liquidOnly
-    ? all.map((s) => ({ month: s.month, totals: restrictTotals(s.totals, liquid) }))
-    : all
+  const months = useMemo(
+    () =>
+      liquidOnly
+        ? all.map((s) => ({ month: s.month, totals: restrictTotals(s.totals, liquid) }))
+        : all,
+    // `liquid` is derived fresh each render from `profile` — compare by its resolved values via
+    // the profile field it reads, not the array identity, so this doesn't recompute every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [all, liquidOnly, profile?.networth_liquid_asset_types],
+  )
   const latest = months[months.length - 1]
   const currentTotal = latest ? sumTotals(latest.totals) : 0
 
   const range = NETWORTH_RANGES.find((r) => r.key === rangeKey) ?? NETWORTH_RANGES[0]!
   const cutoff = rangeCutoff(range.months, startOfMonth(todayLocal()))
-  const windowed = cutoff ? months.filter((s) => s.month >= cutoff) : months
-
-  const presentTypes: AssetType[] = ASSET_TYPES.filter((t) =>
-    windowed.some((s) => s.totals[t] !== 0),
+  const windowed = useMemo(
+    () => (cutoff ? months.filter((s) => s.month >= cutoff) : months),
+    [months, cutoff],
   )
-  const chartData: TrendRow[] =
-    mode === 'total'
-      ? windowed.map((s) => ({ month: s.month, total: sumTotals(s.totals) }))
-      : windowed.map((s) => ({ month: s.month, ...s.totals }))
 
-  const breakdown = latest
-    ? typeBreakdownFromTotals(latest.totals).filter((r) => r.total !== 0)
-    : []
+  const presentTypes: AssetType[] = useMemo(
+    () => ASSET_TYPES.filter((t) => windowed.some((s) => s.totals[t] !== 0)),
+    [windowed],
+  )
+  const chartData: TrendRow[] = useMemo(
+    () =>
+      mode === 'total'
+        ? windowed.map((s) => ({ month: s.month, total: sumTotals(s.totals) }))
+        : windowed.map((s) => ({ month: s.month, ...s.totals })),
+    [windowed, mode],
+  )
+
+  const breakdown = useMemo(
+    () =>
+      latest ? typeBreakdownFromTotals(latest.totals).filter((r) => r.total !== 0) : [],
+    [latest],
+  )
 
   const birthYear = profile?.birthday
     ? Number(profile.birthday.slice(0, 4))
     : DEFAULT_BIRTH_YEAR
   const currentAge = ageForYear(Number(startOfMonth(todayLocal()).slice(0, 4)), birthYear)
   const funds = extra?.funds ?? []
-  const agg =
-    extra && extra.catalogue.length > 0
-      ? buildInsuranceAgg(extra.catalogue, extra.rates, currentAge)
-      : null
+  // Iterates every age × every policy's schedules — worth gating behind useMemo so toggling
+  // unrelated dashboard state (the range menu, Liquid Only, chart mode) doesn't re-run it.
+  const agg = useMemo(
+    () =>
+      extra && extra.catalogue.length > 0
+        ? buildInsuranceAgg(extra.catalogue, extra.rates, currentAge)
+        : null,
+    [extra, currentAge],
+  )
 
   return (
     <div className="flex min-h-full flex-col pb-4">

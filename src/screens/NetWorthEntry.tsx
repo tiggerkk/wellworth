@@ -210,7 +210,14 @@ export function NetWorthEntry() {
     void version
     if (!userId)
       return { rows: [], fxRates: blankRates(), snapshotId: null, needsFreeze: false }
-    const existing = await getSnapshotWithEntries(userId, month)
+    // The existing snapshot and the insurance catalogue are independent, and the catalogue is
+    // needed by BOTH branches below (an existing month missing frozen insurance, or a brand-new
+    // month) — fetch both up front rather than only starting the catalogue fetch after learning
+    // the month needs it, which serialized a round-trip on the common path.
+    const [existing, catalogue] = await Promise.all([
+      getSnapshotWithEntries(userId, month),
+      listCatalogue(userId),
+    ])
     // A saved month shows its FROZEN rows (manual + fund + insurance). If it has no frozen insurance
     // yet (e.g. the snapshot was created by the manual CSV import, which never freezes insurance),
     // live-resolve insurance from the catalogue so it still appears — a Monthly Entry SAVE freezes it.
@@ -222,7 +229,6 @@ export function NetWorthEntry() {
       // insurance into the snapshot and reconciles the Dashboard.
       let needsFreeze = false
       if (!base.rows.some((r) => r.asset_type === 'insurance')) {
-        const catalogue = await listCatalogue(userId)
         const insurance = resolveInsuranceRows(catalogue, month, birthYear, providers)
         if (insurance.length > 0) {
           base.rows = [...base.rows, ...insurance]
@@ -232,11 +238,10 @@ export function NetWorthEntry() {
       return { ...base, snapshotId: existing.snapshot.id, needsFreeze }
     }
 
-    // New month: copy manual + fund forward; insurance is re-resolved from the catalogue. The prior
-    // snapshot, the catalogue, and this month's FX are independent → fetch them concurrently.
-    const [prior, catalogue, fetched] = await Promise.all([
+    // New month: copy manual + fund forward; insurance is re-resolved from the catalogue (already
+    // fetched above). The prior snapshot and this month's FX are independent → fetch concurrently.
+    const [prior, fetched] = await Promise.all([
       getLatestSnapshotBefore(userId, month),
-      listCatalogue(userId),
       fetchRatesToHkd(month),
     ])
     const priorRows = prior

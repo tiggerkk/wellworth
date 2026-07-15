@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
+
 import { useNavigate, useParams } from 'react-router'
 import { IconArrowsLeftRight, IconCheck, IconUpload, IconX } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
@@ -385,6 +386,10 @@ function PolicyForm({
   }
 
   const selected = schedules.find((v) => v.id === selectedSchedule) ?? null
+  // `schedules` only changes on load/reload/import; every other state change in this form (draft
+  // field edits, calendar picks, etc.) re-renders without touching it, so sorting it here once per
+  // actual schedules change avoids a re-sort per keystroke.
+  const schedulesDesc = useMemo(() => sortSchedulesDesc(schedules), [schedules])
 
   async function onPickCalendar(d: string) {
     if (cal === 'start') update({ start_date: d })
@@ -642,7 +647,7 @@ function PolicyForm({
                 )}
                 <SelectMenu
                   value={selectedSchedule}
-                  options={sortSchedulesDesc(schedules).map((v) => ({
+                  options={schedulesDesc.map((v) => ({
                     value: v.id,
                     label: scheduleLabel(v),
                   }))}

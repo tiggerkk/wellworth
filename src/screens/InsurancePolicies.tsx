@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { IconFileCertificate, IconPlus } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
@@ -74,7 +74,7 @@ export function InsurancePolicies() {
   }, [userId, version])
   const { data, loading, error } = useAsync(loadFn)
 
-  const items = data ?? []
+  const items = useMemo(() => data ?? [], [data])
   const birthYear = profile?.birthday
     ? Number(profile.birthday.slice(0, 4))
     : DEFAULT_BIRTH_YEAR
@@ -85,7 +85,17 @@ export function InsurancePolicies() {
       .filter((p) => items.some((i) => i.policy.provider === p.key))
       .map((p) => ({ value: p.key, label: p.label })),
   ]
-  const view = applyInsuranceView(items, criteria, currentAge)
+  // `applyInsuranceView` filters/sorts the whole catalogue, and `hasBrokenEven` walks each policy's
+  // resolved series — both worth gating behind useMemo so opening the filter panel or typing in an
+  // unrelated field (state changes that don't affect `items`/`criteria`/`currentAge`) doesn't re-run
+  // them. Break-even is computed once here per item rather than again per row during render.
+  const view = useMemo(() => {
+    const filtered = applyInsuranceView(items, criteria, currentAge)
+    return filtered.map((item) => ({
+      ...item,
+      brokeEven: hasBrokenEven(item.schedules, currentAge),
+    }))
+  }, [items, criteria, currentAge])
 
   function clearFilters() {
     setCriteria(() => ({
@@ -184,43 +194,40 @@ export function InsurancePolicies() {
               No matches.
             </p>
           ) : (
-            view.map(({ policy, schedules }) => {
-              const brokeEven = hasBrokenEven(schedules, currentAge)
-              return (
-                <button
-                  key={policy.id}
-                  onClick={() => navigate(routes.networth.insuranceEdit(policy.id))}
-                  className="flex w-full items-center gap-3 px-3 py-2.5 text-left active:bg-input/40"
-                >
-                  <span className="min-w-0 flex-1">
-                    <InsurancePolicyHeader
-                      policyNumber={policy.policy_number}
-                      startDate={policy.start_date}
-                      providerLabel={providerLabel(providers, policy.provider)}
-                      policyName={policy.policy_name || policy.policy_number}
-                      truncate
-                    />
-                    <span className="mt-1 flex flex-wrap items-center gap-1.5 text-caption text-text-tertiary">
-                      {policy.termination_kind === 'surrendered' && (
-                        <StatusChip
-                          label="Surrendered"
-                          className="bg-track text-text-secondary"
-                        />
-                      )}
-                      {policy.termination_kind === 'matured' && (
-                        <StatusChip label="Matured" className="bg-accent text-bg" />
-                      )}
-                      {brokeEven && (
-                        <StatusChip
-                          label="Past Break-Even"
-                          className="bg-positive text-bg"
-                        />
-                      )}
-                    </span>
+            view.map(({ policy, brokeEven }) => (
+              <button
+                key={policy.id}
+                onClick={() => navigate(routes.networth.insuranceEdit(policy.id))}
+                className="flex w-full items-center gap-3 px-3 py-2.5 text-left active:bg-input/40"
+              >
+                <span className="min-w-0 flex-1">
+                  <InsurancePolicyHeader
+                    policyNumber={policy.policy_number}
+                    startDate={policy.start_date}
+                    providerLabel={providerLabel(providers, policy.provider)}
+                    policyName={policy.policy_name || policy.policy_number}
+                    truncate
+                  />
+                  <span className="mt-1 flex flex-wrap items-center gap-1.5 text-caption text-text-tertiary">
+                    {policy.termination_kind === 'surrendered' && (
+                      <StatusChip
+                        label="Surrendered"
+                        className="bg-track text-text-secondary"
+                      />
+                    )}
+                    {policy.termination_kind === 'matured' && (
+                      <StatusChip label="Matured" className="bg-accent text-bg" />
+                    )}
+                    {brokeEven && (
+                      <StatusChip
+                        label="Past Break-Even"
+                        className="bg-positive text-bg"
+                      />
+                    )}
                   </span>
-                </button>
-              )
-            })
+                </span>
+              </button>
+            ))
           )}
         </div>
       )}
