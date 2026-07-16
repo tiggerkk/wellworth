@@ -23,6 +23,7 @@ import { SegmentedTabs } from '../components/SegmentedTabs'
 import { ShowRowHeader } from '../components/ShowRowHeader'
 import { PosterThumb } from '../components/PosterThumb'
 import { EmptyState } from '../components/EmptyState'
+import { ListLoader } from '../components/ListLoader'
 
 type TypeFilter = 'all' | ShowType
 
@@ -58,16 +59,6 @@ export function ShowsDashboard() {
     setSyncedShows(shows)
     setOverride(null)
   }
-  const all = override ?? shows ?? []
-  const filtered = filter === 'all' ? all : all.filter((s) => s.type === filter)
-
-  const favorites = favoriteShows(filtered)
-  const upNext = filtered.filter(isUpNext)
-  const upNextIds = new Set(upNext.map((s) => s.id))
-  const watching = filtered.filter((s) => s.status === 'watching' && !upNextIds.has(s.id))
-  const want = filtered.filter((s) => s.status === 'want').slice(0, WANT_SHELF_LIMIT)
-  const recent = recentlyWatched(filtered, 5)
-  const watchedYear = countWatchedThisYear(filtered, Number(todayLocal().slice(0, 4)))
 
   async function quickUpdate(id: string, patch: ShowUpdate) {
     setUpdatingId(id)
@@ -100,102 +91,127 @@ export function ShowsDashboard() {
         />
       </header>
 
-      {loading && <p className="px-4 py-6 text-body text-text-secondary">Loading…</p>}
-      {error && (
-        <p className="px-4 py-6 text-body text-danger">Couldn’t load your shows.</p>
-      )}
+      <ListLoader
+        loading={loading}
+        error={error}
+        data={override ?? shows}
+        errorText="Couldn’t load your shows."
+        emptyState={
+          <EmptyState
+            title="No shows yet"
+            actionLabel="New Show"
+            to={routes.shows.entry}
+            Icon={IconDeviceTv}
+          />
+        }
+      >
+        {(all) => {
+          const filtered = filter === 'all' ? all : all.filter((s) => s.type === filter)
+          const favorites = favoriteShows(filtered)
+          const upNext = filtered.filter(isUpNext)
+          const upNextIds = new Set(upNext.map((s) => s.id))
+          const watching = filtered.filter(
+            (s) => s.status === 'watching' && !upNextIds.has(s.id),
+          )
+          const want = filtered
+            .filter((s) => s.status === 'want')
+            .slice(0, WANT_SHELF_LIMIT)
+          const recent = recentlyWatched(filtered, 5)
+          const watchedYear = countWatchedThisYear(
+            filtered,
+            Number(todayLocal().slice(0, 4)),
+          )
 
-      {!loading && !error && all.length === 0 && (
-        <EmptyState
-          title="No shows yet"
-          actionLabel="New Show"
-          to={routes.shows.entry}
-          Icon={IconDeviceTv}
-        />
-      )}
+          return (
+            <div className="flex flex-col gap-4 px-4">
+              {watchedYear > 0 && (
+                <p className="px-1 text-caption text-text-secondary">
+                  {watchedYear} watched this year
+                </p>
+              )}
 
-      {!loading && !error && all.length > 0 && (
-        <div className="flex flex-col gap-4 px-4">
-          {watchedYear > 0 && (
-            <p className="px-1 text-caption text-text-secondary">
-              {watchedYear} watched this year
-            </p>
-          )}
+              {favorites.length > 0 && (
+                <SectionCard title="Favourites">
+                  {favorites.map((s) => (
+                    <DashRow key={s.id} show={s} onEdit={() => editShow(s.id)} />
+                  ))}
+                </SectionCard>
+              )}
 
-          {favorites.length > 0 && (
-            <SectionCard title="Favourites">
-              {favorites.map((s) => (
-                <DashRow key={s.id} show={s} onEdit={() => editShow(s.id)} />
-              ))}
-            </SectionCard>
-          )}
-
-          {upNext.length > 0 && (
-            <SectionCard title="Up Next">
-              {upNext.map((s) => (
-                <DashRow
-                  key={s.id}
-                  show={s}
-                  onEdit={() => editShow(s.id)}
-                  action={
-                    <ActionButton
-                      label="Mark Watched"
-                      disabled={updatingId === s.id}
-                      onClick={() => void quickUpdate(s.id, markWatched(s, todayLocal()))}
+              {upNext.length > 0 && (
+                <SectionCard title="Up Next">
+                  {upNext.map((s) => (
+                    <DashRow
+                      key={s.id}
+                      show={s}
+                      onEdit={() => editShow(s.id)}
+                      action={
+                        <ActionButton
+                          label="Mark Watched"
+                          disabled={updatingId === s.id}
+                          onClick={() =>
+                            void quickUpdate(s.id, markWatched(s, todayLocal()))
+                          }
+                        />
+                      }
                     />
-                  }
-                />
-              ))}
-            </SectionCard>
-          )}
+                  ))}
+                </SectionCard>
+              )}
 
-          {watching.length > 0 && (
-            <SectionCard title="Watching">
-              {watching.map((s) => (
-                <DashRow
-                  key={s.id}
-                  show={s}
-                  onEdit={() => editShow(s.id)}
-                  action={
-                    <ActionButton
-                      label="Mark Watched"
-                      disabled={updatingId === s.id}
-                      onClick={() => void quickUpdate(s.id, markWatched(s, todayLocal()))}
+              {watching.length > 0 && (
+                <SectionCard title="Watching">
+                  {watching.map((s) => (
+                    <DashRow
+                      key={s.id}
+                      show={s}
+                      onEdit={() => editShow(s.id)}
+                      action={
+                        <ActionButton
+                          label="Mark Watched"
+                          disabled={updatingId === s.id}
+                          onClick={() =>
+                            void quickUpdate(s.id, markWatched(s, todayLocal()))
+                          }
+                        />
+                      }
                     />
-                  }
-                />
-              ))}
-            </SectionCard>
-          )}
+                  ))}
+                </SectionCard>
+              )}
 
-          {want.length > 0 && (
-            <SectionCard title="Want to Watch">
-              {want.map((s) => (
-                <DashRow
-                  key={s.id}
-                  show={s}
-                  onEdit={() => editShow(s.id)}
-                  action={
-                    <ActionButton
-                      label="Start Watching"
-                      disabled={updatingId === s.id}
-                      onClick={() => void quickUpdate(s.id, startWatching(todayLocal()))}
+              {want.length > 0 && (
+                <SectionCard title="Want to Watch">
+                  {want.map((s) => (
+                    <DashRow
+                      key={s.id}
+                      show={s}
+                      onEdit={() => editShow(s.id)}
+                      action={
+                        <ActionButton
+                          label="Start Watching"
+                          disabled={updatingId === s.id}
+                          onClick={() =>
+                            void quickUpdate(s.id, startWatching(todayLocal()))
+                          }
+                        />
+                      }
                     />
-                  }
-                />
-              ))}
-            </SectionCard>
-          )}
+                  ))}
+                </SectionCard>
+              )}
 
-          {recent.length > 0 && (
-            <SectionCard title="Recently Watched">
-              {recent.map((s) => (
-                <DashRow key={s.id} show={s} onEdit={() => editShow(s.id)} />
-              ))}
-            </SectionCard>
-          )}
-        </div>
-      )}
+              {recent.length > 0 && (
+                <SectionCard title="Recently Watched">
+                  {recent.map((s) => (
+                    <DashRow key={s.id} show={s} onEdit={() => editShow(s.id)} />
+                  ))}
+                </SectionCard>
+              )}
+            </div>
+          )
+        }}
+      </ListLoader>
     </div>
   )
 }

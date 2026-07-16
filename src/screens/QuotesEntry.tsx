@@ -136,7 +136,7 @@ export function QuotesEntry() {
     <div className="relative flex h-full min-h-0 flex-col">
       {/* 
         Outer structural header remains statically mounted during data retrieval,
-        rendering "Loading..." elegantly under a unified layout frame.
+        rendering "Loading" elegantly under a unified layout frame.
       */}
       <EntryHeaderTitle
         title={id ? 'Edit Quote' : 'New Quote'}

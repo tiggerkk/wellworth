@@ -139,7 +139,7 @@ export function InsuranceEntry() {
     <div className="relative flex h-full min-h-0 flex-col">
       {/* 
         This outer header is always mounted! 
-        It displays "Loading..." gracefully with the header structure perfectly intact.
+        It displays "Loading" gracefully with the header structure perfectly intact.
       */}
       <EntryHeaderTitle
         title={id ? 'Edit Insurance' : 'New Insurance'}

@@ -72,7 +72,7 @@ export function MedicalEntry() {
     <div className="relative flex h-full min-h-0 flex-col">
       {/* 
         Outer structural header remains statically mounted during data retrieval,
-        rendering "Loading..." elegantly under a unified structure.
+        rendering "Loading" elegantly under a unified structure.
       */}
       <EntryHeaderTitle
         title={id ? 'Edit Report' : 'New Report'}

@@ -22,6 +22,7 @@ import { SectionCard } from '../components/SectionCard'
 import { BookRowHeader } from '../components/BookRowHeader'
 import { CoverThumb } from '../components/CoverThumb'
 import { EmptyState } from '../components/EmptyState'
+import { ListLoader } from '../components/ListLoader'
 
 const WANT_SHELF_LIMIT = 6
 
@@ -53,13 +54,6 @@ export function BooksDashboard() {
     setSyncedBooks(books)
     setOverride(null)
   }
-  const all = override ?? books ?? []
-  const favorites = favoriteBooks(all)
-  const reading = currentlyReading(all)
-  const recent = recentlyRead(all, 5)
-  const want = wantToRead(all, WANT_SHELF_LIMIT)
-  const readYear = countReadThisYear(all, Number(todayLocal().slice(0, 4)))
-
   async function quickUpdate(id: string, patch: BookUpdate) {
     setUpdatingId(id)
     setOverride((prev) =>
@@ -78,83 +72,94 @@ export function BooksDashboard() {
 
   return (
     <div className="flex min-h-full flex-col py-4">
-      {loading && <p className="px-4 py-6 text-body text-text-secondary">Loading…</p>}
-      {error && (
-        <p className="px-4 py-6 text-body text-danger">Couldn’t load your books.</p>
-      )}
+      <ListLoader
+        loading={loading}
+        error={error}
+        data={override ?? books}
+        errorText="Couldn’t load your books."
+        emptyState={
+          <EmptyState
+            title="No books yet"
+            actionLabel="New Book"
+            to={routes.books.entry}
+            Icon={IconBook}
+          />
+        }
+      >
+        {(all) => {
+          const favorites = favoriteBooks(all)
+          const reading = currentlyReading(all)
+          const recent = recentlyRead(all, 5)
+          const want = wantToRead(all, WANT_SHELF_LIMIT)
+          const readYear = countReadThisYear(all, Number(todayLocal().slice(0, 4)))
 
-      {!loading && !error && all.length === 0 && (
-        <EmptyState
-          title="No books yet"
-          actionLabel="New Book"
-          to={routes.books.entry}
-          Icon={IconBook}
-        />
-      )}
+          return (
+            <div className="flex flex-col gap-4 px-4">
+              {readYear > 0 && (
+                <p className="px-1 text-caption text-text-secondary">
+                  {readYear} read this year
+                </p>
+              )}
 
-      {!loading && !error && all.length > 0 && (
-        <div className="flex flex-col gap-4 px-4">
-          {readYear > 0 && (
-            <p className="px-1 text-caption text-text-secondary">
-              {readYear} read this year
-            </p>
-          )}
+              {favorites.length > 0 && (
+                <SectionCard title="Favourites">
+                  {favorites.map((b) => (
+                    <DashRow key={b.id} book={b} onEdit={() => editBook(b.id)} />
+                  ))}
+                </SectionCard>
+              )}
 
-          {favorites.length > 0 && (
-            <SectionCard title="Favourites">
-              {favorites.map((b) => (
-                <DashRow key={b.id} book={b} onEdit={() => editBook(b.id)} />
-              ))}
-            </SectionCard>
-          )}
-
-          {reading.length > 0 && (
-            <SectionCard title="Currently Reading">
-              {reading.map((b) => (
-                <DashRow
-                  key={b.id}
-                  book={b}
-                  onEdit={() => editBook(b.id)}
-                  action={
-                    <ActionButton
-                      label="Mark Read"
-                      disabled={updatingId === b.id}
-                      onClick={() => void quickUpdate(b.id, markRead(todayLocal()))}
+              {reading.length > 0 && (
+                <SectionCard title="Currently Reading">
+                  {reading.map((b) => (
+                    <DashRow
+                      key={b.id}
+                      book={b}
+                      onEdit={() => editBook(b.id)}
+                      action={
+                        <ActionButton
+                          label="Mark Read"
+                          disabled={updatingId === b.id}
+                          onClick={() => void quickUpdate(b.id, markRead(todayLocal()))}
+                        />
+                      }
                     />
-                  }
-                />
-              ))}
-            </SectionCard>
-          )}
+                  ))}
+                </SectionCard>
+              )}
 
-          {recent.length > 0 && (
-            <SectionCard title="Recently Read">
-              {recent.map((b) => (
-                <DashRow key={b.id} book={b} onEdit={() => editBook(b.id)} />
-              ))}
-            </SectionCard>
-          )}
+              {recent.length > 0 && (
+                <SectionCard title="Recently Read">
+                  {recent.map((b) => (
+                    <DashRow key={b.id} book={b} onEdit={() => editBook(b.id)} />
+                  ))}
+                </SectionCard>
+              )}
 
-          {want.length > 0 && (
-            <SectionCard title="Want to Read">
-              {want.map((b) => (
-                <DashRow
-                  key={b.id}
-                  book={b}
-                  onEdit={() => editBook(b.id)}
-                  action={
-                    <ActionButton
-                      label="Start Reading"
-                      disabled={updatingId === b.id}
-                      onClick={() => void quickUpdate(b.id, startReading(todayLocal()))}
+              {want.length > 0 && (
+                <SectionCard title="Want to Read">
+                  {want.map((b) => (
+                    <DashRow
+                      key={b.id}
+                      book={b}
+                      onEdit={() => editBook(b.id)}
+                      action={
+                        <ActionButton
+                          label="Start Reading"
+                          disabled={updatingId === b.id}
+                          onClick={() =>
+                            void quickUpdate(b.id, startReading(todayLocal()))
+                          }
+                        />
+                      }
                     />
-                  }
-                />
-              ))}
-            </SectionCard>
-          )}
-        </div>
-      )}
+                  ))}
+                </SectionCard>
+              )}
+            </div>
+          )
+        }}
+      </ListLoader>
     </div>
   )
 }

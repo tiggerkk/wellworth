@@ -30,6 +30,7 @@ import { DateRangeRow } from '../components/DateRangeRow'
 import { BookRowHeader } from '../components/BookRowHeader'
 import { CoverThumb } from '../components/CoverThumb'
 import { EmptyState } from '../components/EmptyState'
+import { ListLoader } from '../components/ListLoader'
 
 type StatusFilter = 'all' | BookStatus
 type DateBound = 'startFrom' | 'startTo' | 'endFrom' | 'endTo'
@@ -135,8 +136,6 @@ export function BooksLibrary() {
     { value: 'all', label: 'Any Genre' },
     ...bookGenres(allBooks).map((g) => ({ value: g, label: g })),
   ]
-  const view = applyLibraryView(allBooks, criteria)
-
   const boundValue: Record<DateBound, IsoDate | null> = {
     startFrom: criteria.startFrom,
     startTo: criteria.startTo,
@@ -224,46 +223,50 @@ export function BooksLibrary() {
         </FilterPanel>
       )}
 
-      {loading && <p className="px-1 py-6 text-body text-text-secondary">Loading…</p>}
-      {error && (
-        <p className="px-1 py-6 text-body text-danger">Couldn’t load your books.</p>
-      )}
-
-      {!loading && !error && allBooks.length === 0 && (
-        <EmptyState
-          title="No books yet"
-          actionLabel="New Book"
-          to={routes.books.entry}
-          Icon={IconBook}
-        />
-      )}
-
-      {!loading && !error && allBooks.length > 0 && view.length > 0 && (
-        <ResultCount count={view.length} />
-      )}
-      {!loading && !error && allBooks.length > 0 && (
-        <div className="overflow-hidden rounded-card border border-border bg-surface">
-          {view.length === 0 ? (
-            <p className="px-4 py-6 text-center text-body text-text-tertiary">
-              No matches.
-            </p>
-          ) : (
-            view.map((b) => (
-              <SwipeRow key={b.id} onDelete={() => void remove(b.id)}>
-                <button
-                  onClick={() => navigate(routes.books.edit(b.id))}
-                  className="flex w-full items-center gap-3 px-3 py-2.5 text-left active:bg-input/40"
-                >
-                  <CoverThumb url={b.cover_url} />
-                  <span className="min-w-0 flex-1">
-                    <BookRowHeader book={b} />
-                  </span>
-                </button>
-              </SwipeRow>
-            ))
-          )}
-        </div>
-      )}
+      <ListLoader
+        loading={loading}
+        error={error}
+        data={override ?? books}
+        errorText="Couldn’t load your books."
+        emptyState={
+          <EmptyState
+            title="No books yet"
+            actionLabel="New Book"
+            to={routes.books.entry}
+            Icon={IconBook}
+          />
+        }
+      >
+        {(all) => {
+          const view = applyLibraryView(all, criteria)
+          return (
+            <>
+              {view.length > 0 && <ResultCount count={view.length} />}
+              <div className="overflow-hidden rounded-card border border-border bg-surface">
+                {view.length === 0 ? (
+                  <p className="px-4 py-6 text-center text-body text-text-tertiary">
+                    No matches.
+                  </p>
+                ) : (
+                  view.map((b) => (
+                    <SwipeRow key={b.id} onDelete={() => void remove(b.id)}>
+                      <button
+                        onClick={() => navigate(routes.books.edit(b.id))}
+                        className="flex w-full items-center gap-3 px-3 py-2.5 text-left active:bg-input/40"
+                      >
+                        <CoverThumb url={b.cover_url} />
+                        <span className="min-w-0 flex-1">
+                          <BookRowHeader book={b} />
+                        </span>
+                      </button>
+                    </SwipeRow>
+                  ))
+                )}
+              </div>
+            </>
+          )
+        }}
+      </ListLoader>
 
       {whichDate && (
         <Calendar

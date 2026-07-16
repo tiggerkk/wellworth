@@ -29,6 +29,7 @@ import { bumpQuotes, useQuotesVersion } from '../lib/quotes-refresh'
 import { routes } from '../constants/routes'
 import { StatusChip } from '../components/StatusChip'
 import { EmptyState } from '../components/EmptyState'
+import { ListLoader } from '../components/ListLoader'
 
 const PULL_THRESHOLD = 60 // px of (damped) pull past which release triggers a shuffle
 const PULL_MAX = 90
@@ -130,69 +131,74 @@ export function QuotesZen() {
 
   return (
     <div className="flex h-full flex-col">
-      {loading && <p className="px-4 py-6 text-body text-text-secondary">Loading…</p>}
-      {error && (
-        <p className="px-4 py-6 text-body text-danger">Couldn’t load your quotes.</p>
-      )}
+      <ListLoader
+        loading={loading}
+        error={error}
+        data={quotes}
+        errorText="Couldn’t load your quotes."
+        emptyState={
+          <EmptyState
+            title="No quotes yet"
+            actionLabel="New Quote"
+            to={routes.quotes.entry}
+            Icon={IconQuote}
+          />
+        }
+      >
+        {() =>
+          // `current` is picked by an effect once `quotes` arrives, so it can briefly be null on
+          // the very first non-empty render — render nothing that tick rather than a flash of dead UI.
+          current && (
+            <div
+              ref={scrollRef}
+              onPointerDown={onPointerDown}
+              onPointerMove={onPointerMove}
+              onPointerUp={onPointerUp}
+              onPointerCancel={onPointerUp}
+              className="relative flex-1 overflow-y-auto"
+              // pan-y pinch-zoom: keep vertical scroll + the pull-to-shuffle gesture, but leave
+              // pinch-zoom enabled (omitting pinch-zoom would disable it over the quote — see F21).
+              style={{ touchAction: 'pan-y pinch-zoom' }}
+            >
+              <div
+                className="pointer-events-none absolute inset-x-0 top-2 flex justify-center"
+                style={{ opacity: Math.min(pull / PULL_THRESHOLD, 1) }}
+              >
+                <span className="flex items-center gap-1 text-caption text-text-secondary">
+                  <IconArrowsShuffle size={14} />
+                  {pull > PULL_THRESHOLD ? 'Release to shuffle' : 'Pull to shuffle'}
+                </span>
+              </div>
 
-      {!loading && !error && all.length === 0 && (
-        <EmptyState
-          title="No quotes yet"
-          actionLabel="New Quote"
-          to={routes.quotes.entry}
-          Icon={IconQuote}
-        />
-      )}
+              <div
+                className="flex min-h-full items-center justify-center"
+                style={{
+                  transform: `translateY(${pull}px)`,
+                  transition: dragging ? 'none' : 'transform 200ms ease-out',
+                }}
+              >
+                <QuoteCard
+                  quote={current}
+                  favorite={favOverride[current.id] ?? current.is_favorite}
+                  onToggleFavorite={() => void toggleFavorite(current)}
+                  onEdit={() => navigate(routes.quotes.edit(current.id))}
+                  sourceTypes={sourceTypes}
+                  categories={categories}
+                />
+              </div>
 
-      {!loading && !error && current && (
-        <div
-          ref={scrollRef}
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
-          onPointerCancel={onPointerUp}
-          className="relative flex-1 overflow-y-auto"
-          // pan-y pinch-zoom: keep vertical scroll + the pull-to-shuffle gesture, but leave
-          // pinch-zoom enabled (omitting pinch-zoom would disable it over the quote — see F21).
-          style={{ touchAction: 'pan-y pinch-zoom' }}
-        >
-          <div
-            className="pointer-events-none absolute inset-x-0 top-2 flex justify-center"
-            style={{ opacity: Math.min(pull / PULL_THRESHOLD, 1) }}
-          >
-            <span className="flex items-center gap-1 text-caption text-text-secondary">
-              <IconArrowsShuffle size={14} />
-              {pull > PULL_THRESHOLD ? 'Release to shuffle' : 'Pull to shuffle'}
-            </span>
-          </div>
-
-          <div
-            className="flex min-h-full items-center justify-center"
-            style={{
-              transform: `translateY(${pull}px)`,
-              transition: dragging ? 'none' : 'transform 200ms ease-out',
-            }}
-          >
-            <QuoteCard
-              quote={current}
-              favorite={favOverride[current.id] ?? current.is_favorite}
-              onToggleFavorite={() => void toggleFavorite(current)}
-              onEdit={() => navigate(routes.quotes.edit(current.id))}
-              sourceTypes={sourceTypes}
-              categories={categories}
-            />
-          </div>
-
-          <button
-            onClick={shuffle}
-            disabled={all.length === 0}
-            aria-label="Shuffle"
-            className="absolute right-4 bottom-4 z-10 flex items-center gap-1 rounded-pill bg-input px-3 py-1.5 text-body text-accent shadow-sm disabled:opacity-40"
-          >
-            <IconArrowsShuffle size={18} /> Shuffle
-          </button>
-        </div>
-      )}
+              <button
+                onClick={shuffle}
+                disabled={all.length === 0}
+                aria-label="Shuffle"
+                className="absolute right-4 bottom-4 z-10 flex items-center gap-1 rounded-pill bg-input px-3 py-1.5 text-body text-accent shadow-sm disabled:opacity-40"
+              >
+                <IconArrowsShuffle size={18} /> Shuffle
+              </button>
+            </div>
+          )
+        }
+      </ListLoader>
     </div>
   )
 }

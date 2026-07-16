@@ -6,9 +6,8 @@ import { useEscapeKey } from '../hooks/useEscapeKey'
 /**
  * The shared shell for a global/module Settings screen: a full-width column + sticky header with
  * the uniform top-left `IconX` dismiss (navigate(-1), also Esc-closable) and a title. The caller
- * supplies the body (its own loading/error/section content). Matches the entry-form dismiss
- * convention — see `01_design_system.md` → Button convention (back/close is always `IconX`, never a
- * chevron). `closeLabel` overrides the button's accessible name (e.g. the Literature module's 關閉).
+ * supplies the body (its own loading/error/section content).
+ * `closeLabel` overrides the button's accessible name (e.g. the Literature module's 關閉).
  */
 export function SettingsLayout({
   title,

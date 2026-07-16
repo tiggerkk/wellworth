@@ -25,6 +25,7 @@ import { QUOTE_LANGUAGES, QUOTE_LANGUAGE_LABELS } from '../constants/quotes'
 import { routes } from '../constants/routes'
 import { SwipeRow } from '../components/SwipeRow'
 import { EmptyState } from '../components/EmptyState'
+import { ListLoader } from '../components/ListLoader'
 import { SelectMenu } from '../components/SelectMenu'
 import { Toggle } from '../components/Toggle'
 import { StatusChip } from '../components/StatusChip'
@@ -150,9 +151,6 @@ export function QuotesLibrary() {
     ...criteria.tags.filter((t) => !tagFilter || foldZh(t).includes(tagFilter)),
     ...pool.filter((t) => !criteria.tags.includes(t)),
   ]
-  // The URL constraint is layered on at view time so the panel state stays purely local.
-  const view = applyLibraryView(all, { ...criteria, showId, bookId })
-
   const constrained = !!(showId || bookId)
   const constraintTitle = constrained
     ? (all.find(
@@ -267,55 +265,65 @@ export function QuotesLibrary() {
         </FilterPanel>
       )}
 
-      {loading && <p className="text-body text-text-secondary">Loading…</p>}
-      {error && <p className="text-body text-danger">Couldn’t load your quotes.</p>}
-      {!loading && !error && view.length === 0 && all.length === 0 && (
-        <EmptyState
-          title="No quotes yet"
-          actionLabel="New Quote"
-          to={routes.quotes.entry}
-          Icon={IconQuote}
-        />
-      )}
-      {!loading && !error && view.length === 0 && all.length > 0 && (
-        <p className="py-16 text-center text-body text-text-secondary">
-          No quotes match.
-        </p>
-      )}
-
-      {!loading && !error && view.length > 0 && (
-        <>
-          <ResultCount count={view.length} />
-          <div className="overflow-hidden rounded-card border border-border">
-            {view.map((quote) => (
-              <SwipeRow key={quote.id} onDelete={() => void remove(quote.id)}>
-                <button
-                  onClick={() => navigate(routes.quotes.edit(quote.id))}
-                  className="block w-full border-b border-border px-3 py-3 text-left last:border-b-0"
-                >
-                  <span className="flex items-start gap-1.5 text-body text-text-primary">
-                    {quote.is_favorite && (
-                      <IconHeartFilled
-                        size={13}
-                        className="mt-1 shrink-0 text-favorite"
-                        aria-label="Favourite"
-                      />
-                    )}
-                    <span className="line-clamp-2">{quote.text}</span>
-                  </span>
-                  <span className="mt-1 flex flex-wrap items-center gap-2 text-caption text-text-secondary">
-                    <StatusChip
-                      label={categoryLabel(categories, quote.category)}
-                      className={QUOTE_CATEGORY_CHIP}
-                    />
-                    {quote.author && <span className="truncate">{quote.author}</span>}
-                  </span>
-                </button>
-              </SwipeRow>
-            ))}
-          </div>
-        </>
-      )}
+      <ListLoader
+        loading={loading}
+        error={error}
+        data={override ?? quotes}
+        errorText="Couldn’t load your quotes."
+        emptyState={
+          <EmptyState
+            title="No quotes yet"
+            actionLabel="New Quote"
+            to={routes.quotes.entry}
+            Icon={IconQuote}
+          />
+        }
+      >
+        {(allLoaded) => {
+          // The URL constraint is layered on at view time so the panel state stays purely local.
+          const view = applyLibraryView(allLoaded, { ...criteria, showId, bookId })
+          if (view.length === 0) {
+            return (
+              <p className="py-16 text-center text-body text-text-secondary">
+                No quotes match.
+              </p>
+            )
+          }
+          return (
+            <>
+              <ResultCount count={view.length} />
+              <div className="overflow-hidden rounded-card border border-border">
+                {view.map((quote) => (
+                  <SwipeRow key={quote.id} onDelete={() => void remove(quote.id)}>
+                    <button
+                      onClick={() => navigate(routes.quotes.edit(quote.id))}
+                      className="block w-full border-b border-border px-3 py-3 text-left last:border-b-0"
+                    >
+                      <span className="flex items-start gap-1.5 text-body text-text-primary">
+                        {quote.is_favorite && (
+                          <IconHeartFilled
+                            size={13}
+                            className="mt-1 shrink-0 text-favorite"
+                            aria-label="Favourite"
+                          />
+                        )}
+                        <span className="line-clamp-2">{quote.text}</span>
+                      </span>
+                      <span className="mt-1 flex flex-wrap items-center gap-2 text-caption text-text-secondary">
+                        <StatusChip
+                          label={categoryLabel(categories, quote.category)}
+                          className={QUOTE_CATEGORY_CHIP}
+                        />
+                        {quote.author && <span className="truncate">{quote.author}</span>}
+                      </span>
+                    </button>
+                  </SwipeRow>
+                ))}
+              </div>
+            </>
+          )
+        }}
+      </ListLoader>
     </div>
   )
 }

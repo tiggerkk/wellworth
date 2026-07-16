@@ -36,6 +36,7 @@ import { DateRangeRow } from '../components/DateRangeRow'
 import { ShowRowHeader } from '../components/ShowRowHeader'
 import { PosterThumb } from '../components/PosterThumb'
 import { EmptyState } from '../components/EmptyState'
+import { ListLoader } from '../components/ListLoader'
 
 type TypeFilter = 'all' | ShowType
 type StatusFilter = 'all' | ShowStatus
@@ -149,8 +150,6 @@ export function ShowsLibrary() {
     { value: 'all', label: 'Any Genre' },
     ...showGenres(allShows).map((g) => ({ value: g, label: g })),
   ]
-  const view = applyLibraryView(allShows, criteria)
-
   const boundValue: Record<DateBound, IsoDate | null> = {
     startFrom: criteria.startFrom,
     startTo: criteria.startTo,
@@ -243,46 +242,50 @@ export function ShowsLibrary() {
         </FilterPanel>
       )}
 
-      {loading && <p className="px-1 py-6 text-body text-text-secondary">Loading…</p>}
-      {error && (
-        <p className="px-1 py-6 text-body text-danger">Couldn’t load your shows.</p>
-      )}
-
-      {!loading && !error && allShows.length === 0 && (
-        <EmptyState
-          title="No shows yet"
-          actionLabel="New Show"
-          to={routes.shows.entry}
-          Icon={IconDeviceTv}
-        />
-      )}
-
-      {!loading && !error && allShows.length > 0 && view.length > 0 && (
-        <ResultCount count={view.length} />
-      )}
-      {!loading && !error && allShows.length > 0 && (
-        <div className="overflow-hidden rounded-card border border-border bg-surface">
-          {view.length === 0 ? (
-            <p className="px-4 py-6 text-center text-body text-text-tertiary">
-              No matches.
-            </p>
-          ) : (
-            view.map((s) => (
-              <SwipeRow key={s.id} onDelete={() => void remove(s.id)}>
-                <button
-                  onClick={() => navigate(routes.shows.edit(s.id))}
-                  className="flex w-full items-center gap-3 px-3 py-2.5 text-left active:bg-input/40"
-                >
-                  <PosterThumb path={s.poster_path} size="w92" />
-                  <span className="min-w-0 flex-1">
-                    <ShowRowHeader show={s} />
-                  </span>
-                </button>
-              </SwipeRow>
-            ))
-          )}
-        </div>
-      )}
+      <ListLoader
+        loading={loading}
+        error={error}
+        data={override ?? shows}
+        errorText="Couldn’t load your shows."
+        emptyState={
+          <EmptyState
+            title="No shows yet"
+            actionLabel="New Show"
+            to={routes.shows.entry}
+            Icon={IconDeviceTv}
+          />
+        }
+      >
+        {(all) => {
+          const view = applyLibraryView(all, criteria)
+          return (
+            <>
+              {view.length > 0 && <ResultCount count={view.length} />}
+              <div className="overflow-hidden rounded-card border border-border bg-surface">
+                {view.length === 0 ? (
+                  <p className="px-4 py-6 text-center text-body text-text-tertiary">
+                    No matches.
+                  </p>
+                ) : (
+                  view.map((s) => (
+                    <SwipeRow key={s.id} onDelete={() => void remove(s.id)}>
+                      <button
+                        onClick={() => navigate(routes.shows.edit(s.id))}
+                        className="flex w-full items-center gap-3 px-3 py-2.5 text-left active:bg-input/40"
+                      >
+                        <PosterThumb path={s.poster_path} size="w92" />
+                        <span className="min-w-0 flex-1">
+                          <ShowRowHeader show={s} />
+                        </span>
+                      </button>
+                    </SwipeRow>
+                  ))
+                )}
+              </div>
+            </>
+          )
+        }}
+      </ListLoader>
 
       {whichDate && (
         <Calendar

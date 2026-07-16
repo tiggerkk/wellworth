@@ -49,7 +49,7 @@ export interface MedicalTrends {
  *
  * Seeds from `medical-cache.ts` (in-memory, per-user, session-only — see that file for why it's not
  * localStorage) so navigating away from Medical and back repaints the last-known data immediately
- * instead of a "Loading…" flash, while the fetch still runs in the background to reconcile.
+ * instead of a "Loading" flash, while the fetch still runs in the background to reconcile.
  */
 export function useMedicalTrends(): MedicalTrends {
   const { session } = useAuth()

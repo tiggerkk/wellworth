@@ -5,6 +5,7 @@ import { SectionCard } from '../components/SectionCard'
 import { StatusChip } from '../components/StatusChip'
 import { Thumb } from '../components/Thumb'
 import { EmptyState } from '../components/EmptyState'
+import { ListLoader } from '../components/ListLoader'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { listTripFacetRows, listTrips } from '../data/travel'
@@ -84,61 +85,61 @@ export function TravelDashboard() {
     [trips],
   )
 
-  if (loading) return <p className="p-4 text-body text-text-secondary">Loading…</p>
-  if (error)
-    return (
-      <p className="p-4 text-body text-danger">Couldn’t load your travel dashboard.</p>
-    )
-
-  if (trips.length === 0) {
-    return (
-      <div className="flex min-h-full flex-col">
-        <EmptyState
-          title="No trips yet"
-          actionLabel="New Trip"
-          to={routes.travel.entry}
-          Icon={IconRoute}
-        />
-      </div>
-    )
-  }
-
   return (
-    <div className="flex flex-col gap-4 px-4 py-4 pb-8">
-      {/* Count tiles — 3 columns × 2 rows, filled column-first (China · World · Trips). */}
-      <div className="grid grid-flow-col grid-cols-3 grid-rows-2 gap-2">
-        <Tile
-          value={stats.chinaProvinces}
-          suffix={`/ ${CHINA_PROVINCE_TOTAL}`}
-          label="中国省份"
-        />
-        <Tile value={stats.chinaCities} label="中国城市" />
-        <Tile value={stats.countries} label="Countries" />
-        <Tile value={stats.cities} label="Cities" />
-        <Tile value={stats.tripsThisYear} label="Trips This Year" />
-        <Tile value={stats.daysTravelled} label="Days Travelled" />
-      </div>
+    <ListLoader
+      loading={loading}
+      error={error}
+      data={data ? trips : undefined}
+      errorText="Couldn’t load your travel dashboard."
+      emptyState={
+        <div className="flex min-h-full flex-col">
+          <EmptyState
+            title="No trips yet"
+            actionLabel="New Trip"
+            to={routes.travel.entry}
+            Icon={IconRoute}
+          />
+        </div>
+      }
+    >
+      {() => (
+        <div className="flex flex-col gap-4 px-4 py-4 pb-8">
+          {/* Count tiles — 3 columns × 2 rows, filled column-first (China · World · Trips). */}
+          <div className="grid grid-flow-col grid-cols-3 grid-rows-2 gap-2">
+            <Tile
+              value={stats.chinaProvinces}
+              suffix={`/ ${CHINA_PROVINCE_TOTAL}`}
+              label="中国省份"
+            />
+            <Tile value={stats.chinaCities} label="中国城市" />
+            <Tile value={stats.countries} label="Countries" />
+            <Tile value={stats.cities} label="Cities" />
+            <Tile value={stats.tripsThisYear} label="Trips This Year" />
+            <Tile value={stats.daysTravelled} label="Days Travelled" />
+          </div>
 
-      <Shelf
-        title="Recently Visited"
-        trips={recentlyVisited}
-        facetsByTrip={facetsByTrip}
-        onOpen={(id) => navigate(routes.travel.edit(id))}
-        onSeeAll={() => navigate(routes.travel.trips)}
-      />
-      <Shelf
-        title="Planning"
-        trips={planning}
-        facetsByTrip={facetsByTrip}
-        onOpen={(id) => navigate(routes.travel.edit(id))}
-      />
-      <Shelf
-        title="Want to Visit"
-        trips={want}
-        facetsByTrip={facetsByTrip}
-        onOpen={(id) => navigate(routes.travel.edit(id))}
-      />
-    </div>
+          <Shelf
+            title="Recently Visited"
+            trips={recentlyVisited}
+            facetsByTrip={facetsByTrip}
+            onOpen={(id) => navigate(routes.travel.edit(id))}
+            onSeeAll={() => navigate(routes.travel.trips)}
+          />
+          <Shelf
+            title="Planning"
+            trips={planning}
+            facetsByTrip={facetsByTrip}
+            onOpen={(id) => navigate(routes.travel.edit(id))}
+          />
+          <Shelf
+            title="Want to Visit"
+            trips={want}
+            facetsByTrip={facetsByTrip}
+            onOpen={(id) => navigate(routes.travel.edit(id))}
+          />
+        </div>
+      )}
+    </ListLoader>
   )
 }
 
