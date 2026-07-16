@@ -39,6 +39,7 @@ import { routes } from '../constants/routes'
 import type { Tables } from '../types/database'
 import { Calendar, type DayCue } from '../components/Calendar'
 import { Collapsible } from '../components/Collapsible'
+import { EntryLoader } from '../components/EntryLoader'
 import { IconAction } from '../components/IconAction'
 import { ConfirmDeleteAction } from '../components/ConfirmDeleteAction'
 import { NutrientBar } from '../components/NutrientBar'
@@ -317,123 +318,123 @@ export function WellnessDiary() {
         )}
       </div>
 
-      {/* States */}
-      {loading && <p className="px-4 py-6 text-body text-text-secondary">Loading…</p>}
-      {error && (
-        <p className="px-4 py-6 text-body text-danger">
-          Couldn’t load this day. Pull to retry.
-        </p>
-      )}
-
       {/* Groups */}
-      {!loading && !error && (
-        <div className="flex flex-col gap-3 px-4">
-          {DIARY_GROUPS.map((group) => {
-            const groupEntries = orderedEntries(group.key, entriesFor(group.key))
-            const subtotal = groupEntries.reduce(
-              (sum, e) => sum + (e.energy_kcal ?? 0),
-              0,
-            )
-            const isOpen = expanded[group.key] ?? false
-            const byId = new Map(groupEntries.map((e) => [e.id, e]))
-            const negative = subtotal < 0
-            return (
-              <Collapsible
-                key={group.key}
-                title={group.label}
-                icon={group.Icon}
-                iconClassName={group.iconClass}
-                titleSuffix={
-                  <span
-                    className={`shrink-0 text-label ${negative ? 'text-accent' : 'text-text-secondary'}`}
-                  >
-                    {Math.round(subtotal)} kcal
-                  </span>
-                }
-                titleGrow={false}
-                open={isOpen}
-                onOpenChange={() =>
-                  setExpanded((prev) => ({ ...prev, [group.key]: !isOpen }))
-                }
-                actions={
-                  <>
-                    <div className="flex-1" />
-                    <ConfirmDeleteAction
-                      label={`Delete all in ${group.label}`}
-                      onDelete={() => void deleteGroup(group)}
-                      disabled={groupEntries.length === 0}
-                    />
-                    <IconAction
-                      Icon={IconCopy}
-                      label={`Copy ${group.label}`}
-                      onClick={() => void copyGroup(group)}
-                      disabled={groupEntries.length === 0}
-                    />
-                    <IconAction
-                      Icon={IconClipboard}
-                      label={`Paste into ${group.label}`}
-                      onClick={() => void pasteGroup(group)}
-                      disabled={!canPaste}
-                      tone="positive"
-                    />
-                    <IconAction
-                      Icon={IconPlus}
-                      label={`Add to ${group.label}`}
-                      onClick={() =>
-                        openSheet(
-                          group.kind === 'activity'
-                            ? `${routes.wellness.addActivity}?day=${day}`
-                            : `${routes.wellness.addFood}?group=${group.key}&day=${day}`,
+      <EntryLoader
+        loading={loading}
+        error={error}
+        data={entries}
+        errorText="Couldn’t load this day."
+        className="contents"
+      >
+        {() => (
+          <div className="flex flex-col gap-3 px-4">
+            {DIARY_GROUPS.map((group) => {
+              const groupEntries = orderedEntries(group.key, entriesFor(group.key))
+              const subtotal = groupEntries.reduce(
+                (sum, e) => sum + (e.energy_kcal ?? 0),
+                0,
+              )
+              const isOpen = expanded[group.key] ?? false
+              const byId = new Map(groupEntries.map((e) => [e.id, e]))
+              const negative = subtotal < 0
+              return (
+                <Collapsible
+                  key={group.key}
+                  title={group.label}
+                  icon={group.Icon}
+                  iconClassName={group.iconClass}
+                  titleSuffix={
+                    <span
+                      className={`shrink-0 text-label ${negative ? 'text-accent' : 'text-text-secondary'}`}
+                    >
+                      {Math.round(subtotal)} kcal
+                    </span>
+                  }
+                  titleGrow={false}
+                  open={isOpen}
+                  onOpenChange={() =>
+                    setExpanded((prev) => ({ ...prev, [group.key]: !isOpen }))
+                  }
+                  actions={
+                    <>
+                      <div className="flex-1" />
+                      <ConfirmDeleteAction
+                        label={`Delete all in ${group.label}`}
+                        onDelete={() => void deleteGroup(group)}
+                        disabled={groupEntries.length === 0}
+                      />
+                      <IconAction
+                        Icon={IconCopy}
+                        label={`Copy ${group.label}`}
+                        onClick={() => void copyGroup(group)}
+                        disabled={groupEntries.length === 0}
+                      />
+                      <IconAction
+                        Icon={IconClipboard}
+                        label={`Paste into ${group.label}`}
+                        onClick={() => void pasteGroup(group)}
+                        disabled={!canPaste}
+                        tone="positive"
+                      />
+                      <IconAction
+                        Icon={IconPlus}
+                        label={`Add to ${group.label}`}
+                        onClick={() =>
+                          openSheet(
+                            group.kind === 'activity'
+                              ? `${routes.wellness.addActivity}?day=${day}`
+                              : `${routes.wellness.addFood}?group=${group.key}&day=${day}`,
+                          )
+                        }
+                        tone="positive"
+                        stroke={2.25}
+                      />
+                    </>
+                  }
+                >
+                  {groupEntries.length === 0 ? (
+                    <p className="px-4 py-3 text-caption text-text-tertiary">
+                      Nothing logged.
+                    </p>
+                  ) : (
+                    <ReorderList
+                      ids={groupEntries.map((e) => e.id)}
+                      containerClassName="divide-y divide-border"
+                      onReorder={(nextIds) => {
+                        setOrderOverride((prev) => ({ ...prev, [group.key]: nextIds }))
+                        const reordered = nextIds
+                          .map((id) => byId.get(id))
+                          .filter((e): e is Tables<'diary_entry'> => e != null)
+                        void reorderEntries(reordered).catch(() => bumpDiary())
+                      }}
+                      onDelete={(id) => void handleDelete(id)}
+                      handleLabel={() => `Drag to reorder in ${group.label}`}
+                      renderLabel={(id) => {
+                        const e = byId.get(id)
+                        if (!e) return null
+                        return (
+                          <button
+                            onClick={() => openEdit(e)}
+                            className="block w-full truncate text-left"
+                          >
+                            {e.label}
+                            {e.duration_min ? ` · ${e.duration_min} min` : ''}
+                          </button>
                         )
-                      }
-                      tone="positive"
-                      stroke={2.25}
+                      }}
+                      renderTrailing={(id) => (
+                        <span className="text-body text-text-muted">
+                          {Math.round(byId.get(id)?.energy_kcal ?? 0)} kcal
+                        </span>
+                      )}
                     />
-                  </>
-                }
-              >
-                {groupEntries.length === 0 ? (
-                  <p className="px-4 py-3 text-caption text-text-tertiary">
-                    Nothing logged.
-                  </p>
-                ) : (
-                  <ReorderList
-                    ids={groupEntries.map((e) => e.id)}
-                    containerClassName="divide-y divide-border"
-                    onReorder={(nextIds) => {
-                      setOrderOverride((prev) => ({ ...prev, [group.key]: nextIds }))
-                      const reordered = nextIds
-                        .map((id) => byId.get(id))
-                        .filter((e): e is Tables<'diary_entry'> => e != null)
-                      void reorderEntries(reordered).catch(() => bumpDiary())
-                    }}
-                    onDelete={(id) => void handleDelete(id)}
-                    handleLabel={() => `Drag to reorder in ${group.label}`}
-                    renderLabel={(id) => {
-                      const e = byId.get(id)
-                      if (!e) return null
-                      return (
-                        <button
-                          onClick={() => openEdit(e)}
-                          className="block w-full truncate text-left"
-                        >
-                          {e.label}
-                          {e.duration_min ? ` · ${e.duration_min} min` : ''}
-                        </button>
-                      )
-                    }}
-                    renderTrailing={(id) => (
-                      <span className="text-body text-text-muted">
-                        {Math.round(byId.get(id)?.energy_kcal ?? 0)} kcal
-                      </span>
-                    )}
-                  />
-                )}
-              </Collapsible>
-            )
-          })}
-        </div>
-      )}
+                  )}
+                </Collapsible>
+              )
+            })}
+          </div>
+        )}
+      </EntryLoader>
 
       {calendarOpen && (
         <Calendar

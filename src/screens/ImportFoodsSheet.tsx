@@ -229,9 +229,7 @@ export function ImportFoodsSheet() {
       </header>
 
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
-        {refLoading ? (
-          <p className="text-body text-text-secondary">Loading…</p>
-        ) : done !== null ? (
+        {done !== null ? (
           <div className="flex flex-col gap-2">
             <p className="text-body font-medium text-text-primary">
               Imported {done.created + done.updated} food
@@ -265,10 +263,15 @@ export function ImportFoodsSheet() {
             />
             <button
               onClick={() => inputRef.current?.click()}
-              className="flex items-center justify-center gap-2 rounded-input border border-border bg-input px-4 py-3 text-body text-text-primary"
+              disabled={refLoading}
+              className="flex items-center justify-center gap-2 rounded-input border border-border bg-input px-4 py-3 text-body text-text-primary disabled:opacity-50"
             >
               <IconUpload size={18} />
-              {fileName ? 'Choose a different file' : 'Choose CSV File'}
+              {refLoading
+                ? 'Loading…'
+                : fileName
+                  ? 'Choose a different file'
+                  : 'Choose CSV File'}
             </button>
             {fileName && (
               <p className="text-caption text-text-secondary">

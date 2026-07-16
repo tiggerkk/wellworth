@@ -28,6 +28,7 @@ import { OverlayBottom } from '../components/OverlayBottom'
 import { OverlayCloseButton } from '../components/OverlayCloseButton'
 import { TravelExpensesPanel } from '../components/TravelExpensesPanel'
 import { DayExpensesOverlay } from '../components/DayExpensesOverlay'
+import { EntryLoader } from '../components/EntryLoader'
 import type { ExpenseDraft } from '../components/ExpenseRowsEditor'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
@@ -187,6 +188,15 @@ function NewTrip() {
 // --- Edit trip: header + Itinerary (Days → Stops) + Expenses placeholder ---
 
 function EditTrip({ id }: { id: string }) {
+  const navigate = useNavigate()
+  const location = useLocation()
+  // Close → back if we came from within the app, else fall back to the Trips list. Duplicated
+  // from EditTripBody's own `close` (not lifted, to avoid a second useEscapeKey listener double
+  // -firing navigate(-1) once the body mounts) — this one only backs the header's Close button
+  // during the loading/error phase, before EditTripBody exists.
+  const close = () =>
+    location.key === 'default' ? navigate(routes.travel.trips) : navigate(-1)
+
   const version = useTravelVersion()
   const fn = useCallback(() => {
     void version
@@ -196,16 +206,28 @@ function EditTrip({ id }: { id: string }) {
 
   // Keep the body mounted across background refetches (a day/stop/expense write bumps the version →
   // `useAsync` flips `loading` true but retains the prior `bundle`). Gating on `!loading` here would
-  // unmount the body on every itinerary edit and discard the header's unsaved local state.
+  // unmount the body on every itinerary edit and discard the header's unsaved local state. Passing
+  // `loading`/`error` through `!bundle` reproduces that: once `bundle` exists, EntryLoader always
+  // renders the body regardless of a background loading/error state.
   return (
     <div className="flex h-full flex-col">
-      {loading && !bundle && (
-        <p className="p-4 text-body text-text-secondary">Loading…</p>
+      {!bundle && (
+        <header className="flex items-center gap-3 border-b border-border px-4 py-3">
+          <button onClick={close} aria-label="Close" className="text-text-secondary">
+            <IconX size={22} />
+          </button>
+          <h1 className="flex-1 text-heading font-medium text-text-primary">Edit Trip</h1>
+        </header>
       )}
-      {error && !bundle && (
-        <p className="p-4 text-body text-danger">Couldn’t load this trip.</p>
-      )}
-      {bundle && <EditTripBody key={id} bundle={bundle} />}
+      <EntryLoader
+        loading={loading && !bundle}
+        error={error && !bundle ? error : undefined}
+        data={bundle}
+        errorText="Couldn’t load this trip."
+        className="contents"
+      >
+        {(b) => <EditTripBody key={id} bundle={b} />}
+      </EntryLoader>
     </div>
   )
 }

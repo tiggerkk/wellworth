@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { SheetCloseButton } from './SheetCloseButton'
 import { Sheet } from './Sheet'
 import { Toggle } from './Toggle'
+import { EntryLoader } from './EntryLoader'
 import { useProfileEditor } from '../hooks/useProfileEditor'
 import type { Tables, TablesUpdate } from '../types/database'
 
@@ -53,7 +54,7 @@ export function VisibleFieldsSheet({
   extras = [],
   title = 'Visible Fields',
 }: VisibleFieldsSheetProps) {
-  const { profile, loading, save } = useProfileEditor()
+  const { profile, loading, error, save } = useProfileEditor()
 
   return (
     <Sheet variant="full" label="Visible fields">
@@ -61,17 +62,23 @@ export function VisibleFieldsSheet({
         <SheetCloseButton />
         <h1 className="text-heading font-medium text-text-primary">{title}</h1>
       </header>
-      {loading && <p className="p-4 text-body text-text-secondary">Loading…</p>}
-      {profile && (
-        <Picker
-          profile={profile}
-          save={save}
-          intro={intro}
-          fields={fields}
-          column={column}
-          extras={extras}
-        />
-      )}
+      <EntryLoader
+        loading={loading}
+        error={error}
+        data={profile}
+        errorText="Couldn’t load visible fields."
+      >
+        {(prof) => (
+          <Picker
+            profile={prof}
+            save={save}
+            intro={intro}
+            fields={fields}
+            column={column}
+            extras={extras}
+          />
+        )}
+      </EntryLoader>
     </Sheet>
   )
 }
