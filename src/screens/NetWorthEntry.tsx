@@ -674,6 +674,12 @@ function EntryForm({
                       <IconUpload size={18} />
                     </button>
                   )}
+                  {isInsurance && (
+                    // Insurance has no action button (read-only, no add/import), so this
+                    // invisible spacer reserves the same width as the icon buttons other
+                    // asset types render here — keeping the subtotal right-aligned with them.
+                    <span className="size-[18px] shrink-0" aria-hidden="true" />
+                  )}
                 </>
               }
             >
