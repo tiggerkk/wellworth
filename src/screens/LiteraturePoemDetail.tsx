@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router'
-import { IconHeart, IconHeartFilled, IconX } from '@tabler/icons-react'
+import { IconHeart, IconHeartFilled } from '@tabler/icons-react'
 import { useAsync } from '../hooks/useAsync'
 import { useProfile } from '../hooks/useProfile'
 import { useEscapeKey } from '../hooks/useEscapeKey'
@@ -9,6 +9,7 @@ import { getPoem, loadMeta } from '../data/literature'
 import { DYNASTY_CHIP, isFieldVisible, type SpeechLang } from '../lib/literature'
 import { LITERATURE_SECTION_COLOR } from '../constants/literature'
 import { routes } from '../constants/routes'
+import { EntryHeaderTitle } from '../components/EntryHeaderTitle'
 import { PoemReader } from '../components/PoemReader'
 import { FilterPill } from '../components/FilterPill'
 import { Collapsible } from '../components/Collapsible'
@@ -80,15 +81,24 @@ export function LiteraturePoemDetail() {
   }, [poem, meta])
 
   return (
-    <div className="flex min-h-full flex-col gap-4 px-4 py-4">
-      <header className="sticky top-0 z-10 -mx-4 flex items-center gap-2 bg-bg/90 px-4 py-3 backdrop-blur">
-        <button
-          onClick={() => navigate(-1)}
-          aria-label="關閉"
-          className="-ml-1 shrink-0 p-1 text-text-secondary"
-        >
-          <IconX size={22} />
-        </button>
+    <div className="flex h-full min-h-0 flex-col">
+      <EntryHeaderTitle
+        closeAriaLabel="關閉"
+        actions={
+          <button
+            onClick={() => toggle(poemId)}
+            aria-label="收藏"
+            aria-pressed={isFav}
+            className="shrink-0 p-1"
+          >
+            {isFav ? (
+              <IconHeartFilled size={22} className="text-favorite" />
+            ) : (
+              <IconHeart size={22} className="text-text-tertiary" />
+            )}
+          </button>
+        }
+      >
         <div className="flex min-w-0 flex-1 items-baseline gap-2">
           {poem && (
             <>
@@ -111,68 +121,60 @@ export function LiteraturePoemDetail() {
             </>
           )}
         </div>
-        <button
-          onClick={() => toggle(poemId)}
-          aria-label="收藏"
-          aria-pressed={isFav}
-          className="shrink-0 p-1"
-        >
-          {isFav ? (
-            <IconHeartFilled size={22} className="text-favorite" />
-          ) : (
-            <IconHeart size={22} className="text-text-tertiary" />
-          )}
-        </button>
-      </header>
+      </EntryHeaderTitle>
 
-      {loading && <p className="text-body text-text-secondary">載入中…</p>}
-      {error && <p className="text-body text-danger">無法載入此詩詞。</p>}
+      <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex flex-col gap-4">
+          {loading && <p className="text-body text-text-secondary">載入中…</p>}
+          {error && <p className="text-body text-danger">無法載入此詩詞。</p>}
 
-      {poem && (
-        <>
-          <PoemReader text={content} defaultLang={defaultLang} autoLoop={autoLoop} />
+          {poem && (
+            <>
+              <PoemReader text={content} defaultLang={defaultLang} autoLoop={autoLoop} />
 
-          {tags.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {tags.map((name) => (
-                <FilterPill key={name} label={name} />
-              ))}
-            </div>
-          )}
+              {tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {tags.map((name) => (
+                    <FilterPill key={name} label={name} />
+                  ))}
+                </div>
+              )}
 
-          <Collapsible
-            title="原文"
-            color={LITERATURE_SECTION_COLOR.content}
-            defaultOpen={true}
-          >
-            <p className="whitespace-pre-line px-4 py-4 text-center text-xl leading-loose text-text-primary">
-              {content}
-            </p>
-          </Collapsible>
+              <Collapsible
+                title="原文"
+                color={LITERATURE_SECTION_COLOR.content}
+                defaultOpen={true}
+              >
+                <p className="whitespace-pre-line px-4 py-4 text-center text-xl leading-loose text-text-primary">
+                  {content}
+                </p>
+              </Collapsible>
 
-          {isFieldVisible(visibleFields, 'translation') && (
-            <ProseSection
-              title="譯文"
-              color={LITERATURE_SECTION_COLOR.translation}
-              text={htmlToText(poem.translation)}
-            />
+              {isFieldVisible(visibleFields, 'translation') && (
+                <ProseSection
+                  title="譯文"
+                  color={LITERATURE_SECTION_COLOR.translation}
+                  text={htmlToText(poem.translation)}
+                />
+              )}
+              {isFieldVisible(visibleFields, 'remark') && (
+                <ProseSection
+                  title="註釋"
+                  color={LITERATURE_SECTION_COLOR.remark}
+                  text={htmlToText(poem.remark)}
+                />
+              )}
+              {isFieldVisible(visibleFields, 'shangxi') && (
+                <ProseSection
+                  title="賞析"
+                  color={LITERATURE_SECTION_COLOR.shangxi}
+                  text={htmlToText(poem.shangxi)}
+                />
+              )}
+            </>
           )}
-          {isFieldVisible(visibleFields, 'remark') && (
-            <ProseSection
-              title="註釋"
-              color={LITERATURE_SECTION_COLOR.remark}
-              text={htmlToText(poem.remark)}
-            />
-          )}
-          {isFieldVisible(visibleFields, 'shangxi') && (
-            <ProseSection
-              title="賞析"
-              color={LITERATURE_SECTION_COLOR.shangxi}
-              text={htmlToText(poem.shangxi)}
-            />
-          )}
-        </>
-      )}
+        </div>
+      </div>
     </div>
   )
 }

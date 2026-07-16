@@ -2,8 +2,6 @@ import { useCallback, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import {
   IconArrowsDiagonal,
-  IconHeart,
-  IconHeartFilled,
   IconQuote,
   IconRefresh,
   IconWorldSearch,
@@ -13,8 +11,10 @@ import { routes } from '../constants/routes'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useDirty } from '../hooks/useDirty'
+import { useEntryFavorite } from '../hooks/useEntryFavorite'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 import { EntryLoader } from '../components/EntryLoader'
+import { EntryHeaderTitle } from '../components/EntryHeaderTitle'
 import { createShow, deleteShow, getShow, updateShow } from '../data/show'
 import { numStr } from '../lib/wellness-quantity'
 import { FIELD_CLASS as inputClass } from '../constants/forms'
@@ -179,20 +179,10 @@ export function ShowsEntry() {
 
   return (
     <div className="relative flex h-full min-h-0 flex-col">
-      <header className="flex h-14 items-center gap-3 border-b border-border px-4 py-3">
-        <button
-          onClick={() => navigate(-1)}
-          aria-label="Close"
-          className="text-text-secondary"
-        >
-          <IconX size={22} />
-        </button>
-        <h1 className="flex-1 truncate text-heading font-medium text-text-primary">
-          {id ? 'Edit Show' : 'New Show'}
-        </h1>
-        {/* Reservation slot matching header actions width to guard absolute composition */}
-        <div className="w-32 shrink-0" />
-      </header>
+      <EntryHeaderTitle
+        title={id ? 'Edit Show' : 'New Show'}
+        actions={<div className="w-24 shrink-0" />}
+      />
 
       <EntryLoader
         loading={loading}
@@ -206,7 +196,13 @@ export function ShowsEntry() {
   )
 }
 
-function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft }) {
+function ShowForm({
+  id,
+  initial: initialProp,
+}: {
+  id: string | undefined
+  initial: ShowDraft
+}) {
   const navigate = useNavigate()
   const { session } = useAuth()
   const userId = session?.user.id
@@ -214,7 +210,10 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
   // Entry field visibility (Shows Settings). Core Type/Title/Status/Search are always shown.
   const show = (key: string) => isFieldVisible(profile?.show_visible_fields ?? null, key)
 
-  const [draft, setDraft] = useState<ShowDraft>(initial)
+  // `initial` is stateful (not just the loader's prop) so an immediate favorite save (see
+  // `useEntryFavorite`) can sync the dirty baseline without affecting any other in-progress edits.
+  const [initial, setInitial] = useState<ShowDraft>(initialProp)
+  const [draft, setDraft] = useState<ShowDraft>(initialProp)
   const [saving, setSaving] = useState(false)
   const [datePicker, setDatePicker] = useState<null | 'start' | 'end'>(null)
   const [searchOpen, setSearchOpen] = useState(false)
@@ -424,23 +423,21 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
     }
   }
 
+  const toggleFavorite = useEntryFavorite({
+    id,
+    favorite: draft.is_favorite,
+    setFavorite: (next) => update({ is_favorite: next }),
+    syncInitialFavorite: (next) => setInitial((i) => ({ ...i, is_favorite: next })),
+    persist: (showId, next) => updateShow(showId, { is_favorite: next }),
+    bump: bumpShows,
+  })
+
   const pickerDay =
     (datePicker === 'start' ? draft.start_date : draft.end_date) ?? todayLocal()
 
   return (
     <>
       <div className="absolute top-3 right-4 z-10 flex items-center gap-3">
-        <button
-          onClick={() => update({ is_favorite: !draft.is_favorite })}
-          aria-label="Favourite"
-          className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-muted"
-        >
-          {draft.is_favorite ? (
-            <IconHeartFilled size={20} className="text-favorite" />
-          ) : (
-            <IconHeart size={20} className="text-text-tertiary" />
-          )}
-        </button>
         <EntryHeaderActions
           editing={!!id}
           dirty={dirty}
@@ -449,6 +446,8 @@ function ShowForm({ id, initial }: { id: string | undefined; initial: ShowDraft 
           onReset={() => setDraft(initial)}
           onSubmit={() => void save()}
           onDelete={id ? () => void remove() : undefined}
+          favorite={draft.is_favorite}
+          onToggleFavorite={toggleFavorite}
         />
       </div>
 

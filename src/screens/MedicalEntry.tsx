@@ -8,6 +8,7 @@ import { useEscapeKey } from '../hooks/useEscapeKey'
 import { useProfile } from '../hooks/useProfile'
 import { useSheetNavigate } from '../hooks/useSheetNavigate'
 import { EntryLoader } from '../components/EntryLoader'
+import { EntryHeaderTitle } from '../components/EntryHeaderTitle'
 import { FIELD_CLASS as inputClass } from '../constants/forms'
 import { deleteReport, getReportWithResults, saveReport } from '../data/medical'
 import { bumpMedical } from '../lib/medical-refresh'
@@ -73,29 +74,23 @@ export function MedicalEntry() {
         Outer structural header remains statically mounted during data retrieval,
         rendering "Loading..." elegantly under a unified structure.
       */}
-      <header className="flex h-14 items-center gap-3 border-b border-border px-4 py-3">
-        <button
-          onClick={() => navigate(-1)}
-          aria-label="Close"
-          className="text-text-secondary"
-        >
-          <IconX size={22} />
-        </button>
-        <h1 className="flex-1 truncate text-heading font-medium text-text-primary">
-          {id ? 'Edit Report' : 'New Report'}
-        </h1>
-        {!id && profile?.medical_importer_enabled && (
-          <button
-            onClick={() => openSheet(routes.medical.import)}
-            className="flex shrink-0 items-center gap-1.5 pl-2 text-body text-accent"
-          >
-            <IconUpload size={16} /> Import JSON
-          </button>
-        )}
-        {/* Reservation slot matching header actions width to guard absolute composition */}
-        <div className="w-24 shrink-0" />
-      </header>
-
+      <EntryHeaderTitle
+        title={id ? 'Edit Report' : 'New Report'}
+        actions={
+          <>
+            {!id && profile?.medical_importer_enabled && (
+              <button
+                onClick={() => openSheet(routes.medical.import)}
+                className="flex shrink-0 items-center gap-1.5 pl-2 text-body text-accent"
+              >
+                <IconUpload size={16} /> Import JSON
+              </button>
+            )}
+            {/* Reservation slot matching header actions width to guard absolute composition */}
+            <div className="w-24 shrink-0" />
+          </>
+        }
+      />
       <EntryLoader
         loading={loading}
         error={error}

@@ -2,8 +2,6 @@ import { useCallback, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import {
   IconArrowsDiagonal,
-  IconHeart,
-  IconHeartFilled,
   IconQuote,
   IconWorldSearch,
   IconX,
@@ -12,8 +10,10 @@ import { routes } from '../constants/routes'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useDirty } from '../hooks/useDirty'
+import { useEntryFavorite } from '../hooks/useEntryFavorite'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 import { EntryLoader } from '../components/EntryLoader'
+import { EntryHeaderTitle } from '../components/EntryHeaderTitle'
 import { createBook, deleteBook, getBook, updateBook } from '../data/book'
 import { numStr } from '../lib/wellness-quantity'
 import { FIELD_CLASS as inputClass } from '../constants/forms'
@@ -130,20 +130,10 @@ export function BooksEntry() {
         This outer header is always mounted! 
         It displays "Loading..." gracefully with the header structure perfectly intact.
       */}
-      <header className="flex h-14 items-center gap-3 border-b border-border px-4 py-3">
-        <button
-          onClick={() => navigate(-1)}
-          aria-label="Close"
-          className="text-text-secondary"
-        >
-          <IconX size={22} />
-        </button>
-        <h1 className="flex-1 truncate text-heading font-medium text-text-primary">
-          {id ? 'Edit Book' : 'New Book'}
-        </h1>
-        {/* We leave horizontal space on the right of the header title for actions to overlay safely */}
-        <div className="w-24 shrink-0" />
-      </header>
+      <EntryHeaderTitle
+        title={id ? 'Edit Book' : 'New Book'}
+        actions={<div className="w-24 shrink-0" />}
+      />
 
       <EntryLoader
         loading={loading}
@@ -157,7 +147,13 @@ export function BooksEntry() {
   )
 }
 
-function BookForm({ id, initial }: { id: string | undefined; initial: BookDraft }) {
+function BookForm({
+  id,
+  initial: initialProp,
+}: {
+  id: string | undefined
+  initial: BookDraft
+}) {
   const navigate = useNavigate()
   const { session } = useAuth()
   const userId = session?.user.id
@@ -165,7 +161,10 @@ function BookForm({ id, initial }: { id: string | undefined; initial: BookDraft 
   // Entry field visibility (Books Settings). Title / Status / Search are always shown.
   const show = (key: string) => isFieldVisible(profile?.book_visible_fields ?? null, key)
 
-  const [draft, setDraft] = useState<BookDraft>(initial)
+  // `initial` is stateful (not just the loader's prop) so an immediate favorite save (see
+  // `useEntryFavorite`) can sync the dirty baseline without affecting any other in-progress edits.
+  const [initial, setInitial] = useState<BookDraft>(initialProp)
+  const [draft, setDraft] = useState<BookDraft>(initialProp)
   const [saving, setSaving] = useState(false)
   const [datePicker, setDatePicker] = useState<null | 'start' | 'end'>(null)
   const [searchOpen, setSearchOpen] = useState(false)
@@ -284,6 +283,15 @@ function BookForm({ id, initial }: { id: string | undefined; initial: BookDraft 
     }
   }
 
+  const toggleFavorite = useEntryFavorite({
+    id,
+    favorite: draft.is_favorite,
+    setFavorite: (next) => update({ is_favorite: next }),
+    syncInitialFavorite: (next) => setInitial((i) => ({ ...i, is_favorite: next })),
+    persist: (bookId, next) => updateBook(bookId, { is_favorite: next }),
+    bump: bumpBooks,
+  })
+
   const pickerDay =
     (datePicker === 'start' ? draft.start_date : draft.end_date) ?? todayLocal()
 
@@ -294,17 +302,6 @@ function BookForm({ id, initial }: { id: string | undefined; initial: BookDraft 
         Because it is absolute positioned relative to the outer boundary, it stays secure on mobile viewports.
       */}
       <div className="absolute top-3 right-4 z-10 flex items-center gap-3">
-        <button
-          onClick={() => update({ is_favorite: !draft.is_favorite })}
-          aria-label="Favourite"
-          className="flex shrink-0 items-center justify-center p-1"
-        >
-          {draft.is_favorite ? (
-            <IconHeartFilled size={20} className="text-favorite" />
-          ) : (
-            <IconHeart size={20} className="text-text-tertiary" />
-          )}
-        </button>
         <EntryHeaderActions
           editing={!!id}
           dirty={dirty}
@@ -313,6 +310,8 @@ function BookForm({ id, initial }: { id: string | undefined; initial: BookDraft 
           onReset={() => setDraft(initial)}
           onSubmit={() => void save()}
           onDelete={id ? () => void remove() : undefined}
+          favorite={draft.is_favorite}
+          onToggleFavorite={toggleFavorite}
         />
       </div>
 

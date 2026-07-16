@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 import { useNavigate, useParams } from 'react-router'
-import { IconExternalLink, IconPencil, IconX } from '@tabler/icons-react'
+import { IconExternalLink, IconPencil } from '@tabler/icons-react'
 import { useAsync } from '../hooks/useAsync'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 import { useProfile } from '../hooks/useProfile'
@@ -26,6 +26,7 @@ import { groupResultsByCategory } from '../lib/medical-order'
 import { formatFullDate } from '../lib/date'
 import { routes } from '../constants/routes'
 import { EntryLoader } from '../components/EntryLoader'
+import { EntryHeaderTitle } from '../components/EntryHeaderTitle'
 import { PrimaryButton } from '../components/PrimaryButton'
 import { MedicalValueRow } from '../components/MedicalValueRow'
 import { Collapsible } from '../components/Collapsible'
@@ -51,18 +52,24 @@ export function MedicalReportDetail() {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <button
-          onClick={() => navigate(-1)}
-          aria-label="Close"
-          className="-ml-1 p-1 text-text-secondary"
-        >
-          <IconX size={22} />
-        </button>
+      <EntryHeaderTitle
+        actions={
+          id &&
+          data && (
+            <PrimaryButton
+              size="sm"
+              onClick={() => navigate(routes.medical.edit(id))}
+              aria-label="Edit"
+            >
+              <IconPencil size={18} />
+            </PrimaryButton>
+          )
+        }
+      >
         <div className="min-w-0 flex-1">
           {data ? (
             <>
-              <p className="truncate text-heading font-medium text-text-primary">
+              <p className="truncate text-title font-medium text-text-primary">
                 {formatFullDate(data.report.report_date)} -{' '}
                 {REPORT_TYPE_LABELS[data.report.report_type as ReportType] ??
                   data.report.report_type}
@@ -77,19 +84,10 @@ export function MedicalReportDetail() {
               )}
             </>
           ) : (
-            <p className="truncate text-heading font-medium text-text-primary">Report</p>
+            <p className="truncate text-title font-medium text-text-primary">Report</p>
           )}
         </div>
-        {id && data && (
-          <PrimaryButton
-            size="sm"
-            onClick={() => navigate(routes.medical.edit(id))}
-            aria-label="Edit"
-          >
-            <IconPencil size={18} />
-          </PrimaryButton>
-        )}
-      </header>
+      </EntryHeaderTitle>
 
       <div className="flex-1 overflow-y-auto p-4">
         <EntryLoader

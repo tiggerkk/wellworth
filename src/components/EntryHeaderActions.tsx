@@ -3,6 +3,8 @@ import {
   IconArrowBackUp,
   IconCheck,
   IconDeviceFloppy,
+  IconHeart,
+  IconHeartFilled,
   IconPlus,
   IconTrash,
   IconX,
@@ -21,12 +23,19 @@ interface EntryHeaderActionsProps {
   onSubmit: () => void
   /** Wired only when editing; the delete asks for an inline confirm first. */
   onDelete?: () => void
+  /** Current favorite state. Only render the heart button when this and `onToggleFavorite` are
+   *  both provided — omit both for entry forms that don't have a favorite concept. */
+  favorite?: boolean
+  /** Tapping the heart saves immediately (no Save button needed); see `useEntryFavorite`. */
+  onToggleFavorite?: () => void
 }
 
 /**
- * The shared top-right entry-form action cluster: DELETE · RESET · SUBMIT, as compact `sm` icon
- * buttons (see docs/04-design-system.md → Button placement). DELETE shows only when editing and
- * flips to a two-step inline confirm before firing. Submit shows a plus (new) / floppy (editing).
+ * The shared top-right entry-form action cluster: (optional) FAVORITE · DELETE · RESET · SUBMIT,
+ * as compact `sm` icon buttons (see docs/04-design-system.md → Button placement). DELETE shows only
+ * when editing and flips to a two-step inline confirm before firing. Submit shows a plus (new) /
+ * floppy (editing). FAVORITE shows only when both `favorite` and `onToggleFavorite` are passed, and
+ * saves immediately on tap rather than waiting for Submit.
  */
 export function EntryHeaderActions({
   editing,
@@ -36,8 +45,11 @@ export function EntryHeaderActions({
   onReset,
   onSubmit,
   onDelete,
+  favorite,
+  onToggleFavorite,
 }: EntryHeaderActionsProps) {
   const [confirming, setConfirming] = useState(false)
+  const showFavorite = favorite !== undefined && !!onToggleFavorite
 
   if (confirming && editing && onDelete) {
     return (
@@ -67,6 +79,19 @@ export function EntryHeaderActions({
 
   return (
     <div className="flex items-center gap-2">
+      {showFavorite && (
+        <button
+          onClick={onToggleFavorite}
+          aria-label="Favorite"
+          className="flex shrink-0 items-center justify-center p-1"
+        >
+          {favorite ? (
+            <IconHeartFilled size={20} className="text-favorite" />
+          ) : (
+            <IconHeart size={20} className="text-text-tertiary" />
+          )}
+        </button>
+      )}
       {editing && onDelete && (
         <button
           onClick={() => setConfirming(true)}

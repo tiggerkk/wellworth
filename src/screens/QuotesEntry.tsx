@@ -1,18 +1,14 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
-import {
-  IconClipboard,
-  IconHeart,
-  IconHeartFilled,
-  IconLink,
-  IconX,
-} from '@tabler/icons-react'
+import { IconClipboard, IconLink, IconX } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useProfile } from '../hooks/useProfile'
+import { useEntryFavorite } from '../hooks/useEntryFavorite'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 import { useDirty } from '../hooks/useDirty'
 import { EntryLoader } from '../components/EntryLoader'
+import { EntryHeaderTitle } from '../components/EntryHeaderTitle'
 import { FIELD_CLASS as inputClass } from '../constants/forms'
 import {
   createQuote,
@@ -142,20 +138,10 @@ export function QuotesEntry() {
         Outer structural header remains statically mounted during data retrieval,
         rendering "Loading..." elegantly under a unified layout frame.
       */}
-      <header className="flex h-14 items-center gap-3 border-b border-border px-4 py-3">
-        <button
-          onClick={() => navigate(-1)}
-          aria-label="Close"
-          className="text-text-secondary"
-        >
-          <IconX size={22} />
-        </button>
-        <h1 className="flex-1 truncate text-heading font-medium text-text-primary">
-          {id ? 'Edit Quote' : 'New Quote'}
-        </h1>
-        {/* Reservation slot matching absolute actions width to guard structural boundaries */}
-        <div className="w-32 shrink-0" />
-      </header>
+      <EntryHeaderTitle
+        title={id ? 'Edit Quote' : 'New Quote'}
+        actions={<div className="w-24 shrink-0" />}
+      />
 
       <EntryLoader
         loading={loading}
@@ -182,7 +168,7 @@ const canPaste = typeof navigator !== 'undefined' && !!navigator.clipboard
 
 function QuoteForm({
   id,
-  initial,
+  initial: initialProp,
   profile,
   sourceTypes,
   categories,
@@ -205,7 +191,10 @@ function QuoteForm({
   )
   const { data: tagSuggestions } = useAsync(tagsFn)
 
-  const [draft, setDraft] = useState<QuoteDraft>(initial)
+  // `initial` is stateful (not just the loader's prop) so an immediate favorite save (see
+  // `useEntryFavorite`) can sync the dirty baseline without affecting any other in-progress edits.
+  const [initial, setInitial] = useState<QuoteDraft>(initialProp)
+  const [draft, setDraft] = useState<QuoteDraft>(initialProp)
   const [saving, setSaving] = useState(false)
   // Language is auto-detected from the text until the user touches the control (or we're editing
   // an existing quote, whose stored language must not be overwritten by retyping).
@@ -315,6 +304,15 @@ function QuoteForm({
     }
   }
 
+  const toggleFavorite = useEntryFavorite({
+    id,
+    favorite: draft.is_favorite,
+    setFavorite: (next) => update({ is_favorite: next }),
+    syncInitialFavorite: (next) => setInitial((i) => ({ ...i, is_favorite: next })),
+    persist: (quoteId, next) => updateQuote(quoteId, { is_favorite: next }),
+    bump: bumpQuotes,
+  })
+
   return (
     <>
       {/* 
@@ -322,17 +320,6 @@ function QuoteForm({
         Absolute alignment coordinates prevent breaking context boxes across compact resolutions.
       */}
       <div className="absolute top-3 right-4 z-10 flex items-center gap-3">
-        <button
-          onClick={() => update({ is_favorite: !draft.is_favorite })}
-          aria-label="Favourite"
-          className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-muted"
-        >
-          {draft.is_favorite ? (
-            <IconHeartFilled size={20} className="text-favorite" />
-          ) : (
-            <IconHeart size={20} className="text-text-tertiary" />
-          )}
-        </button>
         <EntryHeaderActions
           editing={!!id}
           dirty={dirty}
@@ -341,6 +328,8 @@ function QuoteForm({
           onReset={() => setDraft(initial)}
           onSubmit={() => void save()}
           onDelete={id ? () => void remove() : undefined}
+          favorite={draft.is_favorite}
+          onToggleFavorite={toggleFavorite}
         />
       </div>
 

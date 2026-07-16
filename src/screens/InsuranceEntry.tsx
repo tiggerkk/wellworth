@@ -8,6 +8,7 @@ import { useDirty } from '../hooks/useDirty'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 import { useProfile } from '../hooks/useProfile'
 import { EntryLoader } from '../components/EntryLoader'
+import { EntryHeaderTitle } from '../components/EntryHeaderTitle'
 import { IconAction } from '../components/IconAction'
 import { InsuranceCompareOverlay } from '../components/InsuranceCompareOverlay'
 import { InsurancePolicyHeader } from '../components/InsurancePolicyHeader'
@@ -140,20 +141,10 @@ export function InsuranceEntry() {
         This outer header is always mounted! 
         It displays "Loading..." gracefully with the header structure perfectly intact.
       */}
-      <header className="flex h-14 items-center gap-3 border-b border-border px-4 py-3">
-        <button
-          onClick={() => navigate(-1)}
-          aria-label="Close"
-          className="text-text-secondary"
-        >
-          <IconX size={22} />
-        </button>
-        <h1 className="flex-1 truncate text-heading font-medium text-text-primary">
-          {id ? 'Edit Insurance' : 'New Insurance'}
-        </h1>
-        {/* We leave horizontal space on the right of the header title for actions to overlay safely */}
-        <div className="w-24 shrink-0" />
-      </header>
+      <EntryHeaderTitle
+        title={id ? 'Edit Insurance' : 'New Insurance'}
+        actions={<div className="w-24 shrink-0" />}
+      />
 
       <EntryLoader
         loading={loading}

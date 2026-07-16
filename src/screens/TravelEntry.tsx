@@ -7,7 +7,6 @@ import {
   IconCopy,
   IconPlus,
   IconReceipt2,
-  IconX,
 } from '@tabler/icons-react'
 import { SegmentedTabs } from '../components/SegmentedTabs'
 import { SelectMenu } from '../components/SelectMenu'
@@ -19,6 +18,7 @@ import { ReorderList } from '../components/ReorderList'
 import { FIELD_CLASS as inputClass } from '../constants/forms'
 import { SecondaryButton } from '../components/SecondaryButton'
 import { EntryHeaderActions } from '../components/EntryHeaderActions'
+import { EntryHeaderTitle } from '../components/EntryHeaderTitle'
 import { ConfirmDeleteAction } from '../components/ConfirmDeleteAction'
 import { IconAction } from '../components/IconAction'
 import { StopEditorOverlay } from '../components/StopEditorOverlay'
@@ -122,24 +122,24 @@ function NewTrip() {
 
   return (
     <div className="flex h-full flex-col">
-      <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <button onClick={close} aria-label="Close" className="text-text-secondary">
-          <IconX size={22} />
-        </button>
-        <h1 className="flex-1 text-heading font-medium text-text-primary">New Trip</h1>
-        <EntryHeaderActions
-          editing={false}
-          dirty={name.trim() !== '' || status !== 'planning' || baseCurrency !== 'CNY'}
-          saving={saving}
-          canSubmit={!!name.trim()}
-          onReset={() => {
-            setName('')
-            setStatus('planning')
-            setBaseCurrency('CNY')
-          }}
-          onSubmit={() => void create()}
-        />
-      </header>
+      <EntryHeaderTitle
+        title="New Trip"
+        onClose={close}
+        actions={
+          <EntryHeaderActions
+            editing={false}
+            dirty={name.trim() !== '' || status !== 'planning' || baseCurrency !== 'CNY'}
+            saving={saving}
+            canSubmit={!!name.trim()}
+            onReset={() => {
+              setName('')
+              setStatus('planning')
+              setBaseCurrency('CNY')
+            }}
+            onSubmit={() => void create()}
+          />
+        }
+      />
       <div className="flex flex-col gap-4 p-4">
         <div className="flex gap-3">
           <label className="flex-1 text-caption text-text-secondary">
@@ -211,14 +211,7 @@ function EditTrip({ id }: { id: string }) {
   // renders the body regardless of a background loading/error state.
   return (
     <div className="flex h-full flex-col">
-      {!bundle && (
-        <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-          <button onClick={close} aria-label="Close" className="text-text-secondary">
-            <IconX size={22} />
-          </button>
-          <h1 className="flex-1 text-heading font-medium text-text-primary">Edit Trip</h1>
-        </header>
-      )}
+      {!bundle && <EntryHeaderTitle title="Edit Trip" onClose={close} />}
       <EntryLoader
         loading={loading && !bundle}
         error={error && !bundle ? error : undefined}
@@ -569,24 +562,21 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
 
   return (
     <>
-      <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <button onClick={close} aria-label="Close" className="text-text-secondary">
-          <IconX size={22} />
-        </button>
-        <h1 className="flex-1 truncate text-heading font-medium text-text-primary">
-          Edit Trip
-        </h1>
-        <EntryHeaderActions
-          editing
-          dirty={headerDirty}
-          saving={savingHeader}
-          canSubmit={!!name.trim()}
-          onReset={resetHeader}
-          onSubmit={() => void saveHeader()}
-          onDelete={() => void removeTrip()}
-        />
-      </header>
-
+      <EntryHeaderTitle
+        title="Edit Trip"
+        onClose={close}
+        actions={
+          <EntryHeaderActions
+            editing
+            dirty={headerDirty}
+            saving={savingHeader}
+            canSubmit={!!name.trim()}
+            onReset={resetHeader}
+            onSubmit={() => void saveHeader()}
+            onDelete={() => void removeTrip()}
+          />
+        }
+      />
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
         {/* Trip header fields */}
         <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
