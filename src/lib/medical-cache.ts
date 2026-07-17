@@ -4,7 +4,7 @@ import type { MedicalReportRow } from './medical'
 /**
  * Last-known Medical Dashboard payload, kept **in memory only** (a plain module-level `Map`, no
  * `localStorage`/`sessionStorage`) so `useMedicalTrends` can seed `useAsync` and paint instantly on
- * re-entry instead of flashing "Loading…" every time the person tabs away from Medical and back —
+ * re-entry instead of flashing "Loading" every time the person tabs away from Medical and back —
  * the same stale-while-revalidate idea as `profile-cache.ts`, but deliberately NOT persisted to disk.
  *
  * Medical is the one module with its own biometric/PIN lock (`MedicalLockProvider`) specifically to

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router'
 import { IconCalendarPlus, IconChevronDown } from '@tabler/icons-react'
 import { lazyWithReload } from '../lib/lazy-with-reload'
 import { EmptyState } from '../components/EmptyState'
+import { ListLoader } from '../components/ListLoader'
 import { routes } from '../constants/routes'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
@@ -236,187 +237,91 @@ export function NetWorthDashboard() {
 
   return (
     <div className="flex min-h-full flex-col pb-4">
-      {loading && (
-        <p className="px-4 pt-6 pb-6 text-body text-text-secondary">Loading…</p>
-      )}
-      {error && (
-        <p className="px-4 pt-6 pb-6 text-body text-danger">
-          Couldn’t load your net worth.
-        </p>
-      )}
-
-      {!loading && !error && all.length === 0 && (
-        <EmptyState
-          Icon={IconCalendarPlus}
-          title="No entries yet"
-          actionLabel="Monthly Entry"
-          to={routes.networth.entry}
-        />
-      )}
-
-      {!loading && !error && all.length > 0 && (
-        <div className="flex flex-col gap-3 px-4 pt-3">
-          {/* Current total */}
-          <SectionCard>
-            <div className="flex items-start justify-between gap-3 px-4 py-4">
-              <div>
-                <span className="block text-section uppercase tracking-wide text-text-secondary">
-                  Net worth · {latest ? formatMonthLabel(latest.month) : ''}
-                </span>
-                <span className="mt-0.5 block text-3xl font-semibold text-text-primary">
-                  {formatHkd(currentTotal)}
-                </span>
-              </div>
-              <label className="flex shrink-0 items-center gap-2">
-                <span className="text-label text-text-secondary">Liquid Only</span>
-                <Toggle
-                  checked={liquidOnly}
-                  onChange={setLiquidOnly}
-                  label="Liquid only"
-                />
-              </label>
-            </div>
-          </SectionCard>
-
-          {/* Trend */}
-          <SectionCard>
-            <div className="flex items-center justify-between gap-2 px-3 pt-3">
-              <div className="w-44">
-                <SegmentedTabs
-                  value={mode}
-                  onChange={(v) => setMode(v as 'total' | 'type')}
-                  options={[
-                    { value: 'total', label: 'Total' },
-                    { value: 'type', label: 'By Type' },
-                  ]}
-                />
-              </div>
-              <div className="relative">
-                <button
-                  onClick={() => setMenuOpen((o) => !o)}
-                  className="flex items-center gap-1 rounded-input bg-input px-2.5 py-1.5 text-body text-text-primary"
-                >
-                  {range.label}
-                  <IconChevronDown size={15} className="text-text-secondary" />
-                </button>
-                {menuOpen && (
-                  <>
-                    <div
-                      className="fixed inset-0 z-10"
-                      onClick={() => setMenuOpen(false)}
-                      aria-hidden
-                    />
-                    <div className="absolute right-0 z-20 mt-1 w-28 overflow-hidden rounded-card border border-border bg-surface text-body shadow-lg">
-                      {NETWORTH_RANGES.map((r) => (
-                        <button
-                          key={r.key}
-                          onClick={() => {
-                            setRangeKey(r.key)
-                            setMenuOpen(false)
-                          }}
-                          className={`block w-full px-4 py-2 text-left active:bg-input/40 ${
-                            r.key === rangeKey ? 'text-accent' : 'text-text-primary'
-                          }`}
-                        >
-                          {r.label}
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-            <div className="px-2 py-3">
-              <Suspense
-                fallback={
-                  <p className="py-10 text-center text-body text-text-secondary">
-                    Loading chart…
-                  </p>
-                }
-              >
-                <NetWorthTrendChart
-                  mode={mode}
-                  data={chartData}
-                  presentTypes={presentTypes}
-                />
-              </Suspense>
-            </div>
-          </SectionCard>
-
-          {/* Per-type summary (latest month) */}
-          {breakdown.length > 0 && (
-            <SectionCard title="By asset type · latest month">
-              {breakdown.map((row) => (
-                <div
-                  key={row.type}
-                  className="flex items-center gap-3 border-b border-border px-4 py-2.5 last:border-b-0"
-                >
-                  <span
-                    className="h-2.5 w-2.5 shrink-0 rounded-full"
-                    style={{ background: ASSET_TYPE_COLORS[row.type] }}
-                  />
-                  <span className="flex-1 text-body text-text-primary">
-                    {ASSET_TYPE_LABELS[row.type]}
+      <ListLoader
+        loading={loading}
+        error={error}
+        data={rows}
+        errorText="Couldn’t load your net worth."
+        emptyState={
+          <EmptyState
+            Icon={IconCalendarPlus}
+            title="No entries yet"
+            actionLabel="Monthly Entry"
+            to={routes.networth.entry}
+          />
+        }
+      >
+        {() => (
+          <div className="flex flex-col gap-3 px-4 pt-3">
+            {/* Current total */}
+            <SectionCard>
+              <div className="flex items-start justify-between gap-3 px-4 py-4">
+                <div>
+                  <span className="block text-section uppercase tracking-wide text-text-secondary">
+                    Net worth · {latest ? formatMonthLabel(latest.month) : ''}
                   </span>
-                  <span className="text-body text-text-primary">
-                    {formatHkd(row.total)}
-                  </span>
-                  <span className="w-12 text-right text-caption text-text-secondary">
-                    {Math.round(row.pct * 100)}%
+                  <span className="mt-0.5 block text-3xl font-semibold text-text-primary">
+                    {formatHkd(currentTotal)}
                   </span>
                 </div>
-              ))}
+                <label className="flex shrink-0 items-center gap-2">
+                  <span className="text-label text-text-secondary">Liquid Only</span>
+                  <Toggle
+                    checked={liquidOnly}
+                    onChange={setLiquidOnly}
+                    label="Liquid only"
+                  />
+                </label>
+              </div>
             </SectionCard>
-          )}
 
-          {/* Fund Performance (latest month) */}
-          {funds.length > 0 && (
-            <SectionCard title="Fund performance · latest month">
-              {funds.map((f) => (
-                <button
-                  key={f.id}
-                  onClick={() => navigate(routes.networth.fund(f.id))}
-                  className="flex w-full items-center gap-3 border-b border-border px-4 py-2.5 text-left last:border-b-0 active:bg-input/40"
-                >
-                  <span className="min-w-0 flex-1 truncate text-body text-text-primary">
-                    {f.name}
-                  </span>
-                  <span className="shrink-0 text-body text-text-primary">
-                    {formatHkd(f.valueHkd)}
-                  </span>
-                  {f.returnRate != null && (
-                    <span
-                      className={`w-12 shrink-0 text-right text-caption ${gainLossClass(f.returnRate)}`}
-                    >
-                      {f.returnRate > 0 ? '+' : ''}
-                      {f.returnRate.toFixed(1)}%
-                    </span>
+            {/* Trend */}
+            <SectionCard>
+              <div className="flex items-center justify-between gap-2 px-3 pt-3">
+                <div className="w-44">
+                  <SegmentedTabs
+                    value={mode}
+                    onChange={(v) => setMode(v as 'total' | 'type')}
+                    options={[
+                      { value: 'total', label: 'Total' },
+                      { value: 'type', label: 'By Type' },
+                    ]}
+                  />
+                </div>
+                <div className="relative">
+                  <button
+                    onClick={() => setMenuOpen((o) => !o)}
+                    className="flex items-center gap-1 rounded-input bg-input px-2.5 py-1.5 text-body text-text-primary"
+                  >
+                    {range.label}
+                    <IconChevronDown size={15} className="text-text-secondary" />
+                  </button>
+                  {menuOpen && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-10"
+                        onClick={() => setMenuOpen(false)}
+                        aria-hidden
+                      />
+                      <div className="absolute right-0 z-20 mt-1 w-28 overflow-hidden rounded-card border border-border bg-surface text-body shadow-lg">
+                        {NETWORTH_RANGES.map((r) => (
+                          <button
+                            key={r.key}
+                            onClick={() => {
+                              setRangeKey(r.key)
+                              setMenuOpen(false)
+                            }}
+                            className={`block w-full px-4 py-2 text-left active:bg-input/40 ${
+                              r.key === rangeKey ? 'text-accent' : 'text-text-primary'
+                            }`}
+                          >
+                            {r.label}
+                          </button>
+                        ))}
+                      </div>
+                    </>
                   )}
-                </button>
-              ))}
-            </SectionCard>
-          )}
-
-          {/* Insurance — aggregate Cash Value vs Total Premiums */}
-          {agg && agg.series.length > 0 && (
-            <SectionCard title="Insurance · cash value vs premiums">
-              <div className="flex flex-wrap gap-x-6 gap-y-1 px-4 py-3 text-body">
-                <span className="text-text-secondary">
-                  Cash value{' '}
-                  <span className="text-text-primary">{formatHkd(agg.currentCash)}</span>
-                </span>
-                <span className="text-text-secondary">
-                  Premiums{' '}
-                  <span className="text-text-primary">
-                    {formatHkd(agg.currentPremium)}
-                  </span>
-                </span>
-                <span className="text-text-secondary">
-                  Past break-even{' '}
-                  <span className="text-text-primary">
-                    {agg.pastBreakEven}/{agg.activeCount}
-                  </span>
-                </span>
+                </div>
               </div>
               <div className="px-2 py-3">
                 <Suspense
@@ -426,16 +331,111 @@ export function NetWorthDashboard() {
                     </p>
                   }
                 >
-                  <InsuranceTrendChart
-                    data={agg.series}
-                    breakEvenAge={agg.breakEvenAge}
+                  <NetWorthTrendChart
+                    mode={mode}
+                    data={chartData}
+                    presentTypes={presentTypes}
                   />
                 </Suspense>
               </div>
             </SectionCard>
-          )}
-        </div>
-      )}
+
+            {/* Per-type summary (latest month) */}
+            {breakdown.length > 0 && (
+              <SectionCard title="By asset type · latest month">
+                {breakdown.map((row) => (
+                  <div
+                    key={row.type}
+                    className="flex items-center gap-3 border-b border-border px-4 py-2.5 last:border-b-0"
+                  >
+                    <span
+                      className="h-2.5 w-2.5 shrink-0 rounded-full"
+                      style={{ background: ASSET_TYPE_COLORS[row.type] }}
+                    />
+                    <span className="flex-1 text-body text-text-primary">
+                      {ASSET_TYPE_LABELS[row.type]}
+                    </span>
+                    <span className="text-body text-text-primary">
+                      {formatHkd(row.total)}
+                    </span>
+                    <span className="w-12 text-right text-caption text-text-secondary">
+                      {Math.round(row.pct * 100)}%
+                    </span>
+                  </div>
+                ))}
+              </SectionCard>
+            )}
+
+            {/* Fund Performance (latest month) */}
+            {funds.length > 0 && (
+              <SectionCard title="Fund performance · latest month">
+                {funds.map((f) => (
+                  <button
+                    key={f.id}
+                    onClick={() => navigate(routes.networth.fund(f.id))}
+                    className="flex w-full items-center gap-3 border-b border-border px-4 py-2.5 text-left last:border-b-0 active:bg-input/40"
+                  >
+                    <span className="min-w-0 flex-1 truncate text-body text-text-primary">
+                      {f.name}
+                    </span>
+                    <span className="shrink-0 text-body text-text-primary">
+                      {formatHkd(f.valueHkd)}
+                    </span>
+                    {f.returnRate != null && (
+                      <span
+                        className={`w-12 shrink-0 text-right text-caption ${gainLossClass(f.returnRate)}`}
+                      >
+                        {f.returnRate > 0 ? '+' : ''}
+                        {f.returnRate.toFixed(1)}%
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </SectionCard>
+            )}
+
+            {/* Insurance — aggregate Cash Value vs Total Premiums */}
+            {agg && agg.series.length > 0 && (
+              <SectionCard title="Insurance · cash value vs premiums">
+                <div className="flex flex-wrap gap-x-6 gap-y-1 px-4 py-3 text-body">
+                  <span className="text-text-secondary">
+                    Cash value{' '}
+                    <span className="text-text-primary">
+                      {formatHkd(agg.currentCash)}
+                    </span>
+                  </span>
+                  <span className="text-text-secondary">
+                    Premiums{' '}
+                    <span className="text-text-primary">
+                      {formatHkd(agg.currentPremium)}
+                    </span>
+                  </span>
+                  <span className="text-text-secondary">
+                    Past break-even{' '}
+                    <span className="text-text-primary">
+                      {agg.pastBreakEven}/{agg.activeCount}
+                    </span>
+                  </span>
+                </div>
+                <div className="px-2 py-3">
+                  <Suspense
+                    fallback={
+                      <p className="py-10 text-center text-body text-text-secondary">
+                        Loading chart…
+                      </p>
+                    }
+                  >
+                    <InsuranceTrendChart
+                      data={agg.series}
+                      breakEvenAge={agg.breakEvenAge}
+                    />
+                  </Suspense>
+                </div>
+              </SectionCard>
+            )}
+          </div>
+        )}
+      </ListLoader>
     </div>
   )
 }

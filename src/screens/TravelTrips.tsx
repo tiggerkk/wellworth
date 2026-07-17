@@ -6,6 +6,7 @@ import { SwipeRow } from '../components/SwipeRow'
 import { StatusChip } from '../components/StatusChip'
 import { Thumb } from '../components/Thumb'
 import { EmptyState } from '../components/EmptyState'
+import { ListLoader } from '../components/ListLoader'
 import { ListSearchHeader } from '../components/ListSearchHeader'
 import { FilterPanel } from '../components/FilterPanel'
 import { FilterPanelFooter } from '../components/FilterPanelFooter'
@@ -110,8 +111,6 @@ export function TravelTrips() {
     return [...s].sort((a, b) => b.localeCompare(a))
   }, [trips])
 
-  const view = applyTripList(trips, facetsByTrip, criteria)
-
   async function remove(id: string) {
     await deleteTrip(id)
     bumpTravel()
@@ -197,61 +196,69 @@ export function TravelTrips() {
         </FilterPanel>
       )}
 
-      {loading && <p className="p-4 text-body text-text-secondary">Loading…</p>}
-      {error && <p className="p-4 text-body text-danger">Couldn’t load your trips.</p>}
-
-      {!loading && !error && trips.length === 0 && (
-        <EmptyState
-          title="No trips yet"
-          actionLabel="New Trip"
-          to={routes.travel.entry}
-          Icon={IconRoute}
-        />
-      )}
-
-      {!loading && !error && trips.length > 0 && view.length > 0 && (
-        <ResultCount count={view.length} />
-      )}
-      {!loading && !error && trips.length > 0 && (
-        <div className="overflow-hidden rounded-card border border-border bg-surface">
-          {view.length === 0 ? (
-            <p className="px-4 py-6 text-center text-body text-text-secondary">
-              No matches.
-            </p>
-          ) : (
-            view.map((t) => {
-              const label = primaryLabel(facetsByTrip.get(t.id))
-              return (
-                <SwipeRow key={t.id} onDelete={() => void remove(t.id)}>
-                  <button
-                    onClick={() => navigate(routes.travel.edit(t.id))}
-                    className="flex w-full items-center gap-3 px-3 py-2.5 text-left active:bg-input/40"
-                  >
-                    <Thumb url={t.cover_url} className="h-14 w-20 rounded-card" />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="truncate text-body text-text-primary">
-                          {t.name}
-                        </span>
-                        <StatusChip
-                          label={tripStatusLabel(t.status)}
-                          className={
-                            TRIP_STATUS_CHIP[t.status as keyof typeof TRIP_STATUS_CHIP]
-                          }
-                        />
-                      </div>
-                      <p className="truncate text-caption text-text-secondary">
-                        {dateRange(t.start_date, t.end_date)}
-                        {label ? ` · ${label}` : ''}
-                      </p>
-                    </div>
-                  </button>
-                </SwipeRow>
-              )
-            })
-          )}
-        </div>
-      )}
+      <ListLoader
+        loading={loading}
+        error={error}
+        data={data ? trips : undefined}
+        errorText="Couldn’t load your trips."
+        emptyState={
+          <EmptyState
+            title="No trips yet"
+            actionLabel="New Trip"
+            to={routes.travel.entry}
+            Icon={IconRoute}
+          />
+        }
+      >
+        {(allTrips) => {
+          const view = applyTripList(allTrips, facetsByTrip, criteria)
+          return (
+            <>
+              {view.length > 0 && <ResultCount count={view.length} />}
+              <div className="overflow-hidden rounded-card border border-border bg-surface">
+                {view.length === 0 ? (
+                  <p className="px-4 py-6 text-center text-body text-text-secondary">
+                    No matches.
+                  </p>
+                ) : (
+                  view.map((t) => {
+                    const label = primaryLabel(facetsByTrip.get(t.id))
+                    return (
+                      <SwipeRow key={t.id} onDelete={() => void remove(t.id)}>
+                        <button
+                          onClick={() => navigate(routes.travel.edit(t.id))}
+                          className="flex w-full items-center gap-3 px-3 py-2.5 text-left active:bg-input/40"
+                        >
+                          <Thumb url={t.cover_url} className="h-14 w-20 rounded-card" />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="truncate text-body text-text-primary">
+                                {t.name}
+                              </span>
+                              <StatusChip
+                                label={tripStatusLabel(t.status)}
+                                className={
+                                  TRIP_STATUS_CHIP[
+                                    t.status as keyof typeof TRIP_STATUS_CHIP
+                                  ]
+                                }
+                              />
+                            </div>
+                            <p className="truncate text-caption text-text-secondary">
+                              {dateRange(t.start_date, t.end_date)}
+                              {label ? ` · ${label}` : ''}
+                            </p>
+                          </div>
+                        </button>
+                      </SwipeRow>
+                    )
+                  })
+                )}
+              </div>
+            </>
+          )
+        }}
+      </ListLoader>
     </div>
   )
 }

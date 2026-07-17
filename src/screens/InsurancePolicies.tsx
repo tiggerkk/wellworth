@@ -31,6 +31,7 @@ import { FilterPanelFooter } from '../components/FilterPanelFooter'
 import { DateRangeRow } from '../components/DateRangeRow'
 import { ResultCount } from '../components/ResultCount'
 import { EmptyState } from '../components/EmptyState'
+import { ListLoader } from '../components/ListLoader'
 
 const SORT_OPTIONS: { value: InsuranceSortField; label: string }[] = [
   { value: 'startDate', label: 'Start Date' },
@@ -164,73 +165,78 @@ export function InsurancePolicies() {
         </FilterPanel>
       )}
 
-      {loading && <p className="text-body text-text-secondary">Loading…</p>}
-      {error && <p className="text-body text-danger">Couldn’t load your policies.</p>}
-      {!loading && !error && items.length === 0 && (
-        <EmptyState
-          title="No insurance policies yet"
-          actionLabel="New Insurance"
-          to={routes.networth.insuranceEntry}
-          Icon={IconFileCertificate}
-        />
-      )}
-      {/* "XX results" on the left; "+ New Insurance" is the entry point at the right edge (the
-          bottom-nav tab was removed, so this — and the empty-state action — replace it). */}
-      {!loading && !error && items.length > 0 && (
-        <div className="flex items-center">
-          {view.length > 0 && <ResultCount count={view.length} />}
-          <button
-            onClick={() => navigate(routes.networth.insuranceEntry)}
-            className="ml-auto flex items-center gap-1 px-1 text-body text-positive"
-          >
-            <IconPlus size={16} /> New Insurance
-          </button>
-        </div>
-      )}
-      {!loading && !error && items.length > 0 && (
-        <div className="divide-y divide-border overflow-hidden rounded-card border border-border bg-surface">
-          {view.length === 0 ? (
-            <p className="px-4 py-6 text-center text-body text-text-tertiary">
-              No matches.
-            </p>
-          ) : (
-            view.map(({ policy, brokeEven }) => (
+      <ListLoader
+        loading={loading}
+        error={error}
+        data={data}
+        errorText="Couldn’t load your policies."
+        emptyState={
+          <EmptyState
+            title="No insurance policies yet"
+            actionLabel="New Insurance"
+            to={routes.networth.insuranceEntry}
+            Icon={IconFileCertificate}
+          />
+        }
+      >
+        {() => (
+          <>
+            {/* "XX results" on the left; "+ New Insurance" is the entry point at the right edge (the
+                bottom-nav tab was removed, so this — and the empty-state action — replace it). */}
+            <div className="flex items-center">
+              {view.length > 0 && <ResultCount count={view.length} />}
               <button
-                key={policy.id}
-                onClick={() => navigate(routes.networth.insuranceEdit(policy.id))}
-                className="flex w-full items-center gap-3 px-3 py-2.5 text-left active:bg-input/40"
+                onClick={() => navigate(routes.networth.insuranceEntry)}
+                className="ml-auto flex items-center gap-1 px-1 text-body text-positive"
               >
-                <span className="min-w-0 flex-1">
-                  <InsurancePolicyHeader
-                    policyNumber={policy.policy_number}
-                    startDate={policy.start_date}
-                    providerLabel={providerLabel(providers, policy.provider)}
-                    policyName={policy.policy_name || policy.policy_number}
-                    truncate
-                  />
-                  <span className="mt-1 flex flex-wrap items-center gap-1.5 text-caption text-text-tertiary">
-                    {policy.termination_kind === 'surrendered' && (
-                      <StatusChip
-                        label="Surrendered"
-                        className="bg-track text-text-secondary"
-                      />
-                    )}
-                    {policy.termination_kind === 'matured' && (
-                      <StatusChip label="Matured" className="bg-accent text-bg" />
-                    )}
-                    {brokeEven && (
-                      <StatusChip
-                        label="Past Break-Even"
-                        className="bg-positive text-bg"
-                      />
-                    )}
-                  </span>
-                </span>
+                <IconPlus size={16} /> New Insurance
               </button>
-            ))
-          )}
-        </div>
-      )}
+            </div>
+            <div className="divide-y divide-border overflow-hidden rounded-card border border-border bg-surface">
+              {view.length === 0 ? (
+                <p className="px-4 py-6 text-center text-body text-text-tertiary">
+                  No matches.
+                </p>
+              ) : (
+                view.map(({ policy, brokeEven }) => (
+                  <button
+                    key={policy.id}
+                    onClick={() => navigate(routes.networth.insuranceEdit(policy.id))}
+                    className="flex w-full items-center gap-3 px-3 py-2.5 text-left active:bg-input/40"
+                  >
+                    <span className="min-w-0 flex-1">
+                      <InsurancePolicyHeader
+                        policyNumber={policy.policy_number}
+                        startDate={policy.start_date}
+                        providerLabel={providerLabel(providers, policy.provider)}
+                        policyName={policy.policy_name || policy.policy_number}
+                        truncate
+                      />
+                      <span className="mt-1 flex flex-wrap items-center gap-1.5 text-caption text-text-tertiary">
+                        {policy.termination_kind === 'surrendered' && (
+                          <StatusChip
+                            label="Surrendered"
+                            className="bg-track text-text-secondary"
+                          />
+                        )}
+                        {policy.termination_kind === 'matured' && (
+                          <StatusChip label="Matured" className="bg-accent text-bg" />
+                        )}
+                        {brokeEven && (
+                          <StatusChip
+                            label="Past Break-Even"
+                            className="bg-positive text-bg"
+                          />
+                        )}
+                      </span>
+                    </span>
+                  </button>
+                ))
+              )}
+            </div>
+          </>
+        )}
+      </ListLoader>
 
       {whichDate && (
         <Calendar

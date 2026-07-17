@@ -19,6 +19,7 @@ import { routes } from '../constants/routes'
 import { IconHeartbeat } from '@tabler/icons-react'
 import { SwipeRow } from '../components/SwipeRow'
 import { EmptyState } from '../components/EmptyState'
+import { ListLoader } from '../components/ListLoader'
 import { SelectMenu } from '../components/SelectMenu'
 import { ListSearchHeader } from '../components/ListSearchHeader'
 import { FilterPanel } from '../components/FilterPanel'
@@ -100,8 +101,6 @@ export function MedicalReports() {
     { value: 'all', label: 'Any Body Part' },
     ...reportBodyParts(reports).map((p) => ({ value: p, label: p })),
   ]
-  const view = applyReportView(reports, criteria)
-
   return (
     <div className="flex min-h-full flex-col gap-3 px-4 py-4">
       {!error && (
@@ -148,50 +147,60 @@ export function MedicalReports() {
         </FilterPanel>
       )}
 
-      {loading && <p className="text-body text-text-secondary">Loading…</p>}
-      {error && <p className="text-body text-danger">Couldn’t load your reports.</p>}
-      {!loading && !error && reports.length === 0 && (
-        <EmptyState
-          title="No medical reports yet"
-          actionLabel="New Medical Report"
-          to={routes.medical.entry}
-          Icon={IconHeartbeat}
-        />
-      )}
-      {!loading && !error && reports.length > 0 && view.length > 0 && (
-        <ResultCount count={view.length} />
-      )}
-      {!loading && !error && reports.length > 0 && (
-        <div className="divide-y divide-border overflow-hidden rounded-card border border-border bg-surface">
-          {view.length === 0 ? (
-            <p className="px-4 py-6 text-center text-body text-text-tertiary">
-              No matches.
-            </p>
-          ) : (
-            view.map((r) => {
-              const secondary = [r.provider, r.body_part].filter(Boolean).join(' · ')
-              return (
-                <SwipeRow key={r.id} onDelete={() => void remove(r.id)}>
-                  <button
-                    onClick={() => navigate(routes.medical.detail(r.id))}
-                    className="flex w-full items-center gap-3 px-3 py-2.5 text-left active:bg-input/40"
-                  >
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-body text-text-primary">
-                        {formatFullDate(r.report_date)}
-                      </span>
-                      <span className="block truncate text-caption text-text-secondary">
-                        {typeLabel(r.report_type)}
-                        {secondary ? ` · ${secondary}` : ''}
-                      </span>
-                    </span>
-                  </button>
-                </SwipeRow>
-              )
-            })
-          )}
-        </div>
-      )}
+      <ListLoader
+        loading={loading}
+        error={error}
+        data={override ?? data}
+        errorText="Couldn’t load your reports."
+        emptyState={
+          <EmptyState
+            title="No medical reports yet"
+            actionLabel="New Medical Report"
+            to={routes.medical.entry}
+            Icon={IconHeartbeat}
+          />
+        }
+      >
+        {(all) => {
+          const view = applyReportView(all, criteria)
+          return (
+            <>
+              {view.length > 0 && <ResultCount count={view.length} />}
+              <div className="divide-y divide-border overflow-hidden rounded-card border border-border bg-surface">
+                {view.length === 0 ? (
+                  <p className="px-4 py-6 text-center text-body text-text-tertiary">
+                    No matches.
+                  </p>
+                ) : (
+                  view.map((r) => {
+                    const secondary = [r.provider, r.body_part]
+                      .filter(Boolean)
+                      .join(' · ')
+                    return (
+                      <SwipeRow key={r.id} onDelete={() => void remove(r.id)}>
+                        <button
+                          onClick={() => navigate(routes.medical.detail(r.id))}
+                          className="flex w-full items-center gap-3 px-3 py-2.5 text-left active:bg-input/40"
+                        >
+                          <span className="min-w-0 flex-1">
+                            <span className="block text-body text-text-primary">
+                              {formatFullDate(r.report_date)}
+                            </span>
+                            <span className="block truncate text-caption text-text-secondary">
+                              {typeLabel(r.report_type)}
+                              {secondary ? ` · ${secondary}` : ''}
+                            </span>
+                          </span>
+                        </button>
+                      </SwipeRow>
+                    )
+                  })
+                )}
+              </div>
+            </>
+          )
+        }}
+      </ListLoader>
     </div>
   )
 }

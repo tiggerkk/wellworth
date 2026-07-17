@@ -10,6 +10,7 @@ import { lazyWithReload } from '../lib/lazy-with-reload'
 import { useMedicalTrends } from '../hooks/useMedicalTrends'
 import { Sparkline } from '../components/Sparkline'
 import { EmptyState } from '../components/EmptyState'
+import { ListLoader } from '../components/ListLoader'
 import { SectionCard } from '../components/SectionCard'
 import {
   MEDICAL_CATEGORY_COLOR,
@@ -47,8 +48,7 @@ const MedicalTrendChart = lazyWithReload(() =>
  * an alternate trend layout could swap in here without touching the data layer.
  */
 export function MedicalDashboard() {
-  const { loading, error, tracked, latestByCategory, recentReports, isEmpty } =
-    useMedicalTrends()
+  const { loading, error, tracked, latestByCategory, recentReports } = useMedicalTrends()
   const [expandedKey, setExpandedKey] = useState<string | null>(null)
 
   const expanded = expandedKey ? tracked.find((t) => t.key === expandedKey) : undefined
@@ -58,67 +58,70 @@ export function MedicalDashboard() {
 
   return (
     <div className="flex min-h-full flex-col pb-4 pt-2">
-      {loading && <p className="px-4 py-6 text-body text-text-secondary">Loading…</p>}
-      {error && (
-        <p className="px-4 py-6 text-body text-danger">
-          Couldn’t load your medical data.
-        </p>
-      )}
+      <ListLoader
+        loading={loading}
+        error={error}
+        data={recentReports}
+        errorText="Couldn’t load your medical data."
+        emptyState={
+          <EmptyState
+            title="No medical reports yet"
+            actionLabel="New Medical Report"
+            to={routes.medical.entry}
+            Icon={IconHeartbeat}
+          />
+        }
+      >
+        {() => (
+          <div className="flex flex-col gap-5 px-4">
+            {/* Trends — sparkline grid */}
+            {tracked.length > 0 && (
+              <section>
+                <h2 className="mb-2 px-1 text-section font-medium uppercase tracking-[0.08em] text-text-secondary">
+                  Trends
+                </h2>
+                <div className="grid grid-cols-2 gap-2">
+                  {tracked.map((t) => (
+                    <SparkCard
+                      key={t.key}
+                      trend={t}
+                      onOpen={() => setExpandedKey(t.key)}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
 
-      {isEmpty && (
-        <EmptyState
-          title="No medical reports yet"
-          actionLabel="New Medical Report"
-          to={routes.medical.entry}
-          Icon={IconHeartbeat}
-        />
-      )}
+            {/* Latest report — jump straight to the newest report (reports are newest-first) */}
+            {recentReports.length > 0 && (
+              <Link
+                to={routes.medical.detail(recentReports[0]!.id)}
+                className="flex items-center justify-center gap-2 rounded-card border border-accent/40 bg-accent/10 px-4 py-2.5 text-body font-medium text-accent active:bg-accent/20"
+              >
+                <IconReportMedical size={18} /> Latest Report
+              </Link>
+            )}
 
-      {!loading && !error && !isEmpty && (
-        <div className="flex flex-col gap-5 px-4">
-          {/* Trends — sparkline grid */}
-          {tracked.length > 0 && (
-            <section>
-              <h2 className="mb-2 px-1 text-section font-medium uppercase tracking-[0.08em] text-text-secondary">
-                Trends
-              </h2>
-              <div className="grid grid-cols-2 gap-2">
-                {tracked.map((t) => (
-                  <SparkCard key={t.key} trend={t} onOpen={() => setExpandedKey(t.key)} />
+            {/* Latest values per test, grouped by category */}
+            {latestByCategory.map((group) => (
+              <Collapsible
+                key={group.category}
+                title={MEDICAL_CATEGORY_LABELS[group.category]}
+                color={MEDICAL_CATEGORY_COLOR[group.category]}
+                titleCase="caption"
+                defaultOpen
+              >
+                {group.rows.map((row) => (
+                  <LatestRow key={row.id} row={row} />
                 ))}
-              </div>
-            </section>
-          )}
+              </Collapsible>
+            ))}
 
-          {/* Latest report — jump straight to the newest report (reports are newest-first) */}
-          {recentReports.length > 0 && (
-            <Link
-              to={routes.medical.detail(recentReports[0]!.id)}
-              className="flex items-center justify-center gap-2 rounded-card border border-accent/40 bg-accent/10 px-4 py-2.5 text-body font-medium text-accent active:bg-accent/20"
-            >
-              <IconReportMedical size={18} /> Latest Report
-            </Link>
-          )}
-
-          {/* Latest values per test, grouped by category */}
-          {latestByCategory.map((group) => (
-            <Collapsible
-              key={group.category}
-              title={MEDICAL_CATEGORY_LABELS[group.category]}
-              color={MEDICAL_CATEGORY_COLOR[group.category]}
-              titleCase="caption"
-              defaultOpen
-            >
-              {group.rows.map((row) => (
-                <LatestRow key={row.id} row={row} />
-              ))}
-            </Collapsible>
-          ))}
-
-          {/* Recent reports timeline */}
-          <ReportsTimeline reports={recentReports} />
-        </div>
-      )}
+            {/* Recent reports timeline */}
+            <ReportsTimeline reports={recentReports} />
+          </div>
+        )}
+      </ListLoader>
 
       {expanded && (
         <ExpandedTrend
