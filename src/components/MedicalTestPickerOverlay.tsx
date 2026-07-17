@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { IconPlus } from '@tabler/icons-react'
 import { OverlayTop } from './OverlayTop'
-import { OverlayCloseButton } from './OverlayCloseButton'
+import { ScreenHeaderTitle } from './ScreenHeaderTitle'
 import { SearchBar } from './SearchBar'
 import { MEDICAL_CATEGORY_LABELS, type MedicalLabTestSeed } from '../constants/medical'
 import { medicalTestsByCategory } from '../lib/medical'
@@ -40,12 +40,11 @@ export function MedicalTestPickerOverlay({
 
   return (
     <OverlayTop onClose={onClose} label="Add a test">
-      <div className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <OverlayCloseButton onClick={onClose} />
+      <ScreenHeaderTitle onClose={onClose}>
         <div className="flex-1">
           <SearchBar value={query} onChange={setQuery} placeholder="Search tests" />
         </div>
-      </div>
+      </ScreenHeaderTitle>
 
       <div className="min-h-0 flex-1 overflow-y-auto p-4">
         <button

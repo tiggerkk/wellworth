@@ -1,6 +1,6 @@
 import { Suspense, useMemo, useState } from 'react'
 import { OverlayTop } from './OverlayTop'
-import { OverlayCloseButton } from './OverlayCloseButton'
+import { ScreenHeaderTitle } from './ScreenHeaderTitle'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 import { lazyWithReload } from '../lib/lazy-with-reload'
 import { SelectMenu } from './SelectMenu'
@@ -74,10 +74,7 @@ export function InsuranceCompareOverlay({
 
   return (
     <OverlayTop onClose={onClose} label="Compare Schedules">
-      <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <OverlayCloseButton onClick={onClose} />
-        <h1 className="text-heading font-medium text-text-primary">Compare Schedules</h1>
-      </header>
+      <ScreenHeaderTitle onClose={onClose} title="Compare Schedules" />
 
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
         <div>

@@ -1,5 +1,5 @@
 import { OverlayTop } from './OverlayTop'
-import { OverlayCloseButton } from './OverlayCloseButton'
+import { ScreenHeaderTitle } from './ScreenHeaderTitle'
 import { ExpenseRowsEditor, type ExpenseDraft } from './ExpenseRowsEditor'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 import type { ExpenseRow, ExpenseUpdate } from '../lib/travel-expenses'
@@ -48,8 +48,7 @@ export function DayExpensesOverlay({
   useEscapeKey(onClose)
   return (
     <OverlayTop onClose={onClose} label="Expenses for ${dayLabel}">
-      <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <OverlayCloseButton onClick={onClose} />
+      <ScreenHeaderTitle onClose={onClose}>
         <div className="flex-1">
           <h1 className="text-heading font-medium text-text-primary">Expenses</h1>
           <p className="text-caption text-text-secondary">
@@ -57,7 +56,7 @@ export function DayExpensesOverlay({
             {date ? ` · ${formatFullDate(date)}` : ''}
           </p>
         </div>
-      </header>
+      </ScreenHeaderTitle>
 
       <div className="min-h-0 flex-1 overflow-y-auto p-4">
         <ExpenseRowsEditor

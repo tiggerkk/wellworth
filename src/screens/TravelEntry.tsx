@@ -25,7 +25,6 @@ import { StopEditorOverlay } from '../components/StopEditorOverlay'
 import { StopTypeIcon } from '../components/StopTypeIcon'
 import { Collapsible } from '../components/Collapsible'
 import { OverlayBottom } from '../components/OverlayBottom'
-import { OverlayCloseButton } from '../components/OverlayCloseButton'
 import { TravelExpensesPanel } from '../components/TravelExpensesPanel'
 import { DayExpensesOverlay } from '../components/DayExpensesOverlay'
 import { EntryLoader } from '../components/EntryLoader'
@@ -987,12 +986,7 @@ function ReorderDaysSheet({
   const indexById = new Map(days.map((d, i) => [d.id, i]))
   return (
     <OverlayBottom onClose={onClose} label="Reorder days">
-      <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <OverlayCloseButton onClick={onClose} />
-        <h1 className="flex-1 text-heading font-medium text-text-primary">
-          Reorder Days
-        </h1>
-      </header>
+      <ScreenHeaderTitle onClose={onClose} title="Reorder Days" />
       <div className="min-h-0 flex-1 overflow-y-auto p-4">
         <ReorderList
           ids={days.map((d) => d.id)}

@@ -47,7 +47,6 @@ import { ConfirmDeleteAction } from '../components/ConfirmDeleteAction'
 import { PrimaryButton } from '../components/PrimaryButton'
 import { SecondaryButton } from '../components/SecondaryButton'
 import { OverlayTop } from '../components/OverlayTop'
-import { OverlayCloseButton } from '../components/OverlayCloseButton'
 
 type TerminationKind = 'surrendered' | 'matured'
 
@@ -833,12 +832,7 @@ function ImportScheduleOverlay({
 
   return (
     <OverlayTop onClose={onClose} label="Import Policy Schedule">
-      <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <OverlayCloseButton onClick={onClose} />
-        <h1 className="text-heading font-medium text-text-primary">
-          Import Policy Schedule
-        </h1>
-      </header>
+      <ScreenHeaderTitle onClose={onClose} title="Import Policy Schedule" />
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
         <div>
           <InsurancePolicyHeader

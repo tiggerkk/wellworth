@@ -8,8 +8,8 @@ import {
   IconUpload,
 } from '@tabler/icons-react'
 import { OverlayTop } from '../components/OverlayTop'
+import { ScreenHeaderTitle } from '../components/ScreenHeaderTitle'
 import { EntryLoader } from '../components/EntryLoader'
-import { OverlayCloseButton } from '../components/OverlayCloseButton'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useProfile } from '../hooks/useProfile'
@@ -751,12 +751,11 @@ function EntryForm({
 
       {fundModal && (
         <OverlayTop onClose={() => setFundModal(null)} label={fundModal.name}>
-          <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-            <OverlayCloseButton onClick={() => setFundModal(null)} />
-            <h1 className="line-clamp-2 flex-1 text-heading font-medium text-text-primary">
-              {fundModal.name}
-            </h1>
-          </header>
+          <ScreenHeaderTitle
+            onClose={() => setFundModal(null)}
+            title={fundModal.name}
+            titleClassName="line-clamp-2 flex-1 text-heading font-medium text-text-primary"
+          />
           <div className="flex-1 overflow-y-auto p-4">
             <NetWorthFundDetail
               data={{

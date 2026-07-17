@@ -6,7 +6,7 @@ import {
   IconWorldSearch,
 } from '@tabler/icons-react'
 import { OverlayTop } from './OverlayTop'
-import { OverlayCloseButton } from './OverlayCloseButton'
+import { ScreenHeaderTitle } from './ScreenHeaderTitle'
 import { SearchBar } from './SearchBar'
 import { SelectMenu } from './SelectMenu'
 import { PrimaryButton } from './PrimaryButton'
@@ -128,8 +128,7 @@ export function CitySearchOverlay({
 
   return (
     <OverlayTop onClose={onClose} label="Pick a city">
-      <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <OverlayCloseButton onClick={onClose} />
+      <ScreenHeaderTitle onClose={onClose}>
         <div className="flex-1">
           <SearchBar
             value={query}
@@ -138,7 +137,7 @@ export function CitySearchOverlay({
             icon={IconWorldSearch}
           />
         </div>
-      </header>
+      </ScreenHeaderTitle>
 
       <div className="min-h-0 flex-1 overflow-y-auto p-4">
         {/* Remembered cities (instant, no network) */}

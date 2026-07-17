@@ -7,7 +7,7 @@ import { posterUrl } from '../lib/shows'
 import { filterLinkCandidates, type LinkCandidate } from '../lib/quotes'
 import type { QuoteSourceType } from '../constants/quotes'
 import { OverlayTop } from './OverlayTop'
-import { OverlayCloseButton } from './OverlayCloseButton'
+import { ScreenHeaderTitle } from './ScreenHeaderTitle'
 import { SearchBar } from './SearchBar'
 import { Thumb } from './Thumb'
 import { StatusChip } from './StatusChip'
@@ -72,8 +72,7 @@ export function QuoteSourceLinkOverlay({
 
   return (
     <OverlayTop onClose={onClose} label="Link a Show or Book">
-      <div className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <OverlayCloseButton onClick={onClose} />
+      <ScreenHeaderTitle onClose={onClose}>
         <div className="flex-1">
           <SearchBar
             value={query}
@@ -81,7 +80,7 @@ export function QuoteSourceLinkOverlay({
             placeholder="Search your Shows & Books"
           />
         </div>
-      </div>
+      </ScreenHeaderTitle>
 
       <div className="min-h-0 flex-1 overflow-y-auto p-4">
         <div className="divide-y divide-border overflow-hidden rounded-card border border-border bg-surface">

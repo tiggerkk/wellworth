@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { IconWorldSearch } from '@tabler/icons-react'
 import { OverlayTop } from './OverlayTop'
-import { OverlayCloseButton } from './OverlayCloseButton'
+import { ScreenHeaderTitle } from './ScreenHeaderTitle'
 import { SegmentedTabs } from './SegmentedTabs'
 import { SelectMenu } from './SelectMenu'
 import { EntryHeaderActions } from './EntryHeaderActions'
@@ -134,20 +134,20 @@ export function StopEditorOverlay({
   return (
     <>
       <OverlayTop onClose={onClose} label={stop ? 'Edit stop' : 'Add stop'}>
-        <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-          <OverlayCloseButton onClick={onClose} />
-          <h1 className="flex-1 text-heading font-medium text-text-primary">
-            {stop ? 'Edit Stop' : 'Add Stop'}
-          </h1>
-          <EntryHeaderActions
-            editing={!!stop}
-            dirty={dirty}
-            saving={saving}
-            onReset={reset}
-            onSubmit={() => void save()}
-            onDelete={stop && onDelete ? onDelete : undefined}
-          />
-        </header>
+        <ScreenHeaderTitle
+          onClose={onClose}
+          title={stop ? 'Edit Stop' : 'Add Stop'}
+          actions={
+            <EntryHeaderActions
+              editing={!!stop}
+              dirty={dirty}
+              saving={saving}
+              onReset={reset}
+              onSubmit={() => void save()}
+              onDelete={stop && onDelete ? onDelete : undefined}
+            />
+          }
+        />
 
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
           <SegmentedTabs<StopType>

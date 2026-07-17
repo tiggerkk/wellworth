@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { IconClipboard } from '@tabler/icons-react'
 import { OverlayTop } from './OverlayTop'
-import { OverlayCloseButton } from './OverlayCloseButton'
+import { ScreenHeaderTitle } from './ScreenHeaderTitle'
 import { EntryHeaderActions } from './EntryHeaderActions'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 
@@ -96,8 +96,22 @@ export function NotesEditorOverlay({
 
   return (
     <OverlayTop onClose={onClose} label="Edit ${fieldLabel.toLowerCase()}">
-      <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <OverlayCloseButton onClick={onClose} />
+      <ScreenHeaderTitle
+        onClose={onClose}
+        actions={
+          <EntryHeaderActions
+            editing
+            dirty={dirty}
+            saving={false}
+            onReset={() => setBuffer(value)}
+            onDelete={() => setBuffer('')}
+            onSubmit={() => {
+              onSave(buffer)
+              onClose()
+            }}
+          />
+        }
+      >
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-heading font-medium text-text-primary">
             {headerTitle}
@@ -106,18 +120,7 @@ export function NotesEditorOverlay({
             <p className="truncate text-caption text-text-secondary">{subtitle}</p>
           )}
         </div>
-        <EntryHeaderActions
-          editing
-          dirty={dirty}
-          saving={false}
-          onReset={() => setBuffer(value)}
-          onDelete={() => setBuffer('')}
-          onSubmit={() => {
-            onSave(buffer)
-            onClose()
-          }}
-        />
-      </header>
+      </ScreenHeaderTitle>
 
       <div className="flex flex-1 flex-col overflow-hidden p-4">
         <div className="flex items-center justify-between">

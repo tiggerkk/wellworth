@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { IconWorldSearch } from '@tabler/icons-react'
 import { OverlayTop } from './OverlayTop'
-import { OverlayCloseButton } from './OverlayCloseButton'
+import { ScreenHeaderTitle } from './ScreenHeaderTitle'
 import { SearchBar } from './SearchBar'
 import {
   externalFoodServing,
@@ -86,8 +86,7 @@ export function FoodSearchOverlay({
 
   return (
     <OverlayTop onClose={onClose} label="Search foods">
-      <div className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <OverlayCloseButton onClick={onClose} />
+      <ScreenHeaderTitle onClose={onClose}>
         <div className="flex-1">
           <SearchBar
             value={query}
@@ -96,7 +95,7 @@ export function FoodSearchOverlay({
             icon={IconWorldSearch}
           />
         </div>
-      </div>
+      </ScreenHeaderTitle>
 
       <div className="min-h-0 flex-1 overflow-y-auto p-4">
         <div className="divide-y divide-border overflow-hidden rounded-card border border-border bg-surface">
