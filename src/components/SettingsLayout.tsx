@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router'
-import { IconX } from '@tabler/icons-react'
 import { useEscapeKey } from '../hooks/useEscapeKey'
+import { ScreenHeaderTitle } from './ScreenHeaderTitle'
 
 /**
  * The shared shell for a global/module Settings screen: a full-width column + sticky header with
@@ -22,16 +22,12 @@ export function SettingsLayout({
   useEscapeKey(() => navigate(-1))
   return (
     <div className="flex flex-col gap-5 px-4 py-4">
-      <header className="sticky top-0 z-10 -mx-4 flex items-center gap-2 bg-bg/90 px-4 py-3 backdrop-blur">
-        <button
-          onClick={() => navigate(-1)}
-          aria-label={closeLabel}
-          className="-ml-1 p-1 text-text-secondary"
-        >
-          <IconX size={22} />
-        </button>
-        <h1 className="text-title font-medium text-text-primary">{title}</h1>
-      </header>
+      <ScreenHeaderTitle
+        title={title}
+        closeAriaLabel={closeLabel}
+        className="sticky top-0 z-10 -mx-4 flex items-center gap-2 bg-bg/90 px-4 py-3 backdrop-blur"
+        titleClassName="text-title font-medium text-text-primary"
+      />
       {children}
     </div>
   )

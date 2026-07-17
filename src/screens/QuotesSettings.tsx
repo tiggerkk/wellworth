@@ -1,6 +1,5 @@
 import { IconChevronRight, IconUpload } from '@tabler/icons-react'
-import { SettingsLayout } from '../components/SettingsLayout'
-import { EntryLoader } from '../components/EntryLoader'
+import { SettingsLoader } from '../components/SettingsLoader'
 import { useProfileEditor } from '../hooks/useProfileEditor'
 import { useSheetNavigate } from '../hooks/useSheetNavigate'
 import { SectionCard } from '../components/SectionCard'
@@ -21,17 +20,15 @@ export function QuotesSettings() {
   const { profile, loading, error, save } = useProfileEditor()
 
   return (
-    <SettingsLayout title="Quotes Settings">
-      <EntryLoader
-        loading={loading}
-        error={error}
-        data={profile}
-        errorText="Couldn’t load your profile."
-        className="contents"
-      >
-        {(profile) => <Body profile={profile} save={save} />}
-      </EntryLoader>
-    </SettingsLayout>
+    <SettingsLoader
+      title="Quotes Settings"
+      loading={loading}
+      error={error}
+      data={profile}
+      errorText="Couldn’t load your profile."
+    >
+      {(profile) => <Body profile={profile} save={save} />}
+    </SettingsLoader>
   )
 }
 

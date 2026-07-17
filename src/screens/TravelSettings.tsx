@@ -1,7 +1,6 @@
 import { IconChevronRight, IconUpload } from '@tabler/icons-react'
 import { SectionCard } from '../components/SectionCard'
-import { SettingsLayout } from '../components/SettingsLayout'
-import { EntryLoader } from '../components/EntryLoader'
+import { SettingsLoader } from '../components/SettingsLoader'
 import { FieldRow } from '../components/FieldRow'
 import { Toggle } from '../components/Toggle'
 import { useProfileEditor } from '../hooks/useProfileEditor'
@@ -22,7 +21,29 @@ export function TravelSettings() {
   const { profile, loading, error, save } = useProfileEditor()
 
   return (
-    <SettingsLayout title="Travel Settings">
+    <SettingsLoader
+      title="Travel Settings"
+      loading={loading}
+      error={error}
+      data={profile}
+      errorText="Couldn’t load your profile."
+    >
+      {(profile) => <Body profile={profile} save={save} openSheet={openSheet} />}
+    </SettingsLoader>
+  )
+}
+
+function Body({
+  profile,
+  save,
+  openSheet,
+}: {
+  profile: Tables<'profile'>
+  save: SaveFn
+  openSheet: (to: string) => void
+}) {
+  return (
+    <>
       <SectionCard title="Entry Form">
         <button
           onClick={() => openSheet(routes.travel.settingsVisible)}
@@ -44,59 +65,35 @@ export function TravelSettings() {
         </button>
       </SectionCard>
 
-      <EntryLoader
-        loading={loading}
-        error={error}
-        data={profile}
-        errorText="Couldn’t load your profile."
-        className="contents"
-      >
-        {(profile) => (
-          <ImportSection profile={profile} save={save} openSheet={openSheet} />
+      <SectionCard title="Import">
+        <FieldRow label="Enable Bulk Trips Import">
+          <Toggle
+            checked={profile.travel_importer_enabled}
+            onChange={(on) => void save({ travel_importer_enabled: on })}
+            label="Enable Bulk Trips Import"
+          />
+        </FieldRow>
+        {profile.travel_importer_enabled ? (
+          <>
+            <button
+              onClick={() => openSheet(routes.travel.importTravel)}
+              className="flex w-full items-center gap-2 border-b border-border px-4 py-2 text-body text-accent last:border-b-0 active:bg-input/40"
+            >
+              <IconUpload size={18} /> Import JSON Trips
+            </button>
+            <button
+              onClick={() => openSheet(routes.travel.importExpenses)}
+              className="flex w-full items-center gap-2 border-b border-border px-4 py-2 text-body text-accent last:border-b-0 active:bg-input/40"
+            >
+              <IconUpload size={18} /> Import CSV Expenses
+            </button>
+          </>
+        ) : (
+          <div className="px-4 py-2 text-caption text-text-tertiary">
+            Turn this on to bulk-seed your trips from a JSON / CSV.
+          </div>
         )}
-      </EntryLoader>
-    </SettingsLayout>
-  )
-}
-
-function ImportSection({
-  profile,
-  save,
-  openSheet,
-}: {
-  profile: Tables<'profile'>
-  save: SaveFn
-  openSheet: (to: string) => void
-}) {
-  return (
-    <SectionCard title="Import">
-      <FieldRow label="Enable Bulk Trips Import">
-        <Toggle
-          checked={profile.travel_importer_enabled}
-          onChange={(on) => void save({ travel_importer_enabled: on })}
-          label="Enable Bulk Trips Import"
-        />
-      </FieldRow>
-      {profile.travel_importer_enabled ? (
-        <>
-          <button
-            onClick={() => openSheet(routes.travel.importTravel)}
-            className="flex w-full items-center gap-2 border-b border-border px-4 py-2 text-body text-accent last:border-b-0 active:bg-input/40"
-          >
-            <IconUpload size={18} /> Import JSON Trips
-          </button>
-          <button
-            onClick={() => openSheet(routes.travel.importExpenses)}
-            className="flex w-full items-center gap-2 border-b border-border px-4 py-2 text-body text-accent last:border-b-0 active:bg-input/40"
-          >
-            <IconUpload size={18} /> Import CSV Expenses
-          </button>
-        </>
-      ) : (
-        <div className="px-4 py-2 text-caption text-text-tertiary">
-          Turn this on to bulk-seed your trips from a JSON / CSV.
-        </div>
-      )}
-    </SectionCard>
+      </SectionCard>
+    </>
   )
 }

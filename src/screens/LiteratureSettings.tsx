@@ -2,7 +2,7 @@ import { IconChevronRight } from '@tabler/icons-react'
 import { useProfileEditor } from '../hooks/useProfileEditor'
 import { useSheetNavigate } from '../hooks/useSheetNavigate'
 import { SectionCard } from '../components/SectionCard'
-import { SettingsLayout } from '../components/SettingsLayout'
+import { SettingsLoader } from '../components/SettingsLoader'
 import { FieldRow } from '../components/FieldRow'
 import { Toggle } from '../components/Toggle'
 import { SegmentedTabs } from '../components/SegmentedTabs'
@@ -17,14 +17,19 @@ type SaveFn = (patch: TablesUpdate<'profile'>) => Promise<void>
  * (read-aloud auto-loop + default language). Auto-saves on change.
  */
 export function LiteratureSettings() {
-  const { profile, loading, save } = useProfileEditor()
+  const { profile, loading, error, save } = useProfileEditor()
 
   return (
-    <SettingsLayout title="萬卷詩書 Settings" closeLabel="關閉">
-      {loading && <p className="text-body text-text-secondary">載入中…</p>}
-      {!loading && !profile && <p className="text-body text-danger">無法載入設定。</p>}
-      {profile && <Body profile={profile} save={save} />}
-    </SettingsLayout>
+    <SettingsLoader
+      title="萬卷詩書 Settings"
+      closeLabel="關閉"
+      loading={loading}
+      error={error}
+      data={profile}
+      errorText="Couldn’t load your profile."
+    >
+      {(profile) => <Body profile={profile} save={save} />}
+    </SettingsLoader>
   )
 }
 
