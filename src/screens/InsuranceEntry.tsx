@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 
 import { useNavigate, useParams } from 'react-router'
 import { IconArrowsLeftRight, IconCheck, IconUpload, IconX } from '@tabler/icons-react'
@@ -11,7 +11,7 @@ import { EntryLoader } from '../components/EntryLoader'
 import { ScreenHeaderTitle } from '../components/ScreenHeaderTitle'
 import { IconAction } from '../components/IconAction'
 import { InsuranceCompareOverlay } from '../components/InsuranceCompareOverlay'
-import { InsurancePolicyHeader } from '../components/InsurancePolicyHeader'
+import { ImportScheduleOverlay } from '../components/ImportScheduleOverlay'
 import {
   addScheduleVersion,
   createPolicy,
@@ -25,8 +25,7 @@ import {
 import { FIELD_CLASS as inputClass } from '../constants/forms'
 import { bumpNetWorth } from '../lib/networth-refresh'
 import { errorMessage } from '../lib/errors'
-import { parseCsv } from '../lib/csv'
-import { parseInsuranceSingleCsv, type ParsedSinglePolicy } from '../lib/insurance-import'
+import { type ParsedSinglePolicy } from '../lib/insurance-import'
 import { NETWORTH_CURRENCIES, type NetWorthCurrency } from '../constants/networth'
 import {
   gainLossClass,
@@ -44,9 +43,7 @@ import { SelectMenu } from '../components/SelectMenu'
 import { SegmentedTabs } from '../components/SegmentedTabs'
 import { EntryHeaderActions } from '../components/EntryHeaderActions'
 import { ConfirmDeleteAction } from '../components/ConfirmDeleteAction'
-import { PrimaryButton } from '../components/PrimaryButton'
 import { SecondaryButton } from '../components/SecondaryButton'
-import { OverlayTop } from '../components/OverlayTop'
 
 type TerminationKind = 'surrendered' | 'matured'
 
@@ -769,161 +766,5 @@ function PolicyForm({
         />
       )}
     </>
-  )
-}
-
-// --- Local import overlay (does not remount the form) ------------------------------------
-
-function ImportScheduleOverlay({
-  provider,
-  providers,
-  policyNumber,
-  startDate,
-  policyName,
-  schedules,
-  currentAge,
-  busy,
-  onApply,
-  onClose,
-}: {
-  provider: string
-  providers: InsuranceProviderConfig[]
-  policyNumber: string
-  startDate: string | null
-  policyName: string
-  schedules: ScheduleVersion[]
-  currentAge: number
-  busy: boolean
-  onApply: (
-    parsed: ParsedSinglePolicy,
-    target: { mode: 'new' } | { mode: 'replace'; scheduleId: string },
-  ) => void
-  onClose: () => void
-}) {
-  const inputRef = useRef<HTMLInputElement>(null)
-  const [fileName, setFileName] = useState<string | null>(null)
-  const [parsed, setParsed] = useState<ParsedSinglePolicy | null>(null)
-  const [parseErrors, setParseErrors] = useState<string[]>([])
-  const [mode, setMode] = useState<'new' | string>('new') // 'new' | scheduleId
-  // Innermost overlay over the form — Esc closes it first (an open SelectMenu layers above this).
-  useEscapeKey(onClose)
-
-  async function onFile(file: File) {
-    setParseErrors([])
-    try {
-      const text = await file.text()
-      const res = parseInsuranceSingleCsv(parseCsv(text), providers, currentAge)
-      setParsed(res.policy)
-      setParseErrors(res.errors)
-      setFileName(file.name)
-    } catch (e) {
-      setParsed(null)
-      setParseErrors([errorMessage(e, 'Could not read the file.')])
-    }
-  }
-
-  // Match validation: number must equal the screen's; provider (if present) must match.
-  const mismatch =
-    parsed != null &&
-    (parsed.policy_number !== policyNumber ||
-      (parsed.provider != null && parsed.provider !== provider))
-
-  const canApply = parsed != null && parseErrors.length === 0 && !mismatch && !busy
-
-  return (
-    <OverlayTop onClose={onClose} label="Import Policy Schedule">
-      <ScreenHeaderTitle onClose={onClose} title="Import Policy Schedule" />
-      <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
-        <div>
-          <InsurancePolicyHeader
-            policyNumber={policyNumber || 'New policy'}
-            startDate={startDate}
-            providerLabel={
-              (providers.find((p) => p.key === provider)?.label ?? provider) || '—'
-            }
-            policyName={policyName || '—'}
-          />
-        </div>
-
-        {!policyNumber && (
-          <p className="text-caption text-warning">
-            Enter the Policy Number first — the file must match it.
-          </p>
-        )}
-        <input
-          ref={inputRef}
-          type="file"
-          accept=".csv,text/csv"
-          className="hidden"
-          onChange={(e) => {
-            const f = e.target.files?.[0]
-            if (f) void onFile(f)
-            e.target.value = ''
-          }}
-        />
-        <button
-          onClick={() => inputRef.current?.click()}
-          className="flex items-center justify-center gap-2 rounded-input border border-border bg-input px-4 py-3 text-body text-text-primary"
-        >
-          <IconUpload size={18} />
-          {fileName ? 'Choose a different file' : 'Choose CSV File'}
-        </button>
-
-        {parseErrors.length > 0 && (
-          <ul className="flex flex-col gap-1 text-caption text-danger">
-            {parseErrors.map((m, i) => (
-              <li key={i}>{m}</li>
-            ))}
-          </ul>
-        )}
-
-        {parsed && (
-          <div className="flex flex-col gap-3">
-            <div className="rounded-card border border-border bg-surface px-4 py-3 text-body text-text-primary">
-              {parsed.policy_number} · {parsed.points.length} schedule point
-              {parsed.points.length === 1 ? '' : 's'}
-              {parsed.termination_kind === 'matured' && ' · auto-detected Matured'}
-            </div>
-            {mismatch && (
-              <p className="text-caption text-danger">
-                File doesn’t match this policy’s provider / number.
-              </p>
-            )}
-            <div>
-              <p className="mb-1 text-caption uppercase tracking-[0.08em] text-text-secondary">
-                Apply as
-              </p>
-              <SelectMenu
-                value={mode}
-                ariaLabel="Apply target"
-                options={[
-                  { value: 'new', label: 'Add new version' },
-                  ...schedules.map((v) => ({
-                    value: v.id,
-                    label: `Replace ${v.kind === 'original' ? 'Original' : 'Update'}${v.effective_date ? ` · ${formatFullDate(v.effective_date)}` : ''}`,
-                  })),
-                ]}
-                onChange={setMode}
-              />
-            </div>
-          </div>
-        )}
-      </div>
-      <div className="border-t border-border p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
-        <PrimaryButton
-          onClick={() =>
-            parsed &&
-            onApply(
-              parsed,
-              mode === 'new' ? { mode: 'new' } : { mode: 'replace', scheduleId: mode },
-            )
-          }
-          disabled={!canApply}
-          className="w-full"
-        >
-          {busy ? 'Importing…' : 'IMPORT SCHEDULE'}
-        </PrimaryButton>
-      </div>
-    </OverlayTop>
   )
 }
