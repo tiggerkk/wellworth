@@ -1,8 +1,7 @@
 import { useCallback } from 'react'
 import { useSearchParams } from 'react-router'
 import { IconPlus } from '@tabler/icons-react'
-import { SheetCloseButton } from '../components/SheetCloseButton'
-import { Sheet } from '../components/Sheet'
+import { SheetLoader } from '../components/SheetLoader'
 import { ListRow } from '../components/ListRow'
 import { useAsync } from '../hooks/useAsync'
 import { useSheetNavigate } from '../hooks/useSheetNavigate'
@@ -20,12 +19,10 @@ export function WellnessActivityAddSheet() {
   const { data: activities, loading, error } = useAsync(fn)
 
   return (
-    <Sheet variant="full" label="Add activity">
-      <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <SheetCloseButton />
-        <h1 className="flex-1 text-heading font-medium text-text-primary">
-          Add Activity
-        </h1>
+    <SheetLoader
+      label="Add activity"
+      title="Add Activity"
+      actions={
         <button
           onClick={() => openSheet(routes.wellness.newActivity)}
           aria-label="New activity"
@@ -33,14 +30,16 @@ export function WellnessActivityAddSheet() {
         >
           <IconPlus size={22} />
         </button>
-      </header>
-
-      <div className="flex-1 overflow-y-auto p-4">
-        {loading && <p className="text-body text-text-secondary">Loading…</p>}
-        {error && <p className="text-body text-danger">Couldn’t load activities.</p>}
-        {!loading && !error && (
+      }
+      loading={loading}
+      error={error}
+      data={activities}
+      errorText="Couldn’t load activities."
+    >
+      {(list) => (
+        <div className="flex-1 overflow-y-auto p-4">
           <div className="overflow-hidden rounded-card border border-border bg-surface">
-            {(activities ?? []).map((a) => {
+            {list.map((a) => {
               const Icon = resolveActivityIcon(a.icon)
               return (
                 <ListRow
@@ -54,7 +53,7 @@ export function WellnessActivityAddSheet() {
                 />
               )
             })}
-            {(activities ?? []).length === 0 && (
+            {list.length === 0 && (
               <button
                 onClick={() => openSheet(routes.wellness.newActivity)}
                 className="block w-full px-4 py-6 text-center text-body text-positive"
@@ -63,8 +62,8 @@ export function WellnessActivityAddSheet() {
               </button>
             )}
           </div>
-        )}
-      </div>
-    </Sheet>
+        </div>
+      )}
+    </SheetLoader>
   )
 }

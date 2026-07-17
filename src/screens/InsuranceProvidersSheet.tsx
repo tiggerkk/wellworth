@@ -1,5 +1,4 @@
-import { SheetCloseButton } from '../components/SheetCloseButton'
-import { Sheet } from '../components/Sheet'
+import { SheetLoader } from '../components/SheetLoader'
 import { ConfigListEditor } from '../components/ConfigListEditor'
 import { SelectMenu } from '../components/SelectMenu'
 import { useAuth } from '../auth/AuthProvider'
@@ -15,7 +14,6 @@ import {
   reorderProviders,
   type InsuranceProviderConfig,
 } from '../lib/insurance-config'
-import { EntryLoader } from '../components/EntryLoader'
 
 const CCY_OPTIONS = NETWORTH_CURRENCIES.map((c) => ({ value: c, label: c }))
 
@@ -31,47 +29,40 @@ export function InsuranceProvidersSheet() {
   const userId = session?.user.id
 
   return (
-    <Sheet variant="full" label="Insurance Providers">
-      <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <SheetCloseButton />
-        <h1 className="text-heading font-medium text-text-primary">
-          Insurance Providers
-        </h1>
-      </header>
-
-      <EntryLoader
-        loading={loading}
-        data={profile}
-        errorText="Couldn’t load insurance providers."
-      >
-        {(prof) => (
-          <ConfigListEditor<InsuranceProviderConfig>
-            list={effectiveProviders(prof.insurance_providers)}
-            noun="provider"
-            itemNoun="policy"
-            userId={userId}
-            persist={(next) => void save({ insurance_providers: next })}
-            add={addProvider}
-            rename={renameProvider}
-            remove={removeProvider}
-            reorder={reorderProviders}
-            count={(key) => countPoliciesByProvider(userId!, key)}
-            reassign={(from, to) => reassignProvider(userId!, from, to)}
-            onChanged={bumpNetWorth}
-            hint={(e) => `imports as ${e.defaultCurrency}`}
-            rowExtra={(entry, update) => (
-              <div className="w-24">
-                <SelectMenu
-                  value={entry.defaultCurrency}
-                  options={CCY_OPTIONS}
-                  onChange={(v) => update({ defaultCurrency: v as NetWorthCurrency })}
-                  ariaLabel={`Default currency for ${entry.label}`}
-                />
-              </div>
-            )}
-          />
-        )}
-      </EntryLoader>
-    </Sheet>
+    <SheetLoader
+      label="Insurance Providers"
+      title="Insurance Providers"
+      loading={loading}
+      data={profile}
+      errorText="Couldn’t load insurance providers."
+    >
+      {(prof) => (
+        <ConfigListEditor<InsuranceProviderConfig>
+          list={effectiveProviders(prof.insurance_providers)}
+          noun="provider"
+          itemNoun="policy"
+          userId={userId}
+          persist={(next) => void save({ insurance_providers: next })}
+          add={addProvider}
+          rename={renameProvider}
+          remove={removeProvider}
+          reorder={reorderProviders}
+          count={(key) => countPoliciesByProvider(userId!, key)}
+          reassign={(from, to) => reassignProvider(userId!, from, to)}
+          onChanged={bumpNetWorth}
+          hint={(e) => `imports as ${e.defaultCurrency}`}
+          rowExtra={(entry, update) => (
+            <div className="w-24">
+              <SelectMenu
+                value={entry.defaultCurrency}
+                options={CCY_OPTIONS}
+                onChange={(v) => update({ defaultCurrency: v as NetWorthCurrency })}
+                ariaLabel={`Default currency for ${entry.label}`}
+              />
+            </div>
+          )}
+        />
+      )}
+    </SheetLoader>
   )
 }

@@ -1,11 +1,9 @@
 import { useState } from 'react'
-import { SheetCloseButton } from '../components/SheetCloseButton'
-import { Sheet } from '../components/Sheet'
+import { SheetLoader } from '../components/SheetLoader'
 import { Toggle } from '../components/Toggle'
 import { useProfileEditor } from '../hooks/useProfileEditor'
 import { useNutrientReference } from '../hooks/useNutrientReference'
 import type { Tables, TablesUpdate } from '../types/database'
-import { EntryLoader } from '../components/EntryLoader'
 
 const VISIBLE_GROUPS: { label: string; categories: string[] }[] = [
   { label: 'General & Protein', categories: ['general', 'protein'] },
@@ -27,20 +25,15 @@ export function WellnessVisibleNutrientsSheet() {
   const { nutrients } = useNutrientReference()
 
   return (
-    <Sheet variant="full" label="Visible nutrients">
-      <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <SheetCloseButton />
-        <h1 className="text-heading font-medium text-text-primary">Visible Nutrients</h1>
-      </header>
-
-      <EntryLoader
-        loading={loading || !nutrients}
-        data={profile}
-        errorText="Couldn’t load visible nutrients."
-      >
-        {(prof) => <Picker profile={prof} nutrients={nutrients!} save={save} />}
-      </EntryLoader>
-    </Sheet>
+    <SheetLoader
+      label="Visible nutrients"
+      title="Visible Nutrients"
+      loading={loading || !nutrients}
+      data={profile}
+      errorText="Couldn’t load visible nutrients."
+    >
+      {(prof) => <Picker profile={prof} nutrients={nutrients!} save={save} />}
+    </SheetLoader>
   )
 }
 

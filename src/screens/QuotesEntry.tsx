@@ -8,7 +8,7 @@ import { useEntryFavorite } from '../hooks/useEntryFavorite'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 import { useDirty } from '../hooks/useDirty'
 import { EntryLoader } from '../components/EntryLoader'
-import { EntryHeaderTitle } from '../components/EntryHeaderTitle'
+import { ScreenHeaderTitle } from '../components/ScreenHeaderTitle'
 import { FIELD_CLASS as inputClass } from '../constants/forms'
 import {
   createQuote,
@@ -138,7 +138,7 @@ export function QuotesEntry() {
         Outer structural header remains statically mounted during data retrieval,
         rendering "Loading" elegantly under a unified layout frame.
       */}
-      <EntryHeaderTitle
+      <ScreenHeaderTitle
         title={id ? 'Edit Quote' : 'New Quote'}
         actions={<div className="w-24 shrink-0" />}
       />

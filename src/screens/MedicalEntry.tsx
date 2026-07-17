@@ -8,7 +8,7 @@ import { useEscapeKey } from '../hooks/useEscapeKey'
 import { useProfile } from '../hooks/useProfile'
 import { useSheetNavigate } from '../hooks/useSheetNavigate'
 import { EntryLoader } from '../components/EntryLoader'
-import { EntryHeaderTitle } from '../components/EntryHeaderTitle'
+import { ScreenHeaderTitle } from '../components/ScreenHeaderTitle'
 import { FIELD_CLASS as inputClass } from '../constants/forms'
 import { deleteReport, getReportWithResults, saveReport } from '../data/medical'
 import { bumpMedical } from '../lib/medical-refresh'
@@ -74,7 +74,7 @@ export function MedicalEntry() {
         Outer structural header remains statically mounted during data retrieval,
         rendering "Loading" elegantly under a unified structure.
       */}
-      <EntryHeaderTitle
+      <ScreenHeaderTitle
         title={id ? 'Edit Report' : 'New Report'}
         actions={
           <>

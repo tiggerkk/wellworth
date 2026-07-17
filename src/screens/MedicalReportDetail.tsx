@@ -26,7 +26,7 @@ import { groupResultsByCategory } from '../lib/medical-order'
 import { formatFullDate } from '../lib/date'
 import { routes } from '../constants/routes'
 import { EntryLoader } from '../components/EntryLoader'
-import { EntryHeaderTitle } from '../components/EntryHeaderTitle'
+import { ScreenHeaderTitle } from '../components/ScreenHeaderTitle'
 import { PrimaryButton } from '../components/PrimaryButton'
 import { MedicalValueRow } from '../components/MedicalValueRow'
 import { Collapsible } from '../components/Collapsible'
@@ -52,7 +52,7 @@ export function MedicalReportDetail() {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <EntryHeaderTitle
+      <ScreenHeaderTitle
         actions={
           id &&
           data && (
@@ -87,7 +87,7 @@ export function MedicalReportDetail() {
             <p className="truncate text-title font-medium text-text-primary">Report</p>
           )}
         </div>
-      </EntryHeaderTitle>
+      </ScreenHeaderTitle>
 
       <div className="flex-1 overflow-y-auto p-4">
         <EntryLoader

@@ -1,6 +1,5 @@
 import { useState } from 'react'
-import { SheetCloseButton } from '../components/SheetCloseButton'
-import { Sheet } from '../components/Sheet'
+import { SheetLoader } from '../components/SheetLoader'
 import { Toggle } from '../components/Toggle'
 import { ReorderGrid } from '../components/ReorderGrid'
 import { useProfileEditor } from '../hooks/useProfileEditor'
@@ -8,7 +7,6 @@ import { MODULES } from '../constants/modules'
 import { homeModules, orderedModuleKeys } from '../lib/modules-display'
 import { showToast } from '../lib/toast'
 import type { Tables, TablesUpdate } from '../types/database'
-import { EntryLoader } from '../components/EntryLoader'
 
 /**
  * Global Settings → DISPLAY → Visible Modules: a 2-up combined grid (`ReorderGrid`, following the
@@ -22,20 +20,15 @@ export function VisibleModulesSheet() {
   const { profile, loading, save } = useProfileEditor()
 
   return (
-    <Sheet variant="full" label="Visible modules">
-      <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <SheetCloseButton />
-        <h1 className="text-heading font-medium text-text-primary">Visible Modules</h1>
-      </header>
-
-      <EntryLoader
-        loading={loading}
-        data={profile}
-        errorText="Couldn’t load visible modules settings."
-      >
-        {(prof) => <Editor profile={prof} save={save} />}
-      </EntryLoader>
-    </Sheet>
+    <SheetLoader
+      label="Visible modules"
+      title="Visible Modules"
+      loading={loading}
+      data={profile}
+      errorText="Couldn’t load visible modules settings."
+    >
+      {(prof) => <Editor profile={prof} save={save} />}
+    </SheetLoader>
   )
 }
 

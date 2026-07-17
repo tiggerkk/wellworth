@@ -1,12 +1,10 @@
 import { useState } from 'react'
 import { IconCheck } from '@tabler/icons-react'
-import { SheetCloseButton } from '../components/SheetCloseButton'
-import { Sheet } from '../components/Sheet'
+import { SheetLoader } from '../components/SheetLoader'
 import { useProfileEditor } from '../hooks/useProfileEditor'
 import { useNutrientReference } from '../hooks/useNutrientReference'
 import { NUTRIENT_SECTIONS } from '../constants/wellness'
 import type { Tables } from '../types/database'
-import { EntryLoader } from '../components/EntryLoader'
 
 const MAX = 8
 
@@ -15,28 +13,21 @@ export function WellnessHighlightedNutrientsSheet() {
   const { nutrients } = useNutrientReference()
 
   return (
-    <Sheet variant="full" label="Highlighted nutrients">
-      <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <SheetCloseButton />
-        <h1 className="text-heading font-medium text-text-primary">
-          Highlighted Nutrients
-        </h1>
-      </header>
-
-      <EntryLoader
-        loading={loading || !nutrients}
-        data={profile}
-        errorText="Couldn’t load highlighted nutrients."
-      >
-        {(prof) => (
-          <Picker
-            initial={prof.highlighted_nutrients}
-            nutrients={nutrients!}
-            onChange={(next) => void save({ highlighted_nutrients: next })}
-          />
-        )}
-      </EntryLoader>
-    </Sheet>
+    <SheetLoader
+      label="Highlighted nutrients"
+      title="Highlighted Nutrients"
+      loading={loading || !nutrients}
+      data={profile}
+      errorText="Couldn’t load highlighted nutrients."
+    >
+      {(prof) => (
+        <Picker
+          initial={prof.highlighted_nutrients}
+          nutrients={nutrients!}
+          onChange={(next) => void save({ highlighted_nutrients: next })}
+        />
+      )}
+    </SheetLoader>
   )
 }
 

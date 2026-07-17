@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
-import { SheetCloseButton } from '../components/SheetCloseButton'
-import { Sheet } from '../components/Sheet'
+import { SheetLoader } from '../components/SheetLoader'
 import { SectionCard } from '../components/SectionCard'
 import { FieldRow } from '../components/FieldRow'
 import { Toggle } from '../components/Toggle'
@@ -25,7 +24,6 @@ import {
   registerPlatformCredential,
 } from '../lib/medical-webauthn'
 import type { Tables, TablesUpdate } from '../types/database'
-import { EntryLoader } from '../components/EntryLoader'
 
 type SaveFn = (patch: TablesUpdate<'profile'>) => Promise<void>
 
@@ -39,20 +37,15 @@ export function MedicalLockSheet() {
   const { profile, loading, save } = useProfileEditor()
 
   return (
-    <Sheet variant="full" label="Lock">
-      <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <SheetCloseButton />
-        <h1 className="text-heading font-medium text-text-primary">Lock</h1>
-      </header>
-
-      <EntryLoader
-        loading={loading}
-        data={profile}
-        errorText="Couldn’t load security settings."
-      >
-        {(prof) => <Body profile={prof} save={save} />}
-      </EntryLoader>
-    </Sheet>
+    <SheetLoader
+      label="Lock"
+      title="Lock"
+      loading={loading}
+      data={profile}
+      errorText="Couldn’t load security settings."
+    >
+      {(prof) => <Body profile={prof} save={save} />}
+    </SheetLoader>
   )
 }
 

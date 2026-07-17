@@ -18,7 +18,7 @@ import { ReorderList } from '../components/ReorderList'
 import { FIELD_CLASS as inputClass } from '../constants/forms'
 import { SecondaryButton } from '../components/SecondaryButton'
 import { EntryHeaderActions } from '../components/EntryHeaderActions'
-import { EntryHeaderTitle } from '../components/EntryHeaderTitle'
+import { ScreenHeaderTitle } from '../components/ScreenHeaderTitle'
 import { ConfirmDeleteAction } from '../components/ConfirmDeleteAction'
 import { IconAction } from '../components/IconAction'
 import { StopEditorOverlay } from '../components/StopEditorOverlay'
@@ -122,7 +122,7 @@ function NewTrip() {
 
   return (
     <div className="flex h-full flex-col">
-      <EntryHeaderTitle
+      <ScreenHeaderTitle
         title="New Trip"
         onClose={close}
         actions={
@@ -211,7 +211,7 @@ function EditTrip({ id }: { id: string }) {
   // renders the body regardless of a background loading/error state.
   return (
     <div className="flex h-full flex-col">
-      {!bundle && <EntryHeaderTitle title="Edit Trip" onClose={close} />}
+      {!bundle && <ScreenHeaderTitle title="Edit Trip" onClose={close} />}
       <EntryLoader
         loading={loading && !bundle}
         error={error && !bundle ? error : undefined}
@@ -562,7 +562,7 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
 
   return (
     <>
-      <EntryHeaderTitle
+      <ScreenHeaderTitle
         title="Edit Trip"
         onClose={close}
         actions={

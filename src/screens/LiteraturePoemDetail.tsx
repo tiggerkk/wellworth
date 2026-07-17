@@ -9,7 +9,7 @@ import { getPoem, loadMeta } from '../data/literature'
 import { DYNASTY_CHIP, isFieldVisible, type SpeechLang } from '../lib/literature'
 import { LITERATURE_SECTION_COLOR } from '../constants/literature'
 import { routes } from '../constants/routes'
-import { EntryHeaderTitle } from '../components/EntryHeaderTitle'
+import { ScreenHeaderTitle } from '../components/ScreenHeaderTitle'
 import { PoemReader } from '../components/PoemReader'
 import { FilterPill } from '../components/FilterPill'
 import { Collapsible } from '../components/Collapsible'
@@ -82,7 +82,7 @@ export function LiteraturePoemDetail() {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <EntryHeaderTitle
+      <ScreenHeaderTitle
         closeAriaLabel="關閉"
         actions={
           <button
@@ -121,7 +121,7 @@ export function LiteraturePoemDetail() {
             </>
           )}
         </div>
-      </EntryHeaderTitle>
+      </ScreenHeaderTitle>
 
       <div className="flex-1 overflow-y-auto p-4">
         <div className="flex flex-col gap-4">

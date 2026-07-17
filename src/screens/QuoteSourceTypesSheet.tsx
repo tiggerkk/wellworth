@@ -1,5 +1,4 @@
-import { SheetCloseButton } from '../components/SheetCloseButton'
-import { Sheet } from '../components/Sheet'
+import { SheetLoader } from '../components/SheetLoader'
 import { ConfigListEditor } from '../components/ConfigListEditor'
 import { useAuth } from '../auth/AuthProvider'
 import { useProfileEditor } from '../hooks/useProfileEditor'
@@ -13,7 +12,6 @@ import {
   renameSourceType,
   reorderSourceTypes,
 } from '../lib/quotes-config'
-import { EntryLoader } from '../components/EntryLoader'
 
 /**
  * Quotes → Source Types (M8): add / rename / delete / reorder the owner's Source Type list, stored on
@@ -25,44 +23,39 @@ export function QuoteSourceTypesSheet() {
   const { profile, loading, save } = useProfileEditor()
 
   return (
-    <Sheet variant="full" label="Source Types">
-      <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <SheetCloseButton />
-        <h1 className="text-heading font-medium text-text-primary">Source Types</h1>
-      </header>
-
-      <EntryLoader
-        loading={loading}
-        data={profile}
-        errorText="Couldn’t load source types."
-      >
-        {(prof) => (
-          <ConfigListEditor
-            list={effectiveSourceTypes(prof.quote_source_types)}
-            noun="source type"
-            itemNoun="quote"
-            userId={session?.user.id}
-            persist={(next) => void save({ quote_source_types: next })}
-            add={addSourceType}
-            rename={renameSourceType}
-            remove={removeSourceType}
-            reorder={reorderSourceTypes}
-            count={(key) => countQuotesByField(session!.user.id, 'source_type', key)}
-            reassign={(from, to) =>
-              reassignQuoteField(session!.user.id, 'source_type', from, to)
-            }
-            onChanged={bumpQuotes}
-            isProtected={isProtectedSourceKey}
-            hint={(e) =>
-              e.linkKind === 'show'
-                ? 'links to Shows'
-                : e.linkKind === 'book'
-                  ? 'links to Books'
-                  : null
-            }
-          />
-        )}
-      </EntryLoader>
-    </Sheet>
+    <SheetLoader
+      label="Source Types"
+      title="Source Types"
+      loading={loading}
+      data={profile}
+      errorText="Couldn’t load source types."
+    >
+      {(prof) => (
+        <ConfigListEditor
+          list={effectiveSourceTypes(prof.quote_source_types)}
+          noun="source type"
+          itemNoun="quote"
+          userId={session?.user.id}
+          persist={(next) => void save({ quote_source_types: next })}
+          add={addSourceType}
+          rename={renameSourceType}
+          remove={removeSourceType}
+          reorder={reorderSourceTypes}
+          count={(key) => countQuotesByField(session!.user.id, 'source_type', key)}
+          reassign={(from, to) =>
+            reassignQuoteField(session!.user.id, 'source_type', from, to)
+          }
+          onChanged={bumpQuotes}
+          isProtected={isProtectedSourceKey}
+          hint={(e) =>
+            e.linkKind === 'show'
+              ? 'links to Shows'
+              : e.linkKind === 'book'
+                ? 'links to Books'
+                : null
+          }
+        />
+      )}
+    </SheetLoader>
   )
 }

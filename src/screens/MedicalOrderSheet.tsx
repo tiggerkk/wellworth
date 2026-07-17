@@ -1,13 +1,11 @@
 import { useState } from 'react'
-import { SheetCloseButton } from '../components/SheetCloseButton'
-import { Sheet } from '../components/Sheet'
+import { SheetLoader } from '../components/SheetLoader'
 import { SelectMenu } from '../components/SelectMenu'
 import { ReorderList } from '../components/ReorderList'
 import { useProfileEditor } from '../hooks/useProfileEditor'
 import { MEDICAL_CATEGORY_LABELS, type MedicalCategory } from '../constants/medical'
 import { buildOrderModel, flattenTestOrder, testDisplayName } from '../lib/medical-order'
 import type { Tables, TablesUpdate } from '../types/database'
-import { EntryLoader } from '../components/EntryLoader'
 
 /**
  * Medical → Display Order (M5): drag-to-reorder the category **sections** and the **tests within a
@@ -19,20 +17,15 @@ export function MedicalOrderSheet() {
   const { profile, loading, save } = useProfileEditor()
 
   return (
-    <Sheet variant="full" label="Display order">
-      <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <SheetCloseButton />
-        <h1 className="text-heading font-medium text-text-primary">Display Order</h1>
-      </header>
-
-      <EntryLoader
-        loading={loading}
-        data={profile}
-        errorText="Couldn’t load display order settings."
-      >
-        {(prof) => <Editor profile={prof} save={save} />}
-      </EntryLoader>
-    </Sheet>
+    <SheetLoader
+      label="Display order"
+      title="Display Order"
+      loading={loading}
+      data={profile}
+      errorText="Couldn’t load display order settings."
+    >
+      {(prof) => <Editor profile={prof} save={save} />}
+    </SheetLoader>
   )
 }
 

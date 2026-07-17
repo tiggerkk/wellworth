@@ -14,7 +14,7 @@ import { useDirty } from '../hooks/useDirty'
 import { useEntryFavorite } from '../hooks/useEntryFavorite'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 import { EntryLoader } from '../components/EntryLoader'
-import { EntryHeaderTitle } from '../components/EntryHeaderTitle'
+import { ScreenHeaderTitle } from '../components/ScreenHeaderTitle'
 import { createShow, deleteShow, getShow, updateShow } from '../data/show'
 import { numStr } from '../lib/wellness-quantity'
 import { FIELD_CLASS as inputClass } from '../constants/forms'
@@ -179,7 +179,7 @@ export function ShowsEntry() {
 
   return (
     <div className="relative flex h-full min-h-0 flex-col">
-      <EntryHeaderTitle
+      <ScreenHeaderTitle
         title={id ? 'Edit Show' : 'New Show'}
         actions={<div className="w-24 shrink-0" />}
       />

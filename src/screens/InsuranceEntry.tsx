@@ -8,7 +8,7 @@ import { useDirty } from '../hooks/useDirty'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 import { useProfile } from '../hooks/useProfile'
 import { EntryLoader } from '../components/EntryLoader'
-import { EntryHeaderTitle } from '../components/EntryHeaderTitle'
+import { ScreenHeaderTitle } from '../components/ScreenHeaderTitle'
 import { IconAction } from '../components/IconAction'
 import { InsuranceCompareOverlay } from '../components/InsuranceCompareOverlay'
 import { InsurancePolicyHeader } from '../components/InsurancePolicyHeader'
@@ -141,7 +141,7 @@ export function InsuranceEntry() {
         This outer header is always mounted! 
         It displays "Loading" gracefully with the header structure perfectly intact.
       */}
-      <EntryHeaderTitle
+      <ScreenHeaderTitle
         title={id ? 'Edit Insurance' : 'New Insurance'}
         actions={<div className="w-24 shrink-0" />}
       />

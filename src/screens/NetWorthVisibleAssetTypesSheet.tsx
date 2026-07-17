@@ -1,6 +1,5 @@
 import { useState } from 'react'
-import { SheetCloseButton } from '../components/SheetCloseButton'
-import { Sheet } from '../components/Sheet'
+import { SheetLoader } from '../components/SheetLoader'
 import { Toggle } from '../components/Toggle'
 import { ReorderList } from '../components/ReorderList'
 import { useProfileEditor } from '../hooks/useProfileEditor'
@@ -8,7 +7,6 @@ import { ASSET_TYPE_LABELS, type AssetType } from '../constants/networth'
 import { orderedAssetTypes, visibleAssetTypes } from '../lib/networth'
 import { showToast } from '../lib/toast'
 import type { Tables, TablesUpdate } from '../types/database'
-import { EntryLoader } from '../components/EntryLoader'
 
 /**
  * Net Worth Settings → Display → Visible Asset Types: a combined reorder + visibility list. Drag to
@@ -19,18 +17,15 @@ export function NetWorthVisibleAssetTypesSheet() {
   const { profile, loading, save } = useProfileEditor()
 
   return (
-    <Sheet variant="full" label="Visible asset types">
-      <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <SheetCloseButton />
-        <h1 className="text-heading font-medium text-text-primary">
-          Visible Asset Types
-        </h1>
-      </header>
-
-      <EntryLoader loading={loading} data={profile} errorText="Couldn’t load settings.">
-        {(prof) => <Editor profile={prof} save={save} />}
-      </EntryLoader>
-    </Sheet>
+    <SheetLoader
+      label="Visible asset types"
+      title="Visible Asset Types"
+      loading={loading}
+      data={profile}
+      errorText="Couldn’t load settings."
+    >
+      {(prof) => <Editor profile={prof} save={save} />}
+    </SheetLoader>
   )
 }
 

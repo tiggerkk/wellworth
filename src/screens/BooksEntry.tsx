@@ -13,7 +13,7 @@ import { useDirty } from '../hooks/useDirty'
 import { useEntryFavorite } from '../hooks/useEntryFavorite'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 import { EntryLoader } from '../components/EntryLoader'
-import { EntryHeaderTitle } from '../components/EntryHeaderTitle'
+import { ScreenHeaderTitle } from '../components/ScreenHeaderTitle'
 import { createBook, deleteBook, getBook, updateBook } from '../data/book'
 import { numStr } from '../lib/wellness-quantity'
 import { FIELD_CLASS as inputClass } from '../constants/forms'
@@ -130,7 +130,7 @@ export function BooksEntry() {
         This outer header is always mounted! 
         It displays "Loading" gracefully with the header structure perfectly intact.
       */}
-      <EntryHeaderTitle
+      <ScreenHeaderTitle
         title={id ? 'Edit Book' : 'New Book'}
         actions={<div className="w-24 shrink-0" />}
       />

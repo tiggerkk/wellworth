@@ -1,12 +1,10 @@
 import { useState } from 'react'
-import { SheetCloseButton } from '../components/SheetCloseButton'
-import { Sheet } from '../components/Sheet'
+import { SheetLoader } from '../components/SheetLoader'
 import { Toggle } from '../components/Toggle'
 import { useProfileEditor } from '../hooks/useProfileEditor'
 import { MEDICAL_CATEGORY_LABELS } from '../constants/medical'
 import { defaultTrackedTestKeys, medicalTestsByCategory } from '../lib/medical'
 import type { Tables, TablesUpdate } from '../types/database'
-import { EntryLoader } from '../components/EntryLoader'
 
 /**
  * Medical → Tracked Tests: which tests trend on the Dashboard (the sparkline grid). Grouped by
@@ -17,20 +15,15 @@ export function MedicalTrackedTestsSheet() {
   const { profile, loading, save } = useProfileEditor()
 
   return (
-    <Sheet variant="full" label="Tracked tests">
-      <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <SheetCloseButton />
-        <h1 className="text-heading font-medium text-text-primary">Tracked Tests</h1>
-      </header>
-
-      <EntryLoader
-        loading={loading}
-        data={profile}
-        errorText="Couldn’t load tracked tests."
-      >
-        {(prof) => <Picker profile={prof} save={save} />}
-      </EntryLoader>
-    </Sheet>
+    <SheetLoader
+      label="Tracked tests"
+      title="Tracked Tests"
+      loading={loading}
+      data={profile}
+      errorText="Couldn’t load tracked tests."
+    >
+      {(prof) => <Picker profile={prof} save={save} />}
+    </SheetLoader>
   )
 }
 

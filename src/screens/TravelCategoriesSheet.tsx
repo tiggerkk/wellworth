@@ -1,5 +1,4 @@
-import { SheetCloseButton } from '../components/SheetCloseButton'
-import { Sheet } from '../components/Sheet'
+import { SheetLoader } from '../components/SheetLoader'
 import { ConfigListEditor } from '../components/ConfigListEditor'
 import { ColorPicker } from '../components/ColorPicker'
 import { useAuth } from '../auth/AuthProvider'
@@ -15,7 +14,6 @@ import {
   renameCategory,
   reorderCategories,
 } from '../lib/travel-config'
-import { EntryLoader } from '../components/EntryLoader'
 
 /**
  * Travel → Expense Categories: add / rename / delete / reorder the owner's category list, stored on
@@ -28,45 +26,40 @@ export function TravelCategoriesSheet() {
   const userId = session?.user.id
 
   return (
-    <Sheet variant="full" label="Expense Categories">
-      <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <SheetCloseButton />
-        <h1 className="text-heading font-medium text-text-primary">Expense Categories</h1>
-      </header>
-
-      <EntryLoader
-        loading={loading}
-        data={profile}
-        errorText="Couldn’t load expense categories."
-      >
-        {(prof) => {
-          const list = effectiveCategories(prof.travel_expense_categories)
-          return (
-            <ConfigListEditor
-              list={list}
-              noun="category"
-              itemNoun="expense"
-              userId={userId}
-              persist={(next) => void save({ travel_expense_categories: next })}
-              add={addCategory}
-              rename={renameCategory}
-              remove={removeCategory}
-              reorder={reorderCategories}
-              count={(key) => countExpensesByCategory(userId!, key)}
-              reassign={(from, to) => reassignExpenseCategory(userId!, from, to)}
-              onChanged={bumpTravel}
-              rowExtra={(entry, update) => (
-                <ColorPicker
-                  value={entry.color ?? categoryColor(list, entry.key)}
-                  onChange={(color) => update({ color })}
-                  options={TRAVEL_CATEGORY_COLORS}
-                  ariaLabel={`Colour for ${entry.label}`}
-                />
-              )}
-            />
-          )
-        }}
-      </EntryLoader>
-    </Sheet>
+    <SheetLoader
+      label="Expense Categories"
+      title="Expense Categories"
+      loading={loading}
+      data={profile}
+      errorText="Couldn’t load expense categories."
+    >
+      {(prof) => {
+        const list = effectiveCategories(prof.travel_expense_categories)
+        return (
+          <ConfigListEditor
+            list={list}
+            noun="category"
+            itemNoun="expense"
+            userId={userId}
+            persist={(next) => void save({ travel_expense_categories: next })}
+            add={addCategory}
+            rename={renameCategory}
+            remove={removeCategory}
+            reorder={reorderCategories}
+            count={(key) => countExpensesByCategory(userId!, key)}
+            reassign={(from, to) => reassignExpenseCategory(userId!, from, to)}
+            onChanged={bumpTravel}
+            rowExtra={(entry, update) => (
+              <ColorPicker
+                value={entry.color ?? categoryColor(list, entry.key)}
+                onChange={(color) => update({ color })}
+                options={TRAVEL_CATEGORY_COLORS}
+                ariaLabel={`Colour for ${entry.label}`}
+              />
+            )}
+          />
+        )
+      }}
+    </SheetLoader>
   )
 }

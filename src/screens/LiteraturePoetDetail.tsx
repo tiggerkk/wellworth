@@ -8,7 +8,7 @@ import { getWriter, loadIndex } from '../data/literature'
 import { DYNASTY_CHIP, isFieldVisible } from '../lib/literature'
 import { LITERATURE_SECTION_COLOR } from '../constants/literature'
 import { routes } from '../constants/routes'
-import { EntryHeaderTitle } from '../components/EntryHeaderTitle'
+import { ScreenHeaderTitle } from '../components/ScreenHeaderTitle'
 import { Collapsible } from '../components/Collapsible'
 
 /** Writer portrait with a graceful fallback when `headImageUrl` is absent or dead. */
@@ -59,7 +59,7 @@ export function LiteraturePoetDetail() {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <EntryHeaderTitle closeAriaLabel="關閉">
+      <ScreenHeaderTitle closeAriaLabel="關閉">
         {writer && (
           <div className="flex min-w-0 flex-1 items-baseline gap-2">
             <h1 className="min-w-0 truncate text-title font-medium text-text-primary">
@@ -74,7 +74,7 @@ export function LiteraturePoetDetail() {
             )}
           </div>
         )}
-      </EntryHeaderTitle>
+      </ScreenHeaderTitle>
       <div className="flex-1 overflow-y-auto p-4">
         <div className="flex flex-col gap-4">
           {loading && <p className="text-body text-text-secondary">載入中…</p>}
