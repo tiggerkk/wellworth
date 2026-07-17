@@ -2,7 +2,7 @@ import { Suspense, useEffect, useState } from 'react'
 import { useLocation, useSearchParams, type Location } from 'react-router'
 import { IconHeart, IconHeartFilled } from '@tabler/icons-react'
 import { lazyWithReload } from '../lib/lazy-with-reload'
-import { SheetCloseButton } from '../components/SheetCloseButton'
+import { ScreenHeaderTitle } from '../components/ScreenHeaderTitle'
 import { Sheet } from '../components/Sheet'
 import { SearchBar } from '../components/SearchBar'
 import { SegmentedTabs } from '../components/SegmentedTabs'
@@ -76,8 +76,9 @@ export function WellnessFoodAddSheet() {
   }, [query])
 
   // Follow tab + search into the URL (replace, so keystrokes don't pile up history). The
-  // entry left behind when opening Food Detail then carries them, so SheetCloseButton restores
-  // them. We keep `location.state` (the painted background) intact across the replace.
+  // entry left behind when opening Food Detail then carries them, so ScreenHeaderTitle's default
+  // navigate(-1) close restores them. We keep `location.state` (the painted background) intact
+  // across the replace.
   useEffect(() => {
     const desiredTab = tab === 'favorites' ? null : tab
     const desiredQuery = query || null
@@ -222,8 +223,7 @@ export function WellnessFoodAddSheet() {
     <Sheet variant="full" label="Add food">
       {/* Pinned top pane: close, search, and tabs stay visible while results scroll. */}
       <div className="flex flex-col gap-3 border-b border-border px-4 py-3">
-        <div className="flex items-center gap-3">
-          <SheetCloseButton />
+        <ScreenHeaderTitle className="flex items-center gap-3">
           <div className="flex-1">
             <SearchBar
               value={query}
@@ -232,7 +232,7 @@ export function WellnessFoodAddSheet() {
               onScan={() => setScanning((s) => !s)}
             />
           </div>
-        </div>
+        </ScreenHeaderTitle>
 
         {!scanning && (
           <SegmentedTabs

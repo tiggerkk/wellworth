@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { IconUpload } from '@tabler/icons-react'
-import { SheetCloseButton } from '../components/SheetCloseButton'
+import { ScreenHeaderTitle } from '../components/ScreenHeaderTitle'
 import { Sheet } from '../components/Sheet'
 import { ImportSheetFooter } from '../components/ImportSheetFooter'
 import { ImportPreviewList } from '../components/ImportPreviewList'
@@ -223,10 +223,7 @@ export function ImportFoodsSheet() {
 
   return (
     <Sheet variant="full" label="Import foods">
-      <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <SheetCloseButton />
-        <h1 className="text-heading font-medium text-text-primary">Import Foods</h1>
-      </header>
+      <ScreenHeaderTitle title="Import Foods" />
 
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
         {done !== null ? (

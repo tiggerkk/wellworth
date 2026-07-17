@@ -37,7 +37,7 @@ interface ScreenHeaderTitleProps {
 /**
  * Shared header — close button + title (or custom `children`) + trailing `actions` — for every
  * Entry screen, routed `Sheet`, and local overlay (`OverlayTop`/`OverlayBottom`) in scope. One
- * component replaces what used to be three near-identical header blocks plus `SheetCloseButton`
+ * component replaces what used to be three near-identical header blocks plus a `SheetCloseButton`
  * and `OverlayCloseButton`; only the `onClose` behavior differs by caller (Entry/Sheet default to
  * `navigate(-1)`, overlays pass their own handler).
  */

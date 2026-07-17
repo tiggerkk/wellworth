@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 import { useParams } from 'react-router'
-import { SheetCloseButton } from '../components/SheetCloseButton'
+import { ScreenHeaderTitle } from '../components/ScreenHeaderTitle'
 import { Sheet } from '../components/Sheet'
 import { NutrientReport } from '../components/NutrientReport'
 import { useAuth } from '../auth/AuthProvider'
@@ -21,12 +21,7 @@ export function WellnessDailyReportSheet() {
 
   return (
     <Sheet variant="full" label="Daily report">
-      <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <SheetCloseButton />
-        <h1 className="text-heading font-medium text-text-primary">
-          Daily Report · {formatFullDate(day)}
-        </h1>
-      </header>
+      <ScreenHeaderTitle title={`Daily Report · ${formatFullDate(day)}`} />
       <div className="flex-1 overflow-y-auto py-2">
         <NutrientReport entries={entries} loading={loading} error={error} />
       </div>
