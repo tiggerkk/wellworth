@@ -7,8 +7,8 @@ import {
   IconStar,
   IconStarFilled,
 } from '@tabler/icons-react'
-import { SheetCloseButton } from '../components/SheetCloseButton'
 import { Sheet } from '../components/Sheet'
+import { ScreenHeaderTitle } from '../components/ScreenHeaderTitle'
 import { EntryLoader } from '../components/EntryLoader'
 import { RemoveRowButton } from '../components/RemoveRowButton'
 import { NutrientBar } from '../components/NutrientBar'
@@ -394,52 +394,52 @@ export function WellnessFoodSheet() {
 
   return (
     <Sheet variant="full" label="Food detail">
-      <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <SheetCloseButton />
-        <h1 className="line-clamp-2 flex-1 text-heading font-medium text-text-primary">
-          {food?.name ?? 'Food'}
-        </h1>
-        {food && (
-          <button onClick={() => void toggleFavorite()} aria-label="Favorite">
-            {favShown ? (
-              <IconHeartFilled size={20} className="text-favorite" />
-            ) : (
-              <IconHeart size={20} className="text-text-tertiary" />
-            )}
-          </button>
-        )}
-        {food &&
-          (editing ? (
-            <EntryHeaderActions
-              editing
-              dirty={dirty}
-              saving={saving}
-              onReset={reset}
-              onSubmit={() => void submit()}
-              onDelete={entryId ? () => void removeEntry() : undefined}
-            />
-          ) : (
-            <PrimaryButton
-              size="sm"
-              tone="positive"
-              onClick={() => void submit()}
-              disabled={saving}
-              aria-label="Add to diary"
-            >
-              <IconPlus size={18} />
-            </PrimaryButton>
-          ))}
-      </header>
+      {/* Header always mounted (no shift once the food loads) — actions are reserved space here,
+          then absolutely floated over that same space once loaded below. */}
+      <ScreenHeaderTitle
+        title={food?.name ?? 'Food'}
+        titleClassName="line-clamp-2 flex-1 text-heading font-medium text-text-primary"
+        actions={<div className="w-36 shrink-0" />}
+      />
 
-      <div className="flex-1 overflow-y-auto p-4">
-        <EntryLoader
-          loading={loading}
-          error={error}
-          data={food && serving ? { food, serving } : null}
-          errorText="Couldn’t load this item."
-        >
-          {() => (
-            <>
+      <EntryLoader
+        loading={loading}
+        error={error}
+        data={food && serving ? { food, serving } : null}
+        errorText="Couldn’t load this item."
+      >
+        {() => (
+          <>
+            <div className="absolute top-3 right-4 z-10 flex items-center gap-3">
+              <button onClick={() => void toggleFavorite()} aria-label="Favorite">
+                {favShown ? (
+                  <IconHeartFilled size={20} className="text-favorite" />
+                ) : (
+                  <IconHeart size={20} className="text-text-tertiary" />
+                )}
+              </button>
+              {editing ? (
+                <EntryHeaderActions
+                  editing
+                  dirty={dirty}
+                  saving={saving}
+                  onReset={reset}
+                  onSubmit={() => void submit()}
+                  onDelete={entryId ? () => void removeEntry() : undefined}
+                />
+              ) : (
+                <PrimaryButton
+                  size="sm"
+                  tone="positive"
+                  onClick={() => void submit()}
+                  disabled={saving}
+                  aria-label="Add to diary"
+                >
+                  <IconPlus size={18} />
+                </PrimaryButton>
+              )}
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
               <div className="mb-2 flex gap-3">
                 <label className="flex-1 text-caption text-text-secondary">
                   Amount
@@ -554,10 +554,10 @@ export function WellnessFoodSheet() {
                   )
                 })}
               </div>
-            </>
-          )}
-        </EntryLoader>
-      </div>
+            </div>
+          </>
+        )}
+      </EntryLoader>
     </Sheet>
   )
 }

@@ -1,8 +1,8 @@
 import { useCallback } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
 import { IconPencil } from '@tabler/icons-react'
-import { SheetCloseButton } from '../components/SheetCloseButton'
 import { Sheet } from '../components/Sheet'
+import { ScreenHeaderTitle } from '../components/ScreenHeaderTitle'
 import { InsurancePolicyDetail } from '../components/InsurancePolicyDetail'
 import { useAsync } from '../hooks/useAsync'
 import { useAuth } from '../auth/AuthProvider'
@@ -43,41 +43,44 @@ export function InsurancePolicyDetailSheet() {
 
   return (
     <Sheet variant="full" label="Policy detail">
-      <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <SheetCloseButton />
-        <h1 className="line-clamp-2 flex-1 text-heading font-medium text-text-primary">
-          Insurance Policy Detail
-        </h1>
-        {data && (
-          <button
-            onClick={() => navigate(routes.networth.insuranceEdit(data.policy.id))}
-            aria-label="Edit policy"
-            className="shrink-0 text-text-secondary"
-          >
-            <IconPencil size={20} />
-          </button>
+      {/* Header is always mounted (no shift once the policy loads) — the edit button is reserved
+          space here, then absolutely floated over that same space by the loaded body below. */}
+      <ScreenHeaderTitle
+        title="Insurance Policy Detail"
+        titleClassName="line-clamp-2 flex-1 text-heading font-medium text-text-primary"
+        actions={<div className="w-5 shrink-0" />}
+      />
+      <EntryLoader
+        loading={loading}
+        error={error}
+        data={data}
+        errorText="Couldn’t load this policy."
+      >
+        {(d) => (
+          <>
+            <div className="absolute top-3 right-4 z-10">
+              <button
+                onClick={() => navigate(routes.networth.insuranceEdit(d.policy.id))}
+                aria-label="Edit policy"
+                className="shrink-0 text-text-secondary"
+              >
+                <IconPencil size={20} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              <InsurancePolicyDetail
+                policy={d.policy}
+                schedules={d.schedules}
+                age={age}
+                providerLabel={providerLabel(
+                  effectiveProviders(profile?.insurance_providers),
+                  d.policy.provider,
+                )}
+              />
+            </div>
+          </>
         )}
-      </header>
-      <div className="flex-1 overflow-y-auto p-4">
-        <EntryLoader
-          loading={loading}
-          error={error}
-          data={data}
-          errorText="Couldn’t load this policy."
-        >
-          {(d) => (
-            <InsurancePolicyDetail
-              policy={d.policy}
-              schedules={d.schedules}
-              age={age}
-              providerLabel={providerLabel(
-                effectiveProviders(profile?.insurance_providers),
-                d.policy.provider,
-              )}
-            />
-          )}
-        </EntryLoader>
-      </div>
+      </EntryLoader>
     </Sheet>
   )
 }

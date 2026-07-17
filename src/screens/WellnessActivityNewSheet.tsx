@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
-import { SheetCloseButton } from '../components/SheetCloseButton'
 import { Sheet } from '../components/Sheet'
+import { ScreenHeaderTitle } from '../components/ScreenHeaderTitle'
 import { EntryHeaderActions } from '../components/EntryHeaderActions'
 import { SegmentedTabs } from '../components/SegmentedTabs'
 import { useAuth } from '../auth/AuthProvider'
@@ -63,6 +63,12 @@ export function WellnessActivityNewSheet() {
 
   return (
     <Sheet variant="full" label={isEdit ? 'Edit activity' : 'New activity'}>
+      {/* Header always mounted (no shift once the activity loads) — actions are reserved space
+          here, then absolutely floated over that same space by ActivityForm below. */}
+      <ScreenHeaderTitle
+        title={isEdit ? 'Edit Activity' : 'New Activity'}
+        actions={<div className="w-24 shrink-0" />}
+      />
       <EntryLoader
         loading={loading}
         error={error}
@@ -168,11 +174,7 @@ function ActivityForm({
 
   return (
     <>
-      <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <SheetCloseButton />
-        <h1 className="flex-1 truncate text-heading font-medium text-text-primary">
-          {id ? 'Edit Activity' : 'New Activity'}
-        </h1>
+      <div className="absolute top-3 right-4 z-10 flex items-center gap-3">
         <EntryHeaderActions
           editing={!!id}
           dirty={dirty}
@@ -182,7 +184,7 @@ function ActivityForm({
           onSubmit={() => void save()}
           onDelete={id ? () => void remove() : undefined}
         />
-      </header>
+      </div>
 
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
         <label className="text-caption text-text-secondary">

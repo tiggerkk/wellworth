@@ -1,8 +1,8 @@
 import { useCallback, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { IconPlus } from '@tabler/icons-react'
-import { SheetCloseButton } from '../components/SheetCloseButton'
 import { Sheet } from '../components/Sheet'
+import { ScreenHeaderTitle } from '../components/ScreenHeaderTitle'
 import { RemoveRowButton } from '../components/RemoveRowButton'
 import { EntryHeaderActions } from '../components/EntryHeaderActions'
 import { SegmentedTabs } from '../components/SegmentedTabs'
@@ -65,6 +65,12 @@ export function WellnessFoodNewSheet() {
 
   return (
     <Sheet variant="full" label={isEdit ? 'Edit food' : 'New food'}>
+      {/* Header always mounted (no shift once the food loads) — actions are reserved space here,
+          then absolutely floated over that same space by FoodForm below. */}
+      <ScreenHeaderTitle
+        title={isEdit ? 'Edit Food' : 'New Food'}
+        actions={<div className="w-24 shrink-0" />}
+      />
       <EntryLoader
         loading={loading}
         error={error}
@@ -164,12 +170,8 @@ function FoodForm({ id, initial }: { id: string | undefined; initial: FoodInitia
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <SheetCloseButton />
-        <h1 className="min-w-0 flex-1 truncate text-heading font-medium text-text-primary">
-          {id ? 'Edit Food' : 'New Food'}
-        </h1>
+    <>
+      <div className="absolute top-3 right-4 z-10 flex items-center gap-3">
         <EntryHeaderActions
           editing={!!id}
           dirty={dirty}
@@ -179,7 +181,7 @@ function FoodForm({ id, initial }: { id: string | undefined; initial: FoodInitia
           onSubmit={() => void save()}
           onDelete={id ? () => void remove() : undefined}
         />
-      </header>
+      </div>
 
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
         <SegmentedTabs
@@ -305,6 +307,6 @@ function FoodForm({ id, initial }: { id: string | undefined; initial: FoodInitia
           </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }
