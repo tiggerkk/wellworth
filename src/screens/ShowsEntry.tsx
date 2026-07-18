@@ -1,5 +1,5 @@
-import { useCallback, useState } from 'react'
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
+import { useCallback, useEffect, useState } from 'react'
+import { Link, useParams, useSearchParams } from 'react-router'
 import {
   IconArrowsDiagonal,
   IconQuote,
@@ -9,12 +9,14 @@ import {
 } from '@tabler/icons-react'
 import { routes } from '../constants/routes'
 import { useAuth } from '../auth/AuthProvider'
-import { useAsync } from '../hooks/useAsync'
 import { useDirty } from '../hooks/useDirty'
+import { useEntryDraft } from '../hooks/useEntryDraft'
+import { useEntryClose } from '../hooks/useEntryClose'
 import { useEntryFavorite } from '../hooks/useEntryFavorite'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 import { EntryLoader } from '../components/EntryLoader'
 import { ScreenHeaderTitle } from '../components/ScreenHeaderTitle'
+import { ConfirmDialog } from '../components/ConfirmDialog'
 import { createShow, deleteShow, getShow, updateShow } from '../data/show'
 import { numStr } from '../lib/wellness-quantity'
 import { FIELD_CLASS as inputClass } from '../constants/forms'
@@ -154,12 +156,18 @@ function draftFromRow(row: ShowRow): ShowDraft {
 /**
  * Shows — Entry / Edit. TMDB title search populates the metadata on select (persisted only on
  * save); Title/Year stay editable so manual entry + corrections still work. Outer loader + inner
- * form keyed by id (so a stale `useAsync` result never mounts under the wrong title).
+ * form keyed by id; `useEntryDraft` guarantees a New-mode render never shows a previous edit's
+ * stale data (see its docstring — this is what used to prefill "New Show" from whatever title was
+ * last opened).
+ *
+ * Close/Save navigation is fixed-destination (`useEntryClose`), not a history pop — see
+ * `QuotesEntry`'s docstring and docs/13_navigation.md for the full rationale. `dirty` is lifted
+ * from `ShowForm` (via `onDirtyChange`) since the close button lives in this outer, always-mounted
+ * header.
  */
 export function ShowsEntry() {
   const { id } = useParams()
   const [params] = useSearchParams()
-  const navigate = useNavigate()
   const title = params.get('title') ?? ''
   const poster = params.get('poster') ?? ''
   const overview = params.get('overview') ?? ''
@@ -168,19 +176,33 @@ export function ShowsEntry() {
     ? (typeParam as ShowType)
     : null
 
-  const loadFn = useCallback(async (): Promise<ShowDraft | null> => {
-    if (!id) return blankDraft({ title, poster, overview, type })
-    const row = await getShow(id)
-    return row ? draftFromRow(row) : null
-  }, [id, title, poster, overview, type])
-  const { data: initial, loading, error } = useAsync(loadFn)
+  const blank = useCallback(
+    () => blankDraft({ title, poster, overview, type }),
+    [title, poster, overview, type],
+  )
+  const { initial, loading, error } = useEntryDraft({
+    id,
+    fetchRow: getShow,
+    toDraft: draftFromRow,
+    blank,
+  })
 
-  useEscapeKey(() => navigate(-1))
+  const [dirty, setDirty] = useState(false)
+  const { requestClose, afterSave, confirm } = useEntryClose({
+    editing: !!id,
+    dirty,
+    listing: routes.shows.library,
+    editRoute: routes.shows.edit,
+  })
+
+  useEscapeKey(requestClose)
 
   return (
     <div className="relative flex h-full min-h-0 flex-col">
       <ScreenHeaderTitle
         title={id ? 'Edit Show' : 'New Show'}
+        icon={id ? 'back' : 'close'}
+        onClose={requestClose}
         actions={<div className="w-24 shrink-0" />}
       />
 
@@ -190,8 +212,24 @@ export function ShowsEntry() {
         data={initial}
         errorText="Couldn’t load this show."
       >
-        {(d) => <ShowForm key={id ?? 'new'} id={id} initial={d} />}
+        {(d) => (
+          <ShowForm
+            key={id ?? 'new'}
+            id={id}
+            initial={d}
+            onDirtyChange={setDirty}
+            afterSave={afterSave}
+          />
+        )}
       </EntryLoader>
+
+      <ConfirmDialog
+        open={confirm.open}
+        title="Discard changes?"
+        message="You have unsaved changes to this show. Discard them?"
+        onConfirm={confirm.onConfirm}
+        onCancel={confirm.onCancel}
+      />
     </div>
   )
 }
@@ -199,11 +237,14 @@ export function ShowsEntry() {
 function ShowForm({
   id,
   initial: initialProp,
+  onDirtyChange,
+  afterSave,
 }: {
   id: string | undefined
   initial: ShowDraft
+  onDirtyChange: (dirty: boolean) => void
+  afterSave: (newId: string, toastMessage?: string) => void
 }) {
-  const navigate = useNavigate()
   const { session } = useAuth()
   const userId = session?.user.id
   const { data: profile } = useProfile()
@@ -227,6 +268,9 @@ function ShowForm({
 
   const update = (patch: Partial<ShowDraft>) => setDraft((d) => ({ ...d, ...patch }))
   const dirty = useDirty(draft, initial)
+  useEffect(() => {
+    onDirtyChange(dirty)
+  }, [dirty, onDirtyChange])
   const episodic = usesEpisodes(draft.type)
   // Dynasty is editable only for a Chinese title; the dropdown shows the default until chosen.
   const isChinese = containsCjk(draft.title)
@@ -402,10 +446,10 @@ function ShowForm({
         tmdb_id: draft.tmdb_id,
         imdb_id: draft.imdb_id,
       }
+      const newId = id ? id : (await createShow({ ...row, user_id: userId })).id
       if (id) await updateShow(id, row)
-      else await createShow({ ...row, user_id: userId })
       bumpShows()
-      navigate(-1)
+      afterSave(newId, id ? 'Show saved' : 'Show added')
     } finally {
       setSaving(false)
     }
@@ -417,7 +461,7 @@ function ShowForm({
     try {
       await deleteShow(id)
       bumpShows()
-      navigate(-1)
+      afterSave(id, 'Show deleted')
     } finally {
       setSaving(false)
     }

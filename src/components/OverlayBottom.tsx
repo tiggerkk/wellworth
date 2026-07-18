@@ -12,8 +12,7 @@ interface OverlayBottomProps {
  * sheets that slide up from the bottom rather than covering the whole screen (a date picker, a
  * reorder list, an expanded chart). Handles the scrim, dialog semantics, bottom safe-area inset,
  * rounded top corners, and Esc-to-close so each caller doesn't have to re-type them; the caller
- * supplies its own header/body content (typically an `OverlayCloseButton` alongside a title) and
- * any of its own padding.
+ * supplies its own header/body content and any of its own padding.
  *
  * Caps at 85% of the viewport height and clips overflow (`max-h-[85vh] flex flex-col`) so content
  * that can grow unboundedly (a long reorder list, a long trend) never pushes past the top of the

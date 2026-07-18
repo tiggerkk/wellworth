@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
-import { useLocation, useNavigate, useParams } from 'react-router'
+import { useParams } from 'react-router'
 import {
   IconBan,
   IconCalendar,
@@ -19,6 +19,7 @@ import { FIELD_CLASS as inputClass } from '../constants/forms'
 import { SecondaryButton } from '../components/SecondaryButton'
 import { EntryHeaderActions } from '../components/EntryHeaderActions'
 import { ScreenHeaderTitle } from '../components/ScreenHeaderTitle'
+import { ConfirmDialog } from '../components/ConfirmDialog'
 import { ConfirmDeleteAction } from '../components/ConfirmDeleteAction'
 import { IconAction } from '../components/IconAction'
 import { StopEditorOverlay } from '../components/StopEditorOverlay'
@@ -31,6 +32,7 @@ import { EntryLoader } from '../components/EntryLoader'
 import type { ExpenseDraft } from '../components/ExpenseRowsEditor'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
+import { useEntryClose } from '../hooks/useEntryClose'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 import {
   createDay,
@@ -87,8 +89,6 @@ function cityRuns(stops: StopRow[]): { city: string; stops: StopRow[] }[] {
 // --- New trip: header only; Days/Stops unlock once the trip exists ---
 
 function NewTrip() {
-  const navigate = useNavigate()
-  const location = useLocation()
   const { session } = useAuth()
   const userId = session?.user.id
   const [name, setName] = useState('')
@@ -96,11 +96,14 @@ function NewTrip() {
   const [baseCurrency, setBaseCurrency] = useState('CNY')
   const [saving, setSaving] = useState(false)
 
-  // Close → go back if we arrived from within the app, else land on the Trips list (so a direct
-  // load / refresh of this route still has somewhere sensible to go).
-  const close = () =>
-    location.key === 'default' ? navigate(routes.travel.trips) : navigate(-1)
-  useEscapeKey(close)
+  const dirty = name.trim() !== '' || status !== 'planning' || baseCurrency !== 'CNY'
+  const { requestClose, afterSave, confirm } = useEntryClose({
+    editing: false,
+    dirty,
+    listing: routes.travel.trips,
+    editRoute: routes.travel.edit,
+  })
+  useEscapeKey(requestClose)
 
   async function create() {
     if (!userId || !name.trim()) return
@@ -113,7 +116,7 @@ function NewTrip() {
         base_currency: baseCurrency,
       })
       bumpTravel()
-      navigate(routes.travel.edit(trip.id), { replace: true })
+      afterSave(trip.id, 'Trip created')
     } finally {
       setSaving(false)
     }
@@ -123,11 +126,12 @@ function NewTrip() {
     <div className="flex h-full flex-col">
       <ScreenHeaderTitle
         title="New Trip"
-        onClose={close}
+        icon="close"
+        onClose={requestClose}
         actions={
           <EntryHeaderActions
             editing={false}
-            dirty={name.trim() !== '' || status !== 'planning' || baseCurrency !== 'CNY'}
+            dirty={dirty}
             saving={saving}
             canSubmit={!!name.trim()}
             onReset={() => {
@@ -180,6 +184,14 @@ function NewTrip() {
           Add days, stops, and the rest of the trip details after you create it.
         </p>
       </div>
+
+      <ConfirmDialog
+        open={confirm.open}
+        title="Discard changes?"
+        message="You have unsaved changes to this trip. Discard them?"
+        onConfirm={confirm.onConfirm}
+        onCancel={confirm.onCancel}
+      />
     </div>
   )
 }
@@ -187,21 +199,27 @@ function NewTrip() {
 // --- Edit trip: header + Itinerary (Days → Stops) + Expenses placeholder ---
 
 function EditTrip({ id }: { id: string }) {
-  const navigate = useNavigate()
-  const location = useLocation()
-  // Close → back if we came from within the app, else fall back to the Trips list. Duplicated
-  // from EditTripBody's own `close` (not lifted, to avoid a second useEscapeKey listener double
-  // -firing navigate(-1) once the body mounts) — this one only backs the header's Close button
-  // during the loading/error phase, before EditTripBody exists.
-  const close = () =>
-    location.key === 'default' ? navigate(routes.travel.trips) : navigate(-1)
+  const { requestClose } = useEntryClose({
+    editing: true,
+    dirty: false, // nothing is loaded yet at this stage — see EditTripBody for the real dirty check
+    listing: routes.travel.trips,
+    editRoute: routes.travel.edit,
+  })
 
   const version = useTravelVersion()
   const fn = useCallback(() => {
     void version
     return getTripBundle(id)
   }, [id, version])
-  const { data: bundle, loading, error } = useAsync(fn)
+  const { data: rawBundle, loading, error } = useAsync(fn)
+
+  // Guard against `useAsync`'s stale-while-revalidate behavior: after navigating from Edit(A) to
+  // Edit(B) (e.g. Close after creating a new trip), `rawBundle` can still hold A's data for one
+  // render while B's fetch is in flight. Treating a mismatched bundle as "not loaded yet" — rather
+  // than trusting it — is what fixes "Close on the new trip lands on the previous trip's Edit
+  // screen but shows the new trip's data": EditTripBody (keyed by `id`) now never mounts/reseeds
+  // its header fields from a bundle that belongs to a different trip.
+  const bundle = rawBundle && rawBundle.trip.id === id ? rawBundle : undefined
 
   // Keep the body mounted across background refetches (a day/stop/expense write bumps the version →
   // `useAsync` flips `loading` true but retains the prior `bundle`). Gating on `!loading` here would
@@ -210,7 +228,9 @@ function EditTrip({ id }: { id: string }) {
   // renders the body regardless of a background loading/error state.
   return (
     <div className="flex h-full flex-col">
-      {!bundle && <ScreenHeaderTitle title="Edit Trip" onClose={close} />}
+      {!bundle && (
+        <ScreenHeaderTitle title="Edit Trip" icon="back" onClose={requestClose} />
+      )}
       <EntryLoader
         loading={loading && !bundle}
         error={error && !bundle ? error : undefined}
@@ -225,8 +245,6 @@ function EditTrip({ id }: { id: string }) {
 }
 
 function EditTripBody({ bundle }: { bundle: TripBundle }) {
-  const navigate = useNavigate()
-  const location = useLocation()
   const { session } = useAuth()
   const userId = session?.user.id
   const { data: profile } = useProfile()
@@ -259,11 +277,6 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
     () => effectiveCategories(profile?.travel_expense_categories ?? null),
     [profile],
   )
-
-  // Close → back if we came from within the app, else fall back to the Trips list.
-  const close = () =>
-    location.key === 'default' ? navigate(routes.travel.trips) : navigate(-1)
-  useEscapeKey(close)
 
   // Header local draft (the trip already exists, so this is Save, not Create).
   const [name, setName] = useState(trip.name)
@@ -322,6 +335,14 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
     notes !== (trip.notes ?? '') ||
     trackReimb !== trip.track_reimbursement
 
+  const { requestClose, afterSave, confirm } = useEntryClose({
+    editing: true,
+    dirty: headerDirty,
+    listing: routes.travel.trips,
+    editRoute: routes.travel.edit,
+  })
+  useEscapeKey(requestClose)
+
   function resetHeader() {
     setName(trip.name)
     setStatus(trip.status)
@@ -348,7 +369,7 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
         track_reimbursement: trackReimb,
       })
       bumpTravel()
-      navigate(-1) // SAVE returns to where the user came from (Trips/Map/Dashboard)
+      afterSave(trip.id, 'Trip saved')
     } finally {
       setSavingHeader(false)
     }
@@ -359,7 +380,7 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
     try {
       await deleteTrip(trip.id)
       bumpTravel()
-      navigate(-1)
+      afterSave(trip.id, 'Trip deleted')
     } finally {
       setSavingHeader(false)
     }
@@ -563,7 +584,8 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
     <>
       <ScreenHeaderTitle
         title="Edit Trip"
-        onClose={close}
+        icon="back"
+        onClose={requestClose}
         actions={
           <EntryHeaderActions
             editing
@@ -968,6 +990,14 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
           onClose={() => setDayExpensesFor(null)}
         />
       )}
+
+      <ConfirmDialog
+        open={confirm.open}
+        title="Discard changes?"
+        message="You have unsaved changes to this trip. Discard them?"
+        onConfirm={confirm.onConfirm}
+        onCancel={confirm.onCancel}
+      />
     </>
   )
 }

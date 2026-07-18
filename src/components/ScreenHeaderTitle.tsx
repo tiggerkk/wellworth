@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router'
-import { IconX } from '@tabler/icons-react'
+import { IconChevronLeft, IconX } from '@tabler/icons-react'
 
 interface ScreenHeaderTitleProps {
   /** Plain string title, rendered in the standard header `<h1>`. Omit and pass `children` instead
@@ -26,12 +26,17 @@ interface ScreenHeaderTitleProps {
   /** The standardized `-ml-1 p-1 text-text-secondary` (bigger tap target, flush via negative
    *  margin) — rarely overridden. */
   closeClassName?: string
-  /** Defaults to "Close"; Literature passes "關閉" since that module's UI copy is in Chinese. */
+  /** Defaults to "Close" (or "Back" when `icon='back'`); Literature passes "關閉" since that
+   *  module's UI copy is in Chinese. */
   closeAriaLabel?: string
   /** Overrides the `<header>` wrapper's classes. Defaults to the standard fixed-header shell used
    *  by every Entry screen, Sheet, and local overlay in scope — content-driven height (no fixed
    *  `h-14`) so a two-line `line-clamp-2` title can grow the header naturally. */
   className?: string
+  /** `'close'` (default, an X) for a task opened as an overlay/temporary session — New Item forms,
+   *  Sheets, local overlays. `'back'` (a `<` chevron) for a screen reached by drilling down a level
+   *  from a list — e.g. Edit Item opened from its Listing. See docs/13_navigation.md. */
+  icon?: 'close' | 'back'
 }
 
 /**
@@ -47,18 +52,19 @@ export function ScreenHeaderTitle({
   actions,
   onClose,
   closeClassName = '-ml-1 p-1 text-text-secondary',
-  closeAriaLabel = 'Close',
+  closeAriaLabel,
   className = 'flex items-center gap-3 border-b border-border px-4 py-3',
+  icon = 'close',
 }: ScreenHeaderTitleProps) {
   const navigate = useNavigate()
   return (
     <header className={className}>
       <button
         onClick={onClose ?? (() => navigate(-1))}
-        aria-label={closeAriaLabel}
+        aria-label={closeAriaLabel ?? (icon === 'back' ? 'Back' : 'Close')}
         className={closeClassName}
       >
-        <IconX size={22} />
+        {icon === 'back' ? <IconChevronLeft size={22} /> : <IconX size={22} />}
       </button>
       {children ?? <h1 className={titleClassName}>{title}</h1>}
       {actions}

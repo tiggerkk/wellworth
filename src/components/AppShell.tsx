@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useLocation, useOutlet, type Location } from 'react-router'
 import { BottomNav } from './BottomNav'
 import { MedicalLockProvider, useMedicalLock } from './MedicalLockProvider'
@@ -10,6 +10,7 @@ import { useAuth } from '../auth/AuthProvider'
 import { useEnsureProfile } from '../hooks/useEnsureProfile'
 import { useProfile } from '../hooks/useProfile'
 import { useFontSizeSync } from '../hooks/useFontSizeSync'
+import { useScrollRestoration } from '../hooks/useScrollRestoration'
 import { needsOnboarding } from '../lib/access'
 import { moduleForPath } from '../constants/modules'
 import { setLastModule } from '../lib/last-module'
@@ -70,6 +71,8 @@ export function AppShell() {
   const location = useLocation()
   const outlet = useOutlet()
   const module = moduleForPath(location.pathname)
+  const mainRef = useRef<HTMLElement>(null)
+  useScrollRestoration(mainRef, location.pathname + location.search)
 
   // Reopen the last-used module on next launch (Home hub + global settings are not modules).
   useEffect(() => {
@@ -82,7 +85,7 @@ export function AppShell() {
   return (
     <MedicalLockProvider>
       <div className="mx-auto flex h-dvh max-w-md flex-col bg-bg pt-[env(safe-area-inset-top)]">
-        <main className="flex-1 overflow-y-auto">
+        <main ref={mainRef} className="flex-1 overflow-y-auto">
           {background ? backgroundTab : outlet}
         </main>
         {module && <BottomNav module={module} />}

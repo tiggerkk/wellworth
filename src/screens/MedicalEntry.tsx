@@ -1,16 +1,23 @@
-import { useCallback, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { IconArrowsDiagonal, IconPlus, IconUpload, IconX } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
-import { useAsync } from '../hooks/useAsync'
 import { useDirty } from '../hooks/useDirty'
+import { useEntryDraft } from '../hooks/useEntryDraft'
+import { useEntryClose } from '../hooks/useEntryClose'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 import { useProfile } from '../hooks/useProfile'
 import { useSheetNavigate } from '../hooks/useSheetNavigate'
 import { EntryLoader } from '../components/EntryLoader'
 import { ScreenHeaderTitle } from '../components/ScreenHeaderTitle'
+import { ConfirmDialog } from '../components/ConfirmDialog'
 import { FIELD_CLASS as inputClass } from '../constants/forms'
-import { deleteReport, getReportWithResults, saveReport } from '../data/medical'
+import {
+  deleteReport,
+  getReportWithResults,
+  saveReport,
+  type ReportWithResults,
+} from '../data/medical'
 import { bumpMedical } from '../lib/medical-refresh'
 import {
   blankReportDraft,
@@ -53,20 +60,45 @@ const EYE_KEY_SET = new Set(EYE_REFRACTION_KEYS)
  * separate sheet, M3). The draft model + result-row editor are shared
  * with the import review screen (`src/lib/medical-draft.ts` + `MedicalResultCard`).
  */
+/** Maps the fetched report + its results to the Edit form's draft shape. Module-level (stable
+ *  identity) for `useEntryDraft`. */
+function toDraft(row: ReportWithResults): ReportDraft {
+  return reportToDraft(row.report, row.results)
+}
+
+/**
+ * Add / Edit Medical Report — the report parent plus its result rows (the structured import is a
+ * separate sheet, M3). The draft model + result-row editor are shared
+ * with the import review screen (`src/lib/medical-draft.ts` + `MedicalResultCard`).
+ *
+ * Medical is Category 1 (has a View Item page — `MedicalReportDetail`), so Edit's Cancel/Save and
+ * New's Save all go to the report's View route (`routes.medical.detail`), not the Reports listing —
+ * see `useEntryClose`'s `editTarget`/`newSaveTarget` and docs/13_navigation.md. `useEntryDraft`
+ * guarantees a New-mode render never shows a previous edit's stale data (see its docstring).
+ */
 export function MedicalEntry() {
   const { id } = useParams()
-  const navigate = useNavigate()
   const openSheet = useSheetNavigate()
   const { data: profile } = useProfile()
 
-  const loadFn = useCallback(async (): Promise<ReportDraft | null> => {
-    if (!id) return blankReportDraft()
-    const data = await getReportWithResults(id)
-    return data ? reportToDraft(data.report, data.results) : null
-  }, [id])
-  const { data: initial, loading, error } = useAsync(loadFn)
+  const { initial, loading, error } = useEntryDraft({
+    id,
+    fetchRow: getReportWithResults,
+    toDraft,
+    blank: blankReportDraft,
+  })
 
-  useEscapeKey(() => navigate(-1))
+  const [dirty, setDirty] = useState(false)
+  const { requestClose, afterSave, confirm } = useEntryClose({
+    editing: !!id,
+    dirty,
+    listing: routes.medical.reports,
+    editRoute: routes.medical.detail,
+    editTarget: id ? routes.medical.detail(id) : undefined,
+    newSaveTarget: routes.medical.detail,
+  })
+
+  useEscapeKey(requestClose)
 
   return (
     <div className="relative flex h-full min-h-0 flex-col">
@@ -76,6 +108,8 @@ export function MedicalEntry() {
       */}
       <ScreenHeaderTitle
         title={id ? 'Edit Report' : 'New Report'}
+        icon={id ? 'back' : 'close'}
+        onClose={requestClose}
         actions={
           <>
             {!id && profile?.medical_importer_enabled && (
@@ -97,13 +131,39 @@ export function MedicalEntry() {
         data={initial}
         errorText="Couldn’t load this report."
       >
-        {(d) => <ReportForm key={id ?? 'new'} id={id} initial={d} />}
+        {(d) => (
+          <ReportForm
+            key={id ?? 'new'}
+            id={id}
+            initial={d}
+            onDirtyChange={setDirty}
+            afterSave={afterSave}
+          />
+        )}
       </EntryLoader>
+
+      <ConfirmDialog
+        open={confirm.open}
+        title="Discard changes?"
+        message="You have unsaved changes to this report. Discard them?"
+        onConfirm={confirm.onConfirm}
+        onCancel={confirm.onCancel}
+      />
     </div>
   )
 }
 
-function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDraft }) {
+function ReportForm({
+  id,
+  initial,
+  onDirtyChange,
+  afterSave,
+}: {
+  id: string | undefined
+  initial: ReportDraft
+  onDirtyChange: (dirty: boolean) => void
+  afterSave: (newId: string, toastMessage?: string) => void
+}) {
   const navigate = useNavigate()
   const { session } = useAuth()
   const userId = session?.user.id
@@ -119,6 +179,9 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
 
   const update = (patch: Partial<ReportDraft>) => setDraft((d) => ({ ...d, ...patch }))
   const dirty = useDirty(draft, initial)
+  useEffect(() => {
+    onDirtyChange(dirty)
+  }, [dirty, onDirtyChange])
 
   // Mirrors the read-only Report detail screen's header (Line 1: Date - Type · Body Part), so the
   // Narrative editor modal opens on a heading the person already recognizes from that screen.
@@ -215,9 +278,9 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
     if (!userId) return
     setSaving(true)
     try {
-      await saveReport(userId, draftToSaveInput(draft), id)
+      const newId = await saveReport(userId, draftToSaveInput(draft), id)
       bumpMedical()
-      navigate(-1)
+      afterSave(newId, id ? 'Report saved' : 'Report added')
     } finally {
       setSaving(false)
     }
@@ -229,8 +292,9 @@ function ReportForm({ id, initial }: { id: string | undefined; initial: ReportDr
     try {
       await deleteReport(id)
       bumpMedical()
-      // Don't navigate(-1) — that returns to this report's now-deleted read-only detail ("Couldn’t
-      // load this report"). Land on the Reports list instead.
+      // Deleting always lands on the Reports list, never View Item — that report no longer exists.
+      // `afterSave`'s editing-branch target here would be this now-deleted report's own View route
+      // (`editTarget`), so this intentionally does NOT go through `afterSave`.
       navigate(routes.medical.reports)
     } finally {
       setSaving(false)

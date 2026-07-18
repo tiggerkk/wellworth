@@ -1,14 +1,16 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
-import { useNavigate, useParams } from 'react-router'
+import { useParams } from 'react-router'
 import { IconArrowsLeftRight, IconCheck, IconUpload, IconX } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
-import { useAsync } from '../hooks/useAsync'
 import { useDirty } from '../hooks/useDirty'
+import { useEntryDraft } from '../hooks/useEntryDraft'
+import { useEntryClose } from '../hooks/useEntryClose'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 import { useProfile } from '../hooks/useProfile'
 import { EntryLoader } from '../components/EntryLoader'
 import { ScreenHeaderTitle } from '../components/ScreenHeaderTitle'
+import { ConfirmDialog } from '../components/ConfirmDialog'
 import { IconAction } from '../components/IconAction'
 import { InsuranceCompareOverlay } from '../components/InsuranceCompareOverlay'
 import { ImportScheduleOverlay } from '../components/ImportScheduleOverlay'
@@ -21,6 +23,7 @@ import {
   replaceScheduleVersion,
   savePolicyFields,
   updateScheduleEffectiveDate,
+  type PolicyWithSchedules,
 } from '../data/insurance'
 import { FIELD_CLASS as inputClass } from '../constants/forms'
 import { bumpNetWorth } from '../lib/networth-refresh'
@@ -77,6 +80,31 @@ function blankDraft(providers: InsuranceProviderConfig[]): PolicyDraft {
   }
 }
 
+/** Maps the fetched policy + its schedules to the Edit form's shape. Module-level (stable
+ *  identity) — one of `useEntryDraft`'s two callbacks that must not change every render. */
+function toDraft(row: PolicyWithSchedules): {
+  draft: PolicyDraft
+  schedules: ScheduleVersion[]
+} {
+  const p = row.policy
+  return {
+    draft: {
+      provider: p.provider,
+      policy_number: p.policy_number,
+      policy_name: p.policy_name,
+      start_date: p.start_date,
+      currency: (p.currency as NetWorthCurrency) ?? 'USD',
+      notes: p.notes ?? '',
+      termination_kind: (p.termination_kind as TerminationKind | null) ?? null,
+      termination_date: p.termination_date,
+      termination_effective_date: p.termination_effective_date,
+      termination_proceeds:
+        p.termination_proceeds == null ? '' : String(p.termination_proceeds),
+    },
+    schedules: row.schedules,
+  }
+}
+
 const CCY_OPTIONS = NETWORTH_CURRENCIES.map((c) => ({ value: c, label: c }))
 
 function scheduleLabel(v: ScheduleVersion): string {
@@ -84,15 +112,25 @@ function scheduleLabel(v: ScheduleVersion): string {
   return v.effective_date ? `${prefix} ${formatFullDate(v.effective_date)}` : prefix
 }
 
+/**
+ * Insurance — Entry / Edit. Outer loader fetches the policy + its schedules together (the compound
+ * `{ draft, schedules }` shape `useEntryDraft` is parameterized over); `extraLoading: !userId`
+ * holds the loader in "Loading" rather than briefly resolving to a blank draft while auth is still
+ * settling. `useEntryDraft` guarantees a New-mode render never shows a previous edit's stale data.
+ *
+ * Close/Save navigation is fixed-destination (`useEntryClose`), not a history pop — see
+ * `QuotesEntry`'s docstring and docs/13_navigation.md. `dirty` is lifted from `PolicyForm` (via
+ * `onDirtyChange`) since the close button lives in this outer, always-mounted header. The single-
+ * policy importer's own New -> Edit transition (`applyImport`) reuses the same `afterSave`.
+ */
 export function InsuranceEntry() {
   const { id } = useParams()
-  const navigate = useNavigate()
   const { session } = useAuth()
   const userId = session?.user.id
   const { data: profile } = useProfile()
-  // Memoize so `providers` keeps a stable identity across renders — it feeds `loadFn`'s deps, and a
-  // fresh array each render would make `loadFn` change every render and spin `useAsync` into an
-  // infinite re-fetch/re-render loop (same guard NetWorthEntry uses).
+  // Memoize so `providers` keeps a stable identity across renders — it feeds `blank`'s deps, and a
+  // fresh array each render would make `blank` change every render and spin `useEntryDraft`'s
+  // internal `useAsync` into an infinite re-fetch/re-render loop (same guard NetWorthEntry uses).
   const providers = useMemo(
     () => effectiveProviders(profile?.insurance_providers),
     [profile?.insurance_providers],
@@ -103,33 +141,32 @@ export function InsuranceEntry() {
     ? Number(todayLocal().slice(0, 4)) - birthYear
     : NaN
 
-  const loadFn = useCallback(async () => {
-    if (!id || !userId)
-      return { draft: blankDraft(providers), schedules: [] as ScheduleVersion[] }
-    const data = await getPolicyWithSchedules(userId, id)
-    if (!data) return null
-    const p = data.policy
-    return {
-      draft: {
-        provider: p.provider,
-        policy_number: p.policy_number,
-        policy_name: p.policy_name,
-        start_date: p.start_date,
-        currency: (p.currency as NetWorthCurrency) ?? 'USD',
-        notes: p.notes ?? '',
-        termination_kind: (p.termination_kind as TerminationKind | null) ?? null,
-        termination_date: p.termination_date,
-        termination_effective_date: p.termination_effective_date,
-        termination_proceeds:
-          p.termination_proceeds == null ? '' : String(p.termination_proceeds),
-      },
-      schedules: data.schedules,
-    }
-    // providers only affect the blank-draft default; re-resolving on profile load is harmless.
-  }, [id, userId, providers])
-  const { data: initial, loading, error } = useAsync(loadFn)
+  const fetchRow = useCallback(
+    (policyId: string) =>
+      userId ? getPolicyWithSchedules(userId, policyId) : Promise.resolve(null),
+    [userId],
+  )
+  const blank = useCallback(
+    () => ({ draft: blankDraft(providers), schedules: [] as ScheduleVersion[] }),
+    [providers],
+  )
+  const { initial, loading, error } = useEntryDraft({
+    id,
+    fetchRow,
+    toDraft,
+    blank,
+    extraLoading: !userId,
+  })
 
-  useEscapeKey(() => navigate(-1))
+  const [dirty, setDirty] = useState(false)
+  const { requestClose, afterSave, confirm } = useEntryClose({
+    editing: !!id,
+    dirty,
+    listing: routes.networth.insurancePolicies,
+    editRoute: routes.networth.insuranceEdit,
+  })
+
+  useEscapeKey(requestClose)
 
   return (
     <div className="relative flex h-full min-h-0 flex-col">
@@ -139,6 +176,8 @@ export function InsuranceEntry() {
       */}
       <ScreenHeaderTitle
         title={id ? 'Edit Insurance' : 'New Insurance'}
+        icon={id ? 'back' : 'close'}
+        onClose={requestClose}
         actions={<div className="w-24 shrink-0" />}
       />
 
@@ -157,9 +196,19 @@ export function InsuranceEntry() {
             initialSchedules={d.schedules}
             providers={providers}
             currentAge={currentAge}
+            onDirtyChange={setDirty}
+            afterSave={afterSave}
           />
         )}
       </EntryLoader>
+
+      <ConfirmDialog
+        open={confirm.open}
+        title="Discard changes?"
+        message="You have unsaved changes to this policy. Discard them?"
+        onConfirm={confirm.onConfirm}
+        onCancel={confirm.onCancel}
+      />
     </div>
   )
 }
@@ -171,6 +220,8 @@ function PolicyForm({
   initialSchedules,
   providers,
   currentAge,
+  onDirtyChange,
+  afterSave,
 }: {
   id: string | undefined
   userId: string
@@ -178,8 +229,9 @@ function PolicyForm({
   initialSchedules: ScheduleVersion[]
   providers: InsuranceProviderConfig[]
   currentAge: number
+  onDirtyChange: (dirty: boolean) => void
+  afterSave: (newId: string, toastMessage?: string) => void
 }) {
-  const navigate = useNavigate()
   const providerOptions = providers.map((p) => ({ value: p.key, label: p.label }))
   const [draft, setDraft] = useState<PolicyDraft>(initialDraft)
   // Baseline for dirty / RESET; re-seeded after a schedule import changes policy fields.
@@ -198,6 +250,9 @@ function PolicyForm({
 
   const update = (patch: Partial<PolicyDraft>) => setDraft((d) => ({ ...d, ...patch }))
   const dirty = useDirty(draft, baseline)
+  useEffect(() => {
+    onDirtyChange(dirty)
+  }, [dirty, onDirtyChange])
   const isTerminated = !!draft.termination_effective_date
   // The kind whose section is shown: the persisted kind, else the one being opened.
   const activeKind: TerminationKind | null = draft.termination_kind ?? markingKind
@@ -258,13 +313,10 @@ function PolicyForm({
     if (!validateRequired()) return
     setSaving(true)
     try {
-      if (id) {
-        await savePolicyFields(id, policyPatch())
-      } else {
-        await createPolicy(userId, policyPatch())
-      }
+      const newId = id ? id : (await createPolicy(userId, policyPatch())).id
+      if (id) await savePolicyFields(id, policyPatch())
       bumpNetWorth()
-      navigate(-1)
+      afterSave(newId, id ? 'Policy saved' : 'Policy added')
     } catch (e) {
       showToast(errorMessage(e, 'Could not save the policy.'))
     } finally {
@@ -278,7 +330,7 @@ function PolicyForm({
     try {
       await deletePolicy(id)
       bumpNetWorth()
-      navigate(-1)
+      afterSave(id, 'Policy deleted')
     } finally {
       setSaving(false)
     }
@@ -361,7 +413,7 @@ function PolicyForm({
       bumpNetWorth()
       setImportOpen(false)
       if (!id) {
-        navigate(routes.networth.insuranceEdit(policyId), { replace: true })
+        afterSave(policyId)
       } else {
         applyImportOverrides(parsed)
         await reload()

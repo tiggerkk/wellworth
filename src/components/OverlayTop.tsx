@@ -12,8 +12,7 @@ interface OverlayTopProps {
  * overlays that must stay inside the calling screen's own React tree so its in-progress draft
  * survives (using the routing `Sheet` here would put the caller behind a background-location and
  * remount it). Handles the scrim, dialog semantics, top safe-area inset, and Esc-to-close so each
- * caller doesn't have to re-type them; the caller supplies its own header/body content (typically
- * an `OverlayCloseButton` alongside a `SearchBar` or title).
+ * caller doesn't have to re-type them; the caller supplies its own header/body content.
  */
 export function OverlayTop({ children, onClose, label }: OverlayTopProps) {
   useEscapeKey(onClose)

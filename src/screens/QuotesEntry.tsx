@@ -1,15 +1,19 @@
-import { useCallback, useMemo, useState } from 'react'
-import { useNavigate, useParams, useSearchParams } from 'react-router'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useParams, useSearchParams } from 'react-router'
 import { IconClipboard, IconLink, IconX } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useProfile } from '../hooks/useProfile'
 import { useEntryFavorite } from '../hooks/useEntryFavorite'
+import { useEntryDraft } from '../hooks/useEntryDraft'
+import { useEntryClose } from '../hooks/useEntryClose'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 import { useDirty } from '../hooks/useDirty'
 import { EntryLoader } from '../components/EntryLoader'
 import { ScreenHeaderTitle } from '../components/ScreenHeaderTitle'
+import { ConfirmDialog } from '../components/ConfirmDialog'
 import { FIELD_CLASS as inputClass } from '../constants/forms'
+import { routes } from '../constants/routes'
 import {
   createQuote,
   deleteQuote,
@@ -96,23 +100,24 @@ function draftFromRow(row: QuoteRow): QuoteDraft {
 /**
  * Quotes — Add / Edit (manual). Outer loader fetches the quote (edit) + the owner's profile (for the
  * configurable Source Type / Category lists + field visibility), then mounts the inner form keyed by id
- * so a stale `useAsync` result never mounts under the wrong quote. A new quote can be prefilled from
- * `?text=&author=&title=`. The Show/Book linker is `QuoteSourceLinkOverlay`.
+ * so a stale `useAsync` result never mounts under the wrong quote (`useEntryDraft` additionally
+ * guarantees a New-mode render never reads a stale fetched row at all — see its docstring). A new
+ * quote can be prefilled from `?text=&author=&title=`. The Show/Book linker is `QuoteSourceLinkOverlay`.
+ *
+ * Close/Save navigation is fixed-destination (`useEntryClose`), not a history pop: Edit Quote's
+ * Cancel/Save always return to the Library listing; New Quote's Cancel returns to wherever it was
+ * opened from, and Save moves to the new quote's fixed Edit route. `dirty` is lifted from `QuoteForm`
+ * (via `onDirtyChange`) since the close button lives in this outer, always-mounted header — see
+ * docs/13_navigation.md.
  */
 export function QuotesEntry() {
   const { id } = useParams()
   const [params] = useSearchParams()
-  const navigate = useNavigate()
   const text = params.get('text') ?? ''
   const author = params.get('author') ?? ''
   const title = params.get('title') ?? ''
 
   const { data: profile, loading: profileLoading } = useProfile()
-  const loadFn = useCallback(
-    async (): Promise<QuoteRow | null> => (id ? getQuote(id) : null),
-    [id],
-  )
-  const { data: row, loading: rowLoading, error } = useAsync(loadFn)
 
   const sourceTypes = useMemo(
     () => effectiveSourceTypes(profile?.quote_source_types ?? null),
@@ -123,14 +128,30 @@ export function QuotesEntry() {
     [profile],
   )
 
-  const initial = useMemo<QuoteDraft | null>(() => {
-    if (id) return row ? draftFromRow(row) : null
-    return blankDraft({ text, author, title }, sourceTypes, categories)
-  }, [id, row, text, author, title, sourceTypes, categories])
+  const blank = useCallback(
+    () => blankDraft({ text, author, title }, sourceTypes, categories),
+    [text, author, title, sourceTypes, categories],
+  )
+  const { initial, loading, error } = useEntryDraft({
+    id,
+    fetchRow: getQuote,
+    toDraft: draftFromRow,
+    blank,
+    extraLoading: profileLoading,
+  })
 
-  const loading = profileLoading || rowLoading
+  // Lifted up from QuoteForm — the close button lives in this outer header, which stays mounted
+  // (with a "Loading…" body) before QuoteForm exists, so dirty-check + Save/Cancel destinations
+  // live here rather than in the form itself.
+  const [dirty, setDirty] = useState(false)
+  const { requestClose, afterSave, confirm } = useEntryClose({
+    editing: !!id,
+    dirty,
+    listing: routes.quotes.library,
+    editRoute: routes.quotes.edit,
+  })
 
-  useEscapeKey(() => navigate(-1))
+  useEscapeKey(requestClose)
 
   return (
     <div className="relative flex h-full min-h-0 flex-col">
@@ -140,6 +161,8 @@ export function QuotesEntry() {
       */}
       <ScreenHeaderTitle
         title={id ? 'Edit Quote' : 'New Quote'}
+        icon={id ? 'back' : 'close'}
+        onClose={requestClose}
         actions={<div className="w-24 shrink-0" />}
       />
 
@@ -157,9 +180,19 @@ export function QuotesEntry() {
             profile={profile ?? null}
             sourceTypes={sourceTypes}
             categories={categories}
+            onDirtyChange={setDirty}
+            afterSave={afterSave}
           />
         )}
       </EntryLoader>
+
+      <ConfirmDialog
+        open={confirm.open}
+        title="Discard changes?"
+        message="You have unsaved changes to this quote. Discard them?"
+        onConfirm={confirm.onConfirm}
+        onCancel={confirm.onCancel}
+      />
     </div>
   )
 }
@@ -172,14 +205,17 @@ function QuoteForm({
   profile,
   sourceTypes,
   categories,
+  onDirtyChange,
+  afterSave,
 }: {
   id: string | undefined
   initial: QuoteDraft
   profile: Tables<'profile'> | null
   sourceTypes: QuoteSourceTypeConfig[]
   categories: QuoteCategoryConfig[]
+  onDirtyChange: (dirty: boolean) => void
+  afterSave: (newId: string, toastMessage?: string) => void
 }) {
-  const navigate = useNavigate()
   const { session } = useAuth()
   const userId = session?.user.id
   // Entry field visibility (Quotes Settings). Quote Text / Category / heart / buttons are always shown.
@@ -204,6 +240,10 @@ function QuoteForm({
 
   const update = (patch: Partial<QuoteDraft>) => setDraft((d) => ({ ...d, ...patch }))
   const dirty = useDirty(draft, initial)
+  useEffect(() => {
+    onDirtyChange(dirty)
+  }, [dirty, onDirtyChange])
+
   // Category now defaults to the first value, so it's always set — only the text is required.
   const canSave = !!draft.text.trim()
   const linked = !!draft.show_id || !!draft.book_id
@@ -274,10 +314,10 @@ function QuoteForm({
         show_id: draft.show_id,
         book_id: draft.book_id,
       }
+      const newId = id ? id : (await createQuote({ ...row, user_id: userId })).id
       if (id) await updateQuote(id, row)
-      else await createQuote({ ...row, user_id: userId })
       bumpQuotes()
-      navigate(-1)
+      afterSave(newId, id ? 'Quote saved' : 'Quote created')
     } catch (e) {
       // UNIQUE(user_id, text_norm) → "no exact duplicates" (the manual-entry counterpart to the
       // importer's ON CONFLICT DO NOTHING).
@@ -298,7 +338,7 @@ function QuoteForm({
     try {
       await deleteQuote(id)
       bumpQuotes()
-      navigate(-1)
+      afterSave(id, 'Quote deleted')
     } finally {
       setSaving(false)
     }

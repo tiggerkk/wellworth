@@ -53,6 +53,7 @@ export function MedicalReportDetail() {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <ScreenHeaderTitle
+        icon="back"
         actions={
           id &&
           data && (

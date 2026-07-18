@@ -1,5 +1,5 @@
-import { useCallback, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router'
+import { useEffect, useState } from 'react'
+import { Link, useParams } from 'react-router'
 import {
   IconArrowsDiagonal,
   IconQuote,
@@ -8,12 +8,14 @@ import {
 } from '@tabler/icons-react'
 import { routes } from '../constants/routes'
 import { useAuth } from '../auth/AuthProvider'
-import { useAsync } from '../hooks/useAsync'
 import { useDirty } from '../hooks/useDirty'
+import { useEntryDraft } from '../hooks/useEntryDraft'
+import { useEntryClose } from '../hooks/useEntryClose'
 import { useEntryFavorite } from '../hooks/useEntryFavorite'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 import { EntryLoader } from '../components/EntryLoader'
 import { ScreenHeaderTitle } from '../components/ScreenHeaderTitle'
+import { ConfirmDialog } from '../components/ConfirmDialog'
 import { createBook, deleteBook, getBook, updateBook } from '../data/book'
 import { numStr } from '../lib/wellness-quantity'
 import { FIELD_CLASS as inputClass } from '../constants/forms'
@@ -107,22 +109,34 @@ function draftFromRow(row: BookRow): BookDraft {
 }
 
 /**
- * Books — Entry / Edit (M2: manual). Outer loader + inner form keyed by id (so a stale `useAsync`
- * result never mounts under the wrong title). Google Books title search + the read-only metadata
- * block arrive in M3; the metadata columns are carried through unchanged for now.
+ * Books — Entry / Edit (M2: manual). Outer loader + inner form keyed by id; `useEntryDraft`
+ * guarantees a New-mode render never shows a previous edit's stale data (see its docstring).
+ * Google Books title search + the read-only metadata block arrive in M3; the metadata columns are
+ * carried through unchanged for now.
+ *
+ * Close/Save navigation is fixed-destination (`useEntryClose`), not a history pop — see
+ * `QuotesEntry`'s docstring and docs/13_navigation.md. `dirty` is lifted from `BookForm` (via
+ * `onDirtyChange`) since the close button lives in this outer, always-mounted header.
  */
 export function BooksEntry() {
   const { id } = useParams()
-  const navigate = useNavigate()
 
-  const loadFn = useCallback(async (): Promise<BookDraft | null> => {
-    if (!id) return blankDraft()
-    const row = await getBook(id)
-    return row ? draftFromRow(row) : null
-  }, [id])
-  const { data: initial, loading, error } = useAsync(loadFn)
+  const { initial, loading, error } = useEntryDraft({
+    id,
+    fetchRow: getBook,
+    toDraft: draftFromRow,
+    blank: blankDraft,
+  })
 
-  useEscapeKey(() => navigate(-1))
+  const [dirty, setDirty] = useState(false)
+  const { requestClose, afterSave, confirm } = useEntryClose({
+    editing: !!id,
+    dirty,
+    listing: routes.books.library,
+    editRoute: routes.books.edit,
+  })
+
+  useEscapeKey(requestClose)
 
   return (
     <div className="relative flex h-full min-h-0 flex-col">
@@ -132,6 +146,8 @@ export function BooksEntry() {
       */}
       <ScreenHeaderTitle
         title={id ? 'Edit Book' : 'New Book'}
+        icon={id ? 'back' : 'close'}
+        onClose={requestClose}
         actions={<div className="w-24 shrink-0" />}
       />
 
@@ -141,8 +157,24 @@ export function BooksEntry() {
         data={initial}
         errorText="Couldn’t load this book."
       >
-        {(d) => <BookForm key={id ?? 'new'} id={id} initial={d} />}
+        {(d) => (
+          <BookForm
+            key={id ?? 'new'}
+            id={id}
+            initial={d}
+            onDirtyChange={setDirty}
+            afterSave={afterSave}
+          />
+        )}
       </EntryLoader>
+
+      <ConfirmDialog
+        open={confirm.open}
+        title="Discard changes?"
+        message="You have unsaved changes to this book. Discard them?"
+        onConfirm={confirm.onConfirm}
+        onCancel={confirm.onCancel}
+      />
     </div>
   )
 }
@@ -150,11 +182,14 @@ export function BooksEntry() {
 function BookForm({
   id,
   initial: initialProp,
+  onDirtyChange,
+  afterSave,
 }: {
   id: string | undefined
   initial: BookDraft
+  onDirtyChange: (dirty: boolean) => void
+  afterSave: (newId: string, toastMessage?: string) => void
 }) {
-  const navigate = useNavigate()
   const { session } = useAuth()
   const userId = session?.user.id
   const { data: profile } = useProfile()
@@ -174,6 +209,9 @@ function BookForm({
 
   const update = (patch: Partial<BookDraft>) => setDraft((d) => ({ ...d, ...patch }))
   const dirty = useDirty(draft, initial)
+  useEffect(() => {
+    onDirtyChange(dirty)
+  }, [dirty, onDirtyChange])
   // Dynasty is editable only for a Chinese title; the dropdown shows the default until chosen.
   const isChinese = containsCjk(draft.title)
   const hasMeta =
@@ -262,10 +300,10 @@ function BookForm({
         open_library_id: draft.open_library_id,
         isbn: draft.isbn,
       }
+      const newId = id ? id : (await createBook({ ...row, user_id: userId })).id
       if (id) await updateBook(id, row)
-      else await createBook({ ...row, user_id: userId })
       bumpBooks()
-      navigate(-1)
+      afterSave(newId, id ? 'Book saved' : 'Book added')
     } finally {
       setSaving(false)
     }
@@ -277,7 +315,7 @@ function BookForm({
     try {
       await deleteBook(id)
       bumpBooks()
-      navigate(-1)
+      afterSave(id, 'Book deleted')
     } finally {
       setSaving(false)
     }

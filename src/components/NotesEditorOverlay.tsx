@@ -3,6 +3,8 @@ import { IconClipboard } from '@tabler/icons-react'
 import { OverlayTop } from './OverlayTop'
 import { ScreenHeaderTitle } from './ScreenHeaderTitle'
 import { EntryHeaderActions } from './EntryHeaderActions'
+import { ConfirmDialog } from './ConfirmDialog'
+import { useDiscardConfirm } from '../hooks/useDiscardConfirm'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 
 interface NotesEditorOverlayProps {
@@ -50,7 +52,9 @@ export function NotesEditorOverlay({
   const taRef = useRef<HTMLTextAreaElement>(null)
   // Caret to restore after a programmatic paste (null = leave the caret where the browser put it).
   const pendingCaret = useRef<number | null>(null)
-  useEscapeKey(onClose)
+  const dirty = buffer !== value
+  const { requestClose, confirm } = useDiscardConfirm(dirty, onClose)
+  useEscapeKey(requestClose)
 
   const trimmed = title.trim()
   const headerTitle = trimmed
@@ -58,7 +62,6 @@ export function NotesEditorOverlay({
       ? `${trimmed} (${year})`
       : trimmed
     : fieldLabel
-  const dirty = buffer !== value
 
   // Focus the textarea on open with the caret at the end (ready to append).
   useEffect(() => {
@@ -95,9 +98,9 @@ export function NotesEditorOverlay({
   }
 
   return (
-    <OverlayTop onClose={onClose} label="Edit ${fieldLabel.toLowerCase()}">
+    <OverlayTop onClose={requestClose} label={`Edit ${fieldLabel.toLowerCase()}`}>
       <ScreenHeaderTitle
-        onClose={onClose}
+        onClose={requestClose}
         actions={
           <EntryHeaderActions
             editing
@@ -141,6 +144,14 @@ export function NotesEditorOverlay({
           className="field-control mt-1 w-full flex-1 resize-none overflow-y-auto"
         />
       </div>
+
+      <ConfirmDialog
+        open={confirm.open}
+        title="Discard changes?"
+        message={`You have unsaved changes to ${fieldLabel.toLowerCase()}. Discard them?`}
+        onConfirm={confirm.onConfirm}
+        onCancel={confirm.onCancel}
+      />
     </OverlayTop>
   )
 }

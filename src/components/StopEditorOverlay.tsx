@@ -5,11 +5,14 @@ import { ScreenHeaderTitle } from './ScreenHeaderTitle'
 import { SegmentedTabs } from './SegmentedTabs'
 import { SelectMenu } from './SelectMenu'
 import { EntryHeaderActions } from './EntryHeaderActions'
+import { ConfirmDialog } from './ConfirmDialog'
 import { CitySearchOverlay } from './CitySearchOverlay'
 import { createStop, nextStopSortOrder, updateStop } from '../data/travel'
 import { type ResolvedCity, type StopRow } from '../lib/travel'
 import { STOP_TYPES, STOP_TYPE_LABELS, type StopType } from '../constants/travel'
 import { FIELD_CLASS as inputClass } from '../constants/forms'
+import { useDiscardConfirm } from '../hooks/useDiscardConfirm'
+import { useEscapeKey } from '../hooks/useEscapeKey'
 
 interface StopEditorOverlayProps {
   userId: string
@@ -82,6 +85,9 @@ export function StopEditorOverlay({
     details !== init.details ||
     completion !== init.completion
 
+  const { requestClose, confirm } = useDiscardConfirm(dirty, onClose)
+  useEscapeKey(requestClose)
+
   function reset() {
     setType(init.type)
     setTargetDay(init.targetDay)
@@ -133,9 +139,9 @@ export function StopEditorOverlay({
 
   return (
     <>
-      <OverlayTop onClose={onClose} label={stop ? 'Edit stop' : 'Add stop'}>
+      <OverlayTop onClose={requestClose} label={stop ? 'Edit stop' : 'Add stop'}>
         <ScreenHeaderTitle
-          onClose={onClose}
+          onClose={requestClose}
           title={stop ? 'Edit Stop' : 'Add Stop'}
           actions={
             <EntryHeaderActions
@@ -249,6 +255,14 @@ export function StopEditorOverlay({
           </div>
         </div>
       </OverlayTop>
+
+      <ConfirmDialog
+        open={confirm.open}
+        title="Discard changes?"
+        message="You have unsaved changes to this stop. Discard them?"
+        onConfirm={confirm.onConfirm}
+        onCancel={confirm.onCancel}
+      />
 
       {cityOpen && (
         <CitySearchOverlay
