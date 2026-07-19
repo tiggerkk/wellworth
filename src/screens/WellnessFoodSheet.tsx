@@ -14,8 +14,10 @@ import { RemoveRowButton } from '../components/RemoveRowButton'
 import { NutrientBar } from '../components/NutrientBar'
 import { PrimaryButton } from '../components/PrimaryButton'
 import { EntryHeaderActions } from '../components/EntryHeaderActions'
+import { ConfirmDialog } from '../components/ConfirmDialog'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
+import { useDiscardConfirm } from '../hooks/useDiscardConfirm'
 import { useProfile } from '../hooks/useProfile'
 import { useReturnAfterLog } from '../hooks/useReturnAfterLog'
 import { useNutrientReference } from '../hooks/useNutrientReference'
@@ -277,6 +279,9 @@ export function WellnessFoodSheet() {
       (amount !== initial.amount || servingIndex !== initial.servingIndex)) ||
     servingsDirty
 
+  const close = () => navigate(-1)
+  const { requestClose, confirm } = useDiscardConfirm(dirty, close)
+
   function reset() {
     if (initial) {
       setAmount(initial.amount)
@@ -393,12 +398,14 @@ export function WellnessFoodSheet() {
     .filter((k) => (scaled[k] ?? 0) > 0)
 
   return (
-    <Sheet variant="full" label="Food detail">
+    <Sheet variant="full" label="Food detail" onClose={requestClose}>
       {/* Header always mounted (no shift once the food loads) — actions are reserved space here,
           then absolutely floated over that same space once loaded below. */}
       <ScreenHeaderTitle
         title={food?.name ?? 'Food'}
         titleClassName="line-clamp-2 flex-1 text-heading font-medium text-text-primary"
+        icon="back"
+        onClose={requestClose}
         actions={<div className="w-36 shrink-0" />}
       />
 
@@ -558,6 +565,14 @@ export function WellnessFoodSheet() {
           </>
         )}
       </EntryLoader>
+
+      <ConfirmDialog
+        open={confirm.open}
+        title="Discard changes?"
+        message="You have unsaved changes here. Discard them?"
+        onConfirm={confirm.onConfirm}
+        onCancel={confirm.onCancel}
+      />
     </Sheet>
   )
 }

@@ -4,12 +4,21 @@ import { useAsync } from './useAsync'
 interface UseEntryDraftOptions<Row, Draft> {
   /** Present when editing an existing item; undefined for a New Item form. */
   id: string | undefined
-  /** Fetches the row being edited. Only called when `id` is present. Must be stable
-   *  (`useCallback`) — same contract as `useAsync`. */
+  /** Fetches the row being edited. Only called when `id` is present. MUST be stable — a
+   *  module-level function (like `getBook`) or a `useCallback` with correct deps. An inline arrow
+   *  function here (`fetchRow: async (id) => {...}`) gets a new identity every render, which
+   *  `loadFn` below depends on, which re-triggers `useAsync`'s fetch effect every render: an
+   *  infinite refetch loop, not just a stale-data bug. (This exact mistake shipped in
+   *  `WellnessFoodNewSheet` — a fresh network request on every render, hammering Supabase and
+   *  spamming "Maximum update depth exceeded" until the browser gave up on the requests.) */
   fetchRow: (id: string) => Promise<Row | null>
-  /** Maps a fetched row to the form's draft shape. Must be stable (`useCallback`/module-level). */
+  /** Maps a fetched row to the form's draft shape. Must be stable (`useCallback`/module-level) for
+   *  the same reason — it's a dep of the `initial` memo below. */
   toDraft: (row: Row) => Draft
-  /** Builds a blank draft for New Item mode (e.g. from `?prefill=` query params). Must be stable. */
+  /** Builds a blank draft for New Item mode (e.g. from `?prefill=` query params). Must be stable
+   *  for the same reason. If it doesn't close over any component state (no prefill), a bare
+   *  module-level function is simplest; if it does, wrap it in `useCallback` with the right deps
+   *  (see `QuotesEntry`/`InsuranceEntry`). */
   blank: () => Draft
   /** OR'd into the returned `loading` — e.g. a profile fetch the blank/draft mapping also depends
    *  on (Quotes' Source Type / Category lists). */
@@ -31,9 +40,7 @@ interface UseEntryDraftResult<Draft> {
  * Edit(A) -> New, where there's nothing to wait on at all.
  *
  * `initial` here is derived with a synchronous `useMemo` gated on `id`, so a New-mode render never
- * reads the async `row` — regardless of whether the fetch behind it has resolved. (This is exactly
- * the pattern `QuotesEntry` used before this hook existed; the other Entry screens read `useAsync`'s
- * result directly and don't have this guarantee.)
+ * reads the async `row` — regardless of whether the fetch behind it has resolved.
  */
 export function useEntryDraft<Row, Draft>({
   id,

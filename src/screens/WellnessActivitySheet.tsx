@@ -4,10 +4,12 @@ import { IconPlus } from '@tabler/icons-react'
 import { Sheet } from '../components/Sheet'
 import { ScreenHeaderTitle } from '../components/ScreenHeaderTitle'
 import { EntryHeaderActions } from '../components/EntryHeaderActions'
+import { ConfirmDialog } from '../components/ConfirmDialog'
 import { EffortPicker } from '../components/EffortPicker'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useDirty } from '../hooks/useDirty'
+import { useDiscardConfirm } from '../hooks/useDiscardConfirm'
 import { useProfile } from '../hooks/useProfile'
 import { useReturnAfterLog } from '../hooks/useReturnAfterLog'
 import { getActivity } from '../data/activity'
@@ -128,6 +130,9 @@ export function WellnessActivitySheet() {
   const minutesValue = draftAmount(minutes, activityDefaultDuration)
   const changed = useDirty({ minutes, effort, exercises }, initial)
   const dirty = initial != null && changed
+
+  const close = () => navigate(-1)
+  const { requestClose, confirm } = useDiscardConfirm(dirty, close)
 
   // Effort defaults to the activity's, but is fully editable per session (e.g. an easier day).
   const defaultEffort = (activity?.default_effort as Effort) ?? 'moderate'
@@ -265,12 +270,14 @@ export function WellnessActivitySheet() {
   )
 
   return (
-    <Sheet variant="full" label="Log activity">
+    <Sheet variant="full" label="Log activity" onClose={requestClose}>
       {/* Header always mounted (no shift once the activity loads) — actions are reserved space
           here, then absolutely floated over that same space once loaded below. */}
       <ScreenHeaderTitle
         title={activity?.name ?? 'Activity'}
         titleClassName="line-clamp-2 flex-1 text-heading font-medium text-text-primary"
+        icon="back"
+        onClose={requestClose}
         actions={<div className="w-24 shrink-0" />}
       />
       {activity && strengthError && (
@@ -420,6 +427,14 @@ export function WellnessActivitySheet() {
           </>
         )}
       </EntryLoader>
+
+      <ConfirmDialog
+        open={confirm.open}
+        title="Discard changes?"
+        message="You have unsaved changes here. Discard them?"
+        onConfirm={confirm.onConfirm}
+        onCancel={confirm.onCancel}
+      />
     </Sheet>
   )
 }

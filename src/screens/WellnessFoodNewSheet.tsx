@@ -1,14 +1,16 @@
-import { useCallback, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { IconPlus } from '@tabler/icons-react'
 import { Sheet } from '../components/Sheet'
 import { ScreenHeaderTitle } from '../components/ScreenHeaderTitle'
+import { ConfirmDialog } from '../components/ConfirmDialog'
 import { RemoveRowButton } from '../components/RemoveRowButton'
 import { EntryHeaderActions } from '../components/EntryHeaderActions'
 import { SegmentedTabs } from '../components/SegmentedTabs'
 import { Collapsible } from '../components/Collapsible'
 import { useAuth } from '../auth/AuthProvider'
-import { useAsync } from '../hooks/useAsync'
+import { useEntryDraft } from '../hooks/useEntryDraft'
+import { useDiscardConfirm } from '../hooks/useDiscardConfirm'
 import { useNutrientReference } from '../hooks/useNutrientReference'
 import { createFood, getFood, softDeleteFood, updateFood } from '../data/food'
 import { listServings, replaceServings } from '../data/serving'
@@ -16,6 +18,7 @@ import { asNutrientMap, type NutrientMap } from '../lib/wellness-nutrients'
 import { NUTRIENT_SECTIONS } from '../constants/wellness'
 import { bumpDiary } from '../lib/wellness-diary-refresh'
 import { EntryLoader } from '../components/EntryLoader'
+import { showToast } from '../lib/toast'
 
 interface ServingDraft {
   name: string
@@ -37,38 +40,72 @@ const BLANK: FoodInitial = {
   nutrients: {},
 }
 
+function blankDraft(): FoodInitial {
+  return BLANK
+}
+
+interface FoodRow {
+  food: NonNullable<Awaited<ReturnType<typeof getFood>>>
+  servings: Awaited<ReturnType<typeof listServings>>
+}
+
+/** Fetches the food + its servings together. Module-level (stable identity) — `useEntryDraft`
+ *  re-fetches whenever this reference changes, so it must NOT be recreated on every render (an
+ *  inline arrow function here previously caused an infinite refetch loop). */
+async function fetchFoodRow(id: string): Promise<FoodRow | null> {
+  const food = await getFood(id)
+  if (!food) return null
+  const servings = await listServings(id)
+  return { food, servings }
+}
+
+/** Maps the fetched food + servings to the Edit form's draft shape. Also module-level for the same
+ *  stable-identity reason. */
+function toDraft({ food, servings }: FoodRow): FoodInitial {
+  const nutrients: Record<string, string> = {}
+  for (const [k, v] of Object.entries(asNutrientMap(food.nutrients))) {
+    if (v != null) nutrients[k] = String(v)
+  }
+  return {
+    type: food.type,
+    name: food.name,
+    basis: food.nutrient_basis,
+    servings:
+      servings.length > 0
+        ? servings.map((s) => ({ name: s.name, grams: String(s.grams) }))
+        : [{ name: '', grams: '' }],
+    nutrients,
+  }
+}
+
 export function WellnessFoodNewSheet() {
   const { id } = useParams()
   const isEdit = !!id
 
-  const loadFn = useCallback(async (): Promise<FoodInitial | null> => {
-    if (!id) return BLANK
-    const food = await getFood(id)
-    if (!food) return null
-    const servings = await listServings(id)
-    const nutrients: Record<string, string> = {}
-    for (const [k, v] of Object.entries(asNutrientMap(food.nutrients))) {
-      if (v != null) nutrients[k] = String(v)
-    }
-    return {
-      type: food.type,
-      name: food.name,
-      basis: food.nutrient_basis,
-      servings:
-        servings.length > 0
-          ? servings.map((s) => ({ name: s.name, grams: String(s.grams) }))
-          : [{ name: '', grams: '' }],
-      nutrients,
-    }
-  }, [id])
-  const { data: initial, loading, error } = useAsync(loadFn)
+  const { initial, loading, error } = useEntryDraft({
+    id,
+    fetchRow: fetchFoodRow,
+    toDraft,
+    blank: blankDraft,
+  })
+
+  const [dirty, setDirty] = useState(false)
+  const navigate = useNavigate()
+  const close = () => navigate(-1)
+  const { requestClose, confirm } = useDiscardConfirm(dirty, close)
 
   return (
-    <Sheet variant="full" label={isEdit ? 'Edit food' : 'New food'}>
+    <Sheet
+      variant="full"
+      label={isEdit ? 'Edit food' : 'New food'}
+      onClose={requestClose}
+    >
       {/* Header always mounted (no shift once the food loads) — actions are reserved space here,
           then absolutely floated over that same space by FoodForm below. */}
       <ScreenHeaderTitle
         title={isEdit ? 'Edit Food' : 'New Food'}
+        icon={isEdit ? 'back' : 'close'}
+        onClose={requestClose}
         actions={<div className="w-24 shrink-0" />}
       />
       <EntryLoader
@@ -77,14 +114,31 @@ export function WellnessFoodNewSheet() {
         data={initial}
         errorText="Couldn’t load this item."
       >
-        {(d) => <FoodForm id={id} initial={d} />}
+        {(d) => <FoodForm id={id} initial={d} onDirtyChange={setDirty} onSaved={close} />}
       </EntryLoader>
+
+      <ConfirmDialog
+        open={confirm.open}
+        title="Discard changes?"
+        message="You have unsaved changes to this food. Discard them?"
+        onConfirm={confirm.onConfirm}
+        onCancel={confirm.onCancel}
+      />
     </Sheet>
   )
 }
 
-function FoodForm({ id, initial }: { id: string | undefined; initial: FoodInitial }) {
-  const navigate = useNavigate()
+function FoodForm({
+  id,
+  initial,
+  onDirtyChange,
+  onSaved,
+}: {
+  id: string | undefined
+  initial: FoodInitial
+  onDirtyChange: (dirty: boolean) => void
+  onSaved: () => void
+}) {
   const { session } = useAuth()
   const userId = session?.user.id
   const { nutrients: refRows } = useNutrientReference()
@@ -98,7 +152,7 @@ function FoodForm({ id, initial }: { id: string | undefined; initial: FoodInitia
 
   const basisLabel = basis === 'per_serving' ? 'serving' : '100 g'
 
-  // Dirty vs the loaded/blank initial — drives RESET + SAVE enablement.
+  // Dirty vs the loaded/blank initial — drives RESET + SAVE enablement, and the discard-confirm.
   const dirty =
     JSON.stringify({ type, name, basis, servings, values }) !==
     JSON.stringify({
@@ -108,6 +162,9 @@ function FoodForm({ id, initial }: { id: string | undefined; initial: FoodInitia
       servings: initial.servings,
       values: initial.nutrients,
     })
+  useEffect(() => {
+    onDirtyChange(dirty)
+  }, [dirty, onDirtyChange])
 
   function reset() {
     setType(initial.type)
@@ -151,7 +208,8 @@ function FoodForm({ id, initial }: { id: string | undefined; initial: FoodInitia
         await replaceServings(created.id, rows)
       }
       bumpDiary()
-      navigate(-1)
+      showToast(id ? 'Food saved' : 'Food added')
+      onSaved()
     } finally {
       setSaving(false)
     }
@@ -163,7 +221,8 @@ function FoodForm({ id, initial }: { id: string | undefined; initial: FoodInitia
     try {
       await softDeleteFood(id)
       bumpDiary()
-      navigate(-1)
+      showToast('Food deleted')
+      onSaved()
     } finally {
       setSaving(false)
     }
