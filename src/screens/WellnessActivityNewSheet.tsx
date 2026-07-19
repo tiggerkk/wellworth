@@ -1,13 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { Sheet } from '../components/Sheet'
 import { ScreenHeaderTitle } from '../components/ScreenHeaderTitle'
-import { ConfirmDialog } from '../components/ConfirmDialog'
 import { EntryHeaderActions } from '../components/EntryHeaderActions'
 import { SegmentedTabs } from '../components/SegmentedTabs'
 import { useAuth } from '../auth/AuthProvider'
-import { useEntryDraft } from '../hooks/useEntryDraft'
-import { useDiscardConfirm } from '../hooks/useDiscardConfirm'
+import { useAsync } from '../hooks/useAsync'
 import {
   createActivity,
   getActivity,
@@ -17,10 +15,12 @@ import {
 import { draftAmount } from '../lib/wellness-quantity'
 import { bumpDiary } from '../lib/wellness-diary-refresh'
 import { EFFORT_LEVELS, type Effort } from '../constants/wellness'
-import { ACTIVITY_ICONS, resolveActivityIcon } from '../constants/wellness'
+import {
+  ACTIVITY_ICONS,
+  ACTIVITY_TEMPLATES,
+  resolveActivityIcon,
+} from '../constants/wellness'
 import { EntryLoader } from '../components/EntryLoader'
-import { showToast } from '../lib/toast'
-import type { Tables } from '../types/database'
 
 interface ActivityInitial {
   name: string
@@ -42,55 +42,35 @@ const BLANK: ActivityInitial = {
   icon: null,
 }
 
-function blankDraft(): ActivityInitial {
-  return BLANK
-}
-
-/** Maps the fetched activity to the Edit form's draft shape. Module-level (stable identity) for
- *  `useEntryDraft`. */
-function toDraft(a: Tables<'activity'>): ActivityInitial {
-  const metMap = (a.met_by_effort ?? {}) as Record<string, number>
-  const met: Record<string, string> = {}
-  for (const [k, v] of Object.entries(metMap)) met[k] = String(v)
-  return {
-    name: a.name,
-    description: a.description ?? '',
-    template: a.template,
-    defaultEffort: a.default_effort as Effort,
-    defaultDuration: String(a.default_duration_min),
-    met,
-    icon: a.icon,
-  }
-}
-
 export function WellnessActivityNewSheet() {
   const { id } = useParams()
   const isEdit = !!id
 
-  const { initial, loading, error } = useEntryDraft({
-    id,
-    fetchRow: getActivity,
-    toDraft,
-    blank: blankDraft,
-  })
-
-  const [dirty, setDirty] = useState(false)
-  const navigate = useNavigate()
-  const close = () => navigate(-1)
-  const { requestClose, confirm } = useDiscardConfirm(dirty, close)
+  const loadFn = useCallback(async (): Promise<ActivityInitial | null> => {
+    if (!id) return BLANK
+    const a = await getActivity(id)
+    if (!a) return null
+    const metMap = (a.met_by_effort ?? {}) as Record<string, number>
+    const met: Record<string, string> = {}
+    for (const [k, v] of Object.entries(metMap)) met[k] = String(v)
+    return {
+      name: a.name,
+      description: a.description ?? '',
+      template: a.template,
+      defaultEffort: a.default_effort as Effort,
+      defaultDuration: String(a.default_duration_min),
+      met,
+      icon: a.icon,
+    }
+  }, [id])
+  const { data: initial, loading, error } = useAsync(loadFn)
 
   return (
-    <Sheet
-      variant="full"
-      label={isEdit ? 'Edit activity' : 'New activity'}
-      onClose={requestClose}
-    >
+    <Sheet variant="full" label={isEdit ? 'Edit activity' : 'New activity'}>
       {/* Header always mounted (no shift once the activity loads) — actions are reserved space
           here, then absolutely floated over that same space by ActivityForm below. */}
       <ScreenHeaderTitle
         title={isEdit ? 'Edit Activity' : 'New Activity'}
-        icon={isEdit ? 'back' : 'close'}
-        onClose={requestClose}
         actions={<div className="w-24 shrink-0" />}
       />
       <EntryLoader
@@ -99,18 +79,8 @@ export function WellnessActivityNewSheet() {
         data={initial}
         errorText="Couldn’t load this item."
       >
-        {(d) => (
-          <ActivityForm id={id} initial={d} onDirtyChange={setDirty} onSaved={close} />
-        )}
+        {(d) => <ActivityForm id={id} initial={d} />}
       </EntryLoader>
-
-      <ConfirmDialog
-        open={confirm.open}
-        title="Discard changes?"
-        message="You have unsaved changes to this activity. Discard them?"
-        onConfirm={confirm.onConfirm}
-        onCancel={confirm.onCancel}
-      />
     </Sheet>
   )
 }
@@ -118,14 +88,11 @@ export function WellnessActivityNewSheet() {
 function ActivityForm({
   id,
   initial,
-  onDirtyChange,
-  onSaved,
 }: {
   id: string | undefined
   initial: ActivityInitial
-  onDirtyChange: (dirty: boolean) => void
-  onSaved: () => void
 }) {
+  const navigate = useNavigate()
   const { session } = useAuth()
   const userId = session?.user.id
 
@@ -148,7 +115,7 @@ function ActivityForm({
   // (the Activity Log resolves energy from the default effort's MET).
   const canSave = name.trim() !== '' && anyMet && defaultHasMet
 
-  // Dirty vs the loaded/blank initial — drives RESET + SAVE enablement, and the discard-confirm.
+  // Dirty vs the loaded/blank initial — drives RESET + SAVE enablement.
   const dirty =
     JSON.stringify({
       name,
@@ -159,9 +126,6 @@ function ActivityForm({
       met,
       icon,
     }) !== JSON.stringify(initial)
-  useEffect(() => {
-    onDirtyChange(dirty)
-  }, [dirty, onDirtyChange])
 
   function reset() {
     setName(initial.name)
@@ -179,8 +143,7 @@ function ActivityForm({
     try {
       await softDeleteActivity(id)
       bumpDiary()
-      showToast('Activity deleted')
-      onSaved()
+      navigate(-1)
     } finally {
       setSaving(false)
     }
@@ -207,8 +170,7 @@ function ActivityForm({
       if (id) await updateActivity(id, payload)
       else await createActivity({ user_id: userId, ...payload })
       bumpDiary()
-      showToast(id ? 'Activity saved' : 'Activity added')
-      onSaved()
+      navigate(-1)
     } finally {
       setSaving(false)
     }
@@ -252,10 +214,7 @@ function ActivityForm({
           <SegmentedTabs
             value={template}
             onChange={setTemplate}
-            options={[
-              { value: 'duration', label: 'Duration' },
-              { value: 'strength', label: 'Strength' },
-            ]}
+            options={ACTIVITY_TEMPLATES.map((t) => ({ value: t.key, label: t.label }))}
           />
         </div>
 

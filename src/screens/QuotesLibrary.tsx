@@ -215,11 +215,7 @@ export function QuotesLibrary() {
                 options={LANGUAGE_OPTIONS}
                 onChange={(v) => setCrit({ language: v as LibraryCriteria['language'] })}
               />
-            </div>
-
-            {/* Linked toggle + the tag search share one row to save vertical space. */}
-            <div className="grid grid-cols-2 gap-3">
-              <label className="flex items-center justify-between py-1.5">
+              <label className="flex items-center justify-between self-end py-1.5">
                 <span className="text-text-secondary">Linked Titles Only</span>
                 <Toggle
                   checked={criteria.linkedOnly}
@@ -227,16 +223,17 @@ export function QuotesLibrary() {
                   label="Linked Titles Only"
                 />
               </label>
-              {showTagSearch && (
-                <input
-                  value={tagQuery}
-                  onChange={(e) => setTagQuery(e.target.value)}
-                  placeholder="Filter tags…"
-                  aria-label="Filter tags"
-                  className="field-control w-full self-center"
-                />
-              )}
             </div>
+
+            {showTagSearch && (
+              <input
+                value={tagQuery}
+                onChange={(e) => setTagQuery(e.target.value)}
+                placeholder="Filter tags…"
+                aria-label="Filter tags"
+                className="field-control w-full"
+              />
+            )}
 
             {ranked.length > 0 && (
               <div className="flex max-h-32 flex-wrap items-center gap-1.5 overflow-y-auto">
