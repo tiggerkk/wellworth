@@ -15,12 +15,9 @@ import {
   type TypeKind,
 } from '../lib/literature'
 import { routes } from '../constants/routes'
-import { ListSearchHeader } from '../components/ListSearchHeader'
-import { FilterPanel } from '../components/FilterPanel'
-import { FilterPanelFooter } from '../components/FilterPanelFooter'
+import { ListSearchFilterPanel, ResultCount } from '../components/ListSearchFilterPanel'
 import { Toggle } from '../components/Toggle'
 import { EmptyState } from '../components/EmptyState'
-import { ResultCount } from '../components/ResultCount'
 import { PoemCard } from '../components/PoemCard'
 import { FilterPill } from '../components/FilterPill'
 
@@ -113,116 +110,110 @@ export function LiteraturePoems() {
 
   return (
     <div className="flex min-h-full flex-col gap-3 px-4 py-4">
-      <div className="sticky top-0 z-10 -mx-4 flex flex-col gap-3 bg-bg/90 px-4 py-3 backdrop-blur">
-        <ListSearchHeader
-          query={criteria.query}
-          onQueryChange={(q) => setCrit({ query: q })}
-          placeholder="搜尋詩詞、作者"
-          filtersOpen={filtersOpen}
-          onToggleFilters={() => setFiltersOpen((o) => !o)}
-        />
-        <FilterPanelFooter
-          sortField={criteria.sortField}
-          sortOptions={SORT_OPTIONS}
-          onSortFieldChange={(f) => setCrit({ sortField: f })}
-          sortDir={criteria.sortDir}
-          onToggleSortDir={() =>
-            setCrit({ sortDir: criteria.sortDir === 'asc' ? 'desc' : 'asc' })
-          }
-          sortLabel="排序"
-          onClearFilters={clearFilters}
-          clearLabel="清除篩選"
-          leading={
-            <label className="flex items-center gap-2">
-              <span className="text-text-secondary">只看收藏</span>
-              <Toggle
-                checked={criteria.favoritesOnly}
-                onChange={(v) => setCrit({ favoritesOnly: v })}
-                label="只看收藏"
-              />
-            </label>
-          }
-        />
-      </div>
-
-      {filtersOpen && (
-        <FilterPanel>
-          {meta && meta.dynasties.length > 0 && (
-            <div className="flex flex-col gap-1.5">
-              <span className="text-caption text-text-secondary">朝代</span>
-              <div className="flex flex-wrap gap-1.5">
-                {meta.dynasties.map((d) => (
-                  <FilterPill
-                    key={d}
-                    label={d}
-                    selected={criteria.dynasty === d}
-                    onClick={() =>
-                      setCrit({ dynasty: criteria.dynasty === d ? null : d })
-                    }
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {FILTER_KINDS.map((kind) => {
-            const list = typesByKind.get(kind)
-            if (!list || list.length === 0) return null
-            return (
-              <div key={kind} className="flex flex-col gap-1.5">
-                <span className="text-caption text-text-secondary">
-                  {KIND_LABEL[kind]}
-                </span>
+      <ListSearchFilterPanel
+        sticky
+        query={criteria.query}
+        onQueryChange={(q) => setCrit({ query: q })}
+        placeholder="搜尋詩詞、作者"
+        filtersOpen={filtersOpen}
+        onToggleFilters={() => setFiltersOpen((o) => !o)}
+        sortField={criteria.sortField}
+        sortOptions={SORT_OPTIONS}
+        onSortFieldChange={(f) => setCrit({ sortField: f })}
+        sortDir={criteria.sortDir}
+        onToggleSortDir={() =>
+          setCrit({ sortDir: criteria.sortDir === 'asc' ? 'desc' : 'asc' })
+        }
+        onClearFilters={clearFilters}
+        extra={
+          <span className="flex items-center gap-1.5">
+            <span className="text-caption text-text-secondary">只看收藏</span>
+            <Toggle
+              checked={criteria.favoritesOnly}
+              onChange={(v) => setCrit({ favoritesOnly: v })}
+              label="只看收藏"
+            />
+          </span>
+        }
+        filters={
+          <>
+            {meta && meta.dynasties.length > 0 && (
+              <div className="flex flex-col gap-1.5">
+                <span className="text-caption text-text-secondary">朝代</span>
                 <div className="flex flex-wrap gap-1.5">
-                  {list.map((t) => (
+                  {meta.dynasties.map((d) => (
                     <FilterPill
-                      key={t.id}
-                      label={t.name}
-                      selected={criteria.typeIds.includes(t.id)}
-                      onClick={() => toggleType(t.id)}
+                      key={d}
+                      label={d}
+                      selected={criteria.dynasty === d}
+                      onClick={() =>
+                        setCrit({ dynasty: criteria.dynasty === d ? null : d })
+                      }
                     />
                   ))}
                 </div>
               </div>
-            )
-          })}
-        </FilterPanel>
-      )}
+            )}
 
-      {indexLoading && <p className="text-body text-text-secondary">載入中…</p>}
-      {indexError && (
-        <p className="text-body text-danger">
-          無法載入詩詞庫（請確認已產生 public/literature 資料）。
-        </p>
-      )}
-      {!indexLoading && !indexError && view.length === 0 && (
-        <EmptyState title="沒有符合的詩詞" Icon={IconFeather} />
-      )}
-
-      {!indexLoading && !indexError && view.length > 0 && (
-        <>
-          <ResultCount count={view.length} />
-          <div className="flex flex-col gap-2">
-            {view.slice(0, limit).map((p) => (
-              <PoemCard
-                key={p.id}
-                entry={p}
-                isFavorite={favoriteIds.has(p.id)}
-                onOpen={() => navigate(routes.literature.poem(String(p.id)))}
-                onToggleFavorite={() => toggle(p.id)}
-              />
-            ))}
-          </div>
-          {view.length > limit && (
-            <button
-              onClick={() => setLimit((n) => n + PAGE)}
-              className="mx-auto mt-1 rounded-pill bg-input px-4 py-2 text-body text-text-secondary"
-            >
-              載入更多（{view.length - limit}）
-            </button>
-          )}
-        </>
-      )}
+            {FILTER_KINDS.map((kind) => {
+              const list = typesByKind.get(kind)
+              if (!list || list.length === 0) return null
+              return (
+                <div key={kind} className="flex flex-col gap-1.5">
+                  <span className="text-caption text-text-secondary">
+                    {KIND_LABEL[kind]}
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {list.map((t) => (
+                      <FilterPill
+                        key={t.id}
+                        label={t.name}
+                        selected={criteria.typeIds.includes(t.id)}
+                        onClick={() => toggleType(t.id)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )
+            })}
+          </>
+        }
+        loading={indexLoading}
+        loadingText="載入中…"
+        error={indexError}
+        data={index}
+        errorText="無法載入詩詞庫（請確認已產生 public/literature 資料）。"
+        emptyState={<EmptyState title="沒有符合的詩詞" Icon={IconFeather} />}
+      >
+        {() =>
+          view.length === 0 ? (
+            <EmptyState title="沒有符合的詩詞" Icon={IconFeather} />
+          ) : (
+            <>
+              <ResultCount count={view.length} />
+              <div className="flex flex-col gap-2">
+                {view.slice(0, limit).map((p) => (
+                  <PoemCard
+                    key={p.id}
+                    entry={p}
+                    isFavorite={favoriteIds.has(p.id)}
+                    onOpen={() => navigate(routes.literature.poem(String(p.id)))}
+                    onToggleFavorite={() => toggle(p.id)}
+                  />
+                ))}
+              </div>
+              {view.length > limit && (
+                <button
+                  onClick={() => setLimit((n) => n + PAGE)}
+                  className="mx-auto mt-1 rounded-pill bg-input px-4 py-2 text-body text-text-secondary"
+                >
+                  載入更多（{view.length - limit}）
+                </button>
+              )}
+            </>
+          )
+        }
+      </ListSearchFilterPanel>
     </div>
   )
 }

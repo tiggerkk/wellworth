@@ -28,15 +28,11 @@ import { SegmentedTabs } from '../components/SegmentedTabs'
 import { SelectMenu } from '../components/SelectMenu'
 import { Toggle } from '../components/Toggle'
 import { Calendar } from '../components/Calendar'
-import { ListSearchHeader } from '../components/ListSearchHeader'
-import { FilterPanel } from '../components/FilterPanel'
-import { FilterPanelFooter } from '../components/FilterPanelFooter'
-import { ResultCount } from '../components/ResultCount'
+import { ListSearchFilterPanel, ResultCount } from '../components/ListSearchFilterPanel'
 import { DateRangeRow } from '../components/DateRangeRow'
 import { ShowRowHeader } from '../components/ShowRowHeader'
 import { PosterThumb } from '../components/PosterThumb'
 import { EmptyState } from '../components/EmptyState'
-import { ListLoader } from '../components/ListLoader'
 
 type TypeFilter = 'all' | ShowType
 type StatusFilter = 'all' | ShowStatus
@@ -159,90 +155,87 @@ export function ShowsLibrary() {
 
   return (
     <div className="flex min-h-full flex-col gap-3 px-4 pb-4">
-      <div className="sticky top-0 z-10 -mx-4 flex flex-col gap-3 bg-bg/90 px-4 py-3 backdrop-blur">
-        <SegmentedTabs
-          value={criteria.type}
-          onChange={(t) => setCrit({ type: t })}
-          options={TYPE_OPTIONS}
-        />
-        <ListSearchHeader
-          query={criteria.query}
-          onQueryChange={(q) => setCrit({ query: q })}
-          placeholder="Search title, director, cast"
-          filtersOpen={filtersOpen}
-          onToggleFilters={() => setFiltersOpen((o) => !o)}
-        />
-        <FilterPanelFooter
-          sortField={criteria.sortField}
-          sortOptions={SORT_OPTIONS}
-          onSortFieldChange={(f) => setCrit({ sortField: f })}
-          sortDir={criteria.sortDir}
-          onToggleSortDir={() =>
-            setCrit({ sortDir: criteria.sortDir === 'asc' ? 'desc' : 'asc' })
-          }
-          onClearFilters={clearFilters}
-        />
-      </div>
-
-      {filtersOpen && (
-        <FilterPanel>
-          <div className="grid grid-cols-2 gap-3">
-            <SelectMenu
-              value={criteria.status}
-              options={STATUS_OPTIONS}
-              onChange={(s) => setCrit({ status: s })}
+      <ListSearchFilterPanel
+        sticky
+        topExtra={
+          <SegmentedTabs
+            value={criteria.type}
+            onChange={(t) => setCrit({ type: t })}
+            options={TYPE_OPTIONS}
+          />
+        }
+        query={criteria.query}
+        onQueryChange={(q) => setCrit({ query: q })}
+        placeholder="Search title, director, cast"
+        filtersOpen={filtersOpen}
+        onToggleFilters={() => setFiltersOpen((o) => !o)}
+        sortField={criteria.sortField}
+        sortOptions={SORT_OPTIONS}
+        onSortFieldChange={(f) => setCrit({ sortField: f })}
+        sortDir={criteria.sortDir}
+        onToggleSortDir={() =>
+          setCrit({ sortDir: criteria.sortDir === 'asc' ? 'desc' : 'asc' })
+        }
+        onClearFilters={clearFilters}
+        extra={
+          <span className="flex items-center gap-1.5">
+            <span className="text-caption text-text-secondary">Favorites Only</span>
+            <Toggle
+              checked={criteria.favoritesOnly}
+              onChange={(v) => setCrit({ favoritesOnly: v })}
+              label="Favorites Only"
             />
-            <SelectMenu
-              value={criteria.genre}
-              options={genreOptions}
-              onChange={(g) => setCrit({ genre: g })}
-            />
-            <SelectMenu
-              value={String(criteria.minRating)}
-              options={RATING_OPTIONS}
-              onChange={(v) => setCrit({ minRating: Number(v) })}
-            />
-            <SelectMenu
-              value={criteria.lgbtq}
-              options={LGBTQ_OPTIONS}
-              onChange={(l) => setCrit({ lgbtq: l })}
-            />
-            <SelectMenu
-              value={criteria.dynasty}
-              options={DYNASTY_OPTIONS}
-              onChange={(d) => setCrit({ dynasty: d })}
-            />
-            <label className="flex items-center justify-between self-end py-1.5">
-              <span className="text-text-secondary">Favorites Only</span>
-              <Toggle
-                checked={criteria.favoritesOnly}
-                onChange={(v) => setCrit({ favoritesOnly: v })}
-                label="Favorites Only"
+          </span>
+        }
+        filters={
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              <SelectMenu
+                value={criteria.status}
+                options={STATUS_OPTIONS}
+                onChange={(s) => setCrit({ status: s })}
               />
-            </label>
-          </div>
-          <DateRangeRow
-            label="Started"
-            from={criteria.startFrom}
-            to={criteria.startTo}
-            onPickFrom={() => setWhichDate('startFrom')}
-            onPickTo={() => setWhichDate('startTo')}
-            onClearFrom={() => setBound('startFrom', null)}
-            onClearTo={() => setBound('startTo', null)}
-          />
-          <DateRangeRow
-            label="Finished"
-            from={criteria.endFrom}
-            to={criteria.endTo}
-            onPickFrom={() => setWhichDate('endFrom')}
-            onPickTo={() => setWhichDate('endTo')}
-            onClearFrom={() => setBound('endFrom', null)}
-            onClearTo={() => setBound('endTo', null)}
-          />
-        </FilterPanel>
-      )}
-
-      <ListLoader
+              <SelectMenu
+                value={criteria.genre}
+                options={genreOptions}
+                onChange={(g) => setCrit({ genre: g })}
+              />
+              <SelectMenu
+                value={String(criteria.minRating)}
+                options={RATING_OPTIONS}
+                onChange={(v) => setCrit({ minRating: Number(v) })}
+              />
+              <SelectMenu
+                value={criteria.lgbtq}
+                options={LGBTQ_OPTIONS}
+                onChange={(l) => setCrit({ lgbtq: l })}
+              />
+              <SelectMenu
+                value={criteria.dynasty}
+                options={DYNASTY_OPTIONS}
+                onChange={(d) => setCrit({ dynasty: d })}
+              />
+            </div>
+            <DateRangeRow
+              label="Started"
+              from={criteria.startFrom}
+              to={criteria.startTo}
+              onPickFrom={() => setWhichDate('startFrom')}
+              onPickTo={() => setWhichDate('startTo')}
+              onClearFrom={() => setBound('startFrom', null)}
+              onClearTo={() => setBound('startTo', null)}
+            />
+            <DateRangeRow
+              label="Finished"
+              from={criteria.endFrom}
+              to={criteria.endTo}
+              onPickFrom={() => setWhichDate('endFrom')}
+              onPickTo={() => setWhichDate('endTo')}
+              onClearFrom={() => setBound('endFrom', null)}
+              onClearTo={() => setBound('endTo', null)}
+            />
+          </>
+        }
         loading={loading}
         error={error}
         data={override ?? shows}
@@ -285,7 +278,7 @@ export function ShowsLibrary() {
             </>
           )
         }}
-      </ListLoader>
+      </ListSearchFilterPanel>
 
       {whichDate && (
         <Calendar

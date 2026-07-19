@@ -19,12 +19,8 @@ import { routes } from '../constants/routes'
 import { IconHeartbeat } from '@tabler/icons-react'
 import { SwipeRow } from '../components/SwipeRow'
 import { EmptyState } from '../components/EmptyState'
-import { ListLoader } from '../components/ListLoader'
 import { SelectMenu } from '../components/SelectMenu'
-import { ListSearchHeader } from '../components/ListSearchHeader'
-import { FilterPanel } from '../components/FilterPanel'
-import { FilterPanelFooter } from '../components/FilterPanelFooter'
-import { ResultCount } from '../components/ResultCount'
+import { ListSearchFilterPanel, ResultCount } from '../components/ListSearchFilterPanel'
 
 const TYPE_OPTIONS = [
   { value: 'all', label: 'Any Type' },
@@ -103,30 +99,23 @@ export function MedicalReports() {
   ]
   return (
     <div className="flex min-h-full flex-col gap-3 px-4 py-4">
-      {!error && (
-        <ListSearchHeader
-          query={criteria.query}
-          onQueryChange={(q) => setCrit({ query: q })}
-          placeholder="Search body part, narrative"
-          filtersOpen={filtersOpen}
-          onToggleFilters={() => setFiltersOpen((o) => !o)}
-        />
-      )}
-      {!error && reports.length > 0 && (
-        <FilterPanelFooter
-          sortField={criteria.sortField}
-          sortOptions={SORT_OPTIONS}
-          onSortFieldChange={(f) => setCrit({ sortField: f })}
-          sortDir={criteria.sortDir}
-          onToggleSortDir={() =>
-            setCrit({ sortDir: criteria.sortDir === 'asc' ? 'desc' : 'asc' })
-          }
-          onClearFilters={clearFilters}
-        />
-      )}
-
-      {filtersOpen && reports.length > 0 && (
-        <FilterPanel>
+      <ListSearchFilterPanel
+        query={criteria.query}
+        onQueryChange={(q) => setCrit({ query: q })}
+        placeholder="Search body part, narrative"
+        filtersOpen={filtersOpen}
+        onToggleFilters={() => setFiltersOpen((o) => !o)}
+        hideSearch={!!error}
+        hideFilters={!!error || reports.length === 0}
+        sortField={criteria.sortField}
+        sortOptions={SORT_OPTIONS}
+        onSortFieldChange={(f) => setCrit({ sortField: f })}
+        sortDir={criteria.sortDir}
+        onToggleSortDir={() =>
+          setCrit({ sortDir: criteria.sortDir === 'asc' ? 'desc' : 'asc' })
+        }
+        onClearFilters={clearFilters}
+        filters={
           <div className="grid grid-cols-2 gap-3">
             <SelectMenu
               value={criteria.reportType}
@@ -144,10 +133,7 @@ export function MedicalReports() {
               onChange={(v) => setCrit({ bodyPart: v })}
             />
           </div>
-        </FilterPanel>
-      )}
-
-      <ListLoader
+        }
         loading={loading}
         error={error}
         data={override ?? data}
@@ -200,7 +186,7 @@ export function MedicalReports() {
             </>
           )
         }}
-      </ListLoader>
+      </ListSearchFilterPanel>
     </div>
   )
 }

@@ -26,9 +26,16 @@ Module base `/literature`; tabs (Home auto-prepended by `BottomNav`): **Poems ·
 
 ### Poems — Home (`/literature`)
 
-- Sticky **`SearchBar`** ("搜尋詩詞、作者…") + **`FilterToggleButton`**. Search is real-time over title + writer + excerpt, Traditional⇄Simplified-agnostic (`foldZh`).
-- **`FilterPanel`**: 朝代 (dynasty, **single-select** pills, options from `meta.dynasties`) · 主題 / 時令 / 選集 / 風格 (**multi-select** pills, from `meta.types` by `kind`). Footer row: **只看收藏** toggle · the shared **`SortControl`** (labelled 排序; 朝代 / 作者 / 標題, default 朝代 ascending, with an asc/desc toggle) · **清除篩選** (bottom-right, same line; clears filters but keeps the query + sort). Filter semantics: **OR within a kind-group, AND across groups** (e.g. (春天 OR 秋天) AND 唐詩三百首). Sorting is the pure `sortPoems` (dynasty rank = position in `meta.dynasties`, so it's corpus-consistent; author/title by `localeCompare`; null/unknown dynasty sorts last). Pills use the shared **`FilterPill`** (`text-body`, `bg-input text-text-primary` inactive / accent-filled selected) — the same chip the Quotes Library tag facet, the Poets list, and a poem's tag list use.
-- **`ResultCount`** + a list of **`PoemCard`**s (title · writer · gold dynasty badge · excerpt + heart). Tapping a card opens the poem; the heart toggles a favourite (optimistic). Initial paint capped (`PAGE = 60`) with a "載入更多" button. Criteria persist via `useSessionState('wellworth:literature-home')`.
+- **Search bar** ("搜尋詩詞、作者…"): matches title, writer, excerpt; Traditional⇄Simplified-agnostic (`foldZh`); **Filter button** to the right.
+- **SortControl**, **只看收藏 toggle**, **Clear Filters button**: Sort over (labelled 排序) { 朝代, 作者, 標題 } with an **asc/desc** toggle; default is **朝代** descending.
+- **Filter panel**: 朝代 (dynasty, **single-select** pills, options from `meta.dynasties`) · 主題 / 時令 / 選集 / 風格 (**multi-select** pills, from `meta.types` by `kind`).
+  - Pills use the shared **`FilterPill`** (`text-body`, `bg-input text-text-primary` inactive / accent-filled selected).
+  - Filter semantics: **OR within a kind-group, AND across groups** (e.g. (春天 OR 秋天) AND 唐詩三百首). Sorting is the pure `sortPoems` (dynasty rank = position in `meta.dynasties`, so it's corpus-consistent; author/title by `localeCompare`; null/unknown dynasty sorts last).
+- Each row carries:
+  - Line 1: **title · writer · gold dynasty badge**.
+  - Line 2: **excerpt** + **heart** (toggle is optimistic).
+  - Tap → opens the poem; **swipe-left → Delete** (optimistic).
+- Initial paint capped (`PAGE = 60`) with a "載入更多" button.
 
 ### Poem detail (`/literature/poem/:id`)
 

@@ -31,7 +31,7 @@ const OUT_DIR = join(ROOT, 'public', 'literature')
 const CORPUS_VERSION = 1
 const EXCERPT_LEN = 40
 
-// The curated filter vocabulary: which `types.name` values appear under each FilterPanel group, in
+// The curated filter vocabulary: which `types.name` values appear under each filter panel group, in
 // display order. A type not in any list is kept (kind 'other') so its poem links still resolve, but
 // it isn't surfaced as a filter. Keep these in sync with docs/11_literature.md.
 // These are matched against the actual `types.name` values in poems.db (curated subset shown as

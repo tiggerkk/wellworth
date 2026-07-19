@@ -4,7 +4,7 @@
 
 ### Dashboard (`/medical`)
 
-No screen-title header. Explicit loading / empty / error states; empty (no reports yet) → the shared **EmptyState** (see `docs/01_design_system.md`): "No medical reports yet" · "+ New Medical Report".
+No screen-title header. Explicit loading / empty / error states; empty (no reports yet) → the shared **EmptyState**: "No medical reports yet" · "+ New Medical Report".
 
 When there is data, three sections:
 
@@ -25,13 +25,13 @@ Tracked tests are chosen in Medical Settings → Tracked Tests (seeded from `def
 
 ### Reports (`/medical/reports`)
 
-- Searchable/filterable/sortable list (no screen-title header), newest report-date first by default.
-- A **Search bar** (placeholder "Search body part, narrative") with an **icon-only Filter button** to its right (see `docs/01_design_system.md` → FilterToggleButton). Empty → shared **EmptyState**; active search/filter with no matches → "No matches."
-- Shared **FilterPanel** (label-free): **Any Type**, **Any Provider** (providers present in your own reports), **Any Body Part** — footer carries the **SortControl** next to **Clear Filters**.
-- Sort over { Date, Type, Provider, Body Part } with **asc/desc** toggle (newest-first within ties); default: **Date** descending.
-- Each row: **full date** (with year — reports span years), the **type** label, and `provider · body part` as a secondary line. Tap → Report detail; **swipe-left → Delete** (hard; tapping the revealed Delete acts immediately — no browser dialog; the FK cascades the report's results). The delete is **optimistic** — the row drops from local state instantly, the DB delete runs in the background (no `bumpMedical()` → full-list refetch; bump only on error). See tech-spec F16b.
-- New reports from the **New Medical** bottom-nav tab.
-- Search, filter, and sort persist for the **browser-tab session** (`useSessionState`).
+- **Search bar**: matches body part, narrative; **Filter button** to the right.
+- **SortControl**, **Clear Filters button**: Sort over { Date, Type, Provider, Body Part } with an **asc/desc** toggle (newest-first within ties); default is **Date** descending.
+- **Filter panel** is label-free: **Any Type**, **Any Provider**, **Any Body Part**.
+- Each row carries:
+  - Line 1: **full date**.
+  - Line 2: **type · provider · body part**.
+  - Tap → Entry/Edit; **swipe-left → Delete** (optimistic). The DB delete runs in the background (no `bumpMedical()` → full-list refetch; bump only on error).
 
 ### Report detail (`/medical/:id`)
 

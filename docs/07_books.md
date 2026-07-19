@@ -2,35 +2,29 @@
 
 ## Screens
 
-### Dashboard
+### Dashboard (`/books`)
 
-Shelves, each a card shown only when it has items. No type filter (books are one kind). Every row shows its **status chip** (Want / Reading / Read / Dropped) consistently across all shelves:
-
-- **Favourites** — every `is_favorite` book (any status), each row showing its status chip. (A favourite also still appears in its status shelf below.)
-- **Currently Reading** — all `status=reading`; each row shows the cover, title (+ year), the status chip, and author(s), plus a **Mark Read** action (status → read, finish → today).
-- **Recently Read** — the last 5 by finish date; rows show the status chip + star rating + the finish date as **month + day** (e.g. "Jun 22"). Imported rows with no `end_date` don't appear here.
-- **Want to Read** — `status=want` titles; each with the **"Want"** chip + author(s) and a **Start Reading** action (status → reading, start → today).
-
-- A favourite row anywhere shows a small filled **♥** before the title.
-- Status chip palette: **Want**, **Reading**, **Read**, **Dropped** (the shared `StatusChip`).
 - A small stat line: **"N read this year"**.
-- The **Mark Read / Start Reading** quick actions are **optimistic**: the row patches in local state and
-  moves shelves instantly, persisting in the background (no `bumpBooks()` → full-library refetch on
-  success; bump only on error). The Library **swipe-delete** is optimistic the same way. See tech-spec F16b.
+- **Shelves**: a card shown only when it has items. Each row carries the following (with some card-specific items):
+  - Line 1: **cover thumbnail** (2:3, neutral placeholder when there's no cover), **title (+ year)** with a small filled **♥** when favorited and a **gold Dynasty badge** for Chinese titles.
+  - Line 2: **status chip · star rating** (when set) **· date**.
+  - Line 3: **author · first genre**.
+- **Favorites** — every `is_favorite` book (any status); a favorite also still appears in its status shelf below.
+- **Currently Reading** — all `status=reading`; **Mark Read** action (status → read, finish → today).
+- **Recently Read** — last 5 by finish date; shows **finish date**. Imported rows with no `end_date` don't appear here.
+- **Want to Read** — `status=want` titles; **Start Reading** action (status → reading, start → today).
+- **Mark Read / Start Reading** quick actions are **optimistic**: the row patches in local state and moves shelves instantly, persisting in the background (no `bumpBooks()` → full-library refetch on success; bump only on error).
 
-### Library
+### Library (`/books/library`)
 
-- **Search bar** over a list of every tracked book — matches **Title and Author(s)** (author is searched, not filtered). An **icon-only Filter button** to the right (see `docs/01_design_system.md` → FilterToggleButton).
-- The shared **FilterPanel** is label-free: **Any Status**, **Any Genre** (genres in your own rows), **Any Rating** (minimum: Any / 1★+ … / 5★), **Any LGBT+** (None/Some/Significant), **Any Dynasty** (+ `全部` and the 12 dynasties) sharing a row with the **Favorites Only** toggle, plus single-line **Started** + **Finished** date ranges (each bound via the Calendar modal, clearable via DateRangeRow).
-- Panel footer: shared **SortControl** next to **Clear Filters**. Sort over { Date, Dynasty, Rating, Status, Genre, Author, Title, Year } with an **asc/desc** toggle (nulls sort last; Dynasty: chronologically oldest→newest ascending — 先秦 first … 近代, `全部` last, non-Chinese last; descending flips it); default is **Date** descending.
-- Each row: **cover thumbnail** (2:3, neutral placeholder when there's no cover), title (+ year) with a small filled **♥** when favourited and a **gold Dynasty badge** for Chinese titles, the author(s), a **status chip**, the **star rating** when rated, the first genre, and the date as "Jun 22". Tap → Entry/Edit; **swipe-left → Delete** (hard; tapping the revealed Delete acts immediately — no browser dialog).
-- Search, filter, and sort persist for the **browser-tab session** (`useSessionState`), restored on return via Back/bottom nav/Home, cleared when the tab closes.
+- **Search bar**: matches title, author(s); **Filter button** to the right.
+- **SortControl**, **Favorites Only toggle**, **Clear Filters button**: Sort over { Date, Dynasty, Rating, Status, Genre, Author, Title, Year } with an **asc/desc** toggle (nulls sort last; Dynasty: chronologically oldest→newest ascending — 先秦 first … 近代, `全部` last, non-Chinese last; descending flips it); default is **Date** descending.
+- **Filter panel** is label-free: **Any Status**, **Any Genre**, **Any Rating** (minimum: Any / 1★+ … / 5★), **Any LGBT+**, **Any Dynasty**, and single-line **Started** + **Finished** date ranges.
+- Each row shows the same information as the Dashboard; Tap → Entry/Edit; **swipe-left → Delete** (optimistic).
 
-### Entry / Edit (form)
+### New / Edit Entry (`/books/entry`, `/books/:id`)
 
-Reached from the **New Book** bottom-nav tab (`/books/entry`, new) or by tapping a row (`/books/:id`, edit).
-
-- A **favourite heart** in the header toggles `is_favorite`.
+- A **favorite heart** in the header toggles `is_favorite`.
 - **Title** (required for CREATE) shares a line with a **Google Books** search button (search icon) opening the **Book Search** modal (pre-filled with the current Title). Selecting a result fetches details and populates metadata — a cover thumbnail + Genres, Page count, Language, Description (read-only display) — plus Title / Author(s) / Year (editable). Nothing saved until Create/Save.
 - **Author(s)** (comma-separated), **Year**.
 - **Status** (Want / Reading / Read / Dropped) is a **dropdown** sharing a line with **Rating** (0–5 half-star): Reading defaults **Start Date** to today; Read/Dropped defaults **Finish/Drop date** to today.
@@ -47,7 +41,7 @@ Reached from the **New Book** bottom-nav tab (`/books/entry`, new) or by tapping
 - Results from **Google Books**, falling back to **Open Library** when Google returns nothing.
 - `VITE_GOOGLE_BOOKS_API_KEY` is optional (search works keyless at a lower quota).
 
-### Settings
+### Settings (`/book/settings`)
 
 - **Entry Form → Visible Fields**: shared **VisibleFieldsSheet** (see `docs/01_design_system.md`) over the optional Entry/Edit fields in New/Edit form order: Author(s), Year, **Google Books Metadata**, Rating, LGBT+, Dynasty, the two dates, Notes. Stored on `profile.book_visible_fields` (**NULL = all visible**). Title, Status, and the Search button are always shown and not listed.
 - **Import → Enable Bulk Books Import** toggle (`profile.book_importer_enabled`, **on by default**); when on, an **Import CSV Books** launcher opens the importer sheet, plus a **Clear Import Match Cache (N)** button — clears the localStorage match cache (`clearBookMatchCache`; `N` = `bookMatchCacheSize`), so the next import does a fresh lookup. The cache is **not** affected by a DB reset (see Import CSV → match cache, and `OWNER_RUNBOOK.md` Part R).
@@ -118,7 +112,7 @@ Full guide: `templates/books-import-guide.md`.
 - `rating` NUMERIC NULL — user stars, 0–5 in 0.5 steps (CHECK)
 - `lgbtq_rep` TEXT DEFAULT 'none' — `'none' | 'some' | 'significant'` (CHECK)
 - `dynasty` TEXT NULL — Chinese dynasty (CHECK against the 13 `DYNASTIES` values in `src/constants/dynasty.ts`); set only for Chinese titles, NULL otherwise; editable only when the Title contains CJK
-- `is_favorite` BOOLEAN NOT NULL DEFAULT false — ♥; favourites filter + Dashboard shelf
+- `is_favorite` BOOLEAN NOT NULL DEFAULT false — ♥; favorites filter + Dashboard shelf
 - `start_date` DATE NULL · `end_date` DATE NULL
 - `notes` TEXT NULL — free-text user notes (effectively unbounded; edited inline or via `NotesEditorOverlay`)
 - `created_at`, `updated_at`

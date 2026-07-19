@@ -2,21 +2,75 @@ import { useCallback, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { IconPlus } from '@tabler/icons-react'
 import { useAsync } from '../hooks/useAsync'
+import { useSessionState } from '../hooks/useSessionState'
 import { useSheetNavigate } from '../hooks/useSheetNavigate'
 import { useDiaryVersion, bumpDiary } from '../lib/wellness-diary-refresh'
 import { listFoods, deleteFoodSmart } from '../data/food'
 import { listActivities, softDeleteActivity } from '../data/activity'
-import { resolveActivityIcon } from '../constants/wellness'
+import {
+  resolveActivityIcon,
+  FOOD_TYPES,
+  FOOD_SOURCES,
+  ACTIVITY_TEMPLATES,
+  EFFORT_LEVELS,
+} from '../constants/wellness'
 import { routes } from '../constants/routes'
+import {
+  DEFAULT_FOOD_CRITERIA,
+  DEFAULT_ACTIVITY_CRITERIA,
+  applyFoodListView,
+  applyActivityListView,
+  type FoodListCriteria,
+  type ActivityListCriteria,
+} from '../lib/wellness-library'
 import { SegmentedTabs } from '../components/SegmentedTabs'
-import { SearchBar } from '../components/SearchBar'
+import { SelectMenu } from '../components/SelectMenu'
+import { Toggle } from '../components/Toggle'
 import { ListRow } from '../components/ListRow'
 import { SwipeRow } from '../components/SwipeRow'
-import { ResultCount } from '../components/ResultCount'
 import { SecondaryButton } from '../components/SecondaryButton'
-import { foldZh } from '../lib/zh-fold'
+import { EmptyState } from '../components/EmptyState'
+import { ListSearchFilterPanel, ResultCount } from '../components/ListSearchFilterPanel'
 
 type Tab = 'foods' | 'activities'
+
+const FOOD_SORT_OPTIONS: { value: FoodListCriteria['sortField']; label: string }[] = [
+  { value: 'name', label: 'Food Name' },
+  { value: 'type', label: 'Type' },
+  { value: 'source', label: 'Source' },
+]
+
+const ACTIVITY_SORT_OPTIONS: {
+  value: ActivityListCriteria['sortField']
+  label: string
+}[] = [
+  { value: 'name', label: 'Activity Name' },
+  { value: 'template', label: 'Template' },
+  { value: 'effort', label: 'Effort' },
+]
+
+const FOOD_TYPE_OPTIONS = [
+  { value: 'all', label: 'Any Type' },
+  ...FOOD_TYPES.map((t) => ({ value: t.key, label: t.label })),
+]
+const FOOD_SOURCE_OPTIONS = [
+  { value: 'all', label: 'Any Source' },
+  ...FOOD_SOURCES.map((s) => ({ value: s.key, label: s.label })),
+]
+const ACTIVITY_TEMPLATE_OPTIONS = [
+  { value: 'all', label: 'Any Template' },
+  ...ACTIVITY_TEMPLATES.map((t) => ({ value: t.key, label: t.label })),
+]
+const ACTIVITY_EFFORT_OPTIONS = [
+  { value: 'all', label: 'Any Effort' },
+  ...EFFORT_LEVELS.map((e) => ({ value: e.key, label: e.label })),
+]
+
+function foodTag(f: { source: string; type: string }): string | undefined {
+  if (f.source === 'usda') return 'USDA'
+  if (f.source === 'off') return 'OFF'
+  return f.type === 'supplement' ? 'Supplement' : undefined
+}
 
 export function WellnessLibrary() {
   const openSheet = useSheetNavigate()
@@ -38,34 +92,37 @@ export function WellnessLibrary() {
       ),
     [setParams],
   )
-  const [query, setQuery] = useState('')
+  const [filtersOpen, setFiltersOpen] = useState(false)
+
+  const [foodCriteria, setFoodCriteria] = useSessionState<FoodListCriteria>(
+    'wellworth:wellness-library-foods',
+    DEFAULT_FOOD_CRITERIA,
+  )
+  const setFoodCrit = (patch: Partial<FoodListCriteria>) =>
+    setFoodCriteria((c) => ({ ...c, ...patch }))
+
+  const [activityCriteria, setActivityCriteria] = useSessionState<ActivityListCriteria>(
+    'wellworth:wellness-library-activities',
+    DEFAULT_ACTIVITY_CRITERIA,
+  )
+  const setActivityCrit = (patch: Partial<ActivityListCriteria>) =>
+    setActivityCriteria((c) => ({ ...c, ...patch }))
 
   const foodsFn = useCallback(() => {
     void version // refetch when user data changes
     return listFoods()
   }, [version])
-  const { data: foods } = useAsync(foodsFn)
+  const { data: foods, loading: foodsLoading, error: foodsError } = useAsync(foodsFn)
 
   const activitiesFn = useCallback(() => {
     void version
     return listActivities()
   }, [version])
-  const { data: activities } = useAsync(activitiesFn)
-
-  const q = foldZh(query.trim())
-  // All of the user's foods — custom items plus the USDA/OFF rows cached from a favorite, log, or
-  // custom serving. Surfacing the cached ones here gives them a delete path they otherwise lack.
-  const foodList = (foods ?? []).filter((f) => !q || foldZh(f.name).includes(q))
-  const filteredActivities = (activities ?? []).filter(
-    (a) => !q || foldZh(a.name).includes(q),
-  )
-
-  // Source/type tag shown as the row subtitle.
-  function foodTag(f: { source: string; type: string }): string | undefined {
-    if (f.source === 'usda') return 'USDA'
-    if (f.source === 'off') return 'OFF'
-    return f.type === 'supplement' ? 'Supplement' : undefined
-  }
+  const {
+    data: activities,
+    loading: activitiesLoading,
+    error: activitiesError,
+  } = useAsync(activitiesFn)
 
   async function removeFood(id: string) {
     await deleteFoodSmart(id)
@@ -76,91 +133,192 @@ export function WellnessLibrary() {
     bumpDiary()
   }
 
+  const tabs = (
+    <SegmentedTabs
+      value={tab}
+      onChange={setTab}
+      options={[
+        { value: 'foods', label: 'Foods' },
+        { value: 'activities', label: 'Activities' },
+      ]}
+    />
+  )
+
   return (
     <div className="flex flex-col gap-3 px-4 py-4">
-      {/* Pinned top pane: tabs + search stay visible while the list scrolls. */}
-      <div className="sticky top-0 z-10 -mx-4 flex flex-col gap-3 bg-bg/90 px-4 py-3 backdrop-blur">
-        <SegmentedTabs
-          value={tab}
-          onChange={setTab}
-          options={[
-            { value: 'foods', label: 'Foods' },
-            { value: 'activities', label: 'Activities' },
-          ]}
-        />
-        <SearchBar value={query} onChange={setQuery} placeholder={`Search ${tab}`} />
-      </div>
-
-      {/* "XX results" on the left; the New entry point sits at the right edge of the same row. */}
-      <div className="flex items-center">
-        {tab === 'foods' && foodList.length > 0 && (
-          <ResultCount count={foodList.length} />
-        )}
-        {tab === 'activities' && filteredActivities.length > 0 && (
-          <ResultCount count={filteredActivities.length} />
-        )}
-        <SecondaryButton
-          size="sm"
-          className="ml-auto"
-          onClick={() =>
-            openSheet(
-              tab === 'foods' ? routes.wellness.newFood : routes.wellness.newActivity,
-            )
+      {tab === 'foods' ? (
+        <ListSearchFilterPanel
+          sticky
+          topExtra={tabs}
+          query={foodCriteria.query}
+          onQueryChange={(q) => setFoodCrit({ query: q })}
+          placeholder="Search foods"
+          filtersOpen={filtersOpen}
+          onToggleFilters={() => setFiltersOpen((o) => !o)}
+          sortField={foodCriteria.sortField}
+          sortOptions={FOOD_SORT_OPTIONS}
+          onSortFieldChange={(f) => setFoodCrit({ sortField: f })}
+          sortDir={foodCriteria.sortDir}
+          onToggleSortDir={() =>
+            setFoodCrit({ sortDir: foodCriteria.sortDir === 'asc' ? 'desc' : 'asc' })
           }
+          onClearFilters={() => setFoodCriteria(DEFAULT_FOOD_CRITERIA)}
+          extra={
+            <span className="flex items-center gap-1.5">
+              <span className="text-caption text-text-secondary">Favorites Only</span>
+              <Toggle
+                checked={foodCriteria.favoritesOnly}
+                onChange={(v) => setFoodCrit({ favoritesOnly: v })}
+                label="Favorites Only"
+              />
+            </span>
+          }
+          filters={
+            <div className="grid grid-cols-2 gap-3">
+              <SelectMenu
+                value={foodCriteria.type}
+                options={FOOD_TYPE_OPTIONS}
+                onChange={(v) => setFoodCrit({ type: v })}
+              />
+              <SelectMenu
+                value={foodCriteria.source}
+                options={FOOD_SOURCE_OPTIONS}
+                onChange={(v) => setFoodCrit({ source: v })}
+              />
+            </div>
+          }
+          loading={foodsLoading}
+          error={foodsError}
+          data={foods}
+          errorText="Couldn’t load your foods."
+          emptyState={<EmptyState title="No foods yet" />}
         >
-          <span className="inline-flex items-center gap-1 text-positive">
-            <IconPlus size={15} /> New {tab === 'foods' ? 'Food' : 'Activity'}
-          </span>
-        </SecondaryButton>
-      </div>
-
-      <div className="overflow-hidden rounded-card border border-border bg-surface">
-        {tab === 'foods' &&
-          (foodList.length === 0 ? (
-            <p className="px-4 py-6 text-center text-body text-text-tertiary">
-              No foods yet.
-            </p>
-          ) : (
-            foodList.map((f) => (
-              <SwipeRow key={f.id} onDelete={() => void removeFood(f.id)}>
-                <ListRow
-                  title={f.name}
-                  subtitle={foodTag(f)}
-                  // Custom foods open the editor; cached USDA/OFF foods open Food Detail so their
-                  // servings can be viewed/managed (they aren't editable as custom nutrient rows).
-                  onClick={() =>
-                    openSheet(
-                      f.source === 'custom'
-                        ? routes.wellness.editFood(f.id)
-                        : routes.wellness.food('local', f.id),
-                    )
-                  }
-                />
-              </SwipeRow>
-            ))
-          ))}
-
-        {tab === 'activities' &&
-          (filteredActivities.length === 0 ? (
-            <p className="px-4 py-6 text-center text-body text-text-tertiary">
-              No activities yet.
-            </p>
-          ) : (
-            filteredActivities.map((a) => {
-              const Icon = resolveActivityIcon(a.icon)
-              return (
-                <SwipeRow key={a.id} onDelete={() => void removeActivity(a.id)}>
-                  <ListRow
-                    leading={<Icon size={22} stroke={1.75} />}
-                    title={a.name}
-                    subtitle={a.template === 'strength' ? 'Strength' : 'Duration'}
-                    onClick={() => openSheet(routes.wellness.editActivity(a.id))}
-                  />
-                </SwipeRow>
-              )
+          {(all) => {
+            const view = applyFoodListView(all, foodCriteria)
+            return (
+              <>
+                <div className="flex items-center">
+                  {view.length > 0 && <ResultCount count={view.length} />}
+                  <SecondaryButton
+                    size="sm"
+                    className="ml-auto"
+                    onClick={() => openSheet(routes.wellness.newFood)}
+                  >
+                    <span className="inline-flex items-center gap-1 text-positive">
+                      <IconPlus size={15} /> New Food
+                    </span>
+                  </SecondaryButton>
+                </div>
+                <div className="overflow-hidden rounded-card border border-border bg-surface">
+                  {view.length === 0 ? (
+                    <p className="px-4 py-6 text-center text-body text-text-tertiary">
+                      No matches.
+                    </p>
+                  ) : (
+                    view.map((f) => (
+                      <SwipeRow key={f.id} onDelete={() => void removeFood(f.id)}>
+                        <ListRow
+                          title={f.name}
+                          subtitle={foodTag(f)}
+                          // Custom foods open the editor; cached USDA/OFF foods open Food Detail so
+                          // their servings can be viewed/managed (not editable as custom nutrient rows).
+                          onClick={() =>
+                            openSheet(
+                              f.source === 'custom'
+                                ? routes.wellness.editFood(f.id)
+                                : routes.wellness.food('local', f.id),
+                            )
+                          }
+                        />
+                      </SwipeRow>
+                    ))
+                  )}
+                </div>
+              </>
+            )
+          }}
+        </ListSearchFilterPanel>
+      ) : (
+        <ListSearchFilterPanel
+          sticky
+          topExtra={tabs}
+          query={activityCriteria.query}
+          onQueryChange={(q) => setActivityCrit({ query: q })}
+          placeholder="Search activities"
+          filtersOpen={filtersOpen}
+          onToggleFilters={() => setFiltersOpen((o) => !o)}
+          sortField={activityCriteria.sortField}
+          sortOptions={ACTIVITY_SORT_OPTIONS}
+          onSortFieldChange={(f) => setActivityCrit({ sortField: f })}
+          sortDir={activityCriteria.sortDir}
+          onToggleSortDir={() =>
+            setActivityCrit({
+              sortDir: activityCriteria.sortDir === 'asc' ? 'desc' : 'asc',
             })
-          ))}
-      </div>
+          }
+          onClearFilters={() => setActivityCriteria(DEFAULT_ACTIVITY_CRITERIA)}
+          filters={
+            <div className="grid grid-cols-2 gap-3">
+              <SelectMenu
+                value={activityCriteria.template}
+                options={ACTIVITY_TEMPLATE_OPTIONS}
+                onChange={(v) => setActivityCrit({ template: v })}
+              />
+              <SelectMenu
+                value={activityCriteria.effort}
+                options={ACTIVITY_EFFORT_OPTIONS}
+                onChange={(v) => setActivityCrit({ effort: v })}
+              />
+            </div>
+          }
+          loading={activitiesLoading}
+          error={activitiesError}
+          data={activities}
+          errorText="Couldn’t load your activities."
+          emptyState={<EmptyState title="No activities yet" />}
+        >
+          {(all) => {
+            const view = applyActivityListView(all, activityCriteria)
+            return (
+              <>
+                <div className="flex items-center">
+                  {view.length > 0 && <ResultCount count={view.length} />}
+                  <SecondaryButton
+                    size="sm"
+                    className="ml-auto"
+                    onClick={() => openSheet(routes.wellness.newActivity)}
+                  >
+                    <span className="inline-flex items-center gap-1 text-positive">
+                      <IconPlus size={15} /> New Activity
+                    </span>
+                  </SecondaryButton>
+                </div>
+                <div className="overflow-hidden rounded-card border border-border bg-surface">
+                  {view.length === 0 ? (
+                    <p className="px-4 py-6 text-center text-body text-text-tertiary">
+                      No matches.
+                    </p>
+                  ) : (
+                    view.map((a) => {
+                      const Icon = resolveActivityIcon(a.icon)
+                      return (
+                        <SwipeRow key={a.id} onDelete={() => void removeActivity(a.id)}>
+                          <ListRow
+                            leading={<Icon size={22} stroke={1.75} />}
+                            title={a.name}
+                            subtitle={a.template === 'strength' ? 'Strength' : 'Duration'}
+                            onClick={() => openSheet(routes.wellness.editActivity(a.id))}
+                          />
+                        </SwipeRow>
+                      )
+                    })
+                  )}
+                </div>
+              </>
+            )
+          }}
+        </ListSearchFilterPanel>
+      )}
     </div>
   )
 }

@@ -25,13 +25,9 @@ import { SegmentedTabs } from '../components/SegmentedTabs'
 import { Toggle } from '../components/Toggle'
 import { InsurancePolicyHeader } from '../components/InsurancePolicyHeader'
 import { Calendar } from '../components/Calendar'
-import { ListSearchHeader } from '../components/ListSearchHeader'
-import { FilterPanel } from '../components/FilterPanel'
-import { FilterPanelFooter } from '../components/FilterPanelFooter'
+import { ListSearchFilterPanel, ResultCount } from '../components/ListSearchFilterPanel'
 import { DateRangeRow } from '../components/DateRangeRow'
-import { ResultCount } from '../components/ResultCount'
 import { EmptyState } from '../components/EmptyState'
-import { ListLoader } from '../components/ListLoader'
 
 const SORT_OPTIONS: { value: InsuranceSortField; label: string }[] = [
   { value: 'startDate', label: 'Start Date' },
@@ -109,63 +105,55 @@ export function InsurancePolicies() {
 
   return (
     <div className="flex min-h-full flex-col gap-3 px-4 py-4">
-      {!error && (
-        <ListSearchHeader
-          query={criteria.query}
-          onQueryChange={(q) => setCrit({ query: q })}
-          placeholder="Search policy number, policy name, notes"
-          filtersOpen={filtersOpen}
-          onToggleFilters={() => setFiltersOpen((o) => !o)}
-        />
-      )}
-      {!error && items.length > 0 && (
-        <FilterPanelFooter
-          sortField={criteria.sortField}
-          sortOptions={SORT_OPTIONS}
-          onSortFieldChange={(f) => setCrit({ sortField: f })}
-          sortDir={criteria.sortDir}
-          onToggleSortDir={() =>
-            setCrit({ sortDir: criteria.sortDir === 'asc' ? 'desc' : 'asc' })
-          }
-          onClearFilters={clearFilters}
-        />
-      )}
-
-      {filtersOpen && items.length > 0 && (
-        <FilterPanel>
-          <div className="grid grid-cols-2 gap-3">
-            <SelectMenu
-              value={criteria.provider}
-              options={providerOptions}
-              onChange={(v) => setCrit({ provider: v })}
-            />
-            <label className="flex items-center justify-between self-end py-1.5">
-              <span className="text-text-secondary">Past Break-Even Only</span>
-              <Toggle
-                checked={criteria.brokeEvenOnly}
-                onChange={(v) => setCrit({ brokeEvenOnly: v })}
-                label="Past Break-Even Only"
+      <ListSearchFilterPanel
+        query={criteria.query}
+        onQueryChange={(q) => setCrit({ query: q })}
+        placeholder="Search policy number, policy name, notes"
+        filtersOpen={filtersOpen}
+        onToggleFilters={() => setFiltersOpen((o) => !o)}
+        hideSearch={!!error}
+        hideFilters={!!error || items.length === 0}
+        sortField={criteria.sortField}
+        sortOptions={SORT_OPTIONS}
+        onSortFieldChange={(f) => setCrit({ sortField: f })}
+        sortDir={criteria.sortDir}
+        onToggleSortDir={() =>
+          setCrit({ sortDir: criteria.sortDir === 'asc' ? 'desc' : 'asc' })
+        }
+        onClearFilters={clearFilters}
+        filters={
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              <SelectMenu
+                value={criteria.provider}
+                options={providerOptions}
+                onChange={(v) => setCrit({ provider: v })}
               />
-            </label>
-          </div>
-          <SegmentedTabs
-            value={criteria.status}
-            options={STATUS_OPTIONS}
-            onChange={(v) => setCrit({ status: v })}
-          />
-          <DateRangeRow
-            label="Started"
-            from={criteria.startFrom}
-            to={criteria.startTo}
-            onPickFrom={() => setWhichDate('startFrom')}
-            onPickTo={() => setWhichDate('startTo')}
-            onClearFrom={() => setCrit({ startFrom: null })}
-            onClearTo={() => setCrit({ startTo: null })}
-          />
-        </FilterPanel>
-      )}
-
-      <ListLoader
+              <label className="flex items-center justify-between self-end py-1.5">
+                <span className="text-text-secondary">Past Break-Even Only</span>
+                <Toggle
+                  checked={criteria.brokeEvenOnly}
+                  onChange={(v) => setCrit({ brokeEvenOnly: v })}
+                  label="Past Break-Even Only"
+                />
+              </label>
+            </div>
+            <SegmentedTabs
+              value={criteria.status}
+              options={STATUS_OPTIONS}
+              onChange={(v) => setCrit({ status: v })}
+            />
+            <DateRangeRow
+              label="Started"
+              from={criteria.startFrom}
+              to={criteria.startTo}
+              onPickFrom={() => setWhichDate('startFrom')}
+              onPickTo={() => setWhichDate('startTo')}
+              onClearFrom={() => setCrit({ startFrom: null })}
+              onClearTo={() => setCrit({ startTo: null })}
+            />
+          </>
+        }
         loading={loading}
         error={error}
         data={data}
@@ -236,7 +224,7 @@ export function InsurancePolicies() {
             </div>
           </>
         )}
-      </ListLoader>
+      </ListSearchFilterPanel>
 
       {whichDate && (
         <Calendar

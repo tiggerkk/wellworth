@@ -6,11 +6,7 @@ import { SwipeRow } from '../components/SwipeRow'
 import { StatusChip } from '../components/StatusChip'
 import { Thumb } from '../components/Thumb'
 import { EmptyState } from '../components/EmptyState'
-import { ListLoader } from '../components/ListLoader'
-import { ListSearchHeader } from '../components/ListSearchHeader'
-import { FilterPanel } from '../components/FilterPanel'
-import { FilterPanelFooter } from '../components/FilterPanelFooter'
-import { ResultCount } from '../components/ResultCount'
+import { ListSearchFilterPanel, ResultCount } from '../components/ListSearchFilterPanel'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useSessionState } from '../hooks/useSessionState'
@@ -129,14 +125,12 @@ export function TravelTrips() {
 
   return (
     <div className="flex min-h-full flex-col gap-3 px-4 py-4">
-      <ListSearchHeader
+      <ListSearchFilterPanel
         query={criteria.query}
         onQueryChange={(q) => set({ query: q })}
         placeholder="Search trip name, city, companion"
         filtersOpen={filtersOpen}
         onToggleFilters={() => setFiltersOpen((o) => !o)}
-      />
-      <FilterPanelFooter
         sortField={criteria.sortField}
         sortOptions={SORT_OPTIONS}
         onSortFieldChange={(f) => set({ sortField: f })}
@@ -145,10 +139,7 @@ export function TravelTrips() {
           set({ sortDir: criteria.sortDir === 'asc' ? 'desc' : 'asc' })
         }
         onClearFilters={clearFilters}
-      />
-
-      {filtersOpen && (
-        <FilterPanel>
+        filters={
           <div className="grid grid-cols-2 gap-2">
             <SelectMenu
               value={criteria.country}
@@ -193,10 +184,7 @@ export function TravelTrips() {
               ]}
             />
           </div>
-        </FilterPanel>
-      )}
-
-      <ListLoader
+        }
         loading={loading}
         error={error}
         data={data ? trips : undefined}
@@ -258,7 +246,7 @@ export function TravelTrips() {
             </>
           )
         }}
-      </ListLoader>
+      </ListSearchFilterPanel>
     </div>
   )
 }

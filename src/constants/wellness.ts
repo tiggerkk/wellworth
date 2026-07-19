@@ -114,6 +114,23 @@ export const DIARY_GROUPS: DiaryGroup[] = [
   },
 ]
 
+// --- Food types + sources (Foods listing filter/sort) ---------------------------------------------
+
+export type FoodType = 'food' | 'supplement'
+
+export const FOOD_TYPES: { key: FoodType; label: string }[] = [
+  { key: 'food', label: 'Food' },
+  { key: 'supplement', label: 'Supplement' },
+]
+
+export type FoodSource = 'custom' | 'usda' | 'off'
+
+export const FOOD_SOURCES: { key: FoodSource; label: string }[] = [
+  { key: 'custom', label: 'Custom' },
+  { key: 'usda', label: 'USDA' },
+  { key: 'off', label: 'Off' },
+]
+
 // --- Nutrient sections (Dashboard / Daily Report) -------------------------------------------------
 
 interface NutrientSection {
@@ -153,6 +170,15 @@ const DEFAULT_ACTIVITY_ICON: Icon = IconRun
 export function resolveActivityIcon(name: string | null): Icon {
   return (name && ACTIVITY_ICONS[name]) || DEFAULT_ACTIVITY_ICON
 }
+
+// --- Activity templates --------------------------------------------------------------------------
+
+export type ActivityTemplate = 'duration' | 'strength'
+
+export const ACTIVITY_TEMPLATES: { key: ActivityTemplate; label: string }[] = [
+  { key: 'duration', label: 'Duration' },
+  { key: 'strength', label: 'Strength' },
+]
 
 // --- Activity effort levels with their MET intensity bands ---------------------------------------
 

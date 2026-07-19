@@ -25,15 +25,11 @@ import { QUOTE_LANGUAGES, QUOTE_LANGUAGE_LABELS } from '../constants/quotes'
 import { routes } from '../constants/routes'
 import { SwipeRow } from '../components/SwipeRow'
 import { EmptyState } from '../components/EmptyState'
-import { ListLoader } from '../components/ListLoader'
 import { SelectMenu } from '../components/SelectMenu'
 import { Toggle } from '../components/Toggle'
 import { StatusChip } from '../components/StatusChip'
-import { ListSearchHeader } from '../components/ListSearchHeader'
-import { FilterPanel } from '../components/FilterPanel'
-import { FilterPanelFooter } from '../components/FilterPanelFooter'
+import { ListSearchFilterPanel, ResultCount } from '../components/ListSearchFilterPanel'
 import { FilterPill } from '../components/FilterPill'
-import { ResultCount } from '../components/ResultCount'
 
 const LANGUAGE_OPTIONS: { value: string; label: string }[] = [
   { value: 'all', label: 'Any Language' },
@@ -160,112 +156,108 @@ export function QuotesLibrary() {
 
   return (
     <div className="flex min-h-full flex-col gap-3 px-4 py-4">
-      <div className="sticky top-0 z-10 -mx-4 flex flex-col gap-3 bg-bg/90 px-4 py-3 backdrop-blur">
-        <ListSearchHeader
-          query={criteria.query}
-          onQueryChange={(q) => setCrit({ query: q })}
-          placeholder="Search quote, author, title, tag"
-          filtersOpen={filtersOpen}
-          onToggleFilters={() => setFiltersOpen((o) => !o)}
-        />
-        <FilterPanelFooter
-          sortField={criteria.sortField}
-          sortOptions={SORT_OPTIONS}
-          onSortFieldChange={(f) => setCrit({ sortField: f })}
-          sortDir={criteria.sortDir}
-          onToggleSortDir={() =>
-            setCrit({ sortDir: criteria.sortDir === 'asc' ? 'desc' : 'asc' })
-          }
-          onClearFilters={clearFilters}
-        />
-      </div>
-
-      {constrained && (
-        <div className="flex items-center justify-between rounded-input bg-input px-3 py-2 text-body">
-          <span className="min-w-0 truncate text-text-primary">
-            Quotes from <span className="text-text-secondary">{constraintTitle}</span>
+      <ListSearchFilterPanel
+        sticky
+        query={criteria.query}
+        onQueryChange={(q) => setCrit({ query: q })}
+        placeholder="Search quote, author, title, tag"
+        filtersOpen={filtersOpen}
+        onToggleFilters={() => setFiltersOpen((o) => !o)}
+        sortField={criteria.sortField}
+        sortOptions={SORT_OPTIONS}
+        onSortFieldChange={(f) => setCrit({ sortField: f })}
+        sortDir={criteria.sortDir}
+        onToggleSortDir={() =>
+          setCrit({ sortDir: criteria.sortDir === 'asc' ? 'desc' : 'asc' })
+        }
+        onClearFilters={clearFilters}
+        extra={
+          <span className="flex items-center gap-1.5">
+            <span className="text-caption text-text-secondary">Favorites Only</span>
+            <Toggle
+              checked={criteria.favoritesOnly}
+              onChange={(v) => setCrit({ favoritesOnly: v })}
+              label="Favorites Only"
+            />
           </span>
-          <button
-            onClick={() => navigate(routes.quotes.library)}
-            aria-label="Clear title filter"
-            className="shrink-0 p-1 text-text-tertiary"
-          >
-            <IconX size={16} />
-          </button>
-        </div>
-      )}
-
-      {filtersOpen && (
-        <FilterPanel>
-          <div className="grid grid-cols-2 gap-3">
-            <SelectMenu
-              value={criteria.category}
-              options={categoryOptions}
-              onChange={(v) => setCrit({ category: v })}
-            />
-            <SelectMenu
-              value={criteria.sourceType}
-              options={sourceOptions}
-              onChange={(v) => setCrit({ sourceType: v })}
-            />
-            <SelectMenu
-              value={criteria.language}
-              options={LANGUAGE_OPTIONS}
-              onChange={(v) => setCrit({ language: v as LibraryCriteria['language'] })}
-            />
-            <label className="flex items-center justify-between self-end py-1.5">
-              <span className="text-text-secondary">Favorites Only</span>
-              <Toggle
-                checked={criteria.favoritesOnly}
-                onChange={(v) => setCrit({ favoritesOnly: v })}
-                label="Favorites Only"
+        }
+        afterSearch={
+          constrained && (
+            <div className="flex items-center justify-between rounded-input bg-input px-3 py-2 text-body">
+              <span className="min-w-0 truncate text-text-primary">
+                Quotes from <span className="text-text-secondary">{constraintTitle}</span>
+              </span>
+              <button
+                onClick={() => navigate(routes.quotes.library)}
+                aria-label="Clear title filter"
+                className="shrink-0 p-1 text-text-tertiary"
+              >
+                <IconX size={16} />
+              </button>
+            </div>
+          )
+        }
+        filters={
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              <SelectMenu
+                value={criteria.category}
+                options={categoryOptions}
+                onChange={(v) => setCrit({ category: v })}
               />
-            </label>
-          </div>
-
-          {/* Linked toggle + the tag search share one row to save vertical space. */}
-          <div className="grid grid-cols-2 gap-3">
-            <label className="flex items-center justify-between py-1.5">
-              <span className="text-text-secondary">Linked Titles Only</span>
-              <Toggle
-                checked={criteria.linkedOnly}
-                onChange={(v) => setCrit({ linkedOnly: v })}
-                label="Linked Titles Only"
+              <SelectMenu
+                value={criteria.sourceType}
+                options={sourceOptions}
+                onChange={(v) => setCrit({ sourceType: v })}
               />
-            </label>
-            {showTagSearch && (
-              <input
-                value={tagQuery}
-                onChange={(e) => setTagQuery(e.target.value)}
-                placeholder="Filter tags…"
-                aria-label="Filter tags"
-                className="field-control w-full self-center"
+              <SelectMenu
+                value={criteria.language}
+                options={LANGUAGE_OPTIONS}
+                onChange={(v) => setCrit({ language: v as LibraryCriteria['language'] })}
               />
-            )}
-          </div>
+            </div>
 
-          {ranked.length > 0 && (
-            <div className="flex max-h-32 flex-wrap items-center gap-1.5 overflow-y-auto">
-              {displayTags.map((tag) => (
-                <FilterPill
-                  key={tag}
-                  label={tag}
-                  selected={criteria.tags.includes(tag)}
-                  onClick={() => toggleTag(tag)}
+            {/* Linked toggle + the tag search share one row to save vertical space. */}
+            <div className="grid grid-cols-2 gap-3">
+              <label className="flex items-center justify-between py-1.5">
+                <span className="text-text-secondary">Linked Titles Only</span>
+                <Toggle
+                  checked={criteria.linkedOnly}
+                  onChange={(v) => setCrit({ linkedOnly: v })}
+                  label="Linked Titles Only"
                 />
-              ))}
-              {displayTags.length === 0 && (
-                <span className="text-text-tertiary">No tags match.</span>
-              )}
-              {showTagSearch && !tagFilter && (
-                <span className="text-text-tertiary">· top {TOP_TAGS} by use</span>
+              </label>
+              {showTagSearch && (
+                <input
+                  value={tagQuery}
+                  onChange={(e) => setTagQuery(e.target.value)}
+                  placeholder="Filter tags…"
+                  aria-label="Filter tags"
+                  className="field-control w-full self-center"
+                />
               )}
             </div>
-          )}
-        </FilterPanel>
-      )}
 
-      <ListLoader
+            {ranked.length > 0 && (
+              <div className="flex max-h-32 flex-wrap items-center gap-1.5 overflow-y-auto">
+                {displayTags.map((tag) => (
+                  <FilterPill
+                    key={tag}
+                    label={tag}
+                    selected={criteria.tags.includes(tag)}
+                    onClick={() => toggleTag(tag)}
+                  />
+                ))}
+                {displayTags.length === 0 && (
+                  <span className="text-text-tertiary">No tags match.</span>
+                )}
+                {showTagSearch && !tagFilter && (
+                  <span className="text-text-tertiary">· top {TOP_TAGS} by use</span>
+                )}
+              </div>
+            )}
+          </>
+        }
         loading={loading}
         error={error}
         data={override ?? quotes}
@@ -323,7 +315,7 @@ export function QuotesLibrary() {
             </>
           )
         }}
-      </ListLoader>
+      </ListSearchFilterPanel>
     </div>
   )
 }

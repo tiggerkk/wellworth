@@ -18,10 +18,9 @@ interface ListLoaderProps<T> {
 /**
  * The shared body-only branch for every Dashboard/Library list screen: `Loading…`, an error line,
  * an `EmptyState`, or — once data resolves non-empty — the list (via a render prop). Renders a
- * fragment (no wrapping element), so it drops in below sticky chrome (SegmentedTabs,
- * ListSearchHeader, FilterPanelFooter, etc.) without affecting layout — that chrome stays mounted
- * and visible across all three states. Distinct from `EntryLoader`, which is for single-entity
- * New/Edit form screens and conflates "error" with "not found."
+ * fragment (no wrapping element), so it drops in below sticky chrome (e.g. SegmentedTabs) without
+ * affecting layout — that chrome stays mounted and visible across all three states. Distinct from
+ * `EntryLoader`, which is for single-entity New/Edit form screens and conflates "error" with "not found."
  */
 export function ListLoader<T>({
   loading,

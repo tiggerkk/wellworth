@@ -160,7 +160,7 @@ export function ShowsDashboard() {
               )}
 
               {watching.length > 0 && (
-                <SectionCard title="Watching">
+                <SectionCard title="Currently Watching">
                   {watching.map((s) => (
                     <DashRow
                       key={s.id}

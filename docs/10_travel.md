@@ -4,40 +4,26 @@
 
 ### Dashboard (`/travel`)
 
-- **Six count tiles** over `status = visited` trips, **3 columns × 2 rows, filled column-first**:
-  **中国省份** (China provinces, `N / 34` suffix) · **中国城市** (China cities) | **Countries** ·
-  **Cities** | **Trips This Year** · **Days Travelled** — distinct counts. The province count is
-  intersected with `CHINA_PROVINCES`, so it never exceeds 34; Days Travelled is the inclusive span of
-  dated visited trips. No standalone province-progress bar (removed — duplicated the 中国省份 tile).
-- **Shelves**: **Recently Visited** (reverse-chron, with a "See all trips" link), **Planning**,
-  **Want to Visit** — each a card row (cover thumbnail · name · date range · primary region · status
-  chip), tapping into the Trip Builder. Empty overall → **New Trip** CTA (shared EmptyState).
-- **Status chip palette** (`TRIP_STATUS_CHIP`): Want = purple (`plan`), Planning =
-  orange (`warning`), Visited = teal (`positive`) — via the shared `StatusChip`.
+- **Six count tiles** over `status = visited` trips, **3 columns × 2 rows, filled column-first**: **中国省份** (China provinces, `N / 34` suffix) · **中国城市** (China cities) | **Countries** · **Cities** | **Trips This Year** · **Days Travelled** — distinct counts. The province count is intersected with `CHINA_PROVINCES`, so it never exceeds 34; Days Travelled is the inclusive span of dated visited trips. No standalone province-progress bar (removed — duplicated the 中国省份 tile).
+- **Shelves**: **Recently Visited** (reverse-chron, with a "See all trips" link), **Planning**, **Want to Visit** — each a card row (cover thumbnail · name · date range · primary region · status chip), tapping into the Trip Builder. Empty overall → **New Trip** CTA (shared EmptyState).
+- **Status chip palette** (`TRIP_STATUS_CHIP`): Want = purple (`plan`), Planning = orange (`warning`), Visited = teal (`positive`) — via the shared `StatusChip`.
 
 ### Map (`/travel/map`)
 
 - A **Leaflet** map (OSM tiles), lazy-loaded into its own chunk.
-- A **markercluster dot per visited city** (`accent` = visited; neutral `text-secondary` =
-  planned), placed from the city's `remembered_city` coords. A city without a cached pin shows no dot
-  (a hint points to the picker's "Look up online").
-- A **Region fill** toggle (default on): China filled by province (DataV GeoJSON) + non-China countries
-  filled whole (Natural Earth GeoJSON), over visited trips, in the teal `positive` colour at low opacity.
+- A **markercluster dot per visited city** (`accent` = visited; neutral `text-secondary` = planned), placed from the city's `remembered_city` coords. A city without a cached pin shows no dot (a hint points to the picker's "Look up online").
+- A **Region fill** toggle (default on): China filled by province (DataV GeoJSON) + non-China countries filled whole (Natural Earth GeoJSON), over visited trips, in the teal `positive` colour at low opacity.
 - Tapping a dot opens the trip(s) touching that city (single → Trip Builder; multiple → a short list).
 
 ### Trips (`/travel/trips`)
 
-- A **Search bar** (placeholder "Search trip name, city, companion" — matches trip name,
-  city, and companions) with an **icon-only Filter button** flush at the right edge (see
-  `docs/01_design_system.md` → FilterToggleButton). Shared **FilterPanel** (label-free): **Any
-  Country**, **Any Province**, **Any Status**, **Any Rating** (minimum: Any / 1★+ … / 5★), **Any
-  Year** — footer: **SortControl** next to **Clear Filters**. Sort over { Date, Country, Province,
-  City, Status, Trip Name } with **asc/desc** toggle (country/province/city use the trip's
-  alphabetically-first value; undated trips last); default: **Date** descending.
-- Row: cover thumbnail · name · status chip · date range · primary region. Tap → Travel Entry;
-  **swipe-left → Delete** (hard; tapping the revealed Delete acts immediately — no browser dialog;
-  cascades days/stops/expenses).
-- _Search, filter, and sort persist for the **browser-tab session** (`useSessionState`)._
+- **Search bar**: matches trip name, city, companion; **Filter button** to the right.
+- **SortControl**, **Clear Filters button**: Sort over { Date, Country, Province, City, Status, Trip Name } with an **asc/desc** toggle (country/province/city use the trip's alphabetically-first value; undated trips last); default is **Date** descending.
+- **Filter panel** is label-free: **Any Country**, **Any Status**, **Any Rating** (minimum: Any / 1★+ … / 5★), **Any Year**.
+- Each row carries:
+  - Line 1: **cover thumbnail · trip name · status chip**.
+  - Line 2: **date range · primary region**.
+  - Tap → Entry/Edit; **swipe-left → Delete** (optimistic, cascades days/stops/expenses).
 
 ### Trip Builder (`/travel/entry` new, `/travel/trip/:id` edit)
 
