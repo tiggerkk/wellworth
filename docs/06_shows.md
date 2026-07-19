@@ -7,15 +7,14 @@
 - **Type**: segmented control (All / TV / Movies / Docs) sits in the **sticky header above** that is always visible.
 - A small stat line: **"N watched this year"**.
 - **Shelves**: a card shown only when it has items. Each row carries the following (with some card-specific items):
-  - Line 1: **poster thumbnail**, **title (+ year)** with a small filled **♥** when favorited and a **gold Dynasty badge** for Chinese titles.
+  - Line 1: **poster thumbnail**, **title (+ year)** and a **gold Dynasty badge** for Chinese titles.
   - Line 2: **status chip · star rating** (when set) **· date**.
   - Line 3: **type badge · seasons/episodes or length hint· first genre**.
 - **Favorites** — every `is_favorite` title (any status); a favorite also still appears in its status shelf below.
-- **Up Next** — in-progress episodic title (TV or documentary); seasons/episodes shows **"S{watched_seasons} · {watched_episodes}/{total_episodes}"** progress + a **Mark Watched** action (status → watched, finish → today, watched counts → totals).
-- **Watching** — remaining `status=watching` titles (movies + TV without episode totals); season/episode progress for an episodic title with a known total, otherwise **"Started {start date}"** — plus a **Mark Watched** action. Up Next is de-duplicated out so a show isn't listed twice.
-- **Want to Watch** — `status=want` titles; **length hint** is compact (`~2h 10m` for movies, `3 seasons`/`12 eps` for episodic) and a **Start Watching** action (status → watching, start → today).
+- **Up Next** — in-progress episodic title (TV or documentary); seasons/episodes shows **"S{watched_seasons} · {watched_episodes}/{total_episodes}"** progress.
+- **Watching** — remaining `status=watching` titles (movies + TV without episode totals); season/episode progress for an episodic title with a known total, otherwise **"Started {start date}"**. Up Next is de-duplicated out so a show isn't listed twice.
+- **Want to Watch** — `status=want` titles; **length hint** is compact (`~2h 10m` for movies, `3 seasons`/`12 eps` for episodic).
 - **Recently Watched** — last 5 by finish date; shows **finish date**. Imported rows with no `end_date` don't appear here.
-- **Mark Watched / Start Watching** quick actions are **optimistic**: the row patches in local state and moves shelves instantly, persisting in the background (no `bumpShows()` → full-library refetch on success; bump only on error).
 
 ### Library (`/shows/library`)
 
@@ -23,7 +22,7 @@
 - **Search bar**: matches title, director, and cast; **Filter button** to the right.
 - **SortControl**, **Favorites Only** toggle, **Clear Filters button**: Sort over { Date, Dynasty, Rating, Status, Genre, Title, Year, Type } with an **asc/desc** toggle (nulls sort last; Dynasty: chronologically oldest→newest ascending — 先秦 first … 近代, `全部` last, non-Chinese last; descending flips it); default is **Date** descending.
 - **Filter panel** is label-free: **Any Status**, **Any Genre**, **Any Rating** (minimum: Any / 1★+ … / 5★), **Any LGBT+**, **Any Dynasty**, and single-line **Started** + **Finished** date ranges.
-- Each row shows the same information as the Dashboard; Tap → Entry/Edit; **swipe-left → Delete** (optimistic).
+- Each row shows the same information as the Dashboard + **heart** (toggle is optimistic); Tap → Entry/Edit; **swipe-left → Delete** (optimistic).
 
 ### New / Edit Entry (`/shows/entry`, `/shows/:id`)
 

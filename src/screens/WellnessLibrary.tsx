@@ -5,7 +5,7 @@ import { useAsync } from '../hooks/useAsync'
 import { useSessionState } from '../hooks/useSessionState'
 import { useSheetNavigate } from '../hooks/useSheetNavigate'
 import { useDiaryVersion, bumpDiary } from '../lib/wellness-diary-refresh'
-import { listFoods, deleteFoodSmart } from '../data/food'
+import { listFoods, deleteFoodSmart, setFavorite } from '../data/food'
 import { listActivities, softDeleteActivity } from '../data/activity'
 import {
   resolveActivityIcon,
@@ -27,7 +27,8 @@ import { SegmentedTabs } from '../components/SegmentedTabs'
 import { SelectMenu } from '../components/SelectMenu'
 import { Toggle } from '../components/Toggle'
 import { ListRow } from '../components/ListRow'
-import { SwipeRow } from '../components/SwipeRow'
+import { FoodRowHeader } from '../components/FoodRowHeader'
+import { ActivityRowHeader } from '../components/ActivityRowHeader'
 import { SecondaryButton } from '../components/SecondaryButton'
 import { EmptyState } from '../components/EmptyState'
 import { ListSearchFilterPanel, ResultCount } from '../components/ListSearchFilterPanel'
@@ -132,6 +133,10 @@ export function WellnessLibrary() {
     await softDeleteActivity(id)
     bumpDiary()
   }
+  async function toggleFoodFavorite(id: string, next: boolean) {
+    await setFavorite(id, next)
+    bumpDiary()
+  }
 
   const tabs = (
     <SegmentedTabs
@@ -209,28 +214,32 @@ export function WellnessLibrary() {
                     </span>
                   </SecondaryButton>
                 </div>
-                <div className="overflow-hidden rounded-card border border-border bg-surface">
+                <div className="flex flex-col gap-2">
                   {view.length === 0 ? (
-                    <p className="px-4 py-6 text-center text-body text-text-tertiary">
+                    <p className="rounded-card border border-border bg-surface px-4 py-6 text-center text-body text-text-tertiary">
                       No matches.
                     </p>
                   ) : (
                     view.map((f) => (
-                      <SwipeRow key={f.id} onDelete={() => void removeFood(f.id)}>
-                        <ListRow
-                          title={f.name}
-                          subtitle={foodTag(f)}
-                          // Custom foods open the editor; cached USDA/OFF foods open Food Detail so
-                          // their servings can be viewed/managed (not editable as custom nutrient rows).
-                          onClick={() =>
-                            openSheet(
-                              f.source === 'custom'
-                                ? routes.wellness.editFood(f.id)
-                                : routes.wellness.food('local', f.id),
-                            )
-                          }
-                        />
-                      </SwipeRow>
+                      <ListRow
+                        key={f.id}
+                        isFavorite={f.is_favorite}
+                        onToggleFavorite={() =>
+                          void toggleFoodFavorite(f.id, !f.is_favorite)
+                        }
+                        onDelete={() => void removeFood(f.id)}
+                        // Custom foods open the editor; cached USDA/OFF foods open Food Detail so
+                        // their servings can be viewed/managed (not editable as custom nutrient rows).
+                        onClick={() =>
+                          openSheet(
+                            f.source === 'custom'
+                              ? routes.wellness.editFood(f.id)
+                              : routes.wellness.food('local', f.id),
+                          )
+                        }
+                      >
+                        <FoodRowHeader name={f.name} secondary={foodTag(f)} />
+                      </ListRow>
                     ))
                   )}
                 </div>
@@ -293,23 +302,23 @@ export function WellnessLibrary() {
                     </span>
                   </SecondaryButton>
                 </div>
-                <div className="overflow-hidden rounded-card border border-border bg-surface">
+                <div className="flex flex-col gap-2">
                   {view.length === 0 ? (
-                    <p className="px-4 py-6 text-center text-body text-text-tertiary">
+                    <p className="rounded-card border border-border bg-surface px-4 py-6 text-center text-body text-text-tertiary">
                       No matches.
                     </p>
                   ) : (
                     view.map((a) => {
                       const Icon = resolveActivityIcon(a.icon)
                       return (
-                        <SwipeRow key={a.id} onDelete={() => void removeActivity(a.id)}>
-                          <ListRow
-                            leading={<Icon size={22} stroke={1.75} />}
-                            title={a.name}
-                            subtitle={a.template === 'strength' ? 'Strength' : 'Duration'}
-                            onClick={() => openSheet(routes.wellness.editActivity(a.id))}
-                          />
-                        </SwipeRow>
+                        <ListRow
+                          key={a.id}
+                          leading={<Icon size={22} stroke={1.75} />}
+                          onDelete={() => void removeActivity(a.id)}
+                          onClick={() => openSheet(routes.wellness.editActivity(a.id))}
+                        >
+                          <ActivityRowHeader activity={a} />
+                        </ListRow>
                       )
                     })
                   )}

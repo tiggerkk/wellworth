@@ -24,6 +24,7 @@ import { SelectMenu } from '../components/SelectMenu'
 import { SegmentedTabs } from '../components/SegmentedTabs'
 import { Toggle } from '../components/Toggle'
 import { InsurancePolicyHeader } from '../components/InsurancePolicyHeader'
+import { ListRow } from '../components/ListRow'
 import { Calendar } from '../components/Calendar'
 import { ListSearchFilterPanel, ResultCount } from '../components/ListSearchFilterPanel'
 import { DateRangeRow } from '../components/DateRangeRow'
@@ -180,45 +181,42 @@ export function InsurancePolicies() {
                 <IconPlus size={16} /> New Insurance
               </button>
             </div>
-            <div className="divide-y divide-border overflow-hidden rounded-card border border-border bg-surface">
+            <div className="flex flex-col gap-2">
               {view.length === 0 ? (
-                <p className="px-4 py-6 text-center text-body text-text-tertiary">
+                <p className="rounded-card border border-border bg-surface px-4 py-6 text-center text-body text-text-tertiary">
                   No matches.
                 </p>
               ) : (
                 view.map(({ policy, brokeEven }) => (
-                  <button
+                  <ListRow
                     key={policy.id}
                     onClick={() => navigate(routes.networth.insuranceEdit(policy.id))}
-                    className="flex w-full items-center gap-3 px-3 py-2.5 text-left active:bg-input/40"
                   >
-                    <span className="min-w-0 flex-1">
-                      <InsurancePolicyHeader
-                        policyNumber={policy.policy_number}
-                        startDate={policy.start_date}
-                        providerLabel={providerLabel(providers, policy.provider)}
-                        policyName={policy.policy_name || policy.policy_number}
-                        truncate
-                      />
-                      <span className="mt-1 flex flex-wrap items-center gap-1.5 text-caption text-text-tertiary">
-                        {policy.termination_kind === 'surrendered' && (
-                          <StatusChip
-                            label="Surrendered"
-                            className="bg-track text-text-secondary"
-                          />
-                        )}
-                        {policy.termination_kind === 'matured' && (
-                          <StatusChip label="Matured" className="bg-accent text-bg" />
-                        )}
-                        {brokeEven && (
-                          <StatusChip
-                            label="Past Break-Even"
-                            className="bg-positive text-bg"
-                          />
-                        )}
-                      </span>
+                    <InsurancePolicyHeader
+                      policyNumber={policy.policy_number}
+                      startDate={policy.start_date}
+                      providerLabel={providerLabel(providers, policy.provider)}
+                      policyName={policy.policy_name || policy.policy_number}
+                      truncate
+                    />
+                    <span className="mt-1 flex flex-wrap items-center gap-1.5 text-caption text-text-tertiary">
+                      {policy.termination_kind === 'surrendered' && (
+                        <StatusChip
+                          label="Surrendered"
+                          className="bg-track text-text-secondary"
+                        />
+                      )}
+                      {policy.termination_kind === 'matured' && (
+                        <StatusChip label="Matured" className="bg-accent text-bg" />
+                      )}
+                      {brokeEven && (
+                        <StatusChip
+                          label="Past Break-Even"
+                          className="bg-positive text-bg"
+                        />
+                      )}
                     </span>
-                  </button>
+                  </ListRow>
                 ))
               )}
             </div>

@@ -1,10 +1,10 @@
 import { useSyncExternalStore } from 'react'
 
 /**
- * Minimal app-wide transient toast. Module-scoped (same pattern as `diary-clipboard.ts`) so any
- * screen can fire one without threading a context/provider; a single `<Toaster />` mounted in
- * `AppShell` renders the current message. Each `showToast` replaces the previous message and resets
- * a ~2s auto-dismiss timer. Not persisted — purely a UI cue (e.g. "Copied Breakfast · 3 items").
+ * Minimal app-wide transient toast. Module-scoped so any screen can fire one without threading a
+ * context/provider; a single `<Toaster />` mounted in `AppShell` renders the current message. Each
+ * `showToast` replaces the previous message and resets a ~2s auto-dismiss timer. Not persisted —
+ * purely a UI cue (e.g. "Copied Breakfast · 3 items").
  */
 const DISMISS_MS = 2000
 

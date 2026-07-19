@@ -1,8 +1,9 @@
 import { useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router'
-import { IconChevronRight, IconRoute } from '@tabler/icons-react'
+import { IconRoute } from '@tabler/icons-react'
 import { SectionCard } from '../components/SectionCard'
-import { StatusChip } from '../components/StatusChip'
+import { DashboardRow } from '../components/DashboardRow'
+import { TravelRowHeader } from '../components/TravelRowHeader'
 import { Thumb } from '../components/Thumb'
 import { EmptyState } from '../components/EmptyState'
 import { ListLoader } from '../components/ListLoader'
@@ -11,11 +12,9 @@ import { useAsync } from '../hooks/useAsync'
 import { listTripFacetRows, listTrips } from '../data/travel'
 import { useTravelVersion } from '../lib/travel-refresh'
 import {
-  TRIP_STATUS_CHIP,
   compareTripsByDateDesc,
   facetsForStops,
   primaryLabel,
-  tripStatusLabel,
   type TripFacets,
   type TripRow,
 } from '../lib/travel'
@@ -25,16 +24,10 @@ import {
   type StatFacetRow,
 } from '../lib/travel-stats'
 import { routes } from '../constants/routes'
-import { formatFullDate, formatMonthDay, todayLocal } from '../lib/date'
+import { todayLocal } from '../lib/date'
 
 const RECENT_LIMIT = 5
 const SHELF_LIMIT = 4
-
-function dateRange(start: string | null, end: string | null): string {
-  if (start && end) return `${formatMonthDay(start)} – ${formatFullDate(end)}`
-  if (start) return formatFullDate(start)
-  return 'No dates yet'
-}
 
 export function TravelDashboard() {
   const navigate = useNavigate()
@@ -182,27 +175,13 @@ function Shelf({
       {trips.map((t) => {
         const label = primaryLabel(facetsByTrip.get(t.id))
         return (
-          <button
+          <DashboardRow
             key={t.id}
+            leading={<Thumb url={t.cover_url} className="h-12 w-16 rounded-card" />}
             onClick={() => onOpen(t.id)}
-            className="flex w-full items-center gap-3 border-b border-border px-3 py-2.5 text-left last:border-b-0 active:bg-input/40"
           >
-            <Thumb url={t.cover_url} className="h-12 w-16 rounded-card" />
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <span className="truncate text-body text-text-primary">{t.name}</span>
-                <StatusChip
-                  label={tripStatusLabel(t.status)}
-                  className={TRIP_STATUS_CHIP[t.status as keyof typeof TRIP_STATUS_CHIP]}
-                />
-              </div>
-              <p className="truncate text-caption text-text-secondary">
-                {dateRange(t.start_date, t.end_date)}
-                {label ? ` · ${label}` : ''}
-              </p>
-            </div>
-            <IconChevronRight size={18} className="shrink-0 text-text-tertiary" />
-          </button>
+            <TravelRowHeader trip={t} label={label} />
+          </DashboardRow>
         )
       })}
       {onSeeAll && (

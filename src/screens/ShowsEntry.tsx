@@ -160,8 +160,9 @@ function draftFromRow(row: ShowRow): ShowDraft {
  * stale data (see its docstring — this is what used to prefill "New Show" from whatever title was
  * last opened).
  *
- * Close/Save navigation is fixed-destination (`useEntryClose`), not a history pop — see
- * `QuotesEntry`'s docstring and docs/13_navigation.md for the full rationale. `dirty` is lifted
+ * Close/Save navigation is fixed-destination (`useEntryClose`), not a history pop: Edit Show's
+ * Cancel/Save always return to the Library listing; New Show's Cancel returns to wherever it was
+ * opened from, and Save moves to the new show's fixed Edit route. . `dirty` is lifted
  * from `ShowForm` (via `onDirtyChange`) since the close button lives in this outer, always-mounted
  * header.
  */

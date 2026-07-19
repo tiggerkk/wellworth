@@ -1,11 +1,6 @@
 import { Suspense, useState } from 'react'
-import { Link } from 'react-router'
-import {
-  IconChevronDown,
-  IconChevronRight,
-  IconHeartbeat,
-  IconReportMedical,
-} from '@tabler/icons-react'
+import { Link, useNavigate } from 'react-router'
+import { IconChevronDown, IconHeartbeat, IconReportMedical } from '@tabler/icons-react'
 import { lazyWithReload } from '../lib/lazy-with-reload'
 import { useMedicalTrends } from '../hooks/useMedicalTrends'
 import { Sparkline } from '../components/Sparkline'
@@ -16,8 +11,6 @@ import {
   MEDICAL_CATEGORY_LABELS,
   MEDICAL_FLAG_COLOR,
   MEDICAL_FLAG_CLASS,
-  REPORT_TYPE_LABELS,
-  type ReportType,
   MEDICAL_RANGES,
   MEDICAL_RANGE_DEFAULT,
   medicalRangeCutoff,
@@ -25,8 +18,10 @@ import {
 import { asFlag, latestPoint, type TrackedTrend } from '../lib/medical-trends'
 import { formatRefRange, formatResultValue, type MedicalReportRow } from '../lib/medical'
 import type { ResultWithReportMeta } from '../data/medical'
-import { formatFullDate, todayLocal } from '../lib/date'
+import { todayLocal } from '../lib/date'
 import { MedicalValueRow } from '../components/MedicalValueRow'
+import { MedicalRowHeader } from '../components/MedicalRowHeader'
+import { DashboardRow } from '../components/DashboardRow'
 import { Collapsible } from '../components/Collapsible'
 import { OverlayBottom } from '../components/OverlayBottom'
 import { ScreenHeaderTitle } from '../components/ScreenHeaderTitle'
@@ -179,32 +174,19 @@ function LatestRow({ row }: { row: ResultWithReportMeta }) {
 
 /** Up to five most-recent reports, linking to their detail; a "View all" row when there are more. */
 function ReportsTimeline({ reports }: { reports: MedicalReportRow[] }) {
+  const navigate = useNavigate()
   if (reports.length === 0) return null
   const recent = reports.slice(0, 5)
   return (
     <SectionCard title="Recent reports">
-      {recent.map((rep) => {
-        const typeLabel =
-          REPORT_TYPE_LABELS[rep.report_type as ReportType] ?? rep.report_type
-        const secondary = [typeLabel, rep.provider, rep.body_part]
-          .filter(Boolean)
-          .join(' · ')
-        return (
-          <Link
-            key={rep.id}
-            to={routes.medical.detail(rep.id)}
-            className="flex items-center gap-3 border-b border-border px-4 py-2.5 last:border-b-0 active:bg-input/40"
-          >
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-body text-text-primary">
-                {formatFullDate(rep.report_date)}
-              </p>
-              <p className="truncate text-caption text-text-secondary">{secondary}</p>
-            </div>
-            <IconChevronRight size={18} className="shrink-0 text-text-tertiary" />
-          </Link>
-        )
-      })}
+      {recent.map((rep) => (
+        <DashboardRow
+          key={rep.id}
+          onClick={() => navigate(routes.medical.detail(rep.id))}
+        >
+          <MedicalRowHeader report={rep} />
+        </DashboardRow>
+      ))}
       {reports.length > recent.length && (
         <Link
           to={routes.medical.reports}

@@ -5,7 +5,7 @@ import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useSessionState } from '../hooks/useSessionState'
 import { useShowsVersion, bumpShows } from '../lib/shows-refresh'
-import { deleteShow, listShows } from '../data/show'
+import { deleteShow, listShows, updateShow } from '../data/show'
 import {
   type ShowType,
   SHOW_STATUSES,
@@ -23,7 +23,7 @@ import {
 import { DYNASTIES } from '../constants/dynasty'
 import { todayLocal, type IsoDate } from '../lib/date'
 import { routes } from '../constants/routes'
-import { SwipeRow } from '../components/SwipeRow'
+import { ListRow } from '../components/ListRow'
 import { SegmentedTabs } from '../components/SegmentedTabs'
 import { SelectMenu } from '../components/SelectMenu'
 import { Toggle } from '../components/Toggle'
@@ -118,6 +118,17 @@ export function ShowsLibrary() {
       await deleteShow(id)
     } catch {
       bumpShows() // resync from server on a failed delete
+    }
+  }
+
+  async function toggleFavorite(id: string, next: boolean) {
+    setOverride((prev) =>
+      (prev ?? shows ?? []).map((s) => (s.id === id ? { ...s, is_favorite: next } : s)),
+    )
+    try {
+      await updateShow(id, { is_favorite: next })
+    } catch {
+      bumpShows() // resync from server on a failed write
     }
   }
 
@@ -254,24 +265,23 @@ export function ShowsLibrary() {
           return (
             <>
               {view.length > 0 && <ResultCount count={view.length} />}
-              <div className="overflow-hidden rounded-card border border-border bg-surface">
+              <div className="flex flex-col gap-2">
                 {view.length === 0 ? (
-                  <p className="px-4 py-6 text-center text-body text-text-tertiary">
+                  <p className="rounded-card border border-border bg-surface px-4 py-6 text-center text-body text-text-tertiary">
                     No matches.
                   </p>
                 ) : (
                   view.map((s) => (
-                    <SwipeRow key={s.id} onDelete={() => void remove(s.id)}>
-                      <button
-                        onClick={() => navigate(routes.shows.edit(s.id))}
-                        className="flex w-full items-center gap-3 px-3 py-2.5 text-left active:bg-input/40"
-                      >
-                        <PosterThumb path={s.poster_path} size="w92" />
-                        <span className="min-w-0 flex-1">
-                          <ShowRowHeader show={s} />
-                        </span>
-                      </button>
-                    </SwipeRow>
+                    <ListRow
+                      key={s.id}
+                      leading={<PosterThumb path={s.poster_path} size="w92" />}
+                      isFavorite={s.is_favorite}
+                      onToggleFavorite={() => void toggleFavorite(s.id, !s.is_favorite)}
+                      onDelete={() => void remove(s.id)}
+                      onClick={() => navigate(routes.shows.edit(s.id))}
+                    >
+                      <ShowRowHeader show={s} />
+                    </ListRow>
                   ))
                 )}
               </div>

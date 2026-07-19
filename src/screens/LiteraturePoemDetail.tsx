@@ -6,7 +6,8 @@ import { useProfile } from '../hooks/useProfile'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 import { useLiteratureFavorites } from '../hooks/useLiteratureFavorites'
 import { getPoem, loadMeta } from '../data/literature'
-import { DYNASTY_CHIP, isFieldVisible, type SpeechLang } from '../lib/literature'
+import { isFieldVisible, type SpeechLang } from '../lib/literature'
+import { DynastyChip } from '../components/DynastyChip'
 import { LITERATURE_SECTION_COLOR } from '../constants/literature'
 import { routes } from '../constants/routes'
 import { ScreenHeaderTitle } from '../components/ScreenHeaderTitle'
@@ -111,13 +112,7 @@ export function LiteraturePoemDetail() {
               >
                 {poem.writer}
               </button>
-              {poem.dynasty && (
-                <span
-                  className={`shrink-0 rounded-pill px-1.5 py-0.5 text-section ${DYNASTY_CHIP}`}
-                >
-                  {poem.dynasty}
-                </span>
-              )}
+              {poem.dynasty && <DynastyChip dynasty={poem.dynasty} />}
             </>
           )}
         </div>

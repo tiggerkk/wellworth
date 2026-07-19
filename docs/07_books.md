@@ -6,21 +6,20 @@
 
 - A small stat line: **"N read this year"**.
 - **Shelves**: a card shown only when it has items. Each row carries the following (with some card-specific items):
-  - Line 1: **cover thumbnail** (2:3, neutral placeholder when there's no cover), **title (+ year)** with a small filled **♥** when favorited and a **gold Dynasty badge** for Chinese titles.
+  - Line 1: **cover thumbnail** (2:3, neutral placeholder when there's no cover), **title (+ year)** and a **gold Dynasty badge** for Chinese titles.
   - Line 2: **status chip · star rating** (when set) **· date**.
   - Line 3: **author · first genre**.
 - **Favorites** — every `is_favorite` book (any status); a favorite also still appears in its status shelf below.
-- **Currently Reading** — all `status=reading`; **Mark Read** action (status → read, finish → today).
+- **Currently Reading** — all `status=reading`.
 - **Recently Read** — last 5 by finish date; shows **finish date**. Imported rows with no `end_date` don't appear here.
-- **Want to Read** — `status=want` titles; **Start Reading** action (status → reading, start → today).
-- **Mark Read / Start Reading** quick actions are **optimistic**: the row patches in local state and moves shelves instantly, persisting in the background (no `bumpBooks()` → full-library refetch on success; bump only on error).
+- **Want to Read** — `status=want` titles.
 
 ### Library (`/books/library`)
 
 - **Search bar**: matches title, author(s); **Filter button** to the right.
 - **SortControl**, **Favorites Only toggle**, **Clear Filters button**: Sort over { Date, Dynasty, Rating, Status, Genre, Author, Title, Year } with an **asc/desc** toggle (nulls sort last; Dynasty: chronologically oldest→newest ascending — 先秦 first … 近代, `全部` last, non-Chinese last; descending flips it); default is **Date** descending.
 - **Filter panel** is label-free: **Any Status**, **Any Genre**, **Any Rating** (minimum: Any / 1★+ … / 5★), **Any LGBT+**, **Any Dynasty**, and single-line **Started** + **Finished** date ranges.
-- Each row shows the same information as the Dashboard; Tap → Entry/Edit; **swipe-left → Delete** (optimistic).
+- Each row shows the same information as the Dashboard + **heart** (toggle is optimistic); Tap → Entry/Edit; **swipe-left → Delete** (optimistic).
 
 ### New / Edit Entry (`/books/entry`, `/books/:id`)
 

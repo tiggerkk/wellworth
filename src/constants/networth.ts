@@ -85,7 +85,7 @@ export const DEFAULT_LIQUID_ASSET_TYPES: AssetType[] = [
 // yr N"). Variance is measured against the Original (baseline) version. See docs/05_networth.md.
 // =====================================================================================
 
-// Seed defaults only — the live provider list is owner-configurable (the Quotes pattern), stored on
+// Seed defaults only — the live provider list is owner-configurable, stored on
 // `profile.insurance_providers` and resolved by src/lib/insurance-config.ts. These three feed the NULL
 // fallback (`defaultProviders()`); `InsuranceProvider` describes the seeds' keys, but stored values are
 // plain string keys (insurance_policy.provider has no CHECK).

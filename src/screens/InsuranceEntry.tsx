@@ -118,10 +118,11 @@ function scheduleLabel(v: ScheduleVersion): string {
  * holds the loader in "Loading" rather than briefly resolving to a blank draft while auth is still
  * settling. `useEntryDraft` guarantees a New-mode render never shows a previous edit's stale data.
  *
- * Close/Save navigation is fixed-destination (`useEntryClose`), not a history pop — see
- * `QuotesEntry`'s docstring and docs/13_navigation.md. `dirty` is lifted from `PolicyForm` (via
- * `onDirtyChange`) since the close button lives in this outer, always-mounted header. The single-
- * policy importer's own New -> Edit transition (`applyImport`) reuses the same `afterSave`.
+ * Close/Save navigation is fixed-destination (`useEntryClose`), not a history pop: Edit Insurance's
+ * Cancel/Save always return to the Insurance Policies listing; New Insurance's Cancel returns to wherever it was
+ * opened from, and Save moves to the new insurance policy's fixed Edit route. .  `dirty` is lifted
+ * from `PolicyForm` (via `onDirtyChange`) since the close button lives in this outer, always-mounted header.
+ * The single-policy importer's own New -> Edit transition (`applyImport`) reuses the same `afterSave`.
  */
 export function InsuranceEntry() {
   const { id } = useParams()

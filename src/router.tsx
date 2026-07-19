@@ -31,7 +31,6 @@ import {
   LiteraturePoemDetail,
   LiteraturePoets,
   LiteraturePoetDetail,
-  LiteratureFavorites,
   LiteratureSettings,
   LiteraturePoemFieldsSheet,
   LiteratureWriterFieldsSheet,
@@ -180,7 +179,6 @@ export const router = createBrowserRouter([
           { path: 'literature/poem/:id', element: <LiteraturePoemDetail /> },
           { path: 'literature/poets', element: <LiteraturePoets /> },
           { path: 'literature/poet/:id', element: <LiteraturePoetDetail /> },
-          { path: 'literature/favorites', element: <LiteratureFavorites /> },
           { path: 'literature/settings', element: <LiteratureSettings /> },
           {
             path: 'literature/settings/visible-poem',

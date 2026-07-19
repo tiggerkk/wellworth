@@ -13,10 +13,9 @@
 --   * HARD DELETE: deleting a trip cascades its trip_day / stop / trip_expense rows. Stops
 --     cascade from their trip_day.
 --   * Expense categories are NOT a table — they are an owner-configurable {key,label} JSONB list on
---     profile.travel_expense_categories (see 15_travel_profile_settings.sql), the same
---     pattern as Quotes. trip_expense.category stores the stable TEXT key (no FK); reassign-before-
---     delete and can't-delete-last are enforced in the app, and an orphaned key still renders via the
---     raw-key fallback in src/lib/travel-config.ts.
+--     profile.travel_expense_categories (see 15_travel_profile_settings.sql). trip_expense.category 
+--     stores the stable TEXT key (no FK); reassign-before-delete and can't-delete-last are enforced 
+--     in the app, and an orphaned key still renders via the raw-key fallback in src/lib/travel-config.ts.
 --   * The trip cover is a pasted image URL (rendered referrerpolicy="no-referrer"); never a stored
 --     file. No Supabase Storage.
 --   * A stop's cost is informational only and never summed (the Expenses layer is the spend total);
@@ -195,8 +194,7 @@ create table public.remembered_city (
   lat        numeric,
   lng        numeric,
   -- city_norm (generated, lower+trimmed) backs the per-owner UNIQUE so a city is cached once.
-  -- (An inline UNIQUE can't hold an expression; a generated column is the codebase pattern — cf.
-  -- quote.text_norm in 08_quotes_schema.sql.)
+  -- (An inline UNIQUE can't hold an expression; a generated column is the codebase)
   city_norm  text generated always as (lower(btrim(city))) stored,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),

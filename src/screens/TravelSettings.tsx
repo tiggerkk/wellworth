@@ -11,10 +11,9 @@ import type { Tables, TablesUpdate } from '../types/database'
 type SaveFn = (patch: TablesUpdate<'profile'>) => Promise<void>
 
 /**
- * Travel Settings. M5 adds the **Expense Categories** editor (Quotes pattern). A single
- * **Enable JSON / CSV Import** toggle surfaces BOTH importers (JSON Trips + CSV Expenses).
- * Per-trip FX overrides live in the trip's Expenses tab (where they're actionable),
- * not here.
+ * Travel Settings. M5 adds the **Expense Categories** editor. A single **Enable JSON / CSV Import**
+ * toggle surfaces BOTH importers (JSON Trips + CSV Expenses). Per-trip FX overrides live in the trip's
+ * Expenses tab (where they're actionable), not here.
  */
 export function TravelSettings() {
   const openSheet = useSheetNavigate()

@@ -114,9 +114,10 @@ function draftFromRow(row: BookRow): BookDraft {
  * Google Books title search + the read-only metadata block arrive in M3; the metadata columns are
  * carried through unchanged for now.
  *
- * Close/Save navigation is fixed-destination (`useEntryClose`), not a history pop — see
- * `QuotesEntry`'s docstring and docs/13_navigation.md. `dirty` is lifted from `BookForm` (via
- * `onDirtyChange`) since the close button lives in this outer, always-mounted header.
+ * Close/Save navigation is fixed-destination (`useEntryClose`), not a history pop: Edit Book's
+ * Cancel/Save always return to the Library listing; New Book's Cancel returns to wherever it was
+ * opened from, and Save moves to the new book's fixed Edit route. . `dirty` is lifted from `BookForm`
+ * (via `onDirtyChange`) since the close button lives in this outer, always-mounted header.
  */
 export function BooksEntry() {
   const { id } = useParams()

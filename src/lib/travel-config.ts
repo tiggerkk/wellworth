@@ -1,9 +1,7 @@
 /**
  * Travel configurable-list helpers — pure, unit-tested. The owner can add / rename / delete / reorder
  * the **Expense Category** list in Travel Settings; the list is stored as a JSONB array on
- * `profile.travel_expense_categories` (display order = array order). This is the Quotes-category
- * pattern (`src/lib/quotes-config.ts`), trimmed to a single list (Travel has no source types / link
- * kinds).
+ * `profile.travel_expense_categories` (display order = array order).
  *
  * `trip_expense.category` stores a stable `key` from this list; only the `label` is editable, so a
  * rename never touches expense rows. Lookups fall back to the raw key (orphan tolerance) so an expense

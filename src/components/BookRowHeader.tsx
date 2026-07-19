@@ -1,19 +1,17 @@
 /**
- * Standardized 3-line book identity block — reused everywhere a book row is shown: every Books
- * Dashboard shelf (Favourites / Currently Reading / Recently Read / Want to Read) and the Library.
- * Presentational only; each caller supplies its own wrapping element (button, SwipeRow content,
- * etc.), thumbnail, and any trailing action (Mark Read / Start Reading) so the identity block is
- * always visually identical no matter where it renders.
+ * Standardized 3-line book identity block — reused everywhere a book row is shown: every Books Dashboard
+ * shelf and the Library. Presentational only; each caller supplies its own wrapping element, thumbnail,
+ * and any trailing action so the identity block is always visually identical no matter where it renders.
+ * The favourite indicator itself lives on the caller's `ListRow`/`DashboardRow`, not here.
  *
- * Line 1: ♥ (if favourite) · Title (+ year) · Dynasty chip (if not null)
+ * Line 1: Title (+ year) · Dynasty chip (if not null)
  * Line 2: Status chip · Rating (if not null) · Start/Finish date (per status, see BookDateHint)
  * Line 3: Author(s) · Genre (first genre only)
  */
-import { IconHeartFilled } from '@tabler/icons-react'
 import { BOOK_STATUS_LABELS, BOOK_STATUS_CHIP, type BookStatus } from '../constants/books'
-import { DYNASTY_CHIP } from '../constants/dynasty'
 import { formatMonthDay, type IsoDate } from '../lib/date'
 import type { BookRow } from '../lib/books'
+import { DynastyChip } from './DynastyChip'
 import { StatusChip } from './StatusChip'
 import { StarRating } from './StarRating'
 
@@ -22,7 +20,6 @@ type BookRowHeaderProps = {
     BookRow,
     | 'title'
     | 'year'
-    | 'is_favorite'
     | 'dynasty'
     | 'status'
     | 'rating'
@@ -42,20 +39,11 @@ export function BookRowHeader({ book }: BookRowHeaderProps) {
   return (
     <>
       <span className="flex items-center gap-1.5 text-body text-text-primary">
-        {book.is_favorite && (
-          <IconHeartFilled
-            size={13}
-            className="shrink-0 text-favorite"
-            aria-label="Favourite"
-          />
-        )}
         <span className="min-w-0 truncate">
           {book.title}
           {book.year ? ` (${book.year})` : ''}
         </span>
-        {book.dynasty && (
-          <StatusChip label={book.dynasty} className={`shrink-0 ${DYNASTY_CHIP}`} />
-        )}
+        {book.dynasty && <DynastyChip dynasty={book.dynasty} />}
       </span>
 
       <span className="mt-0.5 flex items-center gap-2 text-caption text-text-secondary">

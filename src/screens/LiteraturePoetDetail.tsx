@@ -5,8 +5,9 @@ import { useAsync } from '../hooks/useAsync'
 import { useProfile } from '../hooks/useProfile'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 import { getWriter, loadIndex } from '../data/literature'
-import { DYNASTY_CHIP, isFieldVisible } from '../lib/literature'
+import { isFieldVisible } from '../lib/literature'
 import { LITERATURE_SECTION_COLOR } from '../constants/literature'
+import { DynastyChip } from '../components/DynastyChip'
 import { routes } from '../constants/routes'
 import { ScreenHeaderTitle } from '../components/ScreenHeaderTitle'
 import { Collapsible } from '../components/Collapsible'
@@ -65,13 +66,7 @@ export function LiteraturePoetDetail() {
             <h1 className="min-w-0 truncate text-title font-medium text-text-primary">
               {writer.name}
             </h1>
-            {writer.dynasty && (
-              <span
-                className={`shrink-0 rounded-pill px-1.5 py-0.5 text-section ${DYNASTY_CHIP}`}
-              >
-                {writer.dynasty}
-              </span>
-            )}
+            {writer.dynasty && <DynastyChip dynasty={writer.dynasty} />}
           </div>
         )}
       </ScreenHeaderTitle>

@@ -98,7 +98,7 @@ export function QuotesZen() {
     }
   }
 
-  // --- Pull-to-refresh (Pointer Events, same as SwipeRow) ---
+  // --- Pull-to-refresh (Pointer Events) ---
   const scrollRef = useRef<HTMLDivElement>(null)
   const startY = useRef<number | null>(null)
   const active = useRef(false)

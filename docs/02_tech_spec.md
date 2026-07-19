@@ -40,7 +40,7 @@ docs/                # documentation
 - The index route `/` is a `RootRedirect` to the **last-used module** (`localStorage`, via `src/lib/last-module.ts`), falling back to `/home`. Login and the PWA `start_url`/OAuth redirect all land on `/` and flow through it.
 - `AppShell` renders the per-module `BottomNav` (a leading **Home** item + the module's tabs) only when in a module; the hub and global Settings have none. Modal **sheets** use React Router's **background-location** pattern — opening a sheet stashes the current location as `state.background`, and `AppShell` paints that tab (via `TAB_FOR_PATH`) behind the sheet. New sheets live under their module's prefix and are opened with `useSheetNavigate`.
 
-"Listing - View - Edit / New" follows three-category industry-standard model:
+"Listing - View - Edit / New" follows a three-category industry-standard model:
 
 1. **Category 1**: Modules with a "View Item" Page (e.g. Medical Report)
 
@@ -67,9 +67,22 @@ docs/                # documentation
 - **"X" button**: Used when a task has been initiated (like creating a New Item or opening Settings) that exists as an overlay or a temporary session "on top" of my current location.
 - A `‹ month ›` cluster is a distinct _navigation_ control, not a dismiss — see the Net Worth month nav / `Calendar`.
 
-- **Escape-to-dismiss** is centralised in `useEscapeKey` (`src/hooks/useEscapeKey.ts`): one document listener over a LIFO handler stack, so the innermost overlay wins. Route `Sheet`s + local search sheets close themselves, the `Calendar` closes, an open `SelectMenu` collapses, and the Add/Edit screens `navigate(-1)` only when nothing is layered above them.
-- **Session-persistent list state** — `useSessionState(key, initial)` (`src/hooks/useSessionState.ts`) is a `useState` drop-in backed by `sessionStorage` (resilient to disabled storage, with an object schema-drift merge). The Library/Reports/Trips screens hold their criteria object (search + filters + sort) in it, so a list's view survives the full-route-swap remount when the user opens an item and returns. Keys: `wellworth:{shows,books,quotes}-library`, `wellworth:medical-reports`, `wellworth:travel-trips`.
-- **Draft dirty-check** — `useDirty(current, initial)` (`src/hooks/useDirty.ts`) is the one place the entry forms compute "has the draft changed" (deep `JSON.stringify` compare, memoized on the two references). It drives Reset/Save enablement; call it unconditionally (it's a hook) and AND any extra guard outside it. Shared by the Shows/Books/Quotes/Medical/Insurance entry screens + ActivityLogSheet.
+- **Session-persistent list state** — `useSessionState(key, initial)` is a `useState` drop-in backed by `sessionStorage` (resilient to disabled storage, with an object schema-drift merge). All listing screens hold their criteria object (search + filters + sort) in it, so a list's view survives the full-route-swap remount when the user opens an item and returns. Keys:
+  - `wellworth:books-library`
+  - `wellworth:networth-insurance`
+  - `wellworth:literature-home`
+  - `wellworth:medical-reports`
+  - `wellworth:quotes-library`
+  - `wellworth:shows-library`
+  - `wellworth:travel-trips`
+  - `wellworth:wellness-library-foods`
+  - `wellworth:wellness-library-activities`
+  - `networth-entry-month`
+  - `networth-entry-expanded`
+- **Escape-to-dismiss** is centralised in `useEscapeKey`: one document listener over a LIFO handler stack, so the innermost overlay wins. Route `Sheet`s + local search sheets close themselves, the `Calendar` closes, an open `SelectMenu` collapses, and the Add/Edit screens follows the navigation described above.
+- **Draft dirty-check**:
+  - `useDirty(current, initial)` in entry forms compute "has the draft changed" (deep `JSON.stringify` compare, memoized on the two references). It drives Reset/Save enablement; call this hook unconditionally and AND any extra guard outside it.
+  - `useDiscardConfirm` gates a close action behind a discard-confirm when there are unsaved changes.
 - **Entry/Settings shells** — two shared chrome wrappers keep New/Edit and Settings screens uniform: `EntryLoader` (the `useAsync` outer loader → inner form render-prop) and `SettingsLayout` (sticky header + the standard `IconX` dismiss). See `01_design_system.md` for both.
 
 ## Data flow

@@ -5,7 +5,7 @@ import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useSessionState } from '../hooks/useSessionState'
 import { useBooksVersion, bumpBooks } from '../lib/books-refresh'
-import { deleteBook, listBooks } from '../data/book'
+import { deleteBook, listBooks, updateBook } from '../data/book'
 import { BOOK_STATUSES, type BookStatus, BOOK_STATUS_LABELS } from '../constants/books'
 import { LGBTQ_REPS, LGBTQ_REP_LABELS } from '../constants/lgbtq'
 import { DYNASTIES } from '../constants/dynasty'
@@ -18,7 +18,7 @@ import {
 } from '../lib/books'
 import { todayLocal, type IsoDate } from '../lib/date'
 import { routes } from '../constants/routes'
-import { SwipeRow } from '../components/SwipeRow'
+import { ListRow } from '../components/ListRow'
 import { SelectMenu } from '../components/SelectMenu'
 import { Toggle } from '../components/Toggle'
 import { Calendar } from '../components/Calendar'
@@ -105,6 +105,17 @@ export function BooksLibrary() {
       await deleteBook(id)
     } catch {
       bumpBooks() // resync from server on a failed delete
+    }
+  }
+
+  async function toggleFavorite(id: string, next: boolean) {
+    setOverride((prev) =>
+      (prev ?? books ?? []).map((b) => (b.id === id ? { ...b, is_favorite: next } : b)),
+    )
+    try {
+      await updateBook(id, { is_favorite: next })
+    } catch {
+      bumpBooks() // resync from server on a failed write
     }
   }
 
@@ -233,24 +244,23 @@ export function BooksLibrary() {
           return (
             <>
               {view.length > 0 && <ResultCount count={view.length} />}
-              <div className="overflow-hidden rounded-card border border-border bg-surface">
+              <div className="flex flex-col gap-2">
                 {view.length === 0 ? (
-                  <p className="px-4 py-6 text-center text-body text-text-tertiary">
+                  <p className="rounded-card border border-border bg-surface px-4 py-6 text-center text-body text-text-tertiary">
                     No matches.
                   </p>
                 ) : (
                   view.map((b) => (
-                    <SwipeRow key={b.id} onDelete={() => void remove(b.id)}>
-                      <button
-                        onClick={() => navigate(routes.books.edit(b.id))}
-                        className="flex w-full items-center gap-3 px-3 py-2.5 text-left active:bg-input/40"
-                      >
-                        <CoverThumb url={b.cover_url} />
-                        <span className="min-w-0 flex-1">
-                          <BookRowHeader book={b} />
-                        </span>
-                      </button>
-                    </SwipeRow>
+                    <ListRow
+                      key={b.id}
+                      leading={<CoverThumb url={b.cover_url} />}
+                      isFavorite={b.is_favorite}
+                      onToggleFavorite={() => void toggleFavorite(b.id, !b.is_favorite)}
+                      onDelete={() => void remove(b.id)}
+                      onClick={() => navigate(routes.books.edit(b.id))}
+                    >
+                      <BookRowHeader book={b} />
+                    </ListRow>
                   ))
                 )}
               </div>

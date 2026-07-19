@@ -19,9 +19,9 @@ const CCY_OPTIONS = NETWORTH_CURRENCIES.map((c) => ({ value: c, label: c }))
 
 /**
  * Net Worth → Manage Providers: add / rename / delete / reorder the owner's insurance-provider list,
- * stored on `profile.insurance_providers` (the Quotes pattern). Each row also edits the provider's
- * **default import currency** (the per-row control). A provider is required on every policy, so the
- * last value can't be deleted; deleting an in-use value reassigns its policies to a chosen value first.[cite: 10]
+ * stored on `profile.insurance_providers`. Each row also edits the provider's **default import currency**
+ * (the per-row control). A provider is required on every policy, so the last value can't be deleted;
+ * deleting an in-use value reassigns its policies to a chosen value first.
  */
 export function InsuranceProvidersSheet() {
   const { session } = useAuth()

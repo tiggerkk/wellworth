@@ -1,24 +1,22 @@
 /**
- * Standardized 3-line show identity block — reused everywhere a show row is shown: every Shows
- * Dashboard shelf (Favourites / Up Next / Watching / Want to Watch / Recently Watched) and the
- * Library. Presentational only; each caller supplies its own wrapping element, thumbnail, and any
- * trailing action (Mark Watched / Start Watching) so the identity block is always visually
- * identical no matter where it renders.
+ * Standardized 3-line show identity block — reused everywhere a show row is shown: every Shows Dashboard
+ * shelf and the Library. Presentational only; each caller supplies its own wrapping element, thumbnail,
+ * and any trailing action so the identity block is always visually identical no matter where it renders.
+ * The favourite indicator itself lives on the caller's `ListRow`/`DashboardRow`, not here.
  *
- * Line 1: ♥ (if favourite) · Title (+ year) · Dynasty chip (if not null)
+ * Line 1: Title (+ year) · Dynasty chip (if not null)
  * Line 2: Status chip · Rating (if not null) · Start/Finish date (per status)
  * Line 3: TV/Movie/Doc icon · Progress info (see showProgressInfo) · Genre (first genre only)
  */
-import { IconHeartFilled } from '@tabler/icons-react'
 import {
   SHOW_STATUS_LABELS,
   SHOW_STATUS_CHIP,
   type ShowStatus,
   type ShowType,
 } from '../constants/shows'
-import { DYNASTY_CHIP } from '../constants/dynasty'
 import { formatMonthDay, type IsoDate } from '../lib/date'
 import { lengthHint, progressLabel, usesEpisodes, type ShowRow } from '../lib/shows'
+import { DynastyChip } from './DynastyChip'
 import { ShowTypeBadge } from './ShowTypeBadge'
 import { StatusChip } from './StatusChip'
 import { StarRating } from './StarRating'
@@ -28,7 +26,6 @@ type ShowRowHeaderProps = {
     ShowRow,
     | 'title'
     | 'year'
-    | 'is_favorite'
     | 'dynasty'
     | 'status'
     | 'type'
@@ -54,20 +51,11 @@ export function ShowRowHeader({ show }: ShowRowHeaderProps) {
   return (
     <>
       <span className="flex items-center gap-1.5 text-body text-text-primary">
-        {show.is_favorite && (
-          <IconHeartFilled
-            size={13}
-            className="shrink-0 text-favorite"
-            aria-label="Favourite"
-          />
-        )}
         <span className="min-w-0 truncate">
           {show.title}
           {show.year ? ` (${show.year})` : ''}
         </span>
-        {show.dynasty && (
-          <StatusChip label={show.dynasty} className={`shrink-0 ${DYNASTY_CHIP}`} />
-        )}
+        {show.dynasty && <DynastyChip dynasty={show.dynasty} />}
       </span>
 
       <span className="mt-0.5 flex items-center gap-2 text-caption text-text-secondary">

@@ -5,7 +5,7 @@ import { useAsync } from '../hooks/useAsync'
 import { useSessionState } from '../hooks/useSessionState'
 import { deleteReport, listReports } from '../data/medical'
 import { bumpMedical, useMedicalVersion } from '../lib/medical-refresh'
-import { REPORT_TYPES, REPORT_TYPE_LABELS, type ReportType } from '../constants/medical'
+import { REPORT_TYPES, REPORT_TYPE_LABELS } from '../constants/medical'
 import {
   applyReportView,
   DEFAULT_REPORT_LIST_CRITERIA,
@@ -14,10 +14,10 @@ import {
   type ReportListCriteria,
   type ReportSortField,
 } from '../lib/medical'
-import { formatFullDate } from '../lib/date'
 import { routes } from '../constants/routes'
 import { IconHeartbeat } from '@tabler/icons-react'
-import { SwipeRow } from '../components/SwipeRow'
+import { ListRow } from '../components/ListRow'
+import { MedicalRowHeader } from '../components/MedicalRowHeader'
 import { EmptyState } from '../components/EmptyState'
 import { SelectMenu } from '../components/SelectMenu'
 import { ListSearchFilterPanel, ResultCount } from '../components/ListSearchFilterPanel'
@@ -88,7 +88,6 @@ export function MedicalReports() {
   }
 
   const reports = override ?? data ?? []
-  const typeLabel = (t: string) => REPORT_TYPE_LABELS[t as ReportType] ?? t
   const providerOptions = [
     { value: 'all', label: 'Any Provider' },
     ...reportProviders(reports).map((p) => ({ value: p, label: p })),
@@ -152,35 +151,21 @@ export function MedicalReports() {
           return (
             <>
               {view.length > 0 && <ResultCount count={view.length} />}
-              <div className="divide-y divide-border overflow-hidden rounded-card border border-border bg-surface">
+              <div className="flex flex-col gap-2">
                 {view.length === 0 ? (
-                  <p className="px-4 py-6 text-center text-body text-text-tertiary">
+                  <p className="rounded-card border border-border bg-surface px-4 py-6 text-center text-body text-text-tertiary">
                     No matches.
                   </p>
                 ) : (
-                  view.map((r) => {
-                    const secondary = [r.provider, r.body_part]
-                      .filter(Boolean)
-                      .join(' · ')
-                    return (
-                      <SwipeRow key={r.id} onDelete={() => void remove(r.id)}>
-                        <button
-                          onClick={() => navigate(routes.medical.detail(r.id))}
-                          className="flex w-full items-center gap-3 px-3 py-2.5 text-left active:bg-input/40"
-                        >
-                          <span className="min-w-0 flex-1">
-                            <span className="block text-body text-text-primary">
-                              {formatFullDate(r.report_date)}
-                            </span>
-                            <span className="block truncate text-caption text-text-secondary">
-                              {typeLabel(r.report_type)}
-                              {secondary ? ` · ${secondary}` : ''}
-                            </span>
-                          </span>
-                        </button>
-                      </SwipeRow>
-                    )
-                  })
+                  view.map((r) => (
+                    <ListRow
+                      key={r.id}
+                      onDelete={() => void remove(r.id)}
+                      onClick={() => navigate(routes.medical.detail(r.id))}
+                    >
+                      <MedicalRowHeader report={r} />
+                    </ListRow>
+                  ))
                 )}
               </div>
             </>

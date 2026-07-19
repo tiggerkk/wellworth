@@ -28,7 +28,7 @@ interface ImportPreviewListProps {
 }
 
 /**
- * Shared preview list for the CSV importers (Books, Shows): a bordered card of result rows, each with
+ * Shared preview list for the CSV importers (Books, Shows, Foods): a bordered card of result rows, each with
  * a thumbnail, title/subtitle/meta, the No-match/review/manual flag, and Change/Manual actions. The
  * caller renders it inside the sheet's `flex-1 overflow-y-auto` body.
  *

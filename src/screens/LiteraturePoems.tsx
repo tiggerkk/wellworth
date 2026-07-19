@@ -18,7 +18,8 @@ import { routes } from '../constants/routes'
 import { ListSearchFilterPanel, ResultCount } from '../components/ListSearchFilterPanel'
 import { Toggle } from '../components/Toggle'
 import { EmptyState } from '../components/EmptyState'
-import { PoemCard } from '../components/PoemCard'
+import { ListRow } from '../components/ListRow'
+import { DynastyChip } from '../components/DynastyChip'
 import { FilterPill } from '../components/FilterPill'
 
 const KIND_LABEL: Record<Exclude<TypeKind, 'other'>, string> = {
@@ -193,13 +194,23 @@ export function LiteraturePoems() {
               <ResultCount count={view.length} />
               <div className="flex flex-col gap-2">
                 {view.slice(0, limit).map((p) => (
-                  <PoemCard
+                  <ListRow
                     key={p.id}
-                    entry={p}
                     isFavorite={favoriteIds.has(p.id)}
-                    onOpen={() => navigate(routes.literature.poem(String(p.id)))}
                     onToggleFavorite={() => toggle(p.id)}
-                  />
+                    onClick={() => navigate(routes.literature.poem(String(p.id)))}
+                  >
+                    <span className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                      <span className="text-body font-medium text-text-primary">
+                        {p.title}
+                      </span>
+                      <span className="text-caption text-text-secondary">{p.writer}</span>
+                      {p.dynasty && <DynastyChip dynasty={p.dynasty} />}
+                    </span>
+                    <p className="mt-1 line-clamp-1 text-caption text-text-secondary">
+                      {p.excerpt}
+                    </p>
+                  </ListRow>
                 ))}
               </div>
               {view.length > limit && (

@@ -1,12 +1,12 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
-import { IconHeartFilled, IconQuote, IconX } from '@tabler/icons-react'
+import { IconQuote, IconX } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useProfile } from '../hooks/useProfile'
 import { useSessionState } from '../hooks/useSessionState'
 import { bumpQuotes, useQuotesVersion } from '../lib/quotes-refresh'
-import { deleteQuote, listQuotes } from '../data/quote'
+import { deleteQuote, listQuotes, updateQuote } from '../data/quote'
 import {
   applyLibraryView,
   DEFAULT_LIBRARY_CRITERIA,
@@ -23,7 +23,7 @@ import {
 } from '../lib/quotes-config'
 import { QUOTE_LANGUAGES, QUOTE_LANGUAGE_LABELS } from '../constants/quotes'
 import { routes } from '../constants/routes'
-import { SwipeRow } from '../components/SwipeRow'
+import { ListRow } from '../components/ListRow'
 import { EmptyState } from '../components/EmptyState'
 import { SelectMenu } from '../components/SelectMenu'
 import { Toggle } from '../components/Toggle'
@@ -115,6 +115,17 @@ export function QuotesLibrary() {
       await deleteQuote(id)
     } catch {
       bumpQuotes() // resync from server on a failed delete
+    }
+  }
+
+  async function toggleFavorite(id: string, next: boolean) {
+    setOverride((prev) =>
+      (prev ?? quotes ?? []).map((q) => (q.id === id ? { ...q, is_favorite: next } : q)),
+    )
+    try {
+      await updateQuote(id, { is_favorite: next })
+    } catch {
+      bumpQuotes() // resync from server on a failed write
     }
   }
 
@@ -281,32 +292,28 @@ export function QuotesLibrary() {
           return (
             <>
               <ResultCount count={view.length} />
-              <div className="overflow-hidden rounded-card border border-border">
+              <div className="flex flex-col gap-2">
                 {view.map((quote) => (
-                  <SwipeRow key={quote.id} onDelete={() => void remove(quote.id)}>
-                    <button
-                      onClick={() => navigate(routes.quotes.edit(quote.id))}
-                      className="block w-full border-b border-border px-3 py-3 text-left last:border-b-0"
-                    >
-                      <span className="flex items-start gap-1.5 text-body text-text-primary">
-                        {quote.is_favorite && (
-                          <IconHeartFilled
-                            size={13}
-                            className="mt-1 shrink-0 text-favorite"
-                            aria-label="Favourite"
-                          />
-                        )}
-                        <span className="line-clamp-2">{quote.text}</span>
-                      </span>
-                      <span className="mt-1 flex flex-wrap items-center gap-2 text-caption text-text-secondary">
-                        <StatusChip
-                          label={categoryLabel(categories, quote.category)}
-                          className={QUOTE_CATEGORY_CHIP}
-                        />
-                        {quote.author && <span className="truncate">{quote.author}</span>}
-                      </span>
-                    </button>
-                  </SwipeRow>
+                  <ListRow
+                    key={quote.id}
+                    isFavorite={quote.is_favorite}
+                    onToggleFavorite={() =>
+                      void toggleFavorite(quote.id, !quote.is_favorite)
+                    }
+                    onDelete={() => void remove(quote.id)}
+                    onClick={() => navigate(routes.quotes.edit(quote.id))}
+                  >
+                    <span className="line-clamp-2 block text-body text-text-primary">
+                      {quote.text}
+                    </span>
+                    <span className="mt-1 flex flex-wrap items-center gap-2 text-caption text-text-secondary">
+                      <StatusChip
+                        label={categoryLabel(categories, quote.category)}
+                        className={QUOTE_CATEGORY_CHIP}
+                      />
+                      {quote.author && <span className="truncate">{quote.author}</span>}
+                    </span>
+                  </ListRow>
                 ))}
               </div>
             </>

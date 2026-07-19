@@ -17,8 +17,8 @@ import {
 
 /**
  * Travel → Expense Categories: add / rename / delete / reorder the owner's category list, stored on
- * `profile.travel_expense_categories` (the Quotes pattern). Category is required on every expense, so the
- * last value can't be deleted; deleting an in-use value reassigns its expenses to a chosen value first.
+ * `profile.travel_expense_categories`. Category is required on every expense, so the last value can't
+ * be deleted; deleting an in-use value reassigns its expenses to a chosen value first.
  */
 export function TravelCategoriesSheet() {
   const { session } = useAuth()

@@ -17,12 +17,12 @@
 --     time_deposit, stock, fund); an explicit array once the owner customizes in Net Worth Settings →
 --     Liquid Assets. The toggle's on/off state itself is ephemeral (localStorage), not stored here.
 --   * insurance_providers — the owner's configurable insurance-provider list (add/rename/delete/
---     reorder in Net Worth Settings → Manage Providers), the Quotes pattern. A JSONB array of
---     {key,label,defaultCurrency} objects in display order; defaultCurrency (HKD/CNY/USD) seeds the
---     bulk-import per-provider currency. NULL = the canonical seed defaults in code (INSURANCE_PROVIDERS
---     etc. in src/constants/networth.ts), resolved tolerantly by src/lib/insurance-config.ts — so a
---     newly-shipped default appears for owners who never customized. A non-null array is authoritative
---     (a deleted default does not resurrect). insurance_policy.provider stores the stable `key`.
+--     reorder in Net Worth Settings → Manage Providers). A JSONB array of {key,label,defaultCurrency}
+--     objects in display order; defaultCurrency (HKD/CNY/USD) seeds the bulk-import per-provider currency.
+--     NULL = the canonical seed defaults in code (INSURANCE_PROVIDERS, etc. in src/constants/networth.ts),
+--     resolved tolerantly by src/lib/insurance-config.ts — so a newly-shipped default appears for owners 
+--     who never customized. A non-null array is authoritative (a deleted default does not resurrect). 
+--     insurance_policy.provider stores the stable `key`.
 
 alter table public.profile
   add column networth_visible_asset_types          text[],

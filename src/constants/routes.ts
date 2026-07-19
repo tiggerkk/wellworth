@@ -86,7 +86,6 @@ export const routes = {
     poets: '/literature/poets', // writers grouped by dynasty
     poet: (id: string) => `/literature/poet/${id}`, // poet detail (bio + works) — drill-in
     poem: (id: string) => `/literature/poem/${id}`, // poem detail (reader + 譯文/註釋/賞析) — drill-in
-    favorites: '/literature/favorites',
     settings: '/literature/settings', // 顯示 (field visibility) + 朗讀 (read-aloud) prefs
     settingsVisiblePoem: '/literature/settings/visible-poem', // poem-detail field visibility (sheet)
     settingsVisibleWriter: '/literature/settings/visible-writer', // poet-detail field visibility (sheet)

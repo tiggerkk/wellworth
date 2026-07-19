@@ -5,7 +5,6 @@ import {
   IconChartBar,
   IconDeviceTv,
   IconFeather,
-  IconHeart,
   IconHeartbeat,
   IconLibrary,
   IconList,
@@ -110,7 +109,6 @@ export const MODULES: ModuleDef[] = [
     tabs: [
       { to: routes.literature.home, label: 'Poems', Icon: IconList, end: true },
       { to: routes.literature.poets, label: 'Poets', Icon: IconUsers },
-      { to: routes.literature.favorites, label: 'Favorites', Icon: IconHeart },
       { to: routes.literature.settings, label: 'Settings', Icon: IconSettings },
     ],
   },

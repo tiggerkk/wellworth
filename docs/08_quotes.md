@@ -15,8 +15,8 @@
 - **Filter panel** is label-free: **Any Category**, **Any Source**, **Any Language**, **Linked Titles Only**, and multi-select **Filter Tags** (OR — any selected tag), which follow:
   - **Top 10 tags by use** shown by default (most-used first; selected tags always visible, with a "· top 10 by use" hint) in a fixed-height scroll area; the search box narrows the full tag list when there are more than 10. When opened from a Show/Book detail (via `?show=`/`?book=` param), the list is constrained to that record's quotes with a clearable banner.
 - Each row carries:
-  - Line 1: small filled **♥** when favorited, **quote snippet**.
-  - Line 2: **category badge · author**.
+  - Line 1: **quote snippet**.
+  - Line 2: **category badge · author** + **heart** (toggle is optimistic).
   - Tap → Entry/Edit; **swipe-left → Delete** (optimistic). The DB delete runs in the background (no `bumpQuotes()` → full-list refetch; bump only on error).
 
 ### New / Edit Entry (`/quotes/entry`, `/quotes/:id`)

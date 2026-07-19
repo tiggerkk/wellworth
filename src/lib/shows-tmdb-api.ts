@@ -8,10 +8,10 @@ export { containsCjk }
 
 /**
  * TMDB (The Movie Database) client + pure field mapping. Called directly from the browser with
- * VITE_TMDB_API_KEY (a v3 api_key query param — same browser-var pattern as USDA). Two-step,
- * on-demand only: search → details on select. Only the pure mappers below are unit-tested
- * (matching food-api / off-api / fx); the network calls are not. Nothing is persisted here —
- * the Entry form writes mapped fields into a `show` row only on CREATE/SAVE.
+ * VITE_TMDB_API_KEY (a v3 api_key query param). Two-step, on-demand only: search → details on
+ * select. Only the pure mappers below are unit-tested (matching food-api / off-api / fx); the
+ * network calls are not. Nothing is persisted here — the Entry form writes mapped fields into a
+ * `show` row only on CREATE/SAVE.
  *
  * Chinese-aware: a query/title containing CJK is sent with `language=zh-CN` so results and stored
  * metadata use the Chinese title. `documentary` shares the `/tv` endpoint (most are multi-episode

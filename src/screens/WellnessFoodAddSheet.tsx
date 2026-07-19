@@ -1,11 +1,12 @@
 import { Suspense, useEffect, useState } from 'react'
 import { useLocation, useSearchParams, type Location } from 'react-router'
-import { IconHeart, IconHeartFilled } from '@tabler/icons-react'
 import { lazyWithReload } from '../lib/lazy-with-reload'
 import { ScreenHeaderTitle } from '../components/ScreenHeaderTitle'
 import { Sheet } from '../components/Sheet'
 import { SearchBar } from '../components/SearchBar'
 import { SegmentedTabs } from '../components/SegmentedTabs'
+import { ListRow } from '../components/ListRow'
+import { FoodRowHeader } from '../components/FoodRowHeader'
 import { useSheetNavigate } from '../hooks/useSheetNavigate'
 import { listFoods, setFavorite } from '../data/food'
 import {
@@ -267,57 +268,23 @@ export function WellnessFoodAddSheet() {
           </Suspense>
         ) : (
           <>
-            <div className="divide-y divide-border overflow-hidden rounded-card border border-border bg-surface">
+            <div className="flex flex-col gap-2">
               {results.map((r) => (
-                <div
+                <ListRow
                   key={r.key}
                   onClick={r.onOpen}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault()
-                      r.onOpen()
-                    }
-                  }}
-                  className="flex w-full items-start gap-3 px-4 py-3 text-left active:bg-input/40 cursor-pointer"
+                  isFavorite={r.favorite?.isFavorite}
+                  onToggleFavorite={r.favorite?.toggle}
                 >
-                  <span className="min-w-0 flex-1">
-                    <span className="flex items-start gap-2">
-                      <span className="min-w-0 flex-1 break-words text-body text-text-primary">
-                        {r.name}
-                      </span>
-                      {r.favorite ? (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            r.favorite!.toggle()
-                          }}
-                          aria-label={r.favorite.isFavorite ? 'Unfavorite' : 'Favorite'}
-                          className="shrink-0"
-                        >
-                          {r.favorite.isFavorite ? (
-                            <IconHeartFilled size={18} className="text-favorite" />
-                          ) : (
-                            <IconHeart size={18} className="text-text-tertiary" />
-                          )}
-                        </button>
-                      ) : (
-                        <IconHeart size={18} className="shrink-0 text-text-tertiary" />
-                      )}
-                    </span>
-                    <span className="mt-0.5 flex items-baseline justify-between gap-2 text-caption text-text-secondary">
-                      <span className="min-w-0 truncate">
-                        {r.nutrientCount} nutrients · {r.serving}
-                      </span>
-                      <span className="shrink-0 text-text-tertiary">{r.source}</span>
-                    </span>
-                  </span>
-                </div>
+                  <FoodRowHeader
+                    name={r.name}
+                    secondary={`${r.nutrientCount} nutrients · ${r.serving} · ${r.source}`}
+                  />
+                </ListRow>
               ))}
 
               {results.length === 0 && (
-                <p className="px-4 py-6 text-center text-body text-text-tertiary">
+                <p className="rounded-card border border-border bg-surface px-4 py-6 text-center text-body text-text-tertiary">
                   {tab === 'all' && !debounced.trim()
                     ? 'Search USDA, or pick from Favorites/Custom.'
                     : usdaLoading

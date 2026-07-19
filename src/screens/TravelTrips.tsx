@@ -2,11 +2,11 @@ import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { IconRoute } from '@tabler/icons-react'
 import { SelectMenu } from '../components/SelectMenu'
-import { SwipeRow } from '../components/SwipeRow'
-import { StatusChip } from '../components/StatusChip'
+import { ListRow } from '../components/ListRow'
 import { Thumb } from '../components/Thumb'
 import { EmptyState } from '../components/EmptyState'
 import { ListSearchFilterPanel, ResultCount } from '../components/ListSearchFilterPanel'
+import { TravelRowHeader } from '../components/TravelRowHeader'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useSessionState } from '../hooks/useSessionState'
@@ -14,7 +14,6 @@ import { deleteTrip, listTripFacetRows, listTrips } from '../data/travel'
 import { bumpTravel, useTravelVersion } from '../lib/travel-refresh'
 import {
   DEFAULT_TRIP_CRITERIA,
-  TRIP_STATUS_CHIP,
   applyTripList,
   facetsForStops,
   primaryLabel,
@@ -26,7 +25,6 @@ import {
 } from '../lib/travel'
 import { TRIP_STATUSES } from '../constants/travel'
 import { routes } from '../constants/routes'
-import { formatFullDate, formatMonthDay } from '../lib/date'
 
 const RATING_OPTIONS = [
   { value: '0', label: 'Any Rating' },
@@ -44,12 +42,6 @@ const SORT_OPTIONS: { value: TripSortField; label: string }[] = [
   { value: 'status', label: 'Status' },
   { value: 'name', label: 'Trip Name' },
 ]
-
-function dateRange(start: string | null, end: string | null): string {
-  if (start && end) return `${formatMonthDay(start)} – ${formatFullDate(end)}`
-  if (start) return formatFullDate(start)
-  return 'No dates yet'
-}
 
 export function TravelTrips() {
   const navigate = useNavigate()
@@ -203,42 +195,25 @@ export function TravelTrips() {
           return (
             <>
               {view.length > 0 && <ResultCount count={view.length} />}
-              <div className="overflow-hidden rounded-card border border-border bg-surface">
+              <div className="flex flex-col gap-2">
                 {view.length === 0 ? (
-                  <p className="px-4 py-6 text-center text-body text-text-secondary">
+                  <p className="rounded-card border border-border bg-surface px-4 py-6 text-center text-body text-text-secondary">
                     No matches.
                   </p>
                 ) : (
                   view.map((t) => {
                     const label = primaryLabel(facetsByTrip.get(t.id))
                     return (
-                      <SwipeRow key={t.id} onDelete={() => void remove(t.id)}>
-                        <button
-                          onClick={() => navigate(routes.travel.edit(t.id))}
-                          className="flex w-full items-center gap-3 px-3 py-2.5 text-left active:bg-input/40"
-                        >
+                      <ListRow
+                        key={t.id}
+                        leading={
                           <Thumb url={t.cover_url} className="h-14 w-20 rounded-card" />
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2">
-                              <span className="truncate text-body text-text-primary">
-                                {t.name}
-                              </span>
-                              <StatusChip
-                                label={tripStatusLabel(t.status)}
-                                className={
-                                  TRIP_STATUS_CHIP[
-                                    t.status as keyof typeof TRIP_STATUS_CHIP
-                                  ]
-                                }
-                              />
-                            </div>
-                            <p className="truncate text-caption text-text-secondary">
-                              {dateRange(t.start_date, t.end_date)}
-                              {label ? ` · ${label}` : ''}
-                            </p>
-                          </div>
-                        </button>
-                      </SwipeRow>
+                        }
+                        onDelete={() => void remove(t.id)}
+                        onClick={() => navigate(routes.travel.edit(t.id))}
+                      >
+                        <TravelRowHeader trip={t} label={label} />
+                      </ListRow>
                     )
                   })
                 )}

@@ -180,6 +180,10 @@ export const ACTIVITY_TEMPLATES: { key: ActivityTemplate; label: string }[] = [
   { key: 'strength', label: 'Strength' },
 ]
 
+export function activityTemplateLabel(template: string): string {
+  return ACTIVITY_TEMPLATES.find((t) => t.key === template)?.label ?? template
+}
+
 // --- Activity effort levels with their MET intensity bands ---------------------------------------
 
 export type Effort = 'light' | 'moderate' | 'vigorous'
