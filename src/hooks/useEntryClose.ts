@@ -23,6 +23,11 @@ interface UseEntryCloseOptions {
   /** Category-1 override: New Item's post-Save target, given the newly created id — the new item's
    *  View Item route. Omit for Category 2, where this is just `editRoute`. */
   newSaveTarget?: (newId: string) => string
+  /** This module's Dashboard route. When Edit/View was opened via a `fromDashboard`-tagged
+   *  navigation (a Dashboard row), Cancel/Close returns there instead of `editTarget ?? listing`.
+   *  Omit for modules with no Dashboard link into Edit/View — Cancel/Close always goes to
+   *  `editTarget ?? listing` then, same as before this option existed. */
+  dashboard?: string
 }
 
 interface UseEntryCloseResult {
@@ -41,9 +46,14 @@ interface UseEntryCloseResult {
   }
 }
 
+/** Pass as the second argument to `navigate()` from a Dashboard row that links to Edit/View, so
+ *  that screen's Cancel/Close (via this hook's `dashboard` option) returns to the Dashboard instead
+ *  of Listing. Not needed for links from a Listing row — that's the default when this is absent. */
+export const fromDashboard = { state: { from: 'dashboard' } } as const
+
 /**
  * Fixed-destination Save/Cancel navigation for an Entry screen, replacing the previous
- * `navigate(-1)` / `location.key === 'default'` pattern (see docs/13_navigation.md).
+ * `navigate(-1)` / `location.key === 'default'` pattern.
  *
  * Covers both nav-model categories:
  * - **Category 2** (Shows, Books, Quotes, Insurance, Travel — no View Item page): pass `listing` +
@@ -73,18 +83,23 @@ export function useEntryClose({
   editRoute,
   editTarget,
   newSaveTarget,
+  dashboard,
 }: UseEntryCloseOptions): UseEntryCloseResult {
   const navigate = useNavigate()
   const location = useLocation()
+  const cameFromDashboard =
+    (location.state as { from?: string } | null)?.from === 'dashboard'
 
   const goToCancelTarget = useCallback(() => {
     // `{ replace: true }` here is what stops View <-> Edit from ping-ponging: without it, each
     // Cancel push a *new* View/Listing entry on top of Edit rather than collapsing back into the
     // one that put Edit there, so the next Back lands on Edit again instead of continuing outward.
-    if (editing) navigate(editTarget ?? listing, { replace: true })
-    else if (location.key === 'default') navigate(listing)
+    if (editing) {
+      const target = cameFromDashboard && dashboard ? dashboard : (editTarget ?? listing)
+      navigate(target, { replace: true })
+    } else if (location.key === 'default') navigate(listing)
     else navigate(-1)
-  }, [editing, editTarget, listing, navigate, location.key])
+  }, [editing, editTarget, listing, dashboard, cameFromDashboard, navigate, location.key])
 
   const { requestClose, confirm } = useDiscardConfirm(dirty, goToCancelTarget)
 

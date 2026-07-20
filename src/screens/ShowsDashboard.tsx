@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router'
 import { IconDeviceTv } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
+import { fromDashboard } from '../hooks/useEntryClose'
 import { useShowsVersion } from '../lib/shows-refresh'
 import { listShows } from '../data/show'
 import { type ShowType } from '../constants/shows'
@@ -45,7 +46,7 @@ export function ShowsDashboard() {
   }, [userId, version])
   const { data: shows, loading, error } = useAsync(fn)
 
-  const editShow = (id: string) => navigate(routes.shows.edit(id))
+  const editShow = (id: string) => navigate(routes.shows.edit(id), fromDashboard)
 
   return (
     <div className="flex min-h-full flex-col pb-4">

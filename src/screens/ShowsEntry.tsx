@@ -194,6 +194,7 @@ export function ShowsEntry() {
     dirty,
     listing: routes.shows.library,
     editRoute: routes.shows.edit,
+    dashboard: routes.shows.dashboard,
   })
 
   useEscapeKey(requestClose)

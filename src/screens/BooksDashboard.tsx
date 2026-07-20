@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router'
 import { IconBook } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
+import { fromDashboard } from '../hooks/useEntryClose'
 import { useBooksVersion } from '../lib/books-refresh'
 import { listBooks } from '../data/book'
 import {
@@ -40,7 +41,7 @@ export function BooksDashboard() {
   }, [userId, version])
   const { data: books, loading, error } = useAsync(fn)
 
-  const editBook = (id: string) => navigate(routes.books.edit(id))
+  const editBook = (id: string) => navigate(routes.books.edit(id), fromDashboard)
 
   return (
     <div className="flex min-h-full flex-col py-4">

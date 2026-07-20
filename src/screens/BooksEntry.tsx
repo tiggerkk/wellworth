@@ -135,6 +135,7 @@ export function BooksEntry() {
     dirty,
     listing: routes.books.library,
     editRoute: routes.books.edit,
+    dashboard: routes.books.dashboard,
   })
 
   useEscapeKey(requestClose)

@@ -73,8 +73,8 @@ function toDraft(row: ReportWithResults): ReportDraft {
  *
  * Medical is Category 1 (has a View Item page — `MedicalReportDetail`), so Edit's Cancel/Save and
  * New's Save all go to the report's View route (`routes.medical.detail`), not the Reports listing —
- * see `useEntryClose`'s `editTarget`/`newSaveTarget` and docs/13_navigation.md. `useEntryDraft`
- * guarantees a New-mode render never shows a previous edit's stale data (see its docstring).
+ * see `useEntryClose`'s `editTarget`/`newSaveTarget`. `useEntryDraft` guarantees a New-mode render
+ * never shows a previous edit's stale data (see its docstring).
  */
 export function MedicalEntry() {
   const { id } = useParams()

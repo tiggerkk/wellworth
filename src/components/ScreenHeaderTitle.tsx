@@ -35,7 +35,7 @@ interface ScreenHeaderTitleProps {
   className?: string
   /** `'close'` (default, an X) for a task opened as an overlay/temporary session — New Item forms,
    *  Sheets, local overlays. `'back'` (a `<` chevron) for a screen reached by drilling down a level
-   *  from a list — e.g. Edit Item opened from its Listing. See docs/13_navigation.md. */
+   *  from a list — e.g. Edit Item opened from its Listing. */
   icon?: 'close' | 'back'
 }
 

@@ -107,8 +107,7 @@ function draftFromRow(row: QuoteRow): QuoteDraft {
  * Close/Save navigation is fixed-destination (`useEntryClose`), not a history pop: Edit Quote's
  * Cancel/Save always return to the Library listing; New Quote's Cancel returns to wherever it was
  * opened from, and Save moves to the new quote's fixed Edit route. `dirty` is lifted from `QuoteForm`
- * (via `onDirtyChange`) since the close button lives in this outer, always-mounted header — see
- * docs/13_navigation.md.
+ * (via `onDirtyChange`) since the close button lives in this outer, always-mounted header.
  */
 export function QuotesEntry() {
   const { id } = useParams()

@@ -204,6 +204,7 @@ function EditTrip({ id }: { id: string }) {
     dirty: false, // nothing is loaded yet at this stage — see EditTripBody for the real dirty check
     listing: routes.travel.trips,
     editRoute: routes.travel.edit,
+    dashboard: routes.travel.dashboard,
   })
 
   const version = useTravelVersion()
@@ -340,6 +341,7 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
     dirty: headerDirty,
     listing: routes.travel.trips,
     editRoute: routes.travel.edit,
+    dashboard: routes.travel.dashboard,
   })
   useEscapeKey(requestClose)
 

@@ -9,6 +9,7 @@ import { EmptyState } from '../components/EmptyState'
 import { ListLoader } from '../components/ListLoader'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
+import { fromDashboard } from '../hooks/useEntryClose'
 import { listTripFacetRows, listTrips } from '../data/travel'
 import { useTravelVersion } from '../lib/travel-refresh'
 import {
@@ -115,20 +116,20 @@ export function TravelDashboard() {
             title="Recently Visited"
             trips={recentlyVisited}
             facetsByTrip={facetsByTrip}
-            onOpen={(id) => navigate(routes.travel.edit(id))}
+            onOpen={(id) => navigate(routes.travel.edit(id), fromDashboard)}
             onSeeAll={() => navigate(routes.travel.trips)}
           />
           <Shelf
             title="Planning"
             trips={planning}
             facetsByTrip={facetsByTrip}
-            onOpen={(id) => navigate(routes.travel.edit(id))}
+            onOpen={(id) => navigate(routes.travel.edit(id), fromDashboard)}
           />
           <Shelf
             title="Want to Visit"
             trips={want}
             facetsByTrip={facetsByTrip}
-            onOpen={(id) => navigate(routes.travel.edit(id))}
+            onOpen={(id) => navigate(routes.travel.edit(id), fromDashboard)}
           />
         </div>
       )}

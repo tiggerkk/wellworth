@@ -40,30 +40,66 @@ docs/                # documentation
 - The index route `/` is a `RootRedirect` to the **last-used module** (`localStorage`, via `src/lib/last-module.ts`), falling back to `/home`. Login and the PWA `start_url`/OAuth redirect all land on `/` and flow through it.
 - `AppShell` renders the per-module `BottomNav` (a leading **Home** item + the module's tabs) only when in a module; the hub and global Settings have none. Modal **sheets** use React Router's **background-location** pattern — opening a sheet stashes the current location as `state.background`, and `AppShell` paints that tab (via `TAB_FOR_PATH`) behind the sheet. New sheets live under their module's prefix and are opened with `useSheetNavigate`.
 
-"Listing - View - Edit / New" follows a three-category industry-standard model:
+Screen flows fall into the following categories.
 
-1. **Category 1**: Modules with a "View Item" Page (e.g. Medical Report)
+1. **Category 1**: Modules with a "View Item" Page
 
-| Flow      | Entry      | Top-Left Icon | Post-Save Action | Post-Cancel Action  |
-| --------- | ---------- | ------------- | ---------------- | ------------------- |
-| New Item  | Bottom Nav | X             | Go to View Item  | Return to Source    |
-| Edit Item | View Item  | <             | Go to View Item  | Return to View Item |
-| View Item | Listing    | <             | N/A (ready-only) | Return to Listing   |
+- Medical Report (has Dashboard)
 
-2. **Category 2**: Modules WITHOUT a "View Item" Page (e.g. Insurance Policies, Quotes, Shows, Books, Travel)
+| Screen    | Entry                | Top-Left Icon | Post-Save Action | Post-Cancel Action  | Routed |
+| --------- | -------------------- | ------------- | ---------------- | ------------------- | ------ |
+| New Item  | Bottom Nav           | X             | Go to View Item  | Return to Source    | Yes    |
+| Edit Item | View Item            | <             | Go to View Item  | Return to View Item | Yes    |
+| View Item | Listing or Dashboard | <             | N/A (ready-only) | Return to Source    | Yes    |
 
-| Flow      | Entry      | Top-Left Icon | Post-Save Action | Post-Cancel Action |
-| --------- | ---------- | ------------- | ---------------- | ------------------ |
-| New Item  | Bottom Nav | X             | Go to Edit Item  | Return to Source   |
-| Edit Item | Listing    | <             | Go to Listing    | Return to Listing  |
+2. **Category 2**: Modules WITHOUT a "View Item" Page
 
-3. **Category 3**: Modules WITHOUT an "Edit Item" Page (e.g. Literature)
+- Insurance Policies, Quotes (no Dashboard)
+- Shows, Books, Travel (have Dashboard)
 
-| Flow      | Entry   | Top-Left Icon | Post-Save Action | Post-Cancel Action |
-| --------- | ------- | ------------- | ---------------- | ------------------ |
-| View Item | Listing | <             | N/A (ready-only) | Return to Listing  |
+| Screen    | Entry                | Top-Left Icon | Post-Save Action | Post-Cancel Action | Routed |
+| --------- | -------------------- | ------------- | ---------------- | ------------------ | ------ |
+| New Item  | Bottom Nav or + Item | X             | Go to Edit Item  | Return to Source   | Yes    |
+| Edit Item | Listing or Dashboard | <             | Go to Listing    | Return to Source   | Yes    |
 
-- **"Back" (<) button**: Used when landing on a screen by "drilling down" into an item from a list; signifies moving up one level in the hierarchy.
+3. **Category 3**: Modules WITHOUT an "Edit Item" Page
+
+- Literature (no Dashboard)
+
+| Screen    | Entry   | Top-Left Icon | Post-Save Action | Post-Cancel Action | Routed |
+| --------- | ------- | ------------- | ---------------- | ------------------ | ------ |
+| View Item | Listing | <             | N/A (ready-only) | Return to Listing  | Yes    |
+
+4. **Category 4**: Special modules
+
+- Wellness (no Dashboard, but has Food / Activity picker)
+
+| Screen             | Entry                      | Top-Left Icon | Post-Save Action         | Post-Cancel Action | Routed |
+| ------------------ | -------------------------- | ------------- | ------------------------ | ------------------ | ------ |
+| Add Food/Activity  | Diary                      | X             | N/A (picker)             | Return to Diary    | Yes    |
+| Log Food/Activity  | Add Food/Activity or Diary | <             | Go to Diary              | Return to Source   | Yes    |
+| New Food/Activity  | Library (+Food/Activity)   | X             | Go to Edit Food/Activity | Return to Library  | Yes    |
+| Edit Food/Activity | Library                    | <             | Go to Library            | Return to Library  | Yes    |
+
+5. **Others**
+
+| Screen                      | Entry                    | Top-Left Icon | Post-Save Action | Post-Cancel Action | Routed |
+| --------------------------- | ------------------------ | ------------- | ---------------- | ------------------ | ------ |
+| Settings Item               | Global / Module Settings | <             | N/A (auto-save)  | Return to Settings | Yes    |
+| Import CSV/JSON             | Various                  | <             | Same screen      | Return to Source   | Yes    |
+| Fund Detail                 | Net Worth Dashboard      | <             | N/A (read-only)  | Return to Source   | Yes    |
+| Insurance Policy Detail     | Net Worth Monthly Entry  | <             | N/A (read-only)  | Return to Source   | Yes    |
+| Insurance Import Schedule   | Edit Insurance           | X             | Save screen      | Return to Source   | No     |
+| Insurance Compare Schedules | Edit Insurance           | X             | N/A (read-only)  | Return to Source   | No     |
+| Notes Editor                | Edit Show/Book/Medical   | X             | Go to source     | Return to Source   | No     |
+| Stop Editor                 | Edit Trip                | X             | Go to source     | Return to Source   | No     |
+| Day Expense                 | Edit Trip                | X             | N/A (auto-save)  | Return to Source   | No     |
+| City/Book/Food/Title Search | Various                  | X             | Go to Source     | Return to Source   | No     |
+| Quote Source Link           | New / Edit Quote         | X             | Go to Source     | Return to Source   | No     |
+| Wellness Daily Reort        | Dairy                    | X             | Go to Source     | Return to Source   | No     |
+| MedicalTestPickerOverlay    | New / Edit Report        | X             | Go to Source     | Return to Source   | No     |
+
+- **"Back" (<) button**: Used when landing on a screen by "drilling down" into an item; signifies moving up one level in the hierarchy.
 - **"X" button**: Used when a task has been initiated (like creating a New Item or opening Settings) that exists as an overlay or a temporary session "on top" of my current location.
 - A `‹ month ›` cluster is a distinct _navigation_ control, not a dismiss — see the Net Worth month nav / `Calendar`.
 
