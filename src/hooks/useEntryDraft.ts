@@ -8,8 +8,8 @@ interface UseEntryDraftOptions<Row, Draft> {
    *  module-level function (like `getBook`) or a `useCallback` with correct deps. An inline arrow
    *  function here (`fetchRow: async (id) => {...}`) gets a new identity every render, which
    *  `loadFn` below depends on, which re-triggers `useAsync`'s fetch effect every render: an
-   *  infinite refetch loop, not just a stale-data bug. (This exact mistake shipped in
-   *  `WellnessFoodNewSheet` — a fresh network request on every render, hammering Supabase and
+   *  infinite refetch loop, not just a stale-data bug. (This exact mistake was shipped
+   *  previously — a fresh network request on every render, hammering Supabase and
    *  spamming "Maximum update depth exceeded" until the browser gave up on the requests.) */
   fetchRow: (id: string) => Promise<Row | null>
   /** Maps a fetched row to the form's draft shape. Must be stable (`useCallback`/module-level) for

@@ -8,8 +8,8 @@ interface SheetProps {
   variant?: 'bottom' | 'full'
   label: string
   /** Overrides the scrim-click / Esc close action (default `navigate(-1)`). Sheets with a dirty
-   *  form (e.g. `WellnessFoodNewSheet`) pass a `useDiscardConfirm`-wrapped handler here so those
-   *  two escape hatches can't skip the discard-confirm the header's X button already gets. */
+   *  form pass a `useDiscardConfirm`-wrapped handler here so those two escape hatches can't skip
+   *  the discard-confirm the header's X button already gets. */
   onClose?: () => void
 }
 

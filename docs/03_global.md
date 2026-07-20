@@ -26,33 +26,17 @@
   onto the dark canvas (`BG`) so there's no transparency, with the maskable variant inset to the
   ~80% safe zone. **Changing the logo:** `OWNER_RUNBOOK.md` Part T.
 
-- **Wellness** tabs: **Home**, **Dashboard**, **Diary**, **Food & Activities** (the Library), **Settings**.
-- **Net Worth** tabs: **Home**, **Dashboard**, **Monthly Entry**, **Insurance Policies**, **Settings**.
-  The New/Edit Insurance screen is reached from the teal **+ New Insurance** action on the Insurance
-  Policies result-count row / its empty state (new) or by tapping an **Insurance Policies** row (edit) —
-  there is no longer a dedicated New Insurance bottom-nav tab.
-- **Shows** tabs: **Home**, **Dashboard**, **Library**, **New Show**, **Settings**. The Entry/Edit
-  screen is reached from the **New Show** tab (new) or by tapping a Library/Dashboard row (edit).
-  Dashboard/Library pages carry no title bar (the active tab signals location).
-- **Books** tabs: **Home**, **Dashboard**, **Library**, **New Book**, **Settings**. The Entry/Edit
-  screen is reached from the **New Book** tab (new) or by tapping a row (edit).
-- **Quotes** tabs: **Home**, **Zen** (the Moment-of-Zen dashboard), **Library**, **New Quote**,
-  **Settings**. The Add/Edit screen is reached from the **New Quote** tab (new) or by tapping a row.
-- **Medical** tabs: **Home**, **Dashboard**, **Reports**, **New Medical**, **Settings**. The Add/Edit
-  Report screen is reached from the **New Medical** tab (new) or by tapping a report. The
-  **biometric/PIN lock** gates entry to the whole module (see `docs/09_medical.md`).
-- **Travel** tabs: **Home**, **Dashboard**, **Map**, **Trips**, **New Trip**, **Settings**. The Trip
-  Builder is reached from the **New Trip** tab (new = header-only + Create) or by tapping a Trips/Map
-  row.
-- **Settings is global**, reached from a gear on the Home hub (profile, units, account — app-wide).
-  Module-specific settings live in the **Settings** bottom tab of each module.
+- **Wellness** tabs: **Home**, **Dashboard**, **Diary**, **Foods & Activities** (the Library), **Settings**.
+- **Net Worth** tabs: **Home**, **Dashboard**, **Monthly Entry**, **Insurance Policies**, **Settings**. The New/Edit Insurance screen is reached from the teal **+ New Insurance** action on the Insurance Policies result-count row / its empty state (new) or by tapping an **Insurance Policies** row (edit) — there is no longer a dedicated New Insurance bottom-nav tab.
+- **Quotes** tabs: **Home**, **Zen** (the Moment-of-Zen dashboard), **Library**, **New Quote**, **Settings**. The Add/Edit screen is reached from the **New Quote** tab (new) or by tapping a row.
+- **Literature** tabs: **Home**, **Poems**, **Poets**, **Settings**.
+- **Shows** tabs: **Home**, **Dashboard**, **Library**, **New Show**, **Settings**. The Entry/Edit screen is reached from the **New Show** tab (new) or by tapping a Library/Dashboard row (edit). Dashboard/Library pages carry no title bar (the active tab signals location).
+- **Books** tabs: **Home**, **Dashboard**, **Library**, **New Book**, **Settings**. The Entry/Edit screen is reached from the **New Book** tab (new) or by tapping a row (edit).
+- **Medical** tabs: **Home**, **Dashboard**, **Reports**, **New Medical**, **Settings**. The Add/Edit Report screen is reached from the **New Medical** tab (new) or by tapping a report. The **biometric/PIN lock** gates entry to the whole module (see `docs/09_medical.md`).
+- **Travel** tabs: **Home**, **Dashboard**, **Map**, **Trips**, **New Trip**, **Settings**. The Trip Builder is reached from the **New Trip** tab (new = header-only + Create) or by tapping a Trips/Map row.
+- **Settings is global**, reached from a gear on the Home hub (profile, units, account — app-wide). Module-specific settings live in the **Settings** bottom tab of each module.
 
-Modal sheets slide up over a module's tabs: Calendar, Add Food, Food Detail, Add Activity, Activity
-Log, New Food, New Activity, Month Picker / Fund Detail / Policy Detail / Visible Asset Types / the
-manual, fund & bulk-insurance importers (Net Worth — the single-policy Import Policy Schedule is a
-local overlay inside New/Edit Insurance so the draft survives), Title Search (Shows), Book Search
-(Books), Source Link (Quotes), City Picker / Stop Editor / Reorder Days / Expense Editor (Travel —
-local overlays so the builder draft survives).
+Modal sheets slide up over a module's tabs: Calendar, Add Food, Food Detail, Add Activity, Activity Log, Month Picker / Fund Detail / Policy Detail / Visible Asset Types / the manual, fund & bulk-insurance importers (Net Worth — the single-policy Import Policy Schedule is a local overlay inside New/Edit Insurance so the draft survives), Title Search (Shows), Book Search (Books), Source Link (Quotes), City Picker / Stop Editor / Reorder Days / Expense Editor (Travel — local overlays so the builder draft survives).
 
 ---
 

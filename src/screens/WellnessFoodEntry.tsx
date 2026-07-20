@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router'
+import { useParams } from 'react-router'
 import { IconPlus } from '@tabler/icons-react'
-import { Sheet } from '../components/Sheet'
 import { ScreenHeaderTitle } from '../components/ScreenHeaderTitle'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { RemoveRowButton } from '../components/RemoveRowButton'
@@ -9,16 +8,18 @@ import { EntryHeaderActions } from '../components/EntryHeaderActions'
 import { SegmentedTabs } from '../components/SegmentedTabs'
 import { Collapsible } from '../components/Collapsible'
 import { useAuth } from '../auth/AuthProvider'
+import { useDirty } from '../hooks/useDirty'
 import { useEntryDraft } from '../hooks/useEntryDraft'
-import { useDiscardConfirm } from '../hooks/useDiscardConfirm'
+import { useEntryClose } from '../hooks/useEntryClose'
+import { useEscapeKey } from '../hooks/useEscapeKey'
 import { useNutrientReference } from '../hooks/useNutrientReference'
 import { createFood, getFood, softDeleteFood, updateFood } from '../data/food'
 import { listServings, replaceServings } from '../data/serving'
 import { asNutrientMap, type NutrientMap } from '../lib/wellness-nutrients'
 import { NUTRIENT_SECTIONS } from '../constants/wellness'
 import { bumpDiary } from '../lib/wellness-diary-refresh'
+import { routes } from '../constants/routes'
 import { EntryLoader } from '../components/EntryLoader'
-import { showToast } from '../lib/toast'
 
 interface ServingDraft {
   name: string
@@ -78,9 +79,17 @@ function toDraft({ food, servings }: FoodRow): FoodInitial {
   }
 }
 
-export function WellnessFoodNewSheet() {
+/**
+ * Food — Entry / Edit. Outer loader + inner form keyed by id; `useEntryDraft` guarantees a
+ * New-mode render never shows a previous edit's stale data (see its docstring).
+ *
+ * Close/Save navigation is fixed-destination (`useEntryClose`), not a history pop: Edit Food's
+ * Cancel/Save always return to the Library listing; New Food's Cancel returns to wherever it was
+ * opened from, and Save moves to the new food's fixed Edit route. `dirty` is lifted from `FoodForm`
+ * (via `onDirtyChange`) since the close button lives in this outer, always-mounted header.
+ */
+export function WellnessFoodEntry() {
   const { id } = useParams()
-  const isEdit = !!id
 
   const { initial, loading, error } = useEntryDraft({
     id,
@@ -90,21 +99,22 @@ export function WellnessFoodNewSheet() {
   })
 
   const [dirty, setDirty] = useState(false)
-  const navigate = useNavigate()
-  const close = () => navigate(-1)
-  const { requestClose, confirm } = useDiscardConfirm(dirty, close)
+  const { requestClose, afterSave, confirm } = useEntryClose({
+    editing: !!id,
+    dirty,
+    listing: routes.wellness.library,
+    editRoute: routes.wellness.editFood,
+  })
+
+  useEscapeKey(requestClose)
 
   return (
-    <Sheet
-      variant="full"
-      label={isEdit ? 'Edit food' : 'New food'}
-      onClose={requestClose}
-    >
-      {/* Header always mounted (no shift once the food loads) — actions are reserved space here,
-          then absolutely floated over that same space by FoodForm below. */}
+    <div className="relative flex h-full min-h-0 flex-col">
+      {/* This outer header is always mounted, so it displays "Loading" gracefully with the header
+          structure perfectly intact. */}
       <ScreenHeaderTitle
-        title={isEdit ? 'Edit Food' : 'New Food'}
-        icon={isEdit ? 'back' : 'close'}
+        title={id ? 'Edit Food' : 'New Food'}
+        icon={id ? 'back' : 'close'}
         onClose={requestClose}
         actions={<div className="w-24 shrink-0" />}
       />
@@ -114,7 +124,15 @@ export function WellnessFoodNewSheet() {
         data={initial}
         errorText="Couldn’t load this item."
       >
-        {(d) => <FoodForm id={id} initial={d} onDirtyChange={setDirty} onSaved={close} />}
+        {(d) => (
+          <FoodForm
+            key={id ?? 'new'}
+            id={id}
+            initial={d}
+            onDirtyChange={setDirty}
+            afterSave={afterSave}
+          />
+        )}
       </EntryLoader>
 
       <ConfirmDialog
@@ -124,7 +142,7 @@ export function WellnessFoodNewSheet() {
         onConfirm={confirm.onConfirm}
         onCancel={confirm.onCancel}
       />
-    </Sheet>
+    </div>
   )
 }
 
@@ -132,84 +150,65 @@ function FoodForm({
   id,
   initial,
   onDirtyChange,
-  onSaved,
+  afterSave,
 }: {
   id: string | undefined
   initial: FoodInitial
   onDirtyChange: (dirty: boolean) => void
-  onSaved: () => void
+  afterSave: (newId: string, toastMessage?: string) => void
 }) {
   const { session } = useAuth()
   const userId = session?.user.id
   const { nutrients: refRows } = useNutrientReference()
 
-  const [type, setType] = useState(initial.type)
-  const [name, setName] = useState(initial.name)
-  const [basis, setBasis] = useState(initial.basis)
-  const [servings, setServings] = useState<ServingDraft[]>(initial.servings)
-  const [values, setValues] = useState<Record<string, string>>(initial.nutrients)
+  const [draft, setDraft] = useState<FoodInitial>(initial)
   const [saving, setSaving] = useState(false)
 
-  const basisLabel = basis === 'per_serving' ? 'serving' : '100 g'
-
-  // Dirty vs the loaded/blank initial — drives RESET + SAVE enablement, and the discard-confirm.
-  const dirty =
-    JSON.stringify({ type, name, basis, servings, values }) !==
-    JSON.stringify({
-      type: initial.type,
-      name: initial.name,
-      basis: initial.basis,
-      servings: initial.servings,
-      values: initial.nutrients,
-    })
+  const update = (patch: Partial<FoodInitial>) => setDraft((d) => ({ ...d, ...patch }))
+  const dirty = useDirty(draft, initial)
   useEffect(() => {
     onDirtyChange(dirty)
   }, [dirty, onDirtyChange])
 
-  function reset() {
-    setType(initial.type)
-    setName(initial.name)
-    setBasis(initial.basis)
-    setServings(initial.servings.map((s) => ({ ...s })))
-    setValues({ ...initial.nutrients })
-  }
+  const basisLabel = draft.basis === 'per_serving' ? 'serving' : '100 g'
 
   async function save() {
-    if (!userId || !name.trim()) return
+    if (!userId || !draft.name.trim()) return
     setSaving(true)
     try {
       const nutrients: NutrientMap = {}
-      for (const [k, v] of Object.entries(values)) {
+      for (const [k, v] of Object.entries(draft.nutrients)) {
         const n = Number(v)
         if (v.trim() !== '' && Number.isFinite(n)) nutrients[k] = n
       }
-      const rows = servings
+      const rows = draft.servings
         .filter((s) => s.name.trim() && Number(s.grams) > 0)
         .map((s) => ({ name: s.name.trim(), grams: Number(s.grams) }))
 
+      const newId = id
+        ? id
+        : (
+            await createFood({
+              user_id: userId,
+              source: 'custom',
+              name: draft.name.trim(),
+              type: draft.type,
+              nutrient_basis: draft.basis,
+              nutrients,
+              is_favorite: false,
+            })
+          ).id
       if (id) {
         await updateFood(id, {
-          name: name.trim(),
-          type,
-          nutrient_basis: basis,
+          name: draft.name.trim(),
+          type: draft.type,
+          nutrient_basis: draft.basis,
           nutrients,
         })
-        await replaceServings(id, rows)
-      } else {
-        const created = await createFood({
-          user_id: userId,
-          source: 'custom',
-          name: name.trim(),
-          type,
-          nutrient_basis: basis,
-          nutrients,
-          is_favorite: false,
-        })
-        await replaceServings(created.id, rows)
       }
+      await replaceServings(newId, rows)
       bumpDiary()
-      showToast(id ? 'Food saved' : 'Food added')
-      onSaved()
+      afterSave(newId, id ? 'Food saved' : 'Food added')
     } finally {
       setSaving(false)
     }
@@ -221,8 +220,7 @@ function FoodForm({
     try {
       await softDeleteFood(id)
       bumpDiary()
-      showToast('Food deleted')
-      onSaved()
+      afterSave(id, 'Food deleted')
     } finally {
       setSaving(false)
     }
@@ -235,8 +233,8 @@ function FoodForm({
           editing={!!id}
           dirty={dirty}
           saving={saving}
-          canSubmit={!!name.trim()}
-          onReset={reset}
+          canSubmit={!!draft.name.trim()}
+          onReset={() => setDraft(initial)}
           onSubmit={() => void save()}
           onDelete={id ? () => void remove() : undefined}
         />
@@ -244,8 +242,8 @@ function FoodForm({
 
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
         <SegmentedTabs
-          value={type}
-          onChange={setType}
+          value={draft.type}
+          onChange={(type) => update({ type })}
           options={[
             { value: 'food', label: 'Food' },
             { value: 'supplement', label: 'Supplement' },
@@ -255,8 +253,8 @@ function FoodForm({
         <label className="text-caption text-text-secondary">
           Food Name
           <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            value={draft.name}
+            onChange={(e) => update({ name: e.target.value })}
             className="mt-1 field-control w-full"
           />
         </label>
@@ -265,15 +263,18 @@ function FoodForm({
         <div>
           <p className="mb-1 text-caption text-text-secondary">Serving Sizes</p>
           <div className="flex flex-col gap-2">
-            {servings.map((s, i) => (
+            {draft.servings.map((s, i) => (
               <div key={i} className="flex items-center gap-2">
                 <input
                   value={s.name}
                   placeholder="e.g. 1 cup"
                   onChange={(e) =>
-                    setServings((prev) =>
-                      prev.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)),
-                    )
+                    setDraft((d) => ({
+                      ...d,
+                      servings: d.servings.map((x, j) =>
+                        j === i ? { ...x, name: e.target.value } : x,
+                      ),
+                    }))
                   }
                   className="field-control flex-1"
                 />
@@ -284,21 +285,31 @@ function FoodForm({
                   value={s.grams}
                   placeholder="g"
                   onChange={(e) =>
-                    setServings((prev) =>
-                      prev.map((x, j) => (j === i ? { ...x, grams: e.target.value } : x)),
-                    )
+                    setDraft((d) => ({
+                      ...d,
+                      servings: d.servings.map((x, j) =>
+                        j === i ? { ...x, grams: e.target.value } : x,
+                      ),
+                    }))
                   }
                   className="field-control w-20"
                 />
                 <RemoveRowButton
-                  onClick={() => setServings((prev) => prev.filter((_, j) => j !== i))}
+                  onClick={() =>
+                    setDraft((d) => ({
+                      ...d,
+                      servings: d.servings.filter((_, j) => j !== i),
+                    }))
+                  }
                   label="Remove serving"
                 />
               </div>
             ))}
           </div>
           <button
-            onClick={() => setServings((prev) => [...prev, { name: '', grams: '' }])}
+            onClick={() =>
+              update({ servings: [...draft.servings, { name: '', grams: '' }] })
+            }
             className="mt-2 flex items-center gap-1 text-body text-positive"
           >
             <IconPlus size={16} /> Add serving size
@@ -309,8 +320,8 @@ function FoodForm({
         <div>
           <p className="mb-1 text-caption text-text-secondary">Nutrition Shown Per</p>
           <SegmentedTabs
-            value={basis}
-            onChange={setBasis}
+            value={draft.basis}
+            onChange={(basis) => update({ basis })}
             options={[
               { value: 'per_100g', label: 'Per 100 g' },
               { value: 'per_serving', label: 'Per Serving' },
@@ -348,9 +359,12 @@ function FoodForm({
                           type="number"
                           min={0}
                           step="any"
-                          value={values[n.key] ?? ''}
+                          value={draft.nutrients[n.key] ?? ''}
                           onChange={(e) =>
-                            setValues((prev) => ({ ...prev, [n.key]: e.target.value }))
+                            setDraft((d) => ({
+                              ...d,
+                              nutrients: { ...d.nutrients, [n.key]: e.target.value },
+                            }))
                           }
                           className="field-control w-20 text-right"
                         />
