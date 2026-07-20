@@ -74,12 +74,12 @@ Screen flows fall into the following categories.
 
 - Wellness (no Dashboard, but has Food / Activity picker)
 
-| Screen             | Entry                      | Top-Left Icon | Post-Save Action         | Post-Cancel Action | Routed |
-| ------------------ | -------------------------- | ------------- | ------------------------ | ------------------ | ------ |
-| Add Food/Activity  | Diary                      | X             | N/A (picker)             | Return to Diary    | Yes    |
-| Log Food/Activity  | Add Food/Activity or Diary | <             | Go to Diary              | Return to Source   | Yes    |
-| New Food/Activity  | Library (+Food/Activity)   | X             | Go to Edit Food/Activity | Return to Library  | Yes    |
-| Edit Food/Activity | Library                    | <             | Go to Library            | Return to Library  | Yes    |
+| Screen                     | Entry                               | Top-Left Icon | Post-Save Action         | Post-Cancel Action | Routed |
+| -------------------------- | ----------------------------------- | ------------- | ------------------------ | ------------------ | ------ |
+| Diary Food/Activity Picker | Diary                               | X             | N/A (picker)             | Return to Diary    | Yes    |
+| Diary Food/Activity Detail | Diary Food/Activity Picker or Diary | <             | Go to Diary              | Return to Source   | Yes    |
+| New Food/Activity          | Library (+Food/Activity)            | X             | Go to Edit Food/Activity | Return to Library  | Yes    |
+| Edit Food/Activity         | Library                             | <             | Go to Library            | Return to Library  | Yes    |
 
 5. **Others**
 

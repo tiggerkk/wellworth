@@ -36,7 +36,7 @@
 - **Travel** tabs: **Home**, **Dashboard**, **Map**, **Trips**, **New Trip**, **Settings**. The Trip Builder is reached from the **New Trip** tab (new = header-only + Create) or by tapping a Trips/Map row.
 - **Settings is global**, reached from a gear on the Home hub (profile, units, account — app-wide). Module-specific settings live in the **Settings** bottom tab of each module.
 
-Modal sheets slide up over a module's tabs: Calendar, Add Food, Food Detail, Add Activity, Activity Log, Month Picker / Fund Detail / Policy Detail / Visible Asset Types / the manual, fund & bulk-insurance importers (Net Worth — the single-policy Import Policy Schedule is a local overlay inside New/Edit Insurance so the draft survives), Title Search (Shows), Book Search (Books), Source Link (Quotes), City Picker / Stop Editor / Reorder Days / Expense Editor (Travel — local overlays so the builder draft survives).
+Modal sheets slide up over a module's tabs: Calendar, Diary Food Picker, Food Detail, Diary Activity Picker, Activity Log, Month Picker / Fund Detail / Policy Detail / Visible Asset Types / the manual, fund & bulk-insurance importers (Net Worth — the single-policy Import Policy Schedule is a local overlay inside New/Edit Insurance so the draft survives), Title Search (Shows), Book Search (Books), Source Link (Quotes), City Picker / Stop Editor / Reorder Days / Expense Editor (Travel — local overlays so the builder draft survives).
 
 ---
 

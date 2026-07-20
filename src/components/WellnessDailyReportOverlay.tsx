@@ -15,7 +15,7 @@ interface WellnessDailyReportOverlayProps {
 /**
  * Daily nutrient report — a **local** fixed overlay (not the routing `Sheet`). Opened only from
  * the Diary's report icon for the currently-viewed day; it has no onward navigation of its own, so
- * unlike the Add Food / Add Activity pickers it doesn't need to participate in the routed
+ * unlike the Log Food / Log Activity pickers it doesn't need to participate in the routed
  * sheet-stacking (`useSheetNavigate`) pattern.
  */
 export function WellnessDailyReportOverlay({

@@ -37,7 +37,7 @@ interface SheetLoaderProps<T> {
  * The shared shell for a Sheet that loads a single thing before showing its body: `Sheet` +
  * `ScreenHeaderTitle` (always mounted, so the close button / title is visible from the very first
  * paint) + `EntryLoader` (Loading… / error / the body). Covers the ~15 Sheets whose header has no
- * load-dependent actions; Sheets with such actions (`WellnessActivitySheet`,
+ * load-dependent actions; Sheets with such actions (`WellnessDiaryActivityDetailSheet`,
  * `InsurancePolicyDetailSheet`, etc.) compose `Sheet` + `ScreenHeaderTitle` + `EntryLoader`
  * directly so they can apply the placeholder+float technique.
  */

@@ -360,7 +360,7 @@ phone over Wi-Fi; see "Test on your iPhone over Wi-Fi" below.)
      pre-filled: birthday 1974-09-06, female, 171, 56, protein 90).
   4. The bottom tabs (Diary / Dashboard / Library / Settings) switch screens. In **Add Activity** (the
      Activities group's `+`) you see your seeded activities.
-  5. In **Add Food**, search e.g. "egg" → results appear (this confirms the USDA key works).
+  5. In **Diary Food Picker**, search e.g. "egg" → results appear (this confirms the USDA key works).
   6. In **Shows → Library → New Show → Search TMDB**, type e.g. "matrix" → poster results appear (this
      confirms the TMDB key works).
   7. In **Books → Library → New Book → Search Google Books**, type e.g. "dune" → cover results appear
@@ -518,11 +518,9 @@ and run the two commands again. Once the commit succeeds:
 1. On the device, open the Vercel URL **in Safari** (must be Safari, not Chrome).
 2. Sign in with Google once to confirm it works.
 3. Tap the **Share** icon (the square with an up-arrow) → **Add to Home Screen** → **Add**.
-4. Launch **WellWorth** from the home screen — it opens full-screen like a normal app, with the blue
-   ring icon.
+4. Launch **WellWorth** from the home screen — it opens full-screen like a normal app, with the blue ring icon.
 
-- ✅ Check: signed in, you can log a food and an activity, and the **barcode** button in Add Food
-  opens the camera and scans a product (allow camera access when prompted).
+- ✅ Check: signed in, you can log a food and an activity, and the **barcode** button in Diary Food Picker opens the camera and scans a product (allow camera access when prompted).
 
 ---
 

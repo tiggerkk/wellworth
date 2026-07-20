@@ -56,7 +56,7 @@ function parseTab(value: string | null): Tab {
     : 'favorites'
 }
 
-export function WellnessFoodAddSheet() {
+export function WellnessDiaryFoodPickerSheet() {
   const openSheet = useSheetNavigate()
   const location = useLocation()
   const [params, setParams] = useSearchParams()

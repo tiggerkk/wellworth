@@ -3,7 +3,7 @@ import { useLocation, useNavigate, type Location } from 'react-router'
 
 /**
  * Open a route-based sheet while keeping the current tab as the painted background.
- * Preserves the original background across stacked sheets (e.g. Add Food → Food Detail
+ * Preserves the original background across stacked sheets (e.g. Diary Food Picker → Diary Food Detail
  * both keep the Diary behind them), so the Back button unwinds one level at a time.
  */
 export function useSheetNavigate(): (to: string) => void {

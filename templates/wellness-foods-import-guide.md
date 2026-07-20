@@ -2,7 +2,7 @@
 
 - Fill in **`wellness-foods-template.csv`** (one row per item) and import it from **Wellness → Settings →
   Import → Import CSV Food** (turn on **Enable Bulk Food Import** first).
-- Each row is **matched against USDA** by `name` (the same search the Diary "Add Food → All" tab uses):
+- Each row is **matched against USDA** by `name` (the same search the Diary "Diary Food Picker → All" tab uses):
   - A confident match imports as a **USDA** food with USDA's full nutrients — **you don't fill any
     nutrient columns** for these. A weaker match is flagged **review**; no match is flagged **No match**.
   - In the preview, **Change** lets you pick the right USDA food; **Manual** keeps the row as a **custom**

@@ -11,7 +11,7 @@ interface SearchBarProps {
   icon?: Icon
 }
 
-/** Magnifier + input, with an optional barcode-scan button (Add Food). */
+/** Magnifier + input, with an optional barcode-scan button for (Wellness Diary Food Picker). */
 export function SearchBar({
   value,
   onChange,

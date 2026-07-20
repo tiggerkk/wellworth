@@ -12,37 +12,37 @@
 
 ### Diary (Wellness home tab)
 
-- **Day header** — left-to-right: a **Daily Report** icon (top-left, `IconReportAnalytics`, opens the day's report); the centered `‹ date ›` nav (arrows step one day, tapping the date opens the **Calendar** modal — see `docs/01_design_system.md` → Calendar); and a top-right cluster of **Delete · Copy · Paste** icons that act on the **whole day**. The Calendar injects per-day cue dots: one colour if food was logged, another if activity, both if both; a legend explains the dots.
+- **Day header** — left-to-right: a **Daily Report** icon (top-left, `IconReportAnalytics`, opens the day's report); the centered `‹ date ›` nav (arrows step one day, tapping the date opens the **Calendar** modal); and a top-right cluster of **Delete · Copy · Paste** icons that act on the **whole day**. The Calendar injects per-day cue dots: one colour if food was logged, another if activity, both if both; a legend explains the dots.
 - **Highlighted Nutrients**: a grid of up to 8 chosen nutrients (a 4×2 grid when 8 are chosen), each a name, % of target, and a thin progress bar (via `NutrientBar`'s **`compact`** variant — name + % only, so the % isn't crowded out by the full nutrient name in the narrow 2-col grid). Chosen in Settings → Highlighted Nutrients (max 8).
-- **Diary groups, in order:** Breakfast, Lunch, Dinner, Snacks, Supplements, Activities. Each header reads, left-to-right: **expand chevron · category icon · group name · kcal subtotal** (kcal sits right next to the name; activities show negative kcal coral) · ⟨spacer⟩ · **Delete · Copy · Paste · Add** icons (`IconTrash` / `IconCopy` / `IconClipboard` / green `IconPlus`). **Delete** is a `ConfirmDeleteAction` (inline `Delete? ✓ ✗`, no browser dialog) — as is the day-level Delete in the top-right header, whose icon row uses the same `gap-2` spacing as the group headers. Category icons use `cat-*` color tokens (see `docs/01_design_system.md` → Icons).
-- **Default-expand on entry:** when a day's entries first load (on navigating to the Diary or picking another day), every group that **has items** auto-expands; empty groups stay collapsed. This runs **once per day** — later same-day refetches (after add/delete) never clobber a manual collapse. A **Paste** is the exception: it re-runs the auto-expand so the groups it just filled open. Expanded shows the logged entries; **tap an entry** to edit it (reopens Food Detail / Activity Log with **RESET** + **SAVE**), **swipe-left** reveals Delete, and a **drag handle** reorders items within the group (the `ReorderList` component shared with Edit Trip; persisted via `diary_entry.sort_order`).
+- **Diary groups, in order:** Breakfast, Lunch, Dinner, Snacks, Supplements, Activities. Each header reads, left-to-right: **expand chevron · category icon · group name · kcal subtotal** (kcal sits right next to the name; activities show negative kcal coral) · ⟨spacer⟩ · **Delete · Copy · Paste · Add** icons (`IconTrash` / `IconCopy` / `IconClipboard` / `IconPlus`). **Delete** is a `ConfirmDeleteAction` (inline `Delete? ✓ ✗`, no browser dialog) — as is the day-level Delete in the top-right header. Category icons use `cat-*` color tokens (see `docs/01_design_system.md` → Icons).
+- **Default-expand on entry:** when a day's entries first load (on navigating to the Diary or picking another day), every group that **has items** auto-expands; empty groups stay collapsed. This runs **once per day** — later same-day refetches (after add/delete) never clobber a manual collapse. A **Paste** is the exception: it re-runs the auto-expand so the groups it just filled open. Expanded shows the logged entries; **tap an entry** to edit it (reopens Diary Food Detail / Diary Activity Detail with **RESET** + **SAVE**), **swipe-left** reveals Delete, and a **drag handle** reorders items within the group (the `ReorderList` component shared with Edit Trip; persisted via `diary_entry.sort_order`).
 
 #### Copy / Paste (group- and day-level)
 
-There is **no `⋯` menu and no per-item Multi-Select** — copy granularity is a whole group or a whole day, via the header icons. The clipboard is an in-app, in-memory store (`src/lib/diary-clipboard.ts`) that survives sheets but not reloads; strength activities carry their `strength_set` rows.
+Copy granularity is a whole group or a whole day, via the header icons. The clipboard is an in-app, in-memory store (`src/lib/diary-clipboard.ts`) that survives sheets but not reloads; strength activities carry their `strength_set` rows.
 
 - **Delete** (group or day) — clears that group's / the day's entries after a confirm. Disabled when there's nothing to delete.
 - **Copy** (group or day) — replaces the clipboard with those entries (each remembers its **own** group). Fires a toast (e.g. "Copied Breakfast · 3 items"). Disabled when the source is empty.
-- **Paste** — enabled whenever the clipboard holds any item (across a different group **and/or** day). A **group Paste** drops every clipboard item into the clicked group; a **day Paste** keeps each item's original group. Both are **additive** (never overwrite existing rows) and **one-shot** — the clipboard is cleared after a paste, so every Paste icon disables until the next Copy. Enabled Paste icons take an active teal tint (`text-positive`) while the clipboard holds items.
+- **Paste** — enabled whenever the clipboard holds any item (across a different group **and/or** day). A **group Paste** drops every clipboard item into the clicked group; a **day Paste** keeps each item's original group. Both are **additive** (never overwrite existing rows) and **one-shot** — the clipboard is cleared after a paste, so every Paste icon disables until the next Copy. Enabled Paste icons take an active tint (`text-positive`) while the clipboard holds items.
 
-### Add Food (modal, from a group's `+`)
+### Diary Food Picker (modal, from the Diary group's `+`)
 
 - Search bar with a barcode-scan icon.
 - Tabs: **Favorites** (hearted items, default), **Custom** (your items), **All** (combined USDA + your custom). Opening a food then backing out with **X** returns here with the active tab, search text, and results preserved; **ADD** instead closes both sheets and lands back on the Diary.
 - **Matching is broad** — case-, punctuation-, singular/plural-insensitive and partial-typing-tolerant. USDA text search queries the whole-food databases (Foundation / SR Legacy / Survey FNDDS) and Branded foods as two separate pools; Branded duplicates (same name + brand) are collapsed and capped.
-- Result rows are two lines: **line 1** is the food name with a heart on the right; **line 2** shows `<n> nutrients · <serving>` and the source tag (USDA / Custom / OFF). Results are ordered by name-match relevance then nutrient count. Your saved foods have an interactive heart to toggle favorite; raw USDA results show a non-interactive heart and are favorited from **Food Detail**.
+- Result rows are two lines: **line 1** is the food name with a heart on the right; **line 2** shows `<n> nutrients · <serving>` and the source tag (USDA / Custom / OFF). Results are ordered by name-match relevance then nutrient count. Your saved foods have an interactive heart to toggle favorite; raw USDA results do not have a heart and are favorited from **Diary Food Detail**.
 - **Dedupe cached externals:** a USDA/OFF food the user already saved appears as a local row, so its live USDA twin (same `source:external_id`) is filtered out of the **All** results — no double listing, and the local row is the one that carries the custom servings/default.
 - The barcode-scan button opens the camera scanner (lazy-loaded); a decoded EAN/UPC is looked up in Open Food Facts and opens **Food Detail**. Logging or favoriting saves the product into `food` (`source='off'`).
 
-### Food Detail (logging screen)
+### Diary Food Detail (from Diary Food Picker)
 
-- Top: `X` close · food name · **heart** (favorite toggle; rose `favorite` = favorited).
+- Top: `<` close · food name · **heart** (favorite toggle; rose `favorite` = favorited).
 - Editable fields: **Amount**, **Serving Size** (dropdown), **Group** (pre-filled to the group tapped).
 - **Complete Nutrient Summary**: every nutrient as "name · value / target · %", same bar style as the Dashboard, recomputing live as Amount/Serving change.
 - **ADD** when logging a new item. When opened to **edit a logged entry**, the buttons are **RESET** + **SAVE** instead, both enabled only once a value changes; Amount and the serving are prefilled from the entry.
 - **Resolve-to-cached-row on open (F22):** opening a USDA/OFF result first looks up the cached `food` row via `getFoodByExternal(source, externalId)` and, if found, loads **that** (its stored servings, default, favorite state, snapshot nutrients) instead of re-fetching the live API. Only a never-saved food falls back to `getUsdaFood`/`lookupBarcode`.
 
-#### Manage Servings (Food Detail)
+#### Manage Servings (Diary Food Detail)
 
 A food's **servings** (reusable measures = name + grams) are distinct from **Amount** (the per-log quantity). The **Serving Size** dropdown picks which measure this log uses; **Manage Servings** (an accent-coloured toggle under the dropdown; reads **Hide Servings** when open) is where they're created/edited:
 
@@ -51,12 +51,12 @@ A food's **servings** (reusable measures = name + grams) are distinct from **Amo
 - **Persistence is deliberate, not incidental (F22):** the managed list is written to the DB **only when it's dirty** (a serving's name/grams or the default changed) — on **ADD**, the **heart**, or **SAVE**. Changing **Amount**, or just picking a different serving in the dropdown for one log, **never** writes back, so a one-off "ate more/less today" doesn't drift the stored default.
 - Persisting replaces the food's `serving` rows (new ids each time) and re-points `default_serving_id` at the chosen row by position. Adding a custom serving to a never-saved USDA food creates its `food` row (the heart/ADD path), so the serving has somewhere to live.
 
-### Add Activity (modal, from the Activities `+`)
+### Diary Activity Picker (modal, from the Diary Activities `+`)
 
-- Opens your **Activity Library** directly (your activities + an Add button) — no category drill-down.
-- Tapping an activity opens **Activity Log**, in one of two templates.
+- Lists your available **Activities** and an Add button.
+- Tapping an activity opens **Diary Activity Detail**, in one of two templates.
 
-### Activity Log — duration type
+### Diary Activity Detail — duration type
 
 - Effort Level picker (Light / Moderate / Vigorous): defaults to the activity's saved effort, but is **overridable per session**. Levels the activity has no MET for are disabled.
 - Duration (minutes): prefilled from the activity's default duration.
@@ -64,7 +64,7 @@ A food's **servings** (reusable measures = name + grams) are distinct from **Amo
 - Group defaults to **Activities**.
 - **RESET** + **ADD** (logging). RESET enables only when something differs from the defaults. Editing a logged entry shows **RESET** + **SAVE**, both enabled only once changed.
 
-### Activity Log — strength type
+### Diary Activity Detail — strength type
 
 - Same **Effort Level** picker as duration.
 - Duration (minutes, prefilled) → drives the energy estimate. Energy Burned = MET × body-weight(kg) × hours, MET resolved from `met_by_effort` at the chosen effort.
@@ -75,17 +75,17 @@ A food's **servings** (reusable measures = name + grams) are distinct from **Amo
 
 Identical layout to the Dashboard, scoped to a single day instead of an averaged range.
 
-### Library (tab)
+### Library (Foods & Activities tab)
 
-The bottom-nav tab is labelled **Foods & Activities**. The pinned top pane holds the sub-tab control + `SearchBar` only; the **`+ New Food`** / **`+ New Activity`** action sits at the **right edge of the "XX results" row** (below the pane), opposite the `ResultCount` — so it scrolls with the list rather than staying pinned. It's a `SecondaryButton` (outline pill, `size="sm"`) with an `IconPlus` + label — the shared **Add-button style** used app-wide.
+The bottom-nav tab is labelled **Foods & Activities**. The pinned top pane holds the sub-tab control + `SearchBar` only; the **`+ New Food`** / **`+ New Activity`** action sits at the **right edge of the "XX results" row** (below the pane), opposite the `ResultCount` — so it scrolls with the list rather than staying pinned. It's a `SecondaryButton` with an `IconPlus` + label — the shared **Add-button style** used app-wide.
 
 Two sub-tabs:
 
-- **Foods**: searchable list of **all** your foods — custom items **plus** the USDA/OFF rows cached from a favorite, log, or custom serving (tagged `USDA`/`OFF`; custom supplements tagged `Supplement`). Tapping a **custom** food opens the editor; tapping a **USDA/OFF** food opens Food Detail (to view/Manage its servings — they aren't editable as custom nutrient rows). **Swipe to delete** any of them (`deleteFoodSmart` — see below); `+ New Food` opens the New Food form. Surfacing the cached USDA/OFF rows here gives them the **only** delete path they have (they're created silently by favoriting/logging/customizing and were previously undeletable). (The bulk CSV importer launcher lives in **Wellness Settings → Import**, not here — see Settings + Import CSV below.)
+- **Foods**: searchable list of **all** your foods — custom items **plus** the USDA/OFF rows cached from a favorite, log, or custom serving (tagged `USDA`/`OFF`; custom supplements tagged `Supplement`). Tapping a **custom** food opens **Edit Food** screen; tapping a **USDA/OFF** food opens Food Detail (to view/Manage its servings — they aren't editable as custom nutrient rows). **Swipe to delete** any of them (`deleteFoodSmart` — see below); `+ New Food` opens the **New Food** screen. Surfacing the cached USDA/OFF rows here gives them the **only** delete path they have (they're created silently by favoriting/logging/customizing and were previously undeletable). (The bulk CSV importer launcher lives in **Wellness Settings → Import**, not here — see Settings + Import CSV below.)
   - **`deleteFoodSmart`**: if any diary entry still references the food → **soft-delete** (preserve the entry's snapshot + FK, per the rule below); otherwise **hard-delete** so an unreferenced "phantom" leaves no tombstone (its `serving` rows cascade). Applies to custom and cached foods alike.
-- **Activities**: list of your activities; tap to edit template + default effort/MET, swipe to delete; `+ New Activity` opens the New Activity form.
+- **Activities**: list of your activities; tap to edit template + default effort/MET, swipe to delete; `+ New Activity` opens the **New Activity** screen.
 
-### New Food (form)
+### New / Edit Food
 
 - **Type** toggle: Food / Supplement.
 - Food Name.
@@ -94,7 +94,7 @@ Two sub-tabs:
 - **Nutrition Facts**: the _complete_ nutrient set, grouped by category, each an input + unit, collapsible per section. (Supplements: leave Energy/macros blank, fill the relevant micros.)
 - **RESET** + **CREATE** (new) / **SAVE** (editing). Enabled only when something changed; CREATE requires a name.
 
-### New Activity (form)
+### New / Edit Activity
 
 - Activity Name; optional Description.
 - **Logging Template**: Duration (minutes + effort) or Strength (sets/reps/weight + duration).
@@ -118,7 +118,7 @@ Wellness-module sub-settings. Auto-save on change.
 
 Reused CSV format: `templates/wellness-foods-template.csv` (guide: `templates/wellness-foods-import-guide.md`). Columns are all optional except `name` (`type` food|supplement, `is_custom`, `is_favorite`, `nutrient_basis` (custom rows only — blank/ignored for USDA), three `serving*` pairs, `default_serving`, and the nutrient columns). Uses `ImportPreviewList`:
 
-- Each row is **matched against USDA** using the **same logic as Diary Add Food → All** (`searchFoods` + `foodMatchScore`); the best hit's score → status via `foodMatchStatus`: exact/leading-exact → **ok**, weaker → **review**, none → **No match**. Matched rows fetch full nutrients via `getUsdaFood`.
+- Each row is **matched against USDA** using the **same logic as Diary Diary Food Picker → All** (`searchFoods` + `foodMatchScore`); the best hit's score → status via `foodMatchStatus`: exact/leading-exact → **ok**, weaker → **review**, none → **No match**. Matched rows fetch full nutrients via `getUsdaFood`.
 - **`is_custom=true` short-circuits matching** (`resolveRow`): the row skips USDA/OFF entirely (no request, no cache), resolves straight to a **custom** food (`status='manual'`), and needs no review — for foods the owner already knows USDA doesn't have.
 - Preview rows show the USDA **name + "{N} nutrients · {serving}"** (like the live USDA list); \*\*No-match
   - review sort to the top** (danger/accent). **Change** opens the `FoodSearchOverlay` USDA overlay; **Manual\*\* keeps the row as a custom food. Concurrency `POOL` ≈ 6 (USDA ~1,000 req/hr).
@@ -156,7 +156,7 @@ Reused CSV format: `templates/wellness-foods-template.csv` (guide: `templates/we
 - **Search uses POST, not GET (F2):** `searchFoods` POSTs `/foods/search` with a JSON body — a GET whose `dataType` includes `"Survey (FNDDS)"` returns HTTP 400 (the space/parens) and yields stale `fdcId`s that then 404 on the detail endpoint.
 - **Two POST searches, merged whole-foods-first (F6):** issue separate searches for the whole-food databases (`Foundation`/`SR Legacy`/`Survey (FNDDS)`) and `Branded`, then merge whole-foods-first — a single combined search ranks the thousands of identical Branded exact-name products above every varied whole-food entry. Branded duplicates (same name + brand) are collapsed and capped.
 - **Stem-wildcard the last word (F6):** USDA matches **whole tokens**, so a partial word returns nothing — `searchFoods` wildcards the last word at a STEM (`food-search.ts#toUsdaWildcardQuery`, `blueberr*` not the raw word) so partial/plural input recalls the same set.
-- **Result ranking — single-word vs multi-word (`foodMatchScore`):** for a **one-word** query, exact + leading-prefix matches share the top tier (4) so the nutrient-count tiebreak surfaces the fuller food (a bare "BLUEBERRIES" can't outrank "Blueberries, raw"). For a **multi-word** query — which usually names the whole food (Add Food typed name, or a CSV import row) — an **exact full name scores 5** and a **leading phrase 4**, both above the coarse "contains all tokens" tier (2). Without this, "Coffee, Latte" tied "Coffee, Iced Latte"/"…nonfat" (and "…with salt" tied "…without salt", since `with` prefix-matches `without`) at tier 2 and lost the nutrient/alphabetical tiebreak, burying the exact hit.
+- **Result ranking — single-word vs multi-word (`foodMatchScore`):** for a **one-word** query, exact + leading-prefix matches share the top tier (4) so the nutrient-count tiebreak surfaces the fuller food (a bare "BLUEBERRIES" can't outrank "Blueberries, raw"). For a **multi-word** query — which usually names the whole food (Diary Food Picker typed name, or a CSV import row) — an **exact full name scores 5** and a **leading phrase 4**, both above the coarse "contains all tokens" tier (2). Without this, "Coffee, Latte" tied "Coffee, Iced Latte"/"…nonfat" (and "…with salt" tied "…without salt", since `with` prefix-matches `without`) at tier 2 and lost the nutrient/alphabetical tiebreak, burying the exact hit.
 - **Plain-block results pane (F6):** the results scroll pane must be a plain block `flex-1 overflow-y-auto`, not a flex-col (which shrinks the results card — see `01_design_system.md` → Layout gotchas).
 - Map nutrients on the stable INFOODS **`nutrient.number`** (e.g. 208 energy kcal, 320 vitamin A µg RAE, 435 folate µg DFE, 328 vitamin D µg, 312 copper mg). When a USDA food is favorited or logged, cache a copy into `food` (`source`, `external_id`); plain search hits aren't persisted. Source of truth for nutrient mappings: `src/lib/food-api.ts`.
 

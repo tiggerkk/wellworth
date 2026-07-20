@@ -11,7 +11,7 @@ import { resolveActivityIcon } from '../constants/wellness'
 import { routes } from '../constants/routes'
 import { todayLocal } from '../lib/date'
 
-export function WellnessActivityAddSheet() {
+export function WellnessDiaryActivityPickerSheet() {
   const openSheet = useSheetNavigate()
   const [params] = useSearchParams()
   const day = params.get('day') ?? todayLocal()
@@ -21,8 +21,8 @@ export function WellnessActivityAddSheet() {
 
   return (
     <SheetLoader
-      label="Add activity"
-      title="Add Activity"
+      label="Diary Activity Picker"
+      title="Diary Activity Picker"
       icon="close"
       actions={
         <button

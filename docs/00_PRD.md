@@ -55,8 +55,8 @@
 - Google sign-in (Supabase Auth); first login creates the user's profile.
 - **Dashboard / Daily Report:** date-range averages and single-day reports with nutrient bars (red past upper limits) and an energy-balance panel.
 - **Diary:** day navigation + calendar; highlighted-nutrient grid; meal/supplement/activity groups; add/expand/collapse/swipe-delete; copy-day actions; per-day report.
-- **Add Food:** search (USDA), Favorites, Custom; barcode scan (Open Food Facts); food detail entry.
-- **Add Activity:** personal activity library; duration-based and strength-based logging.
+- **Diary Food Picker:** search (USDA), Favorites, Custom; barcode scan (Open Food Facts); food detail entry.
+- **Diary Activity Picker:** personal activity library; duration-based and strength-based logging.
 - **Library:** create/edit/delete custom foods, supplements, and activities (full nutrient entry).
 - **Settings:** protein target override; highlighted nutrients + visible nutrients.
 

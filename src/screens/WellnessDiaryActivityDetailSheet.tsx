@@ -57,7 +57,7 @@ function groupSets(
   return out.length > 0 ? out : blankExercises()
 }
 
-export function WellnessActivitySheet() {
+export function WellnessDiaryActivityDetailSheet() {
   const navigate = useNavigate()
   const returnAfterLog = useReturnAfterLog()
   const { session } = useAuth()
@@ -274,7 +274,7 @@ export function WellnessActivitySheet() {
       {/* Header always mounted (no shift once the activity loads) — actions are reserved space
           here, then absolutely floated over that same space once loaded below. */}
       <ScreenHeaderTitle
-        title={activity?.name ?? 'Activity'}
+        title={activity?.name ?? 'Activity Detail'}
         titleClassName="line-clamp-2 flex-1 text-heading font-medium text-text-primary"
         icon="back"
         onClose={requestClose}

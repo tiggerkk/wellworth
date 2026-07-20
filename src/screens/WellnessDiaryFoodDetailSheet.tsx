@@ -103,7 +103,7 @@ async function writeServings(
   })
 }
 
-export function WellnessFoodSheet() {
+export function WellnessDiaryFoodDetailSheet() {
   const navigate = useNavigate()
   const returnAfterLog = useReturnAfterLog()
   const { session } = useAuth()
@@ -402,7 +402,7 @@ export function WellnessFoodSheet() {
       {/* Header always mounted (no shift once the food loads) — actions are reserved space here,
           then absolutely floated over that same space once loaded below. */}
       <ScreenHeaderTitle
-        title={food?.name ?? 'Food'}
+        title={food?.name ?? 'Food Detail'}
         titleClassName="line-clamp-2 flex-1 text-heading font-medium text-text-primary"
         icon="back"
         onClose={requestClose}

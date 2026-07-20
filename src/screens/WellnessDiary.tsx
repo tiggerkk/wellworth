@@ -51,7 +51,7 @@ export function WellnessDiary() {
   const userId = session?.user.id
 
   // The viewed day lives in the URL (`/wellness?day=YYYY-MM-DD`) rather than component state, so
-  // it survives the Diary unmounting/remounting while a sheet (Daily Report, Add Food/Activity)
+  // it survives the Diary unmounting/remounting while a sheet (Daily Report, Diary Food/Activity Picker)
   // is open over it: navigate(-1) returns to the same entry and restores the day. A clean
   // `/wellness` (no param) means today. `setDay` replaces so day stepping doesn't pile up history.
   const [params, setParams] = useSearchParams()
