@@ -188,6 +188,10 @@ export function ShowsLibrary() {
           setCrit({ sortDir: criteria.sortDir === 'asc' ? 'desc' : 'asc' })
         }
         onClearFilters={clearFilters}
+        hasActiveFilters={
+          JSON.stringify({ ...criteria, type: DEFAULT_LIBRARY_CRITERIA.type }) !==
+          JSON.stringify(DEFAULT_LIBRARY_CRITERIA)
+        }
         extra={
           <span className="flex items-center gap-1.5">
             <span className="text-caption text-text-secondary">Favorites Only</span>

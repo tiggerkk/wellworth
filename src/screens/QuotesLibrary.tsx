@@ -182,6 +182,9 @@ export function QuotesLibrary() {
           setCrit({ sortDir: criteria.sortDir === 'asc' ? 'desc' : 'asc' })
         }
         onClearFilters={clearFilters}
+        hasActiveFilters={
+          JSON.stringify(criteria) !== JSON.stringify(DEFAULT_LIBRARY_CRITERIA)
+        }
         extra={
           <span className="flex items-center gap-1.5">
             <span className="text-caption text-text-secondary">Favorites Only</span>

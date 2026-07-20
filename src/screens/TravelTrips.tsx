@@ -131,6 +131,9 @@ export function TravelTrips() {
           set({ sortDir: criteria.sortDir === 'asc' ? 'desc' : 'asc' })
         }
         onClearFilters={clearFilters}
+        hasActiveFilters={
+          JSON.stringify(criteria) !== JSON.stringify(DEFAULT_TRIP_CRITERIA)
+        }
         filters={
           <div className="grid grid-cols-2 gap-2">
             <SelectMenu

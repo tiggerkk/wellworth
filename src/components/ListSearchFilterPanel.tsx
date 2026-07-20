@@ -3,6 +3,7 @@ import {
   IconArrowDown,
   IconArrowUp,
   IconFilter,
+  IconFilterFilled,
   IconFilterX,
   IconSortDescending2,
 } from '@tabler/icons-react'
@@ -44,6 +45,9 @@ interface ListSearchFilterPanelProps<T, F extends string> {
   sortDir: SortDir
   onToggleSortDir: () => void
   onClearFilters: () => void
+  /** Whether the search box or any filter differs from its default — gates Clear Filters, matching
+   *  EntryHeaderActions' Reset button (disabled + dimmed until there's something to reset). */
+  hasActiveFilters: boolean
   /** Rendered right after the sort direction toggle, before Clear Filters — e.g. Favorites Only. */
   extra?: ReactNode
   /** Sticks the search/sort chrome to the top with a blurred background. */
@@ -81,6 +85,7 @@ export function ListSearchFilterPanel<T, F extends string>({
   sortDir,
   onToggleSortDir,
   onClearFilters,
+  hasActiveFilters,
   extra,
   sticky = false,
   hideSearch = false,
@@ -106,9 +111,10 @@ export function ListSearchFilterPanel<T, F extends string>({
       <button
         onClick={onToggleFilters}
         aria-label="Filters"
+        aria-pressed={filtersOpen}
         className={`shrink-0 rounded-input p-2 ${filtersOpen ? 'text-accent' : 'text-text-secondary'}`}
       >
-        <IconFilter size={20} />
+        {filtersOpen ? <IconFilterFilled size={20} /> : <IconFilter size={20} />}
       </button>
     </div>
   )
@@ -133,7 +139,12 @@ export function ListSearchFilterPanel<T, F extends string>({
         </button>
         {extra}
       </div>
-      <button onClick={onClearFilters} aria-label="Clear Filters" className="text-accent">
+      <button
+        onClick={onClearFilters}
+        disabled={!hasActiveFilters}
+        aria-label="Clear Filters"
+        className="shrink-0 rounded-input p-2 text-accent transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:text-text-tertiary disabled:opacity-40"
+      >
         <IconFilterX size={20} />
       </button>
     </div>

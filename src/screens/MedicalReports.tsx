@@ -114,6 +114,9 @@ export function MedicalReports() {
           setCrit({ sortDir: criteria.sortDir === 'asc' ? 'desc' : 'asc' })
         }
         onClearFilters={clearFilters}
+        hasActiveFilters={
+          JSON.stringify(criteria) !== JSON.stringify(DEFAULT_REPORT_LIST_CRITERIA)
+        }
         filters={
           <div className="grid grid-cols-2 gap-3">
             <SelectMenu

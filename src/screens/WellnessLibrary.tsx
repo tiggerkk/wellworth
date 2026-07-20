@@ -168,6 +168,9 @@ export function WellnessLibrary() {
             setFoodCrit({ sortDir: foodCriteria.sortDir === 'asc' ? 'desc' : 'asc' })
           }
           onClearFilters={() => setFoodCriteria(DEFAULT_FOOD_CRITERIA)}
+          hasActiveFilters={
+            JSON.stringify(foodCriteria) !== JSON.stringify(DEFAULT_FOOD_CRITERIA)
+          }
           extra={
             <span className="flex items-center gap-1.5">
               <span className="text-caption text-text-secondary">Favorites Only</span>
@@ -266,6 +269,9 @@ export function WellnessLibrary() {
             })
           }
           onClearFilters={() => setActivityCriteria(DEFAULT_ACTIVITY_CRITERIA)}
+          hasActiveFilters={
+            JSON.stringify(activityCriteria) !== JSON.stringify(DEFAULT_ACTIVITY_CRITERIA)
+          }
           filters={
             <div className="grid grid-cols-2 gap-3">
               <SelectMenu

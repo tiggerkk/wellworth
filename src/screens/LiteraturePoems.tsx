@@ -126,6 +126,9 @@ export function LiteraturePoems() {
           setCrit({ sortDir: criteria.sortDir === 'asc' ? 'desc' : 'asc' })
         }
         onClearFilters={clearFilters}
+        hasActiveFilters={
+          JSON.stringify(criteria) !== JSON.stringify(DEFAULT_POEM_CRITERIA)
+        }
         extra={
           <span className="flex items-center gap-1.5">
             <span className="text-caption text-text-secondary">只看收藏</span>

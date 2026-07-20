@@ -122,6 +122,9 @@ export function InsurancePolicies() {
           setCrit({ sortDir: criteria.sortDir === 'asc' ? 'desc' : 'asc' })
         }
         onClearFilters={clearFilters}
+        hasActiveFilters={
+          JSON.stringify(criteria) !== JSON.stringify(DEFAULT_INSURANCE_CRITERIA)
+        }
         filters={
           <>
             <div className="grid grid-cols-2 gap-3">
