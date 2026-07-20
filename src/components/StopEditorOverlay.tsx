@@ -11,6 +11,7 @@ import { createStop, nextStopSortOrder, updateStop } from '../data/travel'
 import { type ResolvedCity, type StopRow } from '../lib/travel'
 import { STOP_TYPES, STOP_TYPE_LABELS, type StopType } from '../constants/travel'
 import { FIELD_CLASS as inputClass } from '../constants/forms'
+import { useDirty } from '../hooks/useDirty'
 import { useDiscardConfirm } from '../hooks/useDiscardConfirm'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 
@@ -37,6 +38,17 @@ interface StopEditorOverlayProps {
 
 type CompletionValue = '' | 'done' | 'skipped'
 
+interface StopDraft {
+  type: StopType
+  targetDay: string
+  city: string
+  country: string
+  province: string
+  description: string
+  details: string
+  completion: CompletionValue
+}
+
 /** A **local** overlay editing one stop (not a route sheet, so the Builder draft survives). */
 export function StopEditorOverlay({
   userId,
@@ -55,7 +67,7 @@ export function StopEditorOverlay({
   const [cityOpen, setCityOpen] = useState(false)
 
   // The saved (or carried-forward) starting values — the baseline for dirty-check + Reset.
-  const init = {
+  const init: StopDraft = {
     type: (stop?.type as StopType) ?? defaultType,
     targetDay: stop?.trip_day_id ?? dayId,
     city: stop?.city ?? defaultCity,
@@ -66,43 +78,19 @@ export function StopEditorOverlay({
     completion: (stop?.completion as CompletionValue) ?? '',
   }
 
-  const [type, setType] = useState<StopType>(init.type)
-  const [targetDay, setTargetDay] = useState(init.targetDay)
-  const [city, setCity] = useState(init.city)
-  const [country, setCountry] = useState(init.country)
-  const [province, setProvince] = useState(init.province)
-  const [description, setDescription] = useState(init.description)
-  const [details, setDetails] = useState(init.details)
-  const [completion, setCompletion] = useState<CompletionValue>(init.completion)
-
-  const dirty =
-    type !== init.type ||
-    targetDay !== init.targetDay ||
-    city !== init.city ||
-    country !== init.country ||
-    province !== init.province ||
-    description !== init.description ||
-    details !== init.details ||
-    completion !== init.completion
+  const [draft, setDraft] = useState<StopDraft>(init)
+  const update = (patch: Partial<StopDraft>) => setDraft((d) => ({ ...d, ...patch }))
+  const dirty = useDirty(draft, init)
 
   const { requestClose, confirm } = useDiscardConfirm(dirty, onClose)
   useEscapeKey(requestClose)
 
-  function reset() {
-    setType(init.type)
-    setTargetDay(init.targetDay)
-    setCity(init.city)
-    setCountry(init.country)
-    setProvince(init.province)
-    setDescription(init.description)
-    setDetails(init.details)
-    setCompletion(init.completion)
-  }
-
   function pickCity(resolved: ResolvedCity) {
-    setCity(resolved.city)
-    setCountry(resolved.country)
-    setProvince(resolved.province ?? '')
+    update({
+      city: resolved.city,
+      country: resolved.country,
+      province: resolved.province ?? '',
+    })
     setCityOpen(false)
   }
 
@@ -110,25 +98,27 @@ export function StopEditorOverlay({
     setSaving(true)
     try {
       const payload = {
-        trip_day_id: targetDay,
-        type,
-        city: city.trim() || null,
-        country: country.trim() || null,
-        province: province.trim() || null,
-        description: description.trim() || null,
-        details: details.trim() || null,
-        completion: completion || null,
+        trip_day_id: draft.targetDay,
+        type: draft.type,
+        city: draft.city.trim() || null,
+        country: draft.country.trim() || null,
+        province: draft.province.trim() || null,
+        description: draft.description.trim() || null,
+        details: draft.details.trim() || null,
+        completion: draft.completion || null,
       }
       let saved: StopRow
       if (stop) {
         // Moving to a different day appends it there; same-day edits keep their position.
-        const moved = targetDay !== stop.trip_day_id
-        const sortPatch = moved ? { sort_order: await nextStopSortOrder(targetDay) } : {}
+        const moved = draft.targetDay !== stop.trip_day_id
+        const sortPatch = moved
+          ? { sort_order: await nextStopSortOrder(draft.targetDay) }
+          : {}
         await updateStop(stop.id, { ...payload, ...sortPatch })
         // The patch covers every edited field, so the merged row matches what the DB now holds.
         saved = { ...stop, ...payload, ...sortPatch }
       } else {
-        const sort_order = await nextStopSortOrder(targetDay)
+        const sort_order = await nextStopSortOrder(draft.targetDay)
         saved = await createStop({ ...payload, user_id: userId, sort_order })
       }
       onSaved(saved)
@@ -148,7 +138,7 @@ export function StopEditorOverlay({
               editing={!!stop}
               dirty={dirty}
               saving={saving}
-              onReset={reset}
+              onReset={() => setDraft(init)}
               onSubmit={() => void save()}
               onDelete={stop && onDelete ? onDelete : undefined}
             />
@@ -157,8 +147,8 @@ export function StopEditorOverlay({
 
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
           <SegmentedTabs<StopType>
-            value={type}
-            onChange={setType}
+            value={draft.type}
+            onChange={(type) => update({ type })}
             options={STOP_TYPES.map((t) => ({ value: t, label: STOP_TYPE_LABELS[t] }))}
           />
 
@@ -168,8 +158,8 @@ export function StopEditorOverlay({
               <label className="flex-1 text-caption text-text-secondary">
                 City
                 <input
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
+                  value={draft.city}
+                  onChange={(e) => update({ city: e.target.value })}
                   placeholder="City"
                   className={`mt-1 ${inputClass}`}
                 />
@@ -185,16 +175,16 @@ export function StopEditorOverlay({
               <label className="flex-1 text-caption text-text-secondary">
                 Province / Region
                 <input
-                  value={province}
-                  onChange={(e) => setProvince(e.target.value)}
+                  value={draft.province}
+                  onChange={(e) => update({ province: e.target.value })}
                   className={`mt-1 ${inputClass}`}
                 />
               </label>
               <label className="flex-1 text-caption text-text-secondary">
                 Country
                 <input
-                  value={country}
-                  onChange={(e) => setCountry(e.target.value)}
+                  value={draft.country}
+                  onChange={(e) => update({ country: e.target.value })}
                   className={`mt-1 ${inputClass}`}
                 />
               </label>
@@ -204,10 +194,12 @@ export function StopEditorOverlay({
           <label className="text-caption text-text-secondary">
             Description
             <input
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              value={draft.description}
+              onChange={(e) => update({ description: e.target.value })}
               placeholder={
-                type === 'travel' ? 'e.g. Train: Guangzhou → Chaozhou' : 'Place / name'
+                draft.type === 'travel'
+                  ? 'e.g. Train: Guangzhou → Chaozhou'
+                  : 'Place / name'
               }
               className={`mt-1 ${inputClass}`}
             />
@@ -216,8 +208,8 @@ export function StopEditorOverlay({
           <label className="text-caption text-text-secondary">
             Details
             <textarea
-              value={details}
-              onChange={(e) => setDetails(e.target.value)}
+              value={draft.details}
+              onChange={(e) => update({ details: e.target.value })}
               rows={2}
               className={`mt-1 resize-none ${inputClass}`}
             />
@@ -228,8 +220,8 @@ export function StopEditorOverlay({
               Completion
               <div className="mt-1">
                 <SelectMenu<CompletionValue>
-                  value={completion}
-                  onChange={setCompletion}
+                  value={draft.completion}
+                  onChange={(completion) => update({ completion })}
                   ariaLabel="Completion"
                   options={[
                     { value: '', label: 'Unmarked' },
@@ -244,8 +236,8 @@ export function StopEditorOverlay({
                 Day
                 <div className="mt-1">
                   <SelectMenu
-                    value={targetDay}
-                    onChange={setTargetDay}
+                    value={draft.targetDay}
+                    onChange={(targetDay) => update({ targetDay })}
                     ariaLabel="Move to day"
                     options={days.map((d) => ({ value: d.id, label: d.label }))}
                   />
@@ -267,7 +259,7 @@ export function StopEditorOverlay({
       {cityOpen && (
         <CitySearchOverlay
           userId={userId}
-          initialQuery={city}
+          initialQuery={draft.city}
           onSelect={pickCity}
           onClose={() => setCityOpen(false)}
         />
