@@ -23,6 +23,7 @@ export function WellnessActivityAddSheet() {
     <SheetLoader
       label="Add activity"
       title="Add Activity"
+      icon="close"
       actions={
         <button
           onClick={() => openSheet(routes.wellness.newActivity)}

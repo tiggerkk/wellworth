@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { IconUpload } from '@tabler/icons-react'
-import { ScreenHeaderTitle } from '../components/ScreenHeaderTitle'
+import { ImportSheetHeader } from '../components/ImportSheetHeader'
 import { Sheet } from '../components/Sheet'
 import { ImportSheetFooter } from '../components/ImportSheetFooter'
 import { CoverThumb } from '../components/CoverThumb'
@@ -366,7 +366,7 @@ export function ImportBooksSheet() {
 
   return (
     <Sheet variant="full" label="Import Books">
-      <ScreenHeaderTitle title="Import Books" />
+      <ImportSheetHeader title="Import Books" />
 
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
         {done !== null ? (

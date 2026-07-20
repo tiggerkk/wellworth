@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { IconUpload } from '@tabler/icons-react'
-import { ScreenHeaderTitle } from '../components/ScreenHeaderTitle'
+import { ImportSheetHeader } from '../components/ImportSheetHeader'
 import { Sheet } from '../components/Sheet'
 import { ImportSheetFooter } from '../components/ImportSheetFooter'
 import { useAuth } from '../auth/AuthProvider'
@@ -120,7 +120,7 @@ export function ImportNetWorthSheet() {
 
   return (
     <Sheet variant="full" label="Import Net Worth">
-      <ScreenHeaderTitle title="Import Net Worth CSV" />
+      <ImportSheetHeader title="Import Net Worth CSV" />
 
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
         {doneCount !== null ? (

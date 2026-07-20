@@ -17,6 +17,10 @@ interface SheetLoaderProps<T> {
    *  (a reserved `actions` div here, the real actions absolutely positioned once loaded), matching
    *  every New/Edit form. */
   actions?: ReactNode
+  /** `'back'` (default, a `<` chevron) for a sheet reached by drilling into it — every
+   *  Settings-launched sheet and a Dashboard/Listing detail drill-in. `'close'` (an X) for a
+   *  task-style picker opened over the current screen. See `ScreenHeaderTitle`'s `icon` prop. */
+  icon?: 'close' | 'back'
   /** True while the async load is in flight. */
   loading: boolean
   /** Truthy when the load failed. */
@@ -42,6 +46,7 @@ export function SheetLoader<T>({
   title,
   titleClassName,
   actions,
+  icon = 'back',
   loading,
   error,
   data,
@@ -54,6 +59,7 @@ export function SheetLoader<T>({
         title={title}
         titleClassName={titleClassName}
         actions={actions}
+        icon={icon}
       />
       <EntryLoader loading={loading} error={error} data={data} errorText={errorText}>
         {children}

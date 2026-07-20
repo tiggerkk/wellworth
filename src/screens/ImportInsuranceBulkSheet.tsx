@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { IconUpload } from '@tabler/icons-react'
-import { ScreenHeaderTitle } from '../components/ScreenHeaderTitle'
+import { ImportSheetHeader } from '../components/ImportSheetHeader'
 import { Sheet } from '../components/Sheet'
 import { ImportSheetFooter } from '../components/ImportSheetFooter'
 import { SegmentedTabs } from '../components/SegmentedTabs'
@@ -139,7 +139,7 @@ export function ImportInsuranceBulkSheet() {
 
   return (
     <Sheet variant="full" label="Import insurance">
-      <ScreenHeaderTitle title="Import Insurance CSV" />
+      <ImportSheetHeader title="Import Insurance CSV" />
 
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
         {doneStats !== null ? (
