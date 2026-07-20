@@ -9,7 +9,6 @@ import {
   VisibleModulesSheet,
   WellnessDashboard,
   WellnessDiary,
-  WellnessDailyReportSheet,
   WellnessLibrary,
   WellnessFoodAddSheet,
   WellnessFoodEntry,
@@ -102,7 +101,6 @@ export const router = createBrowserRouter([
           // Wellness module — tabs
           { path: 'wellness', element: <WellnessDiary /> },
           { path: 'wellness/dashboard', element: <WellnessDashboard /> },
-          { path: 'wellness/report/:day', element: <WellnessDailyReportSheet /> },
           { path: 'wellness/library', element: <WellnessLibrary /> },
           { path: 'wellness/add-food', element: <WellnessFoodAddSheet /> },
           { path: 'wellness/new-food', element: <WellnessFoodEntry /> },

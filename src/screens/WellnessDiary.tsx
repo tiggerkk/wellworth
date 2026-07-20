@@ -44,6 +44,7 @@ import { IconAction } from '../components/IconAction'
 import { ConfirmDeleteAction } from '../components/ConfirmDeleteAction'
 import { NutrientBar } from '../components/NutrientBar'
 import { ReorderList } from '../components/ReorderList'
+import { WellnessDailyReportOverlay } from '../components/WellnessDailyReportOverlay'
 
 export function WellnessDiary() {
   const { session } = useAuth()
@@ -72,6 +73,7 @@ export function WellnessDiary() {
   )
 
   const [calendarOpen, setCalendarOpen] = useState(false)
+  const [reportOpen, setReportOpen] = useState(false)
   // Diary supplies the calendar's food/activity cue dots for the visible month.
   const loadCalendarCues = useCallback(
     async (monthStart: IsoDate, monthEnd: IsoDate): Promise<Map<IsoDate, DayCue>> => {
@@ -245,7 +247,7 @@ export function WellnessDiary() {
           <IconAction
             Icon={IconReportAnalytics}
             label="Daily report"
-            onClick={() => openSheet(routes.wellness.report(day))}
+            onClick={() => setReportOpen(true)}
           />
           {/* Center: day nav */}
           <div className="flex flex-1 items-center justify-center gap-1">
@@ -446,6 +448,10 @@ export function WellnessDiary() {
           }}
           onClose={() => setCalendarOpen(false)}
         />
+      )}
+
+      {reportOpen && (
+        <WellnessDailyReportOverlay day={day} onClose={() => setReportOpen(false)} />
       )}
     </div>
   )

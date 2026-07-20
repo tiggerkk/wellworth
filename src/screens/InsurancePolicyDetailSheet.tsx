@@ -48,6 +48,7 @@ export function InsurancePolicyDetailSheet() {
       <ScreenHeaderTitle
         title="Insurance Policy Detail"
         titleClassName="line-clamp-2 flex-1 text-heading font-medium text-text-primary"
+        icon="back"
         actions={<div className="w-5 shrink-0" />}
       />
       <EntryLoader
