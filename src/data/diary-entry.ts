@@ -24,9 +24,9 @@ export async function listEntriesByDay(
 
 /**
  * The columns `NutrientReport`'s aggregation actually reads (see `aggregateEntries` in
- * `lib/medical-report.ts`). A range can span up to a year of logging, so `listEntrySummariesByRange`
- * selects just these instead of `select('*')` — skipping `label`, `sort_order`, the FK columns, etc.
- * for every row in the range.
+ * `lib/wellness-nutrient-report.ts`). A range can span up to a year of logging, so
+ * `listEntrySummariesByRange` selects just these instead of `select('*')` — skipping `label`,
+ * `sort_order`, the FK columns, etc. for every row in the range.
  */
 export type DiaryEntrySummary = Pick<
   Tables<'diary_entry'>,

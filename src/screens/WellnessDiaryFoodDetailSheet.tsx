@@ -165,9 +165,8 @@ export function WellnessDiaryFoodDetailSheet() {
         isFavorite: false,
       }
     }
-    const row = await getFood(id)
+    const [row, rows] = await Promise.all([getFood(id), listServings(id)])
     if (!row) return null
-    const rows = await listServings(id)
     const { servings, defaultIndex } = buildServings(
       rows.map((s) => ({ id: s.id, name: s.name, grams: Number(s.grams) })),
       row.default_serving_id,

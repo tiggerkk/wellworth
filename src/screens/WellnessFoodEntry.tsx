@@ -51,13 +51,13 @@ interface FoodRow {
   servings: Awaited<ReturnType<typeof listServings>>
 }
 
-/** Fetches the food + its servings together. Module-level (stable identity) — `useEntryDraft`
- *  re-fetches whenever this reference changes, so it must NOT be recreated on every render (an
- *  inline arrow function here previously caused an infinite refetch loop). */
+/** Fetches the food + its servings together (in parallel — neither depends on the other's
+ *  result). Module-level (stable identity) — `useEntryDraft` re-fetches whenever this reference
+ *  changes, so it must NOT be recreated on every render (an inline arrow function here previously
+ *  caused an infinite refetch loop). */
 async function fetchFoodRow(id: string): Promise<FoodRow | null> {
-  const food = await getFood(id)
+  const [food, servings] = await Promise.all([getFood(id), listServings(id)])
   if (!food) return null
-  const servings = await listServings(id)
   return { food, servings }
 }
 
