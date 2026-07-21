@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { IconDeviceTv } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
@@ -100,7 +100,11 @@ export function ShowsLibrary() {
     if (!userId) return Promise.resolve([])
     return listShows(userId)
   }, [userId, version])
-  const { data: shows, loading, error } = useAsync(fn)
+  const {
+    data: shows,
+    loading,
+    error,
+  } = useAsync(fn, undefined, userId ? { key: `shows:${userId}`, version } : undefined)
 
   // Optimistic delete: drop the row locally so it disappears instantly, instead of waiting for a
   // `bumpShows()` → full-library refetch. Override resets when a real fetch lands (adjust-state-
@@ -152,11 +156,17 @@ export function ShowsLibrary() {
     }))
   }
 
-  const allShows = override ?? shows ?? []
-  const genreOptions = [
-    { value: 'all', label: 'Any Genre' },
-    ...showGenres(allShows).map((g) => ({ value: g, label: g })),
-  ]
+  const allShows = useMemo(() => override ?? shows ?? [], [override, shows])
+  // Memoized: showGenres scans every show to collect+sort distinct genres, so without this it
+  // reran on every render (including every keystroke in Search) instead of only when the
+  // underlying list actually changes.
+  const genreOptions = useMemo(
+    () => [
+      { value: 'all', label: 'Any Genre' },
+      ...showGenres(allShows).map((g) => ({ value: g, label: g })),
+    ],
+    [allShows],
+  )
   const boundValue: Record<DateBound, IsoDate | null> = {
     startFrom: criteria.startFrom,
     startTo: criteria.startTo,

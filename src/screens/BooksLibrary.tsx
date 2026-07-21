@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { IconBook } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
@@ -87,7 +87,11 @@ export function BooksLibrary() {
     if (!userId) return Promise.resolve([])
     return listBooks(userId)
   }, [userId, version])
-  const { data: books, loading, error } = useAsync(fn)
+  const {
+    data: books,
+    loading,
+    error,
+  } = useAsync(fn, undefined, userId ? { key: `books:${userId}`, version } : undefined)
 
   // Optimistic delete: drop the row locally so it disappears instantly, instead of waiting for a
   // `bumpBooks()` → full-library refetch. Override resets when a real fetch lands (adjust-state-
@@ -138,11 +142,17 @@ export function BooksLibrary() {
     }))
   }
 
-  const allBooks = override ?? books ?? []
-  const genreOptions = [
-    { value: 'all', label: 'Any Genre' },
-    ...bookGenres(allBooks).map((g) => ({ value: g, label: g })),
-  ]
+  const allBooks = useMemo(() => override ?? books ?? [], [override, books])
+  // Memoized: bookGenres scans every book to collect+sort distinct genres, so without this it
+  // reran on every render (including every keystroke in Search) instead of only when the
+  // underlying list actually changes.
+  const genreOptions = useMemo(
+    () => [
+      { value: 'all', label: 'Any Genre' },
+      ...bookGenres(allBooks).map((g) => ({ value: g, label: g })),
+    ],
+    [allBooks],
+  )
   const boundValue: Record<DateBound, IsoDate | null> = {
     startFrom: criteria.startFrom,
     startTo: criteria.startTo,

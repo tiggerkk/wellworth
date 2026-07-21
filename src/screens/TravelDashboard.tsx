@@ -41,7 +41,11 @@ export function TravelDashboard() {
     if (!userId) return Promise.resolve<[TripRow[], StatFacetRow[]]>([[], []])
     return Promise.all([listTrips(userId), listTripFacetRows(userId)])
   }, [userId, version])
-  const { data, loading, error } = useAsync(fn)
+  const { data, loading, error } = useAsync(
+    fn,
+    undefined,
+    userId ? { key: `travel:${userId}`, version } : undefined,
+  )
 
   const [trips, facetRows] = data ?? [[], []]
 

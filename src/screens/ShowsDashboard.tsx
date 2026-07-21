@@ -44,7 +44,11 @@ export function ShowsDashboard() {
     if (!userId) return Promise.resolve([])
     return listShows(userId)
   }, [userId, version])
-  const { data: shows, loading, error } = useAsync(fn)
+  const {
+    data: shows,
+    loading,
+    error,
+  } = useAsync(fn, undefined, userId ? { key: `shows:${userId}`, version } : undefined)
 
   const editShow = (id: string) => navigate(routes.shows.edit(id), fromDashboard)
 

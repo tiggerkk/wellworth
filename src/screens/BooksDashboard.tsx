@@ -39,7 +39,11 @@ export function BooksDashboard() {
     if (!userId) return Promise.resolve([])
     return listBooks(userId)
   }, [userId, version])
-  const { data: books, loading, error } = useAsync(fn)
+  const {
+    data: books,
+    loading,
+    error,
+  } = useAsync(fn, undefined, userId ? { key: `books:${userId}`, version } : undefined)
 
   const editBook = (id: string) => navigate(routes.books.edit(id), fromDashboard)
 

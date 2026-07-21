@@ -50,7 +50,11 @@ export function QuotesZen() {
     if (!userId) return Promise.resolve([])
     return listQuotes(userId)
   }, [userId, version])
-  const { data: quotes, loading, error } = useAsync(fn)
+  const {
+    data: quotes,
+    loading,
+    error,
+  } = useAsync(fn, undefined, userId ? { key: `quotes:${userId}`, version } : undefined)
 
   // Source-type / category labels are owner-configurable — resolve via the profile lists (tolerant).
   const { data: profile } = useProfile()

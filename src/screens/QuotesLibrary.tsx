@@ -71,7 +71,11 @@ export function QuotesLibrary() {
     if (!userId) return Promise.resolve([])
     return listQuotes(userId)
   }, [userId, version])
-  const { data: quotes, loading, error } = useAsync(fn)
+  const {
+    data: quotes,
+    loading,
+    error,
+  } = useAsync(fn, undefined, userId ? { key: `quotes:${userId}`, version } : undefined)
 
   // Optimistic delete: drop the row locally so it disappears instantly, instead of waiting for a
   // `bumpQuotes()` → full-library refetch. Override resets when a real fetch lands (adjust-state-
@@ -145,10 +149,12 @@ export function QuotesLibrary() {
     }))
   }
 
-  const all = override ?? quotes ?? []
+  const all = useMemo(() => override ?? quotes ?? [], [override, quotes])
   // Tags ranked by quote count (most-used first). By default the facet shows the top N; once there are
   // more, a search box narrows the FULL list. Selected tags always stay visible (so they're deselectable).
-  const ranked = rankedTags(all)
+  // Memoized: rankedTags counts+sorts every distinct tag across every quote, so without this it reran on
+  // every render (including every keystroke in Search or the tag-filter box), not just when `all` changes.
+  const ranked = useMemo(() => rankedTags(all), [all])
   const showTagSearch = ranked.length > TOP_TAGS
   const tagFilter = foldZh(tagQuery.trim())
   const pool = tagFilter

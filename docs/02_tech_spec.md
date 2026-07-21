@@ -195,6 +195,55 @@ frozen** from the catalogue per month; funds use `asset_entry` with importer-fil
 - **Matching remote results** (Books): `normMatch` (`src/lib/books-api.ts`) is the shared canonical match key — `foldZh` (Traditional→Simplified + lowercase) then strip whitespace + ASCII/CJK punctuation, keeping CJK ideographs. It backs the author-aware `rankSearchResults({ title, author })` and the importer's `isConfidentMatch`, so the bulk importer and the New/Edit search resolve a book identically. (An earlier ASCII-only normalizer collapsed every Chinese title to '', so all CJK matches looked exact and were never flagged for review.)
 - **Frankfurter** (`api.frankfurter.dev/v1/{date}?from={currency}&to=HKD`): **keyless**, ECB-sourced, CORS-enabled. Returns the most recent rate on or before the requested date (handles non-trading days). The fetched rate is **frozen** on first write so saved records are immune to later rate revisions. Helpers + a small cache live in `src/lib/fx.ts` (Net Worth) and `src/lib/trip-fx.ts` (Travel). `fetchRateToHkdOn(currency, date)` is the shared fetch interface. HKD is always 1 (never fetched); CNY is stored as the `CNY` code, not `RMB`. Failures are non-fatal; the user can override manually.
 
+## Performance notes
+
+### Shows / Books / Quotes / Travel
+
+**Query layer**
+
+- List screens (Dashboard + Library/Trips) select only the columns they render, search, filter, or
+  sort on — not `select('*')`. Full rows (all columns) are only fetched by Entry/Edit via
+  `getShow`/`getBook`/`getQuote`/`getTrip`/`getTripBundle`.
+- `show`, `book`, `quote` each have a `(user_id, updated_at desc)` index covering their list query's
+  default sort order.
+- `quote.show_id` / `quote.book_id` are indexed (`quote_show_id_idx` / `quote_book_id_idx`) so
+  deleting a Show or Book doesn't force a full scan of `quote` for its `ON DELETE SET NULL`.
+- `stop.user_id` is indexed, covering the Travel Dashboard/Trips facet query (`listTripFacetRows`),
+  which queries `stop` directly across every trip.
+
+**Rendering**
+
+- `Thumb` (shared by `PosterThumb`/`CoverThumb`) uses `loading="lazy"` — off-screen list rows don't
+  fetch their image until they're about to scroll into view.
+- `TravelEntry`'s itinerary groups a trip's stops by day once per `stops` change (memoized `Map`),
+  instead of re-filtering the whole trip's stops for every day on every render.
+- Library filter facets — Shows'/Books' genre list, Quotes' tag ranking + tag search — are memoized
+  against the underlying list, so they recompute only when the list actually changes, not on every
+  render (previously reran on every keystroke in Search/tag-filter).
+
+**Data fetching**
+
+- `useAsync` supports an opt-in shared cache (`{ key, version }`): a Dashboard and its matching
+  Library/Trips/Zen screen share one cache entry per module. A hit at the exact version the module
+  was last written skips the network call entirely, so switching between a module's Dashboard and
+  Library no longer independently re-fetches the same full list.
+
+**Known gap, low priority at current scale**
+
+- No virtualization or pagination on any list screen — acceptable at personal-library scale (low
+  thousands of rows); revisit if any module's row count grows well past that.
+
+### Medical
+
+- **Bounded queries, not full history** (`useMedicalTrends`): the Dashboard loads three bounded queries in one pass — `listLatestResultPerTest` (the `medical_latest_result` view, one row per test), `listTrackedResultSeries` (history for tracked tests only), and `listReports(userId, 6)` (6 most recent, not the full list). Payload never grows with a test's full history or the full reports table.
+- **Parallel fetch on Report detail / Edit** (`getReportWithResults`, `src/data/medical.ts`): the parent report and its result rows are independent queries (results only need `reportId`), so they're fired together via `Promise.all` instead of one waiting on the other — roughly halves the round-trip latency opening or editing a report.
+- **In-memory Dashboard cache** (`src/lib/medical-cache.ts`): the last-loaded Dashboard payload is seeded into `useMedicalTrends` on re-entry so navigating away and back repaints instantly instead of a "Loading…" flash, while the real fetch reconciles in the background. Deliberately **not** `localStorage`/`sessionStorage` — Medical is the one module with its own biometric/PIN lock, and the cached payload (test values, flags, narratives) is exactly the content that lock exists to hide. An in-memory `Map` disappears on reload/tab-close, same lifetime as the lock's own unlocked-session flag, so it never survives past the point the lock would re-engage. Keyed per user.
+- **Reports list**: bounded per-request via `listReports`'s optional `limit` param — the Dashboard timeline passes `6`; the full Reports screen (search/filter/sort) omits it to get every row.
+- **Import matching** (`matchTestKey`, `src/lib/medical-import.ts`): the alias/category lookup tables are built **once at module load** into `Map`s, giving O(1) per-row matching during import rather than re-scanning the ~150-test reference per row.
+- **Test picker reference grouping** (`medicalTestsByCategory`, `src/lib/medical.ts`): grouped-by-category test list is computed **once at module load** (frozen) instead of re-filtering/re-sorting the ~150-test reference on every keystroke in `MedicalTestPickerOverlay`.
+- **Memoized display-order derivations**: `orderResultsForDisplay`/`groupResultsByCategory` are wrapped in `useMemo` in both `MedicalReportDetail` (keyed on `results`/section/test order) and the Add/Edit Report form (keyed on `draft.results`/`isEye`/section/test order), so they no longer re-sort and re-group on every keystroke in an unrelated field (date, provider, narrative).
+- **Route-level code-splitting was evaluated and reverted**: dynamically `import()`-ing the Medical screens was tried to keep them out of the main bundle, but a production build showed the project's Rolldown-based bundler (Vite 8) duplicating shared modules (react-router, `zh-fold`) between the static and dynamic import graphs rather than sharing them — a net _increase_ in shipped bytes. Not applied; worth revisiting if Vite/Rolldown's chunking improves.
+
 ## Environment variables
 
 `.env` (gitignored). Only `VITE_`-prefixed vars reach the browser.

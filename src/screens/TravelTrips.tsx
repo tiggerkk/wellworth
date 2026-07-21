@@ -59,7 +59,11 @@ export function TravelTrips() {
     if (!userId) return Promise.resolve(null)
     return Promise.all([listTrips(userId), listTripFacetRows(userId)])
   }, [userId, version])
-  const { data, loading, error } = useAsync(fn)
+  const { data, loading, error } = useAsync(
+    fn,
+    undefined,
+    userId ? { key: `travel:${userId}`, version } : undefined,
+  )
 
   const [trips, facetRows] = data ?? [[], []]
 
