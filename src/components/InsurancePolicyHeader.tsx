@@ -30,10 +30,10 @@ export function InsurancePolicyHeader({
     <>
       <span className={`${lineClass} text-body text-text-primary`}>
         {policyNumber}
-        {startDate ? ` · ${formatFullDate(startDate)}` : ''}
+        {startDate ? ` · ${formatFullDate(startDate)}` : ''} · {providerLabel}
       </span>
       <span className={`${lineClass} text-caption text-text-secondary`}>
-        {providerLabel} · {policyName}
+        {policyName}
       </span>
     </>
   )
