@@ -19,7 +19,7 @@ When there is data, three sections:
 - **Latest values by category**:
   - For every test recorded, its **most recent** value across all reports (not just the newest report — a heterogeneous history means the latest report may omit most tests), grouped under **collapsible, color-accented category sections** in the user's display order.
   - Each row is the shared **`MedicalValueRow`** (also used by the View Report `ResultRow`): test name + the (often long, wrapping) printed reference range in the **flexible left column**, value (+ unit, **coloured by flag**) in a `shrink-0` right column with `items-start` — so a long range wraps under the name instead of squeezing the name or pushing the value off the right edge.
-- **Recent reports** — up to five newest reports (date · type · provider · body part) linking to Report detail, with a **View all reports** row when there are more. (Plain `SectionCard` — **not** category-colored, unlike Latest values.)
+- **Recent reports** — up to five newest reports (date · type · body part · provider) linking to Report detail, with a **View all reports** row when there are more. (Plain `SectionCard` — **not** category-colored, unlike Latest values.)
 
 Tracked tests are chosen in Medical Settings → Tracked Tests (seeded from `default_tracked`).
 
@@ -29,13 +29,13 @@ Tracked tests are chosen in Medical Settings → Tracked Tests (seeded from `def
 - **SortControl**, **Clear Filters button**: Sort over { Date, Type, Provider, Body Part } with an **asc/desc** toggle (newest-first within ties); default is **Date** descending.
 - **Filter panel** is label-free: **Any Type**, **Any Provider**, **Any Body Part**.
 - Each row carries:
-  - Line 1: **full date**.
-  - Line 2: **type · provider · body part**.
+  - Line 1: **date · type · body part**.
+  - Line 2: **provider**.
   - Tap → Entry/Edit; **swipe-left → Delete** (optimistic). The DB delete runs in the background (no `bumpMedical()` → full-list refetch; bump only on error).
 
 ### Report detail (`/medical/:id`)
 
-- Read-only. Header: a top-left **X** (`navigate(-1)` + **Esc** — closes back to wherever it was opened from, Reports list **or** Dashboard; **Date - Type** (e.g. `May 4, 2026 - Health Screening`, with `· body part` when relevant) on line 1; **Provider** as secondary text on line 2; an **Edit** (pencil icon) action.
+- Read-only. Header: a top-left **<** (`navigate(-1)` + **Esc** — closes back to wherever it was opened from, Reports list **or** Dashboard; **Date - Type** (e.g. `May 4, 2026 - Health Screening`, with `· body part` when relevant) on line 1; **Provider** as secondary text on line 2; an **Edit** (pencil icon) action.
 - Below: **Open original** link(s) for each Google Drive URL (`target="_blank" rel="noreferrer"`); a **Narrative** block when present; then **results grouped under collapsible, color-accented category sections** in the seeded section + sort order (filtered to the tests this report contains).
 - Each result row: `test name · reference range` on the left, `value (+ unit)` on the right — value **coloured by flag** (high/abnormal = `danger` red, low = `info` blue).
 - A "normalized from …" note when the value was unit-converted on import; a still-flagged row is **accent-tinted** with a **`Review – <reason>`** marker (`text-label font-medium text-warning`, the **same size + colour as the editor's marker**, read-only — no button here); see the review lifecycle under Add / Edit Report.
@@ -45,7 +45,7 @@ Tracked tests are chosen in Medical Settings → Tracked Tests (seeded from `def
 - Reached from the **New Medical** tab (new) or Report detail **Edit** button.
 - On the New form, an **Import JSON** accent link sits in the **header** between the title and action icons (when the importer is enabled).
 - Top-right icon actions (Delete when editing · Reset · Create/Save) via shared **EntryHeaderActions**.
-- Close (✕)/Escape returns without saving.
+- Back (<)/Escape returns without saving.
 - **Parent fields:**
   - **Report Date** (Calendar; defaults today) + **Type** (dropdown) share one line.
   - **Provider**.

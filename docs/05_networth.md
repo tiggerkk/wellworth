@@ -56,7 +56,7 @@
 ### New/Edit Insurance
 
 - Header:
-  - X · title · Delete/Reset/Create/Save.
+  - X (for new) or < (for Edit) · title · Delete/Reset/Create/Save.
   - It's a plain route screen (not a `Sheet`), so it registers `useEscapeKey(() => navigate(-1))` itself for laptop Esc-to-close (an open Calendar / SelectMenu / import overlay sits above it on the shared LIFO stack and consumes Esc first).
 - Body:
   - Provider (picked from the configured list — manage it in Settings → Manage Providers) + Currency (mandatory; HKD/CNY/USD) on one line (equal-height controls so the dropdown and segmented toggle align).

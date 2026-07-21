@@ -11,24 +11,21 @@ import {
   MEDICAL_CATEGORY_LABELS,
   MEDICAL_FLAG_LABELS,
   type MedicalFlag,
-  REPORT_TYPE_LABELS,
-  type ReportType,
 } from '../constants/medical'
 import {
   formatRefRange,
   formatResultValue,
   medicalReviewReason,
   orderResultsForDisplay,
-  usesBodyPart,
   type MedicalResultRow,
 } from '../lib/medical'
 import { groupResultsByCategory } from '../lib/medical-order'
-import { formatFullDate } from '../lib/date'
 import { routes } from '../constants/routes'
 import { EntryLoader } from '../components/EntryLoader'
 import { ScreenHeaderTitle } from '../components/ScreenHeaderTitle'
 import { PrimaryButton } from '../components/PrimaryButton'
 import { MedicalValueRow } from '../components/MedicalValueRow'
+import { MedicalRowHeader } from '../components/MedicalRowHeader'
 import { Collapsible } from '../components/Collapsible'
 
 /**
@@ -69,21 +66,7 @@ export function MedicalReportDetail() {
       >
         <div className="min-w-0 flex-1">
           {data ? (
-            <>
-              <p className="truncate text-title font-medium text-text-primary">
-                {formatFullDate(data.report.report_date)} -{' '}
-                {REPORT_TYPE_LABELS[data.report.report_type as ReportType] ??
-                  data.report.report_type}
-                {usesBodyPart(data.report.report_type) && data.report.body_part
-                  ? ` · ${data.report.body_part}`
-                  : ''}
-              </p>
-              {data.report.provider && (
-                <p className="truncate text-caption text-text-secondary">
-                  {data.report.provider}
-                </p>
-              )}
-            </>
+            <MedicalRowHeader report={data.report} variant="header" />
           ) : (
             <p className="truncate text-title font-medium text-text-primary">Report</p>
           )}
