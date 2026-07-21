@@ -115,6 +115,9 @@ export function WellnessDiaryFoodDetailSheet() {
   // When opened from a logged Diary row, `entry` is that diary_entry id → edit mode.
   const entryId = params.get('entry')
   const editing = entryId != null
+  // Opened from the Library to manage a cached USDA/OFF food's servings, not to log it — the
+  // Amount field and diary create/update are irrelevant here; Save only persists servings/default.
+  const managing = params.get('mode') === 'manage'
 
   const { data: profile } = useProfile()
   const { byKey, nutrients: nutrientRows } = useNutrientReference()
@@ -198,7 +201,7 @@ export function WellnessDiaryFoodDetailSheet() {
   // once it loads; only an explicit edit here writes back to the DB — see `servingsDirty`.
   const [servings, setServings] = useState<Serving[]>([])
   const [defaultIndex, setDefaultIndex] = useState(0)
-  const [manageOpen, setManageOpen] = useState(false)
+  const [manageOpen, setManageOpen] = useState(managing)
   // Snapshot of the loaded servings + default, for dirty-tracking + RESET.
   const [servingsInitial, setServingsInitial] = useState<{
     servings: Serving[]
@@ -274,10 +277,11 @@ export function WellnessDiaryFoodDetailSheet() {
         defaultIndex: servingsInitial.defaultIndex,
       })
 
-  const dirty =
-    (initial != null &&
-      (amount !== initial.amount || servingIndex !== initial.servingIndex)) ||
-    servingsDirty
+  const dirty = managing
+    ? servingsDirty
+    : (initial != null &&
+        (amount !== initial.amount || servingIndex !== initial.servingIndex)) ||
+      servingsDirty
 
   const close = () => navigate(-1)
   const { requestClose, confirm } = useDiscardConfirm(dirty, close)
@@ -357,6 +361,11 @@ export function WellnessDiaryFoodDetailSheet() {
     try {
       const foodId = await ensureCachedId(food)
       await persistServings(foodId)
+      if (managing) {
+        bumpDiary()
+        navigate(-1)
+        return
+      }
       if (editing && entryId) {
         await updateEntry(entryId, {
           amount: draftAmount(amount, 1),
@@ -434,6 +443,14 @@ export function WellnessDiaryFoodDetailSheet() {
                   onSubmit={() => void submit()}
                   onDelete={entryId ? () => void removeEntry() : undefined}
                 />
+              ) : managing ? (
+                <EntryHeaderActions
+                  editing
+                  dirty={dirty}
+                  saving={saving}
+                  onReset={reset}
+                  onSubmit={() => void submit()}
+                />
               ) : (
                 <PrimaryButton
                   size="sm"
@@ -448,21 +465,23 @@ export function WellnessDiaryFoodDetailSheet() {
             </div>
             <div className="flex-1 overflow-y-auto p-4">
               <div className="mb-2 flex gap-3">
-                <label className="flex-1 text-caption text-text-secondary">
-                  Amount
-                  <input
-                    type="number"
-                    min={0}
-                    step="any"
-                    value={amount}
-                    onFocus={(e) => e.target.select()}
-                    onChange={(e) => setAmount(e.target.value)}
-                    onBlur={(e) => {
-                      if (e.target.value.trim() === '') setAmount('1')
-                    }}
-                    className="mt-1 field-control no-spinner w-full"
-                  />
-                </label>
+                {!managing && (
+                  <label className="flex-1 text-caption text-text-secondary">
+                    Amount
+                    <input
+                      type="number"
+                      min={0}
+                      step="any"
+                      value={amount}
+                      onFocus={(e) => e.target.select()}
+                      onChange={(e) => setAmount(e.target.value)}
+                      onBlur={(e) => {
+                        if (e.target.value.trim() === '') setAmount('1')
+                      }}
+                      className="mt-1 field-control no-spinner w-full"
+                    />
+                  </label>
+                )}
                 <label className="flex-1 text-caption text-text-secondary">
                   Serving Size
                   <select
@@ -481,14 +500,17 @@ export function WellnessDiaryFoodDetailSheet() {
 
               {/* Manage servings: add/edit/delete custom measures + pick the default. These are the
                   food's reusable measures (persisted on ADD/heart/SAVE); the Amount above is the
-                  per-log quantity and never changes them. */}
-              <button
-                onClick={() => setManageOpen((o) => !o)}
-                className="mb-4 text-body text-accent"
-              >
-                {manageOpen ? 'Hide Servings' : 'Manage Servings'}
-              </button>
-              {manageOpen && (
+                  per-log quantity and never changes them. In `manage` mode this panel is the whole
+                  point of the screen, so it's always shown with no toggle. */}
+              {!managing && (
+                <button
+                  onClick={() => setManageOpen((o) => !o)}
+                  className="mb-4 text-body text-accent"
+                >
+                  {manageOpen ? 'Hide Servings' : 'Manage Servings'}
+                </button>
+              )}
+              {(managing || manageOpen) && (
                 <div className="mb-4 flex flex-col gap-2 rounded-card border border-border bg-surface p-3">
                   {servings.map((sv, i) => (
                     <div key={i} className="flex items-center gap-2">

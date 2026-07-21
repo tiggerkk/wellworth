@@ -231,13 +231,14 @@ export function WellnessLibrary() {
                           void toggleFoodFavorite(f.id, !f.is_favorite)
                         }
                         onDelete={() => void removeFood(f.id)}
-                        // Custom foods open the editor; cached USDA/OFF foods open Food Detail so
-                        // their servings can be viewed/managed (not editable as custom nutrient rows).
+                        // Custom foods open the editor; cached USDA/OFF foods open Food Detail in
+                        // `manage` mode so their servings can be viewed/managed without logging a
+                        // diary entry (not editable as custom nutrient rows).
                         onClick={() =>
                           openSheet(
                             f.source === 'custom'
                               ? routes.wellness.editFood(f.id)
-                              : routes.wellness.food('local', f.id),
+                              : `${routes.wellness.food('local', f.id)}?mode=manage`,
                           )
                         }
                       >

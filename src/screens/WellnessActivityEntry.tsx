@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router'
+import { Sheet } from '../components/Sheet'
 import { ScreenHeaderTitle } from '../components/ScreenHeaderTitle'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { EntryHeaderActions } from '../components/EntryHeaderActions'
@@ -92,14 +93,20 @@ export function WellnessActivityEntry() {
   const { requestClose, afterSave, confirm } = useEntryClose({
     editing: !!id,
     dirty,
-    listing: routes.wellness.library,
+    // Preserves the Activities tab on Cancel/Save — plain `routes.wellness.library` would reset
+    // the Library to its default Foods tab.
+    listing: `${routes.wellness.library}?tab=activities`,
     editRoute: routes.wellness.editActivity,
   })
 
   useEscapeKey(requestClose)
 
   return (
-    <div className="relative flex h-full min-h-0 flex-col">
+    <Sheet
+      variant="full"
+      label={id ? 'Edit Activity' : 'New Activity'}
+      onClose={requestClose}
+    >
       {/* This outer header is always mounted, so it displays "Loading" gracefully with the header
           structure perfectly intact. */}
       <ScreenHeaderTitle
@@ -132,7 +139,7 @@ export function WellnessActivityEntry() {
         onConfirm={confirm.onConfirm}
         onCancel={confirm.onCancel}
       />
-    </div>
+    </Sheet>
   )
 }
 

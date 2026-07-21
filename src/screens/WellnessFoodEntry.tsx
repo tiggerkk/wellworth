@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router'
 import { IconPlus } from '@tabler/icons-react'
+import { Sheet } from '../components/Sheet'
 import { ScreenHeaderTitle } from '../components/ScreenHeaderTitle'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { RemoveRowButton } from '../components/RemoveRowButton'
@@ -109,7 +110,7 @@ export function WellnessFoodEntry() {
   useEscapeKey(requestClose)
 
   return (
-    <div className="relative flex h-full min-h-0 flex-col">
+    <Sheet variant="full" label={id ? 'Edit Food' : 'New Food'} onClose={requestClose}>
       {/* This outer header is always mounted, so it displays "Loading" gracefully with the header
           structure perfectly intact. */}
       <ScreenHeaderTitle
@@ -142,7 +143,7 @@ export function WellnessFoodEntry() {
         onConfirm={confirm.onConfirm}
         onCancel={confirm.onCancel}
       />
-    </div>
+    </Sheet>
   )
 }
 
