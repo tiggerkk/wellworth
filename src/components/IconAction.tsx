@@ -8,9 +8,10 @@ interface IconActionProps {
   disabled?: boolean
   /**
    * Tint when enabled: `secondary` (Delete/Copy), `positive` (Add, or Paste when the clipboard
-   * holds items). Disabled always renders muted (`text-text-tertiary`).
+   * holds items), `accent` (Compare schedules, when there's something to compare). Disabled
+   * always renders muted (`text-text-tertiary`).
    */
-  tone?: 'secondary' | 'positive'
+  tone?: 'secondary' | 'positive' | 'accent'
   /** Icon stroke weight (Add uses a heavier 2.25). */
   stroke?: number
 }
@@ -31,7 +32,9 @@ export function IconAction({
     ? 'text-text-tertiary'
     : tone === 'positive'
       ? 'text-positive'
-      : 'text-text-secondary'
+      : tone === 'accent'
+        ? 'text-accent'
+        : 'text-text-secondary'
   return (
     <button
       type="button"

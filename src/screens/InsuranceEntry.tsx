@@ -716,6 +716,7 @@ function PolicyForm({
                   label="Compare schedules"
                   onClick={() => setCompareOpen(true)}
                   disabled={schedules.length < 2}
+                  tone="accent"
                 />
                 {selected && (
                   <ConfirmDeleteAction
