@@ -134,17 +134,25 @@ export const labTestByKey: Map<string, MedicalLabTestSeed> = new Map(
   MEDICAL_LAB_TESTS.map((t) => [t.key, t]),
 )
 
+// Computed once at module load — MEDICAL_LAB_TESTS is static, so re-filtering + re-sorting it on
+// every call (the test picker calls this on every keystroke) would be pure waste. Frozen so callers
+// can't mutate the shared cache.
+const TESTS_BY_CATEGORY: { category: MedicalCategory; tests: MedicalLabTestSeed[] }[] =
+  MEDICAL_CATEGORIES.map((category) => ({
+    category,
+    tests: Object.freeze(
+      MEDICAL_LAB_TESTS.filter((t) => t.category === category).sort(
+        (a, b) => a.sort_order - b.sort_order,
+      ),
+    ) as MedicalLabTestSeed[],
+  })).filter((g) => g.tests.length > 0)
+
 /** The reference tests grouped by category, in section + sort order (for the test picker). */
 export function medicalTestsByCategory(): {
   category: MedicalCategory
   tests: MedicalLabTestSeed[]
 }[] {
-  return MEDICAL_CATEGORIES.map((category) => ({
-    category,
-    tests: MEDICAL_LAB_TESTS.filter((t) => t.category === category).sort(
-      (a, b) => a.sort_order - b.sort_order,
-    ),
-  })).filter((g) => g.tests.length > 0)
+  return TESTS_BY_CATEGORY
 }
 
 const CATEGORY_INDEX = new Map<string, number>(MEDICAL_CATEGORIES.map((c, i) => [c, i]))

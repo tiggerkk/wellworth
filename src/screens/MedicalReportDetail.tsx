@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { IconExternalLink, IconPencil } from '@tabler/icons-react'
 import { useAsync } from '../hooks/useAsync'
@@ -107,12 +107,12 @@ export function MedicalReportDetail() {
 function Body({ data }: { data: ReportWithResults }) {
   const { report, results } = data
   const { data: profile } = useProfile()
-  const ordered = orderResultsForDisplay(
-    results,
-    profile?.medical_section_order,
-    profile?.medical_test_order,
-  )
-  const groups = groupResultsByCategory(ordered)
+  const sectionOrder = profile?.medical_section_order
+  const testOrder = profile?.medical_test_order
+  const groups = useMemo(() => {
+    const ordered = orderResultsForDisplay(results, sectionOrder, testOrder)
+    return groupResultsByCategory(ordered)
+  }, [results, sectionOrder, testOrder])
 
   return (
     <div className="flex flex-col gap-5">

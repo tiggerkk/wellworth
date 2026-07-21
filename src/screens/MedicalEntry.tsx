@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { IconArrowsDiagonal, IconPlus, IconUpload, IconX } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
@@ -192,16 +192,19 @@ function ReportForm({
   // Eye reports surface the six refraction values in a dedicated grid; hide those rows from the
   // generic results list so they aren't edited twice.
   const isEye = draft.report_type === 'eye'
-  const filteredResults = isEye
-    ? draft.results.filter((r) => !(r.test_key && EYE_KEY_SET.has(r.test_key)))
-    : draft.results
+  const sectionOrder = profile?.medical_section_order
+  const testOrder = profile?.medical_test_order
   // Show the result cards in the owner's Display Order (sections + tests) — the same ordering as the
-  // Dashboard and Report detail. Purely presentational (keyed by clientId); editing/removal is unaffected.
-  const listResults = orderResultsForDisplay(
-    filteredResults,
-    profile?.medical_section_order,
-    profile?.medical_test_order,
-  )
+  // Dashboard and Report detail — grouped under collapsible category sections. Purely presentational
+  // (keyed by clientId); editing/removal is unaffected. Memoized so a keystroke in an unrelated field
+  // (date, provider, narrative) doesn't re-sort/re-group the results on every render.
+  const { listResults, resultGroups } = useMemo(() => {
+    const filteredResults = isEye
+      ? draft.results.filter((r) => !(r.test_key && EYE_KEY_SET.has(r.test_key)))
+      : draft.results
+    const ordered = orderResultsForDisplay(filteredResults, sectionOrder, testOrder)
+    return { listResults: ordered, resultGroups: groupResultsByCategory(ordered) }
+  }, [draft.results, isEye, sectionOrder, testOrder])
 
   function updateResult(
     clientId: string,
@@ -449,7 +452,7 @@ function ReportForm({
             </p>
           ) : (
             <div className="flex flex-col gap-5">
-              {groupResultsByCategory(listResults).map((g) => (
+              {resultGroups.map((g) => (
                 <Collapsible
                   key={g.category}
                   title={MEDICAL_CATEGORY_LABELS[g.category]}
