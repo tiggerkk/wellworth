@@ -41,9 +41,18 @@ export function useScrollRestoration(
       if (frame < 20) raf = requestAnimationFrame(retry)
     })
 
+    // `<main>` itself never unmounts on navigation (AppShell persists across routes), so saving
+    // the position in this effect's cleanup is too late: cleanup runs *after* React has already
+    // swapped in the next screen's content, and if that content is shorter the browser has
+    // already clamped `el.scrollTop` down before we get a chance to read it — so the saved value
+    // reflects the destination screen, not the one being left. Track the position continuously
+    // instead, so whatever's stored is always current the moment navigation happens.
+    const onScroll = () => positions.set(key, el.scrollTop)
+    el.addEventListener('scroll', onScroll, { passive: true })
+
     return () => {
       cancelAnimationFrame(raf)
-      positions.set(key, el.scrollTop)
+      el.removeEventListener('scroll', onScroll)
     }
   }, [ref, key])
 }
