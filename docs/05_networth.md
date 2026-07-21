@@ -132,7 +132,7 @@
 - `value_base` NUMERIC — `value_native × fx_rate_to_base` (stored)
 - `sort_order` INT NULL
 - `created_at`, `updated_at`
-- Index on (`user_id`, `snapshot_id`)
+- Index on (`snapshot_id`, `user_id`)
 - `asset_entry` cascades on snapshot delete.
 - No soft-delete — each month is a complete, self-contained set of rows; deleting an entry simply omits it from that month, and prior months are intact. Migration: `supabase/migrations/03_networth_schema.sql`.
 

@@ -142,9 +142,9 @@ export function NetWorthDashboard() {
 
   // Secondary load: latest funds (return %/P&L) + insurance catalogue + USD rate (for HKD agg).
   // Only the LATEST snapshot is needed here, so fetch it directly rather than every snapshot row
-  // (`listSnapshots`) — that grows unbounded with months of history for a value we'd discard down
-  // to one row anyway. Its entries, the insurance catalogue, and this month's FX are independent →
-  // fetch them concurrently once the latest snapshot is known.
+  // that grows unbounded with months of history for a value we'd discard down to one row anyway.
+  // Its entries, the insurance catalogue, and this month's FX are independent → fetch them
+  // concurrently once the latest snapshot is known.
   const extraFn = useCallback(async () => {
     void version
     if (!userId) return null

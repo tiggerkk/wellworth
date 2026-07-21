@@ -410,14 +410,44 @@ export async function applyBulkImport(
     }
   }
 
-  for (const p of toAddSchedule) {
-    const policyId = existingIdByNumber.get(p.policy_number)!
-    await addScheduleVersion(policyId, {
-      kind: 'update',
-      first_year: p.first_year,
-      effective_date: p.start_date,
-      points: p.points,
+  if (toAddSchedule.length > 0) {
+    const { data: addedSchedules, error: asErr } = await supabase
+      .from('insurance_schedule')
+      .insert(
+        toAddSchedule.map((p) => ({
+          policy_id: existingIdByNumber.get(p.policy_number)!,
+          kind: 'update' as const,
+          first_year: p.first_year,
+          effective_date: p.start_date,
+        })),
+      )
+      .select('id, policy_id')
+    if (asErr) throw asErr
+
+    // One block per policy per import (see insurance-import-guide.md), so policy_id is unique
+    // within this batch — safe to key by it.
+    const addedScheduleByPolicyId = new Map(
+      addedSchedules!.map((s) => [s.policy_id, s.id]),
+    )
+    const addPointRows = toAddSchedule.flatMap((p) => {
+      const scheduleId = addedScheduleByPolicyId.get(
+        existingIdByNumber.get(p.policy_number)!,
+      )!
+      return p.points.map((pt) => ({
+        schedule_id: scheduleId,
+        age: pt.age,
+        policy_year: pt.policy_year,
+        total_premium_paid: pt.total_premium_paid,
+        cash_value: pt.cash_value,
+      }))
     })
+    // Chunk the points insert to stay well within statement limits.
+    for (let i = 0; i < addPointRows.length; i += 500) {
+      const { error: apErr } = await supabase
+        .from('insurance_schedule_point')
+        .insert(addPointRows.slice(i, i + 500))
+      if (apErr) throw apErr
+    }
   }
 
   return {

@@ -45,15 +45,32 @@ export interface SnapshotWithEntries {
   entries: Tables<'asset_entry'>[]
 }
 
-/** A month's snapshot together with its asset entries, or null if the month has none. */
+type SnapshotRowWithEntries = Tables<'networth_snapshot'> & {
+  asset_entry: Tables<'asset_entry'>[] | null
+}
+
+/** A month's snapshot together with its asset entries, or null if the month has none. One
+ *  nested-embed round-trip (PostgREST resource embedding) instead of two sequential queries. */
 export async function getSnapshotWithEntries(
   userId: string,
   month: string,
 ): Promise<SnapshotWithEntries | null> {
-  const snapshot = await getSnapshotByMonth(userId, month)
-  if (!snapshot) return null
-  const entries = await listEntriesBySnapshot(snapshot.id)
-  return { snapshot, entries }
+  const { data, error } = await supabase
+    .from('networth_snapshot')
+    .select('*, asset_entry(*)')
+    .eq('user_id', userId)
+    .eq('month', month)
+    .order('sort_order', {
+      foreignTable: 'asset_entry',
+      ascending: true,
+      nullsFirst: true,
+    })
+    .order('created_at', { foreignTable: 'asset_entry', ascending: true })
+    .maybeSingle()
+  if (error) throw error
+  if (!data) return null
+  const { asset_entry, ...snapshot } = data as SnapshotRowWithEntries
+  return { snapshot, entries: asset_entry ?? [] }
 }
 
 /** A pre-aggregated per-(month, asset_type) HKD total — one dashboard row from the DB view. */
@@ -171,22 +188,25 @@ export async function saveManualImportComplete(
   birthYear: number,
   rates: { usd: number; cny: number },
 ): Promise<void> {
-  const existing = await getSnapshotWithEntries(userId, month)
+  // Existing (this month), the prior month (fund carry-forward source), and the insurance
+  // catalogue are independent — fetch all three concurrently rather than only starting the
+  // prior-month / catalogue fetch after learning the month needs them.
+  const [existing, prior, catalogue] = await Promise.all([
+    getSnapshotWithEntries(userId, month),
+    getLatestSnapshotBefore(userId, month),
+    listCatalogue(userId),
+  ])
   const entries = existing?.entries ?? []
 
   let fund = entries.filter((e) => e.asset_type === 'fund').map(entryToInput)
-  if (fund.length === 0) {
-    const prior = await getLatestSnapshotBefore(userId, month)
-    if (prior) {
-      fund = (await listEntriesBySnapshot(prior.id))
-        .filter((e) => e.asset_type === 'fund')
-        .map(entryToInput)
-    }
+  if (fund.length === 0 && prior) {
+    fund = (await listEntriesBySnapshot(prior.id))
+      .filter((e) => e.asset_type === 'fund')
+      .map(entryToInput)
   }
 
   let insurance = entries.filter((e) => e.asset_type === 'insurance').map(entryToInput)
   if (insurance.length === 0) {
-    const catalogue = await listCatalogue(userId)
     insurance = buildResolvedInsuranceEntries(catalogue, month, birthYear, rates)
   }
 
