@@ -35,7 +35,7 @@
 - **Insurance section**:
   - Auto-populated, grouped by the owner's configured provider order (orphan providers last), ordered by policy number within a provider.
   - Terminated (surrendered or matured) policies excluded from their effective month onward.
-  - Rows `Number · Name (truncated) · Policy Year · Premium · Cash Value (native→HKD)` with an "as of yr N" tag when carried.
+  - Rows line 1: `Number · Policy Date · Provider`; line 2: `Name (truncated)`; right-side: `Cash Value (native→HKD)` with an "as of yr N" tag when carried.
   - Tap → Policy detail (read-only, resolved at the month's age), with a schedule table (shared `PolicyDetail`, titled **SCHEDULE**).
 - **Liquid Only toggle** (header, beside Import): when ON, non-liquid sections stay visible and editable but are excluded from the header total and marked with an **"Excluded"** pill; saving is unaffected (the toggle only changes the displayed total, never what's persisted). State is shared with the Dashboard (`useLiquidOnly`, `localStorage`).
 - **Each asset-type section has a colored left stripe + tinted header** (4px left stripe + `color-mix … 14%` header tint) keyed to `ASSET_TYPE_COLORS` (the same per-type palette as the Dashboard "By asset type" dots — defined in `src/lib/networth.ts`), and the **Import** action is accent.

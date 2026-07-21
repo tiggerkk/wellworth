@@ -18,7 +18,6 @@ import { DEFAULT_BIRTH_YEAR } from '../constants/networth'
 import { ageForYear, hasBrokenEven } from '../lib/networth'
 import { effectiveProviders, providerLabel } from '../lib/insurance-config'
 import { todayLocal } from '../lib/date'
-import { StatusChip } from '../components/StatusChip'
 import { routes } from '../constants/routes'
 import { SelectMenu } from '../components/SelectMenu'
 import { SegmentedTabs } from '../components/SegmentedTabs'
@@ -200,25 +199,12 @@ export function InsurancePolicies() {
                       startDate={policy.start_date}
                       providerLabel={providerLabel(providers, policy.provider)}
                       policyName={policy.policy_name || policy.policy_number}
+                      terminationKind={
+                        policy.termination_kind as 'surrendered' | 'matured' | null
+                      }
+                      brokeEven={brokeEven}
                       truncate
                     />
-                    <span className="mt-1 flex flex-wrap items-center gap-1.5 text-caption text-text-tertiary">
-                      {policy.termination_kind === 'surrendered' && (
-                        <StatusChip
-                          label="Surrendered"
-                          className="bg-track text-text-secondary"
-                        />
-                      )}
-                      {policy.termination_kind === 'matured' && (
-                        <StatusChip label="Matured" className="bg-accent text-bg" />
-                      )}
-                      {brokeEven && (
-                        <StatusChip
-                          label="Past Break-Even"
-                          className="bg-positive text-bg"
-                        />
-                      )}
-                    </span>
                   </ListRow>
                 ))
               )}
