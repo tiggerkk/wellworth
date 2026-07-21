@@ -29,12 +29,6 @@ export function quoteSearchText(
   return foldZh([q.text, q.author, q.title, ...(q.tags ?? [])].filter(Boolean).join(' '))
 }
 
-/**
- * Category-badge palette. A single neutral chip for now (used via the presentational `StatusChip`);
- * a fixed colour per category is optional per the spec and deferred until the Zen badge is prominent.
- */
-export const QUOTE_CATEGORY_CHIP = 'bg-input text-text-secondary'
-
 // --- Cross-module Show/Book linker (M3) ---
 
 /**

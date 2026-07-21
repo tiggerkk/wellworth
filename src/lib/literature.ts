@@ -106,9 +106,6 @@ export const DEFAULT_POEM_CRITERIA: PoemCriteria = {
   sortDir: 'asc',
 }
 
-/** Gold dynasty badge, shared with Shows/Books (design-system `--color-dynasty`). */
-export { DYNASTY_CHIP } from '../constants/dynasty'
-
 // --- per-field visibility (Settings → 顯示) -----------------------------------------------------
 
 /**

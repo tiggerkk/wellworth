@@ -10,13 +10,8 @@ import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useProfile } from '../hooks/useProfile'
 import { listQuotes, updateQuote } from '../data/quote'
-import {
-  initialZenPool,
-  nextZenPool,
-  randomItem,
-  QUOTE_CATEGORY_CHIP,
-  type QuoteRow,
-} from '../lib/quotes'
+import { QUOTE_CATEGORY_CHIP } from '../constants/quotes'
+import { initialZenPool, nextZenPool, randomItem, type QuoteRow } from '../lib/quotes'
 import {
   categoryLabel,
   effectiveCategories,

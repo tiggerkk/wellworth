@@ -7,11 +7,11 @@ import { useProfile } from '../hooks/useProfile'
 import { useSessionState } from '../hooks/useSessionState'
 import { bumpQuotes, useQuotesVersion } from '../lib/quotes-refresh'
 import { deleteQuote, listQuotes, updateQuote } from '../data/quote'
+import { QUOTE_CATEGORY_CHIP } from '../constants/quotes'
 import {
   applyLibraryView,
   DEFAULT_LIBRARY_CRITERIA,
   rankedTags,
-  QUOTE_CATEGORY_CHIP,
   type LibraryCriteria,
   type SortField,
 } from '../lib/quotes'

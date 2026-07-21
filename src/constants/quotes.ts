@@ -29,6 +29,12 @@ export const QUOTE_CATEGORY_LABELS: Record<QuoteCategory, string> = {
   growth: 'Growth',
 }
 
+/**
+ * Category-badge palette. A single neutral chip for now (used via the presentational `StatusChip`);
+ * a fixed colour per category is optional per the spec and deferred until the Zen badge is prominent.
+ */
+export const QUOTE_CATEGORY_CHIP = 'bg-input text-text-secondary'
+
 /** The default source types (the medium a quote came from) + their initial display order (seed defaults). */
 export const QUOTE_SOURCE_TYPES = [
   'book',

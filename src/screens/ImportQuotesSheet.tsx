@@ -19,7 +19,7 @@ import {
   type QuoteImportPayload,
   type TitleIndex,
 } from '../lib/quotes-import'
-import { QUOTE_CATEGORY_CHIP } from '../lib/quotes'
+import { QUOTE_CATEGORY_CHIP } from '../constants/quotes'
 import {
   categoryLabel,
   effectiveCategories,

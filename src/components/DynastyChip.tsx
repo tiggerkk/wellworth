@@ -5,10 +5,9 @@ interface DynastyChipProps {
   className?: string
 }
 
-/** Gold/amber dynasty badge (e.g. 先秦, 唐代). Conceptually distinct from a `StatusChip` —
- * dynasty is a descriptive era tag, not a workflow status — so it's its own component even
- * though today it shares `StatusChip`'s pill shape. Shared by Poems (card + detail + poet
- * detail) and by Books/Shows rows, so the visual stays identical everywhere a dynasty shows up. */
+/** Dynasty badge (e.g. 先秦, 唐代). Conceptually distinct from a `StatusChip` — dynasty is a descriptive
+ *  era tag, not a workflow status — so it's its own component. Shared by Poems (card + detail + poet detail)
+ *  and by Books/Shows rows, so the visual stays identical everywhere a dynasty shows up. */
 export function DynastyChip({ dynasty, className = '' }: DynastyChipProps) {
   return (
     <span
