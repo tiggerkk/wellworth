@@ -19,7 +19,7 @@ import {
 import { bumpTravel } from '../lib/travel-refresh'
 import { errorMessage } from '../lib/errors'
 import { geocodeCity } from '../lib/travel-places'
-import { TRIP_STATUS_CHIP, tripStatusLabel } from '../lib/travel'
+
 import {
   distinctCities,
   parseTravelJson,
@@ -27,7 +27,13 @@ import {
   type DistinctCity,
   type TripDraft,
 } from '../lib/travel-import'
-import { STOP_TYPE_LABELS, type StopType } from '../constants/travel'
+import {
+  STOP_TYPE_LABELS,
+  TRIP_STATUS_CHIP,
+  TRIP_STATUS_LABELS,
+  type StopType,
+  type TripStatus,
+} from '../constants/travel'
 
 const norm = (s: string) => s.trim().toLowerCase()
 
@@ -255,8 +261,8 @@ export function ImportTravelSheet() {
                               {t.name}
                             </span>
                             <StatusChip
-                              label={tripStatusLabel(t.status)}
-                              className={TRIP_STATUS_CHIP[t.status]}
+                              label={TRIP_STATUS_LABELS[t.status as TripStatus]}
+                              tone={TRIP_STATUS_CHIP[t.status as TripStatus]}
                             />
                           </div>
                           <p className="truncate text-caption text-text-secondary">

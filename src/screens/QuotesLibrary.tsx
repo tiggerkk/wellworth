@@ -27,7 +27,7 @@ import { ListRow } from '../components/ListRow'
 import { EmptyState } from '../components/EmptyState'
 import { SelectMenu } from '../components/SelectMenu'
 import { Toggle } from '../components/Toggle'
-import { StatusChip } from '../components/StatusChip'
+import { LabelChip } from '../components/LabelChip'
 import { ListSearchFilterPanel, ResultCount } from '../components/ListSearchFilterPanel'
 import { FilterPill } from '../components/FilterPill'
 
@@ -316,7 +316,7 @@ export function QuotesLibrary() {
                       {quote.text}
                     </span>
                     <span className="mt-1 flex flex-wrap items-center gap-2 text-caption text-text-secondary">
-                      <StatusChip
+                      <LabelChip
                         label={categoryLabel(categories, quote.category)}
                         className={QUOTE_CATEGORY_CHIP}
                       />

@@ -30,7 +30,7 @@ export const QUOTE_CATEGORY_LABELS: Record<QuoteCategory, string> = {
 }
 
 /**
- * Category-badge palette. A single neutral chip for now (used via the presentational `StatusChip`);
+ * Category-badge palette. A single neutral chip for now (used via the presentational `LabelChip`);
  * a fixed colour per category is optional per the spec and deferred until the Zen badge is prominent.
  */
 export const QUOTE_CATEGORY_CHIP = 'bg-input text-text-secondary'

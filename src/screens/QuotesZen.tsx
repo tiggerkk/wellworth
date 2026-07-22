@@ -22,7 +22,7 @@ import {
 } from '../lib/quotes-config'
 import { bumpQuotes, useQuotesVersion } from '../lib/quotes-refresh'
 import { routes } from '../constants/routes'
-import { StatusChip } from '../components/StatusChip'
+import { LabelChip } from '../components/LabelChip'
 import { EmptyState } from '../components/EmptyState'
 import { ListLoader } from '../components/ListLoader'
 
@@ -263,7 +263,7 @@ function QuoteCard({
       </div>
 
       <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-        <StatusChip
+        <LabelChip
           label={categoryLabel(categories, quote.category)}
           className={QUOTE_CATEGORY_CHIP}
         />

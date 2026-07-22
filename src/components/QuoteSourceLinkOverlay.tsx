@@ -10,7 +10,7 @@ import { OverlayTop } from './OverlayTop'
 import { ScreenHeaderTitle } from './ScreenHeaderTitle'
 import { SearchBar } from './SearchBar'
 import { Thumb } from './Thumb'
-import { StatusChip } from './StatusChip'
+import { LabelChip } from './LabelChip'
 
 // Link candidates only ever carry a linking source type (tv/movie for shows, book for books); these
 // are the protected keys, so a short fixed label is enough (fallback to the raw value for safety).
@@ -97,7 +97,7 @@ export function QuoteSourceLinkOverlay({
                   {c.year ? ` (${c.year})` : ''}
                 </span>
                 <span className="mt-0.5 flex items-center gap-2">
-                  <StatusChip
+                  <LabelChip
                     label={KIND_LABEL[c.sourceType] ?? c.sourceType}
                     className="bg-input text-text-secondary"
                   />

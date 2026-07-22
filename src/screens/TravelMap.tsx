@@ -10,7 +10,12 @@ import { useAsync } from '../hooks/useAsync'
 import { lazyWithReload } from '../lib/lazy-with-reload'
 import { listRememberedCities, listTripFacetRows, listTrips } from '../data/travel'
 import { useTravelVersion } from '../lib/travel-refresh'
-import { TRIP_STATUS_CHIP, tripStatusLabel, type TripRow } from '../lib/travel'
+import type { TripRow } from '../lib/travel'
+import {
+  TRIP_STATUS_CHIP,
+  TRIP_STATUS_LABELS,
+  type TripStatus,
+} from '../constants/travel'
 import { isChinaCountry, type StatFacetRow } from '../lib/travel-stats'
 import type { MapCity } from '../components/TravelMapCanvas'
 import { routes } from '../constants/routes'
@@ -180,10 +185,8 @@ export function TravelMap() {
                       {t.name}
                     </span>
                     <StatusChip
-                      label={tripStatusLabel(t.status)}
-                      className={
-                        TRIP_STATUS_CHIP[t.status as keyof typeof TRIP_STATUS_CHIP]
-                      }
+                      label={TRIP_STATUS_LABELS[t.status as TripStatus]}
+                      tone={TRIP_STATUS_CHIP[t.status as TripStatus]}
                     />
                   </button>
                 ))}

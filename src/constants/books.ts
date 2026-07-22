@@ -5,16 +5,18 @@
 export const BOOK_STATUSES = ['want', 'reading', 'read', 'dropped'] as const
 export type BookStatus = (typeof BOOK_STATUSES)[number]
 
-export const BOOK_STATUS_LABELS = {
+import type { StatusTone } from './chips'
+
+export const BOOK_STATUS_LABELS: Record<BookStatus, string> = {
   want: 'Want',
   reading: 'Reading',
   read: 'Read',
   dropped: 'Dropped',
-} as const
+}
 
-export const BOOK_STATUS_CHIP = {
-  want: 'bg-plan text-bg',
-  reading: 'bg-warning text-bg',
-  read: 'bg-positive text-bg',
-  dropped: 'bg-track text-text-secondary',
-} as const
+export const BOOK_STATUS_CHIP: Record<BookStatus, StatusTone> = {
+  want: 'want',
+  reading: 'ongoing',
+  read: 'done',
+  dropped: 'dropped',
+}

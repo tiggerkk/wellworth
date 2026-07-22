@@ -3,6 +3,7 @@
  * generated DB types surface as plain `string`) plus the shared place vocabulary. Pure constants
  * only — runtime helpers live in `src/lib/travel*.ts`.
  */
+import type { StatusTone } from './chips'
 
 /** Trip lifecycle status. */
 export const TRIP_STATUSES = ['want', 'planning', 'visited'] as const
@@ -12,6 +13,12 @@ export const TRIP_STATUS_LABELS: Record<TripStatus, string> = {
   want: 'Want',
   planning: 'Planning',
   visited: 'Visited',
+}
+
+export const TRIP_STATUS_CHIP: Record<TripStatus, StatusTone> = {
+  want: 'want',
+  planning: 'ongoing',
+  visited: 'done',
 }
 
 /** Stop kind. `travel` = an inter-city leg; any mode/transit detail goes in the stop description. */

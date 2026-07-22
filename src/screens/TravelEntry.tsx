@@ -54,11 +54,15 @@ import {
   updateTrip,
 } from '../data/travel'
 import { bumpTravel, useTravelVersion } from '../lib/travel-refresh'
-import { CURRENCIES, TRIP_STATUSES } from '../constants/travel'
+import {
+  CURRENCIES,
+  STOP_TYPE_LABELS,
+  TRIP_STATUSES,
+  TRIP_STATUS_LABELS,
+  type StopType,
+} from '../constants/travel'
 import {
   isFieldVisible,
-  stopTypeLabel,
-  tripStatusLabel,
   type StopRow,
   type TripBundle,
   type TripDayRow,
@@ -175,7 +179,7 @@ function NewTrip() {
               ariaLabel="Status"
               options={TRIP_STATUSES.map((s) => ({
                 value: s,
-                label: tripStatusLabel(s),
+                label: TRIP_STATUS_LABELS[s],
               }))}
             />
           </div>
@@ -622,7 +626,7 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
                   ariaLabel="Status"
                   options={TRIP_STATUSES.map((s) => ({
                     value: s,
-                    label: tripStatusLabel(s),
+                    label: TRIP_STATUS_LABELS[s],
                   }))}
                 />
               </div>
@@ -831,7 +835,7 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
                                       onClick={() =>
                                         setStopEditor({ dayId: day.id, stop: s })
                                       }
-                                      aria-label={`${stopTypeLabel(s.type)}: ${
+                                      aria-label={`${STOP_TYPE_LABELS[s.type as StopType]}: ${
                                         s.description || 'no description'
                                       }`}
                                       className={`flex w-full items-center gap-1.5 text-left ${

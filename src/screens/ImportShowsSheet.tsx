@@ -301,7 +301,7 @@ export function ImportShowsSheet() {
                         <ShowTypeBadge type={r.input.type} />
                         <StatusChip
                           label={SHOW_STATUS_LABELS[r.input.status]}
-                          className={SHOW_STATUS_CHIP[r.input.status]}
+                          tone={SHOW_STATUS_CHIP[r.input.status]}
                         />
                         {usesEpisodes(r.input.type) && r.match && (
                           <span>

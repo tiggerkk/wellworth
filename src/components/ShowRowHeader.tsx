@@ -59,10 +59,7 @@ export function ShowRowHeader({ show }: ShowRowHeaderProps) {
       </span>
 
       <span className="mt-0.5 flex items-center gap-2 text-caption text-text-secondary">
-        <StatusChip
-          label={SHOW_STATUS_LABELS[status]}
-          className={SHOW_STATUS_CHIP[status]}
-        />
+        <StatusChip label={SHOW_STATUS_LABELS[status]} tone={SHOW_STATUS_CHIP[status]} />
         {show.rating ? <StarRating value={show.rating} size={12} /> : null}
         <ShowDateHint
           status={status}

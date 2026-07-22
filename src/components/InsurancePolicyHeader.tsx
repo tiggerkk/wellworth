@@ -52,14 +52,10 @@ export function InsurancePolicyHeader({
         {hasChips && (
           <span className="mr-1.5 inline-flex items-center gap-1.5">
             {terminationKind === 'surrendered' && (
-              <StatusChip label="Surrendered" className="bg-track text-text-secondary" />
+              <StatusChip label="Surrendered" tone="dropped" />
             )}
-            {terminationKind === 'matured' && (
-              <StatusChip label="Matured" className="bg-accent text-bg" />
-            )}
-            {showBrokeEven && (
-              <StatusChip label="Past Break-Even" className="bg-positive text-bg" />
-            )}
+            {terminationKind === 'matured' && <StatusChip label="Matured" tone="done" />}
+            {showBrokeEven && <StatusChip label="Past Break-Even" tone="break-even" />}
           </span>
         )}
         {policyName}

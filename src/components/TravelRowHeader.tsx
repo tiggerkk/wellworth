@@ -7,7 +7,12 @@
  * Line 1: Trip name
  * Line 2: Status chip · Date range · Primary place label (if any)
  */
-import { TRIP_STATUS_CHIP, tripStatusLabel, type TripRow } from '../lib/travel'
+import type { TripRow } from '../lib/travel'
+import {
+  TRIP_STATUS_CHIP,
+  TRIP_STATUS_LABELS,
+  type TripStatus,
+} from '../constants/travel'
 import { formatFullDate, formatMonthDay } from '../lib/date'
 import { StatusChip } from './StatusChip'
 
@@ -31,8 +36,8 @@ export function TravelRowHeader({ trip, label }: TravelRowHeaderProps) {
       <span className="block truncate text-body text-text-primary">{trip.name}</span>
       <div className="flex items-center gap-1.5">
         <StatusChip
-          label={tripStatusLabel(trip.status)}
-          className={TRIP_STATUS_CHIP[trip.status as keyof typeof TRIP_STATUS_CHIP]}
+          label={TRIP_STATUS_LABELS[trip.status as TripStatus]}
+          tone={TRIP_STATUS_CHIP[trip.status as TripStatus]}
         />
         <p className="truncate text-caption text-text-secondary">
           {dateRange(trip.start_date, trip.end_date)}

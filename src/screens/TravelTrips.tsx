@@ -17,13 +17,12 @@ import {
   applyTripList,
   facetsForStops,
   primaryLabel,
-  tripStatusLabel,
   tripYear,
   type TripFacets,
   type TripCriteria,
   type TripSortField,
 } from '../lib/travel'
-import { TRIP_STATUSES } from '../constants/travel'
+import { TRIP_STATUSES, TRIP_STATUS_LABELS } from '../constants/travel'
 import { routes } from '../constants/routes'
 
 const RATING_OPTIONS = [
@@ -164,7 +163,7 @@ export function TravelTrips() {
               ariaLabel="Status"
               options={[
                 { value: 'all', label: 'Any Status' },
-                ...TRIP_STATUSES.map((s) => ({ value: s, label: tripStatusLabel(s) })),
+                ...TRIP_STATUSES.map((s) => ({ value: s, label: TRIP_STATUS_LABELS[s] })),
               ]}
             />
             <SelectMenu

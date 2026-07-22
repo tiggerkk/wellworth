@@ -4,13 +4,7 @@
  * lives in `src/data/travel.ts`; enums + labels live in `src/constants/travel.ts`.
  */
 import type { Tables, TablesInsert, TablesUpdate } from '../types/database'
-import {
-  STOP_TYPE_LABELS,
-  TRIP_STATUSES,
-  TRIP_STATUS_LABELS,
-  type StopType,
-  type TripStatus,
-} from '../constants/travel'
+import { TRIP_STATUSES, type TripStatus } from '../constants/travel'
 import { foldZh } from './zh-fold'
 import type { ExpenseRow } from './travel-expenses'
 
@@ -42,24 +36,6 @@ export interface ResolvedCity {
   province: string | null
   lat: number | null
   lng: number | null
-}
-
-// --- Status palette ---
-
-// want = purple (planned), planning = orange (active/in-progress), visited = teal (done) —
-// matches Shows/Books `*_STATUS_CHIP`.
-export const TRIP_STATUS_CHIP: Record<TripStatus, string> = {
-  want: 'bg-plan text-bg',
-  planning: 'bg-warning text-bg',
-  visited: 'bg-positive text-bg',
-}
-
-export function tripStatusLabel(status: string): string {
-  return TRIP_STATUS_LABELS[status as TripStatus] ?? status
-}
-
-export function stopTypeLabel(type: string): string {
-  return STOP_TYPE_LABELS[type as StopType] ?? type
 }
 
 // --- Trip-list view (search + filters + sort) ---

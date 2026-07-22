@@ -482,7 +482,7 @@ export function ImportBooksSheet() {
                       <>
                         <StatusChip
                           label={BOOK_STATUS_LABELS.read}
-                          className={BOOK_STATUS_CHIP.read}
+                          tone={BOOK_STATUS_CHIP.read}
                         />
                         {r.input.rating ? (
                           <StarRating value={r.input.rating} size={12} />

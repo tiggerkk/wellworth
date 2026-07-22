@@ -4,7 +4,7 @@ import { IconLink, IconUpload } from '@tabler/icons-react'
 import { ImportSheetHeader } from '../components/ImportSheetHeader'
 import { Sheet } from '../components/Sheet'
 import { ImportSheetFooter } from '../components/ImportSheetFooter'
-import { StatusChip } from '../components/StatusChip'
+import { LabelChip } from '../components/LabelChip'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useProfile } from '../hooks/useProfile'
@@ -194,7 +194,7 @@ export function ImportQuotesSheet() {
                     >
                       <p className="line-clamp-2 text-body text-text-primary">{r.text}</p>
                       <p className="mt-1 flex flex-wrap items-center gap-2 text-caption text-text-secondary">
-                        <StatusChip
+                        <LabelChip
                           label={categoryLabel(categories, r.category)}
                           className={QUOTE_CATEGORY_CHIP}
                         />

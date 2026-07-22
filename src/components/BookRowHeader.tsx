@@ -47,10 +47,7 @@ export function BookRowHeader({ book }: BookRowHeaderProps) {
       </span>
 
       <span className="mt-0.5 flex items-center gap-2 text-caption text-text-secondary">
-        <StatusChip
-          label={BOOK_STATUS_LABELS[status]}
-          className={BOOK_STATUS_CHIP[status]}
-        />
+        <StatusChip label={BOOK_STATUS_LABELS[status]} tone={BOOK_STATUS_CHIP[status]} />
         {book.rating ? <StarRating value={book.rating} size={12} /> : null}
         <BookDateHint
           status={status}
