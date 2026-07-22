@@ -1,7 +1,7 @@
 /**
  * Presentational Insurance Policy detail body — resolved figures at a given age + the full resolved schedule.
- * Reused by the routed InsurancePolicyDetailSheet (Monthly Entry tap + dashboard drill-in). Amounts are in
- * the policy's own currency.
+ * Reused by the routed InsurancePolicyDetailSheet (Monthly Entry tap + dashboard drill-in), which renders the
+ * policy identity separately in its screen title. Amounts are in the policy's own currency.
  */
 import {
   breakEven,
@@ -13,7 +13,6 @@ import {
   varianceAtAge,
   type ScheduleVersion,
 } from '../lib/networth'
-import { InsurancePolicyHeader } from './InsurancePolicyHeader'
 
 export interface InsurancePolicyDetailData {
   provider: string
@@ -31,13 +30,10 @@ export function InsurancePolicyDetail({
   policy,
   schedules,
   age,
-  providerLabel,
 }: {
   policy: InsurancePolicyDetailData
   schedules: ScheduleVersion[]
   age: number
-  /** Resolved provider label (from the configured list); falls back to the raw key. */
-  providerLabel?: string
 }) {
   const ccy = policy.currency
   const resolved = resolvePolicyAtAge(schedules, age)
@@ -83,15 +79,6 @@ export function InsurancePolicyDetail({
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <InsurancePolicyHeader
-          policyNumber={policy.policy_number}
-          startDate={policy.start_date}
-          providerLabel={providerLabel ?? policy.provider}
-          policyName={policy.policy_name}
-        />
-      </div>
-
       <div className="divide-y divide-border overflow-hidden rounded-card border border-border bg-surface">
         {metrics.map((m) => (
           <div

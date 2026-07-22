@@ -4,6 +4,7 @@ import { IconPencil } from '@tabler/icons-react'
 import { Sheet } from '../components/Sheet'
 import { ScreenHeaderTitle } from '../components/ScreenHeaderTitle'
 import { InsurancePolicyDetail } from '../components/InsurancePolicyDetail'
+import { InsurancePolicyHeader } from '../components/InsurancePolicyHeader'
 import { useAsync } from '../hooks/useAsync'
 import { useAuth } from '../auth/AuthProvider'
 import { EntryLoader } from '../components/EntryLoader'
@@ -40,17 +41,34 @@ export function InsurancePolicyDetailSheet() {
     ? Number(profile.birthday.slice(0, 4))
     : DEFAULT_BIRTH_YEAR
   const age = ageForYear(year, birthYear)
+  const resolvedProviderLabel = data
+    ? providerLabel(
+        effectiveProviders(profile?.insurance_providers),
+        data.policy.provider,
+      )
+    : ''
 
   return (
     <Sheet variant="full" label="Policy detail">
       {/* Header is always mounted (no shift once the policy loads) — the edit button is reserved
           space here, then absolutely floated over that same space by the loaded body below. */}
-      <ScreenHeaderTitle
-        title="Insurance Policy Detail"
-        titleClassName="line-clamp-2 flex-1 text-heading font-medium text-text-primary"
-        icon="back"
-        actions={<div className="w-5 shrink-0" />}
-      />
+      <ScreenHeaderTitle icon="back" actions={<div className="w-5 shrink-0" />}>
+        <div className="min-w-0 flex-1">
+          {data ? (
+            <InsurancePolicyHeader
+              policyNumber={data.policy.policy_number}
+              startDate={data.policy.start_date}
+              providerLabel={resolvedProviderLabel}
+              policyName={data.policy.policy_name}
+              variant="header"
+            />
+          ) : (
+            <p className="truncate text-title font-medium text-text-primary">
+              Insurance Policy Detail
+            </p>
+          )}
+        </div>
+      </ScreenHeaderTitle>
       <EntryLoader
         loading={loading}
         error={error}
@@ -73,10 +91,6 @@ export function InsurancePolicyDetailSheet() {
                 policy={d.policy}
                 schedules={d.schedules}
                 age={age}
-                providerLabel={providerLabel(
-                  effectiveProviders(profile?.insurance_providers),
-                  d.policy.provider,
-                )}
               />
             </div>
           </>
