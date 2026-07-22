@@ -15,9 +15,10 @@ import {
   type ExternalFood,
 } from '../lib/wellness-food-api'
 import { foodMatchScore } from '../lib/wellness-food-search'
-import { asNutrientMap } from '../lib/wellness-nutrients'
+import { asNutrientMap, localFoodServing } from '../lib/wellness-nutrients'
 import { todayLocal } from '../lib/date'
 import { routes } from '../constants/routes'
+import type { FoodSource, FoodType } from '../constants/wellness'
 
 // Lazy-loaded so the ZXing barcode library is a separate chunk, fetched only when scanning.
 const BarcodeScanner = lazyWithReload(() =>
@@ -25,7 +26,6 @@ const BarcodeScanner = lazyWithReload(() =>
 )
 
 type Tab = 'favorites' | 'custom' | 'all'
-const SOURCE_TAG: Record<string, string> = { usda: 'USDA', custom: 'Custom', off: 'OFF' }
 
 /** A search-result row, normalized across local foods and USDA results. */
 interface DisplayFood {
@@ -33,14 +33,12 @@ interface DisplayFood {
   name: string
   nutrientCount: number
   serving: string
-  source: string
+  source: FoodSource
   onOpen: () => void
   /** Present only for local foods, which are the only ones that can be (un)favorited. */
   favorite?: { isFavorite: boolean; toggle: () => void }
-}
-
-function localServing(nutrientBasis: string): string {
-  return nutrientBasis === 'per_serving' ? '1 serving' : '100 g'
+  /** Present only for local foods; not-yet-saved USDA/OFF results have no type until saved. */
+  type?: FoodType
 }
 
 // These caches outlive the sheet's React tree. Opening a food (Food Detail) unmounts this
@@ -176,8 +174,9 @@ export function WellnessDiaryFoodPickerSheet() {
     key: `local-${f.id}`,
     name: f.name,
     nutrientCount: Object.keys(asNutrientMap(f.nutrients)).length,
-    serving: localServing(f.nutrient_basis),
-    source: SOURCE_TAG[f.source] ?? f.source,
+    serving: localFoodServing(f.nutrient_basis),
+    source: f.source as FoodSource,
+    type: f.type as FoodType,
     onOpen: () => openSheet(`${routes.wellness.food('local', f.id)}${suffix}`),
     favorite: {
       isFavorite: f.is_favorite,
@@ -200,7 +199,7 @@ export function WellnessDiaryFoodPickerSheet() {
             name: f.name,
             nutrientCount: Object.keys(f.nutrients).length,
             serving: externalFoodServing(f),
-            source: SOURCE_TAG[f.source] ?? f.source.toUpperCase(),
+            source: f.source,
             onOpen: () =>
               openSheet(`${routes.wellness.food(f.source, f.externalId)}${suffix}`),
           }))
@@ -278,7 +277,10 @@ export function WellnessDiaryFoodPickerSheet() {
                 >
                   <FoodRowHeader
                     name={r.name}
-                    secondary={`${r.nutrientCount} nutrients · ${r.serving} · ${r.source}`}
+                    source={r.source}
+                    nutrientCount={r.nutrientCount}
+                    serving={r.serving}
+                    type={r.type}
                   />
                 </ListRow>
               ))}

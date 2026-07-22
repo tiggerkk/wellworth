@@ -13,7 +13,10 @@ import {
   FOOD_SOURCES,
   ACTIVITY_TEMPLATES,
   EFFORT_LEVELS,
+  type FoodSource,
+  type FoodType,
 } from '../constants/wellness'
+import { asNutrientMap, localFoodServing } from '../lib/wellness-nutrients'
 import { routes } from '../constants/routes'
 import {
   DEFAULT_FOOD_CRITERIA,
@@ -66,12 +69,6 @@ const ACTIVITY_EFFORT_OPTIONS = [
   { value: 'all', label: 'Any Effort' },
   ...EFFORT_LEVELS.map((e) => ({ value: e.key, label: e.label })),
 ]
-
-function foodTag(f: { source: string; type: string }): string | undefined {
-  if (f.source === 'usda') return 'USDA'
-  if (f.source === 'off') return 'OFF'
-  return f.type === 'supplement' ? 'Supplement' : undefined
-}
 
 export function WellnessLibrary() {
   const openSheet = useSheetNavigate()
@@ -242,7 +239,13 @@ export function WellnessLibrary() {
                           )
                         }
                       >
-                        <FoodRowHeader name={f.name} secondary={foodTag(f)} />
+                        <FoodRowHeader
+                          name={f.name}
+                          source={f.source as FoodSource}
+                          type={f.type as FoodType}
+                          nutrientCount={Object.keys(asNutrientMap(f.nutrients)).length}
+                          serving={localFoodServing(f.nutrient_basis)}
+                        />
                       </ListRow>
                     ))
                   )}

@@ -128,7 +128,7 @@ export type FoodSource = 'custom' | 'usda' | 'off'
 export const FOOD_SOURCES: { key: FoodSource; label: string }[] = [
   { key: 'custom', label: 'Custom' },
   { key: 'usda', label: 'USDA' },
-  { key: 'off', label: 'Off' },
+  { key: 'off', label: 'OFF' },
 ]
 
 // --- Nutrient sections (Dashboard / Daily Report) -------------------------------------------------

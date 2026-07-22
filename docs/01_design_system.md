@@ -86,6 +86,7 @@ Every other date value reads as `MMM DD, YYYY` (`formatFullDate`), or `MMM DD` (
 - **ConfirmDialog** - confirms discard of unsaved changes.
 - **DateRangeRow** — single-line filter date range — `label · From · To` — opening the `Calendar`, with a small ✕ to clear a bound.
 - **DisplaySettingsCard** — **DISPLAY** section: Font Size + Visible Modules + Units in one `SectionCard`. Fully controlled (parent owns values + persistence); changing Font Size applies the preset instantly via `applyFontSize`. Rendered by both **Global Settings** and the first-run **Onboarding** wizard above `ProfileMetricsFields`, so the two screens stay identical.
+- **DynastyChip** — dynasty badge (e.g. 先秦, 唐代), renders via `LabelChip`.
 - **EmptyState** — vertically-centered **module icon** over a "No X yet" line over a **+ New X** action pill. Internally `flex-1 justify-center`. Takes an optional `Icon` (a Tabler `Icon`, shown muted at size 40). Used by every module's Dashboards/Libraries and the Travel Dashboard, Trips, and Map. **The host root must be a full-height flex column** (`min-h-full flex flex-col`, or `h-full` for Zen) so the `flex-1` fills the real content area.
 - **EntryHeaderActions** — top-right action cluster for every New/Edit form: compact `sm` **icon** buttons in order **Delete · Reset · Submit**. **Reset** = `IconArrowBackUp` (undo), **Submit** = `IconPlus` (new) / `IconDeviceFloppy` (editing). **Delete** (`IconTrash`, `danger`) shows **only when editing** and flips to a two-step inline confirm before firing. Reset needs a change to enable; Submit needs dirty / required fields.
 - **EntryLoader** — outer wrapper for every New/Edit entry screen: a full-height `flex h-full min-h-0 flex-col` column that shows `Loading…`, an error/not-found line (`errorText`), or — once the async `data` resolves — the inner form via a **render prop** `(data) => …` (so `data` is narrowed non-null). Generic over the draft type; the caller still keys the form by id so a stale `useAsync` result never mounts under the wrong item.
@@ -95,6 +96,7 @@ Every other date value reads as `MMM DD, YYYY` (`formatFullDate`), or `MMM DD` (
 - **IconAction** — header action icon-button: a bare Tabler icon at `size 18`, `p-1` hit area, tinted `secondary` (Copy) or `positive` (Add, and Paste while armed), muted `text-tertiary` when `disabled`.
 - **ImportPreviewList** — CSV-importer result list: a bordered card of rows, each `{ media, title, year, subtitle?, meta?, status, reviewLabel }` plus the standard **No-match / review / manual** flag and **Change / Manual** actions (solid pills, white text, matching Medical's **Mark Reviewed**: **Change** = `bg-danger` red, **Manual** = `bg-accent` blue, dimmed when disabled); callers pass the module-specific thumbnail + chips (`media` + `year` are optional — the Food importer omits them). Used by the Books, Shows, and Food importers. Carries **`shrink-0`** so the `overflow-hidden` card isn't squished + clipped by the sheet's flex-col body — the **Layout gotchas → flex scroll** rule below; its absence was why long imports wouldn't scroll.
 - **ImportSheetFooter** - footer for all Import\*Sheet screens.
+- **LabelChip** — **presentational** status pill taking a `label` + palette `className`. A non-status label pill different from `StatusChip` so labels read apart from statuses at a glance.
 - **ListLoader** - fragment-based render-prop for dashboard & listing screens.
 - **ListRow** — leading icon, two-line name/subtitle, trailing value or chevron.
 - **ListSearchFilterPanel** - Search bar + icon-only filter toggle (bare `IconFilter` that tints **accent** while its panel is open, else `text-secondary`; sits flush at the right edge of the row); sort-field `SelectMenu` + an ascending/descending icon toggle + Favorite-Only toggle (if it exists in the module) + icon-only clear filters button; collapsible filter panel pane with module-specific filter criteria
@@ -119,7 +121,7 @@ Every other date value reads as `MMM DD, YYYY` (`formatFullDate`), or `MMM DD` (
 - **SheetLoader** - outer wrapper for Sheets.
 - **Splash** — full-screen loading state while the auth session resolves.
 - **StarRating** — 0–5 **half-star** rating; display (no `onChange`) or input (two half-width hit-zones per star; tap the current value to clear). Used on the Shows and Books Entry/Dashboard/Library screens and Travel's Trip Builder.
-- **StatusChip** — **presentational** status pill taking a `label` + palette `className`. Palette tokens: **Want** (`plan`, planned) on Shows/Books/Travel / **Watching·Reading·Planning** (`warning`, in-progress) / **Watched·Read·Visited** (`positive`) / **Dropped** (`track`). "Want" label is deliberately short so the chip stays compact; shelf titles still spell it out. Chips appear on every Library row **and** every Dashboard row. The Quotes module reuses the same chip for its **Category badge** (single neutral palette).
+- **StatusChip** — **presentational** status pill taking a `label` + status `tone`. Chips appear on every Library row **and** every Dashboard row.
 - **SwipeRow** — swipe-left reveals a `delete` Delete action; tapping it deletes **immediately** (the swipe + tap is the confirmation — no browser dialog). Its wrapper sets `touch-action: pan-y pinch-zoom` so the rows stay pinch-zoomable (a bare `pan-y` would disable zoom over the whole list — see F21 in `02_tech_spec.md`).
 - **TagInput** — free-form tag editor: committed tags as removable `rounded-pill` chips + a text input that commits on **Enter/comma**, removes the last on Backspace, and offers an autocomplete dropdown over passed suggestions (case-insensitive dedupe).
 - **Thumb** — presentational 2:3 rounded image-or-placeholder (`url` + `className`; a neutral `bg-input` tile when `url` is null). Its `<img>` sets `referrerpolicy="no-referrer"` so hotlink-protected CDNs still serve. Used by search sheets, Dashboard rows, and Library rows.
@@ -137,6 +139,7 @@ Every other date value reads as `MMM DD, YYYY` (`formatFullDate`), or `MMM DD` (
 - **BarcodeScanner** — ZXing camera scanner (lazy-loaded).
 - **EffortPicker** — Light / Moderate / Vigorous radio list with MET ranges.
 - **EnergyBalanceCard** — Consumed / BMR / Activity / bold Net.
+- **FoodRowHeader** - standardized 2-line row display for Diary Food Picker listing and Wellness Library food listing.
 - **FoodSearchOverlay** — title/food search, a **local** full-screen overlay: search bar + result rows; selecting a row hands the result back. `FoodSearchOverlay` (USDA, `searchFoods` + `foodMatchScore`, rows show `{N} nutrients · {serving}`) backs the food importer's **Change** action.
 - **NutrientBar** — name + "value / target" (muted) + %; thin track+fill; **red variant** when over UL. `compact` prop drops the "value / target unit" text (name + % only) for narrow columns — used by the Diary highlighted-nutrients 2-col grid so the % is never crowded out by the full name.
 - **NutrientReport** — body of Dashboard + Daily Report (energy card + visible-nutrient sections).
@@ -185,6 +188,7 @@ Every other date value reads as `MMM DD, YYYY` (`formatFullDate`), or `MMM DD` (
 - **StopTypeIcon** — small icon mapped from a stop's `StopType`, coloured via `STOP_TYPE_COLORS`.
 - **TravelExpenseChart** — Travel expense donut/pie chart, Recharts `PieChart`, using `formatHkd`.
 - **TravelMapCanvas** — Leaflet map canvas with marker clustering, used by the Travel Map screen.
+- **TravelRowHeader** - standardized 2-line row display for Travel.
 
 ### Medical
 
@@ -192,6 +196,7 @@ Every other date value reads as `MMM DD, YYYY` (`formatFullDate`), or `MMM DD` (
 - **MedicalLockProvider** — context provider that gates Medical routes behind the lock screen, keyed off `moduleForPath`.
 - **MedicalLockScreen / PinInput** — medical lock gate: a full-shell overlay (lock glyph, masked numeric `PinInput`, Unlock, an auto-tried Face ID / Touch ID button when a credential is registered, and a "Sign out" escape). `PinInput` is a masked numeric field (digits only, Enter submits) reused by the lock settings. Lock colours reuse `danger` for errors; the screen sits at `z-50`, above sheets.
 - **MedicalResultCard** — per-test-result entry card on the Medical Report entry screen, using `labTestByKey`/`medicalReviewReason`.
+- **MedicalRowHeader** - standardized 2-line row display for Medical Reports.
 - **MedicalTestPickerSheet** — "add a test" picker sheet, built on `SearchBar`, grouped by `MEDICAL_CATEGORY_LABELS`.
 - **MedicalValueRow** — medical result row: name + the (long, wrapping) printed reference range in a `min-w-0 flex-1` left column, value (+ unit, flag-coloured) in a `shrink-0` right column, `items-start` — so a long ref wraps under the name rather than squeezing it or pushing the value off the edge. Callers pass row chrome via `className` and optional `leftExtra`/`rightExtra` slots. Used by the Medical Dashboard latest-values list and the View Report `ResultRow`.
 - **Sparkline** — tiny dependency-free **inline-SVG** trend line (`src/components/Sparkline.tsx`): min–max normalized values, an end dot tintable by a flag colour. Used by Medical Dashboard's tracked-test grid so many render cheaply without a chart library. The full trend chart (`MedicalTrendChart`, recharts) is **lazy-loaded** only when a sparkline is expanded.

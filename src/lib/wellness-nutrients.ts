@@ -16,6 +16,11 @@ export function basisGrams(nutrientBasis: string, servingGrams: number): number 
   return nutrientBasis === 'per_serving' ? servingGrams : 100
 }
 
+/** A saved local food's serving text for row display: "1 serving" for per-serving foods, else "100 g". */
+export function localFoodServing(nutrientBasis: string): string {
+  return nutrientBasis === 'per_serving' ? '1 serving' : '100 g'
+}
+
 export interface ScaleInput {
   amount: number
   servingGrams: number
