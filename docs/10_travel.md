@@ -21,8 +21,8 @@
 - **SortControl**, **Clear Filters button**: Sort over { Date, Country, Province, City, Status, Trip Name } with an **asc/desc** toggle (country/province/city use the trip's alphabetically-first value; undated trips last); default is **Date** descending.
 - **Filter panel** is label-free: **Any Country**, **Any Status**, **Any Rating** (minimum: Any / 1★+ … / 5★), **Any Year**.
 - Each row carries:
-  - Line 1: **cover thumbnail · trip name · status chip**.
-  - Line 2: **date range · primary region**.
+  - Line 1: **cover thumbnail · trip name**.
+  - Line 2: **status chip · date range · primary region**.
   - Tap → Entry/Edit; **swipe-left → Delete** (optimistic, cascades days/stops/expenses).
 
 ### Trip Entry (`/travel/entry` new, `/travel/trip/:id` edit)

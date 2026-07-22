@@ -4,8 +4,8 @@
  * pre-resolved primary place label (`primaryLabel(facetsByTrip.get(trip.id))`) since that lookup
  * depends on data the caller already has assembled.
  *
- * Line 1: Trip name · Status chip
- * Line 2: Date range · Primary place label (if any)
+ * Line 1: Trip name
+ * Line 2: Status chip · Date range · Primary place label (if any)
  */
 import { TRIP_STATUS_CHIP, tripStatusLabel, type TripRow } from '../lib/travel'
 import { formatFullDate, formatMonthDay } from '../lib/date'
@@ -28,17 +28,17 @@ function dateRange(start: string | null, end: string | null): string {
 export function TravelRowHeader({ trip, label }: TravelRowHeaderProps) {
   return (
     <>
-      <div className="flex items-center gap-2">
-        <span className="truncate text-body text-text-primary">{trip.name}</span>
+      <span className="block truncate text-body text-text-primary">{trip.name}</span>
+      <div className="flex items-center gap-1.5">
         <StatusChip
           label={tripStatusLabel(trip.status)}
           className={TRIP_STATUS_CHIP[trip.status as keyof typeof TRIP_STATUS_CHIP]}
         />
+        <p className="truncate text-caption text-text-secondary">
+          {dateRange(trip.start_date, trip.end_date)}
+          {label ? ` · ${label}` : ''}
+        </p>
       </div>
-      <p className="truncate text-caption text-text-secondary">
-        {dateRange(trip.start_date, trip.end_date)}
-        {label ? ` · ${label}` : ''}
-      </p>
     </>
   )
 }
