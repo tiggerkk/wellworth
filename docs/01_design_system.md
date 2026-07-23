@@ -98,7 +98,7 @@ Every other date value reads as `MMM DD, YYYY` (`formatFullDate`), or `MMM DD` (
 - **ImportSheetFooter** - footer for all Import\*Sheet screens.
 - **LabelChip** — **presentational** status pill taking a `label` + palette `className`. A non-status label pill different from `StatusChip` so labels read apart from statuses at a glance.
 - **ListLoader** - fragment-based render-prop for dashboard & listing screens.
-- **ListRow** — leading icon, two-line name/subtitle, trailing value or chevron.
+- **ListRow** — listing-screen row: its own rounded/bordered card (so screens can lay rows out with a gap between them) containing a leading slot, a flexible text body, an optional right-edge favorite heart, and an optional accent color for a left strip on the row.
 - **ListSearchFilterPanel** - Search bar + icon-only filter toggle (bare `IconFilter` that tints **accent** while its panel is open, else `text-secondary`; sits flush at the right edge of the row); sort-field `SelectMenu` + an ascending/descending icon toggle + Favorite-Only toggle (if it exists in the module) + icon-only clear filters button; collapsible filter panel pane with module-specific filter criteria
   ; used by every module's listing; results count.
 - **NotesEditorModal** — full-screen notes editor, used by the Shows, Books, and Medical Entry screens for free-text notes.

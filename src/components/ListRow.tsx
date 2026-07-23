@@ -14,6 +14,9 @@ interface ListRowProps {
   onToggleFavorite?: () => void
   /** Renders a swipe-to-delete affordance (via `SwipeRow`) when supplied. */
   onDelete?: () => void
+  /** Accent color (CSS value, e.g. a `var(--color-*)` token) for a left strip on the row. Omit for a
+   *  plain, uncolored row. */
+  color?: string
   className?: string
 }
 
@@ -30,6 +33,7 @@ export function ListRow({
   isFavorite,
   onToggleFavorite,
   onDelete,
+  color,
   className = '',
 }: ListRowProps) {
   const Tag = onClick ? 'button' : 'div'
@@ -64,6 +68,7 @@ export function ListRow({
   return (
     <div
       className={`overflow-hidden rounded-card border border-border bg-surface ${className}`}
+      style={color ? { borderLeft: `4px solid ${color}` } : undefined}
     >
       {onDelete ? <SwipeRow onDelete={onDelete}>{content}</SwipeRow> : content}
     </div>

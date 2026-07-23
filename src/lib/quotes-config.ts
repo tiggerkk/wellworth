@@ -15,6 +15,8 @@
  */
 import {
   QUOTE_CATEGORIES,
+  QUOTE_CATEGORY_COLOR_FALLBACK,
+  QUOTE_CATEGORY_COLORS,
   QUOTE_CATEGORY_LABELS,
   QUOTE_SOURCE_TYPES,
   QUOTE_SOURCE_TYPE_LABELS,
@@ -28,7 +30,17 @@ export type QuoteSourceTypeConfig = {
   label: string
   linkKind: SourceLinkKind
 }
-export type QuoteCategoryConfig = { key: string; label: string }
+/** A configurable category. `color` is optional (legacy rows may lack it — resolve via
+ *  `categoryColor`), a CSS-var/hex string chosen from `QUOTE_CATEGORY_COLORS`. */
+export type QuoteCategoryConfig = { key: string; label: string; color?: string }
+
+const CATEGORY_PALETTE = QUOTE_CATEGORY_COLORS.map((c) => c.value)
+
+/** The default swatch for a category at display position `i` (cycles the palette). */
+function paletteColor(i: number): string {
+  const n = CATEGORY_PALETTE.length
+  return CATEGORY_PALETTE[((i % n) + n) % n] ?? QUOTE_CATEGORY_COLOR_FALLBACK
+}
 
 /** The seeded source types' built-in link behavior, keyed by the canonical key. */
 function defaultLinkKind(key: string): SourceLinkKind {
@@ -47,7 +59,11 @@ export function defaultSourceTypes(): QuoteSourceTypeConfig[] {
 }
 
 export function defaultCategories(): QuoteCategoryConfig[] {
-  return QUOTE_CATEGORIES.map((key) => ({ key, label: QUOTE_CATEGORY_LABELS[key] }))
+  return QUOTE_CATEGORIES.map((key, i) => ({
+    key,
+    label: QUOTE_CATEGORY_LABELS[key],
+    color: paletteColor(i),
+  }))
 }
 
 /**
@@ -66,6 +82,14 @@ function readEntry(v: unknown): { key: string; label: string } | null {
   const key = typeof o.key === 'string' ? o.key.trim() : ''
   const label = typeof o.label === 'string' ? o.label.trim() : ''
   return key && label ? { key, label } : null
+}
+
+function readCategoryEntry(v: unknown): QuoteCategoryConfig | null {
+  const base = readEntry(v)
+  if (!base) return null
+  const o = v as Record<string, unknown>
+  const color = typeof o.color === 'string' && o.color.trim() ? o.color.trim() : undefined
+  return color ? { ...base, color } : base
 }
 
 /** Resolve the owner's source-type list (override JSONB) → validated configs; NULL/empty ⇒ defaults. */
@@ -94,7 +118,7 @@ export function effectiveCategories(override: unknown): QuoteCategoryConfig[] {
   const seen = new Set<string>()
   const out: QuoteCategoryConfig[] = []
   for (const raw of asArray(override)) {
-    const base = readEntry(raw)
+    const base = readCategoryEntry(raw)
     if (!base || seen.has(base.key)) continue
     out.push(base)
     seen.add(base.key)
@@ -110,6 +134,18 @@ export function sourceTypeLabel(list: QuoteSourceTypeConfig[], key: string): str
 
 export function categoryLabel(list: QuoteCategoryConfig[], key: string): string {
   return list.find((e) => e.key === key)?.label ?? key
+}
+
+/**
+ * The **stable** display colour for a category key: its saved `color`, else a deterministic
+ * position-based palette colour (so a legacy entry with no stored colour still renders consistently),
+ * else the neutral fallback for an orphan key (a deleted category still referenced by a quote). Drives
+ * the left-strip accent on each row in the Quotes Library.
+ */
+export function categoryColor(list: QuoteCategoryConfig[], key: string): string {
+  const i = list.findIndex((e) => e.key === key)
+  if (i === -1) return QUOTE_CATEGORY_COLOR_FALLBACK
+  return list[i]?.color ?? paletteColor(i)
 }
 
 export function linkKindFor(list: QuoteSourceTypeConfig[], key: string): SourceLinkKind {
@@ -196,6 +232,16 @@ export const removeSourceType = (list: QuoteSourceTypeConfig[], key: string) =>
 export const reorderSourceTypes = (list: QuoteSourceTypeConfig[], keyOrder: string[]) =>
   reorderEntries(list, keyOrder)
 
+/** The default colour for a newly-added category: the first palette swatch not already in use, else
+ *  a position-based cycle so a distinct colour is pre-selected (the owner can change it). */
+function nextCategoryColor(list: QuoteCategoryConfig[]): string {
+  const used = new Set(list.map((e) => e.color).filter(Boolean))
+  return (
+    QUOTE_CATEGORY_COLORS.find((c) => !used.has(c.value))?.value ??
+    paletteColor(list.length)
+  )
+}
+
 export function addCategory(
   list: QuoteCategoryConfig[],
   label: string,
@@ -204,7 +250,7 @@ export function addCategory(
     label,
     list.map((e) => e.key),
   )
-  return [...list, { key, label: label.trim() }]
+  return [...list, { key, label: label.trim(), color: nextCategoryColor(list) }]
 }
 
 export const renameCategory = (list: QuoteCategoryConfig[], key: string, label: string) =>

@@ -17,6 +17,7 @@ import {
 } from '../lib/quotes'
 import { foldZh } from '../lib/zh-fold'
 import {
+  categoryColor,
   categoryLabel,
   effectiveCategories,
   effectiveSourceTypes,
@@ -305,6 +306,7 @@ export function QuotesLibrary() {
                 {view.map((quote) => (
                   <ListRow
                     key={quote.id}
+                    color={categoryColor(categories, quote.category)}
                     isFavorite={quote.is_favorite}
                     onToggleFavorite={() =>
                       void toggleFavorite(quote.id, !quote.is_favorite)
