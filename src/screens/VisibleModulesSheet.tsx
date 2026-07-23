@@ -13,8 +13,7 @@ import type { Tables, TablesUpdate } from '../types/database'
  * Home hub's 2-column layout) where each module cell has a visibility `Toggle` in its trailing slot —
  * drag the grip to reorder the hub, toggle to show/hide. A cell's grid position (left→right then
  * top→down) is its hub position. Saved per-profile to `module_order` /
- * `visible_modules` and consumed by the Home hub (`homeModules`). At least one module must stay visible
- * (same as `ConfigListEditor` refusing to delete the last value).
+ * `visible_modules` and consumed by the Home hub (`homeModules`). At least one module must stay visible.
  */
 export function VisibleModulesSheet() {
   const { profile, loading, save } = useProfileEditor()
