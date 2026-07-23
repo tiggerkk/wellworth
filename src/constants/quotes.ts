@@ -33,7 +33,7 @@ export const QUOTE_CATEGORY_LABELS: Record<QuoteCategory, string> = {
  * Category-badge palette. A single neutral chip for now (used via the presentational `LabelChip`);
  * a fixed colour per category is optional per the spec and deferred until the Zen badge is prominent.
  */
-export const QUOTE_CATEGORY_CHIP = 'bg-input text-text-secondary'
+export const QUOTE_CATEGORY_CHIP = 'bg-cat-supplement text-bg'
 
 /**
  * The swatch palette for **category colours** — the choices offered by the per-row colour picker in
@@ -47,12 +47,12 @@ export const QUOTE_CATEGORY_COLORS = [
   { name: 'Rose', value: 'var(--color-favorite)' },
   { name: 'Gold', value: 'var(--color-dynasty)' },
   { name: 'Brown', value: 'var(--color-med-stool)' },
-  { name: 'Purple', value: 'var(--color-cat-supplement)' },
   { name: 'Grey', value: 'var(--color-text-secondary)' },
   { name: 'Blue', value: 'var(--color-accent)' },
   { name: 'Orange', value: 'var(--color-warning)' },
   { name: 'Cyan', value: 'var(--color-med-bone)' },
   { name: 'Red', value: 'var(--color-danger)' },
+  { name: 'Purple', value: 'var(--color-cat-supplement)' },
 ] as const
 
 /** Neutral fallback for an orphan/unconfigured category colour (e.g. a deleted category still on a row). */
