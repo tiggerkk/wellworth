@@ -3,6 +3,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router'
 import { IconPencil } from '@tabler/icons-react'
 import { Sheet } from '../components/Sheet'
 import { ScreenHeaderTitle } from '../components/ScreenHeaderTitle'
+import { PrimaryButton } from '../components/PrimaryButton'
 import { InsurancePolicyDetail } from '../components/InsurancePolicyDetail'
 import { InsurancePolicyHeader } from '../components/InsurancePolicyHeader'
 import { useAsync } from '../hooks/useAsync'
@@ -78,13 +79,13 @@ export function InsurancePolicyDetailSheet() {
         {(d) => (
           <>
             <div className="absolute top-3 right-4 z-10">
-              <button
+              <PrimaryButton
+                size="sm"
                 onClick={() => navigate(routes.networth.insuranceEdit(d.policy.id))}
                 aria-label="Edit policy"
-                className="shrink-0 text-text-secondary"
               >
-                <IconPencil size={20} />
-              </button>
+                <IconPencil size={18} />
+              </PrimaryButton>
             </div>
             <div className="flex-1 overflow-y-auto p-4">
               <InsurancePolicyDetail

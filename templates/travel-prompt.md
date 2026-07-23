@@ -82,9 +82,6 @@ Return the JSON array now, and nothing else.  If the prompt is unclear or confus
 
 ## Step 3 — after you get the JSON
 
-1. Skim a couple of trips — **dates** (month rolled over?), **types** (a restaurant tagged `visit`?),
-   **cities** (carried forward?). Don't over-polish; the Trip Builder makes fixes easy.
+1. Skim a couple of trips — **dates** (month rolled over?), **types** (a restaurant tagged `visit`?), **cities** (carried forward?). Don't over-polish; Edit Trip makes fixes easy.
 2. Save as `trips.json`.
-3. WellWorth → Settings → **Import JSON Trips** → pick the file → one **combined review** (trip count, stop
-   counts, and **new cities** to confirm once each) → **Import** → finish trips in the Trip Builder.
-   Expenses import separately (Import CSV Expenses).
+3. WellWorth → Settings → **Import JSON Trips** → pick the file → one **combined review** (trip count, stop counts, and **new cities** to confirm once each) → **Import** → finish trips in Edit Trip. Expenses import separately (Import CSV Expenses).

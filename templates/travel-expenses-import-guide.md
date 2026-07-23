@@ -10,8 +10,7 @@ Trip, Date, Restaurant, Take-out, Groceries, Shopping, Activity, Hotel, Local Tr
 ```
 
 - **Trip** — the trip name. Rows attribute to a trip by name (matched case-insensitively); a trip that
-  doesn't exist yet is **created** (status _Visited_, base currency _CNY_ — adjust afterwards in the
-  Trip Builder).
+  doesn't exist yet is **created** (status _Visited_, base currency _CNY_ — adjust afterwards in Edit Trip.
 - **Date** — `YYYY-MM-DD` (also accepts `YYYY/M/D`). Optional.
 - **Category columns** (Restaurant … Flight/Train) — put the amount in the column(s) for that day. A row
   with **more than one** category filled **splits into several expenses**. The headers match your

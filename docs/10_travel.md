@@ -5,7 +5,7 @@
 ### Dashboard (`/travel`)
 
 - **Six count tiles** over `status = visited` trips, **3 columns × 2 rows, filled column-first**: **中国省份** (China provinces, `N / 34` suffix) · **中国城市** (China cities) | **Countries** · **Cities** | **Trips This Year** · **Days Travelled** — distinct counts. The province count is intersected with `CHINA_PROVINCES`, so it never exceeds 34; Days Travelled is the inclusive span of dated visited trips. No standalone province-progress bar (removed — duplicated the 中国省份 tile).
-- **Shelves**: **Recently Visited** (reverse-chron, with a "See all trips" link), **Planning**, **Want to Visit** — each a card row (cover thumbnail · name · date range · primary region · status chip), tapping into the Trip Builder. Empty overall → **New Trip** CTA (shared EmptyState).
+- **Shelves**: **Recently Visited** (reverse-chron, with a "See all trips" link), **Planning**, **Want to Visit** — each a card row (cover thumbnail · name · date range · primary region · status chip), tapping goes to Edit Trip. Empty overall → **New Trip** CTA (shared EmptyState).
 - **Status chip palette** (`TRIP_STATUS_CHIP`): Want = purple (`plan`), Planning = orange (`warning`), Visited = teal (`positive`) — via the shared `StatusChip`.
 
 ### Map (`/travel/map`)
@@ -13,7 +13,7 @@
 - A **Leaflet** map (OSM tiles), lazy-loaded into its own chunk.
 - A **markercluster dot per visited city** (`accent` = visited; neutral `text-secondary` = planned), placed from the city's `remembered_city` coords. A city without a cached pin shows no dot (a hint points to the picker's "Look up online").
 - A **Region fill** toggle (default on): China filled by province (DataV GeoJSON) + non-China countries filled whole (Natural Earth GeoJSON), over visited trips, in the teal `positive` colour at low opacity.
-- Tapping a dot opens the trip(s) touching that city (single → Trip Builder; multiple → a short list).
+- Tapping a dot opens the trip(s) touching that city (single → Edit Trip; multiple → a short list).
 
 ### Trips (`/travel/trips`)
 

@@ -198,8 +198,7 @@ export function ImportTravelSheet() {
               {done.stops} stops).
             </p>
             <p className="text-body text-text-secondary">
-              They’re drafts — finish them in the Trip Builder. Expenses import
-              separately.
+              They’re drafts — finish them in Edit Trip. Expenses import separately.
             </p>
           </div>
         ) : (
@@ -208,7 +207,7 @@ export function ImportTravelSheet() {
               Upload a JSON array of trips (see{' '}
               <code className="text-text-primary">templates/travel-prompt.md</code>
               ). It’s a one-time back-catalogue load — the result is drafts you finish in
-              the Trip Builder.
+              Edit Trip.
             </p>
 
             <input

@@ -794,118 +794,61 @@ documentaries / CCTV series). To add one (**Shows → New Show**):
    fields only and **never** overwrites your status, rating, dates, notes, favourite flag, or a
    manually pasted poster. (Bulk "refresh everything" is intentionally not built — see `PARKED.md`.)
 
-**Bulk import:** to seed a back-catalogue, enable **Shows Settings → Enable CSV import** and use one CSV
-spanning English + Chinese across all three types — see `templates/shows-import-guide.md`.
+**Bulk import:** to seed a back-catalogue, enable **Shows Settings → Enable CSV import** and use one CSV spanning English + Chinese across all three types — see `templates/shows-import-guide.md`.
 
 ---
 
 ## Part O — Logging a medical report (the Medical workflow)
 
-The Medical module trends lab results over the years and keeps narrative reports (MRI, imaging, eye).
-Originals are **not** uploaded — you keep Google Drive links. Extraction happens **outside** the app
-(the app does no OCR), because a vision AI reads decimals accurately where OCR mangles them.
+The Medical module trends lab results over the years and keeps narrative reports (MRI, imaging, eye). Originals are **not** uploaded — you keep Google Drive links. Extraction happens **outside** the app (the app does no OCR), because a vision AI reads decimals accurately where OCR mangles them.
 
 1. After you receive a report PDF, save the file to **Google Drive** and copy its share link(s).
-2. Open any vision-capable AI tool (Claude, Gemini, GPT, …), upload the PDF, and paste the prompt from
-   `templates/medical-extraction-prompt.md`. Save the output as `YYYY-MM-DD_<type>.json`. (The JSON
-   shape + a CSV alternative are in `templates/medical-import.schema.json`; a sanitized example is
-   `templates/medical-import-template.json`.)
-3. **Spot-check the JSON** against the PDF — especially decimals (LDL / HDL / glucose / creatinine) and
-   that no section was skipped (bone density, BMI, vitals, imaging findings). Fix any `uncertain` rows.
-4. First time only: in **Medical → Settings**, turn on **Enable structured import**. Then open the
-   importer from there (**Import JSON / CSV Medical**) or the **Import** button on the New-Report form.
-5. Choose the file. The importer auto-repairs the known AI glitch (a stray quote after a number),
-   normalizes provider names + units, and shows a **review screen** (counts by category, so a missing
-   group is obvious). Correct/add anything, set type / date / provider, paste the **Drive link(s)**,
-   and **Save**. Re-importing the same date+type replaces it (no duplicates).
+2. Open any vision-capable AI tool (Claude, Gemini, GPT, …), upload the PDF, and paste the prompt from `templates/medical-extraction-prompt.md`. Save the output as `YYYY-MM-DD_<type>.json`. (The JSON shape + a CSV alternative are in `templates/medical-import.schema.json`; a sanitized example is `templates/medical-import-template.json`.)
+3. **Spot-check the JSON** against the PDF — especially decimals (LDL / HDL / glucose / creatinine) and that no section was skipped (bone density, BMI, vitals, imaging findings). Fix any `uncertain` rows.
+4. First time only: in **Medical → Settings**, turn on **Enable structured import**. Then open the importer from there (**Import JSON / CSV Medical**) or the **Import** button on the New-Report form.
+5. Choose the file. The importer auto-repairs the known AI glitch (a stray quote after a number), normalizes provider names + units, and shows a **review screen** (counts by category, so a missing group is obvious). Correct/add anything, set type / date / provider, paste the **Drive link(s)**, and **Save**. Re-importing the same date+type replaces it (no duplicates).
 6. Manual entry is always available for a single value or a screening the PDF doesn't cover.
-7. **Lock (optional):** in **Medical → Settings → Security → Lock**, set a **PIN** (4–8 digits) to gate
-   the module; on a supported device you can also turn on **Face ID / Touch ID** as a faster unlock
-   (the PIN always works as the fallback). Pick the **auto-lock** timeout (default: after 5 min; it also
-   always re-locks when the app is restarted). The lock guards this device — your data is already
-   private to your account. If you ever forget the PIN, use **Sign out** on the lock screen, sign back
-   in, and reset it (you stay signed in within a session, so you won't be locked out mid-use).
+7. **Lock (optional):** in **Medical → Settings → Security → Lock**, set a **PIN** (4–8 digits) to gate the module; on a supported device you can also turn on **Face ID / Touch ID** as a faster unlock (the PIN always works as the fallback). Pick the **auto-lock** timeout (default: after 5 min; it also always re-locks when the app is restarted). The lock guards this device — your data is already private to your account. If you ever forget the PIN, use **Sign out** on the lock screen, sign back in, and reset it (you stay signed in within a session, so you won't be locked out mid-use).
 
-> **Privacy:** your extracted JSONs (`templates/medical-import-20*.json`) and report PDFs contain your
-> name / HKID / DOB and are **gitignored** — they never go into the repo. Only the prompt, the schema,
-> and the sanitized template are tracked.
+> **Privacy:** your extracted JSONs (`templates/medical-import-20*.json`) and report PDFs contain your name / HKID / DOB and are **gitignored** — they never go into the repo. Only the prompt, the schema, and the sanitized template are tracked.
 
 ---
 
 ## Part P — Logging a trip (the Travel workflow)
 
-The Travel module logs trips as day-by-day itineraries, maps the places you've been, and tracks per-trip
-spend. No API key is needed (the map + geocode + FX are all keyless).
+The Travel module logs trips as day-by-day itineraries, maps the places you've been, and tracks per-trip spend. No API key is needed (the map + geocode + FX are all keyless).
 
-1. **New Trip** → name, status (Want / Planning / Visited), base currency; **Create**. Then add the rest
-   in the builder: optional cover image URL, companions, rating, notes, and (if you'll track it) the
-   **Track Reimbursement** toggle.
-2. **Itinerary**: **Add Day**, give each day a **date** (tap the calendar chip), and **Add Stop** inline —
-   pick a type (Travel / Visit / Eat / Shop / Stay / Other), choose the **city** (known cities fill
-   country/province instantly; a new city offers an optional **Look up online** or manual entry + pin,
-   then is remembered), and fill the type's fields. Drag to reorder; mark **Done/Skipped** (your
-   "didn't go" items become Skipped, not deleted). A stop's Cost is just a note — it's never summed.
-3. **Expenses** (the real spend): add expenses as you go, or one-time **Settings → Import CSV Expenses**
-   (a wide sheet with a **Trip** column + the category columns + **Cost** / **Re-imbursed**). Turn on
-   **Track Reimbursement** where needed; Reimbursed accepts a number or a formula (`amount/2`,
-   `amount/5*2`). Each trip shows its **HKD total** (first-day FX); if a currency can't be priced
-   automatically, type its rate in the trip's **Conversion to HKD** card.
-4. **Bulk-load old trips (one-time):** prefix each trip's text with
-   `=== TRIP: <name> | <YYYY-MM> | <status> ===`, paste them all into any AI tool with
-   `templates/travel-prompt.md`, save the JSON array, then **Settings → Import JSON Trips** →
-   review (confirm any new cities once) → **Import**. The result is drafts you finish in the Trip Builder;
-   expenses import separately.
-5. The **Dashboard** counts (provinces / cities / countries) and the **Map** update automatically from
-   your **Visited** trips.
+1. **New Trip** → name, status (Want / Planning / Visited), base currency; **Create**. Then add the rest in the builder: optional cover image URL, companions, rating, notes, and (if you'll track it) the **Track Reimbursement** toggle.
+2. **Itinerary**: **Add Day**, give each day a **date** (tap the calendar chip), and **Add Stop** inline — pick a type (Travel / Visit / Eat / Shop / Stay / Other), choose the **city** (known cities fill country/province instantly; a new city offers an optional **Look up online** or manual entry + pin, then is remembered), and fill the type's fields. Drag to reorder; mark **Done/Skipped** (your "didn't go" items become Skipped, not deleted). A stop's Cost is just a note — it's never summed.
+3. **Expenses** (the real spend): add expenses as you go, or one-time **Settings → Import CSV Expenses** (a wide sheet with a **Trip** column + the category columns + **Cost** / **Re-imbursed**). Turn on **Track Reimbursement** where needed; Reimbursed accepts a number or a formula (`amount/2`, `amount/5*2`). Each trip shows its **HKD total** (first-day FX); if a currency can't be priced automatically, type its rate in the trip's **Conversion to HKD** card.
+4. **Bulk-load old trips (one-time):** prefix each trip's text with `=== TRIP: <name> | <YYYY-MM> | <status> ===`, paste them all into any AI tool with `templates/travel-prompt.md`, save the JSON array, then **Settings → Import JSON Trips** → review (confirm any new cities once) → **Import**. The result is drafts you finish in the Edit Trip; expenses import separately.
+5. The **Dashboard** counts (provinces / cities / countries) and the **Map** update automatically from your **Visited** trips.
 
-> **Privacy:** your real trip/expense files (`travel-expenses*.csv`) are **gitignored**; only the
-> sanitized templates + the travel prompt/schema are tracked.
+> **Privacy:** your real trip/expense files (`travel-expenses*.csv`) are **gitignored**; only the sanitized templates + the travel prompt/schema are tracked.
 
 ---
 
 ## Part Q — Backups & disaster recovery
 
-The Supabase **free tier has no automatic backups**, and it **pauses a project after ~7 days of
-inactivity** (and can delete it after a long pause). Your data — **medical lab results** and **net-worth
-financials** especially — is irreplaceable, so you run your own **encrypted, off-site backups**, and a
-lightweight **keep-alive** so the project never pauses.
+The Supabase **free tier has no automatic backups**, and it **pauses a project after ~7 days of inactivity** (and can delete it after a long pause). Your data — **medical lab results** and **net-worth financials** especially — is irreplaceable, so you run your own **encrypted, off-site backups**, and a lightweight **keep-alive** so the project never pauses.
 
 What's protected, and what isn't:
 
-- **Schema is already safe** — every table is defined in `supabase/migrations/`, in git. The reference
-  tables `nutrient` and `medical_lab_test` are seeded by migrations too. So the backup only needs your
-  **entered data** (it skips those two reseeded tables) — it's tiny.
-- **The backup also captures `auth.users` + `auth.identities`.** This is the part most guides miss:
-  every row is owned by your auth **UUID**. If you ever recreate the project from scratch, signing in
-  again would mint a _new_ UUID and your restored rows would be invisible (RLS). Backing up the auth
-  identity lets a fresh project re-link your Google login to the **same** UUID. See Q4.
+- **Schema is already safe** — every table is defined in `supabase/migrations/`, in git. The reference tables `nutrient` and `medical_lab_test` are seeded by migrations too. So the backup only needs your **entered data** (it skips those two reseeded tables) — it's tiny.
+- **The backup also captures `auth.users` + `auth.identities`.** This is the part most guides miss: every row is owned by your auth **UUID**. If you ever recreate the project from scratch, signing in again would mint a _new_ UUID and your restored rows would be invisible (RLS). Backing up the auth identity lets a fresh project re-link your Google login to the **same** UUID. See Q4.
 
-> 🐚 **Shell note for this Part:** the local backup/restore commands below run in **Git Bash** (they use
-> Unix `export VAR='…'` syntax), **not** PowerShell. Throughout this runbook a `$` prompt = Git Bash and
-> a `>` prompt = PowerShell. Git Bash was installed with Git in Part A — open it from the Start menu
-> ("Git Bash") or right-click the project folder → "Git Bash Here". The one-time setup steps below are
-> all in the GitHub/Supabase web UI, so they're shell-independent.
+> 🐚 **Shell note for this Part:** the local backup/restore commands below run in **Git Bash** (they use Unix `export VAR='…'` syntax), **not** PowerShell. Throughout this runbook a `$` prompt = Git Bash and a `>` prompt = PowerShell. Git Bash was installed with Git in Part A — open it from the Start menu ("Git Bash") or right-click the project folder → "Git Bash Here". The one-time setup steps below are all in the GitHub/Supabase web UI, so they're shell-independent.
 
 ### Q1 — One-time setup
 
-1. **Create a private backups repo** on GitHub, e.g. `wellworth-backups` (Private). Nothing else goes
-   in it — just the encrypted dumps.
-2. **Make an age key** (encryption). Install age (`winget install FiloSottile.age`, or scoop/brew),
-   then:
+1. **Create a private backups repo** on GitHub, e.g. `wellworth-backups` (Private). Nothing else goes in it — just the encrypted dumps.
+2. **Make an age key** (encryption). Install age (`winget install FiloSottile.age`, or scoop/brew), then:
    ```
    > age-keygen -o wellworth-backup.key
    ```
-   It prints a **public key** (`age1…`) — copy it. **Keep the file `wellworth-backup.key` (the private
-   key) offline** — in your password manager / a USB key, **never in any repo or `.env`**. If you lose
-   it, every backup is unreadable. (The CI runner only ever gets the _public_ key, so it can encrypt but
-   never decrypt.)
-3. **Get the Session-pooler connection string.** Supabase → Settings → Database → **Connection string**
-   → **Session pooler** → URI, and paste your DB password in. It looks like
-   `postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres`. Use the
-   **Session** pooler (not the `:6543` transaction pooler — `pg_dump` needs a session; and not the
-   direct `db.<ref>…` host, which is IPv6-only and unreachable from GitHub's runners).
-4. **Make a fine-grained PAT** for the backups repo: GitHub → Settings → Developer settings →
-   Fine-grained tokens → only `wellworth-backups`, **Repository permissions → Contents: Read and write**.
+   It prints a **public key** (`age1…`) — copy it. **Keep the file `wellworth-backup.key` (the private key) offline** — in your password manager / a USB key, **never in any repo or `.env`**. If you lose it, every backup is unreadable. (The CI runner only ever gets the _public_ key, so it can encrypt but never decrypt.)
+3. **Get the Session-pooler connection string.** Supabase → Settings → Database → **Connection string** → **Session pooler** → URI, and paste your DB password in. It looks like `postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres`. Use the **Session** pooler (not the `:6543` transaction pooler — `pg_dump` needs a session; and not the direct `db.<ref>…` host, which is IPv6-only and unreachable from GitHub's runners).
+4. **Make a fine-grained PAT** for the backups repo: GitHub → Settings → Developer settings → Fine-grained tokens → only `wellworth-backups`, **Repository permissions → Contents: Read and write**.
 5. **Add the secrets** to **this** repo: Settings → Secrets and variables → **Actions** → New secret:
    - `SUPABASE_DB_URL` = the Session-pooler URI from step 3
    - `AGE_PUBLIC_KEY` = the `age1…` public key from step 2
@@ -915,25 +858,15 @@ What's protected, and what isn't:
 
 ### Q2 — The automated backup (and keep-alive)
 
-`.github/workflows/backup.yml` runs **every ~3 days** (and on demand). It dumps the DB through the
-session pooler, encrypts the dump to your age public key, and pushes `backups/wellworth-<timestamp>.sql.age`
-to your private backups repo (keeping the newest 60 in the tree; git history holds the rest). Because the
-dump is a real database connection, **it doubles as the keep-alive** — the project stays active, so it
-won't pause. Run it now to verify: **Actions → DB backup & keep-alive → Run workflow**, then check a new
-`.age` file appears in `wellworth-backups`.
+`.github/workflows/backup.yml` runs **every ~3 days** (and on demand). It dumps the DB through the session pooler, encrypts the dump to your age public key, and pushes `backups/wellworth-<timestamp>.sql.age` to your private backups repo (keeping the newest 60 in the tree; git history holds the rest). Because the dump is a real database connection, **it doubles as the keep-alive** — the project stays active, so it won't pause. Run it now to verify: **Actions → DB backup & keep-alive → Run workflow**, then check a new `.age` file appears in `wellworth-backups`.
 
-> ⚠️ **GitHub disables scheduled workflows after 60 days of no repo activity.** While you're actively
-> committing, that never triggers. If you ever go quiet for two months, re-enable it from the **Actions**
-> tab. Also: "what counts as activity" for the pause is Supabase's call — if they change it, verify a
-> manual run still un-pauses the project.
+> ⚠️ **GitHub disables scheduled workflows after 60 days of no repo activity.** While you're actively committing, that never triggers. If you ever go quiet for two months, re-enable it from the **Actions** tab. Also: "what counts as activity" for the pause is Supabase's call — if they change it, verify a manual run still un-pauses the project.
 
 ### Q3 — Manual backup (before anything risky)
 
-The simplest manual backup is just **Actions → Run workflow** (no local tools needed). **Always take one
-before a `supabase db reset --linked`** (Part M) or any destructive migration.
+The simplest manual backup is just **Actions → Run workflow** (no local tools needed). **Always take one before a `supabase db reset --linked`** (Part M) or any destructive migration.
 
-To back up **locally/offline** instead (needs `age` + the v17 `pg_dump` on PATH), from the project folder
-in Git Bash:
+To back up **locally/offline** instead (needs `age` + the v17 `pg_dump` on PATH), from the project folder in Git Bash:
 
 ```
 $ export SUPABASE_DB_URL='postgresql://postgres.<ref>:<pw>@aws-0-<region>.pooler.supabase.com:5432/postgres'
@@ -943,32 +876,23 @@ $ npm run db:backup        # writes backups/wellworth-<timestamp>.sql.age (gitig
 
 ### Q4 — Restoring (two tiers)
 
-You need `age` + `psql` locally and your **private** age key file. **Always dry-run into a throwaway DB
-first** (`supabase start` for a local one) and compare row counts before trusting a backup.
+You need `age` + `psql` locally and your **private** age key file. **Always dry-run into a throwaway DB first** (`supabase start` for a local one) and compare row counts before trusting a backup.
 
-- **Tier 1 — same project (routine):** the project still exists, you just lost/corrupted data. Point at
-  the live DB and load the latest backup — your UUIDs are unchanged, so everything reappears:
+- **Tier 1 — same project (routine):** the project still exists, you just lost/corrupted data. Point at the live DB and load the latest backup — your UUIDs are unchanged, so everything reappears:
   ```
   $ export TARGET_DB_URL='…session-pooler URI of the live project…'
   $ export AGE_KEY_FILE='/path/to/wellworth-backup.key'
   $ npm run db:restore -- backups/wellworth-<timestamp>.sql.age
   ```
 - **Tier 2 — project deleted (disaster):** create a **new** Supabase project (Part B), then:
-  1. `supabase link --project-ref <new-ref>` and `supabase db push` (rebuilds the schema from
-     migrations + reseeds `nutrient`/`medical_lab_test`).
-  2. **Before signing in for the first time**, run the restore (above) against the new project — this
-     loads `auth.users` + `auth.identities` with their original UUIDs.
-  3. Update `.env` + Vercel + Google OAuth redirect/origin URLs for the new ref + anon key; `npm run
-gen:types`.
-  4. Sign in with the **same** Google account — it re-links to the restored identity, so your UUID (and
-     all your data) matches.
+  1. `supabase link --project-ref <new-ref>` and `supabase db push` (rebuilds the schema from migrations + reseeds `nutrient`/`medical_lab_test`).
+  2. **Before signing in for the first time**, run the restore (above) against the new project — this loads `auth.users` + `auth.identities` with their original UUIDs.
+  3. Update `.env` + Vercel + Google OAuth redirect/origin URLs for the new ref + anon key; `npm run gen:types`.
+  4. Sign in with the **same** Google account — it re-links to the restored identity, so your UUID (and all your data) matches.
 
 ### Q5 — Why this order of priorities
 
-A **paused** project you can un-pause from the dashboard in seconds; a **deleted** one is gone. So the
-**encrypted backup is the real insurance** and the keep-alive is just convenience. Even total loss is
-recoverable: new project → migrations → restore. The one thing you must never lose is the **age private
-key** — guard it like the DB password.
+A **paused** project you can un-pause from the dashboard in seconds; a **deleted** one is gone. So the **encrypted backup is the real insurance** and the keep-alive is just convenience. Even total loss is recoverable: new project → migrations → restore. The one thing you must never lose is the **age private key** — guard it like the DB password.
 
 ---
 
@@ -1012,35 +936,27 @@ Your **shows, books, entries, etc. are untouched** — they're in the database, 
 
 ### R3 — What "cached assets" actually are
 
-The app is a PWA: a **service worker** precaches the app's **own static files** so it loads offline and
-fast. These are the "cached assets":
+The app is a PWA: a **service worker** precaches the app's **own static files** so it loads offline and fast. These are the "cached assets":
 
 - The app's compiled **code + styles** (JS bundles, CSS) and **`index.html`**.
 - **App icons / fonts** and the offline shell.
-- The **Travel map's base data** — the bundled `world-countries.geojson` / `china-provinces.geojson`
-  (Leaflet tiles themselves come from the network, not this cache).
+- The **Travel map's base data** — the bundled `world-countries.geojson` / `china-provinces.geojson` (Leaflet tiles themselves come from the network, not this cache).
 
 They are **not** your data. In particular, **matched shows and matched books are _data_**, stored as rows in the **Supabase database** — they're not "cached assets." The only match data kept in the browser is the **import match caches** in `localStorage` (R5) — `wellworth:books-match-cache`, `wellworth:shows-match-cache`, and `wellworth:food-match-cache` — which exist purely to speed up re-imports (and, for books, save the daily Google Books quota), and also `wellworth:networth-liquid-only` - which is the Liquid Only toggle.
 
 ### R4 — When you actually need to "Delete data"
 
-- **After a deploy/code change, the app looks stale or broken on a device** (old screen, a fixed bug
-  still showing, a white screen) — the service worker is serving the **old cached assets**. This is the
-  main legitimate reason. _Tip:_ a hard reload or closing all tabs often suffices; "Delete data" is the
-  sure fix. (For the installed iPhone PWA, see Part L / the deploy notes.)
+- **After a deploy/code change, the app looks stale or broken on a device** (old screen, a fixed bug still showing, a white screen) — the service worker is serving the **old cached assets**. This is the main legitimate reason. _Tip:_ a hard reload or closing all tabs often suffices; "Delete data" is the sure fix. (For the installed iPhone PWA, see Part L / the deploy notes.)
 - **A migration changed the shape of stored client state** and the app misbehaves on old values.
 - You're **deliberately testing first-run / logged-out** behavior.
 
-You do **not** need it for ordinary data changes, after a DB reset, or just to clear the import cache —
-use R5 for the cache, and re-login is never required for those.
+You do **not** need it for ordinary data changes, after a DB reset, or just to clear the import cache — use R5 for the cache, and re-login is never required for those.
 
 ### R5 — Clearing one thing instead of everything
 
 To drop just an **import match cache** without logging out:
 
-- **In the app:** the module's **Settings → Import → "Clear Import Match Cache"** — **Books** (Google
-  Books matches), **Shows** (TMDB), or **Wellness** (USDA food matches). (Recommended — one tap, stays
-  logged in.)
+- **In the app:** the module's **Settings → Import → "Clear Import Match Cache"** — **Books** (Google Books matches), **Shows** (TMDB), or **Wellness** (USDA food matches). (Recommended — one tap, stays logged in.)
 - **In DevTools, per-key:** F12 → **Application** → **Storage → Local Storage** → click your origin → you'll see individual rows (`wellworth:books-match-cache`, `wellworth:shows-match-cache`, `wellworth:food-match-cache`, `wellworth:last-module`, `wellworth:networth-liquid-only`, the `sb-…-auth-token`). Select a single row and press **Delete** (or right-click → Delete). Deleting only a `…-match-cache` row clears that import cache and leaves your login intact.
 - **In the Console:** `localStorage.removeItem('wellworth:books-match-cache')` (or `'wellworth:shows-match-cache'`). (Avoid `localStorage.clear()` — it also removes the auth token and logs you out.)
 

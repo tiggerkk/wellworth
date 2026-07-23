@@ -6,7 +6,7 @@
  * into a draft (days preserve null dates; stops keep order; enums fall back safely; province is
  * snapped to a canonical `CHINA_PROVINCES` value for Chinese stops). The review screen
  * (`ImportTravelTripsSheet`) confirms trip/day/stop counts + pooled new cities before writing drafts the
- * owner finishes in the Trip Builder.
+ * owner finishes in Edit Trip.
  */
 import { snapProvince } from './travel-places'
 import { isChinaCountry } from './travel-stats'

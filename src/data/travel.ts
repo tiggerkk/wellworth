@@ -31,8 +31,7 @@ import type { ExpenseInsert, ExpenseRow, ExpenseUpdate } from '../lib/travel-exp
  * and sort (`compareTrips`/`compareTripsByDateDesc`: start_date/updated_at/status/name/rating).
  * Deliberately omits `base_currency`, `notes`, `track_reimbursement`, `fx_rates`, `created_at` —
  * none of those are read, searched, filtered, or sorted on by either list screen; they're only
- * used by Entry/Edit and the Trip Builder, which load the full row via `getTrip` / `getTripBundle`.
- * Mirrors the same trim in `data/show.ts` / `data/book.ts` / `data/quote.ts`.
+ * used by Entry/Edit, which load the full row via `getTrip` / `getTripBundle`.
  */
 const TRIP_LIST_COLUMNS =
   'id, user_id, name, status, cover_url, companions, rating, start_date, end_date, updated_at'
@@ -147,7 +146,7 @@ export async function nextStopSortOrder(dayId: string): Promise<number> {
 
 // --- Bundle + derived ---
 
-/** Load a trip with its ordered days and all of their stops (the Trip Builder's single read). */
+/** Load a trip with its ordered days and all of their stops (Edit Trip's single read). */
 export async function getTripBundle(tripId: string): Promise<TripBundle | null> {
   const trip = await getTrip(tripId)
   if (!trip) return null

@@ -14,7 +14,7 @@ export function NetWorthFundDetailSheet() {
   return (
     <SheetLoader
       label="Fund detail"
-      title={entry?.name ?? 'Fund'}
+      title={entry?.name ?? 'Fund Detail'}
       titleClassName="line-clamp-2 flex-1 text-heading font-medium text-text-primary"
       loading={loading}
       error={error}

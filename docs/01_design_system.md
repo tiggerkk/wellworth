@@ -120,7 +120,7 @@ Every other date value reads as `MMM DD, YYYY` (`formatFullDate`), or `MMM DD` (
 - **Sheet** — slide-up overlay for route-based modal screens (scrim, `bottom`/`full` variants, Esc/scrim/back close); the app shell renders sheets over the active tab via React Router's background-location pattern.
 - **SheetLoader** - outer wrapper for Sheets.
 - **Splash** — full-screen loading state while the auth session resolves.
-- **StarRating** — 0–5 **half-star** rating; display (no `onChange`) or input (two half-width hit-zones per star; tap the current value to clear). Used on the Shows and Books Entry/Dashboard/Library screens and Travel's Trip Builder.
+- **StarRating** — 0–5 **half-star** rating; display (no `onChange`) or input (two half-width hit-zones per star; tap the current value to clear). Used on the Shows and Books Entry/Dashboard/Library screens and Travel's Edit Trip.
 - **StatusChip** — **presentational** status pill taking a `label` + status `tone`. Chips appear on every Library row **and** every Dashboard row.
 - **SwipeRow** — swipe-left reveals a `delete` Delete action; tapping it deletes **immediately** (the swipe + tap is the confirmation — no browser dialog). Its wrapper sets `touch-action: pan-y pinch-zoom` so the rows stay pinch-zoomable (a bare `pan-y` would disable zoom over the whole list — see F21 in `02_tech_spec.md`).
 - **TagInput** — free-form tag editor: committed tags as removable `rounded-pill` chips + a text input that commits on **Enter/comma**, removes the last on Backspace, and offers an autocomplete dropdown over passed suggestions (case-insensitive dedupe).

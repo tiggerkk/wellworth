@@ -3,7 +3,7 @@ import { useSyncExternalStore } from 'react'
 /**
  * Travel's app-wide "data changed" tick — separate from the other modules' refresh stores so they
  * don't cross-invalidate (cf. `books-refresh.ts`). Trip/day/stop/expense writes call `bumpTravel()`;
- * the Trips list + Trip Builder include the version in their fetch deps and refetch.
+ * the Trips list + Edit Trip include the version in their fetch deps and refetch.
  */
 let version = 0
 const listeners = new Set<() => void>()

@@ -28,7 +28,7 @@ const CHINA_NAMES = new Set(['china', '中国', 'cn', "people's republic of chin
 const isChina = (country: string) => CHINA_NAMES.has(country.trim().toLowerCase())
 
 /**
- * The City picker — a **local** fixed overlay (not a route sheet, so the Trip Builder's draft
+ * The City picker — a **local** fixed overlay (not a route sheet, so Edit Trip's draft
  * survives). Seeded with the stop's current City, it searches the remembered-cities cache (instant)
  * and Nominatim (auto, debounced) and lists matches immediately.
  * Selecting a result confirms it and returns; manual entry is the fallback, collapsed by default and

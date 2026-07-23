@@ -57,7 +57,7 @@ export function MedicalReportDetail() {
             <PrimaryButton
               size="sm"
               onClick={() => navigate(routes.medical.edit(id))}
-              aria-label="Edit"
+              aria-label="Edit Report"
             >
               <IconPencil size={18} />
             </PrimaryButton>
@@ -68,7 +68,9 @@ export function MedicalReportDetail() {
           {data ? (
             <MedicalRowHeader report={data.report} variant="header" />
           ) : (
-            <p className="truncate text-title font-medium text-text-primary">Report</p>
+            <p className="truncate text-title font-medium text-text-primary">
+              Medical Report
+            </p>
           )}
         </div>
       </ScreenHeaderTitle>
