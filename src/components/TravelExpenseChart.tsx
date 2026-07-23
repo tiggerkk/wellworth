@@ -1,5 +1,17 @@
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 import { formatHkd } from '../lib/travel-expenses'
+import {
+  PALETTE_BLUE,
+  PALETTE_BROWN,
+  PALETTE_CYAN,
+  PALETTE_EMERALD,
+  PALETTE_GOLD,
+  PALETTE_GREY,
+  PALETTE_MAGENTA,
+  PALETTE_PURPLE,
+  PALETTE_RED,
+  PALETTE_OFF_WHITE,
+} from '../constants/palette'
 
 export interface ExpenseSlice {
   label: string
@@ -10,22 +22,22 @@ export interface ExpenseSlice {
 }
 
 /**
- * Fallback donut palette — **accent-led**, distinct hues that read on the dark surface. Driven by the
- * design tokens (`var(--color-*)`) so it tracks the theme. Used only when a slice carries no explicit
- * `color` (slices normally get a **stable per-category** colour via `categoryColor`). Recharts resolves
- * `var(...)` in `fill` (cf. `MedicalTrendChart`). One literal brown remains — no matching token.
+ * Fallback donut palette — distinct hues that read on the dark surface. Driven by the shared
+ * palette constants (`src/constants/palette.ts`) so it tracks the theme. Used only when a slice
+ * carries no explicit `color` (slices normally get a **stable per-category** colour via
+ * `categoryColor`). Recharts resolves `var(...)` in `fill` (cf. `MedicalTrendChart`).
  */
 const COLORS = [
-  'var(--color-accent)',
-  'var(--color-warning)',
-  'var(--color-positive)',
-  'var(--color-cat-supplement)',
-  'var(--color-text-secondary)',
-  'var(--color-favorite)',
-  '#8c564b',
-  'var(--color-med-bone)',
-  'var(--color-dynasty)',
-  'var(--color-danger)',
+  PALETTE_BLUE,
+  PALETTE_GOLD,
+  PALETTE_EMERALD,
+  PALETTE_PURPLE,
+  PALETTE_GREY,
+  PALETTE_MAGENTA,
+  PALETTE_BROWN,
+  PALETTE_CYAN,
+  PALETTE_RED,
+  PALETTE_OFF_WHITE,
 ]
 
 /**

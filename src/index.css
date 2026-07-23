@@ -9,68 +9,93 @@
  * Dark, calm. Match these tokens exactly.
  */
 @theme {
-  /* Colors */
-  --color-bg: #161b28;
-  --color-surface: #232a3a;
-  --color-surface-alt: #1b2130;
-  --color-input: #2a3142;
-  --color-border: rgba(255, 255, 255, 0.08);
-  --color-text-primary: #e8eaf0;
-  --color-text-secondary: #9aa3b5;
-  --color-text-muted: #c2c7d4;
-  --color-text-tertiary: #7a8294;
-  --color-accent: #3874f6;
-  --color-favorite: #e06aa0; /* favorite heart — decoupled from accent (rose) */
-  --color-positive: #5dcaa5;
-  --color-info: #5b8def;
-  --color-plan: #a779e0; /* "Want"/planned status chip — Shows & Books (purple) */
-  --color-warning: #e8623c; /* caution / in-progress status (Watching·Reading·Planning) + import notes */
-  --color-danger: #e2574c;
-  --color-delete: #e24b4a;
-  --color-track: #3a4253;
-  --color-fill: #eef1f7;
-  --color-dynasty: #d8a657; /* gold badge — Chinese-dynasty chip (Shows/Books) */
+  /* ── Common palette — single source of truth for every "named color" reused across modules.
+     11 anchors: 7 vivid hues spaced evenly around the wheel (same S/L family so they read with
+     consistent punch on the dark bg) + Brown (desaturated, doesn't fit the vivid family) + 3
+     neutrals (Off White / Grey / Dark Grey) reused from the core UI elevation/text tokens below.
+     Every module-specific or semantic token further down should reference one of these via
+     var(--palette-*) rather than hardcoding a hex — change the anchor here and every consumer
+     updates together. */
+  --palette-red: #dd5f5f;
+  --palette-gold: #ddbe5f;
+  --palette-emerald: #5fdd7f;
+  --palette-cyan: #5fdddd;
+  --palette-blue: #5f7fdd;
+  --palette-purple: #9e5fdd;
+  --palette-magenta: #dd5fbe;
+  --palette-brown: #b5825f;
+  --palette-off-white: #eef1f7;
+  --palette-grey: #c2c7d4; /* = --color-text-muted */
+  --palette-dark-grey: #3a4253; /* = --color-track */
 
-  /* Category accents — Diary group icons (meal red matches danger today but is its own role) */
-  --color-cat-meal: #e2574c; /* red */
-  --color-cat-snack: #e2933c; /* orange */
-  --color-cat-supplement: #a779e0; /* purple */
-  --color-cat-activity: #5b8def; /* blue */
+  /* Colors */
+  --color-bg: #161b28; /* near-black navy */
+  --color-surface: #232a3a; /* dark slate */
+  --color-surface-alt: #1b2130; /* darker slate */
+  --color-input: #2a3142; /* slate-blue */
+  --color-border: rgba(255, 255, 255, 0.08); /* white, low opacity */
+  --color-text-primary: #e8eaf0; /* near-white */
+  --color-text-secondary: #9aa3b5; /* grey */
+  --color-text-muted: #c2c7d4; /* light grey */
+  --color-text-tertiary: #7a8294; /* darker grey */
+  --color-accent: var(--palette-blue);
+  --color-favorite: var(
+    --palette-magenta
+  ); /* favorite heart — decoupled from accent (magenta) */
+  --color-positive: var(--palette-emerald);
+  --color-info: var(--palette-blue);
+  --color-plan: var(--palette-purple);
+  --color-warning: var(
+    --palette-gold
+  ); /* caution / in-progress status (Watching·Reading·Planning) + import notes (gold) */
+  --color-danger: var(--palette-red);
+  --color-delete: var(--palette-red);
+  --color-track: var(--palette-dark-grey);
+  --color-fill: var(--palette-off-white);
+  --color-dynasty: var(
+    --palette-gold
+  ); /* gold badge — Chinese-dynasty chip (Shows/Books/Literature) */
+
+  /* Category accents — Diary group icons */
+  --color-cat-meal: var(--palette-red);
+  --color-cat-snack: var(--palette-gold);
+  --color-cat-supplement: var(--palette-purple);
+  --color-cat-activity: var(--palette-blue);
 
   /* Medical category accents — one distinct hue per lab-result section (left stripe + tinted
      header on the Report/Edit/Dashboard sections). Consumed via MEDICAL_CATEGORY_COLOR in
      src/lib/medical.ts; tints are derived at the boundary with color-mix. Hues are ordered so
      that *consecutive* categories (the sequence in MEDICAL_CATEGORIES) jump far across the colour
      wheel — no two adjacent sections share a warm/cool band — so neighbours read clearly apart. */
-  --color-med-eye: #a779e0; /* purple */
-  --color-med-general: #5b8def; /* blue */
-  --color-med-vitals: #e2574c; /* red */
-  --color-med-lipids: #e0a83a; /* gold */
-  --color-med-glucose: #2fb0a0; /* teal-green */
-  --color-med-liver: #a779e0; /* purple */
-  --color-med-renal: #e87a4a; /* coral */
-  --color-med-electrolytes: #4a86e8; /* blue */
-  --color-med-cbc: #5bbf4a; /* green */
-  --color-med-thyroid: #d869b0; /* magenta */
-  --color-med-bone: #3fb6c4; /* cyan */
-  --color-med-tumour_markers: #e2933c; /* orange */
-  --color-med-hepatitis: #8a78e0; /* indigo */
-  --color-med-inflammation: #6cc24a; /* green */
-  --color-med-urine: #5b8def; /* blue */
-  --color-med-stool: #8c564b; /* brown */
-  --color-med-imaging: #2f9fb0; /* blue-teal */
-  --color-med-other: #8a93a8; /* grey */
+  --color-med-eye: var(--palette-purple);
+  --color-med-general: var(--palette-emerald);
+  --color-med-vitals: var(--palette-red);
+  --color-med-lipids: var(--palette-blue);
+  --color-med-glucose: var(--palette-gold);
+  --color-med-liver: var(--palette-magenta);
+  --color-med-renal: var(--palette-cyan);
+  --color-med-electrolytes: var(--palette-brown);
+  --color-med-cbc: var(--palette-dark-grey);
+  --color-med-thyroid: var(--palette-purple);
+  --color-med-bone: var(--palette-emerald);
+  --color-med-tumour_markers: var(--palette-red);
+  --color-med-hepatitis: var(--palette-blue);
+  --color-med-inflammation: var(--palette-gold);
+  --color-med-urine: var(--palette-magenta);
+  --color-med-stool: var(--palette-cyan);
+  --color-med-imaging: var(--palette-brown);
+  --color-med-other: var(--palette-dark-grey);
 
   /* Literature section accents — colored left stripe + tinted header on the Poem/Poet detail
      collapsible sections (the Net Worth Monthly Entry pattern). Consumed via
      LITERATURE_SECTION_COLOR in src/constants/literature-sections.ts. Hues are spaced so that
      *consecutive* sections (原文→譯文→註釋→賞析, 作者簡介→作品) sit far apart on the wheel. */
-  --color-lit-original: #e0a83a; /* gold — 原文 */
-  --color-lit-translation: #5b8def; /* blue — 譯文 */
-  --color-lit-remark: #6cc24a; /* green — 註釋 */
-  --color-lit-shangxi: #d869b0; /* magenta — 賞析 */
-  --color-lit-bio: #3fb6c4; /* cyan — 作者簡介 */
-  --color-lit-works: #e87a4a; /* coral — 作品 */
+  --color-lit-original: var(--palette-gold); /* 原文 */
+  --color-lit-translation: var(--palette-blue); /* 譯文 */
+  --color-lit-remark: var(--palette-emerald); /* 註釋 */
+  --color-lit-shangxi: var(--palette-magenta); /* 賞析 */
+  --color-lit-bio: var(--palette-cyan); /* 作者簡介 */
+  --color-lit-works: var(--palette-gold); /* 作品 */
 
   /* Radii */
   --radius-screen: 28px;

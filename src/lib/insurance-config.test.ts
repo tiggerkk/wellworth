@@ -79,7 +79,7 @@ describe('pure transforms', () => {
       key: 'aia',
       label: 'AIA',
       defaultCurrency: 'HKD',
-      color: 'var(--color-med-stool)', // first swatch unused by the 3 seed providers
+      color: 'var(--palette-brown)', // first swatch unused by the 3 seed providers
     })
 
     list = renameProvider(list, 'aia', 'AIA HK')

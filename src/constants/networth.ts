@@ -2,6 +2,18 @@
  * Net Worth module enums + display labels (the source of truth for the CHECK columns, which the
  * generated DB types surface as plain `string`). Pure constants only — runtime helpers live in `src/lib/networth.ts`.
  */
+import {
+  PALETTE_BLUE,
+  PALETTE_BROWN,
+  PALETTE_CYAN,
+  PALETTE_EMERALD,
+  PALETTE_GOLD,
+  PALETTE_GREY,
+  PALETTE_MAGENTA,
+  PALETTE_PURPLE,
+  PALETTE_RED,
+  PALETTE_OFF_WHITE,
+} from './palette'
 
 export const ASSET_TYPES = [
   'cash',
@@ -25,20 +37,20 @@ export const ASSET_TYPE_LABELS: Record<AssetType, string> = {
 }
 
 /**
- * Chart/legend/summary + section-accent color per asset type — CSS vars from the @theme palette
- * (index.css). Shared by the Dashboard "By asset type" dots, the Monthly-Entry section stripes/tints,
- * and the trend chart, so every surface reads the same hue per type. Hues are picked so that
- * *consecutive* types in `ASSET_TYPES` jump across the colour wheel (green → blue → gold → purple →
- * orange → rose → grey) — no two adjacent sections share a warm/cool band, so they read clearly apart.
+ * Chart/legend/summary + section-accent color per asset type — shared palette constants
+ * (src/constants/palette.ts). Shared by the Dashboard "By asset type" dots, the Monthly-Entry
+ * section stripes/tints, and the trend chart, so every surface reads the same hue per type. Hues
+ * are picked so that *consecutive* types in `ASSET_TYPES` jump across the colour wheel — no two
+ * adjacent sections share a warm/cool band, so they read clearly apart.
  */
 export const ASSET_TYPE_COLORS: Record<AssetType, string> = {
-  cash: 'var(--color-lit-original)', // gold
-  time_deposit: 'var(--color-lit-translation)', // blue
-  stock: 'var(--color-lit-remark)', // green
-  fund: 'var(--color-lit-shangxi)', // magenta
-  retirement: 'var(--color-lit-bio)', // cyan
-  insurance: 'var(--color-danger)', // red
-  property: 'var(--color-text-muted)', // grey
+  cash: PALETTE_GOLD,
+  time_deposit: PALETTE_BLUE,
+  stock: PALETTE_EMERALD,
+  fund: PALETTE_MAGENTA,
+  retirement: PALETTE_CYAN,
+  insurance: PALETTE_RED,
+  property: PALETTE_GREY,
 }
 
 export const NETWORTH_CURRENCIES = ['HKD', 'CNY', 'USD'] as const
@@ -111,16 +123,16 @@ export const PROVIDER_DEFAULT_CURRENCY: Record<InsuranceProvider, NetWorthCurren
  * dot on each row in Manage Providers, and the left-strip accent on each row in Insurance Policies.
  */
 export const INSURANCE_PROVIDER_COLORS = [
-  { name: 'Green', value: 'var(--color-positive)' },
-  { name: 'Rose', value: 'var(--color-favorite)' },
-  { name: 'Gold', value: 'var(--color-dynasty)' },
-  { name: 'Brown', value: 'var(--color-med-stool)' },
-  { name: 'Purple', value: 'var(--color-cat-supplement)' },
-  { name: 'Grey', value: 'var(--color-text-secondary)' },
-  { name: 'Blue', value: 'var(--color-accent)' },
-  { name: 'Orange', value: 'var(--color-warning)' },
-  { name: 'Cyan', value: 'var(--color-med-bone)' },
-  { name: 'Red', value: 'var(--color-danger)' },
+  { name: 'Gold', value: PALETTE_GOLD },
+  { name: 'Magenta', value: PALETTE_MAGENTA },
+  { name: 'Purple', value: PALETTE_PURPLE },
+  { name: 'Brown', value: PALETTE_BROWN },
+  { name: 'Cyan', value: PALETTE_CYAN },
+  { name: 'Red', value: PALETTE_RED },
+  { name: 'Grey', value: PALETTE_GREY },
+  { name: 'Blue', value: PALETTE_BLUE },
+  { name: 'Emerald', value: PALETTE_EMERALD },
+  { name: 'Off-White', value: PALETTE_OFF_WHITE },
 ] as const
 
 /** Neutral fallback for an orphan/unconfigured provider colour (e.g. a deleted provider still on a policy). */

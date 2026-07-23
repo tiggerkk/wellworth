@@ -3,6 +3,18 @@
  * generated DB types surface as plain `string`). Pure constants only — runtime helpers
  * live in `src/lib/quotes.ts`.
  */
+import {
+  PALETTE_BLUE,
+  PALETTE_BROWN,
+  PALETTE_CYAN,
+  PALETTE_EMERALD,
+  PALETTE_GOLD,
+  PALETTE_GREY,
+  PALETTE_MAGENTA,
+  PALETTE_PURPLE,
+  PALETTE_RED,
+  PALETTE_OFF_WHITE,
+} from './palette'
 
 /**
  * The default categories + their initial display order. Exactly one category is required per quote.
@@ -43,16 +55,16 @@ export const QUOTE_CATEGORY_CHIP = 'bg-cat-supplement text-bg'
  * accent on each row in the Quotes Library.
  */
 export const QUOTE_CATEGORY_COLORS = [
-  { name: 'Green', value: 'var(--color-positive)' },
-  { name: 'Rose', value: 'var(--color-favorite)' },
-  { name: 'Gold', value: 'var(--color-dynasty)' },
-  { name: 'Brown', value: 'var(--color-med-stool)' },
-  { name: 'Grey', value: 'var(--color-text-secondary)' },
-  { name: 'Blue', value: 'var(--color-accent)' },
-  { name: 'Orange', value: 'var(--color-warning)' },
-  { name: 'Cyan', value: 'var(--color-med-bone)' },
-  { name: 'Red', value: 'var(--color-danger)' },
-  { name: 'Purple', value: 'var(--color-cat-supplement)' },
+  { name: 'Gold', value: PALETTE_GOLD },
+  { name: 'Blue', value: PALETTE_BLUE },
+  { name: 'Magenta', value: PALETTE_MAGENTA },
+  { name: 'Brown', value: PALETTE_BROWN },
+  { name: 'Red', value: PALETTE_RED },
+  { name: 'Emerald', value: PALETTE_EMERALD },
+  { name: 'Cyan', value: PALETTE_CYAN },
+  { name: 'Grey', value: PALETTE_GREY },
+  { name: 'Purple', value: PALETTE_PURPLE },
+  { name: 'Off-White', value: PALETTE_OFF_WHITE },
 ] as const
 
 /** Neutral fallback for an orphan/unconfigured category colour (e.g. a deleted category still on a row). */

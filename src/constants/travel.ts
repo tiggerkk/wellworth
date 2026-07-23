@@ -4,6 +4,18 @@
  * only — runtime helpers live in `src/lib/travel*.ts`.
  */
 import type { StatusTone } from './chips'
+import {
+  PALETTE_BLUE,
+  PALETTE_BROWN,
+  PALETTE_CYAN,
+  PALETTE_EMERALD,
+  PALETTE_GOLD,
+  PALETTE_GREY,
+  PALETTE_MAGENTA,
+  PALETTE_PURPLE,
+  PALETTE_RED,
+  PALETTE_OFF_WHITE,
+} from './palette'
 
 /** Trip lifecycle status. */
 export const TRIP_STATUSES = ['want', 'planning', 'visited'] as const
@@ -35,17 +47,17 @@ export const STOP_TYPE_LABELS: Record<StopType, string> = {
 }
 
 /**
- * Per-stop-type icon accent colour (CSS custom-property refs), so the stop icons read apart by kind.
- * Hues jump across the wheel — no two adjacent types share a warm/cool band. Consumed by `StopTypeIcon`.
- * travel(plane)=green · visit(camera)=gold · eat(chopsticks)=red · shop(shopee)=blue ·
- * stay(bed)=purple · other(map-pin)=grey.
+ * Per-stop-type icon accent colour — shared palette constants (src/constants/palette.ts), so the
+ * stop icons read apart by kind. Consumed by `StopTypeIcon`.
+ * travel(plane)=blue · visit(camera)=purple · eat(chopsticks)=gold · shop(shopee)=brown ·
+ * stay(bed)=cyan · other(map-pin)=grey.
  */
 export const STOP_TYPE_COLORS: Record<StopType, string> = {
-  travel: 'var(--color-accent)', // blue
-  visit: 'var(--color-cat-supplement)', // violet
-  eat: 'var(--color-dynasty)', // gold
-  shop: 'var(--color-med-stool)', // brown
-  stay: 'var(--color-warning)', // orange
+  travel: PALETTE_BLUE,
+  visit: PALETTE_PURPLE,
+  eat: PALETTE_GOLD,
+  shop: PALETTE_BROWN,
+  stay: PALETTE_RED,
   other: 'var(--color-text-tertiary)', // grey (darker than text-muted, so it reads apart from the row text)
 }
 
@@ -86,22 +98,22 @@ export const TRAVEL_EXPENSE_CATEGORY_LABELS: Record<TravelExpenseCategory, strin
 /**
  * The swatch palette for **expense-category colours** — the choices offered by the per-row colour
  * picker in Travel Settings → Expense Categories, and the default-assignment cycle for seed / new
- * categories (`src/lib/travel-config.ts`). Values are design tokens (CSS vars) so they track the theme;
- * the one literal brown has no matching token (follows the donut fallback palette in `TravelExpenseChart`).
- * The category's chosen colour is stored per entry on `profile.travel_expense_categories` and drives the
- * **stable** per-category slice colour in the Expenses donut.
+ * categories (`src/lib/travel-config.ts`). Values are shared palette constants
+ * (src/constants/palette.ts) so they track the theme. The category's chosen colour is stored per
+ * entry on `profile.travel_expense_categories` and drives the **stable** per-category slice colour
+ * in the Expenses donut.
  */
 export const TRAVEL_CATEGORY_COLORS = [
-  { name: 'Green', value: 'var(--color-positive)' },
-  { name: 'Rose', value: 'var(--color-favorite)' },
-  { name: 'Gold', value: 'var(--color-dynasty)' },
-  { name: 'Brown', value: 'var(--color-med-stool)' },
-  { name: 'Purple', value: 'var(--color-cat-supplement)' },
-  { name: 'Grey', value: 'var(--color-text-secondary)' },
-  { name: 'Blue', value: 'var(--color-accent)' },
-  { name: 'Orange', value: 'var(--color-warning)' },
-  { name: 'Cyan', value: 'var(--color-med-bone)' },
-  { name: 'Red', value: 'var(--color-danger)' },
+  { name: 'Emerald', value: PALETTE_EMERALD },
+  { name: 'Magenta', value: PALETTE_MAGENTA },
+  { name: 'Gold', value: PALETTE_GOLD },
+  { name: 'Brown', value: PALETTE_BROWN },
+  { name: 'Purple', value: PALETTE_PURPLE },
+  { name: 'Grey', value: PALETTE_GREY },
+  { name: 'Blue', value: PALETTE_BLUE },
+  { name: 'Red', value: PALETTE_RED },
+  { name: 'Cyan', value: PALETTE_CYAN },
+  { name: 'Off-White', value: PALETTE_OFF_WHITE },
 ] as const
 
 /** Neutral fallback for an orphan/unconfigured category colour (e.g. a deleted category still on a row). */
