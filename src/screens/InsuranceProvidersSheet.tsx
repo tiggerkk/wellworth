@@ -58,22 +58,21 @@ export function InsuranceProvidersSheet() {
             count={(key) => countPoliciesByProvider(userId!, key)}
             reassign={(from, to) => reassignProvider(userId!, from, to)}
             onChanged={bumpNetWorth}
-            hint={(e) => `imports as ${e.defaultCurrency}`}
-            leading={(entry, update) => (
-              <ColorPicker
-                value={entry.color ?? providerColor(list, entry.key)}
-                onChange={(color) => update({ color })}
-                options={INSURANCE_PROVIDER_COLORS}
-                ariaLabel={`Colour for ${entry.label}`}
-              />
-            )}
             rowExtra={(entry, update) => (
-              <div className="w-24">
-                <SelectMenu
-                  value={entry.defaultCurrency}
-                  options={CCY_OPTIONS}
-                  onChange={(v) => update({ defaultCurrency: v as NetWorthCurrency })}
-                  ariaLabel={`Default currency for ${entry.label}`}
+              <div className="flex items-center gap-2">
+                <div className="w-24">
+                  <SelectMenu
+                    value={entry.defaultCurrency}
+                    options={CCY_OPTIONS}
+                    onChange={(v) => update({ defaultCurrency: v as NetWorthCurrency })}
+                    ariaLabel={`Default currency for ${entry.label}`}
+                  />
+                </div>
+                <ColorPicker
+                  value={entry.color ?? providerColor(list, entry.key)}
+                  onChange={(color) => update({ color })}
+                  options={INSURANCE_PROVIDER_COLORS}
+                  ariaLabel={`Colour for ${entry.label}`}
                 />
               </div>
             )}
