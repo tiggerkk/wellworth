@@ -30,6 +30,13 @@ interface ConfigListEditorProps<T extends { key: string; label: string }> {
   /** Optional sub-label shown under a row (e.g. "links to Shows"). */
   hint?: (entry: T) => string | null
   /**
+   * Optional per-row indicator rendered before the label (e.g. an insurance provider's colour dot) —
+   * a passive identifier, not an action, so it sits with the drag handle/label rather than the
+   * trailing action cluster. Consumers that don't pass it (Quotes/Travel/Insurance-currency-only) are
+   * unaffected.
+   */
+  leading?: (entry: T, update: (patch: Partial<T>) => void) => ReactNode
+  /**
    * Optional per-row control rendered before the rename/delete actions, for editing an extra field on
    * the entry (e.g. an insurance provider's default currency). `update` merges a patch into that entry
    * and auto-saves. Consumers that don't pass it (Quotes/Travel) are unaffected.
@@ -61,6 +68,7 @@ export function ConfigListEditor<T extends { key: string; label: string }>({
   onChanged,
   isProtected,
   hint,
+  leading,
   rowExtra,
 }: ConfigListEditorProps<T>) {
   const [items, setItems] = useState<T[]>(list)
@@ -166,14 +174,19 @@ export function ConfigListEditor<T extends { key: string; label: string }>({
               className="field-control w-full"
             />
           ) : (
-            <span className="flex items-baseline gap-2">
-              <span className="truncate">{labelFor(key)}</span>
-              {(() => {
-                const h = hint?.(items.find((e) => e.key === key)!)
-                return h ? (
-                  <span className="text-caption text-text-tertiary">{h}</span>
-                ) : null
-              })()}
+            <span className="flex items-center gap-2">
+              {leading?.(items.find((e) => e.key === key)!, (patch) =>
+                updateEntry(key, patch),
+              )}
+              <span className="flex items-baseline gap-2 truncate">
+                <span className="truncate">{labelFor(key)}</span>
+                {(() => {
+                  const h = hint?.(items.find((e) => e.key === key)!)
+                  return h ? (
+                    <span className="text-caption text-text-tertiary">{h}</span>
+                  ) : null
+                })()}
+              </span>
             </span>
           )
         }

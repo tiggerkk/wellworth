@@ -75,7 +75,12 @@ describe('pure transforms', () => {
   it('add / rename / setCurrency / remove / reorder', () => {
     let list = defaultProviders()
     list = addProvider(list, 'AIA')
-    expect(list.at(-1)).toEqual({ key: 'aia', label: 'AIA', defaultCurrency: 'HKD' })
+    expect(list.at(-1)).toEqual({
+      key: 'aia',
+      label: 'AIA',
+      defaultCurrency: 'HKD',
+      color: 'var(--color-med-stool)', // first swatch unused by the 3 seed providers
+    })
 
     list = renameProvider(list, 'aia', 'AIA HK')
     expect(providerLabel(list, 'aia')).toBe('AIA HK')

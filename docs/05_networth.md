@@ -84,11 +84,11 @@
 
 ### Settings (`IconSettings` tab)
 
-- **DISPLAY → Visible Asset Types** → reorder/visibility sheet (≥1 visible).
-- **DISPLAY → Liquid Assets** → per-asset-type liquid/non-liquid toggles
+- **DISPLAY → Visible Asset Types**: reorder/visibility sheet (≥1 visible).
+- **DISPLAY → Liquid Assets**: per-asset-type liquid/non-liquid toggles
   (`NetWorthLiquidAssetTypesSheet`). Drives the "Liquid Only" view toggle; saved to
   `profile.networth_liquid_asset_types` (NULL = defaults: cash/time_deposit/stock/fund).
-- **DISPLAY → Manage Providers** → add/rename/delete/reorder the insurance-provider list + each provider's **default import currency** (`ConfigListEditor` with a per-row currency control). Stored on `profile.insurance_providers` (JSONB `{key,label,defaultCurrency}[]`; NULL = the seed defaults CHUBB/BOC/Manulife in `src/lib/networth.ts`, resolved by `src/lib/insurance-config.ts`). Provider is **required** on every policy, so the last one can't be deleted; deleting an in-use provider reassigns its policies first. `insurance_policy.provider` has **no DB CHECK** — it stores the stable `key` (orphan keys still render via the raw-key fallback).
+- **DISPLAY → Manage Providers**: uses **ConfigListEditor** to add / rename / delete / drag-reorder / color-pick the list + each provider's **default import currency**. Stored on `profile.insurance_providers` (JSONB `{key,label,defaultCurrency}[]`; NULL = the seed defaults CHUBB/BOC/Manulife in `src/lib/networth.ts`, resolved by `src/lib/insurance-config.ts`). Provider is **required** on every policy, so the last one can't be deleted; deleting an in-use provider reassigns its policies first. `insurance_policy.provider` has **no DB CHECK** — it stores the stable `key` (orphan keys still render via the raw-key fallback). Changes auto-save.
 - **IMPORT → Enable Bulk Insurance Import** toggle (`networth_bulk_insurance_import_enabled`) → `Import CSV Insurance` (can re-run repeatedly which creates new policies, adds new schedules for new dates, leaves everything else alone). Manual / fund / single-policy imports are always enabled.
 
 ---

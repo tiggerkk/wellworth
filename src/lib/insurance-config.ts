@@ -15,6 +15,8 @@
 import {
   INSURANCE_PROVIDERS,
   INSURANCE_PROVIDER_LABELS,
+  INSURANCE_PROVIDER_COLOR_FALLBACK,
+  INSURANCE_PROVIDER_COLORS,
   PROVIDER_DEFAULT_CURRENCY,
   NETWORTH_CURRENCIES,
   BASE_CURRENCY,
@@ -25,14 +27,24 @@ export type InsuranceProviderConfig = {
   key: string
   label: string
   defaultCurrency: NetWorthCurrency
+  color?: string
+}
+
+const CATEGORY_PALETTE = INSURANCE_PROVIDER_COLORS.map((c) => c.value)
+
+/** The default swatch for a provider at display position `i` (cycles the palette). */
+function paletteColor(i: number): string {
+  const n = CATEGORY_PALETTE.length
+  return CATEGORY_PALETTE[((i % n) + n) % n] ?? INSURANCE_PROVIDER_COLOR_FALLBACK
 }
 
 /** The canonical provider defaults (seed + NULL fallback), in their display order. */
 export function defaultProviders(): InsuranceProviderConfig[] {
-  return INSURANCE_PROVIDERS.map((key) => ({
+  return INSURANCE_PROVIDERS.map((key, i) => ({
     key,
     label: INSURANCE_PROVIDER_LABELS[key],
     defaultCurrency: PROVIDER_DEFAULT_CURRENCY[key],
+    color: paletteColor(i),
   }))
 }
 
@@ -51,7 +63,8 @@ function readEntry(v: unknown): InsuranceProviderConfig | null {
   const defaultCurrency = isCurrency(o.defaultCurrency)
     ? o.defaultCurrency
     : BASE_CURRENCY
-  return { key, label, defaultCurrency }
+  const color = typeof o.color === 'string' && o.color.trim() ? o.color.trim() : undefined
+  return color ? { key, label, defaultCurrency, color } : { key, label, defaultCurrency }
 }
 
 /** Resolve the owner's provider list (override JSONB) → validated configs; NULL/empty ⇒ defaults. */
@@ -71,6 +84,18 @@ export function effectiveProviders(override: unknown): InsuranceProviderConfig[]
 
 export function providerLabel(list: InsuranceProviderConfig[], key: string): string {
   return list.find((e) => e.key === key)?.label ?? key
+}
+
+/**
+ * The **stable** display colour for a provider key: its saved `color`, else a deterministic
+ * position-based palette colour (so a legacy entry with no stored colour still renders consistently),
+ * else the neutral fallback for an orphan key (a deleted provider still referenced by a policy). Drives
+ * the leading dot in Manage Providers and the left-strip accent on each row in Insurance Policies.
+ */
+export function providerColor(list: InsuranceProviderConfig[], key: string): string {
+  const i = list.findIndex((e) => e.key === key)
+  if (i === -1) return INSURANCE_PROVIDER_COLOR_FALLBACK
+  return list[i]?.color ?? paletteColor(i)
 }
 
 export function defaultCurrencyFor(
@@ -111,6 +136,16 @@ export function generateKey(label: string, existingKeys: string[]): string {
   return `${slug}_${n}`
 }
 
+/** The default colour for a newly-added provider: the first palette swatch not already in use, else
+ *  a position-based cycle so a distinct colour is pre-selected (the owner can change it). */
+function nextProviderColor(list: InsuranceProviderConfig[]): string {
+  const used = new Set(list.map((e) => e.color).filter(Boolean))
+  return (
+    INSURANCE_PROVIDER_COLORS.find((c) => !used.has(c.value))?.value ??
+    paletteColor(list.length)
+  )
+}
+
 export function addProvider(
   list: InsuranceProviderConfig[],
   label: string,
@@ -119,7 +154,15 @@ export function addProvider(
     label,
     list.map((e) => e.key),
   )
-  return [...list, { key, label: label.trim(), defaultCurrency: BASE_CURRENCY }]
+  return [
+    ...list,
+    {
+      key,
+      label: label.trim(),
+      defaultCurrency: BASE_CURRENCY,
+      color: nextProviderColor(list),
+    },
+  ]
 }
 
 export function renameProvider(

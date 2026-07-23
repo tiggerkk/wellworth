@@ -1,14 +1,20 @@
 import { SheetLoader } from '../components/SheetLoader'
 import { ConfigListEditor } from '../components/ConfigListEditor'
 import { SelectMenu } from '../components/SelectMenu'
+import { ColorPicker } from '../components/ColorPicker'
 import { useAuth } from '../auth/AuthProvider'
 import { useProfileEditor } from '../hooks/useProfileEditor'
 import { countPoliciesByProvider, reassignProvider } from '../data/insurance'
 import { bumpNetWorth } from '../lib/networth-refresh'
-import { NETWORTH_CURRENCIES, type NetWorthCurrency } from '../constants/networth'
+import {
+  NETWORTH_CURRENCIES,
+  INSURANCE_PROVIDER_COLORS,
+  type NetWorthCurrency,
+} from '../constants/networth'
 import {
   addProvider,
   effectiveProviders,
+  providerColor,
   removeProvider,
   renameProvider,
   reorderProviders,
@@ -36,33 +42,44 @@ export function InsuranceProvidersSheet() {
       data={profile}
       errorText="Couldn’t load insurance providers."
     >
-      {(prof) => (
-        <ConfigListEditor<InsuranceProviderConfig>
-          list={effectiveProviders(prof.insurance_providers)}
-          noun="provider"
-          itemNoun="policy"
-          userId={userId}
-          persist={(next) => void save({ insurance_providers: next })}
-          add={addProvider}
-          rename={renameProvider}
-          remove={removeProvider}
-          reorder={reorderProviders}
-          count={(key) => countPoliciesByProvider(userId!, key)}
-          reassign={(from, to) => reassignProvider(userId!, from, to)}
-          onChanged={bumpNetWorth}
-          hint={(e) => `imports as ${e.defaultCurrency}`}
-          rowExtra={(entry, update) => (
-            <div className="w-24">
-              <SelectMenu
-                value={entry.defaultCurrency}
-                options={CCY_OPTIONS}
-                onChange={(v) => update({ defaultCurrency: v as NetWorthCurrency })}
-                ariaLabel={`Default currency for ${entry.label}`}
+      {(prof) => {
+        const list = effectiveProviders(prof.insurance_providers)
+        return (
+          <ConfigListEditor<InsuranceProviderConfig>
+            list={list}
+            noun="provider"
+            itemNoun="policy"
+            userId={userId}
+            persist={(next) => void save({ insurance_providers: next })}
+            add={addProvider}
+            rename={renameProvider}
+            remove={removeProvider}
+            reorder={reorderProviders}
+            count={(key) => countPoliciesByProvider(userId!, key)}
+            reassign={(from, to) => reassignProvider(userId!, from, to)}
+            onChanged={bumpNetWorth}
+            hint={(e) => `imports as ${e.defaultCurrency}`}
+            leading={(entry, update) => (
+              <ColorPicker
+                value={entry.color ?? providerColor(list, entry.key)}
+                onChange={(color) => update({ color })}
+                options={INSURANCE_PROVIDER_COLORS}
+                ariaLabel={`Colour for ${entry.label}`}
               />
-            </div>
-          )}
-        />
-      )}
+            )}
+            rowExtra={(entry, update) => (
+              <div className="w-24">
+                <SelectMenu
+                  value={entry.defaultCurrency}
+                  options={CCY_OPTIONS}
+                  onChange={(v) => update({ defaultCurrency: v as NetWorthCurrency })}
+                  ariaLabel={`Default currency for ${entry.label}`}
+                />
+              </div>
+            )}
+          />
+        )
+      }}
     </SheetLoader>
   )
 }

@@ -103,6 +103,29 @@ export const PROVIDER_DEFAULT_CURRENCY: Record<InsuranceProvider, NetWorthCurren
   manulife: 'HKD',
 }
 
+/**
+ * The swatch palette for **provider colours** — the choices offered by the per-row colour picker in
+ * Net Worth Settings → Manage Providers, and the default-assignment cycle for seed / new providers
+ * (`src/lib/insurance-config.ts`). Values are design tokens (CSS vars) so they track the theme. The
+ * provider's chosen colour is stored per entry on `profile.insurance_providers` and drives the leading
+ * dot on each row in Manage Providers, and the left-strip accent on each row in Insurance Policies.
+ */
+export const INSURANCE_PROVIDER_COLORS = [
+  { name: 'Green', value: 'var(--color-positive)' },
+  { name: 'Rose', value: 'var(--color-favorite)' },
+  { name: 'Gold', value: 'var(--color-dynasty)' },
+  { name: 'Brown', value: 'var(--color-med-stool)' },
+  { name: 'Purple', value: 'var(--color-cat-supplement)' },
+  { name: 'Grey', value: 'var(--color-text-secondary)' },
+  { name: 'Blue', value: 'var(--color-accent)' },
+  { name: 'Orange', value: 'var(--color-warning)' },
+  { name: 'Cyan', value: 'var(--color-med-bone)' },
+  { name: 'Red', value: 'var(--color-danger)' },
+] as const
+
+/** Neutral fallback for an orphan/unconfigured provider colour (e.g. a deleted provider still on a policy). */
+export const INSURANCE_PROVIDER_COLOR_FALLBACK = 'var(--color-text-secondary)'
+
 /** The user's birth year — insurance ages are computed as `entry_year − BIRTH_YEAR`. */
 export const DEFAULT_BIRTH_YEAR = 1974
 

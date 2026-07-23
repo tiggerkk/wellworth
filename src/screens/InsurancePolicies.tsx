@@ -16,7 +16,7 @@ import {
 } from '../lib/insurance-view'
 import { DEFAULT_BIRTH_YEAR } from '../constants/networth'
 import { ageForYear, hasBrokenEven } from '../lib/networth'
-import { effectiveProviders, providerLabel } from '../lib/insurance-config'
+import { effectiveProviders, providerColor, providerLabel } from '../lib/insurance-config'
 import { todayLocal } from '../lib/date'
 import { routes } from '../constants/routes'
 import { SelectMenu } from '../components/SelectMenu'
@@ -192,6 +192,7 @@ export function InsurancePolicies() {
                 view.map(({ policy, brokeEven }) => (
                   <ListRow
                     key={policy.id}
+                    color={providerColor(providers, policy.provider)}
                     onClick={() => navigate(routes.networth.insuranceEdit(policy.id))}
                   >
                     <InsurancePolicyHeader

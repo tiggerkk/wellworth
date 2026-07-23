@@ -19,8 +19,8 @@ const MARGIN = 4 // px gap between the trigger and the popover
  * would otherwise hide it: the `ReorderList` container's `overflow-hidden` (clips) and each reorder
  * row's `transform` (a per-row stacking context that paints later rows over an in-flow popover). It
  * flips **above** the trigger when there isn't room below. Presentational + controlled — the parent
- * owns `value` and persists in `onChange`. Used by the Travel Expense-Categories editor
- * (`ConfigListEditor` `rowExtra`) to set each category's donut colour.
+ * owns `value` and persists in `onChange`. Used by Net Worth Manage Providers, Quotes Categories, and
+ * Travel Expense-Categories editor (`ConfigListEditor` `rowExtra`) to set each category's donut colour.
  */
 export function ColorPicker({
   value,
