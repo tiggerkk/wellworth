@@ -43,7 +43,7 @@ function Body({
 }) {
   return (
     <>
-      <SectionCard title="Entry Form">
+      <SectionCard title="Display">
         <button
           onClick={() => openSheet(routes.travel.settingsVisible)}
           className="w-full border-b border-border last:border-b-0"
@@ -54,7 +54,7 @@ function Body({
         </button>
       </SectionCard>
 
-      <SectionCard title="Expenses">
+      <SectionCard title="Values">
         <button
           onClick={() => openSheet(routes.travel.settingsCategories)}
           className="flex w-full items-center justify-between px-4 py-3 text-left active:bg-input/40"

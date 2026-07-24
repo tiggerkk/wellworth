@@ -11,8 +11,9 @@ import type { Tables, TablesUpdate } from '../types/database'
 type SaveFn = (patch: TablesUpdate<'profile'>) => Promise<void>
 
 /**
- * Net Worth sub-settings: Visible Asset Types (display order/visibility) + the one-time bulk
- * insurance importer toggle. Manual / fund / single-policy imports are always enabled elsewhere.
+ * Net Worth sub-settings: Visible Asset Types (display order/visibility), Manage Providers,
+ * and the one-time bulk insurance importer toggle. Manual / fund / single-policy imports are
+ * always enabled elsewhere.
  */
 export function NetWorthSettings() {
   const { profile, loading, error, save } = useProfileEditor()
@@ -52,6 +53,9 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
             <IconChevronRight size={18} className="text-text-tertiary" />
           </FieldRow>
         </button>
+      </SectionCard>
+
+      <SectionCard title="Values">
         <button
           onClick={() => openSheet(routes.networth.settingsProviders)}
           className="w-full border-b border-border last:border-b-0"

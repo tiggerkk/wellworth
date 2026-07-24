@@ -38,7 +38,7 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
 
   return (
     <>
-      <SectionCard title="Entry Form">
+      <SectionCard title="Display">
         <button
           onClick={() => openSheet(routes.shows.settingsVisible)}
           className="w-full border-b border-border last:border-b-0"
