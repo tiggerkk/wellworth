@@ -31,10 +31,9 @@ A full-screen wizard shown **once** to a brand-new family member (any signed-in 
 
 - **Sections (identical to Global Settings, same order):** **DISPLAY** (Font Size, Visible Modules, Units — shared `DisplaySettingsCard`) then **PROFILE** (Birthday, Sex, Height, Weight — shared `ProfileMetricsFields`; **Birthday opens the shared `Calendar`**; height/weight follow the chosen units). One source per section means the wizard and Settings can't drift. Protein target is **not** asked (it defaults to the DRI; editable later in Wellness Settings).
 - DISPLAY changes apply instantly but are **not** persisted until "Get started" (Font Size applies via `applyFontSize` for live feedback; Units re-keys the height/weight inputs). The exception is **Visible Modules**, which opens the route-based `VisibleModulesSheet` and auto-saves there like in Settings.
-- **Gate stacking (F-onboard-z):** the wizard overlay is `z-20` (not the top-layer `z-50`) so it sits **below** the `z-30` route-sheet layer — that lets the Visible Modules sheet and the birthday `Calendar` paint **above** the gate. It still covers the app behind it (content + bottom nav are `z-10`); the `Toaster` (`z-50`) stays on top so the "at least one module visible" toast shows.
+- **Gate stacking (F24):** the wizard overlay is `z-20` (not the top-layer `z-50`) so it sits **below** the `z-30` route-sheet layer — that lets the Visible Modules sheet and the birthday `Calendar` paint **above** the gate. It still covers the app behind it (content + bottom nav are `z-10`); the `Toaster` (`z-50`) stays on top so the "at least one module visible" toast shows.
 - **"Get started"** validates that birthday/height/weight are filled, saves them in one write, and stamps `onboarded_at` — which dismisses the gate and drops the member into the app (their last-module default is the Home hub). A small **Sign out** link is the only escape.
-- While the member's profile row is still being created the gate shows a brief **splash**, never the wizard with empty fields. The **owner** and any already-onboarded member never see this screen.
-- **A profile/onboarding gate reads `data`, never `loading` (F15b):** `useAsync` keeps prior `data` and flips `loading=true` on every `bumpDiary` refetch, so gating the `OnboardingGate` on `loading || profile == null` flashes a full-screen splash over the whole app on each refetch. Gate on the resolved value only (`profile == null` covers both initial-undefined and the row-being-created window).
+- While the member's profile row is still being created the gate shows a brief **splash**, never the wizard with empty fields. The **owner** and any already-onboarded member never see this screen. (The gate reads `data`, never `loading`, to avoid flashing this splash on background refetches — the general rule + why is tech-spec **F8/F13/F15b**.)
 - Members under 31 (or a non-binary `sex`) see no nutrient targets — the DRI bands cover adult female & male 31–71+ (see `docs/04_wellness.md`).
 
 ---
@@ -68,6 +67,7 @@ Section order: **DISPLAY** (first), **PROFILE**, **ACCOUNT**. (There is no separ
 - `onboarded_at` TIMESTAMPTZ NULL — set when first-run onboarding completes; NULL = new member who must be forced through the Onboarding wizard. The owner seed stamps it; the member seed leaves it NULL.
 - `networth_visible_asset_types` TEXT[] NULL — asset-type sections shown on Net Worth Monthly Entry / Dashboard; **NULL = all visible**. Set from Net Worth Settings → Display → Visible Asset Types (≥1 always stays visible). A type **not in `networth_asset_type_order`** defaults visible (same rule as modules).
 - `networth_asset_type_order` TEXT[] NULL — Net Worth asset-type display order; **NULL = canonical `ASSET_TYPES` order**. Also the seen-set for visibility defaulting.
+- `networth_liquid_asset_types` TEXT[] NULL — per-asset-type liquid/non-liquid flags, driving the Dashboard's "Liquid Only" view toggle; **NULL = defaults** (cash/time_deposit/stock/fund). Set from Net Worth Settings → Display → Liquid Assets.
 - `networth_bulk_insurance_import_enabled` BOOLEAN NOT NULL DEFAULT true — surfaces the **one-time bulk insurance seed** importer in Net Worth Settings (on by default). Gates only the bulk seed; the manual, fund-monthly, and single-policy importers are always enabled.
 - `insurance_providers` JSONB NULL — owner's configurable insurance-provider list, `{key, label, defaultCurrency}[]` in display order (Net Worth Settings → Manage Providers). **NULL = the seed defaults** (CHUBB/BOC/Manulife in `src/constants/networth.ts`), resolved by `src/lib/insurance-config.ts`. `insurance_policy.provider` stores the stable `key` (no DB CHECK). (all added by `supabase/migrations/04_networth_profile_settings.sql`)
 - `show_visible_fields` TEXT[] NULL — Shows Entry-form field visibility; **NULL = all visible**
@@ -92,6 +92,11 @@ Section order: **DISPLAY** (first), **PROFILE**, **ACCOUNT**. (There is no separ
 - `travel_expense_categories` JSONB NULL — owner's configurable Travel expense-category list, `{key, label}` array; **NULL = canonical seed defaults** (`TRAVEL_EXPENSE_CATEGORIES` in `src/constants/travel.ts`)
 - `travel_visible_fields` TEXT[] NULL — Trip Entry-form field visibility; **NULL = all visible**
 - `travel_importer_enabled` BOOLEAN NOT NULL DEFAULT true — single toggle surfacing **both** Travel importers (JSON Trips + CSV Expenses); on by default (added by `supabase/migrations/15_travel_profile_settings.sql`)
+- `literature_tts_lang` TEXT NOT NULL DEFAULT 'zh-HK' — default read-aloud language, `'zh-HK'` (粵) | `'zh-CN'` (國); seeds the Poem-detail player's toggle
+- `literature_tts_autoloop` BOOLEAN NOT NULL DEFAULT false — 自動循環: read-aloud restarts from the top on finish
+- `literature_poem_visible_fields` TEXT[] NULL — 可見詩書欄位: Poem-detail section visibility (譯文/註釋/賞析); **NULL = all visible**. 原文 is always shown and never listed.
+- `literature_writer_visible_fields` TEXT[] NULL — 可見名家欄位: Poet-detail section visibility (作者簡介); **NULL = all visible**. 作品 is always shown and never listed.
+  (all four added by `supabase/migrations/17_literature_profile_settings.sql`)
 - `created_at`, `updated_at` TIMESTAMPTZ
 
 ---
