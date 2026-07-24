@@ -10,9 +10,9 @@ import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useProfile } from '../hooks/useProfile'
 import { listQuotes, updateQuote } from '../data/quote'
-import { QUOTE_CATEGORY_CHIP } from '../constants/quotes'
 import { initialZenPool, nextZenPool, randomItem, type QuoteRow } from '../lib/quotes'
 import {
+  categoryColor,
   categoryLabel,
   effectiveCategories,
   effectiveSourceTypes,
@@ -265,7 +265,7 @@ function QuoteCard({
       <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
         <LabelChip
           label={categoryLabel(categories, quote.category)}
-          className={QUOTE_CATEGORY_CHIP}
+          color={categoryColor(categories, quote.category)}
         />
         {quote.tags.map((tag) => (
           <span

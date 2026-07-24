@@ -37,8 +37,8 @@
 
 ### Settings (`/quotes/settings`)
 
-- **Entry Form → Visible Fields**: shared **VisibleFieldsSheet** (see `docs/01_design_system.md`) over the optional fields in New/Edit form order: Title, Source Link, Author, Source Type, Language, Tags. Quote Text and Category are always shown.
-- **Values** — manage the dropdown lists used on the Add/Edit form (each opens a sheet):
+- **DISPLAY → Visible Fields**: shared **VisibleFieldsSheet** (see `docs/01_design_system.md`) over the optional fields in New/Edit form order: Title, Source Link, Author, Source Type, Language, Tags. Quote Text and Category are always shown.
+- **VALUES** — manage the dropdown lists used on the Add/Edit form (each opens a sheet):
   - **Source Types** and **Categories**: uses **ConfigListEditor** to add / rename / delete / drag-reorder / color-pick the lists. Changes auto-save.
   - **Delete migration**: deleting a value still used by quotes prompts a **reassignment** — pick a replacement and the affected quotes are moved to it before the value is removed. A value can't be deleted if it's the last one in its list. **TV Show / Movie / Book** source types are **protected from deletion** (their `linkKind` drives Show/Book auto-linking) — they can still be renamed/reordered.
 - **Enable Bulk Quotes Import** (`profile.quote_importer_enabled`, **on by default**): surfaces the **Import CSV Quotes** launcher.

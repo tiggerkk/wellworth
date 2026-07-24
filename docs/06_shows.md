@@ -51,7 +51,7 @@ A new show can be prefilled from `?title=&poster=&overview=&type=`.
 
 ### Settings (`/shows/settings`)
 
-- **Entry Form → Visible Fields**: shared **VisibleFieldsSheet** (see `docs/01_design_system.md`) over the optional Entry/Edit fields in New/Edit form order: Original Title, Year, **TMDB Metadata**, Rating, LGBT+, Dynasty, the two dates, Season & Episode counts, **Poster URL**, Notes. Most stored on `profile.show_visible_fields` (**NULL = all visible**); **Poster URL** is an `extra` backed by `profile.show_poster_url_visible` (**default off**) meaning "force always visible" — stored separately because the visible-fields list is default-on. Type, Title, Status, and the favorite heart are always shown and not listed.
+- **DISPLAY → Visible Fields**: shared **VisibleFieldsSheet** (see `docs/01_design_system.md`) over the optional Entry/Edit fields in New/Edit form order: Original Title, Year, **TMDB Metadata**, Rating, LGBT+, Dynasty, the two dates, Season & Episode counts, **Poster URL**, Notes. Most stored on `profile.show_visible_fields` (**NULL = all visible**); **Poster URL** is an `extra` backed by `profile.show_poster_url_visible` (**default off**) meaning "force always visible" — stored separately because the visible-fields list is default-on. Type, Title, Status, and the favorite heart are always shown and not listed.
 - **Import → Enable Bulk Shows Import** toggle (`profile.show_importer_enabled`, **on by default**); when on, an **Import CSV Shows** launcher opens the importer sheet, plus a **Clear Import Match Cache (N)** button (`clearShowMatchCache`; `N` = `showMatchCacheSize`) — see Import CSV → match cache, and `OWNER_RUNBOOK.md` Part R.
 
 ### Import CSV (sheet, from Shows Settings)

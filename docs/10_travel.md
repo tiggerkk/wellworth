@@ -64,8 +64,8 @@ Header top-left: **✕ Close** (returns to origin, Escape does the same). Edit h
 
 ### Settings (`/travel/settings`)
 
-- **Entry Form → Visible Fields**: uses **VisibleFieldsSheet** over the optional Trip-form fields in form order: **Rating, Cover Image URL, Companions, Track Reimbursement, Notes**. Stored on `profile.travel_visible_fields` (**NULL = all visible**); auto-saves per toggle. Trip Name, Default Currency, and Status are always shown.
-- **Expenses → Expense Categories**: uses **ConfigListEditor** to add / rename / delete / drag-reorder / color-pick the list (stored on `profile.travel_expense_categories`). Deleting a category still used by expenses prompts a **reassignment** first; the last category can't be deleted.
+- **DISPLAY → Visible Fields**: uses **VisibleFieldsSheet** over the optional Trip-form fields in form order: **Rating, Cover Image URL, Companions, Track Reimbursement, Notes**. Stored on `profile.travel_visible_fields` (**NULL = all visible**); auto-saves per toggle. Trip Name, Default Currency, and Status are always shown.
+- **VALUES → Expense Categories**: uses **ConfigListEditor** to add / rename / delete / drag-reorder / color-pick the list (stored on `profile.travel_expense_categories`). Deleting a category still used by expenses prompts a **reassignment** first; the last category can't be deleted.
 - **Import → Enable Bulk Trips Import** (`profile.travel_importer_enabled`, **on by default**): a single toggle that surfaces **both** launchers below. When off, a secondary note ("Turn this on to bulk-seed your trips from a JSON / CSV.") replaces them.
 - **Import → Import JSON Trips** (listed first): a JSON array of trips → one combined review (per-trip day/stop counts + a pooled **new-cities** list with optional per-city geocode) → import as drafts.
 - **Import → Import CSV Expenses** (listed second): a wide sheet (Trip, Date, category columns…, Cost, Re-imbursed) → detected-columns + **unknown-header mapping** + per-trip preview + **replace-per-trip** → import. Columns + rules: `templates/travel-expenses-import-guide.md`.

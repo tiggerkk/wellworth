@@ -7,7 +7,6 @@ import { useProfile } from '../hooks/useProfile'
 import { useSessionState } from '../hooks/useSessionState'
 import { bumpQuotes, useQuotesVersion } from '../lib/quotes-refresh'
 import { deleteQuote, listQuotes, updateQuote } from '../data/quote'
-import { QUOTE_CATEGORY_CHIP } from '../constants/quotes'
 import {
   applyLibraryView,
   DEFAULT_LIBRARY_CRITERIA,
@@ -320,7 +319,7 @@ export function QuotesLibrary() {
                     <span className="mt-1 flex flex-wrap items-center gap-2 text-caption text-text-secondary">
                       <LabelChip
                         label={categoryLabel(categories, quote.category)}
-                        className={QUOTE_CATEGORY_CHIP}
+                        color={categoryColor(categories, quote.category)}
                       />
                       {quote.author && <span className="truncate">{quote.author}</span>}
                     </span>

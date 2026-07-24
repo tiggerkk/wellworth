@@ -19,8 +19,8 @@ import {
   type QuoteImportPayload,
   type TitleIndex,
 } from '../lib/quotes-import'
-import { QUOTE_CATEGORY_CHIP } from '../constants/quotes'
 import {
+  categoryColor,
   categoryLabel,
   effectiveCategories,
   effectiveSourceTypes,
@@ -196,7 +196,7 @@ export function ImportQuotesSheet() {
                       <p className="mt-1 flex flex-wrap items-center gap-2 text-caption text-text-secondary">
                         <LabelChip
                           label={categoryLabel(categories, r.category)}
-                          className={QUOTE_CATEGORY_CHIP}
+                          color={categoryColor(categories, r.category)}
                         />
                         {r.author && <span className="truncate">{r.author}</span>}
                         {linked && (

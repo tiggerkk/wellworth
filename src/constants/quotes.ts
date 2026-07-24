@@ -42,12 +42,6 @@ export const QUOTE_CATEGORY_LABELS: Record<QuoteCategory, string> = {
 }
 
 /**
- * Category-badge palette. A single neutral chip for now (used via the presentational `LabelChip`);
- * a fixed colour per category is optional per the spec and deferred until the Zen badge is prominent.
- */
-export const QUOTE_CATEGORY_CHIP = 'bg-cat-supplement text-bg'
-
-/**
  * The swatch palette for **category colours** — the choices offered by the per-row colour picker in
  * Quotes Settings → Categories, and the default-assignment cycle for seed / new categories
  * (`src/lib/quotes-config.ts`). Values are design tokens (CSS vars) so they track the theme. The
@@ -55,15 +49,15 @@ export const QUOTE_CATEGORY_CHIP = 'bg-cat-supplement text-bg'
  * accent on each row in the Quotes Library.
  */
 export const QUOTE_CATEGORY_COLORS = [
-  { name: 'Gold', value: PALETTE_GOLD },
-  { name: 'Blue', value: PALETTE_BLUE },
-  { name: 'Magenta', value: PALETTE_MAGENTA },
-  { name: 'Brown', value: PALETTE_BROWN },
-  { name: 'Red', value: PALETTE_RED },
   { name: 'Emerald', value: PALETTE_EMERALD },
-  { name: 'Cyan', value: PALETTE_CYAN },
-  { name: 'Grey', value: PALETTE_GREY },
+  { name: 'Blue', value: PALETTE_BLUE },
   { name: 'Purple', value: PALETTE_PURPLE },
+  { name: 'Red', value: PALETTE_RED },
+  { name: 'Gold', value: PALETTE_GOLD },
+  { name: 'Grey', value: PALETTE_GREY },
+  { name: 'Brown', value: PALETTE_BROWN },
+  { name: 'Cyan', value: PALETTE_CYAN },
+  { name: 'Magenta', value: PALETTE_MAGENTA },
   { name: 'Off-White', value: PALETTE_OFF_WHITE },
 ] as const
 

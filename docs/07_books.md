@@ -42,7 +42,7 @@
 
 ### Settings (`/book/settings`)
 
-- **Entry Form → Visible Fields**: shared **VisibleFieldsSheet** (see `docs/01_design_system.md`) over the optional Entry/Edit fields in New/Edit form order: Author(s), Year, **Google Books Metadata**, Rating, LGBT+, Dynasty, the two dates, Notes. Stored on `profile.book_visible_fields` (**NULL = all visible**). Title, Status, and the Search button are always shown and not listed.
+- **DISPLAY → Visible Fields**: shared **VisibleFieldsSheet** (see `docs/01_design_system.md`) over the optional Entry/Edit fields in New/Edit form order: Author(s), Year, **Google Books Metadata**, Rating, LGBT+, Dynasty, the two dates, Notes. Stored on `profile.book_visible_fields` (**NULL = all visible**). Title, Status, and the Search button are always shown and not listed.
 - **Import → Enable Bulk Books Import** toggle (`profile.book_importer_enabled`, **on by default**); when on, an **Import CSV Books** launcher opens the importer sheet, plus a **Clear Import Match Cache (N)** button — clears the localStorage match cache (`clearBookMatchCache`; `N` = `bookMatchCacheSize`), so the next import does a fresh lookup. The cache is **not** affected by a DB reset (see Import CSV → match cache, and `OWNER_RUNBOOK.md` Part R).
 
 ### Import CSV (sheet, from Books Settings)
