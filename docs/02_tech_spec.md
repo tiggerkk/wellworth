@@ -98,6 +98,8 @@ docs/                # documentation
 - The app is **multi-module behind a Home hub**. Routes are **URL-namespaced per module**
   (`/wellness/*`, `/networth/*`, `/quotes/*`, `/literature/*`, `/shows/*`, `/books/*`, `/travel/*`,
   `/medical/*`) and declared as flat children of a single `<AppShell/>` layout in `src/router.tsx`.
+  Journal has no prefix of its own — it's folded into Quotes (`/quotes/journal/*`, own bottom-nav tab)
+  rather than a ninth module; see `08_quotes.md`.
 - Path strings live in `src/constants/routes.ts` (one source of truth); the hub/bottom-nav are derived
   from `src/constants/modules.ts` (`MODULES` + `moduleForPath`). Adding a module = a `ModuleDef` + its
   routes — no structural change.
@@ -143,6 +145,14 @@ Every module's New/Edit/View navigation follows one of these four shapes.
 | Diary Food/Activity Detail | Diary Food/Activity Picker or Diary | <             | Go to Diary              | Return to Source   | Yes    |
 | New Food/Activity          | Library (+Food/Activity)            | X             | Go to Edit Food/Activity | Return to Library  | Yes    |
 | Edit Food/Activity         | Library                             | <             | Go to Library            | Return to Library  | Yes    |
+
+**Journal** (folded into the Quotes module) is a day-based variant of Category 2: New and Edit are
+the _same_ routed screen (`/quotes/journal/entry` new, `/quotes/journal/:id` edit) resolving to
+whichever record exists for the day currently shown by its own in-screen calendar nav — so unlike
+every other module, the Top-Left Icon (X vs `<`) and the header title track the **current day**, not
+the entry point. Save and Cancel both always return to the Journal listing (there's no fixed
+"this record's" edit route to return to once the user has browsed to a different day). See
+`08_quotes.md`.
 
 ### Other navigation rules
 
@@ -194,6 +204,11 @@ non-trivial gotchas is in **Data flow & gotchas** below; the rest are self-expla
 - `fetchRow`, `toDraft`, and `blank` must all be **stable** (`useCallback`/module-level) — an inline
   arrow function gets a new identity every render, which cascades into an infinite refetch loop via
   `useAsync`'s dependency (same failure mode as F4).
+- **Journal is an intentional exception.** Its day-based model means the record being edited can
+  change _mid-screen_ (the in-screen calendar nav), so `useEntryDraft`/`useEntryClose` — both built
+  around one fixed `id` for the screen's life — don't fit. `JournalEntry` instead re-resolves the
+  record for the current `day` itself, via a request-token-guarded effect (the same race a `key`-swap
+  protects against, applied to a `day` axis instead of an `id`). See `08_quotes.md`.
 
 ## Data flow
 
