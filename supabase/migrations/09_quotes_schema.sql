@@ -76,3 +76,41 @@ create trigger handle_updated_at before update on public.quote
 -- — belt-and-braces against "42501 permission denied".
 -- =====================================================================================
 grant select, insert, update, delete on public.quote to anon, authenticated;
+
+-- =====================================================================================
+-- journal_entry — one row per calendar day (Journal, folded into the Quotes module rather than
+-- a standalone module). UNIQUE(user_id, day) is the day-based model: the Entry screen's calendar
+-- nav loads the existing row for a day if one exists, else starts a blank draft for it. Hard
+-- delete (leaf table, nothing references journal_entry; no deleted_at). tags is independent of
+-- quote.tags — the two modules keep separate tag vocabularies.
+-- =====================================================================================
+create table public.journal_entry (
+  id             uuid primary key default gen_random_uuid(),
+  user_id        uuid not null references auth.users (id) on delete cascade,
+  day            date not null,
+  journal_entry  text not null,
+  tags           text[] not null default '{}',
+  created_at     timestamptz not null default now(),
+  updated_at     timestamptz not null default now(),
+  unique (user_id, day)
+);
+
+create index on public.journal_entry (user_id, day desc);  -- covers listJournalEntries' default sort order
+
+alter table public.journal_entry enable row level security;
+
+create policy "select own journal_entry" on public.journal_entry
+  for select to authenticated using ((select auth.uid()) = user_id);
+create policy "insert own journal_entry" on public.journal_entry
+  for insert to authenticated with check ((select auth.uid()) = user_id);
+create policy "update own journal_entry" on public.journal_entry
+  for update to authenticated
+  using ((select auth.uid()) = user_id)
+  with check ((select auth.uid()) = user_id);
+create policy "delete own journal_entry" on public.journal_entry
+  for delete to authenticated using ((select auth.uid()) = user_id);
+
+create trigger handle_updated_at before update on public.journal_entry
+  for each row execute procedure extensions.moddatetime (updated_at);
+
+grant select, insert, update, delete on public.journal_entry to anon, authenticated;

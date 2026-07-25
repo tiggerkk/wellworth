@@ -13,8 +13,7 @@ import type { Tables, TablesUpdate } from '../types/database'
 type SaveFn = (patch: TablesUpdate<'profile'>) => Promise<void>
 
 /**
- * Literature sub-settings — 顯示 (per-field visibility for the Poem/Poet detail screens) + 朗讀
- * (read-aloud auto-loop + default language). Auto-saves on change.
+ * Literature settings.
  */
 export function LiteratureSettings() {
   const { profile, loading, error, save } = useProfileEditor()

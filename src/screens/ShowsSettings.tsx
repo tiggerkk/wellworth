@@ -13,8 +13,7 @@ import type { Tables, TablesUpdate } from '../types/database'
 type SaveFn = (patch: TablesUpdate<'profile'>) => Promise<void>
 
 /**
- * Shows-specific sub-settings (Entry field visibility + the CSV importer toggle). Reached from a
- * gear in the Shows headers. App-wide settings live in the global Settings screen at the Home level.
+ * Shows-specific settings.
  */
 export function ShowsSettings() {
   const { profile, loading, error, save } = useProfileEditor()

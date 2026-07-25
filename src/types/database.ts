@@ -458,6 +458,36 @@ export type Database = {
           },
         ]
       }
+      journal_entry: {
+        Row: {
+          created_at: string
+          day: string
+          id: string
+          journal_entry: string
+          tags: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          day: string
+          id?: string
+          journal_entry: string
+          tags?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          day?: string
+          id?: string
+          journal_entry?: string
+          tags?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       medical_lab_test: {
         Row: {
           category: string

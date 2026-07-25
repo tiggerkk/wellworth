@@ -65,6 +65,9 @@ import {
   QuoteSourceTypesSheet,
   QuoteCategoriesSheet,
   ImportQuotesSheet,
+  JournalLibrary,
+  JournalEntry,
+  ImportJournalSheet,
   ShowsDashboard,
   ShowsLibrary,
   ShowsEntry,
@@ -175,12 +178,17 @@ export const router = createBrowserRouter([
           { path: 'quotes', element: <QuotesZen /> },
           { path: 'quotes/library', element: <QuotesLibrary /> },
           { path: 'quotes/entry', element: <QuotesEntry /> },
-          { path: 'quotes/:id', element: <QuotesEntry /> },
           { path: 'quotes/settings', element: <QuotesSettings /> },
           { path: 'quotes/settings/visible', element: <QuotesFieldsSheet /> },
           { path: 'quotes/settings/source-types', element: <QuoteSourceTypesSheet /> },
           { path: 'quotes/settings/categories', element: <QuoteCategoriesSheet /> },
           { path: 'quotes/import', element: <ImportQuotesSheet /> },
+          // Journal (folded into the Quotes module) — registered before the quotes/:id catch-all.
+          { path: 'quotes/journal', element: <JournalLibrary /> },
+          { path: 'quotes/journal/entry', element: <JournalEntry /> },
+          { path: 'quotes/journal/import', element: <ImportJournalSheet /> },
+          { path: 'quotes/journal/:id', element: <JournalEntry /> },
+          { path: 'quotes/:id', element: <QuotesEntry /> },
 
           // Literature module — tabs + drill-in detail screens (corpus is a static asset)
           { path: 'literature', element: <LiteraturePoems /> },

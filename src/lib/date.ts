@@ -69,6 +69,18 @@ export function addMonths(iso: IsoDate, n: number): IsoDate {
   return toIsoDate(new Date(y ?? 1970, (m ?? 1) - 1 + n, 1))
 }
 
+/** 3-letter uppercase weekday, e.g. 'MON' — Journal listing row date badge. */
+export function formatWeekdayShort(iso: IsoDate): string {
+  return new Intl.DateTimeFormat('en-US', { weekday: 'short' })
+    .format(fromIsoDate(iso))
+    .toUpperCase()
+}
+
+/** Zero-padded day of month, e.g. '13' — Journal listing row date badge (paired with the weekday). */
+export function formatDayOfMonth(iso: IsoDate): string {
+  return String(fromIsoDate(iso).getDate()).padStart(2, '0')
+}
+
 /** Format the month of a civil date as e.g. 'June 2026' (local parts). */
 export function formatMonthLabel(iso: IsoDate): string {
   return new Intl.DateTimeFormat('en-US', {

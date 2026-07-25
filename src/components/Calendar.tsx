@@ -1,6 +1,6 @@
 import { OverlayBottom } from '../components/OverlayBottom'
 import { OverlayCloseButton } from '../components/OverlayCloseButton'
-import { useCallback, useState } from 'react'
+import { useCallback, useState, type ReactNode } from 'react'
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react'
 import { useAsync } from '../hooks/useAsync'
 import {
@@ -27,6 +27,12 @@ interface CalendarProps {
    * to draw per-day dots + a legend (Wellness Diary); omit it for a plain date picker (Shows).
    */
   loadCues?: (monthStart: IsoDate, monthEnd: IsoDate) => Promise<Map<IsoDate, DayCue>>
+  /**
+   * Overrides the default Food/Activity legend shown under the grid when `loadCues` is provided.
+   * Pass `false` to render no legend at all (e.g. Journal, which only ever sets `cue.food` for its
+   * single "has an entry" dot and has no second cue to label). Defaults to the Food/Activity legend.
+   */
+  legend?: ReactNode | false
 }
 
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
@@ -48,7 +54,7 @@ const MONTHS = [
 const YEAR_PAGE = 12
 
 /** Month-grid date picker. Presentational + optional injected cue dots. Local overlay (not a route). */
-export function Calendar({ day, onSelect, onClose, loadCues }: CalendarProps) {
+export function Calendar({ day, onSelect, onClose, loadCues, legend }: CalendarProps) {
   const [viewMonth, setViewMonth] = useState<IsoDate>(startOfMonth(day))
   // Tapping the month-year header opens the month grid; tapping its year opens a paged year grid —
   // so jumping to a distant year (e.g. a birthday) is a few page taps, not dozens of single steps.
@@ -234,14 +240,18 @@ export function Calendar({ day, onSelect, onClose, loadCues }: CalendarProps) {
           </>
         )}
 
-        {mode === 'days' && loadCues && (
+        {mode === 'days' && loadCues && legend !== false && (
           <div className="mt-3 flex items-center justify-between text-section text-text-secondary">
-            <span className="flex items-center gap-1">
-              <span className="size-1.5 rounded-full bg-positive" /> Food
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="size-1.5 rounded-full bg-accent" /> Activity
-            </span>
+            {legend ?? (
+              <>
+                <span className="flex items-center gap-1">
+                  <span className="size-1.5 rounded-full bg-positive" /> Food
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="size-1.5 rounded-full bg-accent" /> Activity
+                </span>
+              </>
+            )}
           </div>
         )}
 

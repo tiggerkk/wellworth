@@ -79,6 +79,10 @@ export const routes = {
     settingsSourceTypes: '/quotes/settings/source-types', // manage Source Type list (sheet)
     settingsCategories: '/quotes/settings/categories', // manage Category list (sheet)
     import: '/quotes/import', // CSV importer (sheet)
+    journalLibrary: '/quotes/journal', // Journal listing, grouped by month (folded into Quotes module)
+    journalEntry: '/quotes/journal/entry', // blank New Journal Entry (new; today's day)
+    journalEdit: (id: string) => `/quotes/journal/${id}`, // New/Edit Journal Entry form (editing)
+    importJournal: '/quotes/journal/import', // CSV importer (sheet)
   },
   literature: {
     base: '/literature',

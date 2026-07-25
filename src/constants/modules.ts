@@ -47,7 +47,7 @@ export interface ModuleDef {
 }
 
 // Hub order is the linear reading order of the 2-column Home grid (left→right, top→down):
-// row 1 = Wellness | Net Worth, row 2 = Quotes | Literature, row 3 = Shows | Books,
+// row 1 = Wellness | Net Worth, row 2 = Journal & Quotes | Literature, row 3 = Shows | Books,
 // row 4 = Travel | Medical. This is only the default — users reorder via Visible Modules
 // (`profile.module_order`). `description` is kept short so it fits one truncated line in a
 // half-width hub card.
@@ -89,14 +89,14 @@ export const MODULES: ModuleDef[] = [
   },
   {
     key: 'quotes',
-    label: 'Quotes',
+    label: 'Journal & Quotes',
     Icon: IconQuote,
     base: routes.quotes.base,
     description: 'Daily Zen',
     tabs: [
       { to: routes.quotes.zen, label: 'Zen', Icon: IconSparkles, end: true },
-      { to: routes.quotes.library, label: 'Library', Icon: IconList },
-      { to: routes.quotes.entry, label: 'New Quote', Icon: IconQuote },
+      { to: routes.quotes.journalLibrary, label: 'Journal', Icon: IconNotebook },
+      { to: routes.quotes.library, label: 'Quotes', Icon: IconQuote },
       { to: routes.quotes.settings, label: 'Settings', Icon: IconSettings },
     ],
   },

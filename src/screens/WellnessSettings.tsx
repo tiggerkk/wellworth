@@ -13,9 +13,7 @@ import type { Tables, TablesUpdate } from '../types/database'
 type SaveFn = (patch: TablesUpdate<'profile'>) => Promise<void>
 
 /**
- * Wellness-specific sub-settings (protein target + nutrient display). Reached from the
- * Settings tab in the Wellness bottom nav. App-wide settings (profile, units, account) live
- * in the global Settings screen at the Home level.
+ * Wellness-specific settings (protein target + nutrient display).
  */
 export function WellnessSettings() {
   const { profile, loading, error, save } = useProfileEditor()

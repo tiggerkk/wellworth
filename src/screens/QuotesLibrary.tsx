@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
-import { IconQuote, IconX } from '@tabler/icons-react'
+import { IconPlus, IconQuote, IconX } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useProfile } from '../hooks/useProfile'
@@ -300,7 +300,17 @@ export function QuotesLibrary() {
           }
           return (
             <>
-              <ResultCount count={view.length} />
+              {/* "XX results" on the left; "+ New Quote" is the entry point at the right edge (the
+                  bottom-nav New Quote tab was removed, so this — and the empty-state action — replace it). */}
+              <div className="flex items-center">
+                <ResultCount count={view.length} />
+                <button
+                  onClick={() => navigate(routes.quotes.entry)}
+                  className="ml-auto flex items-center gap-1 px-1 text-body text-positive"
+                >
+                  <IconPlus size={16} /> New Quote
+                </button>
+              </div>
               <div className="flex flex-col gap-2">
                 {view.map((quote) => (
                   <ListRow

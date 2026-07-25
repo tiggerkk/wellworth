@@ -11,9 +11,7 @@ import type { Tables, TablesUpdate } from '../types/database'
 type SaveFn = (patch: TablesUpdate<'profile'>) => Promise<void>
 
 /**
- * Net Worth sub-settings: Visible Asset Types (display order/visibility), Manage Providers,
- * and the one-time bulk insurance importer toggle. Manual / fund / single-policy imports are
- * always enabled elsewhere.
+ * Net Worth-specific settings.
  */
 export function NetWorthSettings() {
   const { profile, loading, error, save } = useProfileEditor()

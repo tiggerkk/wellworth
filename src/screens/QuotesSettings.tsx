@@ -11,17 +11,15 @@ import type { Tables, TablesUpdate } from '../types/database'
 type SaveFn = (patch: TablesUpdate<'profile'>) => Promise<void>
 
 /**
- * Quotes-specific sub-settings (Entry field visibility + the CSV importer toggle). Reached from a
- * gear in the Quotes headers. App-wide settings live in the global Settings screen at the Home level.
- * The importer launcher lands in M7; for now
- * the toggle just persists `quote_importer_enabled`.
+ * Quotes & Journal-specific settings (Entry field visibility + Source Types + Categories +
+ * CSV importer).
  */
 export function QuotesSettings() {
   const { profile, loading, error, save } = useProfileEditor()
 
   return (
     <SettingsLoader
-      title="Quotes Settings"
+      title="Quotes & Journal Settings"
       loading={loading}
       error={error}
       data={profile}
@@ -42,7 +40,7 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
           onClick={() => openSheet(routes.quotes.settingsVisible)}
           className="w-full border-b border-border last:border-b-0"
         >
-          <FieldRow label="Visible Fields">
+          <FieldRow label="Visible Fields" hint="(Quote Entry)">
             <IconChevronRight size={18} className="text-text-tertiary" />
           </FieldRow>
         </button>
@@ -76,15 +74,23 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
           />
         </FieldRow>
         {profile.quote_importer_enabled ? (
-          <button
-            onClick={() => openSheet(routes.quotes.import)}
-            className="flex w-full items-center gap-2 border-b border-border px-4 py-2 text-body text-accent last:border-b-0 active:bg-input/40"
-          >
-            <IconUpload size={18} /> Import CSV Quotes
-          </button>
+          <>
+            <button
+              onClick={() => openSheet(routes.quotes.importJournal)}
+              className="flex w-full items-center gap-2 border-b border-border px-4 py-2 text-body text-accent last:border-b-0 active:bg-input/40"
+            >
+              <IconUpload size={18} /> Import CSV Journal
+            </button>
+            <button
+              onClick={() => openSheet(routes.quotes.import)}
+              className="flex w-full items-center gap-2 border-b border-border px-4 py-2 text-body text-accent last:border-b-0 active:bg-input/40"
+            >
+              <IconUpload size={18} /> Import CSV Quotes
+            </button>
+          </>
         ) : (
           <div className="px-4 py-2 text-caption text-text-tertiary">
-            Turn this on to bulk-seed your library from a CSV.
+            Turn this on to bulk-seed your library or journal from a CSV.
           </div>
         )}
       </SectionCard>
