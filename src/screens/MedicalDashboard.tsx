@@ -1,8 +1,10 @@
-import { Suspense, useState } from 'react'
+import { Suspense, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { IconChevronDown, IconHeartbeat, IconReportMedical } from '@tabler/icons-react'
 import { lazyWithReload } from '../lib/lazy-with-reload'
 import { useMedicalTrends } from '../hooks/useMedicalTrends'
+import { useProfile } from '../hooks/useProfile'
+import { effectiveReportTypes, type MedicalReportTypeConfig } from '../lib/medical-config'
 import { Sparkline } from '../components/Sparkline'
 import { EmptyState } from '../components/EmptyState'
 import { SectionCard } from '../components/SectionCard'
@@ -44,6 +46,11 @@ const MedicalTrendChart = lazyWithReload(() =>
 export function MedicalDashboard() {
   const { loading, error, tracked, latestByCategory, recentReports, isEmpty } =
     useMedicalTrends()
+  const { data: profile } = useProfile()
+  const reportTypes = useMemo(
+    () => effectiveReportTypes(profile?.medical_report_types ?? null),
+    [profile?.medical_report_types],
+  )
   const [expandedKey, setExpandedKey] = useState<string | null>(null)
 
   const expanded = expandedKey ? tracked.find((t) => t.key === expandedKey) : undefined
@@ -111,7 +118,7 @@ export function MedicalDashboard() {
           ))}
 
           {/* Recent reports timeline */}
-          <ReportsTimeline reports={recentReports} />
+          <ReportsTimeline reports={recentReports} reportTypes={reportTypes} />
         </div>
       )}
 
@@ -173,7 +180,13 @@ function LatestRow({ row }: { row: ResultWithReportMeta }) {
 }
 
 /** Up to five most-recent reports, linking to their detail; a "View all" row when there are more. */
-function ReportsTimeline({ reports }: { reports: MedicalReportRow[] }) {
+function ReportsTimeline({
+  reports,
+  reportTypes,
+}: {
+  reports: MedicalReportRow[]
+  reportTypes: MedicalReportTypeConfig[]
+}) {
   const navigate = useNavigate()
   if (reports.length === 0) return null
   const recent = reports.slice(0, 5)
@@ -184,7 +197,7 @@ function ReportsTimeline({ reports }: { reports: MedicalReportRow[] }) {
           key={rep.id}
           onClick={() => navigate(routes.medical.detail(rep.id))}
         >
-          <MedicalRowHeader report={rep} />
+          <MedicalRowHeader report={rep} reportTypes={reportTypes} />
         </DashboardRow>
       ))}
       {reports.length > recent.length && (

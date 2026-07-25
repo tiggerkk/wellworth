@@ -8,6 +8,12 @@
 --   * medical_test_order       — personal flat ordered list of test keys; NULL/empty = seeded order.
 --   * medical_visible_fields   — which Add/Edit Report fields are shown. NULL = all visible
 --     (default-on, like show_visible_fields).
+--   * medical_report_types     — the owner's configurable Report Type list (add/rename/delete/reorder
+--     + per-type colour in Medical Settings → Values → Report Types), a JSONB array of
+--     {key,label,color} objects in display order. NULL = the canonical seed defaults in code
+--     (src/constants/medical.ts), resolved tolerantly by src/lib/medical-config.ts. A non-null array
+--     is authoritative (a deleted default does not resurrect). medical_report.report_type stores the
+--     stable `key` from this list (see 11_medical_schema.sql — no CHECK there; app-validated).
 --   * medical_importer_enabled — surfaces the structured JSON/CSV importer in Medical Settings.
 --   * Biometric lock (client-side UX gate over RLS-protected data; see docs/02-tech-spec.md):
 --       - medical_lock_enabled         — master toggle.
@@ -22,6 +28,7 @@ alter table public.profile
   add column medical_section_order       text[],
   add column medical_test_order          text[],
   add column medical_visible_fields      text[],
+  add column medical_report_types        jsonb,
   add column medical_importer_enabled    boolean not null default true,
   add column medical_lock_enabled        boolean not null default false,
   add column medical_lock_pin_hash       text,

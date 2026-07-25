@@ -29,11 +29,10 @@ import {
 import {
   MEDICAL_CATEGORY_COLOR,
   MEDICAL_CATEGORY_LABELS,
-  REPORT_TYPE_LABELS,
-  REPORT_TYPES,
   type MedicalLabTestSeed,
   EYE_REFRACTION_KEYS,
 } from '../constants/medical'
+import { effectiveReportTypes, reportTypeLabel } from '../lib/medical-config'
 import {
   isMedicalFieldVisible,
   labTestByKey,
@@ -168,6 +167,10 @@ function ReportForm({
   const { session } = useAuth()
   const userId = session?.user.id
   const { data: profile } = useProfile()
+  const reportTypes = useMemo(
+    () => effectiveReportTypes(profile?.medical_report_types ?? null),
+    [profile?.medical_report_types],
+  )
   const vis = (key: string) =>
     isMedicalFieldVisible(profile?.medical_visible_fields ?? null, key)
 
@@ -186,7 +189,7 @@ function ReportForm({
   // Mirrors the read-only Report detail screen's header (Line 1: Date - Type · Body Part), so the
   // Narrative editor modal opens on a heading the person already recognizes from that screen.
   const narrativeHeaderTitle =
-    `${formatFullDate(draft.report_date)} - ${REPORT_TYPE_LABELS[draft.report_type] ?? draft.report_type}` +
+    `${formatFullDate(draft.report_date)} - ${reportTypeLabel(reportTypes, draft.report_type)}` +
     (usesBodyPart(draft.report_type) && draft.body_part ? ` · ${draft.body_part}` : '')
 
   // Eye reports surface the six refraction values in a dedicated grid; hide those rows from the
@@ -338,9 +341,9 @@ function ReportForm({
               value={draft.report_type}
               onChange={(report_type) => update({ report_type })}
               ariaLabel="Report type"
-              options={REPORT_TYPES.map((t) => ({
-                value: t,
-                label: REPORT_TYPE_LABELS[t],
+              options={reportTypes.map((t) => ({
+                value: t.key,
+                label: t.label,
               }))}
             />
           </div>

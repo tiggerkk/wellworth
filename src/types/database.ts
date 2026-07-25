@@ -712,6 +712,7 @@ export type Database = {
           medical_lock_pin_hash: string | null
           medical_lock_timeout_minutes: number | null
           medical_lock_webauthn_id: string | null
+          medical_report_types: Json | null
           medical_section_order: string[] | null
           medical_test_order: string[] | null
           medical_tracked_tests: string[] | null
@@ -761,6 +762,7 @@ export type Database = {
           medical_lock_pin_hash?: string | null
           medical_lock_timeout_minutes?: number | null
           medical_lock_webauthn_id?: string | null
+          medical_report_types?: Json | null
           medical_section_order?: string[] | null
           medical_test_order?: string[] | null
           medical_tracked_tests?: string[] | null
@@ -810,6 +812,7 @@ export type Database = {
           medical_lock_pin_hash?: string | null
           medical_lock_timeout_minutes?: number | null
           medical_lock_webauthn_id?: string | null
+          medical_report_types?: Json | null
           medical_section_order?: string[] | null
           medical_test_order?: string[] | null
           medical_tracked_tests?: string[] | null

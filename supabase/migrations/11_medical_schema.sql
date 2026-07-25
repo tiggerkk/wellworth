@@ -64,9 +64,8 @@ create table public.medical_report (
   id            uuid primary key default gen_random_uuid(),
   user_id       uuid not null references auth.users (id) on delete cascade,
   report_date   date not null,
-  report_type   text not null check (report_type in (
-                  'health_screening', 'mri', 'ultrasound', 'mammogram', 'eye', 'other'
-                )),
+  report_type   text not null,                  -- configurable key (no CHECK; app-validated) — see
+                                                  -- profile.medical_report_types in 13_medical_profile_settings.sql
   body_part     text,                           -- for mri/ultrasound/mammogram/other
   provider      text,
   narrative     text,                           -- MRI/imaging/eye findings, doctor's comments

@@ -3,6 +3,18 @@
  * generated DB types surface as plain `string`). Pure constants only — runtime helpers live in `src/lib/medical.ts`.
  */
 import { addMonths, startOfMonth, type IsoDate } from '../lib/date'
+import {
+  PALETTE_BLUE,
+  PALETTE_BROWN,
+  PALETTE_CYAN,
+  PALETTE_EMERALD,
+  PALETTE_GOLD,
+  PALETTE_GREY,
+  PALETTE_MAGENTA,
+  PALETTE_OFF_WHITE,
+  PALETTE_PURPLE,
+  PALETTE_RED,
+} from './palette'
 
 /** Result categories in section display order (also the default Dashboard/Report section order). */
 export const MEDICAL_CATEGORIES = [
@@ -66,6 +78,30 @@ export const REPORT_TYPE_LABELS: Record<ReportType, string> = {
   eye: 'Eye',
   other: 'Other',
 }
+
+/**
+ * The swatch palette for **report-type colours** — the choices offered by the per-row colour picker
+ * in Medical Settings → Values → Report Types, and the default-assignment cycle for seed / new types
+ * (`src/lib/medical-config.ts`). Values are shared palette constants (src/constants/palette.ts) so
+ * they track the theme. The type's chosen colour is stored per entry on
+ * `profile.medical_report_types` and drives the **stable** per-type left-strip colour on the Reports
+ * list rows.
+ */
+export const REPORT_TYPE_COLORS = [
+  { name: 'Emerald', value: PALETTE_EMERALD },
+  { name: 'Blue', value: PALETTE_BLUE },
+  { name: 'Gold', value: PALETTE_GOLD },
+  { name: 'Magenta', value: PALETTE_MAGENTA },
+  { name: 'Purple', value: PALETTE_PURPLE },
+  { name: 'Red', value: PALETTE_RED },
+  { name: 'Cyan', value: PALETTE_CYAN },
+  { name: 'Brown', value: PALETTE_BROWN },
+  { name: 'Grey', value: PALETTE_GREY },
+  { name: 'Off-White', value: PALETTE_OFF_WHITE },
+] as const
+
+/** Neutral fallback for an orphan/unconfigured report-type colour (e.g. a deleted type still on a row). */
+export const REPORT_TYPE_COLOR_FALLBACK = 'var(--color-text-secondary)'
 
 export const MEDICAL_FLAGS = ['high', 'low', 'abnormal'] as const
 export type MedicalFlag = (typeof MEDICAL_FLAGS)[number]

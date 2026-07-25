@@ -38,6 +38,14 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
     <>
       <SectionCard title="Display">
         <button
+          onClick={() => openSheet(routes.medical.settingsVisible)}
+          className="w-full border-b border-border last:border-b-0"
+        >
+          <FieldRow label="Visible Fields">
+            <IconChevronRight size={18} className="text-text-tertiary" />
+          </FieldRow>
+        </button>
+        <button
           onClick={() => openSheet(routes.medical.settingsTracked)}
           className="w-full border-b border-border last:border-b-0"
         >
@@ -55,12 +63,12 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
         </button>
       </SectionCard>
 
-      <SectionCard title="Report / Entry Form">
+      <SectionCard title="Values">
         <button
-          onClick={() => openSheet(routes.medical.settingsVisible)}
+          onClick={() => openSheet(routes.medical.settingsReportTypes)}
           className="w-full border-b border-border last:border-b-0"
         >
-          <FieldRow label="Visible Fields">
+          <FieldRow label="Report Types">
             <IconChevronRight size={18} className="text-text-tertiary" />
           </FieldRow>
         </button>

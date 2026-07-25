@@ -4,11 +4,7 @@
  * editor + one save mapping. Pure/UI-free. A `clientId` tags rows for React keys + in-place edits and
  * is dropped on save. Numbers are held as strings while editing (empty = unset).
  */
-import {
-  type MedicalCategory,
-  type MedicalFlag,
-  type ReportType,
-} from '../constants/medical'
+import { type MedicalCategory, type MedicalFlag } from '../constants/medical'
 import {
   type MedicalReportInsert,
   type MedicalReportRow,
@@ -41,7 +37,7 @@ export interface ResultDraft {
 
 export interface ReportDraft {
   report_date: IsoDate
-  report_type: ReportType
+  report_type: string
   body_part: string
   provider: string
   narrative: string
@@ -100,7 +96,7 @@ export function reportToDraft(
 ): ReportDraft {
   return {
     report_date: report.report_date,
-    report_type: report.report_type as ReportType,
+    report_type: report.report_type,
     body_part: report.body_part ?? '',
     provider: report.provider ?? '',
     narrative: report.narrative ?? '',

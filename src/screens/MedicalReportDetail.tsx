@@ -6,6 +6,7 @@ import { useEscapeKey } from '../hooks/useEscapeKey'
 import { useProfile } from '../hooks/useProfile'
 import { getReportWithResults, type ReportWithResults } from '../data/medical'
 import { useMedicalVersion } from '../lib/medical-refresh'
+import { effectiveReportTypes } from '../lib/medical-config'
 import {
   MEDICAL_CATEGORY_COLOR,
   MEDICAL_CATEGORY_LABELS,
@@ -37,6 +38,11 @@ export function MedicalReportDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const version = useMedicalVersion()
+  const { data: profile } = useProfile()
+  const reportTypes = useMemo(
+    () => effectiveReportTypes(profile?.medical_report_types ?? null),
+    [profile?.medical_report_types],
+  )
   // Drill-in detail closes back to wherever it was opened from (Reports list or Dashboard) — same
   useEscapeKey(() => navigate(-1))
 
@@ -66,7 +72,11 @@ export function MedicalReportDetail() {
       >
         <div className="min-w-0 flex-1">
           {data ? (
-            <MedicalRowHeader report={data.report} variant="header" />
+            <MedicalRowHeader
+              report={data.report}
+              reportTypes={reportTypes}
+              variant="header"
+            />
           ) : (
             <p className="truncate text-title font-medium text-text-primary">
               Medical Report

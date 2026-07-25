@@ -101,6 +101,7 @@ export const routes = {
     settingsVisible: '/medical/settings/visible',
     settingsTracked: '/medical/settings/tracked',
     settingsOrder: '/medical/settings/order', // drag-to-reorder sections + tests
+    settingsReportTypes: '/medical/settings/report-types',
     settingsLock: '/medical/settings/lock', // biometric/PIN lock config
     import: '/medical/import', // structured JSON/CSV importer (sheet)
   },

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { IconPlus, IconUpload, IconX } from '@tabler/icons-react'
 import { ImportSheetHeader } from '../components/ImportSheetHeader'
@@ -22,10 +22,9 @@ import {
 import {
   MEDICAL_CATEGORIES,
   MEDICAL_CATEGORY_LABELS,
-  REPORT_TYPE_LABELS,
-  REPORT_TYPES,
   type MedicalLabTestSeed,
 } from '../constants/medical'
+import { effectiveReportTypes } from '../lib/medical-config'
 import { orderResultsForDisplay, usesBodyPart } from '../lib/medical'
 import { groupResultsByCategory } from '../lib/medical-order'
 import { useProfile } from '../hooks/useProfile'
@@ -45,6 +44,10 @@ export function ImportMedicalSheet() {
   const { session } = useAuth()
   const userId = session?.user.id
   const { data: profile } = useProfile()
+  const reportTypes = useMemo(
+    () => effectiveReportTypes(profile?.medical_report_types ?? null),
+    [profile?.medical_report_types],
+  )
 
   const inputRef = useRef<HTMLInputElement>(null)
   const [fileName, setFileName] = useState<string | null>(null)
@@ -242,9 +245,9 @@ export function ImportMedicalSheet() {
                 value={draft.report_type}
                 onChange={(report_type) => update({ report_type })}
                 ariaLabel="Report type"
-                options={REPORT_TYPES.map((t) => ({
-                  value: t,
-                  label: REPORT_TYPE_LABELS[t],
+                options={reportTypes.map((t) => ({
+                  value: t.key,
+                  label: t.label,
                 }))}
               />
             </div>

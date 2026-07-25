@@ -1,11 +1,12 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
+import { useProfile } from '../hooks/useProfile'
 import { useSessionState } from '../hooks/useSessionState'
 import { deleteReport, listReports } from '../data/medical'
 import { bumpMedical, useMedicalVersion } from '../lib/medical-refresh'
-import { REPORT_TYPES, REPORT_TYPE_LABELS } from '../constants/medical'
+import { effectiveReportTypes, reportTypeColor } from '../lib/medical-config'
 import {
   applyReportView,
   DEFAULT_REPORT_LIST_CRITERIA,
@@ -22,10 +23,6 @@ import { EmptyState } from '../components/EmptyState'
 import { SelectMenu } from '../components/SelectMenu'
 import { ListSearchFilterPanel, ResultCount } from '../components/ListSearchFilterPanel'
 
-const TYPE_OPTIONS = [
-  { value: 'all', label: 'Any Type' },
-  ...REPORT_TYPES.map((t) => ({ value: t, label: REPORT_TYPE_LABELS[t] })),
-]
 const SORT_OPTIONS: { value: ReportSortField; label: string }[] = [
   { value: 'date', label: 'Date' },
   { value: 'type', label: 'Type' },
@@ -44,6 +41,18 @@ export function MedicalReports() {
   const userId = session?.user.id
   const navigate = useNavigate()
   const version = useMedicalVersion()
+  const { data: profile } = useProfile()
+  const reportTypes = useMemo(
+    () => effectiveReportTypes(profile?.medical_report_types ?? null),
+    [profile?.medical_report_types],
+  )
+  const typeOptions = useMemo(
+    () => [
+      { value: 'all', label: 'Any Type' },
+      ...reportTypes.map((t) => ({ value: t.key, label: t.label })),
+    ],
+    [reportTypes],
+  )
   const [criteria, setCriteria] = useSessionState<ReportListCriteria>(
     'wellworth:medical-reports',
     DEFAULT_REPORT_LIST_CRITERIA,
@@ -121,7 +130,7 @@ export function MedicalReports() {
           <div className="grid grid-cols-2 gap-3">
             <SelectMenu
               value={criteria.reportType}
-              options={TYPE_OPTIONS}
+              options={typeOptions}
               onChange={(v) => setCrit({ reportType: v })}
             />
             <SelectMenu
@@ -163,10 +172,11 @@ export function MedicalReports() {
                   view.map((r) => (
                     <ListRow
                       key={r.id}
+                      color={reportTypeColor(reportTypes, r.report_type)}
                       onDelete={() => void remove(r.id)}
                       onClick={() => navigate(routes.medical.detail(r.id))}
                     >
-                      <MedicalRowHeader report={r} />
+                      <MedicalRowHeader report={r} reportTypes={reportTypes} />
                     </ListRow>
                   ))
                 )}

@@ -223,3 +223,30 @@ export async function saveImportedReport(
   const id = await saveReport(userId, input, existing?.id)
   return { id, replaced: existing != null }
 }
+
+/** Count of reports currently using a given report-type key (drives the delete-reassign prompt in
+ *  Medical Settings → Values → Report Types). */
+export async function countReportsByType(userId: string, key: string): Promise<number> {
+  const { count, error } = await supabase
+    .from('medical_report')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .eq('report_type', key)
+  if (error) throw error
+  return count ?? 0
+}
+
+/** Reassign every report from one report-type key to another (used when the owner deletes an
+ *  in-use type in Medical Settings → Values → Report Types). */
+export async function reassignReportType(
+  userId: string,
+  fromKey: string,
+  toKey: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from('medical_report')
+    .update({ report_type: toKey })
+    .eq('user_id', userId)
+    .eq('report_type', fromKey)
+  if (error) throw error
+}

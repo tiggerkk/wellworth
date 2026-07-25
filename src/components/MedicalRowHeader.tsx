@@ -6,12 +6,15 @@
  * Line 1: Report date · Type label · Body part (body part only for types that use it)
  * Line 2: Provider (if present)
  */
-import { REPORT_TYPE_LABELS, type ReportType } from '../constants/medical'
 import { formatFullDate } from '../lib/date'
 import { usesBodyPart, type MedicalReportRow } from '../lib/medical'
+import { reportTypeLabel, type MedicalReportTypeConfig } from '../lib/medical-config'
 
 type MedicalRowHeaderProps = {
   report: Pick<MedicalReportRow, 'report_date' | 'report_type' | 'provider' | 'body_part'>
+  /** The owner's effective Report Type list (`effectiveReportTypes(profile?.medical_report_types)`),
+   *  so a rename shows up here without touching report rows. */
+  reportTypes: MedicalReportTypeConfig[]
   /** `'row'` (default) for list/dashboard rows (`text-body`); `'header'` for the Report Detail
    * screen header (`text-title font-medium`, matching other Entry/Detail screen titles). */
   variant?: 'row' | 'header'
@@ -19,9 +22,12 @@ type MedicalRowHeaderProps = {
 
 /** Presentational: renders the 2 lines only. Each caller wraps this in its own sizing element
  * (a `min-w-0 flex-1` span/div) so truncation is governed by the caller's layout, not this component. */
-export function MedicalRowHeader({ report, variant = 'row' }: MedicalRowHeaderProps) {
-  const typeLabel =
-    REPORT_TYPE_LABELS[report.report_type as ReportType] ?? report.report_type
+export function MedicalRowHeader({
+  report,
+  reportTypes,
+  variant = 'row',
+}: MedicalRowHeaderProps) {
+  const typeLabel = reportTypeLabel(reportTypes, report.report_type)
   const line1Class =
     variant === 'header'
       ? 'truncate text-title font-medium text-text-primary'

@@ -29,6 +29,7 @@ Tracked tests are chosen in Medical Settings → Tracked Tests (seeded from `def
 - **SortControl**, **Clear Filters button**: Sort over { Date, Type, Provider, Body Part } with an **asc/desc** toggle (newest-first within ties); default is **Date** descending.
 - **Filter panel** is label-free: **Any Type**, **Any Provider**, **Any Body Part**.
 - Each row carries:
+  - A **4px left stripe in the report's Type colour** (owner-configurable, see Settings → Values → Report Types).
   - Line 1: **date · type · body part**.
   - Line 2: **provider**.
   - Tap → Entry/Edit; **swipe-left → Delete** (optimistic). The DB delete runs in the background (no `bumpMedical()` → full-list refetch; bump only on error).
@@ -83,11 +84,12 @@ Tracked tests are chosen in Medical Settings → Tracked Tests (seeded from `def
 
 ### Settings (`/medical/settings`)
 
-Sections in order: **Display**, **Report / Entry Form**, **Import**, **Security**.
+Sections in order: **Display**, **Values**, **Import**, **Security**.
 
+- **Display → Visible Fields**: shared `VisibleFieldsSheet` over the optional Report fields (Provider, Body Part, Narrative, Document Links). Date and Type are always shown.
 - **Display → Tracked Tests** (secondary text "(Dashboard)"): choose which tests trend on the Dashboard. A sheet grouping the reference tests by category with a toggle each; persisted to `medical_tracked_tests` (seeded from `default_tracked` on first run).
 - **Display → Tests Display Order** (secondary text "(Dashboard, Report & Entry)"): drag-to-reorder the category **sections** and the **tests within a section** via the shared `ReorderList`. A **Sections** list reorders categories; a **Tests in section** list (gated by a category picker) reorders tests within it. Saved as `medical_section_order` / `medical_test_order` and applied to the **Dashboard, Report detail, and the New/Edit form's result cards** (all three call `orderResultsForDisplay`); an unset/partial override falls back to the seeded order.
-- **Report / Entry Form → Visible Fields**: shared `VisibleFieldsSheet` over the optional Report fields (Provider, Body Part, Narrative, Document Links). Date and Type are always shown.
+- **Values → Report Types**: add / rename / delete / reorder the owner's Report Type list and pick each type's colour (`ConfigListEditor` + `ColorPicker`). Persisted to `profile.medical_report_types` (JSONB array of `{key,label,color}`, NULL = seed defaults from `src/constants/medical.ts`, resolved by `src/lib/medical-config.ts`). Deleting an in-use type reassigns its reports to another type first; the last type can't be deleted. The type's colour drives the Reports list left-strip and (via `MedicalRowHeader`) its label everywhere it's shown (Dashboard, Reports, Report detail, Add/Edit, Import review).
 - **Import → Enable Medical Import** (**on by default**): surfaces the **Import JSON / CSV Medical** launcher.
 - **Security → Lock** (**last section**): set up / change / turn off the module **PIN**, register an optional **Face ID / Touch ID** unlock (hidden where the device has no platform authenticator), and choose the **auto-lock** timeout (Immediately / 1 / 5 / 15 min / Only on app restart).
 
@@ -131,7 +133,7 @@ Sections in order: **Display**, **Report / Entry Form**, **Import**, **Security*
 
 - `id` UUID PK · `user_id` UUID → auth.users (ON DELETE CASCADE)
 - `report_date` DATE
-- `report_type` TEXT — `'health_screening' | 'mri' | 'ultrasound' | 'mammogram' | 'eye' | 'other'` (CHECK)
+- `report_type` TEXT — owner-configurable key (no CHECK; app-validated), see Settings → Values → Report Types above
 - `body_part` TEXT NULL · `provider` TEXT NULL · `narrative` TEXT NULL
 - `document_urls` TEXT[] NOT NULL DEFAULT '{}' — Google Drive link(s); never a stored file
 - `created_at`, `updated_at` · Index on (`user_id`, `report_date`)

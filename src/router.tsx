@@ -41,6 +41,7 @@ import {
   MedicalFieldsSheet,
   MedicalTrackedTestsSheet,
   MedicalOrderSheet,
+  MedicalReportTypesSheet,
   MedicalLockSheet,
   ImportMedicalSheet,
   NetWorthDashboard,
@@ -206,6 +207,7 @@ export const router = createBrowserRouter([
           { path: 'medical/settings/visible', element: <MedicalFieldsSheet /> },
           { path: 'medical/settings/tracked', element: <MedicalTrackedTestsSheet /> },
           { path: 'medical/settings/order', element: <MedicalOrderSheet /> },
+          { path: 'medical/settings/report-types', element: <MedicalReportTypesSheet /> },
           { path: 'medical/settings/lock', element: <MedicalLockSheet /> },
           { path: 'medical/import', element: <ImportMedicalSheet /> },
 
