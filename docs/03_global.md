@@ -13,7 +13,7 @@
 
 - **Wellness** tabs: **Home**, **Dashboard**, **Diary**, **Foods & Activities** (the Library), **Settings**.
 - **Net Worth** tabs: **Home**, **Dashboard**, **Monthly Entry**, **Insurance Policies**, **Settings**. The New/Edit Insurance screen is reached from the teal **+ New Insurance** action on the Insurance Policies result-count row / its empty state (new) or by tapping an **Insurance Policies** row (edit) — there is no longer a dedicated New Insurance bottom-nav tab.
-- **Quotes** tabs: **Home**, **Zen** (the Moment-of-Zen dashboard), **Library**, **New Quote**, **Settings**. The Add/Edit screen is reached from the **New Quote** tab (new) or by tapping a row.
+- **Journal & Quotes** tabs: **Home**, **Zen** (the Moment-of-Zen dashboard), **Journal**, **Quotes**, **Settings**. The Add/Edit screen is reached from the **New Quote** tab (new) or by tapping a row.
 - **Literature** tabs: **Home**, **Poems**, **Poets**, **Settings**.
 - **Shows** tabs: **Home**, **Dashboard**, **Library**, **New Show**, **Settings**. The Entry/Edit screen is reached from the **New Show** tab (new) or by tapping a Library/Dashboard row (edit). Dashboard/Library pages carry no title bar (the active tab signals location).
 - **Books** tabs: **Home**, **Dashboard**, **Library**, **New Book**, **Settings**. The Entry/Edit screen is reached from the **New Book** tab (new) or by tapping a row (edit).
@@ -83,6 +83,7 @@ Section order: **DISPLAY** (first), **PROFILE**, **ACCOUNT**. (There is no separ
 - `medical_section_order` TEXT[] NULL — personal category-section order override
 - `medical_test_order` TEXT[] NULL — personal flat ordered list of test keys
 - `medical_visible_fields` TEXT[] NULL — Medical New/Edit-Report field visibility; **NULL = all visible**
+- `medical_report_types` JSONB NULL - owner's configurable report type list
 - `medical_importer_enabled` BOOLEAN NOT NULL DEFAULT true — on by default
 - `medical_lock_enabled` BOOLEAN NOT NULL DEFAULT false
 - `medical_lock_pin_hash` TEXT NULL — salted PBKDF2-SHA-256 hash of the fallback PIN (never the PIN)

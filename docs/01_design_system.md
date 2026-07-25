@@ -17,7 +17,7 @@ downstream should hardcode a hex or reach into another module's token.
 | `gold`      | `#ddbe5f`                  |
 | `emerald`   | `#5fdd7f`                  |
 | `cyan`      | `#5fdddd`                  |
-| `blue`      | `#5f7fdd`                  |
+| `blue`      | `#3874f6`                  |
 | `purple`    | `#9e5fdd`                  |
 | `magenta`   | `#dd5fbe`                  |
 | `brown`     | `#b5825f`                  |
@@ -119,7 +119,7 @@ Every other date value reads as `MMM DD, YYYY` (`formatFullDate`), or `MMM DD` (
 - **IconAction** — header action icon-button: a bare Tabler icon at `size 18`, `p-1` hit area, tinted `secondary` (Copy) or `positive` (Add, and Paste while armed), muted `text-tertiary` when `disabled`.
 - **ImportPreviewList** — CSV-importer result list: a bordered card of rows, each `{ media, title, year, subtitle?, meta?, status, reviewLabel }` plus the standard **No-match / review / manual** flag and **Change / Manual** actions (solid pills, white text, matching Medical's **Mark Reviewed**: **Change** = `bg-danger` red, **Manual** = `bg-accent` blue, dimmed when disabled); callers pass the module-specific thumbnail + chips (`media` + `year` are optional — the Food importer omits them). Used by the Books, Shows, and Food importers. Carries **`shrink-0`** so the `overflow-hidden` card isn't squished + clipped by the sheet's flex-col body — see tech-spec's **flex scroll pane** gotcha; its absence was why long imports wouldn't scroll.
 - **ImportSheetFooter** - footer for all Import\*Sheet screens.
-- **LabelChip** — **presentational** status pill taking a `label` + palette `className`. A non-status label pill different from `StatusChip` so labels read apart from statuses at a glance.
+- **LabelChip** — **presentational** status pill taking a `label` + palette `className` + accent color `color`. A non-status label pill different from `StatusChip` so labels read apart from statuses at a glance.
 - **ListLoader** - fragment-based render-prop for dashboard & listing screens.
 - **ListRow** — listing-screen row: its own rounded/bordered card (so screens can lay rows out with a gap between them) containing a leading slot, a flexible text body, an optional right-edge favorite heart, and an optional accent color for a left strip on the row.
 - **ListSearchFilterPanel** - Search bar + icon-only filter toggle (bare `IconFilter` that tints **accent** while its panel is open, else `text-secondary`; sits flush at the right edge of the row); sort-field `SelectMenu` + an ascending/descending icon toggle + Favorite-Only toggle (if it exists in the module) + icon-only clear filters button; collapsible filter panel pane with module-specific filter criteria
