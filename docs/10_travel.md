@@ -24,6 +24,7 @@
   - Line 1: **cover thumbnail · trip name**.
   - Line 2: **status chip · date range · primary region**.
   - Tap → Entry/Edit; **swipe-left → Delete** (optimistic, cascades days/stops/expenses).
+- A floating **+** (`ListFab`) opens **New Trip**, shown only once the filtered list has at least one row (the bottom-nav **New Trip** tab and the empty-state pill remain the other entry points).
 
 ### Trip Entry (`/travel/entry` new, `/travel/trip/:id` edit)
 

@@ -11,7 +11,7 @@
 ### Quotes Library (`/quotes/library`) — bottom-nav tab labeled **Quotes**
 
 - **Search bar**: matches quote text, author, title, tags (via `quoteSearchText`); **Filter button** to the right.
-- **+ New Quote** sits to the right of the results count.
+- The floating **+** (`ListFab`) opens **New Quote**, shown only once the filtered list has at least one row.
 - **SortControl**, **Favorites Only toggle**, **Clear Filters button**: Sort over { Date, Category, Source Type } with an **asc/desc** toggle (Date = date added; Category/Source Type sort on the stored key); default is **Date** descending.
 - **Filter panel** is label-free: **Any Category**, **Any Source**, **Any Language**, **Linked Titles Only**, and multi-select **Filter Tags** (OR — any selected tag), which follow:
   - **Top 10 tags by use** shown by default (most-used first; selected tags always visible, with a "· top 10 by use" hint) in a fixed-height scroll area; the search box narrows the full tag list when there are more than 10. When opened from a Show/Book detail (via `?show=`/`?book=` param), the list is constrained to that record's quotes with a clearable banner.
@@ -41,7 +41,7 @@
 - Folded into the Quotes module (own table `journal_entry`, own tag vocabulary — independent of `quote.tags`) rather than a separate module.
 - **Search bar** matches entry text + tags. **Filter panel**: a tag facet (top 10 by use, same convention as Quotes) and a **Date** range. **Sort**: **Date** only, default descending — Journal has no other sortable field.
 - Rows are **grouped under a centered "Month Year" heading**, newest month first. Each row's leading badge shows the **weekday** (regular weight) over the **day of month** (bold) — `formatWeekdayShort` + `formatDayOfMonth`, and the body is the entry text, clamped to **3 lines**.
-- **+ New Journal** sits to the right of the results count. Tap a row → Journal Entry (edit); **swipe-left → Delete** (optimistic, same pattern as Quotes Library).
+- The floating **+** (`ListFab`) opens **New Journal**, shown only once the filtered list has at least one row. Tap a row → Journal Entry (edit); **swipe-left → Delete** (optimistic, same pattern as Quotes Library).
 
 ### Journal Entry (`/quotes/journal/entry`, `/quotes/journal/:id`)
 

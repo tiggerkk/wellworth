@@ -77,13 +77,13 @@ Identical layout to the Dashboard, scoped to a single day instead of an averaged
 
 ### Library (Foods & Activities tab)
 
-The bottom-nav tab is labelled **Foods & Activities**. The pinned top pane holds the sub-tab control + `SearchBar` only; the **`+ New Food`** / **`+ New Activity`** action sits at the **right edge of the "XX results" row** (below the pane), opposite the `ResultCount` — so it scrolls with the list rather than staying pinned. It's a `SecondaryButton` with an `IconPlus` + label — the shared **Add-button style** used app-wide.
+The bottom-nav tab is labelled **Foods & Activities**. The pinned top pane holds the sub-tab control + `SearchBar` only; the create action is a floating round **+** (`ListFab`) pinned bottom-right over the scrollable list, rendered only once that tab has at least one row — it swaps between **New Food** and **New Activity** automatically with the active sub-tab, since each tab's list mounts its own `ListFab`.
 
 Two sub-tabs:
 
-- **Foods**: searchable list of **all** your foods — custom items **plus** the USDA/OFF rows cached from a favorite, log, or custom serving. Tapping a **custom** food opens **Edit Food** screen; tapping a **USDA/OFF** food opens Food Detail (to view/Manage its servings — they aren't editable as custom nutrient rows). **Swipe to delete** any of them (`deleteFoodSmart` — see below); `+ New Food` opens the **New Food** screen. Surfacing the cached USDA/OFF rows here gives them the **only** delete path they have (they're created silently by favoriting/logging/customizing and were previously undeletable). (The bulk CSV importer launcher lives in **Wellness Settings → Import**, not here — see Settings + Import CSV below.)
+- **Foods**: searchable list of **all** your foods — custom items **plus** the USDA/OFF rows cached from a favorite, log, or custom serving. Tapping a **custom** food opens **Edit Food** screen; tapping a **USDA/OFF** food opens Food Detail (to view/Manage its servings — they aren't editable as custom nutrient rows). **Swipe to delete** any of them (`deleteFoodSmart` — see below); the floating **+** opens the **New Food** screen. Surfacing the cached USDA/OFF rows here gives them the **only** delete path they have (they're created silently by favoriting/logging/customizing and were previously undeletable). (The bulk CSV importer launcher lives in **Wellness Settings → Import**, not here — see Settings + Import CSV below.)
   - **`deleteFoodSmart`**: if any diary entry still references the food → **soft-delete** (preserve the entry's snapshot + FK, per the rule below); otherwise **hard-delete** so an unreferenced "phantom" leaves no tombstone (its `serving` rows cascade). Applies to custom and cached foods alike.
-- **Activities**: list of your activities; tap to edit template + default effort/MET, swipe to delete; `+ New Activity` opens the **New Activity** screen.
+- **Activities**: list of your activities; tap to edit template + default effort/MET, swipe to delete; the floating **+** opens the **New Activity** screen.
 
 ### New / Edit Food
 

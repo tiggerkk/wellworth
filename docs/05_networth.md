@@ -4,7 +4,7 @@
 
 ### Bottom-nav tabs
 
-`Dashboard · Monthly Entry · Insurance Policies · Settings` (plus Home). New Insurance is not a tab — it's the **+ New Insurance** action on the Insurance Policies result-count row (and the empty-state action).
+`Dashboard · Monthly Entry · Insurance Policies · Settings` (plus Home). New Insurance is not a tab — it's the floating **+** (`ListFab`) on the Insurance Policies list (and the empty-state action).
 
 ### Dashboard
 
@@ -49,7 +49,7 @@
   - Line 2: All / Matured / Surrendered `SegmentedTabs` status toggle
   - Line 3: Started date range
   - Line 4: Sort + Clear Filters. Sort (Start Date / Policy Number / Policy Name / Provider, descending default).
-- **`+ New Insurance`** action sits at the right edge of the `ResultCount` row (and is the `EmptyState` action).
+- The floating **+** (`ListFab`) opens **New Insurance**, shown only once the filtered list has at least one row (the `EmptyState` action covers the empty case).
 - Each row shows the provider plus status badges (`StatusChip`): Surrendered, Matured, Past Break Even. (Both filter + badges read `policy.termination_kind`.)
 - "Past break-even" is relative to the current age\*\*, not "ever breaks even": `breakEven` returns the first qualifying age across the WHOLE resolved series (incl. future ages), so the badge/filter/dashboard-count use `hasBrokenEven(schedules, currentAge)` (its break-even age ≤ current age). `applyInsuranceView` takes `currentAge` for the same reason. (Past bug: every policy that would _eventually_ break even read "Past break even".)
 

@@ -33,6 +33,7 @@ Tracked tests are chosen in Medical Settings → Tracked Tests (seeded from `def
   - Line 1: **date · type · body part**.
   - Line 2: **provider**.
   - Tap → Entry/Edit; **swipe-left → Delete** (optimistic). The DB delete runs in the background (no `bumpMedical()` → full-list refetch; bump only on error).
+- A floating **+** (`ListFab`) opens **New Medical Report**, shown only once the filtered list has at least one row (the bottom-nav **New Medical** tab and the empty-state pill remain the other entry points).
 
 ### Report detail (`/medical/:id`)
 

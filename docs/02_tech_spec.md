@@ -88,7 +88,7 @@ Every module's New/Edit/View navigation follows one of these four shapes.
 
 | Screen    | Entry                | Top-Left Icon | Post-Save Action | Post-Cancel Action | Routed |
 | --------- | -------------------- | ------------- | ---------------- | ------------------ | ------ |
-| New Item  | Bottom Nav or + Item | X             | Go to Edit Item  | Return to Source   | Yes    |
+| New Item  | Bottom Nav or + FAB  | X             | Go to Edit Item  | Return to Source   | Yes    |
 | Edit Item | Listing or Dashboard | <             | Go to Listing    | Return to Source   | Yes    |
 
 **Journal** (folded into the Quotes module) is a day-based variant of Category 2: New and Edit are the _same_ routed screen (`/quotes/journal/entry` new, `/quotes/journal/:id` edit) resolving to whichever record exists for the day currently shown by its own in-screen calendar nav — so unlike every other module, the Top-Left Icon (X vs `<`) and the header title track the **current day**, not the entry point. Save and Cancel both always return to the Journal listing (there's no fixed "this record's" edit route to return to once the user has browsed to a different day). See `08_quotes.md`.
@@ -105,7 +105,7 @@ Every module's New/Edit/View navigation follows one of these four shapes.
 | -------------------------- | ----------------------------------- | ------------- | ------------------------ | ------------------ | ------ |
 | Diary Food/Activity Picker | Diary                               | X             | N/A (picker)             | Return to Diary    | Yes    |
 | Diary Food/Activity Detail | Diary Food/Activity Picker or Diary | <             | Go to Diary              | Return to Source   | Yes    |
-| New Food/Activity          | Library (+Food/Activity)            | X             | Go to Edit Food/Activity | Return to Library  | Yes    |
+| New Food/Activity          | Library (+ FAB)                     | X             | Go to Edit Food/Activity | Return to Library  | Yes    |
 | Edit Food/Activity         | Library                             | <             | Go to Library            | Return to Library  | Yes    |
 
 ### Other navigation rules
