@@ -1,8 +1,6 @@
 # 02 — Tech Spec
 
-> **F-number cross-reference:** Gotchas below keep their historical `Fxx` tag (e.g. **F17**) so they stay
-> greppable against `BUILD_HISTORY.md`, where the original debugging narrative lives. The tag is
-> descriptive-first now (`**F17 — error surfacing.**`) — read the name, use the number only to trace history.
+> **F-number cross-reference:** Gotchas below keep their historical `Fxx` tag (e.g. **F17**) so they stay greppable against `BUILD_HISTORY.md`, where the original debugging narrative lives. The tag is descriptive-first now (`**F17 — error surfacing.**`) — read the name, use the number only to trace history.
 
 ## Stack
 
@@ -10,65 +8,38 @@
 - **Styling:** Tailwind CSS v4, CSS-first via `@tailwindcss/vite`.
 - **PWA:** `vite-plugin-pwa` (`registerType: 'autoUpdate'`) for install/offline.
 - **Routing:** React Router — the unified `react-router` package — for routing + modal sheets.
-- **Charts:** Recharts powers the Net Worth dashboard trend chart, the Medical trend chart, the Travel
-  expense-breakdown chart, and the Net Worth insurance-comparison charts. It's **lazy-loaded** (its own
-  chunk) so it stays out of the initial bundle.
-- **Map:** Leaflet + `leaflet.markercluster` power the Travel map (imperative, no react-leaflet);
-  **lazy-loaded** into its own chunk so Leaflet stays off the initial bundle.
-- **Barcode:** `@zxing/browser` (`BrowserMultiFormatReader`) + `@zxing/library` decoding the device
-  camera via `getUserMedia`. Requires HTTPS (localhost is exempt for dev). The scanner is lazy-loaded so
-  ZXing is a separate chunk, fetched only when scanning.
+- **Charts:** Recharts powers the Net Worth dashboard trend chart, the Medical trend chart, the Travel expense-breakdown chart, and the Net Worth insurance-comparison charts. It's **lazy-loaded** (its own chunk) so it stays out of the initial bundle.
+- **Map:** Leaflet + `leaflet.markercluster` power the Travel map (imperative, no react-leaflet); **lazy-loaded** into its own chunk so Leaflet stays off the initial bundle.
+- **Barcode:** `@zxing/browser` (`BrowserMultiFormatReader`) + `@zxing/library` decoding the device camera via `getUserMedia`. Requires HTTPS (localhost is exempt for dev). The scanner is lazy-loaded so ZXing is a separate chunk, fetched only when scanning.
 - **Backend-as-a-service:** Supabase — Postgres, Auth (Google OAuth), auto-generated REST, RLS.
 - **Hosting:** Vercel / Netlify / Cloudflare Pages (any free tier; HTTPS automatic).
 
 ### Lazy loading
 
 - **`lazyWithReload`, not bare `React.lazy` (F11).** Lazy chunks load via `src/lib/lazy-with-reload.ts`.
-  - After a deploy, the installed PWA can reference the previous build's hashed chunk names. The
-    missing `/assets/*.js` then returns the SPA fallback HTML ("'text/html' is not a valid JavaScript
-    MIME type").
-  - `lazyWithReload` forces a **one-time** `location.reload()` (sessionStorage-guarded against loops) to
-    pull fresh chunk names.
-  - Used by: the Net Worth / Medical trend charts, the Net Worth insurance-comparison charts
-    (`InsuranceCompareCharts`), the barcode scanner, and the Travel map + expense-breakdown chart.
+  - After a deploy, the installed PWA can reference the previous build's hashed chunk names. The missing `/assets/*.js` then returns the SPA fallback HTML ("'text/html' is not a valid JavaScript MIME type").
+  - `lazyWithReload` forces a **one-time** `location.reload()` (sessionStorage-guarded against loops) to pull fresh chunk names.
+  - Used by: the Net Worth / Medical trend charts, the Net Worth insurance-comparison charts (`InsuranceCompareCharts`), the barcode scanner, and the Travel map + expense-breakdown chart.
 
 ### Chinese search (Traditional⇄Simplified agnostic)
 
 Every search bar matches across scripts.
 
-- **Local filters** normalize both query and row text with the sync `foldZh` (`src/lib/zh-fold.ts`) —
-  a single-char Traditional→Simplified fold over the generated `src/constants/zh-fold-map.ts` (built by
-  `scripts/gen-zh-fold-map.mjs` from OpenCC's HK+TW+TWP dicts; ~60KB, always resident).
-- **Remote searches** issue the query in both scripts and merge — `src/lib/zh-query.ts`
-  (`searchZhVariants`), using `opencc-js` (HK Traditional) for the Simplified→Traditional direction.
-- **F15a — opencc-js is lazy, never used for local filters.** `opencc-js` (~1.12MB) is **lazy-loaded**
-  via `import('opencc-js')` (`src/lib/zh-convert.ts`) into its own `opencc-*.js` chunk
-  (`build.rollupOptions.output.manualChunks`) and **excluded from the PWA precache**
-  (`workbox.globIgnores: ['**/opencc-*.js']`), so it only loads on the first Chinese remote search. It
-  is **not** wrapped in `lazyWithReload`; a failed `import()` falls back to the typed query. Local
-  filters never touch opencc — they use the tiny sync `foldZh` map instead.
+- **Local filters** normalize both query and row text with the sync `foldZh` (`src/lib/zh-fold.ts`) — a single-char Traditional→Simplified fold over the generated `src/constants/zh-fold-map.ts` (built by `scripts/gen-zh-fold-map.mjs` from OpenCC's HK+TW+TWP dicts; ~60KB, always resident).
+- **Remote searches** issue the query in both scripts and merge — `src/lib/zh-query.ts` (`searchZhVariants`), using `opencc-js` (HK Traditional) for the Simplified→Traditional direction.
+- **F15a — opencc-js is lazy, never used for local filters.** `opencc-js` (~1.12MB) is **lazy-loaded** via `import('opencc-js')` (`src/lib/zh-convert.ts`) into its own `opencc-*.js` chunk (`build.rollupOptions.output.manualChunks`) and **excluded from the PWA precache** (`workbox.globIgnores: ['**/opencc-*.js']`), so it only loads on the first Chinese remote search. It is **not** wrapped in `lazyWithReload`; a failed `import()` falls back to the typed query. Local filters never touch opencc — they use the tiny sync `foldZh` map instead.
 
 ### Static reference corpus (Literature)
 
-- The poem corpus is immutable, shared, non-private, so it ships as a **versioned static asset**
-  (`public/literature/**`, generated by `scripts/build-literature-data.mjs` from a gitignored
-  `poems.db`) rather than a DB table — offline, zero DB cost, updates by redeploy.
-- The small search **index + meta are precached**; per-poem/writer **bodies are runtime-cached**
-  (CacheFirst `literature-bodies-v1`, excluded from precache via `globIgnores`, same idea as the lazy
-  `opencc` chunk); favouriting a poem also `cache.add()`s its body for offline.
-- **Search/filter is client-side** over the in-memory index via `foldZh` — the one module that filters
-  in the client rather than the DB, correct because the data is static + bundled.
-- Only per-user favourites (`poem_favorite`) + read-aloud `profile` columns live in Supabase. See
-  `docs/11_literature.md`.
+- The poem corpus is immutable, shared, non-private, so it ships as a **versioned static asset** (`public/literature/**`, generated by `scripts/build-literature-data.mjs` from a gitignored `poems.db`) rather than a DB table — offline, zero DB cost, updates by redeploy.
+- The small search **index + meta are precached**; per-poem/writer **bodies are runtime-cached** (CacheFirst `literature-bodies-v1`, excluded from precache via `globIgnores`, same idea as the lazy `opencc` chunk); favouriting a poem also `cache.add()`s its body for offline.
+- **Search/filter is client-side** over the in-memory index via `foldZh` — the one module that filters in the client rather than the DB, correct because the data is static + bundled.
+- Only per-user favourites (`poem_favorite`) + read-aloud `profile` columns live in Supabase. See `docs/11_literature.md`.
 
 ### Gotchas
 
-- **F3 — ZXing peer pin.** `@zxing/browser@0.2` peers `@zxing/library@^0.22`: keep `@zxing/library`
-  pinned at `0.22`. Bumping it needs a matching `@zxing/browser` move, or `npm install` requires
-  `--legacy-peer-deps`.
-- **F10 — `Uint8Array` generic under TS 6.** A bare `Uint8Array` is `Uint8Array<ArrayBufferLike>`, which
-  is NOT assignable to WebCrypto / WebAuthn `BufferSource` params: annotate byte helpers feeding those
-  APIs as `Uint8Array<ArrayBuffer>`. Don't use `as unknown as` casts.
+- **F3 — ZXing peer pin.** `@zxing/browser@0.2` peers `@zxing/library@^0.22`: keep `@zxing/library` pinned at `0.22`. Bumping it needs a matching `@zxing/browser` move, or `npm install` requires `--legacy-peer-deps`.
+- **F10 — `Uint8Array` generic under TS 6.** A bare `Uint8Array` is `Uint8Array<ArrayBufferLike>`, which is NOT assignable to WebCrypto / WebAuthn `BufferSource` params: annotate byte helpers feeding those APIs as `Uint8Array<ArrayBuffer>`. Don't use `as unknown as` casts.
 
 ## Folder structure
 
@@ -95,22 +66,11 @@ docs/                # documentation
 
 ### Route model
 
-- The app is **multi-module behind a Home hub**. Routes are **URL-namespaced per module**
-  (`/wellness/*`, `/networth/*`, `/quotes/*`, `/literature/*`, `/shows/*`, `/books/*`, `/travel/*`,
-  `/medical/*`) and declared as flat children of a single `<AppShell/>` layout in `src/router.tsx`.
-  Journal has no prefix of its own — it's folded into Quotes (`/quotes/journal/*`, own bottom-nav tab)
-  rather than a ninth module; see `08_quotes.md`.
-- Path strings live in `src/constants/routes.ts` (one source of truth); the hub/bottom-nav are derived
-  from `src/constants/modules.ts` (`MODULES` + `moduleForPath`). Adding a module = a `ModuleDef` + its
-  routes — no structural change.
-- The index route `/` is a `RootRedirect` to the **last-used module** (`localStorage`, via
-  `src/lib/last-module.ts`), falling back to `/home`. Login and the PWA `start_url`/OAuth redirect all
-  land on `/` and flow through it.
-- `AppShell` renders the per-module `BottomNav` (a leading **Home** item + the module's tabs) only when
-  in a module; the hub and global Settings have none.
-- Modal **sheets** use React Router's **background-location** pattern — opening a sheet stashes the
-  current location as `state.background`, and `AppShell` paints that tab (via `TAB_FOR_PATH`) behind the
-  sheet. New sheets live under their module's prefix and are opened with `useSheetNavigate`.
+- The app is **multi-module behind a Home hub**. Routes are **URL-namespaced per module** (`/wellness/*`, `/networth/*`, `/quotes/*`, `/literature/*`, `/shows/*`, `/books/*`, `/travel/*`, `/medical/*`) and declared as flat children of a single `<AppShell/>` layout in `src/router.tsx`. Journal has no prefix of its own — it's folded into Quotes (`/quotes/journal/*`, own bottom-nav tab) rather than a ninth module; see `08_quotes.md`.
+- Path strings live in `src/constants/routes.ts` (one source of truth); the hub/bottom-nav are derived from `src/constants/modules.ts` (`MODULES` + `moduleForPath`). Adding a module = a `ModuleDef` + its routes — no structural change.
+- The index route `/` is a `RootRedirect` to the **last-used module** (`localStorage`, via `src/lib/last-module.ts`), falling back to `/home`. Login and the PWA `start_url`/OAuth redirect all land on `/` and flow through it.
+- `AppShell` renders the per-module `BottomNav` (a leading **Home** item + the module's tabs) only when in a module; the hub and global Settings have none.
+- Modal **sheets** use React Router's **background-location** pattern — opening a sheet stashes the current location as `state.background`, and `AppShell` paints that tab (via `TAB_FOR_PATH`) behind the sheet. New sheets live under their module's prefix and are opened with `useSheetNavigate`.
 
 ### Screen-flow categories
 
@@ -124,12 +84,14 @@ Every module's New/Edit/View navigation follows one of these four shapes.
 | Edit Item | View Item            | <             | Go to View Item  | Return to View Item | Yes    |
 | View Item | Listing or Dashboard | <             | N/A (read-only)  | Return to Source    | Yes    |
 
-**Category 2 — no "View Item" page** (Insurance Policies, Quotes — no Dashboard; Shows, Books, Travel — have Dashboard)
+**Category 2 — no "View Item" page** (Insurance Policies, Quotes — no Dashboard; Shows, Books, Travel — have Dashboard; Journal — special case)
 
 | Screen    | Entry                | Top-Left Icon | Post-Save Action | Post-Cancel Action | Routed |
 | --------- | -------------------- | ------------- | ---------------- | ------------------ | ------ |
 | New Item  | Bottom Nav or + Item | X             | Go to Edit Item  | Return to Source   | Yes    |
 | Edit Item | Listing or Dashboard | <             | Go to Listing    | Return to Source   | Yes    |
+
+**Journal** (folded into the Quotes module) is a day-based variant of Category 2: New and Edit are the _same_ routed screen (`/quotes/journal/entry` new, `/quotes/journal/:id` edit) resolving to whichever record exists for the day currently shown by its own in-screen calendar nav — so unlike every other module, the Top-Left Icon (X vs `<`) and the header title track the **current day**, not the entry point. Save and Cancel both always return to the Journal listing (there's no fixed "this record's" edit route to return to once the user has browsed to a different day). See `08_quotes.md`.
 
 **Category 3 — no "Edit Item" page** (Literature — no Dashboard)
 
@@ -146,28 +108,14 @@ Every module's New/Edit/View navigation follows one of these four shapes.
 | New Food/Activity          | Library (+Food/Activity)            | X             | Go to Edit Food/Activity | Return to Library  | Yes    |
 | Edit Food/Activity         | Library                             | <             | Go to Library            | Return to Library  | Yes    |
 
-**Journal** (folded into the Quotes module) is a day-based variant of Category 2: New and Edit are
-the _same_ routed screen (`/quotes/journal/entry` new, `/quotes/journal/:id` edit) resolving to
-whichever record exists for the day currently shown by its own in-screen calendar nav — so unlike
-every other module, the Top-Left Icon (X vs `<`) and the header title track the **current day**, not
-the entry point. Save and Cancel both always return to the Journal listing (there's no fixed
-"this record's" edit route to return to once the user has browsed to a different day). See
-`08_quotes.md`.
-
 ### Other navigation rules
 
-- **Escape-to-dismiss** is centralised in `useEscapeKey`: one document listener over a LIFO handler
-  stack, so the innermost overlay wins. Route `Sheet`s + local search sheets close themselves, the
-  `Calendar` closes, an open `SelectMenu` collapses, and the Add/Edit screens follow the navigation
-  described above.
-- **Entry/Settings shells** — two shared chrome wrappers keep New/Edit and Settings screens uniform:
-  `EntryLoader` (the `useAsync` outer loader → inner form render-prop) and `SettingsLayout` (sticky
-  header + the standard `IconX` dismiss). See `01_design_system.md` for both.
+- **Escape-to-dismiss** is centralised in `useEscapeKey`: one document listener over a LIFO handler stack, so the innermost overlay wins. Route `Sheet`s + local search sheets close themselves, the `Calendar` closes, an open `SelectMenu` collapses, and the Add/Edit screens follow the navigation described above.
+- **Entry/Settings shells** — two shared chrome wrappers keep New/Edit and Settings screens uniform: `EntryLoader` (the `useAsync` outer loader → inner form render-prop) and `SettingsLayout` (sticky header + the standard `IconX` dismiss). See `01_design_system.md` for both.
 
 ## Shared hooks (`src/hooks/`)
 
-Quick-reference index — every hook in the repo, one line each. Full behavior for the ones with
-non-trivial gotchas is in **Data flow & gotchas** below; the rest are self-explanatory from source.
+Quick-reference index — every hook in the repo, one line each. Full behavior for the ones with non-trivial gotchas is in **Data flow & gotchas** below; the rest are self-explanatory from source.
 
 | Hook                     | Purpose                                                                                                                              |
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
@@ -195,315 +143,135 @@ non-trivial gotchas is in **Data flow & gotchas** below; the rest are self-expla
 
 ### `useEntryDraft` — why it exists
 
-- Fixes a whole class of bug: navigating from Edit(A) straight to New (`id` → `undefined`) by reusing
-  the same routed screen can briefly — or, if a field is only seeded once via `useState(initial.x)`,
-  _permanently_ — show A's data under the New form.
-- That happens because `useAsync` intentionally keeps the previous fetch's `data` while a new fetch is
-  in flight (F8/F13 below): fine for Edit(A)→Edit(B), wrong for Edit(A)→New, where there's nothing to
-  wait on at all.
-- `fetchRow`, `toDraft`, and `blank` must all be **stable** (`useCallback`/module-level) — an inline
-  arrow function gets a new identity every render, which cascades into an infinite refetch loop via
-  `useAsync`'s dependency (same failure mode as F4).
-- **Journal is an intentional exception.** Its day-based model means the record being edited can
-  change _mid-screen_ (the in-screen calendar nav), so `useEntryDraft`/`useEntryClose` — both built
-  around one fixed `id` for the screen's life — don't fit. `JournalEntry` instead re-resolves the
-  record for the current `day` itself, via a request-token-guarded effect (the same race a `key`-swap
-  protects against, applied to a `day` axis instead of an `id`). See `08_quotes.md`.
+- Fixes a whole class of bug: navigating from Edit(A) straight to New (`id` → `undefined`) by reusing the same routed screen can briefly — or, if a field is only seeded once via `useState(initial.x)`, _permanently_ — show A's data under the New form.
+- That happens because `useAsync` intentionally keeps the previous fetch's `data` while a new fetch is in flight (F8/F13 below): fine for Edit(A)→Edit(B), wrong for Edit(A)→New, where there's nothing to wait on at all.
+- `fetchRow`, `toDraft`, and `blank` must all be **stable** (`useCallback`/module-level) — an inline arrow function gets a new identity every render, which cascades into an infinite refetch loop via `useAsync`'s dependency (same failure mode as F4).
+- **Journal is an intentional exception.** Its day-based model means the record being edited can change _mid-screen_ (the in-screen calendar nav), so `useEntryDraft`/`useEntryClose` — both built around one fixed `id` for the screen's life — don't fit. `JournalEntry` instead re-resolves the record for the current `day` itself, via a request-token-guarded effect (the same race a `key`-swap protects against, applied to a `day` axis instead of an `id`). See `08_quotes.md`.
 
 ## Data flow
 
-UI (`screens` + `components`) → `data/*` repository functions → `supabase-js` query builder → Supabase
-(Postgres + RLS). Components hold no SQL and never import the Supabase client directly.
+UI (`screens` + `components`) → `data/*` repository functions → `supabase-js` query builder → Supabase (Postgres + RLS). Components hold no SQL and never import the Supabase client directly.
 
 ### Gotchas
 
-- **F17 — error surfacing.** Surface caught errors with **`errorMessage(e, fallback)`**
-  (`src/lib/errors.ts`), never `e instanceof Error ? e.message : fallback`.
-  - The `data/*` layer rethrows the raw Supabase error object (`if (error) throw error`), and that
-    object is **not** a JS `Error` instance — so the `instanceof` check fails and the real cause is
-    hidden behind the generic fallback (this is exactly why a failed bulk import showed only "Import
-    failed.").
-  - `errorMessage` reads the Postgrest shape (`message` + the diagnostic `code`/`hint`/`details`;
-    Postgres often puts the actionable fix in `hint`) and still handles genuine `Error`s and thrown
-    strings.
+- **F17 — error surfacing.** Surface caught errors with **`errorMessage(e, fallback)`** (`src/lib/errors.ts`), never `e instanceof Error ? e.message : fallback`.
+  - The `data/*` layer rethrows the raw Supabase error object (`if (error) throw error`), and that object is **not** a JS `Error` instance — so the `instanceof` check fails and the real cause is hidden behind the generic fallback (this is exactly why a failed bulk import showed only "Import failed.").
+  - `errorMessage` reads the Postgrest shape (`message` + the diagnostic `code`/`hint`/`details`; Postgres often puts the actionable fix in `hint`) and still handles genuine `Error`s and thrown strings.
   - All CSV/file importers use it.
-- **F4 — `useAsync` deps must be stable.** `useAsync(fn)` takes a single `useCallback`-stable `fn` and
-  exposes `refetch` — NOT a `deps` array (the react-hooks lint rule rejects a variable deps array).
+- **F4 — `useAsync` deps must be stable.** `useAsync(fn)` takes a single `useCallback`-stable `fn` and exposes `refetch` — NOT a `deps` array (the react-hooks lint rule rejects a variable deps array).
   - Memoize `fn` at the call site.
-  - **Every value in that `fn`'s `useCallback` deps must itself be stable** — a helper that returns a
-    fresh array/object each render (e.g. `effectiveProviders(profile?.…)`) must be wrapped in
-    `useMemo` first, or `fn` changes every render and `useAsync` spins into an infinite
-    re-fetch/re-render loop ("Maximum update depth exceeded", and `ERR_INSUFFICIENT_RESOURCES` from the
-    unbounded fetches).
-- **F8 + F13 — `useAsync` keeps the previous `data` while refetching.** It flips `loading=true` but
-  retains the old `data`. Therefore:
-  - Gate a view on `!loading` ONLY when the loaded subject's IDENTITY changes (and key the component by
-    it) — e.g. Net Worth Monthly Entry switching months (**F8**).
-  - NEVER gate on `!loading` when a child holds unsaved LOCAL state across a same-subject refetch — it
-    unmounts the child and discards edits (**F13**, Travel Edit Trip); instead render once `data` exists
-    and show a first-load spinner only when `loading && !data`.
-  - **F15b — this is also the rule for any profile/onboarding gate.** `OnboardingGate` gating on
-    `loading || profile == null` flashes a full-screen splash over the whole app on every background
-    refetch (e.g. a `bumpDiary` bump). Gate on the resolved value only (`profile == null` covers both
-    initial-undefined and the row-being-created window). See `03_global.md` for the onboarding screen
-    spec this protects.
+  - **Every value in that `fn`'s `useCallback` deps must itself be stable** — a helper that returns a fresh array/object each render (e.g. `effectiveProviders(profile?.…)`) must be wrapped in `useMemo` first, or `fn` changes every render and `useAsync` spins into an infinite re-fetch/re-render loop ("Maximum update depth exceeded", and `ERR_INSUFFICIENT_RESOURCES` from the unbounded fetches).
+- **F8 + F13 — `useAsync` keeps the previous `data` while refetching.** It flips `loading=true` but retains the old `data`. Therefore:
+  - Gate a view on `!loading` ONLY when the loaded subject's IDENTITY changes (and key the component by it) — e.g. Net Worth Monthly Entry switching months (**F8**).
+  - NEVER gate on `!loading` when a child holds unsaved LOCAL state across a same-subject refetch — it unmounts the child and discards edits (**F13**, Travel Edit Trip); instead render once `data` exists and show a first-load spinner only when `loading && !data`.
+  - **F15b — this is also the rule for any profile/onboarding gate.** `OnboardingGate` gating on `loading || profile == null` flashes a full-screen splash over the whole app on every background refetch (e.g. a `bumpDiary` bump). Gate on the resolved value only (`profile == null` covers both initial-undefined and the row-being-created window). See `03_global.md` for the onboarding screen spec this protects.
   - **Rule of thumb:** a gate keyed on a fetched value reads `data`, never `loading`.
-- **F21 — `useProfile` seeds from a local cache.** `useProfile` seeds its first render from a **local
-  cache of the last-known profile** (`src/lib/profile-cache.ts`, keyed `wellworth:profile:<userId>`), so
-  screens rendering a per-profile order/visibility (Home hub, Medical/Net Worth ordering) paint the
-  user's choice immediately instead of flashing the canonical default while the fetch is in flight;
-  every fetch refreshes the cache. This is the `last-module` / `networth-liquid-filter` localStorage
-  convention applied to the whole row, plumbed through an optional `initialData` seed on `useAsync`
-  (stale-while-revalidate).
-  - **Sanitize-on-write:** the cache strips the Medical lock credentials (`medical_lock_pin_hash`,
-    `medical_lock_webauthn_id`) — a brute-forceable PIN hash must never persist to localStorage.
-  - **Opt out with `useProfile({ seed: false })`** where the seed is unsafe: editors that copy the
-    profile into local state on mount need the authoritative fresh row (`useProfileEditor`), and
-    `MedicalLockProvider` must not see a row with its hash stripped (it would briefly unlock; it has its
-    own synchronous `enabledHint` gate instead).
-- **F16a — batch writes, and watch non-uniform keys.** Bulk DB ops go in **one batched call**
-  (`.insert(rows)` / `.upsert(rows)`, chunked), never a per-row `await` loop.
-  - The CSV importers move N rows, so a sequential loop is N round-trips (the Shows importer stalled on
-    IMPORT this way); `saveImportedShows` splits new/existing and issues a bulk insert + bulk upsert
-    (conflict on `id`).
-  - **Gotcha:** when batched rows have **non-uniform keys** (a builder that includes a column only
-    conditionally — e.g. `buildImportRow` adds `created_at` only when the CSV has `start_date`), a bulk
-    write unifies keys across the batch and sends the missing column as NULL by default — which fails a
-    `NOT NULL DEFAULT` column. Pass `{ defaultToNull: false }` so missing keys fall back to the column
-    DEFAULT instead. (Per-row inserts never hit this — each object is self-consistent.)
-- **F16b — prefer optimistic local state over a global refresh-version bump.** Prefer optimistic local
-  state over bumping a module's global refresh version (`bumpTravel()` etc.) on every mutation: a
-  version bump forces every subscriber to refetch its whole bundle (all days + all stops for one edit).
-  - Keep the edited collection in local state, mutate it instantly, persist in the background, and bump
-    **only on a write error** (which refetches + re-seeds from server truth). Other screens then update
-    on their next mount, not live — fine when they remount + refetch on navigation.
-  - When a fetch DOES replace the source and you must re-seed local state, use the
-    **adjust-state-during-render** pattern (track the previous value, `setState` in render), NOT a
-    `setState`-in-effect (the `react-hooks/set-state-in-effect` lint rule).
-  - Travel's Edit-Trip itinerary + expenses use this pattern — see `docs/10_travel.md` for the
-    screen-level behavior this enables (per-day expense modal and the Expenses tab sharing one lifted
-    state).
-- **F12 — OAuth `signup_disabled` after a DB reset.** `parseOAuthError` surfaces `signup_disabled` after
-  a `db reset --linked` wipes `auth.users` while sign-ups are off; check the redirect `?error=` +
-  the Supabase sign-up toggle. See Auth & first-run below.
+- **F21 — `useProfile` seeds from a local cache.** `useProfile` seeds its first render from a **local cache of the last-known profile** (`src/lib/profile-cache.ts`, keyed `wellworth:profile:<userId>`), so screens rendering a per-profile order/visibility (Home hub, Medical/Net Worth ordering) paint the user's choice immediately instead of flashing the canonical default while the fetch is in flight; every fetch refreshes the cache. This is the `last-module` / `networth-liquid-filter` localStorage convention applied to the whole row, plumbed through an optional `initialData` seed on `useAsync` (stale-while-revalidate).
+  - **Sanitize-on-write:** the cache strips the Medical lock credentials (`medical_lock_pin_hash`, `medical_lock_webauthn_id`) — a brute-forceable PIN hash must never persist to localStorage.
+  - **Opt out with `useProfile({ seed: false })`** where the seed is unsafe: editors that copy the profile into local state on mount need the authoritative fresh row (`useProfileEditor`), and `MedicalLockProvider` must not see a row with its hash stripped (it would briefly unlock; it has its own synchronous `enabledHint` gate instead).
+- **F16a — batch writes, and watch non-uniform keys.** Bulk DB ops go in **one batched call** (`.insert(rows)` / `.upsert(rows)`, chunked), never a per-row `await` loop.
+  - The CSV importers move N rows, so a sequential loop is N round-trips (the Shows importer stalled on IMPORT this way); `saveImportedShows` splits new/existing and issues a bulk insert + bulk upsert (conflict on `id`).
+  - **Gotcha:** when batched rows have **non-uniform keys** (a builder that includes a column only conditionally — e.g. `buildImportRow` adds `created_at` only when the CSV has `start_date`), a bulk write unifies keys across the batch and sends the missing column as NULL by default — which fails a `NOT NULL DEFAULT` column. Pass `{ defaultToNull: false }` so missing keys fall back to the column DEFAULT instead. (Per-row inserts never hit this — each object is self-consistent.)
+- **F16b — prefer optimistic local state over a global refresh-version bump.** Prefer optimistic local state over bumping a module's global refresh version (`bumpTravel()` etc.) on every mutation: a version bump forces every subscriber to refetch its whole bundle (all days + all stops for one edit).
+  - Keep the edited collection in local state, mutate it instantly, persist in the background, and bump **only on a write error** (which refetches + re-seeds from server truth). Other screens then update on their next mount, not live — fine when they remount + refetch on navigation.
+  - When a fetch DOES replace the source and you must re-seed local state, use the **adjust-state-during-render** pattern (track the previous value, `setState` in render), NOT a `setState`-in-effect (the `react-hooks/set-state-in-effect` lint rule).
+  - Travel's Edit-Trip itinerary + expenses use this pattern — see `docs/10_travel.md` for the screen-level behavior this enables (per-day expense modal and the Expenses tab sharing one lifted state).
+- **F12 — OAuth `signup_disabled` after a DB reset.** `parseOAuthError` surfaces `signup_disabled` after a `db reset --linked` wipes `auth.users` while sign-ups are off; check the redirect `?error=` + the Supabase sign-up toggle. See Auth & first-run below.
 
 ## Auth & first-run
 
-- Supabase Auth with the Google provider. The client is created once in `src/lib/supabase.ts` with
-  **`flowType: 'pkce'`** set explicitly — the bare supabase-js client otherwise defaults to the implicit
-  flow. A SPA needs no `/auth/callback` route; `detectSessionInUrl` exchanges the `?code=` on load.
-- On first successful login, a client-side hook (`useEnsureProfile`) seeds the user's data: it creates
-  the `profile` row **and** seeds the starter activity library if the user has none. Both are idempotent
-  (insert-if-missing), guarded against React StrictMode double-invoke; not DB triggers.
-  `ensureOwnerProfile(userId, email)` branches on the owner (`isOwnerEmail`, see below): the owner gets
-  the full `OWNER_PROFILE_SEED` and an `onboarded_at` stamp; every other member gets the neutral
-  `MEMBER_PROFILE_SEED` (no body metrics) with `onboarded_at` left null. When it creates a new row it
-  bumps the shared refresh tick so the onboarding gate re-reads it.
-- **Multi-member onboarding gate.** A new member's null `onboarded_at` forces a full-screen `Onboarding`
-  wizard before the app — never inheriting the owner's metrics. The mechanism (gate on `data` not
-  `loading`, and the z-index stacking that lets its sheets paint above it) is F15b above; the full
-  screen spec — sections, order, validation, "Get started" — lives in `03_global.md`.
-- **Access control + error surfacing** (`src/lib/access.ts`, enforced in `AuthProvider`). An optional
-  build-time email allowlist (`VITE_ALLOWED_EMAILS`, parsed by `parseAllowlist`/`isEmailAllowed`) signs
-  out any account whose email isn't listed (empty ⇒ no restriction) — a convenience layer over RLS +
-  Supabase's sign-up controls. `parseOAuthError` reads an error the provider hands back on the redirect
-  (`?error=…`/`#error=…`, captured during the first render before the router strips it) so Login
-  explains a failed sign-in instead of looping silently — most notably **F12**'s `signup_disabled` case
-  after a `db reset --linked` wipes `auth.users` while sign-ups are off.
+- Supabase Auth with the Google provider. The client is created once in `src/lib/supabase.ts` with **`flowType: 'pkce'`** set explicitly — the bare supabase-js client otherwise defaults to the implicit flow. A SPA needs no `/auth/callback` route; `detectSessionInUrl` exchanges the `?code=` on load.
+- On first successful login, a client-side hook (`useEnsureProfile`) seeds the user's data: it creates the `profile` row **and** seeds the starter activity library if the user has none. Both are idempotent (insert-if-missing), guarded against React StrictMode double-invoke; not DB triggers. `ensureOwnerProfile(userId, email)` branches on the owner (`isOwnerEmail`, see below): the owner gets the full `OWNER_PROFILE_SEED` and an `onboarded_at` stamp; every other member gets the neutral `MEMBER_PROFILE_SEED` (no body metrics) with `onboarded_at` left null. When it creates a new row it bumps the shared refresh tick so the onboarding gate re-reads it.
+- **Multi-member onboarding gate.** A new member's null `onboarded_at` forces a full-screen `Onboarding` wizard before the app — never inheriting the owner's metrics. The mechanism (gate on `data` not `loading`, and the z-index stacking that lets its sheets paint above it) is F15b above; the full screen spec — sections, order, validation, "Get started" — lives in `03_global.md`.
+- **Access control + error surfacing** (`src/lib/access.ts`, enforced in `AuthProvider`). An optional build-time email allowlist (`VITE_ALLOWED_EMAILS`, parsed by `parseAllowlist`/`isEmailAllowed`) signs out any account whose email isn't listed (empty ⇒ no restriction) — a convenience layer over RLS + Supabase's sign-up controls. `parseOAuthError` reads an error the provider hands back on the redirect (`?error=…`/`#error=…`, captured during the first render before the router strips it) so Login explains a failed sign-in instead of looping silently — most notably **F12**'s `signup_disabled` case after a `db reset --linked` wipes `auth.users` while sign-ups are off.
 
 ## Sync
 
-Supabase is the single source of truth; all devices read/write it. The cloud is authoritative (this also
-sidesteps iOS PWA storage eviction).
+Supabase is the single source of truth; all devices read/write it. The cloud is authoritative (this also sidesteps iOS PWA storage eviction).
 
 ## Database conventions
 
 - **Table naming:** singular, `snake_case` (`food`, `diary_entry`, `show`).
 - **Migration filenames:** `NN_<module>_<n>.sql` — a two-digit global ordinal (apply order) + the module
-  - a short name (e.g. `01_wellness_schema.sql`, `06_shows_profile_settings.sql`). The ordinal is the
-    Supabase migration version and fixes apply order. New modules append the next ordinal.
-- **Every user-owned table** carries a `user_id` UUID → `auth.users.id` `ON DELETE CASCADE` and four RLS
-  policies (select/insert/update/delete) using `(select auth.uid()) = user_id`. Child tables without
-  their own `user_id` enforce ownership with an `EXISTS` check against their parent.
-- **F1 — RLS enablement needs an explicit GRANT too.** RLS is enabled in the first migration for every
-  table, **and** that migration also `GRANT`s table privileges to the `anon`/`authenticated` roles — RLS
-  gates rows; the role still needs table-level access. Raw-SQL-migration tables do NOT inherit
-  Supabase's default grants.
-- **Enumerated TEXT columns** use `CHECK` constraints (not Postgres enums). **Exception:** columns whose
-  allowed values are owner-configurable (e.g. `quote.source_type`/`category`, `trip_expense.category`)
-  use plain TEXT with no CHECK — validation moves to the app.
+  - a short name (e.g. `01_wellness_schema.sql`, `06_shows_profile_settings.sql`). The ordinal is the Supabase migration version and fixes apply order. New modules append the next ordinal.
+- **Every user-owned table** carries a `user_id` UUID → `auth.users.id` `ON DELETE CASCADE` and four RLS policies (select/insert/update/delete) using `(select auth.uid()) = user_id`. Child tables without their own `user_id` enforce ownership with an `EXISTS` check against their parent.
+- **F1 — RLS enablement needs an explicit GRANT too.** RLS is enabled in the first migration for every table, **and** that migration also `GRANT`s table privileges to the `anon`/`authenticated` roles — RLS gates rows; the role still needs table-level access. Raw-SQL-migration tables do NOT inherit Supabase's default grants.
+- **Enumerated TEXT columns** use `CHECK` constraints (not Postgres enums). **Exception:** columns whose allowed values are owner-configurable (e.g. `quote.source_type`/`category`, `trip_expense.category`, `medical_report.report_type`) use plain TEXT with no CHECK — validation moves to the app.
 - **`updated_at`** is maintained by the `moddatetime` trigger on every table.
-- **Reference tables** (`nutrient`, `medical_lab_test`) have RLS on with a SELECT-only policy for
-  `anon`/`authenticated`; no write policies — rows written only by migrations.
+- **Reference tables** (`nutrient`, `medical_lab_test`) have RLS on with a SELECT-only policy for `anon`/`authenticated`; no write policies — rows written only by migrations.
 - After applying a migration, regenerate `src/types/database.ts` (`npm run gen:types`).
-- **Never drop a table** without explicit confirmation. Schema changes are migration files in
-  `supabase/migrations/`; the human applies them with `supabase db push`.
+- **Never drop a table** without explicit confirmation. Schema changes are migration files in `supabase/migrations/`; the human applies them with `supabase db push`.
 
 ### Gotchas
 
-- **F18 — pre-aggregate unbounded children in a `security_invoker` view.** When a dashboard aggregates
-  an **unbounded child collection** (e.g. Net Worth holdings × months), pre-aggregate in a
-  `security_invoker` DB view instead of fetching every child row and summing client-side, so the
-  payload doesn't grow with the collection size.
-  - `security_invoker = true` (PG15+) makes the view run as the querying user, so the base tables' RLS
-    applies — no policy on the view itself — and it still needs an explicit `grant select`.
+- **F18 — pre-aggregate unbounded children in a `security_invoker` view.** When a dashboard aggregates an **unbounded child collection** (e.g. Net Worth holdings × months), pre-aggregate in a `security_invoker` DB view instead of fetching every child row and summing client-side, so the payload doesn't grow with the collection size.
+  - `security_invoker = true` (PG15+) makes the view run as the querying user, so the base tables' RLS applies — no policy on the view itself — and it still needs an explicit `grant select`.
   - Query it through the typed data layer like a table (it appears under `Views` in `database.ts`).
-  - Instances: `networth_monthly_type_total` (a `sum` rollup) → `asset-entry.listMonthlyTypeTotals`;
-    `medical_latest_result` (a `DISTINCT ON` latest-per-test) → `medical.listLatestResultPerTest`.
-  - The rule is per-need, not per-table: the Medical dashboard's latest-values card is a pure aggregate
-    (→ view), but its sparklines are a genuine time-series, so they stay a row query, just **scoped to
-    the tracked tests** rather than all history.
-- **F7 — gitignore private data before the first commit.** Gitignore any private-data file (real
-  balances, watch/reading history, quote collection, lab results + report PDFs, trip/expense files)
-  BEFORE the first `git add`: gitignore only stops FUTURE commits; a committed file persists in pushed
-  history and must be purged with `git filter-repo --invert-paths` + force-push. Tracked templates must
-  be sanitized example data, never real values (sanitize example numbers in docs too).
+  - Instances: `networth_monthly_type_total` (a `sum` rollup) → `asset-entry.listMonthlyTypeTotals`; `medical_latest_result` (a `DISTINCT ON` latest-per-test) → `medical.listLatestResultPerTest`.
+  - The rule is per-need, not per-table: the Medical dashboard's latest-values card is a pure aggregate (→ view), but its sparklines are a genuine time-series, so they stay a row query, just **scoped to the tracked tests** rather than all history.
+- **F7 — gitignore private data before the first commit.** Gitignore any private-data file (real balances, watch/reading history, quote collection, lab results + report PDFs, trip/expense files) BEFORE the first `git add`: gitignore only stops FUTURE commits; a committed file persists in pushed history and must be purged with `git filter-repo --invert-paths` + force-push. Tracked templates must be sanitized example data, never real values (sanitize example numbers in docs too).
 
 ## Cross-module relationships
 
-`profile` 1—_ `food`, `activity`, `diary_entry` · `food` 1—_ `serving` · `food` 1—_ `diary_entry` ·
-`activity` 1—_ `diary_entry` · `diary_entry` 1—_ `strength_set` · `profile` 1—_ `show` ·
-`profile` 1—_ `book` · `profile` 1—_ `quote` · `show` 1—_ `quote` and `book` 1—_ `quote`
-(both optional, **ON DELETE SET NULL** — quote survives a linked show/book deletion) ·
-`profile` 1—_ `medical_report` · `medical_report` 1—_ `medical_result` ·
-`medical_lab_test` 1—_ `medical_result` (optional; `test_key` NULL for ad-hoc tests) ·
-`profile` 1—_ `trip` · `trip` 1—_ `trip_day` 1—_ `stop` · `trip` 1—_ `trip_expense` ·
-`profile` 1—_ `remembered_city`. Travel expense categories are a JSONB list on `profile`, not a table. ·
-`auth.users` 1—_ `networth_snapshot` 1—_ `asset_entry` (asset*type `cash | time_deposit | stock | fund
+`profile` 1—_ `food`, `activity`, `diary_entry` · `food` 1—_ `serving` · `food` 1—_ `diary_entry` · `activity` 1—_ `diary_entry` · `diary_entry` 1—_ `strength_set` · `profile` 1—_ `show` · `profile` 1—_ `book` · `profile` 1—_ `quote` · `show` 1—_ `quote` and `book` 1—_ `quote` (both optional, **ON DELETE SET NULL** — quote survives a linked show/book deletion) · `profile` 1—_ `medical_report` · `medical_report` 1—_ `medical_result` · `medical_lab_test` 1—_ `medical_result` (optional; `test_key` NULL for ad-hoc tests) · `profile` 1—_ `trip` · `trip` 1—_ `trip_day` 1—_ `stop` · `trip` 1—_ `trip_expense` · `profile` 1—_ `remembered_city`. Travel expense categories and Medical report types are each a JSONB list on `profile` (`travel_expense_categories`, `medical_report_types`), not a table. · `auth.users` 1—_ `networth_snapshot` 1—_ `asset_entry` (asset*type `cash | time_deposit | stock | fund
 | retirement | insurance | property`) · the insurance catalogue: `insurance_policy` 1—*
-`insurance_schedule` 1—\_ `insurance_schedule_point` (per-user reference data; child tables enforce
-ownership via an `EXISTS` check up the parent chain). Insurance `asset_entry` rows are **generated +
-frozen** from the catalogue per month; funds use `asset_entry` with importer-filled `details`.
+`insurance_schedule` 1—\_ `insurance_schedule_point` (per-user reference data; child tables enforce ownership via an `EXISTS` check up the parent chain). Insurance `asset_entry` rows are **generated + frozen** from the catalogue per month; funds use `asset_entry` with importer-filled `details`.
 
 ### Gotchas
 
-- **F19 — load the insurance catalogue in one query.** Load the insurance catalogue (policies →
-  schedules → points) in **one** query via PostgREST resource embedding
-  (`insurance_policy.select('*, insurance_schedule(*, insurance_schedule_point(*))')`), not three
-  sequential round-trips, or Monthly Entry / Insurance Policies stall on free-tier latency
-  (`data/insurance.listCatalogue`). The independent Monthly-Entry loads (prior snapshot · catalogue ·
-  FX) run via `Promise.all`.
-- **F20 — the manual Net Worth CSV import writes a complete snapshot.** The manual importer
-  (`asset-entry.saveManualImportComplete`) writes: imported manual rows + the month's funds (kept, else
-  carried forward) + insurance (kept if frozen, else resolved + frozen now). A naive full-replace save
-  would wipe the not-yet-frozen insurance/fund rows; the manual importer only owns the manual types.
+- **F19 — load the insurance catalogue in one query.** Load the insurance catalogue (policies → schedules → points) in **one** query via PostgREST resource embedding (`insurance_policy.select('*, insurance_schedule(*, insurance_schedule_point(*))')`), not three sequential round-trips, or Monthly Entry / Insurance Policies stall on free-tier latency (`data/insurance.listCatalogue`). The independent Monthly-Entry loads (prior snapshot · catalogue · FX) run via `Promise.all`.
+- **F20 — the manual Net Worth CSV import writes a complete snapshot.** The manual importer (`asset-entry.saveManualImportComplete`) writes: imported manual rows + the month's funds (kept, else carried forward) + insurance (kept if frozen, else resolved + frozen now). A naive full-replace save would wipe the not-yet-frozen insurance/fund rows; the manual importer only owns the manual types.
 
 ## Multi-user readiness
 
-- Because every table carries `user_id` and RLS isolates rows by `auth.uid()`, additional family members
-  work with no schema change: they sign in with their own Google account and get their own `profile` and
-  data automatically.
-- A future "shared household custom foods" feature would be an additive change (e.g. a nullable
-  `household_id` + a shared-visibility policy), not a rebuild.
+- Because every table carries `user_id` and RLS isolates rows by `auth.uid()`, additional family members work with no schema change: they sign in with their own Google account and get their own `profile` and data automatically.
+- A future "shared household custom foods" feature would be an additive change (e.g. a nullable `household_id` + a shared-visibility policy), not a rebuild.
 
 ## Shared external APIs
 
 Called directly from the browser (no server proxy); CORS-enabled.
 
-- **CJK queries** (remote searches only — local filters use `zh-fold`): a query containing CJK is fired
-  in **both** scripts — Simplified (the typed form) + HK-Traditional (via lazy `opencc-js`) — and results
-  merged + de-duped (`searchZhVariants` in `src/lib/zh-query.ts`). Applies to each module's remote search
-  API; see the respective module spec for which API is searched.
-- **Matching remote results** (Books): `normMatch` (`src/lib/books-api.ts`) is the shared canonical match
-  key — `foldZh` (Traditional→Simplified + lowercase) then strip whitespace + ASCII/CJK punctuation,
-  keeping CJK ideographs. It backs the author-aware `rankSearchResults({ title, author })` and the
-  importer's `isConfidentMatch`, so the bulk importer and the New/Edit search resolve a book identically.
-  (An earlier ASCII-only normalizer collapsed every Chinese title to '', so all CJK matches looked exact
-  and were never flagged for review.)
-- **Frankfurter** (`api.frankfurter.dev/v1/{date}?from={currency}&to=HKD`): keyless, ECB-sourced,
-  CORS-enabled.
+- **CJK queries** (remote searches only — local filters use `zh-fold`): a query containing CJK is fired in **both** scripts — Simplified (the typed form) + HK-Traditional (via lazy `opencc-js`) — and results merged + de-duped (`searchZhVariants` in `src/lib/zh-query.ts`). Applies to each module's remote search API; see the respective module spec for which API is searched.
+- **Matching remote results** (Books): `normMatch` (`src/lib/books-api.ts`) is the shared canonical match key — `foldZh` (Traditional→Simplified + lowercase) then strip whitespace + ASCII/CJK punctuation, keeping CJK ideographs. It backs the author-aware `rankSearchResults({ title, author })` and the importer's `isConfidentMatch`, so the bulk importer and the New/Edit search resolve a book identically. (An earlier ASCII-only normalizer collapsed every Chinese title to '', so all CJK matches looked exact and were never flagged for review.)
+- **Frankfurter** (`api.frankfurter.dev/v1/{date}?from={currency}&to=HKD`): keyless, ECB-sourced, CORS-enabled.
   - Returns the most recent rate on or before the requested date (handles non-trading days).
   - The fetched rate is **frozen** on first write so saved records are immune to later rate revisions.
-  - Helpers + a small cache live in `src/lib/fx.ts` (Net Worth) and `src/lib/trip-fx.ts` (Travel).
-    `fetchRateToHkdOn(currency, date)` is the shared fetch interface.
+  - Helpers + a small cache live in `src/lib/fx.ts` (Net Worth) and `src/lib/trip-fx.ts` (Travel). `fetchRateToHkdOn(currency, date)` is the shared fetch interface.
   - HKD is always 1 (never fetched); CNY is stored as the `CNY` code, not `RMB`.
   - Failures are non-fatal; the user can override manually.
 
 ## UI implementation gotchas
 
-General React/CSS pitfalls, applicable to any module. (Visual **tokens** — color, spacing, typography —
-stay in `01_design_system.md`; these are implementation mechanics.)
+General React/CSS pitfalls, applicable to any module. (Visual **tokens** — color, spacing, typography — stay in `01_design_system.md`; these are implementation mechanics.)
 
-- **F23 — typography scale + Dynamic Type.** Font sizes are **one rem-based scale** — the `@theme`
-  `--text-*` tokens in `src/index.css` (`text-title/heading/field/body/label/caption/section`); see the
-  role recipes in `docs/01_design_system.md`.
-  - **Never hardcode `text-[Npx]`/`text-xs`/`text-sm`** — pick a role token (CI-greppable: no
-    `text-[…px]` should remain).
-  - Because the tokens are `rem`, the whole UI scales from one lever: a single **`data-font-scale`**
-    attribute on `<html>` sets `--font-scale` (default→none / `large`→1.15 / `larger`→1.3), and
-    `html { font-size: calc(16px * var(--font-scale)) }` grows every rem (text, padding, gaps).
-  - **Icons** (Tabler) ride the same lever via a `.tabler-icon` `transform: scale(...)` keyed off the
-    same attribute — `transform`, not width/height, so the icon's layout box doesn't grow and add wrap
-    pressure.
-  - Presets are **≥ 1**, so a focused input never drops below 16px (F21-adjacent — see F21's iOS note
-    below).
-  - The preset lives in **`profile.font_size`** (cross-device) and is saved to `localStorage`; an inline
-    boot script in `index.html` applies the cached value before first paint (no flash) and
-    `useFontSizeSync` reconciles from the profile once it loads. `font-scale.ts` is the one writer of
-    the attribute.
-  - Compact label·value rows (`FieldRow`) use `flex-wrap` + `min-w-0` so the value drops to its own line
-    at a larger preset instead of squeezing.
-- **F21 — iOS input-focus zoom.** iOS Safari auto-zooms when a focused `<input>/<select>/<textarea>` has
-  font-size **< 16px** and **never zooms back out** — so closing a sheet left the parent screen stuck
-  zoomed/clipped.
-  - Fixed by rendering **focusable text controls at 16px**, not by locking the viewport: the shared
-    `.field-control` (`src/index.css`) is `text-field` (16px), and the two inputs that don't use it
-    (`SearchBar`, `TagInput` — their chrome is on a wrapper) set `text-field` directly.
-  - The `index.html` viewport keeps **pinch-zoom enabled** (no `maximum-scale` / `user-scalable=no`) so
-    small text on any screen stays zoomable. (Earlier we instead locked the viewport to keep a 15px
-    token; that disabled all browser pinch-zoom, so small text couldn't be magnified — reversed in
-    favour of the 16px controls, since 15px→16px is visually negligible.)
+- **F23 — typography scale + Dynamic Type.** Font sizes are **one rem-based scale** — the `@theme` `--text-*` tokens in `src/index.css` (`text-title/heading/field/body/label/caption/section`); see the role recipes in `docs/01_design_system.md`.
+  - **Never hardcode `text-[Npx]`/`text-xs`/`text-sm`** — pick a role token (CI-greppable: no `text-[…px]` should remain).
+  - Because the tokens are `rem`, the whole UI scales from one lever: a single **`data-font-scale`** attribute on `<html>` sets `--font-scale` (default→none / `large`→1.15 / `larger`→1.3), and `html { font-size: calc(16px * var(--font-scale)) }` grows every rem (text, padding, gaps).
+  - **Icons** (Tabler) ride the same lever via a `.tabler-icon` `transform: scale(...)` keyed off the same attribute — `transform`, not width/height, so the icon's layout box doesn't grow and add wrap pressure.
+  - Presets are **≥ 1**, so a focused input never drops below 16px (F21-adjacent — see F21's iOS note below).
+  - The preset lives in **`profile.font_size`** (cross-device) and is saved to `localStorage`; an inline boot script in `index.html` applies the cached value before first paint (no flash) and `useFontSizeSync` reconciles from the profile once it loads. `font-scale.ts` is the one writer of the attribute.
+  - Compact label·value rows (`FieldRow`) use `flex-wrap` + `min-w-0` so the value drops to its own line at a larger preset instead of squeezing.
+- **F21 — iOS input-focus zoom.** iOS Safari auto-zooms when a focused `<input>/<select>/<textarea>` has font-size **< 16px** and **never zooms back out** — so closing a sheet left the parent screen stuck zoomed/clipped.
+  - Fixed by rendering **focusable text controls at 16px**, not by locking the viewport: the shared `.field-control` (`src/index.css`) is `text-field` (16px), and the two inputs that don't use it (`SearchBar`, `TagInput` — their chrome is on a wrapper) set `text-field` directly.
+  - The `index.html` viewport keeps **pinch-zoom enabled** (no `maximum-scale` / `user-scalable=no`) so small text on any screen stays zoomable. (Earlier we instead locked the viewport to keep a 15px token; that disabled all browser pinch-zoom, so small text couldn't be magnified — reversed in favour of the 16px controls, since 15px→16px is visually negligible.)
   - **Any new focusable text input must be ≥16px** — use `.field-control` or `text-field`.
-  - **`touch-action` also gates pinch-zoom:** an element that captures a custom pointer gesture must
-    list `pinch-zoom` (e.g. `pan-y pinch-zoom`, not bare `pan-y`), or the browser silently disables zoom
-    over that whole subtree. This bit the `SwipeRow` rows (every list/library/reports/trips row) and
-    `QuotesZen`'s scroll area — both now use `pan-y pinch-zoom`. The lone exception is `ReorderList`'s
-    grip handle (`touch-action:none`, needed to capture a vertical drag); it's an ~18px target, and a
-    two-finger pinch lands on the surrounding row (default `touch-action`) where zoom still works.
-- **F22 — a food's servings vs. a log's amount are separate; persist servings only on a deliberate
-  edit.** A `serving` row (name + grams) is a reusable **measure** that belongs to the food;
-  `diary_entry.amount` is the **per-log quantity**.
-  - Food Detail's Manage-servings editor is the **only** thing that writes `serving` rows /
-    `food.default_serving_id`, and it does so **only when that list is dirty** (a name/grams or the
-    default changed) — gated independently of the Amount field and the per-log serving selection. So
-    logging a different amount, or picking another serving for one entry, never mutates the stored
-    default.
-  - Because a serving needs a `food.id` (FK), adding a custom serving to a never-saved USDA/OFF food
-    first mints its `food` row (the heart/ADD path). Opening a USDA/OFF result **resolves to the cached
-    `food` row** (`getFoodByExternal`) before the live API, so stored servings/default come back; the
-    **All** list dedupes the live twin of any cached external.
-  - `replaceServings` mints new serving ids each call, so re-point `default_serving_id` by position
-    right after.
-  - Cached USDA/OFF rows are surfaced + deletable in Library via `deleteFoodSmart` (soft if a diary entry
-    references the food, else hard) — see `docs/04_wellness.md`.
-  - **Seed on first save:** the food's servings (incl. its USDA/OFF household serving) are written when
-    it's first cached — both interactively (`ensureCachedId` → `writeServings`) and on import — so a
-    resolved-to-cached food shows more than just "100 g".
-  - The **CSV importer** follows this — a USDA food's servings become its USDA serving plus the CSV
-    `serving*` measures, with a `default_serving`; **re-import overwrites** servings/default (file
-    wins), and `is_custom=true` skips USDA matching entirely.
-- **F6c/F9 — flex scroll panes.** A flex-col scroll pane needs `min-h-0` on ITSELF **and** `shrink-0` on
-  EVERY direct child.
-  - A flex item's default `min-height:auto` makes the pane grow to fit content (then
-    `overflow-hidden` clips it / the whole `<main>` scrolls); once height-constrained, default
-    `flex-shrink:1` squishes children.
-  - Don't reach for a fixed pixel height; make a simple scroll pane a plain block
-    `flex-1 overflow-y-auto`.
-- **F14 — overlays over third-party widgets need an explicit z-index.** A DOM overlay layered over a map
-  or other third-party widget needs an explicit `z-index` above that widget's own controls (e.g.
-  Leaflet's `.leaflet-top/.leaflet-bottom` sit at `z-index:1000`, so use `z-[1100]`), or the widget's
-  controls swallow taps.
-- **Portal any popover that can render inside `overflow` / `transform` / `opacity`.** An `absolute`
-  dropdown/popover is hidden three ways by common ancestors:
+  - **`touch-action` also gates pinch-zoom:** an element that captures a custom pointer gesture must list `pinch-zoom` (e.g. `pan-y pinch-zoom`, not bare `pan-y`), or the browser silently disables zoom over that whole subtree. This bit the `SwipeRow` rows (every list/library/reports/trips row) and `QuotesZen`'s scroll area — both now use `pan-y pinch-zoom`. The lone exception is `ReorderList`'s grip handle (`touch-action:none`, needed to capture a vertical drag); it's an ~18px target, and a two-finger pinch lands on the surrounding row (default `touch-action`) where zoom still works.
+- **F22 — a food's servings vs. a log's amount are separate; persist servings only on a deliberate edit.** A `serving` row (name + grams) is a reusable **measure** that belongs to the food; `diary_entry.amount` is the **per-log quantity**.
+  - Food Detail's Manage-servings editor is the **only** thing that writes `serving` rows / `food.default_serving_id`, and it does so **only when that list is dirty** (a name/grams or the default changed) — gated independently of the Amount field and the per-log serving selection. So logging a different amount, or picking another serving for one entry, never mutates the stored default.
+  - Because a serving needs a `food.id` (FK), adding a custom serving to a never-saved USDA/OFF food first mints its `food` row (the heart/ADD path). Opening a USDA/OFF result **resolves to the cached `food` row** (`getFoodByExternal`) before the live API, so stored servings/default come back; the **All** list dedupes the live twin of any cached external.
+  - `replaceServings` mints new serving ids each call, so re-point `default_serving_id` by position right after.
+  - Cached USDA/OFF rows are surfaced + deletable in Library via `deleteFoodSmart` (soft if a diary entry references the food, else hard) — see `docs/04_wellness.md`.
+  - **Seed on first save:** the food's servings (incl. its USDA/OFF household serving) are written when it's first cached — both interactively (`ensureCachedId` → `writeServings`) and on import — so a resolved-to-cached food shows more than just "100 g".
+  - The **CSV importer** follows this — a USDA food's servings become its USDA serving plus the CSV `serving*` measures, with a `default_serving`; **re-import overwrites** servings/default (file wins), and `is_custom=true` skips USDA matching entirely.
+- **F6c/F9 — flex scroll panes.** A flex-col scroll pane needs `min-h-0` on ITSELF **and** `shrink-0` on EVERY direct child.
+  - A flex item's default `min-height:auto` makes the pane grow to fit content (then `overflow-hidden` clips it / the whole `<main>` scrolls); once height-constrained, default `flex-shrink:1` squishes children.
+  - Don't reach for a fixed pixel height; make a simple scroll pane a plain block `flex-1 overflow-y-auto`.
+- **F14 — overlays over third-party widgets need an explicit z-index.** A DOM overlay layered over a map or other third-party widget needs an explicit `z-index` above that widget's own controls (e.g. Leaflet's `.leaflet-top/.leaflet-bottom` sit at `z-index:1000`, so use `z-[1100]`), or the widget's controls swallow taps.
+- **Portal any popover that can render inside `overflow` / `transform` / `opacity`.** An `absolute` dropdown/popover is hidden three ways by common ancestors:
   - an `overflow-hidden` container clips it (e.g. a `ReorderList` row / a rounded card);
-  - a `transform` ancestor creates a **stacking context**, so the popover overflowing into siblings
-    paints **under** later ones regardless of `z-index` (every reorder row has a drag `transform`);
-  - an `opacity < 1` ancestor renders the whole subtree — background included — into an alpha buffer, so
-    the panel goes **semi-transparent** (this is what made the dimmed `opacity-55` add-expense row's
-    category menu see-through).
-  - Fix all three by rendering the popover via `createPortal(…, document.body)`, positioned `fixed` from
-    the trigger's `getBoundingClientRect()` (flip above when no room below). **`SelectMenu`** and
-    **`ColorPicker`** both do this; any new in-list/in-form popover should too.
+  - a `transform` ancestor creates a **stacking context**, so the popover overflowing into siblings paints **under** later ones regardless of `z-index` (every reorder row has a drag `transform`);
+  - an `opacity < 1` ancestor renders the whole subtree — background included — into an alpha buffer, so the panel goes **semi-transparent** (this is what made the dimmed `opacity-55` add-expense row's category menu see-through).
+  - Fix all three by rendering the popover via `createPortal(…, document.body)`, positioned `fixed` from the trigger's `getBoundingClientRect()` (flip above when no room below). **`SelectMenu`** and **`ColorPicker`** both do this; any new in-list/in-form popover should too.
 
 ## Performance notes
 
@@ -511,168 +279,69 @@ stay in `01_design_system.md`; these are implementation mechanics.)
 
 **Query layer**
 
-- List screens (Dashboard + Library/Trips) select only the columns they render, search, filter, or sort
-  on — not `select('*')`. Full rows (all columns) are only fetched by Entry/Edit via
-  `getShow`/`getBook`/`getQuote`/`getTrip`/`getTripBundle`.
-- `show`, `book`, `quote` each have a `(user_id, updated_at desc)` index covering their list query's
-  default sort order.
-- `quote.show_id` / `quote.book_id` are indexed (`quote_show_id_idx` / `quote_book_id_idx`) so deleting a
-  Show or Book doesn't force a full scan of `quote` for its `ON DELETE SET NULL`.
-- `stop.user_id` is indexed, covering the Travel Dashboard/Trips facet query (`listTripFacetRows`), which
-  queries `stop` directly across every trip.
+- List screens (Dashboard + Library/Trips) select only the columns they render, search, filter, or sort on — not `select('*')`. Full rows (all columns) are only fetched by Entry/Edit via `getShow`/`getBook`/`getQuote`/`getTrip`/`getTripBundle`.
+- `show`, `book`, `quote` each have a `(user_id, updated_at desc)` index covering their list query's default sort order.
+- `quote.show_id` / `quote.book_id` are indexed (`quote_show_id_idx` / `quote_book_id_idx`) so deleting a Show or Book doesn't force a full scan of `quote` for its `ON DELETE SET NULL`.
+- `stop.user_id` is indexed, covering the Travel Dashboard/Trips facet query (`listTripFacetRows`), which queries `stop` directly across every trip.
 
 **Rendering**
 
-- `Thumb` (shared by `PosterThumb`/`CoverThumb`) uses `loading="lazy"` — off-screen list rows don't fetch
-  their image until they're about to scroll into view.
-- `TravelEntry`'s itinerary groups a trip's stops by day once per `stops` change (memoized `Map`),
-  instead of re-filtering the whole trip's stops for every day on every render.
-- Library filter facets — Shows'/Books' genre list, Quotes' tag ranking + tag search — are memoized
-  against the underlying list, so they recompute only when the list actually changes, not on every
-  render (previously reran on every keystroke in Search/tag-filter).
+- `Thumb` (shared by `PosterThumb`/`CoverThumb`) uses `loading="lazy"` — off-screen list rows don't fetch their image until they're about to scroll into view.
+- `TravelEntry`'s itinerary groups a trip's stops by day once per `stops` change (memoized `Map`), instead of re-filtering the whole trip's stops for every day on every render.
+- Library filter facets — Shows'/Books' genre list, Quotes' tag ranking + tag search — are memoized against the underlying list, so they recompute only when the list actually changes, not on every render (previously reran on every keystroke in Search/tag-filter).
 
 **Data fetching**
 
-- `useAsync` supports an opt-in shared cache (`{ key, version }`): a Dashboard and its matching
-  Library/Trips/Zen screen share one cache entry per module. A hit at the exact version the module was
-  last written skips the network call entirely, so switching between a module's Dashboard and Library no
-  longer independently re-fetches the same full list.
+- `useAsync` supports an opt-in shared cache (`{ key, version }`): a Dashboard and its matching Library/Trips/Zen screen share one cache entry per module. A hit at the exact version the module was last written skips the network call entirely, so switching between a module's Dashboard and Library no longer independently re-fetches the same full list.
 
 **Known gap, low priority at current scale**
 
-- No virtualization or pagination on any list screen — acceptable at personal-library scale (low
-  thousands of rows); revisit if any module's row count grows well past that.
+- No virtualization or pagination on any list screen — acceptable at personal-library scale (low thousands of rows); revisit if any module's row count grows well past that.
 
 ### Journal
 
 **Query layer**
 
-- `listJournalEntries` selects only the columns the listing renders/searches/filters/sorts on
-  (`id, day, journal_entry, tags`) — not `select('*')`; `user_id`/`created_at`/`updated_at` are only
-  needed by `getJournalEntry`/`getJournalEntryByDay` (Entry screen), same convention as
-  `QUOTE_LIST_COLUMNS` above.
-- `journal_entry` has one index: the `UNIQUE(user_id, day)` constraint's own btree, which covers every
-  query pattern (equality lookups, the listing's DESC order via a backward scan, `listJournalDays`'
-  range scan, and the importer's dedup) — a separate explicit `(user_id, day desc)` index was dropped
-  as pure write-overhead with no read benefit.
+- `listJournalEntries` selects only the columns the listing renders/searches/filters/sorts on (`id, day, journal_entry, tags`) — not `select('*')`; `user_id`/`created_at`/`updated_at` are only needed by `getJournalEntry`/`getJournalEntryByDay` (Entry screen), same convention as `QUOTE_LIST_COLUMNS` above.
+- `journal_entry` has one index: the `UNIQUE(user_id, day)` constraint's own btree, which covers every query pattern (equality lookups, the listing's DESC order via a backward scan, `listJournalDays`' range scan, and the importer's dedup) — a separate explicit `(user_id, day desc)` index was dropped as pure write-overhead with no read benefit.
 
 **Data fetching**
 
-- The Edit entry point (tapping a Library row) already fetches the target row once, by `id`, to
-  resolve the screen's starting day. `JournalForm` seeds its initial state from that same row instead
-  of re-fetching it by day on mount, cutting a redundant round-trip on the module's most common action.
-  Every subsequent in-screen day change (chevrons/calendar), and the New entry point's starting day,
-  still fetch normally — skipping those would reintroduce the bug where a day that already has an
-  entry briefly (or persistently) shows a blank draft.
-- Its refresh channel (`bumpJournal`/`useJournalVersion`) is separate from Quotes' (`bumpQuotes`/
-  `useQuotesVersion`), so a Journal write never forces a Quotes Library refetch, or vice versa.
+- The Edit entry point (tapping a Library row) already fetches the target row once, by `id`, to resolve the screen's starting day. `JournalForm` seeds its initial state from that same row instead of re-fetching it by day on mount, cutting a redundant round-trip on the module's most common action. Every subsequent in-screen day change (chevrons/calendar), and the New entry point's starting day, still fetch normally — skipping those would reintroduce the bug where a day that already has an entry briefly (or persistently) shows a blank draft.
+- Its refresh channel (`bumpJournal`/`useJournalVersion`) is separate from Quotes' (`bumpQuotes`/ `useQuotesVersion`), so a Journal write never forces a Quotes Library refetch, or vice versa.
 
 ### Net Worth
 
-- **Bounded latest-month fetch, not full history** (`getLatestSnapshot`,
-  `src/data/networth-snapshot.ts`): the Dashboard's latest-month figures (current total, funds,
-  insurance agg) load via one query ordered by month desc, limit 1, instead of fetching every snapshot
-  row just to take the last one.
-- **Parallel fetch for Dashboard's secondary load**: once the latest snapshot is known, its entries, the
-  insurance catalogue, and that month's FX rates are independent — fetched together via `Promise.all`
-  instead of one waiting on the next.
-- **Memoized Dashboard derivations** (`NetWorthDashboard`): the insurance aggregate (`buildInsuranceAgg`,
-  which walks every age × every policy's schedules) and the month-folding/windowing/chart-data/breakdown
-  chain are behind `useMemo`, so toggling unrelated UI state (the range menu, chart mode, Liquid Only)
-  doesn't re-run them.
-- **Memoized filter/sort/break-even on Insurance Policies** (`InsurancePolicies`): `applyInsuranceView`
-  and each policy's break-even flag (`hasBrokenEven`) are computed once behind `useMemo`, keyed on the
-  catalogue + criteria + current age, instead of recomputing on every render (e.g. opening the filter
-  panel).
-- **Memoized schedule sort on Edit Insurance** (`InsuranceEntry`): the desc-sorted schedule-version list
-  is memoized on `schedules`, so it isn't resorted on every keystroke in the form.
-- **Parallel fetch on Monthly Entry's load** (`NetWorthEntry`): the existing-month snapshot and the
-  insurance catalogue are fetched concurrently, since the catalogue is needed by both the "existing month
-  missing frozen insurance" and "new month" branches — removes a sequential round-trip from the common
-  path. For a new month, the prior snapshot and the current month's FX rates also fetch concurrently.
-- **Index shape matches actual query pattern** (`asset_entry`, `03_networth_schema.sql`): reordered to
-  `(snapshot_id, user_id)` — every real query filters by `snapshot_id` alone (RLS adds `user_id`
-  underneath), so the old `(user_id, snapshot_id)` leading-column order couldn't serve it as a
-  leading-column index scan. The redundant single-column `user_id` index on `networth_snapshot` was also
-  dropped — `unique(user_id, month)` already covers any user_id-only lookup.
-- **One round-trip for a month's snapshot** (`getSnapshotWithEntries`, `src/data/asset-entry.ts`): the
-  snapshot and its entries load via one nested-embed query (`networth_snapshot` → `asset_entry(*)`,
-  ordered by `sort_order`/`created_at` on the embed) instead of two sequential queries. Used by Monthly
-  Entry's load and the manual CSV importer's save.
-- **Parallel fetch on manual CSV import save** (`saveManualImportComplete`, `src/data/asset-entry.ts`):
-  the existing month, the prior month (fund carry-forward source), and the insurance catalogue are
-  independent, so all three fire together via `Promise.all` instead of only starting the
-  prior-month/catalogue fetch after learning the month needs them.
-- **Batched schedule-add on bulk insurance import** (`applyBulkImport`, `src/data/insurance.ts`):
-  policies that need a new schedule version now insert all their `insurance_schedule` rows in one call
-  and all their `insurance_schedule_point` rows in one chunked call, instead of looping
-  `addScheduleVersion` once per policy (2 round-trips each). Matches the shape the "create new policy"
-  bucket already used in the same function.
+- **Bounded latest-month fetch, not full history** (`getLatestSnapshot`, `src/data/networth-snapshot.ts`): the Dashboard's latest-month figures (current total, funds, insurance agg) load via one query ordered by month desc, limit 1, instead of fetching every snapshot row just to take the last one.
+- **Parallel fetch for Dashboard's secondary load**: once the latest snapshot is known, its entries, the insurance catalogue, and that month's FX rates are independent — fetched together via `Promise.all` instead of one waiting on the next.
+- **Memoized Dashboard derivations** (`NetWorthDashboard`): the insurance aggregate (`buildInsuranceAgg`, which walks every age × every policy's schedules) and the month-folding/windowing/chart-data/breakdown chain are behind `useMemo`, so toggling unrelated UI state (the range menu, chart mode, Liquid Only) doesn't re-run them.
+- **Memoized filter/sort/break-even on Insurance Policies** (`InsurancePolicies`): `applyInsuranceView` and each policy's break-even flag (`hasBrokenEven`) are computed once behind `useMemo`, keyed on the catalogue + criteria + current age, instead of recomputing on every render (e.g. opening the filter panel).
+- **Memoized schedule sort on Edit Insurance** (`InsuranceEntry`): the desc-sorted schedule-version list is memoized on `schedules`, so it isn't resorted on every keystroke in the form.
+- **Parallel fetch on Monthly Entry's load** (`NetWorthEntry`): the existing-month snapshot and the insurance catalogue are fetched concurrently, since the catalogue is needed by both the "existing month missing frozen insurance" and "new month" branches — removes a sequential round-trip from the common path. For a new month, the prior snapshot and the current month's FX rates also fetch concurrently.
+- **Index shape matches actual query pattern** (`asset_entry`, `03_networth_schema.sql`): reordered to `(snapshot_id, user_id)` — every real query filters by `snapshot_id` alone (RLS adds `user_id` underneath), so the old `(user_id, snapshot_id)` leading-column order couldn't serve it as a leading-column index scan. The redundant single-column `user_id` index on `networth_snapshot` was also dropped — `unique(user_id, month)` already covers any user_id-only lookup.
+- **One round-trip for a month's snapshot** (`getSnapshotWithEntries`, `src/data/asset-entry.ts`): the snapshot and its entries load via one nested-embed query (`networth_snapshot` → `asset_entry(*)`, ordered by `sort_order`/`created_at` on the embed) instead of two sequential queries. Used by Monthly Entry's load and the manual CSV importer's save.
+- **Parallel fetch on manual CSV import save** (`saveManualImportComplete`, `src/data/asset-entry.ts`): the existing month, the prior month (fund carry-forward source), and the insurance catalogue are independent, so all three fire together via `Promise.all` instead of only starting the prior-month/catalogue fetch after learning the month needs them.
+- **Batched schedule-add on bulk insurance import** (`applyBulkImport`, `src/data/insurance.ts`): policies that need a new schedule version now insert all their `insurance_schedule` rows in one call and all their `insurance_schedule_point` rows in one chunked call, instead of looping `addScheduleVersion` once per policy (2 round-trips each). Matches the shape the "create new policy" bucket already used in the same function.
 
 ### Wellness
 
-- **Session-scoped nutrient reference cache** (`src/lib/nutrient-reference-cache.ts`,
-  `useNutrientReference`): the static nutrient reference table was refetched on every mount across 7
-  screens (Dashboard, Daily Report, Diary, Food Detail, Food New, Visible/Highlighted Nutrients settings,
-  Food Import). Now the first mount per session hits the network and every other mount reads the
-  resolved array synchronously via `useAsync`'s `initialData` seed — no repeat round trips for data that
-  never changes at runtime.
-- **Narrower range queries, not `select('*')`** (`listEntrySummariesByRange`, `listEntryDayKinds`,
-  `src/data/diary-entry.ts`): the old `listEntriesByRange` pulled every column for every row in a date
-  range that can span up to a year (Dashboard) or a month (Diary calendar cues). Split into two
-  purpose-built queries — `day`, `kind`, `energy_kcal`, `nutrients` for the Dashboard's nutrient
-  aggregation, `day`, `kind` for the calendar's cue dots — cutting payload size for the two
-  heaviest-volume reads in the module.
-- **Batched reorder, one round trip not N** (`reorderEntries`, `src/data/diary-entry.ts`): drag-to-reorder
-  previously fired one `update` per row via `Promise.all` (N parallel requests for what's really one
-  statement). Now takes the already-loaded rows and does a single `upsert`, resending full rows so NOT
-  NULL columns stay satisfied while only `sort_order` actually changes.
-- **Missing composite indexes on `food`/`activity`** (`supabase/migrations/01_wellness_schema.sql`):
-  these tables predated the (`user_id, <sort column>`) composite-index convention already applied to
-  Shows/Books/Quotes/Travel/Medical. Added `food (user_id, created_at desc)` and
-  `activity (user_id, name)` to cover `listFoods`/`listActivities`' default sort order, plus a partial
-  index on `food (user_id, source, external_id) where external_id is not null` to cover
-  `getFoodByExternal`'s lookup (hit on every USDA/OFF food view and import dedup check).
-- **Parallel independent fetches, not sequential** (`fetchFoodRow` in `WellnessFoodEntry.tsx`; the
-  custom-food branch of `loadFn` in `WellnessDiaryFoodDetailSheet.tsx`): both did `await getFood(id)`
-  then `await listServings(id)` sequentially, even though `listServings` only needs the already-known
-  `id`, not `getFood`'s result. Now fired together via `Promise.all`, roughly halving round-trip latency
-  on two of the most frequently opened screens (every food edit, every local-food view).
+- **Session-scoped nutrient reference cache** (`src/lib/nutrient-reference-cache.ts`, `useNutrientReference`): the static nutrient reference table was refetched on every mount across 7 screens (Dashboard, Daily Report, Diary, Food Detail, Food New, Visible/Highlighted Nutrients settings, Food Import). Now the first mount per session hits the network and every other mount reads the resolved array synchronously via `useAsync`'s `initialData` seed — no repeat round trips for data that never changes at runtime.
+- **Narrower range queries, not `select('*')`** (`listEntrySummariesByRange`, `listEntryDayKinds`, `src/data/diary-entry.ts`): the old `listEntriesByRange` pulled every column for every row in a date range that can span up to a year (Dashboard) or a month (Diary calendar cues). Split into two purpose-built queries — `day`, `kind`, `energy_kcal`, `nutrients` for the Dashboard's nutrient aggregation, `day`, `kind` for the calendar's cue dots — cutting payload size for the two heaviest-volume reads in the module.
+- **Batched reorder, one round trip not N** (`reorderEntries`, `src/data/diary-entry.ts`): drag-to-reorder previously fired one `update` per row via `Promise.all` (N parallel requests for what's really one statement). Now takes the already-loaded rows and does a single `upsert`, resending full rows so NOT NULL columns stay satisfied while only `sort_order` actually changes.
+- **Missing composite indexes on `food`/`activity`** (`supabase/migrations/01_wellness_schema.sql`): these tables predated the (`user_id, <sort column>`) composite-index convention already applied to Shows/Books/Quotes/Travel/Medical. Added `food (user_id, created_at desc)` and `activity (user_id, name)` to cover `listFoods`/`listActivities`' default sort order, plus a partial index on `food (user_id, source, external_id) where external_id is not null` to cover `getFoodByExternal`'s lookup (hit on every USDA/OFF food view and import dedup check).
+- **Parallel independent fetches, not sequential** (`fetchFoodRow` in `WellnessFoodEntry.tsx`; the custom-food branch of `loadFn` in `WellnessDiaryFoodDetailSheet.tsx`): both did `await getFood(id)` then `await listServings(id)` sequentially, even though `listServings` only needs the already-known `id`, not `getFood`'s result. Now fired together via `Promise.all`, roughly halving round-trip latency on two of the most frequently opened screens (every food edit, every local-food view).
 
 ### Medical
 
-- **Bounded queries, not full history** (`useMedicalTrends`): the Dashboard loads three bounded queries
-  in one pass — `listLatestResultPerTest` (the `medical_latest_result` view, one row per test),
-  `listTrackedResultSeries` (history for tracked tests only), and `listReports(userId, 6)` (6 most
-  recent, not the full list). Payload never grows with a test's full history or the full reports table.
-- **Parallel fetch on Report detail / Edit** (`getReportWithResults`, `src/data/medical.ts`): the parent
-  report and its result rows are independent queries (results only need `reportId`), so they're fired
-  together via `Promise.all` instead of one waiting on the other — roughly halves the round-trip latency
-  opening or editing a report.
-- **In-memory Dashboard cache** (`src/lib/medical-cache.ts`): the last-loaded Dashboard payload is seeded
-  into `useMedicalTrends` on re-entry so navigating away and back repaints instantly instead of a
-  "Loading…" flash, while the real fetch reconciles in the background. Deliberately **not**
-  `localStorage`/`sessionStorage` — Medical is the one module with its own biometric/PIN lock, and the
-  cached payload (test values, flags, narratives) is exactly the content that lock exists to hide. An
-  in-memory `Map` disappears on reload/tab-close, same lifetime as the lock's own unlocked-session flag,
-  so it never survives past the point the lock would re-engage. Keyed per user.
-- **Reports list**: bounded per-request via `listReports`'s optional `limit` param — the Dashboard
-  timeline passes `6`; the full Reports screen (search/filter/sort) omits it to get every row.
-- **Import matching** (`matchTestKey`, `src/lib/medical-import.ts`): the alias/category lookup tables are
-  built **once at module load** into `Map`s, giving O(1) per-row matching during import rather than
-  re-scanning the ~150-test reference per row.
-- **Test picker reference grouping** (`medicalTestsByCategory`, `src/lib/medical.ts`): grouped-by-category
-  test list is computed **once at module load** (frozen) instead of re-filtering/re-sorting the
-  ~150-test reference on every keystroke in `MedicalTestPickerOverlay`.
-- **Memoized display-order derivations**: `orderResultsForDisplay`/`groupResultsByCategory` are wrapped
-  in `useMemo` in both `MedicalReportDetail` (keyed on `results`/section/test order) and the Add/Edit
-  Report form (keyed on `draft.results`/`isEye`/section/test order), so they no longer re-sort and
-  re-group on every keystroke in an unrelated field (date, provider, narrative).
-- **Route-level code-splitting was evaluated and reverted**: dynamically `import()`-ing the Medical
-  screens was tried to keep them out of the main bundle, but a production build showed the project's
-  Rolldown-based bundler (Vite 8) duplicating shared modules (react-router, `zh-fold`) between the static
-  and dynamic import graphs rather than sharing them — a net _increase_ in shipped bytes. Not applied;
-  worth revisiting if Vite/Rolldown's chunking improves.
+- **Bounded queries, not full history** (`useMedicalTrends`): the Dashboard loads three bounded queries in one pass — `listLatestResultPerTest` (the `medical_latest_result` view, one row per test), `listTrackedResultSeries` (history for tracked tests only), and `listReports(userId, 6)` (6 most recent, not the full list). Payload never grows with a test's full history or the full reports table.
+- **Parallel fetch on Report detail / Edit** (`getReportWithResults`, `src/data/medical.ts`): the parent report and its result rows are independent queries (results only need `reportId`), so they're fired together via `Promise.all` instead of one waiting on the other — roughly halves the round-trip latency opening or editing a report.
+- **In-memory Dashboard cache** (`src/lib/medical-cache.ts`): the last-loaded Dashboard payload is seeded into `useMedicalTrends` on re-entry so navigating away and back repaints instantly instead of a "Loading…" flash, while the real fetch reconciles in the background. Deliberately **not** `localStorage`/`sessionStorage` — Medical is the one module with its own biometric/PIN lock, and the cached payload (test values, flags, narratives) is exactly the content that lock exists to hide. An in-memory `Map` disappears on reload/tab-close, same lifetime as the lock's own unlocked-session flag, so it never survives past the point the lock would re-engage. Keyed per user.
+- **Reports list**: bounded per-request via `listReports`'s optional `limit` param — the Dashboard timeline passes `6`; the full Reports screen (search/filter/sort) omits it to get every row.
+- **Import matching** (`matchTestKey`, `src/lib/medical-import.ts`): the alias/category lookup tables are built **once at module load** into `Map`s, giving O(1) per-row matching during import rather than re-scanning the ~150-test reference per row.
+- **Test picker reference grouping** (`medicalTestsByCategory`, `src/lib/medical.ts`): grouped-by-category test list is computed **once at module load** (frozen) instead of re-filtering/re-sorting the ~150-test reference on every keystroke in `MedicalTestPickerOverlay`.
+- **Memoized display-order derivations**: `orderResultsForDisplay`/`groupResultsByCategory` are wrapped in `useMemo` in both `MedicalReportDetail` (keyed on `results`/section/test order) and the Add/Edit Report form (keyed on `draft.results`/`isEye`/section/test order), so they no longer re-sort and re-group on every keystroke in an unrelated field (date, provider, narrative).
+- **Route-level code-splitting was evaluated and reverted**: dynamically `import()`-ing the Medical screens was tried to keep them out of the main bundle, but a production build showed the project's Rolldown-based bundler (Vite 8) duplicating shared modules (react-router, `zh-fold`) between the static and dynamic import graphs rather than sharing them — a net _increase_ in shipped bytes. Not applied; worth revisiting if Vite/Rolldown's chunking improves.
+- **One `useProfile` fetch per screen, not per component**: the Dashboard, Report detail, and Add/Edit Report form each briefly grew a second, redundant `useProfile()` call (added alongside the owner-configurable Report Type list) sitting next to an existing one already held by a child/sibling component — doubling the profile round-trip and, on the Dashboard, widening the gap between `useMedicalTrends`' first fetch (fired with the fallback default tracked-tests before `profile` resolves) and its correcting refetch once the real value arrives, enough to show as a visible second "Loading…" pass. Fixed by fetching once per screen and threading `profile` down as a prop (`Body` in `MedicalReportDetail`, `ReportForm` in `MedicalEntry`) or returning it from the hook that already holds it (`useMedicalTrends` now exposes `profile` for `MedicalDashboard`). `useMedicalTrends`'s `trackedKeys` memo also now depends on `profile?.medical_tracked_tests` directly rather than the whole `profile` object, so it doesn't recompute (and retrigger the fetch) on an unrelated profile change.
 
 ## Environment variables
 
@@ -694,8 +363,6 @@ VITE_OWNER_EMAIL=...           # optional, the owner's email (keeps seeded owner
 
 - **Prettier** (format).
 - **ESLint** (no unused, no `any`).
-- **F5 — the correct typecheck command.** Type-check with `npm run typecheck`
-  (`tsc --noEmit -p tsconfig.app.json`) or `tsc -b`. A bare `tsc --noEmit` checks nothing — the root
-  `tsconfig.json` is references-only (`files: []`).
+- **F5 — the correct typecheck command.** Type-check with `npm run typecheck` (`tsc --noEmit -p tsconfig.app.json`) or `tsc -b`. A bare `tsc --noEmit` checks nothing — the root `tsconfig.json` is references-only (`files: []`).
 - **Vitest** for the calculation helpers.
 - Wire them into a pre-commit hook and/or CI via `npm run check`.
