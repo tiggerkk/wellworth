@@ -103,6 +103,9 @@ export function JournalLibrary() {
   }
 
   const all = useMemo(() => override ?? entries ?? [], [override, entries])
+  // Memoized: applyJournalView filters/sorts/searches the whole list, so without this it reran
+  // on every render instead of only when the list or criteria change.
+  const view = useMemo(() => applyJournalView(all, criteria), [all, criteria])
   // Tags ranked by entry count (most-used first). By default the facet shows the top N; once
   // there are more, a search box narrows the FULL list. Selected tags always stay visible.
   const ranked = useMemo(() => rankedJournalTags(all), [all])
@@ -191,8 +194,7 @@ export function JournalLibrary() {
           />
         }
       >
-        {(allLoaded) => {
-          const view = applyJournalView(allLoaded, criteria)
+        {() => {
           if (view.length === 0) {
             return (
               <p className="py-16 text-center text-body text-text-secondary">

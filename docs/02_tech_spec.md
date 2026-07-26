@@ -289,6 +289,7 @@ General React/CSS pitfalls, applicable to any module. (Visual **tokens** — col
 - `Thumb` (shared by `PosterThumb`/`CoverThumb`) uses `loading="lazy"` — off-screen list rows don't fetch their image until they're about to scroll into view.
 - `TravelEntry`'s itinerary groups a trip's stops by day once per `stops` change (memoized `Map`), instead of re-filtering the whole trip's stops for every day on every render.
 - Library filter facets — Shows'/Books' genre list, Quotes' tag ranking + tag search — are memoized against the underlying list, so they recompute only when the list actually changes, not on every render (previously reran on every keystroke in Search/tag-filter).
+- Each of Books/Shows/Quotes/Travel's `apply*View`/`applyTripList` call — the filter/sort/search pass over the whole list — is memoized behind `useMemo`, keyed on the list plus its criteria (Quotes also keys on the URL show/book constraint; Travel also keys on its facets map), instead of recomputing on every render (favorite toggles, sheet opens, unrelated state changes).
 
 **Data fetching**
 
@@ -304,6 +305,10 @@ General React/CSS pitfalls, applicable to any module. (Visual **tokens** — col
 
 - `listJournalEntries` selects only the columns the listing renders/searches/filters/sorts on (`id, day, journal_entry, tags`) — not `select('*')`; `user_id`/`created_at`/`updated_at` are only needed by `getJournalEntry`/`getJournalEntryByDay` (Entry screen), same convention as `QUOTE_LIST_COLUMNS` above.
 - `journal_entry` has one index: the `UNIQUE(user_id, day)` constraint's own btree, which covers every query pattern (equality lookups, the listing's DESC order via a backward scan, `listJournalDays`' range scan, and the importer's dedup) — a separate explicit `(user_id, day desc)` index was dropped as pure write-overhead with no read benefit.
+
+**Rendering**
+
+- `applyJournalView` is memoized behind `useMemo`, keyed on the loaded list plus criteria, instead of recomputing on every render — same convention as Books/Shows/Quotes/Travel above.
 
 **Data fetching**
 
@@ -330,6 +335,7 @@ General React/CSS pitfalls, applicable to any module. (Visual **tokens** — col
 - **Batched reorder, one round trip not N** (`reorderEntries`, `src/data/diary-entry.ts`): drag-to-reorder previously fired one `update` per row via `Promise.all` (N parallel requests for what's really one statement). Now takes the already-loaded rows and does a single `upsert`, resending full rows so NOT NULL columns stay satisfied while only `sort_order` actually changes.
 - **Missing composite indexes on `food`/`activity`** (`supabase/migrations/01_wellness_schema.sql`): these tables predated the (`user_id, <sort column>`) composite-index convention already applied to Shows/Books/Quotes/Travel/Medical. Added `food (user_id, created_at desc)` and `activity (user_id, name)` to cover `listFoods`/`listActivities`' default sort order, plus a partial index on `food (user_id, source, external_id) where external_id is not null` to cover `getFoodByExternal`'s lookup (hit on every USDA/OFF food view and import dedup check).
 - **Parallel independent fetches, not sequential** (`fetchFoodRow` in `WellnessFoodEntry.tsx`; the custom-food branch of `loadFn` in `WellnessDiaryFoodDetailSheet.tsx`): both did `await getFood(id)` then `await listServings(id)` sequentially, even though `listServings` only needs the already-known `id`, not `getFood`'s result. Now fired together via `Promise.all`, roughly halving round-trip latency on two of the most frequently opened screens (every food edit, every local-food view).
+- **Memoized Library list views** (`WellnessLibrary`): `applyFoodListView` and `applyActivityListView` are each computed once behind `useMemo`, keyed on their respective loaded list plus criteria, instead of recomputing on every render — same convention as Books/Shows/Quotes/Travel/Journal/Medical.
 
 ### Medical
 
@@ -340,6 +346,7 @@ General React/CSS pitfalls, applicable to any module. (Visual **tokens** — col
 - **Import matching** (`matchTestKey`, `src/lib/medical-import.ts`): the alias/category lookup tables are built **once at module load** into `Map`s, giving O(1) per-row matching during import rather than re-scanning the ~150-test reference per row.
 - **Test picker reference grouping** (`medicalTestsByCategory`, `src/lib/medical.ts`): grouped-by-category test list is computed **once at module load** (frozen) instead of re-filtering/re-sorting the ~150-test reference on every keystroke in `MedicalTestPickerOverlay`.
 - **Memoized display-order derivations**: `orderResultsForDisplay`/`groupResultsByCategory` are wrapped in `useMemo` in both `MedicalReportDetail` (keyed on `results`/section/test order) and the Add/Edit Report form (keyed on `draft.results`/`isEye`/section/test order), so they no longer re-sort and re-group on every keystroke in an unrelated field (date, provider, narrative).
+- **Memoized Reports list view** (`MedicalReports`): `applyReportView` is computed once behind `useMemo`, keyed on the loaded list plus criteria, instead of recomputing on every render — same convention as Books/Shows/Quotes/Travel/Journal.
 - **Route-level code-splitting was evaluated and reverted**: dynamically `import()`-ing the Medical screens was tried to keep them out of the main bundle, but a production build showed the project's Rolldown-based bundler (Vite 8) duplicating shared modules (react-router, `zh-fold`) between the static and dynamic import graphs rather than sharing them — a net _increase_ in shipped bytes. Not applied; worth revisiting if Vite/Rolldown's chunking improves.
 - **One `useProfile` fetch per screen, not per component**: the Dashboard, Report detail, and Add/Edit Report form each briefly grew a second, redundant `useProfile()` call (added alongside the owner-configurable Report Type list) sitting next to an existing one already held by a child/sibling component — doubling the profile round-trip and, on the Dashboard, widening the gap between `useMedicalTrends`' first fetch (fired with the fallback default tracked-tests before `profile` resolves) and its correcting refetch once the real value arrives, enough to show as a visible second "Loading…" pass. Fixed by fetching once per screen and threading `profile` down as a prop (`Body` in `MedicalReportDetail`, `ReportForm` in `MedicalEntry`) or returning it from the hook that already holds it (`useMedicalTrends` now exposes `profile` for `MedicalDashboard`). `useMedicalTrends`'s `trackedKeys` memo also now depends on `profile?.medical_tracked_tests` directly rather than the whole `profile` object, so it doesn't recompute (and retrigger the fetch) on an unrelated profile change.
 

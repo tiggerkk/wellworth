@@ -106,6 +106,7 @@ export function InsurancePolicies() {
   return (
     <div className="flex min-h-full flex-col gap-3 px-4 py-4">
       <ListSearchFilterPanel
+        sticky
         query={criteria.query}
         onQueryChange={(q) => setCrit({ query: q })}
         placeholder="Search policy number, policy name, notes"

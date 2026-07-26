@@ -150,6 +150,13 @@ export function QuotesLibrary() {
   }
 
   const all = useMemo(() => override ?? quotes ?? [], [override, quotes])
+  // Memoized: applyLibraryView filters/sorts/searches the whole list, so without this it reran
+  // on every render (favorite toggles, sheet opens) instead of only when the list, criteria, or
+  // URL constraint change.
+  const view = useMemo(
+    () => applyLibraryView(all, { ...criteria, showId, bookId }),
+    [all, criteria, showId, bookId],
+  )
   // Tags ranked by quote count (most-used first). By default the facet shows the top N; once there are
   // more, a search box narrows the FULL list. Selected tags always stay visible (so they're deselectable).
   // Memoized: rankedTags counts+sorts every distinct tag across every quote, so without this it reran on
@@ -288,9 +295,8 @@ export function QuotesLibrary() {
           />
         }
       >
-        {(allLoaded) => {
+        {() => {
           // The URL constraint is layered on at view time so the panel state stays purely local.
-          const view = applyLibraryView(allLoaded, { ...criteria, showId, bookId })
           if (view.length === 0) {
             return (
               <p className="py-16 text-center text-body text-text-secondary">

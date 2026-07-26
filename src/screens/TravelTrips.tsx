@@ -81,6 +81,13 @@ export function TravelTrips() {
     return byTrip
   }, [facetRows])
 
+  // Memoized: applyTripList filters/sorts/searches the whole list, so without this it reran on
+  // every render instead of only when the list, facets, or criteria change.
+  const view = useMemo(
+    () => applyTripList(trips, facetsByTrip, criteria),
+    [trips, facetsByTrip, criteria],
+  )
+
   const countries = useMemo(() => {
     const s = new Set<string>()
     for (const f of facetsByTrip.values()) for (const c of f.countries) s.add(c)
@@ -121,6 +128,7 @@ export function TravelTrips() {
   return (
     <div className="flex min-h-full flex-col gap-3 px-4 py-4">
       <ListSearchFilterPanel
+        sticky
         query={criteria.query}
         onQueryChange={(q) => set({ query: q })}
         placeholder="Search trip name, city, companion"
@@ -196,8 +204,7 @@ export function TravelTrips() {
           />
         }
       >
-        {(allTrips) => {
-          const view = applyTripList(allTrips, facetsByTrip, criteria)
+        {() => {
           return (
             <>
               {view.length > 0 && <ResultCount count={view.length} />}

@@ -143,6 +143,9 @@ export function BooksLibrary() {
   }
 
   const allBooks = useMemo(() => override ?? books ?? [], [override, books])
+  // Memoized: applyLibraryView filters/sorts/searches the whole list, so without this it reran
+  // on every render (favorite toggles, sheet opens) instead of only when the list or criteria change.
+  const view = useMemo(() => applyLibraryView(allBooks, criteria), [allBooks, criteria])
   // Memoized: bookGenres scans every book to collect+sort distinct genres, so without this it
   // reran on every render (including every keystroke in Search) instead of only when the
   // underlying list actually changes.
@@ -252,8 +255,7 @@ export function BooksLibrary() {
           />
         }
       >
-        {(all) => {
-          const view = applyLibraryView(all, criteria)
+        {() => {
           return (
             <>
               {view.length > 0 && <ResultCount count={view.length} />}

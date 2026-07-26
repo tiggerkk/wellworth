@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { IconPlus } from '@tabler/icons-react'
 import { useAsync } from '../hooks/useAsync'
@@ -122,6 +122,19 @@ export function WellnessLibrary() {
     error: activitiesError,
   } = useAsync(activitiesFn)
 
+  const allFoods = useMemo(() => foods ?? [], [foods])
+  // Memoized: applyFoodListView/applyActivityListView filter/sort/search the whole list, so
+  // without this they reran on every render instead of only when the list or criteria change.
+  const foodView = useMemo(
+    () => applyFoodListView(allFoods, foodCriteria),
+    [allFoods, foodCriteria],
+  )
+  const allActivities = useMemo(() => activities ?? [], [activities])
+  const activityView = useMemo(
+    () => applyActivityListView(allActivities, activityCriteria),
+    [allActivities, activityCriteria],
+  )
+
   async function removeFood(id: string) {
     await deleteFoodSmart(id)
     bumpDiary()
@@ -198,8 +211,8 @@ export function WellnessLibrary() {
           errorText="Couldn’t load your foods."
           emptyState={<EmptyState title="No foods yet" />}
         >
-          {(all) => {
-            const view = applyFoodListView(all, foodCriteria)
+          {() => {
+            const view = foodView
             return (
               <>
                 <div className="flex items-center">
@@ -296,8 +309,8 @@ export function WellnessLibrary() {
           errorText="Couldn’t load your activities."
           emptyState={<EmptyState title="No activities yet" />}
         >
-          {(all) => {
-            const view = applyActivityListView(all, activityCriteria)
+          {() => {
+            const view = activityView
             return (
               <>
                 <div className="flex items-center">

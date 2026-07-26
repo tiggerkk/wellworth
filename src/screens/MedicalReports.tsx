@@ -72,6 +72,13 @@ export function MedicalReports() {
   // `bumpMedical()` → full-list refetch. Override resets when a real fetch lands (adjust-state-
   // during-render, not an effect — see tech-spec F16b).
   const [override, setOverride] = useState<typeof data>(undefined)
+  const allReports = useMemo(() => override ?? data ?? [], [override, data])
+  // Memoized: applyReportView filters/sorts/searches the whole list, so without this it reran
+  // on every render instead of only when the list or criteria change.
+  const view = useMemo(
+    () => applyReportView(allReports, criteria),
+    [allReports, criteria],
+  )
   const [syncedData, setSyncedData] = useState(data)
   if (syncedData !== data) {
     setSyncedData(data)
@@ -108,6 +115,7 @@ export function MedicalReports() {
   return (
     <div className="flex min-h-full flex-col gap-3 px-4 py-4">
       <ListSearchFilterPanel
+        sticky
         query={criteria.query}
         onQueryChange={(q) => setCrit({ query: q })}
         placeholder="Search body part, narrative"
@@ -158,8 +166,7 @@ export function MedicalReports() {
           />
         }
       >
-        {(all) => {
-          const view = applyReportView(all, criteria)
+        {() => {
           return (
             <>
               {view.length > 0 && <ResultCount count={view.length} />}
