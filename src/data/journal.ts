@@ -8,15 +8,23 @@ import type { IsoDate } from '../lib/date'
  * call Supabase directly — they go through here. RLS enforces `user_id = auth.uid()` server-side.
  */
 
+/** Columns the Journal listing renders, searches, filters, or sorts on. `user_id`/`created_at`/
+ *  `updated_at` aren't read by `JournalLibrary`/`applyJournalView` (unlike `getJournalEntry*`, which
+ *  need the full row) — the only columns worth dropping here, same as `QUOTE_LIST_COLUMNS`. */
+const JOURNAL_LIST_COLUMNS = 'id, day, journal_entry, tags'
+
 /** All of a user's journal entries, newest day first (Journal listing default order). */
 export async function listJournalEntries(userId: string): Promise<JournalRow[]> {
   const { data, error } = await supabase
     .from('journal_entry')
-    .select('*')
+    .select(JOURNAL_LIST_COLUMNS)
     .eq('user_id', userId)
     .order('day', { ascending: false })
   if (error) throw error
-  return data
+  // Cast: the narrowed select is a subset of journal_entry's columns, and every list-screen
+  // consumer only reads fields within JOURNAL_LIST_COLUMNS (see comment above) — so JournalRow is
+  // safe here even though user_id/created_at/updated_at are undefined at runtime.
+  return data as unknown as JournalRow[]
 }
 
 /** Days (within a range) that have a journal entry — drives the Entry screen calendar's cue dots. */

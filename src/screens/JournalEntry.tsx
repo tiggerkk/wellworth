@@ -116,6 +116,7 @@ export function JournalEntry() {
           <JournalForm
             key={id ?? 'new'}
             startDay={day}
+            initialRow={id ? (initialRow ?? null) : null}
             onDirtyChange={setDirty}
             onHasEntryChange={setHasEntry}
             afterSave={afterSave}
@@ -136,11 +137,16 @@ export function JournalEntry() {
 
 function JournalForm({
   startDay,
+  initialRow,
   onDirtyChange,
   onHasEntryChange,
   afterSave,
 }: {
   startDay: IsoDate
+  // The row the OUTER screen already fetched via `getJournalEntry(id)` for the Edit entry point —
+  // null for the New entry point (there's deliberately no by-day fetch yet: whether `startDay`
+  // already has an entry is exactly what the effect below must still check, same as any other day).
+  initialRow: JournalRow | null
   onDirtyChange: (dirty: boolean) => void
   onHasEntryChange: (hasEntry: boolean) => void
   afterSave: (toastMessage: string) => void
@@ -149,10 +155,13 @@ function JournalForm({
   const userId = session?.user.id
 
   const [day, setDay] = useState<IsoDate>(startDay)
-  const [entryId, setEntryId] = useState<string | null>(null)
-  const [initial, setInitial] = useState<JournalDraft>(blankJournalDraft())
-  const [draft, setDraft] = useState<JournalDraft>(blankJournalDraft())
-  const [dayLoading, setDayLoading] = useState(true)
+  const seedDraft = initialRow ? draftFromRow(initialRow) : blankJournalDraft()
+  const [entryId, setEntryId] = useState<string | null>(initialRow?.id ?? null)
+  const [initial, setInitial] = useState<JournalDraft>(seedDraft)
+  const [draft, setDraft] = useState<JournalDraft>(seedDraft)
+  // Already resolved for `startDay` when we have an `initialRow` to seed from (Edit entry point);
+  // otherwise the effect below still needs to run once to find out (New entry point).
+  const [dayLoading, setDayLoading] = useState(!initialRow)
   const [calendarOpen, setCalendarOpen] = useState(false)
   // Set when a day-nav action (chevron/calendar) is blocked by unsaved changes; confirming applies
   // the switch, canceling stays put. Separate from the screen-level close guard (`JournalEntry`'s
@@ -173,10 +182,18 @@ function JournalForm({
   // Re-resolve the record for `day` whenever it changes. A request token guards against a race
   // where the user flips days quickly and an earlier fetch resolves after a later one.
   const reqRef = useRef(0)
+  // `startDay` never changes for a given mount (the screen remounts via `key={id ?? 'new'}` on
+  // entry-point change) — a plain (non-effect, non-ref) constant would be fine too, but a ref keeps
+  // the intent explicit: "the day this form opened on", distinct from the current `day` state.
+  const startDayRef = useRef(startDay)
   useEffect(() => {
     if (!userId) return
+    // Skip the redundant round-trip for the Edit entry point's starting day only — the outer
+    // screen already fetched this exact row via `getJournalEntry(id)` (see `initialRow` above).
+    // Every subsequent day change (chevron/calendar), and the New entry point's `startDay`
+    // (`initialRow` is always null there), still fetches normally.
+    if (initialRow !== null && day === startDayRef.current) return
     const myReq = ++reqRef.current
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- starting a new day's fetch (mirrors useAsync's own reset-to-loading step)
     setDayLoading(true)
     getJournalEntryByDay(userId, day)
       .then((row) => {
@@ -191,7 +208,7 @@ function JournalForm({
         if (reqRef.current !== myReq) return
         setDayLoading(false)
       })
-  }, [userId, day])
+  }, [userId, day, initialRow])
 
   const tagsFn = useCallback(
     async () => (userId ? listDistinctJournalTags(userId) : []),

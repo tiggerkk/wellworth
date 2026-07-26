@@ -92,10 +92,12 @@ create table public.journal_entry (
   tags           text[] not null default '{}',
   created_at     timestamptz not null default now(),
   updated_at     timestamptz not null default now(),
-  unique (user_id, day)
+  unique (user_id, day)  -- also serves as the lookup index: a btree scans backwards just as
+                         -- cheaply as forwards, so this alone covers listJournalEntries' DESC
+                         -- order, getJournalEntryByDay's/listJournalDays' equality + range
+                         -- lookups, and the importer's dedup — a second explicit index on the
+                         -- same leading columns would only add write overhead, no read benefit.
 );
-
-create index on public.journal_entry (user_id, day desc);  -- covers listJournalEntries' default sort order
 
 alter table public.journal_entry enable row level security;
 

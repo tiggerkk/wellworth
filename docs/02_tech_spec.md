@@ -543,6 +543,30 @@ stay in `01_design_system.md`; these are implementation mechanics.)
 - No virtualization or pagination on any list screen — acceptable at personal-library scale (low
   thousands of rows); revisit if any module's row count grows well past that.
 
+### Journal
+
+**Query layer**
+
+- `listJournalEntries` selects only the columns the listing renders/searches/filters/sorts on
+  (`id, day, journal_entry, tags`) — not `select('*')`; `user_id`/`created_at`/`updated_at` are only
+  needed by `getJournalEntry`/`getJournalEntryByDay` (Entry screen), same convention as
+  `QUOTE_LIST_COLUMNS` above.
+- `journal_entry` has one index: the `UNIQUE(user_id, day)` constraint's own btree, which covers every
+  query pattern (equality lookups, the listing's DESC order via a backward scan, `listJournalDays`'
+  range scan, and the importer's dedup) — a separate explicit `(user_id, day desc)` index was dropped
+  as pure write-overhead with no read benefit.
+
+**Data fetching**
+
+- The Edit entry point (tapping a Library row) already fetches the target row once, by `id`, to
+  resolve the screen's starting day. `JournalForm` seeds its initial state from that same row instead
+  of re-fetching it by day on mount, cutting a redundant round-trip on the module's most common action.
+  Every subsequent in-screen day change (chevrons/calendar), and the New entry point's starting day,
+  still fetch normally — skipping those would reintroduce the bug where a day that already has an
+  entry briefly (or persistently) shows a blank draft.
+- Its refresh channel (`bumpJournal`/`useJournalVersion`) is separate from Quotes' (`bumpQuotes`/
+  `useQuotesVersion`), so a Journal write never forces a Quotes Library refetch, or vice versa.
+
 ### Net Worth
 
 - **Bounded latest-month fetch, not full history** (`getLatestSnapshot`,

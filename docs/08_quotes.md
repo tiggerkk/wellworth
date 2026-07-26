@@ -134,8 +134,7 @@ Standard rules: own `user_id` for direct RLS, four owner policies using `(select
 - `journal_entry` TEXT — the entry text (required)
 - `tags` TEXT[] DEFAULT '{}' — optional; own vocabulary, independent of `quote.tags`
 - `created_at`, `updated_at`
-- **UNIQUE (`user_id`, `day`)** — one entry per day; drives the Entry screen's day nav (the arrows/calendar resolve to this record or a blank draft) and the importer's dedup
-- Index on (`user_id`, `day` DESC) — covers the listing's default sort
+- **UNIQUE (`user_id`, `day`)** — one entry per day; drives the Entry screen's day nav (the arrows/calendar resolve to this record or a blank draft) and the importer's dedup. Its own index also covers every Journal query (equality lookups + the listing's DESC order, via a backward btree scan) — no separate index is needed.
 
 Standard rules: own `user_id` for direct RLS, four owner policies using `(select auth.uid()) = user_id`, no CHECK columns. `moddatetime` trigger on `updated_at`, explicit GRANT to `anon`/`authenticated`. **Hard delete** (leaf table; no `deleted_at`). Appended directly to `supabase/migrations/09_quotes_schema.sql` — Journal has no migration file of its own, per this repo's one-file-per-module SQL convention.
 
