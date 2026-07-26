@@ -4,6 +4,7 @@ import { IconExternalLink, IconPencil } from '@tabler/icons-react'
 import { useAsync } from '../hooks/useAsync'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 import { useProfile } from '../hooks/useProfile'
+import type { Tables } from '../types/database'
 import { getReportWithResults, type ReportWithResults } from '../data/medical'
 import { useMedicalVersion } from '../lib/medical-refresh'
 import { effectiveReportTypes } from '../lib/medical-config'
@@ -92,16 +93,21 @@ export function MedicalReportDetail() {
           data={data}
           errorText="Couldn’t load this report."
         >
-          {(d) => <Body data={d} />}
+          {(d) => <Body data={d} profile={profile} />}
         </EntryLoader>
       </div>
     </div>
   )
 }
 
-function Body({ data }: { data: ReportWithResults }) {
+function Body({
+  data,
+  profile,
+}: {
+  data: ReportWithResults
+  profile: Tables<'profile'> | null | undefined
+}) {
   const { report, results } = data
-  const { data: profile } = useProfile()
   const sectionOrder = profile?.medical_section_order
   const testOrder = profile?.medical_test_order
   const groups = useMemo(() => {

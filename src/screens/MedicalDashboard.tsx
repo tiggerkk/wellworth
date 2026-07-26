@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router'
 import { IconChevronDown, IconHeartbeat, IconReportMedical } from '@tabler/icons-react'
 import { lazyWithReload } from '../lib/lazy-with-reload'
 import { useMedicalTrends } from '../hooks/useMedicalTrends'
-import { useProfile } from '../hooks/useProfile'
 import { effectiveReportTypes, type MedicalReportTypeConfig } from '../lib/medical-config'
 import { Sparkline } from '../components/Sparkline'
 import { EmptyState } from '../components/EmptyState'
@@ -44,9 +43,8 @@ const MedicalTrendChart = lazyWithReload(() =>
  * an alternate trend layout could swap in here without touching the data layer.
  */
 export function MedicalDashboard() {
-  const { loading, error, tracked, latestByCategory, recentReports, isEmpty } =
+  const { loading, error, profile, tracked, latestByCategory, recentReports, isEmpty } =
     useMedicalTrends()
-  const { data: profile } = useProfile()
   const reportTypes = useMemo(
     () => effectiveReportTypes(profile?.medical_report_types ?? null),
     [profile?.medical_report_types],

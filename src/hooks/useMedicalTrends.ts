@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react'
 import { useAuth } from '../auth/AuthProvider'
 import { useProfile } from './useProfile'
 import { useAsync } from './useAsync'
+import type { Tables } from '../types/database'
 import { useMedicalVersion } from '../lib/medical-refresh'
 import {
   listLatestResultPerTest,
@@ -28,6 +29,9 @@ const TIMELINE_FETCH_LIMIT = 6
 export interface MedicalTrends {
   loading: boolean
   error: Error | undefined
+  /** The signed-in user's profile — exposed so callers needing e.g. `medical_report_types` don't
+   *  also call `useProfile()` themselves and fetch it a second time. */
+  profile: Tables<'profile'> | null | undefined
   /** Tracked tests with a numeric series, ordered for the sparkline grid (empty = nothing to trend). */
   tracked: TrackedTrend[]
   /** Latest value per test, grouped by category in the user's display order. */
@@ -61,7 +65,7 @@ export function useMedicalTrends(): MedicalTrends {
   // bare `?? []` / `?? defaultTrackedTestKeys()` doesn't churn the fetch dep every render).
   const trackedKeys = useMemo(
     () => profile?.medical_tracked_tests ?? defaultTrackedTestKeys(),
-    [profile],
+    [profile?.medical_tracked_tests],
   )
   const sectionOrder = profile?.medical_section_order
   const testOrder = profile?.medical_test_order
@@ -108,6 +112,7 @@ export function useMedicalTrends(): MedicalTrends {
   return {
     loading,
     error,
+    profile,
     tracked,
     latestByCategory: grouped,
     recentReports: reports,

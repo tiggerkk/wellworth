@@ -8,6 +8,7 @@ import { useEntryClose } from '../hooks/useEntryClose'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 import { useProfile } from '../hooks/useProfile'
 import { useSheetNavigate } from '../hooks/useSheetNavigate'
+import type { Tables } from '../types/database'
 import { EntryLoader } from '../components/EntryLoader'
 import { ScreenHeaderTitle } from '../components/ScreenHeaderTitle'
 import { ConfirmDialog } from '../components/ConfirmDialog'
@@ -135,6 +136,7 @@ export function MedicalEntry() {
             key={id ?? 'new'}
             id={id}
             initial={d}
+            profile={profile}
             onDirtyChange={setDirty}
             afterSave={afterSave}
           />
@@ -155,18 +157,19 @@ export function MedicalEntry() {
 function ReportForm({
   id,
   initial,
+  profile,
   onDirtyChange,
   afterSave,
 }: {
   id: string | undefined
   initial: ReportDraft
+  profile: Tables<'profile'> | null | undefined
   onDirtyChange: (dirty: boolean) => void
   afterSave: (newId: string, toastMessage?: string) => void
 }) {
   const navigate = useNavigate()
   const { session } = useAuth()
   const userId = session?.user.id
-  const { data: profile } = useProfile()
   const reportTypes = useMemo(
     () => effectiveReportTypes(profile?.medical_report_types ?? null),
     [profile?.medical_report_types],
