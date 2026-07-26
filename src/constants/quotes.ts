@@ -3,18 +3,7 @@
  * generated DB types surface as plain `string`). Pure constants only — runtime helpers
  * live in `src/lib/quotes.ts`.
  */
-import {
-  PALETTE_BLUE,
-  PALETTE_BROWN,
-  PALETTE_CYAN,
-  PALETTE_EMERALD,
-  PALETTE_GOLD,
-  PALETTE_GREY,
-  PALETTE_MAGENTA,
-  PALETTE_PURPLE,
-  PALETTE_RED,
-  PALETTE_OFF_WHITE,
-} from './palette'
+import { PALETTE_SWATCHES } from './palette'
 
 /**
  * The default categories + their initial display order. Exactly one category is required per quote.
@@ -48,18 +37,7 @@ export const QUOTE_CATEGORY_LABELS: Record<QuoteCategory, string> = {
  * category's chosen colour is stored per entry on `profile.quote_categories` and drives the left-strip
  * accent on each row in the Quotes Library.
  */
-export const QUOTE_CATEGORY_COLORS = [
-  { name: 'Gold', value: PALETTE_GOLD },
-  { name: 'Blue', value: PALETTE_BLUE },
-  { name: 'Purple', value: PALETTE_PURPLE },
-  { name: 'Red', value: PALETTE_RED },
-  { name: 'Grey', value: PALETTE_GREY },
-  { name: 'Cyan', value: PALETTE_CYAN },
-  { name: 'Brown', value: PALETTE_BROWN },
-  { name: 'Magenta', value: PALETTE_MAGENTA },
-  { name: 'Off-White', value: PALETTE_OFF_WHITE },
-  { name: 'Emerald', value: PALETTE_EMERALD },
-] as const
+export const QUOTE_CATEGORY_COLORS = PALETTE_SWATCHES
 
 /** Neutral fallback for an orphan/unconfigured category colour (e.g. a deleted category still on a row). */
 export const QUOTE_CATEGORY_COLOR_FALLBACK = 'var(--color-text-secondary)'

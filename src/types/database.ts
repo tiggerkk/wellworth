@@ -464,6 +464,7 @@ export type Database = {
           day: string
           id: string
           journal_entry: string
+          mood: string
           tags: string[]
           updated_at: string
           user_id: string
@@ -473,6 +474,7 @@ export type Database = {
           day: string
           id?: string
           journal_entry: string
+          mood?: string
           tags?: string[]
           updated_at?: string
           user_id: string
@@ -482,6 +484,7 @@ export type Database = {
           day?: string
           id?: string
           journal_entry?: string
+          mood?: string
           tags?: string[]
           updated_at?: string
           user_id?: string
@@ -733,6 +736,7 @@ export type Database = {
           height_cm: number | null
           highlighted_nutrients: string[]
           insurance_providers: Json | null
+          journal_moods: Json | null
           literature_poem_visible_fields: string[] | null
           literature_tts_autoloop: boolean
           literature_tts_lang: string
@@ -783,6 +787,7 @@ export type Database = {
           height_cm?: number | null
           highlighted_nutrients?: string[]
           insurance_providers?: Json | null
+          journal_moods?: Json | null
           literature_poem_visible_fields?: string[] | null
           literature_tts_autoloop?: boolean
           literature_tts_lang?: string
@@ -833,6 +838,7 @@ export type Database = {
           height_cm?: number | null
           highlighted_nutrients?: string[]
           insurance_providers?: Json | null
+          journal_moods?: Json | null
           literature_poem_visible_fields?: string[] | null
           literature_tts_autoloop?: boolean
           literature_tts_lang?: string

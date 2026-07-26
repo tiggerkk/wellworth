@@ -12,8 +12,13 @@ import { EntryHeaderActions } from '../components/EntryHeaderActions'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { Calendar, type DayCue } from '../components/Calendar'
 import { TagInput } from '../components/TagInput'
+import { LabelChip } from '../components/LabelChip'
+import { FilterPill } from '../components/FilterPill'
 import { FIELD_CLASS as inputClass } from '../constants/forms'
 import { routes } from '../constants/routes'
+import { useProfile } from '../hooks/useProfile'
+import { JOURNAL_MOOD_DEFAULT_KEY } from '../constants/journal'
+import { effectiveMoods, moodSubTags } from '../lib/journal-moods'
 import {
   createJournalEntry,
   deleteJournalEntry,
@@ -30,15 +35,16 @@ import { showToast } from '../lib/toast'
 
 interface JournalDraft {
   journal_entry: string
+  mood: string
   tags: string[]
 }
 
 function blankJournalDraft(): JournalDraft {
-  return { journal_entry: '', tags: [] }
+  return { journal_entry: '', mood: JOURNAL_MOOD_DEFAULT_KEY, tags: [] }
 }
 
 function draftFromRow(row: JournalRow): JournalDraft {
-  return { journal_entry: row.journal_entry, tags: row.tags ?? [] }
+  return { journal_entry: row.journal_entry, mood: row.mood, tags: row.tags ?? [] }
 }
 
 const canPaste = typeof navigator !== 'undefined' && !!navigator.clipboard
@@ -216,6 +222,19 @@ function JournalForm({
   )
   const { data: tagSuggestions } = useAsync(tagsFn)
 
+  const { data: profile } = useProfile()
+  const moods = effectiveMoods(profile?.journal_moods)
+  const subTags = moodSubTags(moods, draft.mood)
+
+  function toggleSuggestedTag(tag: string) {
+    const exists = draft.tags.some((t) => t.toLowerCase() === tag.toLowerCase())
+    update({
+      tags: exists
+        ? draft.tags.filter((t) => t.toLowerCase() !== tag.toLowerCase())
+        : [...draft.tags, tag],
+    })
+  }
+
   // Green cue dots for days with an entry (Wellness Diary's cue-dot pattern, single-cue: no
   // legend needed since there's only ever one kind of dot here).
   const loadCalendarCues = useCallback(
@@ -243,7 +262,11 @@ function JournalForm({
     setSaving(true)
     setSaveError(null)
     try {
-      const payload = { journal_entry: draft.journal_entry.trim(), tags: draft.tags }
+      const payload = {
+        journal_entry: draft.journal_entry.trim(),
+        mood: draft.mood,
+        tags: draft.tags,
+      }
       if (entryId) {
         await updateJournalEntry(entryId, payload)
       } else {
@@ -362,6 +385,42 @@ function JournalForm({
                 placeholder="What happened today…"
                 className={`mt-1 ${inputClass} resize-none`}
               />
+            </div>
+
+            <div>
+              <p className="mb-1 text-caption text-text-secondary">Mood</p>
+              <div className="grid grid-cols-4 gap-2">
+                {moods.map((m) => (
+                  <button
+                    key={m.key}
+                    type="button"
+                    onClick={() => update({ mood: m.key })}
+                    aria-pressed={draft.mood === m.key}
+                  >
+                    <LabelChip
+                      label={m.label}
+                      color={m.color}
+                      className={`w-full justify-center py-1 ${
+                        draft.mood === m.key ? 'ring-2 ring-text-primary' : 'opacity-50'
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
+              {subTags.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {subTags.map((tag) => (
+                    <FilterPill
+                      key={tag}
+                      label={tag}
+                      selected={draft.tags.some(
+                        (t) => t.toLowerCase() === tag.toLowerCase(),
+                      )}
+                      onClick={() => toggleSuggestedTag(tag)}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
 
             <div>

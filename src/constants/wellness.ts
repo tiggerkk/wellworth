@@ -13,33 +13,8 @@ import {
   type Icon,
 } from '@tabler/icons-react'
 import type { ComponentType } from 'react'
-import { addDays, fromIsoDate, toIsoDate, type IsoDate } from '../lib/date'
+import { lastNDays, monthsAgo, type RangeOption } from '../lib/date-range'
 import type { TablesInsert } from '../types/database'
-
-// --- Date Range --------------------------------------------------------------------------------
-
-interface DateRange {
-  from: IsoDate
-  to: IsoDate
-}
-
-interface RangeOption {
-  key: string
-  label: string
-  toRange: (today: IsoDate) => DateRange
-}
-
-const lastNDays =
-  (n: number) =>
-  (today: IsoDate): DateRange => ({ from: addDays(today, -(n - 1)), to: today })
-
-const monthsAgo =
-  (n: number) =>
-  (today: IsoDate): DateRange => {
-    const d = fromIsoDate(today)
-    d.setMonth(d.getMonth() - n)
-    return { from: toIsoDate(d), to: today }
-  }
 
 /**
  * Wellness Dashboard range options. Pure UI constants — not persisted; edit freely (add/remove/relabel

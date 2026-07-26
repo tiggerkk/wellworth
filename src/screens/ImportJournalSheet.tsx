@@ -7,6 +7,7 @@ import { ImportSheetFooter } from '../components/ImportSheetFooter'
 import { LabelChip } from '../components/LabelChip'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
+import { useProfile } from '../hooks/useProfile'
 import { parseCsv } from '../lib/csv'
 import {
   buildJournalImportPayload,
@@ -15,6 +16,7 @@ import {
   type JournalImportPayload,
   type ParsedJournalRow,
 } from '../lib/journal-import'
+import { effectiveMoods, moodColor, moodLabel } from '../lib/journal-moods'
 import { listJournalEntries, saveImportedJournalEntries } from '../data/journal'
 import { bumpJournal } from '../lib/journal-refresh'
 import { errorMessage } from '../lib/errors'
@@ -31,14 +33,18 @@ interface Preview {
 
 /**
  * Journal — bulk CSV import (folded into the Quotes module, gated behind the same
- * `quote_importer_enabled` toggle as Import CSV Quotes). Column spec: `day,journal_entry,tags`.
- * A day already in the user's journal is treated as a duplicate and skipped (the table's
+ * `quote_importer_enabled` toggle as Import CSV Quotes). Column spec: `day,journal_entry,mood,tags`.
+ * mood is optional (matched against a mood's key or label, case-insensitive); a blank or
+ * unrecognized cell defaults to Neutral with a flagged warning — the row still imports. A day
+ * already in the user's journal is treated as a duplicate and skipped (the table's
  * `unique(user_id, day)` is the belt-and-braces guard, same relationship as Quotes' text_norm).
  */
 export function ImportJournalSheet() {
   const navigate = useNavigate()
   const { session } = useAuth()
   const userId = session?.user.id
+  const { data: profile } = useProfile()
+  const moods = effectiveMoods(profile?.journal_moods)
 
   // Load the dedup set (existing entries' days) once.
   const existingFn = useCallback(async (): Promise<Set<IsoDate>> => {
@@ -60,7 +66,7 @@ export function ImportJournalSheet() {
     setDone(null)
     if (!existingDays) return
     try {
-      const result = parseJournalCsv(parseCsv(await file.text()))
+      const result = parseJournalCsv(parseCsv(await file.text()), moods)
       const { newRows, duplicates } = partitionNewJournalRows(result.rows, existingDays)
       const payloads = newRows.map(buildJournalImportPayload)
       setFileName(file.name)
@@ -106,8 +112,9 @@ export function ImportJournalSheet() {
             <p className="text-body text-text-secondary">
               Upload a CSV with{' '}
               <code className="text-text-primary">day, journal_entry, tags</code> columns
-              (day as YYYY-MM-DD). Re-importing the same file skips days you already have
-              an entry for.
+              (day as YYYY-MM-DD). mood is optional (matched by name, e.g. “Happy”); a
+              blank or unrecognized value defaults to Neutral. Re-importing the same file
+              skips days you already have an entry for.
             </p>
 
             <input
@@ -166,6 +173,10 @@ export function ImportJournalSheet() {
                     </p>
                     <p className="mt-1 flex flex-wrap items-center gap-2 text-caption text-text-secondary">
                       <LabelChip label={formatFullDate(r.day)} />
+                      <LabelChip
+                        label={moodLabel(moods, r.mood)}
+                        color={moodColor(moods, r.mood)}
+                      />
                       {r.tags.map((t) => (
                         <span key={t} className="truncate">
                           #{t}

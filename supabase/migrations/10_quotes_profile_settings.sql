@@ -15,9 +15,16 @@
 --     seed defaults in code (src/constants/quotes.ts), resolved partial-tolerantly by
 --     src/lib/quotes-config.ts — so a newly-shipped default appears for owners who never customized.
 --     quote.source_type / quote.category store the stable `key` from these lists.
+--   * journal_moods — the owner's rename/recolor/sub-tag customization of the 7 fixed Journal
+--     moods (Quotes Settings -> Journal Values -> Moods). Unlike quote_categories, this is NOT an
+--     add/remove/reorder list — always exactly the 7 canonical keys, in the fixed circumplex
+--     display order. A JSONB array of {key,label,color,subTags} objects. NULL = use the canonical
+--     seed defaults in code (src/constants/journal.ts), resolved by src/lib/journal-moods.ts.
+--     journal_entry.mood stores the stable `key` (CHECK-enforced, see 09_quotes_schema.sql).
 
 alter table public.profile
   add column quote_visible_fields   text[],
   add column quote_importer_enabled boolean not null default true,
   add column quote_source_types     jsonb,
-  add column quote_categories       jsonb;
+  add column quote_categories       jsonb,
+  add column journal_moods          jsonb;

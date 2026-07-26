@@ -78,7 +78,9 @@ export const routes = {
     settingsVisible: '/quotes/settings/visible',
     settingsSourceTypes: '/quotes/settings/source-types', // manage Source Type list (sheet)
     settingsCategories: '/quotes/settings/categories', // manage Category list (sheet)
+    settingsMoods: '/quotes/settings/moods', // rename/recolor/sub-tag the 7 fixed Journal moods (sheet)
     import: '/quotes/import', // CSV importer (sheet)
+    journalDashboard: '/quotes/journal/dashboard', // Journal Dashboard: KPIs + circumplex mood chart
     journalLibrary: '/quotes/journal', // Journal listing, grouped by month (folded into Quotes module)
     journalEntry: '/quotes/journal/entry', // blank New Journal Entry (new; today's day)
     journalEdit: (id: string) => `/quotes/journal/${id}`, // New/Edit Journal Entry form (editing)

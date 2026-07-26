@@ -16,3 +16,21 @@ export const PALETTE_BROWN = 'var(--palette-brown)'
 export const PALETTE_OFF_WHITE = 'var(--palette-off-white)'
 export const PALETTE_GREY = 'var(--palette-grey)'
 export const PALETTE_DARK_GREY = 'var(--palette-dark-grey)'
+
+/**
+ * The named swatch options offered by every per-entry `ColorPicker` in the app (Quotes Categories,
+ * Journal Moods, …) — a single source so the picker's option set can't drift between modules that
+ * each let the owner recolor a configurable value.
+ */
+export const PALETTE_SWATCHES: { name: string; value: string }[] = [
+  { name: 'Gold', value: PALETTE_GOLD },
+  { name: 'Blue', value: PALETTE_BLUE },
+  { name: 'Purple', value: PALETTE_PURPLE },
+  { name: 'Red', value: PALETTE_RED },
+  { name: 'Grey', value: PALETTE_GREY },
+  { name: 'Cyan', value: PALETTE_CYAN },
+  { name: 'Brown', value: PALETTE_BROWN },
+  { name: 'Magenta', value: PALETTE_MAGENTA },
+  { name: 'Off-White', value: PALETTE_OFF_WHITE },
+  { name: 'Emerald', value: PALETTE_EMERALD },
+]

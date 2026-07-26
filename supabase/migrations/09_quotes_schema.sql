@@ -83,12 +83,20 @@ grant select, insert, update, delete on public.quote to anon, authenticated;
 -- nav loads the existing row for a day if one exists, else starts a blank draft for it. Hard
 -- delete (leaf table, nothing references journal_entry; no deleted_at). tags is independent of
 -- quote.tags — the two modules keep separate tag vocabularies.
+--
+-- mood — exactly one of the 7 fixed primary moods, CHECK-enforced (unlike quote.category, this
+-- set is structural — the Journal Dashboard's circumplex placement is keyed to these 7 values
+-- specifically — so it is NOT an owner-configurable list). The owner can still rename/recolor
+-- each mood and edit its sub-tag suggestions in Quotes Settings -> Journal Values -> Moods
+-- (profile.journal_moods); the 7 underlying keys never change. Defaults to 'neutral'.
 -- =====================================================================================
 create table public.journal_entry (
   id             uuid primary key default gen_random_uuid(),
   user_id        uuid not null references auth.users (id) on delete cascade,
   day            date not null,
   journal_entry  text not null,
+  mood           text not null default 'neutral'
+                   check (mood in ('happy', 'motivated', 'calm', 'neutral', 'sad', 'anxious', 'angry')),
   tags           text[] not null default '{}',
   created_at     timestamptz not null default now(),
   updated_at     timestamptz not null default now(),
@@ -98,6 +106,8 @@ create table public.journal_entry (
                          -- lookups, and the importer's dedup — a second explicit index on the
                          -- same leading columns would only add write overhead, no read benefit.
 );
+
+create index on public.journal_entry (user_id, mood);  -- Journal Dashboard's per-mood count aggregate
 
 alter table public.journal_entry enable row level security;
 

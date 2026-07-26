@@ -95,6 +95,7 @@ export const MODULES: ModuleDef[] = [
     description: 'Daily Zen',
     tabs: [
       { to: routes.quotes.zen, label: 'Zen', Icon: IconSparkles, end: true },
+      { to: routes.quotes.journalDashboard, label: 'Dashboard', Icon: IconChartBar },
       { to: routes.quotes.journalLibrary, label: 'Journal', Icon: IconNotebook },
       { to: routes.quotes.library, label: 'Quotes', Icon: IconQuote },
       { to: routes.quotes.settings, label: 'Settings', Icon: IconSettings },

@@ -28,8 +28,12 @@ import { EmptyState } from '../components/EmptyState'
 import { ListSearchFilterPanel, ResultCount } from '../components/ListSearchFilterPanel'
 import { ListFab } from '../components/ListFab'
 import { FilterPill } from '../components/FilterPill'
+import { LabelChip } from '../components/LabelChip'
+import { SelectMenu } from '../components/SelectMenu'
 import { DateRangeRow } from '../components/DateRangeRow'
 import { Calendar } from '../components/Calendar'
+import { useProfile } from '../hooks/useProfile'
+import { effectiveMoods, moodColor, moodLabel } from '../lib/journal-moods'
 
 const SORT_OPTIONS: { value: JournalSortField; label: string }[] = [
   { value: 'date', label: 'Date' },
@@ -49,6 +53,15 @@ export function JournalLibrary() {
   const { session } = useAuth()
   const userId = session?.user.id
   const version = useJournalVersion()
+  const { data: profile } = useProfile()
+  const moods = effectiveMoods(profile?.journal_moods)
+  const moodOptions = useMemo(
+    () => [
+      { value: 'all', label: 'Any Mood' },
+      ...moods.map((m) => ({ value: m.key, label: m.label })),
+    ],
+    [moods],
+  )
 
   const [criteria, setCriteria] = useSessionState<JournalCriteria>(
     'wellworth:journal-library',
@@ -152,15 +165,23 @@ export function JournalLibrary() {
               onClearTo={() => setBound('dateTo', null)}
             />
 
-            {showTagSearch && (
-              <input
-                value={tagQuery}
-                onChange={(e) => setTagQuery(e.target.value)}
-                placeholder="Filter tags…"
-                aria-label="Filter tags"
-                className="field-control w-full"
+            <div className={showTagSearch ? 'grid grid-cols-2 gap-3' : ''}>
+              <SelectMenu
+                value={criteria.mood}
+                options={moodOptions}
+                onChange={(v) => setCrit({ mood: v })}
+                ariaLabel="Mood"
               />
-            )}
+              {showTagSearch && (
+                <input
+                  value={tagQuery}
+                  onChange={(e) => setTagQuery(e.target.value)}
+                  placeholder="Filter tags…"
+                  aria-label="Filter tags"
+                  className="field-control w-full"
+                />
+              )}
+            </div>
 
             {ranked.length > 0 && (
               <div className="flex max-h-32 flex-wrap items-center gap-1.5 overflow-y-auto">
@@ -219,7 +240,17 @@ export function JournalLibrary() {
                           key={entry.id}
                           onDelete={() => void remove(entry.id)}
                           onClick={() => navigate(routes.quotes.journalEdit(entry.id))}
-                          leading={<DateBadge day={entry.day} />}
+                          color={moodColor(moods, entry.mood)}
+                          leading={
+                            <div className="flex flex-col items-center gap-1">
+                              <DateBadge day={entry.day} />
+                              <LabelChip
+                                label={moodLabel(moods, entry.mood)}
+                                color={moodColor(moods, entry.mood)}
+                                className="text-[10px] px-1.5 py-0"
+                              />
+                            </div>
+                          }
                         >
                           <span className="line-clamp-3 block text-body text-text-primary">
                             {entry.journal_entry}

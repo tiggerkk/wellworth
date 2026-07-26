@@ -20,6 +20,9 @@ export interface JournalCriteria {
   tags: string[]
   dateFrom: IsoDate | null
   dateTo: IsoDate | null
+  /** A mood key, or 'all' (the 7 moods are fixed — see `JOURNAL_MOODS` — but the value is kept as
+   *  a plain string here, same tolerant shape as Quotes' `category: 'all' | string`). */
+  mood: 'all' | string
   sortField: JournalSortField
   sortDir: JournalSortDir
 }
@@ -29,6 +32,7 @@ export const DEFAULT_JOURNAL_CRITERIA: JournalCriteria = {
   tags: [],
   dateFrom: null,
   dateTo: null,
+  mood: 'all',
   sortField: 'date',
   sortDir: 'desc',
 }
@@ -66,6 +70,7 @@ export function applyJournalView(
     .filter((e) => {
       if (q && !journalSearchText(e).includes(q)) return false
       if (c.tags.length > 0 && !c.tags.some((t) => e.tags.includes(t))) return false
+      if (c.mood !== 'all' && e.mood !== c.mood) return false
       if (c.dateFrom && e.day < c.dateFrom) return false
       if (c.dateTo && e.day > c.dateTo) return false
       return true

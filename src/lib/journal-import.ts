@@ -3,11 +3,19 @@
  * import screen reads the file (via the shared RFC-4180 `parseCsv`) and writes via
  * `saveImportedJournalEntries`.
  *
- * Column spec: `day,journal_entry,tags`. day (required, YYYY-MM-DD) is the calendar day the entry
- * belongs to and — since `journal_entry` is a day-based table (UNIQUE(user_id, day)) — also the
- * value frozen onto both `created_at` and `updated_at`. journal_entry is required. Tags is a
- * single (quoted) cell of comma-separated tags.
+ * Column spec: `day,journal_entry,mood,tags`. day (required, YYYY-MM-DD) is the calendar day the
+ * entry belongs to and — since `journal_entry` is a day-based table (UNIQUE(user_id, day)) — also
+ * the value frozen onto both `created_at` and `updated_at`. journal_entry is required. mood is
+ * optional (matched case-insensitively against a mood's key or label); a blank or unrecognized
+ * cell defaults to 'neutral' with a flagged warning (not a skipped row — the row still imports).
+ * Tags is a single (quoted) cell of comma-separated tags.
  */
+import { JOURNAL_MOOD_DEFAULT_KEY } from '../constants/journal'
+import {
+  defaultMoods,
+  matchMoodKeyOrLabel,
+  type JournalMoodConfig,
+} from './journal-moods'
 import type { JournalInsert } from './journal'
 import type { IsoDate } from './date'
 
@@ -17,6 +25,7 @@ const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
 export interface ParsedJournalRow {
   day: IsoDate
   journal_entry: string
+  mood: string
   tags: string[]
 }
 
@@ -25,7 +34,12 @@ export interface JournalImportResult {
   errors: string[]
 }
 
-export function parseJournalCsv(rows: string[][]): JournalImportResult {
+/** `moods` defaults to the canonical 7 (key/label match) — pass the owner's `effectiveMoods()`
+ *  result instead when available, so a renamed mood's label still matches in the CSV. */
+export function parseJournalCsv(
+  rows: string[][],
+  moods: JournalMoodConfig[] = defaultMoods(),
+): JournalImportResult {
   const errors: string[] = []
   const out: ParsedJournalRow[] = []
 
@@ -36,6 +50,7 @@ export function parseJournalCsv(rows: string[][]): JournalImportResult {
   if (missing.length > 0) {
     return { rows: out, errors: [`Missing required column(s): ${missing.join(', ')}.`] }
   }
+  const hasMoodColumn = header.includes('mood')
 
   const col = (cells: string[], name: string): string => {
     const idx = header.indexOf(name)
@@ -59,13 +74,24 @@ export function parseJournalCsv(rows: string[][]): JournalImportResult {
       continue
     }
 
+    let mood = JOURNAL_MOOD_DEFAULT_KEY
+    if (hasMoodColumn) {
+      const raw = col(cells, 'mood')
+      const matched = raw ? matchMoodKeyOrLabel(moods, raw) : null
+      if (matched) {
+        mood = matched
+      } else if (raw) {
+        errors.push(`Row ${line}: mood "${raw}" not recognized — defaulted to Neutral.`)
+      }
+    }
+
     // Tags is one (quoted) cell of comma-separated tags: read the whole cell, THEN split on `,`.
     const tags = col(cells, 'tags')
       .split(',')
       .map((t) => t.trim())
       .filter(Boolean)
 
-    out.push({ day, journal_entry: journalEntry, tags })
+    out.push({ day, journal_entry: journalEntry, mood, tags })
   }
 
   return { rows: out, errors }
@@ -104,6 +130,7 @@ export function buildJournalImportPayload(row: ParsedJournalRow): JournalImportP
   return {
     day: row.day,
     journal_entry: row.journal_entry,
+    mood: row.mood,
     tags: row.tags,
     created_at: `${row.day}T00:00:00Z`,
     updated_at: `${row.day}T00:00:00Z`,

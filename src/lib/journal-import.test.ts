@@ -6,8 +6,10 @@ import {
   partitionNewJournalRows,
   type ParsedJournalRow,
 } from './journal-import'
+import { defaultMoods, renameMood } from './journal-moods'
 
 const HEADER = 'day,journal_entry,tags'
+const MOOD_HEADER = 'day,journal_entry,mood,tags'
 const parse = (csv: string) => parseJournalCsv(parseCsv(csv))
 
 describe('parseJournalCsv', () => {
@@ -20,6 +22,7 @@ describe('parseJournalCsv', () => {
     expect(rows[0]).toEqual({
       day: '2026-06-13',
       journal_entry: 'Rested for less than a week.',
+      mood: 'neutral',
       tags: ['work', 'rest'],
     })
   })
@@ -59,6 +62,7 @@ describe('parseJournalCsv', () => {
     expect(rows[0]).toEqual({
       day: '2026-06-13',
       journal_entry: 'Some text',
+      mood: 'neutral',
       tags: ['a', 'b'],
     })
   })
@@ -66,13 +70,64 @@ describe('parseJournalCsv', () => {
   it('returns an error for an empty file', () => {
     expect(parse('').errors).toEqual(['The file is empty.'])
   })
+
+  it('defaults mood to neutral when the column is absent', () => {
+    const { rows, errors } = parse(`${HEADER}\n2026-06-13,No mood column,`)
+    expect(errors).toEqual([])
+    expect(rows[0]?.mood).toBe('neutral')
+  })
+
+  describe('with a mood column', () => {
+    it('matches a canonical mood key, case-insensitively', () => {
+      const { rows, errors } = parse(`${MOOD_HEADER}\n2026-06-13,Great day,HAPPY,`)
+      expect(errors).toEqual([])
+      expect(rows[0]?.mood).toBe('happy')
+    })
+
+    it('matches a mood by its owner-renamed label when that config is passed in', () => {
+      const renamed = renameMood(defaultMoods(), 'happy', 'Joyful')
+      const withoutConfig = parseJournalCsv(
+        parseCsv(`${MOOD_HEADER}\n2026-06-13,Great day,Joyful,`),
+      )
+      const withConfig = parseJournalCsv(
+        parseCsv(`${MOOD_HEADER}\n2026-06-13,Great day,Joyful,`),
+        renamed,
+      )
+      // Against the canonical (unrenamed) defaults, "Joyful" isn't recognized.
+      expect(withoutConfig.rows[0]?.mood).toBe('neutral')
+      expect(withoutConfig.errors.length).toBeGreaterThan(0)
+      // Against the owner's renamed config, "Joyful" resolves to the "happy" key.
+      expect(withConfig.rows[0]?.mood).toBe('happy')
+      expect(withConfig.errors).toEqual([])
+    })
+
+    it('defaults to neutral with a warning for an unrecognized mood, without skipping the row', () => {
+      const { rows, errors } = parse(`${MOOD_HEADER}\n2026-06-13,Great day,ecstatic,`)
+      expect(rows).toHaveLength(1)
+      expect(rows[0]?.mood).toBe('neutral')
+      expect(errors).toEqual([
+        'Row 2: mood "ecstatic" not recognized — defaulted to Neutral.',
+      ])
+    })
+
+    it('defaults to neutral without a warning when the cell is blank', () => {
+      const { rows, errors } = parse(`${MOOD_HEADER}\n2026-06-13,Great day,,`)
+      expect(rows[0]?.mood).toBe('neutral')
+      expect(errors).toEqual([])
+    })
+  })
 })
 
 describe('partitionNewJournalRows', () => {
   const rows: ParsedJournalRow[] = [
-    { day: '2026-06-13', journal_entry: 'A', tags: [] },
-    { day: '2026-06-12', journal_entry: 'B', tags: [] },
-    { day: '2026-06-12', journal_entry: 'B again — in-file dup', tags: [] },
+    { day: '2026-06-13', journal_entry: 'A', mood: 'neutral', tags: [] },
+    { day: '2026-06-12', journal_entry: 'B', mood: 'neutral', tags: [] },
+    {
+      day: '2026-06-12',
+      journal_entry: 'B again — in-file dup',
+      mood: 'neutral',
+      tags: [],
+    },
   ]
 
   it('treats a day already in the DB as a duplicate', () => {
@@ -93,11 +148,13 @@ describe('buildJournalImportPayload', () => {
     const payload = buildJournalImportPayload({
       day: '2026-06-13',
       journal_entry: 'Rested.',
+      mood: 'calm',
       tags: ['rest'],
     })
     expect(payload).toEqual({
       day: '2026-06-13',
       journal_entry: 'Rested.',
+      mood: 'calm',
       tags: ['rest'],
       created_at: '2026-06-13T00:00:00Z',
       updated_at: '2026-06-13T00:00:00Z',

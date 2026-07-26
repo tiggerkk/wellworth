@@ -11,7 +11,7 @@ import type { IsoDate } from '../lib/date'
 /** Columns the Journal listing renders, searches, filters, or sorts on. `user_id`/`created_at`/
  *  `updated_at` aren't read by `JournalLibrary`/`applyJournalView` (unlike `getJournalEntry*`, which
  *  need the full row) — the only columns worth dropping here, same as `QUOTE_LIST_COLUMNS`. */
-const JOURNAL_LIST_COLUMNS = 'id, day, journal_entry, tags'
+const JOURNAL_LIST_COLUMNS = 'id, day, journal_entry, mood, tags'
 
 /** All of a user's journal entries, newest day first (Journal listing default order). */
 export async function listJournalEntries(userId: string): Promise<JournalRow[]> {
@@ -25,6 +25,29 @@ export async function listJournalEntries(userId: string): Promise<JournalRow[]> 
   // consumer only reads fields within JOURNAL_LIST_COLUMNS (see comment above) — so JournalRow is
   // safe here even though user_id/created_at/updated_at are undefined at runtime.
   return data as unknown as JournalRow[]
+}
+
+/**
+ * Per-mood entry counts within a day range — the Journal Dashboard's circumplex chart source
+ * (one bubble per mood, sized by count). Only `mood` is selected: the chart doesn't need entry
+ * text/tags, so this stays a narrow, index-covered query (`(user_id, mood)` — see
+ * `09_quotes_schema.sql`) independent of `listJournalEntries`.
+ */
+export async function listJournalMoodCountsByRange(
+  userId: string,
+  from: IsoDate,
+  to: IsoDate,
+): Promise<Record<string, number>> {
+  const { data, error } = await supabase
+    .from('journal_entry')
+    .select('mood')
+    .eq('user_id', userId)
+    .gte('day', from)
+    .lte('day', to)
+  if (error) throw error
+  const counts: Record<string, number> = {}
+  for (const row of data ?? []) counts[row.mood] = (counts[row.mood] ?? 0) + 1
+  return counts
 }
 
 /** Days (within a range) that have a journal entry — drives the Entry screen calendar's cue dots. */

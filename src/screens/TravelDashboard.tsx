@@ -4,6 +4,7 @@ import { IconRoute } from '@tabler/icons-react'
 import { SectionCard } from '../components/SectionCard'
 import { DashboardRow } from '../components/DashboardRow'
 import { TravelRowHeader } from '../components/TravelRowHeader'
+import { KpiTile } from '../components/KpiTile'
 import { Thumb } from '../components/Thumb'
 import { EmptyState } from '../components/EmptyState'
 import { ListLoader } from '../components/ListLoader'
@@ -104,16 +105,16 @@ export function TravelDashboard() {
         <div className="flex flex-col gap-4 px-4 py-4 pb-8">
           {/* Count tiles — 3 columns × 2 rows, filled column-first (China · World · Trips). */}
           <div className="grid grid-flow-col grid-cols-3 grid-rows-2 gap-2">
-            <Tile
+            <KpiTile
               value={stats.chinaProvinces}
               suffix={`/ ${CHINA_PROVINCE_TOTAL}`}
               label="中国省份"
             />
-            <Tile value={stats.chinaCities} label="中国城市" />
-            <Tile value={stats.countries} label="Countries" />
-            <Tile value={stats.cities} label="Cities" />
-            <Tile value={stats.tripsThisYear} label="Trips This Year" />
-            <Tile value={stats.daysTravelled} label="Days Travelled" />
+            <KpiTile value={stats.chinaCities} label="中国城市" />
+            <KpiTile value={stats.countries} label="Countries" />
+            <KpiTile value={stats.cities} label="Cities" />
+            <KpiTile value={stats.tripsThisYear} label="Trips This Year" />
+            <KpiTile value={stats.daysTravelled} label="Days Travelled" />
           </div>
 
           <Shelf
@@ -138,26 +139,6 @@ export function TravelDashboard() {
         </div>
       )}
     </ListLoader>
-  )
-}
-
-function Tile({
-  value,
-  suffix,
-  label,
-}: {
-  value: number
-  suffix?: string
-  label: string
-}) {
-  return (
-    <div className="rounded-card border border-border bg-surface px-3 py-3">
-      <div className="flex items-baseline gap-1">
-        <span className="text-xl font-semibold text-text-primary">{value}</span>
-        {suffix && <span className="text-caption text-text-secondary">{suffix}</span>}
-      </div>
-      <p className="mt-0.5 text-caption leading-tight text-text-secondary">{label}</p>
-    </div>
   )
 }
 

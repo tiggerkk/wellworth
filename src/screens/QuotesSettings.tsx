@@ -11,8 +11,8 @@ import type { Tables, TablesUpdate } from '../types/database'
 type SaveFn = (patch: TablesUpdate<'profile'>) => Promise<void>
 
 /**
- * Quotes & Journal-specific settings (Entry field visibility + Source Types + Categories +
- * CSV importer).
+ * Quotes & Journal-specific settings (Entry field visibility + Journal Moods + Source Types +
+ * Categories + CSV importer).
  */
 export function QuotesSettings() {
   const { profile, loading, error, save } = useProfileEditor()
@@ -46,7 +46,18 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
         </button>
       </SectionCard>
 
-      <SectionCard title="Values">
+      <SectionCard title="Journal Values">
+        <button
+          onClick={() => openSheet(routes.quotes.settingsMoods)}
+          className="w-full border-b border-border last:border-b-0"
+        >
+          <FieldRow label="Moods">
+            <IconChevronRight size={18} className="text-text-tertiary" />
+          </FieldRow>
+        </button>
+      </SectionCard>
+
+      <SectionCard title="Quotes Values">
         <button
           onClick={() => openSheet(routes.quotes.settingsSourceTypes)}
           className="w-full border-b border-border last:border-b-0"

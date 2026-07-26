@@ -13,6 +13,7 @@ function row(overrides: Partial<JournalRow> = {}): JournalRow {
     user_id: 'u1',
     day: '2026-06-13',
     journal_entry: 'A quiet day.',
+    mood: 'neutral',
     tags: [],
     created_at: '2026-06-13T00:00:00Z',
     updated_at: '2026-06-13T00:00:00Z',
@@ -54,18 +55,21 @@ describe('applyJournalView', () => {
       id: 'a',
       day: '2026-06-13',
       journal_entry: 'Rested for less than a week.',
+      mood: 'calm',
       tags: ['rest'],
     }),
     row({
       id: 'b',
       day: '2026-04-12',
       journal_entry: 'Played with an AI app.',
+      mood: 'happy',
       tags: ['ai', 'poems'],
     }),
     row({
       id: 'c',
       day: '2026-04-06',
       journal_entry: 'Finally decided to learn more about AI!',
+      mood: 'motivated',
       tags: ['ai'],
     }),
   ]
@@ -94,6 +98,16 @@ describe('applyJournalView', () => {
       tags: ['poems'],
     })
     expect(view.map((e) => e.id)).toEqual(['b'])
+  })
+
+  it('filters by mood', () => {
+    const view = applyJournalView(entries, { ...DEFAULT_JOURNAL_CRITERIA, mood: 'happy' })
+    expect(view.map((e) => e.id)).toEqual(['b'])
+  })
+
+  it("'all' mood matches every entry", () => {
+    const view = applyJournalView(entries, { ...DEFAULT_JOURNAL_CRITERIA, mood: 'all' })
+    expect(view).toHaveLength(3)
   })
 
   it('filters by an inclusive date range', () => {
