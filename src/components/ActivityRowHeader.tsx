@@ -4,12 +4,12 @@
  * wrapping element and leading icon (`resolveActivityIcon(a.icon)`).
  *
  * Line 1: Activity name
- * Line 2: Template label (Duration / Strength)
+ * Line 2: Template label (Duration / Strength) · Default effort (Light / Moderate / Vigorous)
  */
-import { activityTemplateLabel } from '../constants/wellness'
+import { activityTemplateLabel, effortLabel } from '../constants/wellness'
 
 type ActivityRowHeaderProps = {
-  activity: { name: string; template: string }
+  activity: { name: string; template: string; default_effort: string }
 }
 
 /** Presentational: renders the 2 lines only. Each caller wraps this in its own sizing element
@@ -19,7 +19,8 @@ export function ActivityRowHeader({ activity }: ActivityRowHeaderProps) {
     <>
       <span className="block truncate text-body text-text-primary">{activity.name}</span>
       <span className="block truncate text-caption text-text-secondary">
-        {activityTemplateLabel(activity.template)}
+        {activityTemplateLabel(activity.template)} ·{' '}
+        {effortLabel(activity.default_effort)}
       </span>
     </>
   )

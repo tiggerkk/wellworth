@@ -200,6 +200,10 @@ export const EFFORT_LEVELS: EffortLevel[] = [
   { key: 'vigorous', label: 'Vigorous', range: '≥ 6 MET' },
 ]
 
+export function effortLabel(effort: string): string {
+  return EFFORT_LEVELS.find((l) => l.key === effort)?.label ?? effort
+}
+
 // --- Seed activities --------------------------------------------------------------------------------
 
 /**
