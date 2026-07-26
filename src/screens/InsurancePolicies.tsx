@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { IconFileCertificate, IconPlus } from '@tabler/icons-react'
+import { IconFileCertificate } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useProfile } from '../hooks/useProfile'
@@ -26,6 +26,7 @@ import { InsurancePolicyHeader } from '../components/InsurancePolicyHeader'
 import { ListRow } from '../components/ListRow'
 import { Calendar } from '../components/Calendar'
 import { ListSearchFilterPanel, ResultCount } from '../components/ListSearchFilterPanel'
+import { ListFab } from '../components/ListFab'
 import { DateRangeRow } from '../components/DateRangeRow'
 import { EmptyState } from '../components/EmptyState'
 
@@ -173,17 +174,7 @@ export function InsurancePolicies() {
       >
         {() => (
           <>
-            {/* "XX results" on the left; "+ New Insurance" is the entry point at the right edge (the
-                bottom-nav tab was removed, so this — and the empty-state action — replace it). */}
-            <div className="flex items-center">
-              {view.length > 0 && <ResultCount count={view.length} />}
-              <button
-                onClick={() => navigate(routes.networth.insuranceEntry)}
-                className="ml-auto flex items-center gap-1 px-1 text-body text-positive"
-              >
-                <IconPlus size={16} /> New Insurance
-              </button>
-            </div>
+            {view.length > 0 && <ResultCount count={view.length} />}
             <div className="flex flex-col gap-2">
               {view.length === 0 ? (
                 <p className="rounded-card border border-border bg-surface px-4 py-6 text-center text-body text-text-tertiary">
@@ -211,6 +202,12 @@ export function InsurancePolicies() {
                 ))
               )}
             </div>
+            {view.length > 0 && (
+              <ListFab
+                onClick={() => navigate(routes.networth.insuranceEntry)}
+                label="New Insurance"
+              />
+            )}
           </>
         )}
       </ListSearchFilterPanel>

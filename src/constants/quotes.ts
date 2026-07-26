@@ -49,16 +49,16 @@ export const QUOTE_CATEGORY_LABELS: Record<QuoteCategory, string> = {
  * accent on each row in the Quotes Library.
  */
 export const QUOTE_CATEGORY_COLORS = [
-  { name: 'Emerald', value: PALETTE_EMERALD },
+  { name: 'Gold', value: PALETTE_GOLD },
   { name: 'Blue', value: PALETTE_BLUE },
   { name: 'Purple', value: PALETTE_PURPLE },
   { name: 'Red', value: PALETTE_RED },
-  { name: 'Gold', value: PALETTE_GOLD },
   { name: 'Grey', value: PALETTE_GREY },
-  { name: 'Brown', value: PALETTE_BROWN },
   { name: 'Cyan', value: PALETTE_CYAN },
+  { name: 'Brown', value: PALETTE_BROWN },
   { name: 'Magenta', value: PALETTE_MAGENTA },
   { name: 'Off-White', value: PALETTE_OFF_WHITE },
+  { name: 'Emerald', value: PALETTE_EMERALD },
 ] as const
 
 /** Neutral fallback for an orphan/unconfigured category colour (e.g. a deleted category still on a row). */

@@ -22,6 +22,7 @@ import { MedicalRowHeader } from '../components/MedicalRowHeader'
 import { EmptyState } from '../components/EmptyState'
 import { SelectMenu } from '../components/SelectMenu'
 import { ListSearchFilterPanel, ResultCount } from '../components/ListSearchFilterPanel'
+import { ListFab } from '../components/ListFab'
 
 const SORT_OPTIONS: { value: ReportSortField; label: string }[] = [
   { value: 'date', label: 'Date' },
@@ -188,6 +189,12 @@ export function MedicalReports() {
                   ))
                 )}
               </div>
+              {view.length > 0 && (
+                <ListFab
+                  onClick={() => navigate(routes.medical.entry)}
+                  label="New Medical Report"
+                />
+              )}
             </>
           )
         }}

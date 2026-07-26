@@ -1,6 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
-import { IconPlus } from '@tabler/icons-react'
 import { useAsync } from '../hooks/useAsync'
 import { useSessionState } from '../hooks/useSessionState'
 import { useSheetNavigate } from '../hooks/useSheetNavigate'
@@ -32,7 +31,7 @@ import { Toggle } from '../components/Toggle'
 import { ListRow } from '../components/ListRow'
 import { FoodRowHeader } from '../components/FoodRowHeader'
 import { ActivityRowHeader } from '../components/ActivityRowHeader'
-import { SecondaryButton } from '../components/SecondaryButton'
+import { ListFab } from '../components/ListFab'
 import { EmptyState } from '../components/EmptyState'
 import { ListSearchFilterPanel, ResultCount } from '../components/ListSearchFilterPanel'
 
@@ -215,18 +214,7 @@ export function WellnessLibrary() {
             const view = foodView
             return (
               <>
-                <div className="flex items-center">
-                  {view.length > 0 && <ResultCount count={view.length} />}
-                  <SecondaryButton
-                    size="sm"
-                    className="ml-auto"
-                    onClick={() => openSheet(routes.wellness.newFood)}
-                  >
-                    <span className="inline-flex items-center gap-1 text-positive">
-                      <IconPlus size={15} /> New Food
-                    </span>
-                  </SecondaryButton>
-                </div>
+                {view.length > 0 && <ResultCount count={view.length} />}
                 <div className="flex flex-col gap-2">
                   {view.length === 0 ? (
                     <p className="rounded-card border border-border bg-surface px-4 py-6 text-center text-body text-text-tertiary">
@@ -263,6 +251,12 @@ export function WellnessLibrary() {
                     ))
                   )}
                 </div>
+                {view.length > 0 && (
+                  <ListFab
+                    onClick={() => openSheet(routes.wellness.newFood)}
+                    label="New Food"
+                  />
+                )}
               </>
             )
           }}
@@ -313,18 +307,7 @@ export function WellnessLibrary() {
             const view = activityView
             return (
               <>
-                <div className="flex items-center">
-                  {view.length > 0 && <ResultCount count={view.length} />}
-                  <SecondaryButton
-                    size="sm"
-                    className="ml-auto"
-                    onClick={() => openSheet(routes.wellness.newActivity)}
-                  >
-                    <span className="inline-flex items-center gap-1 text-positive">
-                      <IconPlus size={15} /> New Activity
-                    </span>
-                  </SecondaryButton>
-                </div>
+                {view.length > 0 && <ResultCount count={view.length} />}
                 <div className="flex flex-col gap-2">
                   {view.length === 0 ? (
                     <p className="rounded-card border border-border bg-surface px-4 py-6 text-center text-body text-text-tertiary">
@@ -346,6 +329,12 @@ export function WellnessLibrary() {
                     })
                   )}
                 </div>
+                {view.length > 0 && (
+                  <ListFab
+                    onClick={() => openSheet(routes.wellness.newActivity)}
+                    label="New Activity"
+                  />
+                )}
               </>
             )
           }}

@@ -29,6 +29,7 @@ import { SelectMenu } from '../components/SelectMenu'
 import { Toggle } from '../components/Toggle'
 import { Calendar } from '../components/Calendar'
 import { ListSearchFilterPanel, ResultCount } from '../components/ListSearchFilterPanel'
+import { ListFab } from '../components/ListFab'
 import { DateRangeRow } from '../components/DateRangeRow'
 import { ShowRowHeader } from '../components/ShowRowHeader'
 import { PosterThumb } from '../components/PosterThumb'
@@ -301,6 +302,9 @@ export function ShowsLibrary() {
                   ))
                 )}
               </div>
+              {view.length > 0 && (
+                <ListFab onClick={() => navigate(routes.shows.entry)} label="New Show" />
+              )}
             </>
           )
         }}

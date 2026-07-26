@@ -6,6 +6,7 @@ import { ListRow } from '../components/ListRow'
 import { Thumb } from '../components/Thumb'
 import { EmptyState } from '../components/EmptyState'
 import { ListSearchFilterPanel, ResultCount } from '../components/ListSearchFilterPanel'
+import { ListFab } from '../components/ListFab'
 import { TravelRowHeader } from '../components/TravelRowHeader'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
@@ -231,6 +232,9 @@ export function TravelTrips() {
                   })
                 )}
               </div>
+              {view.length > 0 && (
+                <ListFab onClick={() => navigate(routes.travel.entry)} label="New Trip" />
+              )}
             </>
           )
         }}

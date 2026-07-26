@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { IconNotebook, IconPlus } from '@tabler/icons-react'
+import { IconNotebook } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useSessionState } from '../hooks/useSessionState'
@@ -26,6 +26,7 @@ import { routes } from '../constants/routes'
 import { ListRow } from '../components/ListRow'
 import { EmptyState } from '../components/EmptyState'
 import { ListSearchFilterPanel, ResultCount } from '../components/ListSearchFilterPanel'
+import { ListFab } from '../components/ListFab'
 import { FilterPill } from '../components/FilterPill'
 import { DateRangeRow } from '../components/DateRangeRow'
 import { Calendar } from '../components/Calendar'
@@ -205,16 +206,7 @@ export function JournalLibrary() {
           const groups = groupByMonth(view)
           return (
             <>
-              {/* "XX results" on the left; "+ New Journal" is the entry point at the right edge. */}
-              <div className="flex items-center">
-                <ResultCount count={view.length} />
-                <button
-                  onClick={() => navigate(routes.quotes.journalEntry)}
-                  className="ml-auto flex items-center gap-1 px-1 text-body text-positive"
-                >
-                  <IconPlus size={16} /> New Journal
-                </button>
-              </div>
+              <ResultCount count={view.length} />
               <div className="flex flex-col gap-4">
                 {groups.map(([month, monthEntries]) => (
                   <div key={month} className="flex flex-col gap-2">
@@ -238,6 +230,10 @@ export function JournalLibrary() {
                   </div>
                 ))}
               </div>
+              <ListFab
+                onClick={() => navigate(routes.quotes.journalEntry)}
+                label="New Journal"
+              />
             </>
           )
         }}

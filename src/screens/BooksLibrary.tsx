@@ -23,6 +23,7 @@ import { SelectMenu } from '../components/SelectMenu'
 import { Toggle } from '../components/Toggle'
 import { Calendar } from '../components/Calendar'
 import { ListSearchFilterPanel, ResultCount } from '../components/ListSearchFilterPanel'
+import { ListFab } from '../components/ListFab'
 import { DateRangeRow } from '../components/DateRangeRow'
 import { BookRowHeader } from '../components/BookRowHeader'
 import { CoverThumb } from '../components/CoverThumb'
@@ -279,6 +280,9 @@ export function BooksLibrary() {
                   ))
                 )}
               </div>
+              {view.length > 0 && (
+                <ListFab onClick={() => navigate(routes.books.entry)} label="New Book" />
+              )}
             </>
           )
         }}
