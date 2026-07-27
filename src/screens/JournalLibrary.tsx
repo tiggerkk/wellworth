@@ -54,7 +54,10 @@ export function JournalLibrary() {
   const userId = session?.user.id
   const version = useJournalVersion()
   const { data: profile } = useProfile()
-  const moods = effectiveMoods(profile?.journal_moods)
+  const moods = useMemo(
+    () => effectiveMoods(profile?.journal_moods),
+    [profile?.journal_moods],
+  )
   const moodOptions = useMemo(
     () => [
       { value: 'all', label: 'Any Mood' },
@@ -235,28 +238,31 @@ export function JournalLibrary() {
                       {formatMonthLabel(month)}
                     </p>
                     <div className="flex flex-col gap-2">
-                      {monthEntries.map((entry) => (
-                        <ListRow
-                          key={entry.id}
-                          onDelete={() => void remove(entry.id)}
-                          onClick={() => navigate(routes.quotes.journalEdit(entry.id))}
-                          color={moodColor(moods, entry.mood)}
-                          leading={
-                            <div className="flex flex-col items-center gap-1">
-                              <DateBadge day={entry.day} />
-                              <LabelChip
-                                label={moodLabel(moods, entry.mood)}
-                                color={moodColor(moods, entry.mood)}
-                                className="text-[10px] px-1.5 py-0"
-                              />
-                            </div>
-                          }
-                        >
-                          <span className="line-clamp-3 block text-body text-text-primary">
-                            {entry.journal_entry}
-                          </span>
-                        </ListRow>
-                      ))}
+                      {monthEntries.map((entry) => {
+                        const color = moodColor(moods, entry.mood)
+                        return (
+                          <ListRow
+                            key={entry.id}
+                            onDelete={() => void remove(entry.id)}
+                            onClick={() => navigate(routes.quotes.journalEdit(entry.id))}
+                            color={color}
+                            leading={
+                              <div className="flex flex-col items-center gap-1">
+                                <DateBadge day={entry.day} />
+                                <LabelChip
+                                  label={moodLabel(moods, entry.mood)}
+                                  color={color}
+                                  className="text-[10px] px-1.5 py-0"
+                                />
+                              </div>
+                            }
+                          >
+                            <span className="line-clamp-3 block text-body text-text-primary">
+                              {entry.journal_entry}
+                            </span>
+                          </ListRow>
+                        )
+                      })}
                     </div>
                   </div>
                 ))}

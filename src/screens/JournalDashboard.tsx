@@ -34,7 +34,10 @@ export function JournalDashboard() {
   const userId = session?.user.id
   const version = useJournalVersion()
   const { data: profile } = useProfile()
-  const moods = effectiveMoods(profile?.journal_moods)
+  const moods = useMemo(
+    () => effectiveMoods(profile?.journal_moods),
+    [profile?.journal_moods],
+  )
 
   const [rangeKey, setRangeKey] = useState(JOURNAL_RANGE_DEFAULT)
   const [menuOpen, setMenuOpen] = useState(false)

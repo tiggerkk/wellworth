@@ -5,8 +5,14 @@
 ### Moment of Zen (`/quotes`)
 
 - **First load**: one random quote where `is_favorite = true`; falls back to the whole pool when there are no favorites.
-- **Refresh**: a floating **Shuffle** button at the **bottom-right** of the quote area and **pull-to-refresh** (touch) rotate to a new random quote from the **entire pool** (no immediate repeat). The module's bottom nav tabs are **Zen · Journal · Quotes · Settings**.
+- **Refresh**: a floating **Shuffle** button at the **bottom-right** of the quote area and **pull-to-refresh** (touch) rotate to a new random quote from the **entire pool** (no immediate repeat). The module's bottom nav tabs are **Zen · Dashboard · Journal · Quotes · Settings**.
 - **Card**: the quote text (large, centred; renders Chinese + multi-line correctly) — **tapping the quote text opens the Edit Quote page**; a metadata cluster — **Author · Source type · Title**, where **tapping the Title navigates to the linked Show/Book detail** (only when a link exists); the single **Category** badge and any **Tags**; a **heart** to toggle favorite instantly (optimistic via a `favOverride` map).
+
+### Journal Dashboard (`/quotes/journal/dashboard`) — bottom-nav tab labeled **Dashboard**
+
+- Header **range picker** (`Last 7 Days ▾`, default): Last 7 Days, Last 1/3/6 Months, Last Year — `JOURNAL_RANGES`/`JOURNAL_RANGE_DEFAULT` in `src/constants/journal.ts`, same pure-UI-constant convention as `WELLNESS_RANGES` (see `docs/04_wellness.md`).
+- **KPI row**: Total Entries, Current Streak, Longest Streak (both in days), Entries This Month — all **range-independent** (computed over full history, not the selected range) via `computeJournalStats` (`src/lib/journal-stats.ts`).
+- **Mood Map**: a bubble chart on **Russell's Circumplex Model of Affect** (valence × arousal) — one bubble per mood at a **fixed position** (`JOURNAL_MOOD_POSITIONS`), sized by that mood's entry count **within the selected range**. A deliberate simplification: Journal records one discrete mood per entry, not a continuous emotional coordinate, so each mood gets one representative point rather than a per-entry scatter. A "Most common: {mood}" line sits above the chart. Empty state when there are no entries at all (range-independent).
 
 ### Quotes Library (`/quotes/library`) — bottom-nav tab labeled **Quotes**
 
@@ -39,8 +45,8 @@
 ### Journal (`/quotes/journal`) — bottom-nav tab labeled **Journal**
 
 - Folded into the Quotes module (own table `journal_entry`, own tag vocabulary — independent of `quote.tags`) rather than a separate module.
-- **Search bar** matches entry text + tags. **Filter panel**: a tag facet (top 10 by use, same convention as Quotes) and a **Date** range. **Sort**: **Date** only, default descending — Journal has no other sortable field.
-- Rows are **grouped under a centered "Month Year" heading**, newest month first. Each row's leading badge shows the **weekday** (regular weight) over the **day of month** (bold) — `formatWeekdayShort` + `formatDayOfMonth`, and the body is the entry text, clamped to **3 lines**.
+- **Search bar** matches entry text + tags. **Filter panel**, below **Date**: a **Mood** dropdown (Any Mood + the 7 moods) and a **Filter tags…** box on the same line, plus a tag facet (top 10 by use, same convention as Quotes). **Sort**: **Date** only, default descending — Journal has no other sortable field.
+- Rows are **grouped under a centered "Month Year" heading**, newest month first. Each row's leading badge shows the **weekday** (regular weight) over the **day of month** (bold) — `formatWeekdayShort` + `formatDayOfMonth` — with the entry's **mood `LabelChip`** underneath; the row's **left strip is colored by mood**. The body is the entry text, clamped to **3 lines**.
 - The floating **+** (`ListFab`) opens **New Journal**, shown only once the filtered list has at least one row. Tap a row → Journal Entry (edit); **swipe-left → Delete** (optimistic, same pattern as Quotes Library).
 
 ### Journal Entry (`/quotes/journal/entry`, `/quotes/journal/:id`)
@@ -48,12 +54,14 @@
 - **Day-based** — one entry per day (`UNIQUE(user_id, day)`). New and Edit are the **same routed screen**, resolving to whichever record exists for the day currently shown.
 - **Day nav** at the top of the body: centered `‹ date ›` (reusing Wellness Diary's header pattern), defaulting to **today**. Tapping the date opens the **Calendar** with a green cue dot on days that already have an entry (`legend={false}` — a single cue needs no legend). Landing on a day with an entry (via the arrows or the calendar) loads it for editing; landing on a blank day starts a fresh draft for it. Switching days with unsaved changes prompts a discard-confirm first.
 - The header **title is always "Journal Entry"** (never "New"/"Edit" — the record backing the screen can change mid-session as the user browses days), and the **top-left icon tracks the current day**: `<` when it has a saved entry, **X** when it doesn't.
+- **Mood** (required, defaults to Neutral): a **2-row grid of 7 `LabelChip`s** (4 + 3), one per mood, single-select, each colored per the owner's Mood config. Selecting a mood surfaces its **sub-tag suggestions** as tappable `FilterPill`s (neutral tone, not accent — see `docs/01_design_system.md`) beside Tags; tapping one toggles it in/out of the entry's Tags.
 - **Journal Entry** (textarea; required) with a **Paste** button (top-right of its label, using the paste-at-cursor pattern) that inserts clipboard text at the cursor. **Tags**: a separate `TagInput` with its own autocomplete pool, independent of Quotes' tags.
 - Top-right icon actions (Delete when the current day has a saved entry · Reset · Create/Save) via shared **EntryHeaderActions** — **no favorite heart**. **Save and Cancel both return to the Journal listing** (there's no fixed "this record's" route to return to once the user has browsed to another day). **Hard delete**.
 
 ### Settings (`/quotes/settings`)
 
-- **DISPLAY → Visible Fields** (labeled **(Quote Entry)** — Journal has no configurable fields): shared **VisibleFieldsSheet** (see `docs/01_design_system.md`) over the optional fields in New/Edit form order: Title, Source Link, Author, Source Type, Language, Tags. Quote Text and Category are always shown.
+- **DISPLAY → Visible Fields** (labeled **(Quote Entry)** — Journal Entry's fields aren't independently configurable): shared **VisibleFieldsSheet** (see `docs/01_design_system.md`) over the optional fields in New/Edit form order: Title, Source Link, Author, Source Type, Language, Tags. Quote Text and Category are always shown.
+- **JOURNAL VALUES → Moods**: opens **JournalMoodsSheet** — rename, recolor (`ColorPicker`), and edit sub-tag suggestions (`TagInput`) for each of the **7 fixed moods**. Unlike Source Types/Categories below, **not** built on `ConfigListEditor` — no add/delete/reorder, since the 7 keys and their circumplex order are structural (the Journal Dashboard's Mood Map is keyed to them). Each mood is a collapsible row; changes auto-save with a **"Saving… / All changes saved"** line, and expand/collapse state is preserved across a save (see `docs/02_tech_spec.md` → Data flow gotchas, F13).
 - **VALUES** — manage the dropdown lists used on the Add/Edit form (each opens a sheet):
   - **Source Types** and **Categories**: uses **ConfigListEditor** to add / rename / delete / drag-reorder / color-pick the lists. Changes auto-save.
   - **Delete migration**: deleting a value still used by quotes prompts a **reassignment** — pick a replacement and the affected quotes are moved to it before the value is removed. A value can't be deleted if it's the last one in its list. **TV Show / Movie / Book** source types are **protected from deletion** (their `linkKind` drives Show/Book auto-linking) — they can still be renamed/reordered.
@@ -77,16 +85,16 @@ Full guide: `templates/quotes-import-guide.md`.
 
 ### Import CSV Journal (sheet, from Quotes Settings)
 
-Columns: `day,journal_entry,tags`
+Columns: `day,journal_entry,mood,tags`
 
-- `day` **required** (`YYYY-MM-DD`) — also frozen onto the imported row's `created_at`/`updated_at`, since Journal is a day-based table. `journal_entry` **required**. **Tags** split from the quoted cell.
-- **No external API, no linking** — a lighter importer than Quotes': no Show/Book resolution, and no Category/Source Type matching (Journal has no configurable fields).
+- `day` **required** (`YYYY-MM-DD`) — also frozen onto the imported row's `created_at`/`updated_at`, since Journal is a day-based table. `journal_entry` **required**. `mood` **optional** — matched against a mood's key or label, case-insensitive; blank or unrecognized **defaults to Neutral** and is flagged with a warning (the row still imports, unlike a bad date/blank entry text). **Tags** split from the quoted cell.
+- **No external API, no linking** — a lighter importer than Quotes': no Show/Book resolution, and no Category/Source Type matching (Journal's only configurable values are the fixed 7 Moods).
 - **Duplicate = a day already in the journal** — either already in the DB or repeated within the file (first occurrence wins) — enforced by `UNIQUE(user_id, day)` via an upsert with `ignoreDuplicates`, so re-running the same file skips every day already imported.
 
 Steps:
 
-1. **Choose CSV** → rows parsed/validated (day format, non-blank entry text).
-2. **Preview**: counts of **new / duplicate-skipped / flagged** rows + a sample of new rows (snippet + date + tags).
+1. **Choose CSV** → rows parsed/validated (day format, non-blank entry text, mood match).
+2. **Preview**: counts of **new / duplicate-skipped / flagged** rows + a sample of new rows (snippet + date + mood chip + tags).
 3. **Import** writes only the new rows in one batched upsert.
 
 ---
@@ -102,7 +110,9 @@ Steps:
 
 **CJK-aware search**: `detectLanguage` (`containsCjk` → 'zh'). `quoteSearchText` builds the searchable text; `foldZh` normalises both query and row text for Traditional⇄Simplified-agnostic local filtering (see `docs/02_tech_spec.md` → Chinese search).
 
-**Journal** (`src/lib/journal.ts`, `src/lib/journal-import.ts`, `src/data/journal.ts`) mirrors Quotes' structure but stays fully independent: its own `JournalCriteria`/`applyJournalView` (date-only sort), its own `rankedJournalTags` (no shared vocabulary with `quote.tags`), and its own refresh channel (`bumpJournal`/`useJournalVersion` in `src/lib/journal-refresh.ts`) so a Journal mutation never forces a Quotes Library refetch, or vice versa.
+**Journal** (`src/lib/journal.ts`, `src/lib/journal-import.ts`, `src/data/journal.ts`) mirrors Quotes' structure but stays fully independent: its own `JournalCriteria`/`applyJournalView` (date-only sort, plus a `mood` filter), its own `rankedJournalTags` (no shared vocabulary with `quote.tags`), and its own refresh channel (`bumpJournal`/`useJournalVersion` in `src/lib/journal-refresh.ts`) so a Journal mutation never forces a Quotes Library refetch, or vice versa.
+
+**Journal Moods** (`src/lib/journal-moods.ts`, seeds in `src/constants/journal.ts`): the 7 keys/order/positions/default colors/default sub-tags are fixed constants (`JOURNAL_MOODS`, `JOURNAL_MOOD_POSITIONS`, …), not a configurable list. `effectiveMoods(profile.journal_moods)` resolves the owner's rename/recolor/sub-tag overrides **per-key independently** — unlike `effectiveCategories`, a partial override doesn't fall back to the whole default set, since every owner always has all 7 keys. `matchMoodKeyOrLabel` backs the CSV importer's mood-column matching. `computeJournalStats`/`topMood` (`src/lib/journal-stats.ts`) derive the Dashboard's KPIs and "Most common" mood from a plain day list / mood-count map.
 
 ---
 
@@ -132,11 +142,12 @@ Standard rules: own `user_id` for direct RLS, four owner policies using `(select
 - `id` UUID PK · `user_id` UUID → auth.users (ON DELETE CASCADE)
 - `day` DATE — the calendar day this entry belongs to (required)
 - `journal_entry` TEXT — the entry text (required)
+- `mood` TEXT DEFAULT 'neutral' **CHECK** in the 7 fixed keys (`happy, motivated, calm, neutral, sad, anxious, angry`) — unlike `quote.source_type`/`category`, this **is** CHECK-constrained: the set is structural (the Dashboard's Mood Map is keyed to it), not an owner-extensible list. The owner's rename/recolor/sub-tags for each key live on `profile.journal_moods` (JSONB, added by `10_quotes_profile_settings.sql` alongside `quote_categories` etc.; NULL = canonical defaults) — resolved by `src/lib/journal-moods.ts`.
 - `tags` TEXT[] DEFAULT '{}' — optional; own vocabulary, independent of `quote.tags`
 - `created_at`, `updated_at`
-- **UNIQUE (`user_id`, `day`)** — one entry per day; drives the Entry screen's day nav (the arrows/calendar resolve to this record or a blank draft) and the importer's dedup. Its own index also covers every Journal query (equality lookups + the listing's DESC order, via a backward btree scan) — no separate index is needed.
+- **UNIQUE (`user_id`, `day`)** — one entry per day; drives the Entry screen's day nav (the arrows/calendar resolve to this record or a blank draft) and the importer's dedup. Its own index also covers every Journal query, including the Dashboard's per-mood count-by-range query (filtered by `user_id` + day range, `mood` only selected) — no separate `mood` index is needed; one wouldn't be used by that query and would be pure write overhead.
 
-Standard rules: own `user_id` for direct RLS, four owner policies using `(select auth.uid()) = user_id`, no CHECK columns. `moddatetime` trigger on `updated_at`, explicit GRANT to `anon`/`authenticated`. **Hard delete** (leaf table; no `deleted_at`). Appended directly to `supabase/migrations/09_quotes_schema.sql` — Journal has no migration file of its own, per this repo's one-file-per-module SQL convention.
+Standard rules: own `user_id` for direct RLS, four owner policies using `(select auth.uid()) = user_id`, only `mood` carries a CHECK. `moddatetime` trigger on `updated_at`, explicit GRANT to `anon`/`authenticated`. **Hard delete** (leaf table; no `deleted_at`). Appended directly to `supabase/migrations/09_quotes_schema.sql` — Journal has no migration file of its own, per this repo's one-file-per-module SQL convention.
 
 ---
 
@@ -171,3 +182,19 @@ These are the canonical defaults resolved when `profile.quote_source_types` / `p
 | love         | Love         |
 | relationship | Relationship |
 | growth       | Growth       |
+
+### Journal Mood seed defaults
+
+The canonical defaults resolved when `profile.journal_moods` is NULL (rename/recolor/sub-tags only — the 7 keys/order themselves are fixed, see Data model above). Stored in `src/constants/journal.ts`:
+
+| key       | label     | default color | default sub-tags                        |
+| --------- | --------- | ------------- | --------------------------------------- |
+| happy     | Happy     | Gold          | relieved, grateful, excited             |
+| motivated | Motivated | Emerald       | energetic, focused                      |
+| calm      | Calm      | Cyan          | content, relaxed, peaceful, resigned    |
+| neutral   | Neutral   | Grey          | indifferent                             |
+| sad       | Sad       | Blue          | lonely, hurt, disappointed, depressed   |
+| anxious   | Anxious   | Purple        | stressed, worried, restless             |
+| angry     | Angry     | Red           | frustrated, annoyed, resentful, furious |
+
+Each mood also has a fixed valence/arousal position on the Dashboard's Mood Map (`JOURNAL_MOOD_POSITIONS`) — not owner-editable.

@@ -34,7 +34,7 @@ const MAX_RADIUS = 32
 export function JournalCircumplexChart({ points }: { points: CircumplexPoint[] }) {
   return (
     <ResponsiveContainer width="100%" height={280}>
-      <ScatterChart margin={{ top: 8, right: 16, bottom: 8, left: 8 }}>
+      <ScatterChart margin={{ top: 8, right: 16, bottom: 24, left: 20 }}>
         <XAxis
           type="number"
           dataKey="valence"

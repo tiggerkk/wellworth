@@ -1,69 +1,47 @@
 # OWNER RUNBOOK — stand up WellWorth from scratch
 
-Every manual step to get WellWorth running locally and deployed, written for someone who has never
-used these tools. Do the parts in order. Each part ends with a **✅ Check** so you know it worked
-before moving on.
+Every manual step to get WellWorth running locally and deployed, written for someone who has never used these tools. Do the parts in order. Each part ends with a **✅ Check** so you know it worked before moving on.
 
-Notation: lines starting with `>` are commands you type into a terminal and press Enter. On Windows
-use **PowerShell** (Start menu → type "PowerShell"). You run commands from the project folder unless
-told otherwise.
+Notation: lines starting with `>` are commands you type into a terminal and press Enter. On Windows use **PowerShell** (Start menu → type "PowerShell"). You run commands from the project folder unless told otherwise.
 
-You will create free accounts on: **Supabase**, **Google Cloud**, **api.data.gov** (USDA),
-**themoviedb.org** (TMDB), **GitHub**, **Vercel**. The only thing that can cost money is the
-Claude/Claude Code subscription used
-to _build_ the app — running it is free.
+You will create free accounts on: **Supabase**, **Google Cloud**, **api.data.gov** (USDA), **themoviedb.org** (TMDB), **GitHub**, **Vercel**. The only thing that can cost money is the Claude/Claude Code subscription used to _build_ the app — running it is free.
 
 ---
 
 ## Part A — One-time tools on your computer
 
-> **Opening PowerShell** (you'll use it throughout): click the Start menu, type `PowerShell`, and click
-> **Windows PowerShell**. A blue/black window opens with a `>` prompt — that's where the commands below
-> go. "Open a new PowerShell window" just means doing this again so it picks up newly-installed tools.
+> **Opening PowerShell** (you'll use it throughout): click the Start menu, type `PowerShell`, and click **Windows PowerShell**. A blue/black window opens with a `>` prompt — that's where the commands below go. "Open a new PowerShell window" just means doing this again so it picks up newly-installed tools.
 
-1. **Node.js** (the JavaScript runtime). Go to <https://nodejs.org> and click the big green button
-   labelled **LTS** (Long Term Support) — **not** "Current". Run the installer with default options.
+1. **Node.js** (the JavaScript runtime). Go to <https://nodejs.org> and click the big green button labelled **LTS** (Long Term Support) — **not** "Current". Run the installer with default options.
    - ✅ Check: open a **new** PowerShell window and run:
      ```
      > node -v
      ```
      You should see a version like `v20.x` or higher.
 
-2. **Git** (version control). Download from <https://git-scm.com/download/win> and install with
-   defaults.
+2. **Git** (version control). Download from <https://git-scm.com/download/win> and install with defaults.
    - ✅ Check: `> git --version` prints a version.
 
-3. **The project folder.** If you were given a zip, unzip it. If it's on GitHub already, clone it
-   (Part H explains git). Then, from inside the folder (it contains `package.json`):
+3. **The project folder.** If you were given a zip, unzip it. If it's on GitHub already, clone it (Part H explains git). Then, from inside the folder (it contains `package.json`):
    ```
    > npm install
    ```
    This downloads the app's dependencies into `node_modules` (takes a minute or two).
-   - ✅ Check: `> npm run build` finishes with `✓ built in …` and no red errors. (It will warn that a
-     chunk is large — that's fine.)
+   - ✅ Check: `> npm run build` finishes with `✓ built in …` and no red errors. (It will warn that a chunk is large — that's fine.)
 
 ---
 
 ## Part B — Create the Supabase project (your database + login)
 
-1. Go to <https://supabase.com>, sign up (the "Sign in with GitHub" option is easiest), and click
-   **New project**.
-2. Fill in: **Name** = `wellworth`; **Database Password** = generate a strong one and **save it
-   somewhere you won't lose it** — a password manager is best; if you don't have one, Windows
-   **Credential Manager** or even writing it on paper kept somewhere safe is fine. You'll need this
-   password to run migrations, and there's no easy recovery if it's lost. **Region** = the one closest
-   to you; Plan = Free. Click **Create new project** and wait ~2 minutes for it to provision.
+1. Go to <https://supabase.com>, sign up (the "Sign in with GitHub" option is easiest), and click **New project**.
+2. Fill in: **Name** = `wellworth`; **Database Password** = generate a strong one and **save it somewhere you won't lose it** — a password manager is best; if you don't have one, Windows **Credential Manager** or even writing it on paper kept somewhere safe is fine. You'll need this password to run migrations, and there's no easy recovery if it's lost. **Region** = the one closest to you; Plan = Free. Click **Create new project** and wait ~2 minutes for it to provision.
 3. In the project, open **Project Settings** (gear icon) → **API**. You need three values from here:
    - **Project URL** — looks like `https://abcd1234.supabase.co`.
-   - **`anon` `public` key** — a long string under "Project API keys". This is safe to ship in the
-     app (it respects row-level security).
-   - **Project Ref** — the `abcd1234` part of the URL (also shown under Settings → General as
-     "Reference ID").
-     > ⚠️ There is also a **`service_role`** key on that page. **Never** use it or put it in the app —
-     > it bypasses all security. We only ever use the `anon` key.
+   - **`anon` `public` key** — a long string under "Project API keys". This is safe to ship in the app (it respects row-level security).
+   - **Project Ref** — the `abcd1234` part of the URL (also shown under Settings → General as "Reference ID").
+     > ⚠️ There is also a **`service_role`** key on that page. **Never** use it or put it in the app — it bypasses all security. We only ever use the `anon` key.
 
-- ✅ Check: you have the Project URL, the anon key, and the project ref written down, plus the DB
-  password saved.
+- ✅ Check: you have the Project URL, the anon key, and the project ref written down, plus the DB password saved.
 
 ---
 
@@ -81,9 +59,7 @@ to _build_ the app — running it is free.
 Used by the **Shows** module to look up posters and metadata. Free, one signup.
 
 1. Create an account at <https://www.themoviedb.org/signup> and verify your email.
-2. Go to **Settings → API** (<https://www.themoviedb.org/settings/api>) → **Request an API key** →
-   choose **Developer**, accept the terms, and fill in the short form (any personal use description is
-   fine; URL can be `http://localhost`).
+2. Go to **Settings → API** (<https://www.themoviedb.org/settings/api>) → **Request an API key** → choose **Developer**, accept the terms, and fill in the short form (any personal use description is fine; URL can be `http://localhost`).
 3. Copy the **API Key (v3 auth)** — a ~32-character string.
 
 - ✅ Check: you have a v3 API key. (Shows _title search_ won't work without it; manual entry still does.)
@@ -92,53 +68,32 @@ Used by the **Shows** module to look up posters and metadata. Free, one signup.
 
 ## Part C3 — Get a free Google Books key (recommended)
 
-Used by the **Books** module to look up covers and metadata. It's technically optional — Books search
-works without it — but the **keyless quota is very low and rate-limits (HTTP 429) almost immediately**
-in practice, so a key is recommended.
+Used by the **Books** module to look up covers and metadata. It's technically optional — Books search works without it — but the **keyless quota is very low and rate-limits (HTTP 429) almost immediately** in practice, so a key is recommended.
 
-1. In the Google Cloud console (the **same project** as your Google sign-in is fine), go to **APIs &
-   Services → Library**, search **Books API**, and **Enable** it.
+1. In the Google Cloud console (the **same project** as your Google sign-in is fine), go to **APIs & Services → Library**, search **Books API**, and **Enable** it.
 2. **APIs & Services → Credentials → Create credentials → API key**, then configure it:
-   - **Name**: anything, e.g. `WellWorth Books (browser)` — it's just a label. Do **not** check
-     "Authenticate API calls through a service account" — a plain API key is correct (the search reads
-     public data; a service account is the wrong credential type here).
-   - **Application restrictions → Websites** (your app is browser JavaScript). Add your origins with a
-     trailing `/*`: `http://localhost:5173/*` (local dev — match the port `npm run dev` prints), your
-     LAN address if you test on the phone (e.g. `http://192.168.1.50:5173/*`), and your production URL
-     (`https://your-app.vercel.app/*`). If you later get `403`s, an origin is missing — temporarily
-     switch to **None** to confirm the key works, then re-add the right patterns. (For a solo app,
-     leaving it on **None** with the API restriction below is also fine.)
-   - **API restrictions → Restrict key → Books API.** A `VITE_` key ships in your browser bundle and is
-     therefore **public**, so limiting it to this one free, read-only API caps any abuse.
+   - **Name**: anything, e.g. `WellWorth Books (browser)` — it's just a label. Do **not** check "Authenticate API calls through a service account" — a plain API key is correct (the search reads public data; a service account is the wrong credential type here).
+   - **Application restrictions → Websites** (your app is browser JavaScript). Add your origins with a trailing `/*`: `http://localhost:5173/*` (local dev — match the port `npm run dev` prints), your LAN address if you test on the phone (e.g. `http://192.168.1.50:5173/*`), and your production URL (`https://your-app.vercel.app/*`). If you later get `403`s, an origin is missing — temporarily switch to **None** to confirm the key works, then re-add the right patterns. (For a solo app, leaving it on **None** with the API restriction below is also fine.)
+   - **API restrictions → Restrict key → Books API.** A `VITE_` key ships in your browser bundle and is therefore **public**, so limiting it to this one free, read-only API caps any abuse.
 3. Copy the key.
 
-> ⚠️ Never put a **service-account / secret** key in a `VITE_` var — only this kind of restricted,
-> public, read-only API key.
+> ⚠️ Never put a **service-account / secret** key in a `VITE_` var — only this kind of restricted, public, read-only API key.
 
 - ✅ Check: Books title search works, and with the key set you won't hit 429s on normal use.
 
-> **Per-day quota (the other 429).** Even a correctly-configured key has a default **1,000
-> `Queries per day`** on the project. A bulk CSV import is expensive: **each Chinese title costs 2
-> queries** (the search runs Simplified + HK-Traditional), so a 32-book import ≈ 64 queries, and re-running the
-> same file repeatedly (e.g. after `supabase db reset --linked` while testing) can exhaust the day's
-> quota — you'll see a **429 that says `Queries per day`**. This is _not_ a config problem; it resets
-> at **midnight US-Pacific**. To raise it: **APIs & Services → Books API → Quotas & System Limits**,
-> filter "Queries per day", and request an increase. (The importer detects this flavour of 429,
-> **stops** instead of retrying, and says so; unmatched rows still import as-is.)
+> **Per-day quota (the other 429).** Even a correctly-configured key has a default **1,000 `Queries per day`** on the project. A bulk CSV import is expensive: **each Chinese title costs 2 queries** (the search runs Simplified + HK-Traditional), so a 32-book import ≈ 64 queries, and re-running the same file repeatedly (e.g. after `supabase db reset --linked` while testing) can exhaust the day's quota — you'll see a **429 that says `Queries per day`**. This is _not_ a config problem; it resets at **midnight US-Pacific**. To raise it: **APIs & Services → Books API → Quotas & System Limits**, filter "Queries per day", and request an increase. (The importer detects this flavour of 429, **stops** instead of retrying, and says so; unmatched rows still import as-is.)
 
 ---
 
 ## Part D — Create the `.env` file (your secrets, kept off the internet)
 
-The app reads its configuration from a file named `.env` in the project root. It is intentionally
-**not** committed to git. There's a template `.env.example` you can copy.
+The app reads its configuration from a file named `.env` in the project root. It is intentionally **not** committed to git. There's a template `.env.example` you can copy.
 
 1. In PowerShell, from the project folder:
    ```
    > Copy-Item .env.example .env
    ```
-2. Open `.env` in a text editor (e.g. Notepad: `> notepad .env`) and fill in the values from
-   Parts B, C, C2, and C3. It should look like this (no quotes, no spaces around `=`):
+2. Open `.env` in a text editor (e.g. Notepad: `> notepad .env`) and fill in the values from Parts B, C, C2, and C3. It should look like this (no quotes, no spaces around `=`):
    ```
    VITE_SUPABASE_URL=https://abcd1234.supabase.co
    VITE_SUPABASE_ANON_KEY=eyJhbGciOi...your-long-anon-key...
@@ -152,19 +107,11 @@ The app reads its configuration from a file named `.env` in the project root. It
    - `VITE_SUPABASE_ANON_KEY` — the anon public key from Part B.
    - `VITE_USDA_API_KEY` — the USDA key from Part C.
    - `VITE_TMDB_API_KEY` — the TMDB v3 key from Part C2.
-   - `VITE_GOOGLE_BOOKS_API_KEY` — Google Books key from Part C3 (recommended; blank works but
-     rate-limits quickly).
-   - `VITE_ALLOWED_EMAILS` — optional email allowlist that keeps the app **yours** (see Part H3).
-     Comma-separate multiple addresses (`you@gmail.com, partner@gmail.com`); leave blank for no
-     restriction.
-   - `VITE_OWNER_EMAIL` — **your** email: this account keeps the seeded owner profile and skips the
-     onboarding wizard. Everyone else on the allowlist is treated as a family member (a neutral profile
-     plus forced onboarding). If you leave it blank and the allowlist has exactly one address, that lone
-     address is treated as the owner. Save and close.
+   - `VITE_GOOGLE_BOOKS_API_KEY` — Google Books key from Part C3 (recommended; blank works but rate-limits quickly).
+   - `VITE_ALLOWED_EMAILS` — optional email allowlist that keeps the app **yours** (see Part H3). Comma-separate multiple addresses (`you@gmail.com, partner@gmail.com`); leave blank for no restriction.
+   - `VITE_OWNER_EMAIL` — **your** email: this account keeps the seeded owner profile and skips the onboarding wizard. Everyone else on the allowlist is treated as a family member (a neutral profile plus forced onboarding). If you leave it blank and the allowlist has exactly one address, that lone address is treated as the owner. Save and close.
 
-- ✅ Check: `.env` exists with the four required lines filled (the Google Books line is optional but
-  recommended). (These get baked into the app when it builds, so if you change them later you must
-  rebuild/redeploy — and **restart `npm run dev`**, since Vite only reads `.env` at startup.)
+- ✅ Check: `.env` exists with the four required lines filled (the Google Books line is optional but recommended). (These get baked into the app when it builds, so if you change them later you must rebuild/redeploy — and **restart `npm run dev`**, since Vite only reads `.env` at startup.)
 
 ---
 
@@ -179,11 +126,8 @@ The CLI is the tool that applies the database structure (migrations) to your Sup
    > scoop bucket add supabase https://github.com/supabase/scoop-bucket.git
    > scoop install supabase
    ```
-   > If `Set-ExecutionPolicy` asks to confirm, press `Y`. If Scoop is already installed, skip its two
-   > lines. (Alternative if you'd rather not install: prefix every `supabase` command below with
-   > `npx`, e.g. `npx supabase login`.)
-2. **Open a new PowerShell window** (so it picks up the new `supabase` command), go back to the
-   project folder, and log in + link:
+   > If `Set-ExecutionPolicy` asks to confirm, press `Y`. If Scoop is already installed, skip its two lines. (Alternative if you'd rather not install: prefix every `supabase` command below with `npx`, e.g. `npx supabase login`.)
+2. **Open a new PowerShell window** (so it picks up the new `supabase` command), go back to the project folder, and log in + link:
    ```
    > supabase login
    ```
@@ -191,11 +135,8 @@ The CLI is the tool that applies the database structure (migrations) to your Sup
    ```
    > supabase link --project-ref abcd1234
    ```
-   Replace `abcd1234` with **your** project ref (Part B). If asked, enter the **database password**
-   from Part B.
-   > Note: the repo already contains `supabase/config.toml` and the migration files, so you do **not**
-   > need to run `supabase init`. If a fresh clone somehow lacks `config.toml`, run `supabase init`
-   > once first (it won't touch the existing `supabase/migrations/` folder).
+   Replace `abcd1234` with **your** project ref (Part B). If asked, enter the **database password** from Part B.
+   > Note: the repo already contains `supabase/config.toml` and the migration files, so you do **not** need to run `supabase init`. If a fresh clone somehow lacks `config.toml`, run `supabase init` once first (it won't touch the existing `supabase/migrations/` folder).
 
 - ✅ Check: `> supabase --version` prints a version, and `link` finished without an error.
 
@@ -205,88 +146,59 @@ The CLI is the tool that applies the database structure (migrations) to your Sup
 
 This creates the tables, security rules, and the nutrient reference data in your Supabase project.
 
-1. Make the database password available (so you aren't prompted each time). Easiest, persistent way —
-   run once, then **open a new PowerShell window**:
+1. Make the database password available (so you aren't prompted each time). Easiest, persistent way — run once, then **open a new PowerShell window**:
    ```
    > setx SUPABASE_DB_PASSWORD "your-database-password"
    ```
-   (This stores it for future sessions. It's saved in plain text in your Windows user profile —
-   acceptable for a personal machine. If you'd rather not persist it, instead run
-   `$env:SUPABASE_DB_PASSWORD = "your-database-password"` each session.)
+   (This stores it for future sessions. It's saved in plain text in your Windows user profile — acceptable for a personal machine. If you'd rather not persist it, instead run `$env:SUPABASE_DB_PASSWORD = "your-database-password"` each session.)
 2. Preview, then apply:
    ```
    > supabase db push --dry-run
    > supabase db push
    ```
-   The CLI applies **every** file in `supabase/migrations/` — Wellness (`01_wellness_schema.sql` —
-   creates `profile` incl. the global display prefs `units` + `font_size` (Dynamic Type preset), plus
-   the Wellness tables; `02_wellness_seed_nutrient.sql`), Net Worth (`03_networth_schema.sql` — snapshots, asset entries +
-   the insurance catalogue tables; `04_networth_profile_settings.sql` — the Net Worth `profile`
-   columns), Shows, Books, Quotes (each a schema +
-   a `profile` settings migration), **Medical** (`11_medical_schema.sql` — the three Medical tables;
-   `13_medical_profile_settings.sql` — the Medical `profile` columns; `12_medical_seed_lab_test.sql` —
-   the seeded lab-test reference), and **Travel** (`14_travel_schema.sql` — the five Travel tables;
-   `15_travel_profile_settings.sql` — the Travel `profile` columns: `travel_expense_categories` +
-   `travel_visible_fields`). You never list them yourself; whatever
-   is in the folder is applied.
+   The CLI applies **every** file in `supabase/migrations/` — Wellness (`01_wellness_schema.sql` — creates `profile` incl. the global display prefs `units` + `font_size` (Dynamic Type preset), plus the Wellness tables; `02_wellness_seed_nutrient.sql`), Net Worth (`03_networth_schema.sql` — snapshots, asset entries + the insurance catalogue tables; `04_networth_profile_settings.sql` — the Net Worth `profile` columns), Shows, Books, Quotes (each a schema + a `profile` settings migration — Quotes' pair also creates `journal_entry` and the `profile` column `journal_moods`, since Journal is folded into the Quotes module rather than a module of its own), **Medical** (`11_medical_schema.sql` — the three Medical tables; `13_medical_profile_settings.sql` — the Medical `profile` columns; `12_medical_seed_lab_test.sql` — the seeded lab-test reference), and **Travel** (`14_travel_schema.sql` — the five Travel tables; `15_travel_profile_settings.sql` — the Travel `profile` columns: `travel_expense_categories` + `travel_visible_fields`). You never list them yourself; whatever is in the folder is applied.
 
 - ✅ Check (in the Supabase dashboard):
-  - **Table Editor** shows the module tables: `nutrient`, `profile`, `food`, `serving`, `activity`,
-    `diary_entry`, `strength_set`; the Net Worth pair `networth_snapshot`, `asset_entry`; `show`;
-    `book`; `quote`; the Medical trio `medical_lab_test`, `medical_report`, `medical_result`; and the
-    five Travel tables `trip`, `trip_day`, `stop`, `trip_expense`, `remembered_city`.
-  - **SQL Editor** → `select count(*) from nutrient;` → **80**; `select count(*) from
-medical_lab_test;` → the seeded reference count (the Medical Dashboard reads it).
+  - **Table Editor** shows the module tables: `nutrient`, `profile`, `food`, `serving`, `activity`, `diary_entry`, `strength_set`; the Net Worth pair `networth_snapshot`, `asset_entry`; `show`; `book`; `quote`; `journal_entry`; the Medical trio `medical_lab_test`, `medical_report`, `medical_result`; and the five Travel tables `trip`, `trip_day`, `stop`, `trip_expense`, `remembered_city`.
+  - **SQL Editor** → `select count(*) from nutrient;` → **80**; `select count(*) from medical_lab_test;` → the seeded reference count (the Medical Dashboard reads it).
   - **Advisors → Security** shows no "RLS disabled in public" warnings.
 
 ---
 
 ## Part G — Generate the TypeScript types
 
-This regenerates `src/types/database.ts` from your live schema so the app's types match the database.
-**Re-run this any time the schema changes.**
+This regenerates `src/types/database.ts` from your live schema so the app's types match the database. **Re-run this any time the schema changes.**
 
 ```
 > npm run gen:types
 ```
 
-- ✅ Check: the command finishes with no error and `src/types/database.ts` now lists your tables
-  (e.g. it mentions `nutrient`, `profile`, `diary_entry`). Then `> npm run typecheck` passes silently.
+- ✅ Check: the command finishes with no error and `src/types/database.ts` now lists your tables (e.g. it mentions `nutrient`, `profile`, `diary_entry`). Then `> npm run typecheck` passes silently.
 
 ---
 
 ## Part H — Set up Google sign-in (OAuth)
 
-Two dashboards talk to each other here. The key idea: **Google needs to know your app's web address,
-and Supabase needs Google's client ID + secret.**
+Two dashboards talk to each other here. The key idea: **Google needs to know your app's web address, and Supabase needs Google's client ID + secret.**
 
 ### H1 — Google Cloud
 
-1. Go to <https://console.cloud.google.com>, and create a project (top-left project picker → New
-   project, name it `WellWorth`).
-2. Left menu → **Google Auth Platform** (or visit
-   <https://console.cloud.google.com/auth/overview>) → **Get started**:
+1. Go to <https://console.cloud.google.com>, and create a project (top-left project picker → New project, name it `WellWorth`).
+2. Left menu → **Google Auth Platform** (or visit <https://console.cloud.google.com/auth/overview>) → **Get started**:
    - **Audience:** External.
    - **Branding:** app name `WellWorth`, your support email.
-   - **Data Access / Scopes:** ensure `openid`, `.../auth/userinfo.email`,
-     `.../auth/userinfo.profile` are present (all "non-sensitive" — no Google review needed).
-   - Under **Audience**, either add your own Gmail address as a **Test user**, or click **Publish app**
-     (instant, since the scopes are non-sensitive).
+   - **Data Access / Scopes:** ensure `openid`, `.../auth/userinfo.email`, `.../auth/userinfo.profile` are present (all "non-sensitive" — no Google review needed).
+   - Under **Audience**, either add your own Gmail address as a **Test user**, or click **Publish app** (instant, since the scopes are non-sensitive).
 3. Left menu → **Clients** → **Create client**:
    - **Application type:** Web application. Name: `WellWorth Web`.
-   - **Authorized JavaScript origins:** add `http://localhost:5173` (you'll add the Vercel URL in
-     Part K).
-   - **Authorized redirect URIs:** add your **Supabase callback** —
-     `https://abcd1234.supabase.co/auth/v1/callback` (use your project ref). The exact value is also
-     shown on the Supabase Google page in H2.
+   - **Authorized JavaScript origins:** add `http://localhost:5173` (you'll add the Vercel URL in Part K).
+   - **Authorized redirect URIs:** add your **Supabase callback** — `https://abcd1234.supabase.co/auth/v1/callback` (use your project ref). The exact value is also shown on the Supabase Google page in H2.
    - Click **Create**, then copy the **Client ID** and **Client secret**.
-     > Remember: JavaScript origins = where the _app_ runs (`localhost:5173`). The redirect URI = the
-     > _Supabase_ callback, not your app.
+     > Remember: JavaScript origins = where the _app_ runs (`localhost:5173`). The redirect URI = the _Supabase_ callback, not your app.
 
 ### H2 — Supabase
 
-1. In Supabase: **Authentication** → **Sign In / Providers** → **Google**. Toggle it **Enabled**,
-   paste the **Client ID** and **Client secret** from H1, and **Save**.
+1. In Supabase: **Authentication** → **Sign In / Providers** → **Google**. Toggle it **Enabled**, paste the **Client ID** and **Client secret** from H1, and **Save**.
 2. **Authentication** → **URL Configuration:**
    - **Site URL:** `http://localhost:5173` for now (you'll change it to the Vercel URL in Part K).
    - **Redirect URLs:** add `http://localhost:5173/**` (keep this even after adding the Vercel one).
@@ -296,49 +208,24 @@ and Supabase needs Google's client ID + secret.**
 
 ### H3 — Restrict who can sign in (so the app stays _yours_)
 
-By default, once your Google consent screen is published, **any** Google account can sign in and
-create its own account on your project. Row-Level Security still isolates data — a stranger never
-sees _your_ rows — but they could create their own account and burn your free-tier quota. Three
-**independent** layers close that door; using more than one is healthy defense-in-depth:
+By default, once your Google consent screen is published, **any** Google account can sign in and create its own account on your project. Row-Level Security still isolates data — a stranger never sees _your_ rows — but they could create their own account and burn your free-tier quota. Three **independent** layers close that door; using more than one is healthy defense-in-depth:
 
-1. **Google OAuth audience — who Google lets through.** Google Cloud → **Google Auth Platform →
-   Audience**:
-   - **Testing**: only addresses you add under **Test users** can sign in; everyone else is blocked
-     **by Google** before they reach your app. Best for a private app. (Cap: 100 test users; for our
-     non-sensitive scopes there's no weekly token expiry to worry about.)
-   - **In production / Published**: **any** Google account can complete sign-in. If you clicked
-     "Publish app" in H1, you're here.
-     → For a personal/family app, prefer **Testing** and add your own + family Gmail as **Test
-     users**.
-2. **Supabase sign-ups — whether a brand-new account is created.** Supabase → **Authentication →
-   Sign In / Providers → "Allow new users to sign up"** (default **ON**). Turn it **OFF** once your
-   own account(s) exist: existing users keep working, but a never-seen Google account can't create a
-   new Supabase user. Flip it on for a minute when onboarding a family member, then off again.
-3. **App-level email allowlist — the only layer visible in the repo.** Set **`VITE_ALLOWED_EMAILS`**
-   (Part D locally; Part K in Vercel) to a comma-separated list of approved emails. The app signs
-   out any signed-in account whose email isn't listed and shows "… isn't authorized to use this
-   app." Leaving it blank means no restriction. Because it lives in the codebase (logic in
-   `src/lib/access.ts`, enforced in `src/auth/AuthProvider.tsx`), it documents intent and keeps
-   working even if a dashboard toggle later drifts.
+1. **Google OAuth audience — who Google lets through.** Google Cloud → **Google Auth Platform → Audience**:
+   - **Testing**: only addresses you add under **Test users** can sign in; everyone else is blocked **by Google** before they reach your app. Best for a private app. (Cap: 100 test users; for our non-sensitive scopes there's no weekly token expiry to worry about.)
+   - **In production / Published**: **any** Google account can complete sign-in. If you clicked "Publish app" in H1, you're here. → For a personal/family app, prefer **Testing** and add your own + family Gmail as **Test users**.
+2. **Supabase sign-ups — whether a brand-new account is created.** Supabase → **Authentication → Sign In / Providers → "Allow new users to sign up"** (default **ON**). Turn it **OFF** once your own account(s) exist: existing users keep working, but a never-seen Google account can't create a new Supabase user. Flip it on for a minute when onboarding a family member, then off again.
+3. **App-level email allowlist — the only layer visible in the repo.** Set **`VITE_ALLOWED_EMAILS`** (Part D locally; Part K in Vercel) to a comma-separated list of approved emails. The app signs out any signed-in account whose email isn't listed and shows "… isn't authorized to use this app." Leaving it blank means no restriction. Because it lives in the codebase (logic in `src/lib/access.ts`, enforced in `src/auth/AuthProvider.tsx`), it documents intent and keeps working even if a dashboard toggle later drifts.
 
-> Remember `VITE_ALLOWED_EMAILS` (and `VITE_OWNER_EMAIL`) are **baked in at build time** — change them
-> and you must redeploy (Part K) for production to pick it up, and restart `npm run dev` locally.
+> Remember `VITE_ALLOWED_EMAILS` (and `VITE_OWNER_EMAIL`) are **baked in at build time** — change them and you must redeploy (Part K) for production to pick it up, and restart `npm run dev` locally.
 
 ### Adding a family member
 
-1. Add their Gmail to **`VITE_ALLOWED_EMAILS`** (Part D locally and Part K in Vercel), keeping
-   **`VITE_OWNER_EMAIL`** set to your own address.
-2. If you turned Supabase sign-ups **off** (step 2 above), turn them **on** for a minute so their
-   brand-new account can be created, then turn them off again. Also make sure they're a Google OAuth
-   **Test user** (step 1) if your consent screen is in Testing.
+1. Add their Gmail to **`VITE_ALLOWED_EMAILS`** (Part D locally and Part K in Vercel), keeping **`VITE_OWNER_EMAIL`** set to your own address.
+2. If you turned Supabase sign-ups **off** (step 2 above), turn them **on** for a minute so their brand-new account can be created, then turn them off again. Also make sure they're a Google OAuth **Test user** (step 1) if your consent screen is in Testing.
 3. **Redeploy** (Part K) — these are build-time vars, so the change isn't live until the new build is.
-4. They open the app, sign in with their own Google account, and are taken straight through the
-   **onboarding wizard** to enter their own birthday/sex/height/weight. From then on their data is
-   entirely separate from yours.
+4. They open the app, sign in with their own Google account, and are taken straight through the **onboarding wizard** to enter their own birthday/sex/height/weight. From then on their data is entirely separate from yours.
 
-> Note: the DRI bands cover adult female & male aged 31 through 71+, so most family members get nutrient
-> targets. Anyone **under 31** (or with a non-binary sex) won't see targets yet — everything else works.
-> Adding a younger band is a small data edit in `src/lib/dri.ts` (see `PARKED.md`).
+> Note: the DRI bands cover adult female & male aged 31 through 71+, so most family members get nutrient targets. Anyone **under 31** (or with a non-binary sex) won't see targets yet — everything else works. Adding a younger band is a small data edit in `src/lib/dri.ts` (see `PARKED.md`).
 
 ---
 
@@ -348,68 +235,46 @@ sees _your_ rows — but they could create their own account and burn your free-
 > npm run dev
 ```
 
-Open the printed **Local** address — **<http://localhost:5173>** — in your browser. (The dev server
-also prints a **Network** address like `http://192.168.1.118:5173/` — that's for testing on your
-phone over Wi-Fi; see "Test on your iPhone over Wi-Fi" below.)
+Open the printed **Local** address — **<http://localhost:5173>** — in your browser. (The dev server also prints a **Network** address like `http://192.168.1.118:5173/` — that's for testing on your phone over Wi-Fi; see "Test on your iPhone over Wi-Fi" below.)
 
 - ✅ Check, in order:
   1. You land on a **Sign in with Google** screen.
-  2. Click it, complete the Google login, and you return to the app's **Diary** tab (no flash of the
-     login screen).
-  3. In Supabase **SQL Editor**, run `select * from profile;` — there is **one row** (your profile,
-     pre-filled: birthday 1974-09-06, female, 171, 56, protein 90).
-  4. The bottom tabs (Diary / Dashboard / Library / Settings) switch screens. In **Add Activity** (the
-     Activities group's `+`) you see your seeded activities.
+  2. Click it, complete the Google login, and you return to the app's **Diary** tab (no flash of the login screen).
+  3. In Supabase **SQL Editor**, run `select * from profile;` — there is **one row** (your profile, pre-filled: birthday 1974-09-06, female, 171, 56, protein 90).
+  4. The bottom tabs (Diary / Dashboard / Library / Settings) switch screens. In **Add Activity** (the Activities group's `+`) you see your seeded activities.
   5. In **Diary Food Picker**, search e.g. "egg" → results appear (this confirms the USDA key works).
-  6. In **Shows → Library → New Show → Search TMDB**, type e.g. "matrix" → poster results appear (this
-     confirms the TMDB key works).
-  7. In **Books → Library → New Book → Search Google Books**, type e.g. "dune" → cover results appear
-     (this works with or without the optional Google Books key).
-  8. In **Quotes → Zen**, the **Shuffle** button rotates quotes (once you have some); **Library → New
-     Quote** opens the entry form. No API key is needed — Quotes has no external service.
+  6. In **Shows → Library → New Show → Search TMDB**, type e.g. "matrix" → poster results appear (this confirms the TMDB key works).
+  7. In **Books → Library → New Book → Search Google Books**, type e.g. "dune" → cover results appear (this works with or without the optional Google Books key).
+  8. In **Quotes → Zen**, the **Shuffle** button rotates quotes (once you have some); **Library → New Quote** opens the entry form. No API key is needed — Quotes has no external service.
 - To stop the dev server: press `Ctrl + C` in the terminal.
 
-> Barcode scanning needs the camera, which browsers only allow over HTTPS. It works on your computer
-> at `localhost` (desktop webcam); on a phone it works after deploying (Part K) or via an HTTPS tunnel
-> (see below) — not over a plain LAN address.
+> Barcode scanning needs the camera, which browsers only allow over HTTPS. It works on your computer at `localhost` (desktop webcam); on a phone it works after deploying (Part K) or via an HTTPS tunnel (see below) — not over a plain LAN address.
 
 ### Test on your iPhone over Wi-Fi (no deploy needed)
 
 Great for checking layout/UI changes on the real device without pushing to GitHub/Vercel.
 
 1. Make sure the phone and computer are on the **same Wi-Fi** network.
-2. Run `npm run dev` (the script uses `--host`, so it serves on your network too). Note the
-   **Network** line it prints, e.g. `http://192.168.1.118:5173/`.
-3. On the iPhone, open that **Network** URL in **Safari**. (Find your computer's address from the
-   Network line — it can change when you reconnect to Wi-Fi. On Windows you can also run `ipconfig`
-   and read the **IPv4 Address**.)
-4. **Firewall:** the first time, Windows may ask to allow Node.js through the firewall — tick
-   **Private networks** and allow it. If the page won't load and there was no prompt, the firewall is
-   almost certainly blocking port `5173`.
+2. Run `npm run dev` (the script uses `--host`, so it serves on your network too). Note the **Network** line it prints, e.g. `http://192.168.1.118:5173/`.
+3. On the iPhone, open that **Network** URL in **Safari**. (Find your computer's address from the Network line — it can change when you reconnect to Wi-Fi. On Windows you can also run `ipconfig` and read the **IPv4 Address**.)
+4. **Firewall:** the first time, Windows may ask to allow Node.js through the firewall — tick **Private networks** and allow it. If the page won't load and there was no prompt, the firewall is almost certainly blocking port `5173`.
 
 Two limits over a plain LAN address (`http://…`, not HTTPS):
 
-- **Google sign-in** only returns to allow-listed origins. To sign in from the phone, add your LAN
-  address to **Supabase → Authentication → URL Configuration → Redirect URLs**
-  (`http://192.168.1.118:5173/**` — use your actual IP); update it when your IP changes. (For pure
-  layout checks you may not need to sign in.)
-- **Camera (barcode) and "Add to Home Screen"** need HTTPS, so they don't work over a LAN address. To
-  test those on-device without deploying, start a temporary HTTPS tunnel in a second terminal:
+- **Google sign-in** only returns to allow-listed origins. To sign in from the phone, add your LAN address to **Supabase → Authentication → URL Configuration → Redirect URLs** (`http://192.168.1.118:5173/**` — use your actual IP); update it when your IP changes. (For pure layout checks you may not need to sign in.)
+- **Camera (barcode) and "Add to Home Screen"** need HTTPS, so they don't work over a LAN address. To test those on-device without deploying, start a temporary HTTPS tunnel in a second terminal:
   ```
   > npx cloudflared tunnel --url http://localhost:5173
   ```
-  Open the printed `https://…trycloudflare.com` URL on the phone (add it to the Supabase Redirect URLs
-  too). This is a temporary public link, not a deploy.
+  Open the printed `https://…trycloudflare.com` URL on the phone (add it to the Supabase Redirect URLs too). This is a temporary public link, not a deploy.
 
 ---
 
 ## Part J — Put the code on GitHub
 
-(Only needed for the Vercel deploy. If the project is already on GitHub and you cloned it, skip to
-Part K.)
+(Only needed for the Vercel deploy. If the project is already on GitHub and you cloned it, skip to Part K.)
 
-1. On <https://github.com/new>, create a **new empty** repository named `wellworth` (Private; do
-   **not** add a README, .gitignore, or license — leave it empty).
+1. On <https://github.com/new>, create a **new empty** repository named `wellworth` (Private; do **not** add a README, .gitignore, or license — leave it empty).
 2. In the project folder, connect it and push. Replace `<you>` with your GitHub username:
    ```
    > git add -A
@@ -419,50 +284,22 @@ Part K.)
    > git push -u origin main
    ```
    The first push will ask you to sign in to GitHub (a browser window opens).
-   > Your secrets are safe: `.env` is git-ignored and is **not** uploaded. Only `.env.example`
-   > (the blank template) is in the repo.
-   > Same for your **Net Worth balances**: keep your real CSV as `templates/networth-seed.local.csv`
-   > (git-ignored). Only the **sanitized** `templates/networth-seed-template.csv` is tracked. Never
-   > commit a CSV with real values. To load them into the app, use **Net Worth → Monthly Entry →
-   > Import CSV** (pick the month; re-importing replaces that month's manual assets, and also freezes
-   > insurance + carries funds so the snapshot is complete — see `templates/networth-import-guide.md`).
-   > **Funds** import from the JPM "My Portfolio" export saved as CSV via **Monthly Entry → Fund
-   > section → import icon** (overwrites that month's funds; `templates/fund-import-guide.md`).
-   > **Insurance** is a policy catalogue: one-time bulk-seed the wide sheet via **Net Worth → Settings →
-   > Import CSV Insurance**, and add/update a single policy from **New Insurance / Edit Insurance →
-   > Import Policy Schedule** (`templates/insurance-import-guide.md`). Keep the real `Insurance.csv` /
-   > `Insurance.xlsx` and JPM exports git-ignored. (History note: real balances were once committed and
-   > later purged from git history with a force-push — if you have an old clone, re-clone it so it
-   > doesn't push the old history back.)
-   > The same applies to your **Shows / Books / Quotes** lists: keep your real CSV git-ignored (e.g.
-   > `quotes-seed-local.csv`), and load it in-app via that module's **Settings → Enable Bulk {Shows |
-   > Books | Quotes} Import → Import CSV {Shows | Books | Quotes}** (idempotent — re-importing skips
-   > duplicates). Only the sanitized `*-import-template.csv` files are tracked.
+   > Your secrets are safe: `.env` is git-ignored and is **not** uploaded. Only `.env.example` (the blank template) is in the repo. Same for your **Net Worth balances**: keep your real CSV as `templates/networth-seed.local.csv` (git-ignored). Only the **sanitized** `templates/networth-seed-template.csv` is tracked. Never commit a CSV with real values. To load them into the app, use **Net Worth → Monthly Entry → Import CSV** (pick the month; re-importing replaces that month's manual assets, and also freezes insurance + carries funds so the snapshot is complete — see `templates/networth-import-guide.md`). **Funds** import from the JPM "My Portfolio" export saved as CSV via **Monthly Entry → Fund section → import icon** (overwrites that month's funds; `templates/fund-import-guide.md`). **Insurance** is a policy catalogue: one-time bulk-seed the wide sheet via **Net Worth → Settings → Import CSV Insurance**, and add/update a single policy from **New Insurance / Edit Insurance → Import Policy Schedule** (`templates/insurance-import-guide.md`). Keep the real `Insurance.csv` / `Insurance.xlsx` and JPM exports git-ignored. (History note: real balances were once committed and later purged from git history with a force-push — if you have an old clone, re-clone it so it doesn't push the old history back.) The same applies to your **Shows / Books / Quotes** lists: keep your real CSV git-ignored (e.g. `quotes-seed-local.csv`), and load it in-app via that module's **Settings → Enable Bulk {Shows | Books | Quotes} Import → Import CSV {Shows | Books | Quotes}** (idempotent — re-importing skips duplicates). Only the sanitized `*-import-template.csv` files are tracked.
 
-> **Optional — add quotes straight from Apple Books (iPhone/iPad).** Quotes has no API, so you add
-> quotes by typing, pasting (the **Paste from clipboard** button on the New Quote form), the **CSV
-> importer**, or an optional **Apple Shortcut**: in the Shortcuts app, make a share-sheet shortcut that
-> takes selected text and **Opens URL**
-> `https://<your-app>/quotes/entry?text=[Shortcut Input]&author=&title=` (URL-encode the text). Sharing
-> a highlight from Apple Books to that shortcut opens the New Quote form pre-filled. (`?text=`,
-> `?author=`, `?title=` all prefill.)
+> **Optional — add quotes straight from Apple Books (iPhone/iPad).** Quotes has no API, so you add quotes by typing, pasting (the **Paste from clipboard** button on the New Quote form), the **CSV importer**, or an optional **Apple Shortcut**: in the Shortcuts app, make a share-sheet shortcut that takes selected text and **Opens URL** `https://<your-app>/quotes/entry?text=[Shortcut Input]&author=&title=` (URL-encode the text). Sharing a highlight from Apple Books to that shortcut opens the New Quote form pre-filled. (`?text=`, `?author=`, `?title=` all prefill.)
 
-- ✅ Check: refresh your GitHub repo page — you see the project files (and a `docs/` folder), but
-  **no `.env`**.
+- ✅ Check: refresh your GitHub repo page — you see the project files (and a `docs/` folder), but **no `.env`**.
 
 ### Saving changes later (every time after the first push)
 
-Whenever you (or Claude Code) change the code, save it to GitHub with these three commands from the
-project folder:
+Whenever you (or Claude Code) change the code, save it to GitHub with these three commands from the project folder:
 
 ```
 > git add -A
 > git commit -m "describe what changed"
 ```
 
-The commit runs the quality gates automatically (format, lint, type-check, tests) — it takes a few
-seconds. If it reports an error, the commit is **blocked**; fix the issue (or have Claude Code fix it)
-and run the two commands again. Once the commit succeeds:
+The commit runs the quality gates automatically (format, lint, type-check, tests) — it takes a few seconds. If it reports an error, the commit is **blocked**; fix the issue (or have Claude Code fix it) and run the two commands again. Once the commit succeeds:
 
 ```
 > git push
@@ -470,46 +307,33 @@ and run the two commands again. Once the commit succeeds:
 
 (You don't need `-u origin main` again — that was only for the first push.)
 
-- ✅ Check: `> git status` prints `nothing to commit, working tree clean` and
-  `Your branch is up to date with 'origin/main'`. If GitHub is connected to Vercel (Part K), the push
-  **auto-deploys** the new version in a minute or two.
+- ✅ Check: `> git status` prints `nothing to commit, working tree clean` and `Your branch is up to date with 'origin/main'`. If GitHub is connected to Vercel (Part K), the push **auto-deploys** the new version in a minute or two.
 
 ---
 
 ## Part K — Deploy to Vercel (so it runs on your phone)
 
 1. Go to <https://vercel.com>, sign up with your GitHub account.
-2. **Add New… → Project** → import the `wellworth` repository. Vercel auto-detects it as a **Vite**
-   app (build command `npm run build`, output `dist`) — leave those defaults.
-3. Expand **Environment Variables** and add the same ones from your `.env` (these get used at build
-   time, so they must be set before deploying):
+2. **Add New… → Project** → import the `wellworth` repository. Vercel auto-detects it as a **Vite** app (build command `npm run build`, output `dist`) — leave those defaults.
+3. Expand **Environment Variables** and add the same ones from your `.env` (these get used at build time, so they must be set before deploying):
    - `VITE_SUPABASE_URL` = your Project URL
    - `VITE_SUPABASE_ANON_KEY` = your anon key
    - `VITE_USDA_API_KEY` = your USDA key
    - `VITE_TMDB_API_KEY` = your TMDB v3 key
    - `VITE_GOOGLE_BOOKS_API_KEY` = your Google Books key
-   - `VITE_ALLOWED_EMAILS` = your email allowlist (optional; see Part H3 — set it to keep prod
-     restricted to you/family)
+   - `VITE_ALLOWED_EMAILS` = your email allowlist (optional; see Part H3 — set it to keep prod restricted to you/family)
    - `VITE_OWNER_EMAIL` = your email (the owner account that skips onboarding; see Part H3)
-4. Click **Deploy**. When it finishes, copy your app's address, e.g.
-   `https://wellworth-xxxx.vercel.app`.
+4. Click **Deploy**. When it finishes, copy your app's address, e.g. `https://wellworth-xxxx.vercel.app`.
 5. **Point Google + Supabase at the live address** (sign-in will fail until you do):
-   - **Google Cloud → Clients → WellWorth Web → Authorized JavaScript origins:** add
-     `https://wellworth-xxxx.vercel.app`. Save. (Leave the redirect URI as the Supabase callback.)
-   - **Supabase → Authentication → URL Configuration:** set **Site URL** to
-     `https://wellworth-xxxx.vercel.app`, and add `https://wellworth-xxxx.vercel.app/**` to
-     **Redirect URLs**.
+   - **Google Cloud → Clients → WellWorth Web → Authorized JavaScript origins:** add `https://wellworth-xxxx.vercel.app`. Save. (Leave the redirect URI as the Supabase callback.)
+   - **Supabase → Authentication → URL Configuration:** set **Site URL** to `https://wellworth-xxxx.vercel.app`, and add `https://wellworth-xxxx.vercel.app/**` to **Redirect URLs**.
 
 - ✅ Check: open the Vercel URL in a normal browser → Sign in with Google works → you reach the Diary.
 
-> Future updates: because GitHub is connected, every `git push` to `main` auto-deploys. If you change
-> `.env` values, also update them in Vercel → Project → **Settings → Environment Variables**, then
-> **redeploy** so the new values get baked in:
+> Future updates: because GitHub is connected, every `git push` to `main` auto-deploys. If you change `.env` values, also update them in Vercel → Project → **Settings → Environment Variables**, then **redeploy** so the new values get baked in:
 >
-> - In Vercel, open the project → **Deployments** tab → on the latest deployment click the **⋯** menu →
->   **Redeploy** → in the dialog **uncheck "Use existing Build Cache"** → **Redeploy**.
-> - (A plain `git push` also triggers a fresh build, but after an env-var change the explicit redeploy
->   above is the reliable way to pick it up.)
+> - In Vercel, open the project → **Deployments** tab → on the latest deployment click the **⋯** menu → **Redeploy** → in the dialog **uncheck "Use existing Build Cache"** → **Redeploy**.
+> - (A plain `git push` also triggers a fresh build, but after an env-var change the explicit redeploy above is the reliable way to pick it up.)
 
 ---
 
@@ -526,29 +350,20 @@ and run the two commands again. Once the commit succeeds:
 
 ## Part M — Resetting & re-seeding data
 
-Three maintenance jobs: **M1** wipes + rebuilds everything, **M2** refreshes the starter activities,
-and **M3** resets one module's data while leaving the others intact.
+Three maintenance jobs: **M1** wipes + rebuilds everything, **M2** refreshes the starter activities, and **M3** resets one module's data while leaving the others intact.
 
 Seed data by module:
 
-- Only **Wellness** has seed data: the owner's **profile** + **activity library** are re-seeded on the
-  next sign-in (idempotent — only when that data is missing), and the **nutrient** reference table is
-  seeded by a migration (not on login).
-- **Net Worth, Shows, Books, Quotes, and Travel have no seed data** (the **Medical** `medical_lab_test`
-  reference is migration-seeded) — their tables (`networth_snapshot`/`asset_entry`, `show`, `book`,
-  `quote`, and the Travel five `trip`/`trip_day`/`stop`/`trip_expense`/`remembered_city`) come back
-  **empty** after a reset and are filled entirely by you in the app.
+- Only **Wellness** has seed data: the owner's **profile** + **activity library** are re-seeded on the next sign-in (idempotent — only when that data is missing), and the **nutrient** reference table is seeded by a migration (not on login).
+- **Net Worth, Shows, Books, Quotes, Journal, and Travel have no seed data** (the **Medical** `medical_lab_test` reference is migration-seeded) — their tables (`networth_snapshot`/`asset_entry`, `show`, `book`, `quote`, `journal_entry`, and the Travel five `trip`/`trip_day`/`stop`/`trip_expense`/`remembered_city`) come back **empty** after a reset and are filled entirely by you in the app.
 
 > ⚠️ These act on your **live** Supabase project. There is no undo. Make sure you mean it.
 
 ### M1 — Completely reset the database (wipe + rebuild from migrations)
 
-Use this to get a pristine database matching the migration files (e.g. after consolidating
-migrations, or to clear all test data). It **drops everything and replays the migrations**, so all
-foods, activities, and diary entries are erased.
+Use this to get a pristine database matching the migration files (e.g. after consolidating migrations, or to clear all test data). It **drops everything and replays the migrations**, so all foods, activities, and diary entries are erased.
 
-> 💾 **Take a backup first** if the project holds real data — `npm run db:backup` (Part Q). A reset is
-> irreversible, and unlike Vercel there's no free-tier snapshot to fall back on.
+> 💾 **Take a backup first** if the project holds real data — `npm run db:backup` (Part Q). A reset is irreversible, and unlike Vercel there's no free-tier snapshot to fall back on.
 
 From the project folder (the database password must be available — see Part F):
 
@@ -556,81 +371,40 @@ From the project folder (the database password must be available — see Part F)
 > supabase db reset --linked
 ```
 
-Confirm at the prompt. The CLI re-runs **every** file in `supabase/migrations/` — currently the 17
-files from `01_wellness_schema.sql` through `17_literature_profile_settings.sql` (Wellness, Net Worth,
-Shows, Books, Quotes, Medical, Travel, and Literature schema + settings + seed migrations) — against the
-remote, leaving a clean schema + the 80 nutrient rows + the seeded `medical_lab_test` reference, and a
-migration-ledger that matches the files.
-(You never list them yourself; the CLI applies whatever is in the folder, so new migrations are picked
-up automatically.)
+Confirm at the prompt. The CLI re-runs **every** file in `supabase/migrations/` — currently the 17 files from `01_wellness_schema.sql` through `17_literature_profile_settings.sql` (Wellness, Net Worth, Shows, Books, Quotes, Medical, Travel, and Literature schema + settings + seed migrations) — against the remote, leaving a clean schema + the 80 nutrient rows + the seeded `medical_lab_test` reference, and a migration-ledger that matches the files. (You never list them yourself; the CLI applies whatever is in the folder, so new migrations are picked up automatically.)
 
 - ✅ Check:
   1. `> supabase migration list` shows the same migrations locally and remotely.
-  2. **Sign out, then sign back in** → you land on the Diary; your **profile** and the **activity
-     library** have been re-seeded; SQL `select count(*) from nutrient;` returns **80**.
+  2. **Sign out, then sign back in** → you land on the Diary; your **profile** and the **activity library** have been re-seeded; SQL `select count(*) from nutrient;` returns **80**.
 
-> **You must sign out first.** A full reset deletes the auth users too, but the browser still holds the
-> old login (a cached token in `localStorage`), so reloading — even after closing/reopening the browser
-> — keeps you "logged in" against a user that no longer exists, and the app shows **"Couldn’t load your
-> profile."** Go to the Home-hub **gear → Settings → Account → Sign out** (that card is always
-> available, even when the profile fails to load), which clears the cached token and reloads to the
-> login screen. Then sign in with Google — a fresh profile + activities are created on first login. (If
-> you ever need to clear it by hand: DevTools → Application → Local Storage → delete the
-> `sb-…-auth-token` key, then reload.)
+> **You must sign out first.** A full reset deletes the auth users too, but the browser still holds the old login (a cached token in `localStorage`), so reloading — even after closing/reopening the browser — keeps you "logged in" against a user that no longer exists, and the app shows **"Couldn’t load your profile."** Go to the Home-hub **gear → Settings → Account → Sign out** (that card is always available, even when the profile fails to load), which clears the cached token and reloads to the login screen. Then sign in with Google — a fresh profile + activities are created on first login. (If you ever need to clear it by hand: DevTools → Application → Local Storage → delete the `sb-…-auth-token` key, then reload.)
 >
-> ⚠️ **If you locked down sign-ups (Part H3), re-enable them before signing back in.** The reset
-> deletes your own `auth.users` account, so your next Google sign-in is treated as a **new signup** — and
-> if **"Allow new users to sign up" is OFF** it's **blocked** (the app loops back to login with
-> `?error=access_denied&error_code=signup_disabled`). Fix: Supabase → **Authentication → Sign In /
-> Providers → enable "Allow new users to sign up"**, sign in once to recreate your account, then turn it
-> **off** again. (`VITE_ALLOWED_EMAILS` still gates who's admitted.)
+> ⚠️ **If you locked down sign-ups (Part H3), re-enable them before signing back in.** The reset deletes your own `auth.users` account, so your next Google sign-in is treated as a **new signup** — and if **"Allow new users to sign up" is OFF** it's **blocked** (the app loops back to login with `?error=access_denied&error_code=signup_disabled`). Fix: Supabase → **Authentication → Sign In / Providers → enable "Allow new users to sign up"**, sign in once to recreate your account, then turn it **off** again. (`VITE_ALLOWED_EMAILS` still gates who's admitted.)
 
 ### M2 — Re-seed activities after changing `seed-activities.ts`
 
-The starter activities live in `src/constants/seed-activities.ts` and are seeded **once**, only when
-you have **zero** activities (`ensureOwnerActivities` is a no-op otherwise). So after you edit that
-file (new activities, changed METs/durations), you must clear the existing rows, then sign in again —
-no full reset needed, and your foods and diary history are kept. (Activities are the **only**
-client-seeded library; Net Worth, Shows, Books, and Quotes have no starter data, so there's nothing to
-re-seed for them.)
+The starter activities live in `src/constants/seed-activities.ts` and are seeded **once**, only when you have **zero** activities (`ensureOwnerActivities` is a no-op otherwise). So after you edit that file (new activities, changed METs/durations), you must clear the existing rows, then sign in again — no full reset needed, and your foods and diary history are kept. (Activities are the **only** client-seeded library; Net Worth, Shows, Books, and Quotes have no starter data, so there's nothing to re-seed for them.)
 
 1. In **Supabase → SQL Editor**, run:
    ```sql
    delete from public.activity;
    ```
-   (Single-user database, so this clears them all. Diary entries that referenced an activity keep
-   their saved snapshot — name, energy — and their `activity_id` simply becomes null.)
-2. **Reload the app** (or sign out and back in). `ensureOwnerActivities` re-seeds the updated set.
-   The seed is baked into the app bundle, so make sure the app you reload is **running the new code** —
-   for the installed iPhone app, `git push` to deploy first (Part J/K); for local testing, the
-   `npm run dev` server already has it.
+   (Single-user database, so this clears them all. Diary entries that referenced an activity keep their saved snapshot — name, energy — and their `activity_id` simply becomes null.)
+2. **Reload the app** (or sign out and back in). `ensureOwnerActivities` re-seeds the updated set. The seed is baked into the app bundle, so make sure the app you reload is **running the new code** — for the installed iPhone app, `git push` to deploy first (Part J/K); for local testing, the `npm run dev` server already has it.
 
-- ✅ Check: Library → **Activities** shows the new list; opening one in **Add Activity** prefills the
-  duration/effort you set in the seed file.
+- ✅ Check: Library → **Activities** shows the new list; opening one in **Add Activity** prefills the duration/effort you set in the seed file.
 
-> If you'd also added custom activities of your own, the delete removes those too — re-create them
-> afterwards. To keep them, delete only the seeded rows by name instead of the whole table.
+> If you'd also added custom activities of your own, the delete removes those too — re-create them afterwards. To keep them, delete only the seeded rows by name instead of the whole table.
 
 ### M3 — Reset one module's data only (keep the other modules)
 
-Use this to start a module clean — test it, wipe just its tables, then enter real production data —
-without touching the others (e.g. reset Wellness and go live on it while Net Worth, Shows, Books,
-Quotes, Medical, and Travel stay as they are). Run the SQL in **Supabase → SQL Editor** (Dashboard →
-**SQL Editor** → **New query** → paste → **Run**). It edits **data only** — never the schema or the
-migrations.
+Use this to start a module clean — test it, wipe just its tables, then enter real production data — without touching the others (e.g. reset Wellness and go live on it while Net Worth, Shows, Books, Quotes, Medical, and Travel stay as they are). Run the SQL in **Supabase → SQL Editor** (Dashboard → **SQL Editor** → **New query** → paste → **Run**). It edits **data only** — never the schema or the migrations.
 
-> ⚠️ The SQL Editor runs with full privileges (it bypasses row-level security), so `truncate` wipes
-> **all** rows in those tables — on a solo project that's exactly your data. `cascade` also clears the
-> dependent child rows (strength sets, servings, asset entries, insurance schedule versions + points,
-> medical results, and Travel days/stops/expenses). There is no undo.
+> ⚠️ The SQL Editor runs with full privileges (it bypasses row-level security), so `truncate` wipes **all** rows in those tables — on a solo project that's exactly your data. `cascade` also clears the dependent child rows (strength sets, servings, asset entries, insurance schedule versions + points, medical results, and Travel days/stops/expenses). There is no undo.
 >
-> **Views need nothing.** `networth_monthly_type_total` and `medical_latest_result` are **views** over
-> their base tables, not tables — they refresh automatically once the underlying rows are wiped, so they
-> never appear in a `truncate`.
+> **Views need nothing.** `networth_monthly_type_total` and `medical_latest_result` are **views** over their base tables, not tables — they refresh automatically once the underlying rows are wiped, so they never appear in a `truncate`.
 
-> Note: every table's primary key is a **random UUID** (`gen_random_uuid()`), not an auto-increment
-> counter, so there's no "id sequence" to reset — IDs don't go back to 1; new rows just get fresh
-> UUIDs. (That's why the commands use plain `truncate … cascade`, not `restart identity`.)
+> Note: every table's primary key is a **random UUID** (`gen_random_uuid()`), not an auto-increment counter, so there's no "id sequence" to reset — IDs don't go back to 1; new rows just get fresh UUIDs. (That's why the commands use plain `truncate … cascade`, not `restart identity`.)
 
 **Wellness** — wipes foods, servings, activities, diary entries, and their strength sets:
 
@@ -639,11 +413,7 @@ truncate public.diary_entry, public.strength_set, public.food, public.serving,
          public.activity cascade;
 ```
 
-This keeps the `nutrient` reference table and your `profile`. After running it, **reload the app**:
-`ensureOwnerActivities` sees zero activities and re-seeds the starter **activity library** (your
-production starting point); foods and diary start empty. Your `profile` (identity, units, protein
-target, nutrient visibility) is the **shared account row** and is left as-is — adjust it in the app's
-**Settings** if you want, rather than here.
+This keeps the `nutrient` reference table and your `profile`. After running it, **reload the app**: `ensureOwnerActivities` sees zero activities and re-seeds the starter **activity library** (your production starting point); foods and diary start empty. Your `profile` (identity, units, protein target, nutrient visibility) is the **shared account row** and is left as-is — adjust it in the app's **Settings** if you want, rather than here.
 
 **Net Worth** — wipes every monthly snapshot + its asset entries **and** the insurance-policy catalogue:
 
@@ -658,14 +428,7 @@ update public.profile
       insurance_providers                   = null;  -- null = the seed providers (CHUBB/BOC/Manulife)
 ```
 
-> Two independent parents here, so both must be listed: `networth_snapshot` cascades to `asset_entry`
-> (the monthly holdings — including funds, which are `asset_entry` rows of `asset_type = 'fund'`, not a
-> separate table), and `insurance_policy` cascades to its `insurance_schedule` versions → their
-> `insurance_schedule_point` rows. The **insurance catalogue is per-user reference data, not per-month**:
-> each month's `insurance` holdings are frozen into `asset_entry` from it at save time. So wiping only
-> the snapshots would leave the catalogue behind and it would re-freeze insurance rows into the next
-> month you save — include `insurance_policy` for a true from-scratch Net Worth reset. (To keep your
-> policies and clear only the monthly figures, drop `public.insurance_policy` from the command.)
+> Two independent parents here, so both must be listed: `networth_snapshot` cascades to `asset_entry` (the monthly holdings — including funds, which are `asset_entry` rows of `asset_type = 'fund'`, not a separate table), and `insurance_policy` cascades to its `insurance_schedule` versions → their `insurance_schedule_point` rows. The **insurance catalogue is per-user reference data, not per-month**: each month's `insurance` holdings are frozen into `asset_entry` from it at save time. So wiping only the snapshots would leave the catalogue behind and it would re-freeze insurance rows into the next month you save — include `insurance_policy` for a true from-scratch Net Worth reset. (To keep your policies and clear only the monthly figures, drop `public.insurance_policy` from the command.)
 
 **Shows** — wipes every tracked title:
 
@@ -678,19 +441,9 @@ update public.profile
       show_poster_url_visible = false;
 ```
 
-> **Schema changes are folded into the existing migration files** (the media tables hold no precious
-> data; you refresh with `supabase db reset --linked`). Because `supabase db push` won't re-run an
-> already-applied migration, apply edits with a full reset: **`supabase db reset --linked`** re-runs
-> every migration from scratch (wipes all modules), then run **Part G** (`npm run gen:types`) so
-> `src/types/database.ts` matches.
+> **Schema changes are folded into the existing migration files** (the media tables hold no precious data; you refresh with `supabase db reset --linked`). Because `supabase db push` won't re-run an already-applied migration, apply edits with a full reset: **`supabase db reset --linked`** re-runs every migration from scratch (wipes all modules), then run **Part G** (`npm run gen:types`) so `src/types/database.ts` matches.
 >
-> ⚠️ **`supabase db reset --linked` also wipes `auth.users` — it deletes your own account.** If
-> **"Allow new users to sign up" is OFF** (Part H3, the recommended lockdown), your next Google
-> sign-in is treated as a _new signup_ and is **blocked** — the app loops back to "Sign in with
-> Google" (the redirect carries `?error=access_denied&error_code=signup_disabled`). **Fix:** Supabase
-> → **Authentication → Sign In / Providers → enable "Allow new users to sign up"**, sign in once to
-> recreate your account, then turn it **off** again. (The `VITE_ALLOWED_EMAILS` allowlist still gates
-> who's admitted.)
+> ⚠️ **`supabase db reset --linked` also wipes `auth.users` — it deletes your own account.** If **"Allow new users to sign up" is OFF** (Part H3, the recommended lockdown), your next Google sign-in is treated as a _new signup_ and is **blocked** — the app loops back to "Sign in with Google" (the redirect carries `?error=access_denied&error_code=signup_disabled`). **Fix:** Supabase → **Authentication → Sign In / Providers → enable "Allow new users to sign up"**, sign in once to recreate your account, then turn it **off** again. (The `VITE_ALLOWED_EMAILS` allowlist still gates who's admitted.)
 
 **Books** — wipes every tracked book:
 
@@ -712,9 +465,18 @@ update public.profile
       quote_categories       = null;  -- null = the seed Category list in src/constants/quotes.ts
 ```
 
-> Quotes' optional `show_id`/`book_id` links are `ON DELETE SET NULL`, so wiping Shows/Books only nulls
-> those columns on surviving quotes (the denormalised author/title/source type stay). Wiping `quote`
-> never touches `show`/`book`.
+> Quotes' optional `show_id`/`book_id` links are `ON DELETE SET NULL`, so wiping Shows/Books only nulls those columns on surviving quotes (the denormalised author/title/source type stay). Wiping `quote` never touches `show`/`book`.
+
+**Journal** — wipes every journal entry (Journal is folded into the Quotes module, but its data is a separate table — resetting Quotes above does **not** touch this):
+
+```sql
+truncate public.journal_entry cascade;
+-- optional: also reset the Journal Moods settings on your profile to defaults
+update public.profile
+  set journal_moods = null;  -- null = the seed mood list (key/color/sub-tags) in src/constants/journal.ts
+```
+
+> The 7 moods themselves (`happy, motivated, calm, neutral, sad, anxious, angry`) are fixed by a CHECK constraint, not owner-configurable — `journal_moods = null` only resets the **rename/recolor/sub-tag** customization back to the seed defaults, not the mood set itself.
 
 **Medical** — wipes every report and its results (the `medical_lab_test` reference is kept):
 
@@ -733,13 +495,7 @@ update public.profile
       medical_lock_timeout_minutes = null;
 ```
 
-> `medical_report` cascades to `medical_result`, so listing both is just explicit. The
-> `medical_lab_test` reference table is **migration-seeded** (like `nutrient`) and read-only to clients —
-> leave it; it isn't user data. The optional `update` reverts the Medical preferences on your shared
-> `profile` row: `medical_tracked_tests = null` falls back to the seeded `default_tracked` set, the order
-> /visible-field overrides clear, the importer returns to its default-on state, and the **biometric
-> lock** is cleared — that last part also wipes a **forgotten Medical PIN** (the salted hash), an
-> alternative to the sign-out reset in Part O.
+> `medical_report` cascades to `medical_result`, so listing both is just explicit. The `medical_lab_test` reference table is **migration-seeded** (like `nutrient`) and read-only to clients — leave it; it isn't user data. The optional `update` reverts the Medical preferences on your shared `profile` row: `medical_tracked_tests = null` falls back to the seeded `default_tracked` set, the order /visible-field overrides clear, the importer returns to its default-on state, and the **biometric lock** is cleared — that last part also wipes a **forgotten Medical PIN** (the salted hash), an alternative to the sign-out reset in Part O.
 
 **Travel** — wipes every trip (days, stops, and expenses cascade) + the remembered-cities cache:
 
@@ -753,46 +509,22 @@ update public.profile
       travel_importer_enabled   = true;
 ```
 
-- ✅ Check: open that module in the app — its lists are empty (Wellness shows the re-seeded starter
-  activities after a reload), and the **other** modules' data is untouched.
+- ✅ Check: open that module in the app — its lists are empty (Wellness shows the re-seeded starter activities after a reload), and the **other** modules' data is untouched.
 
-> **Multi-user note (future household project):** `truncate` clears every user's rows. To scope a wipe
-> to **yourself**, instead run `delete from <table> where user_id = '<your-user-id>';` on each module's
-> **own** tables — `activity`, `food`, `diary_entry` (Wellness) / `networth_snapshot` +
-> `insurance_policy` (Net Worth) / `show` / `book` / `quote` / `medical_report` (Medical) / `trip` +
-> `remembered_city` (Travel) — and the child rows (`serving`, `strength_set`, `asset_entry`,
-> insurance's `insurance_schedule` → `insurance_schedule_point`, `medical_result`, and Travel's
-> `trip_day`/`stop`/`trip_expense`) cascade automatically. The insurance child tables carry no `user_id`
-> of their own (they're owned via the policy), so per-user scoping must go through `insurance_policy`.
-> Your user id is in **Supabase → Authentication → Users**.
+> **Multi-user note (future household project):** `truncate` clears every user's rows. To scope a wipe to **yourself**, instead run `delete from <table> where user_id = '<your-user-id>';` on each module's **own** tables — `activity`, `food`, `diary_entry` (Wellness) / `networth_snapshot` + `insurance_policy` (Net Worth) / `show` / `book` / `quote` / `journal_entry` / `medical_report` (Medical) / `trip` + `remembered_city` (Travel) — and the child rows (`serving`, `strength_set`, `asset_entry`, insurance's `insurance_schedule` → `insurance_schedule_point`, `medical_result`, and Travel's `trip_day`/`stop`/`trip_expense`) cascade automatically. The insurance child tables carry no `user_id` of their own (they're owned via the policy), so per-user scoping must go through `insurance_policy`. Your user id is in **Supabase → Authentication → Users**.
 
 ---
 
 ## Part N — Logging a new show (the Shows workflow)
 
-The Shows module covers TV, movies, and **documentaries** (incl. Chinese titles and Chinese
-documentaries / CCTV series). To add one (**Shows → New Show**):
+The Shows module covers TV, movies, and **documentaries** (incl. Chinese titles and Chinese documentaries / CCTV series). To add one (**Shows → New Show**):
 
-1. **Search TMDB** in the New Show form — works for any title; a **Chinese (CJK) query returns Chinese
-   titles**. For a documentary, set Type → **Documentary** first (it searches TMDB's TV catalogue). If a
-   documentary belongs to a parent series, just fold the series into the **Title** yourself (e.g.
-   `国宝档案 — 从东晋到北魏`).
-2. **Found → select** → metadata + poster auto-fill → set status / rating / **♥ favourite** / etc. →
-   **Save**. Done. (A new show defaults to **Want** with a blank Start Date; pick Watching/Watched and
-   the Start Date defaults to today.)
+1. **Search TMDB** in the New Show form — works for any title; a **Chinese (CJK) query returns Chinese titles**. For a documentary, set Type → **Documentary** first (it searches TMDB's TV catalogue). If a documentary belongs to a parent series, just fold the series into the **Title** yourself (e.g. `国宝档案 — 从东晋到北魏`).
+2. **Found → select** → metadata + poster auto-fill → set status / rating / **♥ favourite** / etc. → **Save**. Done. (A new show defaults to **Want** with a blank Start Date; pick Watching/Watched and the Start Date defaults to today.)
 3. **Not found** (common for niche documentaries), choose one:
-   - **(Preferred, durable) Contribute to TMDB:** create the entry at themoviedb.org (title, episode
-     count, upload a poster). It may take from minutes to a day or two to clear moderation. Either log the
-     show now poster-less and **Refresh from TMDB** once it appears, or wait and then Search TMDB.
-   - **(Immediate) Manual entry + paste a Poster URL:** the **Poster URL** field is **off by default** —
-     turn it on once in **Shows Settings → Visible Fields → Poster URL**. Then type title / status /
-     rating, and on Douban or the streaming page **Copy Image Address** and paste it into the field.
-     Saves instantly; rendered via `no-referrer`. (Prefer a streaming-site `og:image` or TMDB URL over a
-     Baidu/Douban _search_ URL — those can expire.)
-4. **⟳ Refresh from TMDB** (the button beside Search; enabled once a `tmdb_id` exists): use it when your
-   contributed entry clears moderation, or when a show adds seasons/episodes. It updates TMDB-sourced
-   fields only and **never** overwrites your status, rating, dates, notes, favourite flag, or a
-   manually pasted poster. (Bulk "refresh everything" is intentionally not built — see `PARKED.md`.)
+   - **(Preferred, durable) Contribute to TMDB:** create the entry at themoviedb.org (title, episode count, upload a poster). It may take from minutes to a day or two to clear moderation. Either log the show now poster-less and **Refresh from TMDB** once it appears, or wait and then Search TMDB.
+   - **(Immediate) Manual entry + paste a Poster URL:** the **Poster URL** field is **off by default** — turn it on once in **Shows Settings → Visible Fields → Poster URL**. Then type title / status / rating, and on Douban or the streaming page **Copy Image Address** and paste it into the field. Saves instantly; rendered via `no-referrer`. (Prefer a streaming-site `og:image` or TMDB URL over a Baidu/Douban _search_ URL — those can expire.)
+4. **⟳ Refresh from TMDB** (the button beside Search; enabled once a `tmdb_id` exists): use it when your contributed entry clears moderation, or when a show adds seasons/episodes. It updates TMDB-sourced fields only and **never** overwrites your status, rating, dates, notes, favourite flag, or a manually pasted poster. (Bulk "refresh everything" is intentionally not built — see `PARKED.md`.)
 
 **Bulk import:** to seed a back-catalogue, enable **Shows Settings → Enable CSV import** and use one CSV spanning English + Chinese across all three types — see `templates/shows-import-guide.md`.
 
@@ -964,36 +696,19 @@ To drop just an **import match cache** without logging out:
 
 ## Part S — Loading the Literature corpus (诗书)
 
-The **Literature** module's poems/writers are an immutable **static asset**, not database rows. They
-ship as generated JSON under `public/literature/**` (committed to the repo), so a normal clone + deploy
-already has them — **you only do this when you want to add/refresh the corpus**. The two Supabase pieces
-(your favourites + read-aloud settings) come from migrations `16_literature_schema.sql` /
-`17_literature_profile_settings.sql`, applied like any other (Part F).
+The **Literature** module's poems/writers are an immutable **static asset**, not database rows. They ship as generated JSON under `public/literature/**` (committed to the repo), so a normal clone + deploy already has them — **you only do this when you want to add/refresh the corpus**. The two Supabase pieces (your favourites + read-aloud settings) come from migrations `16_literature_schema.sql` / `17_literature_profile_settings.sql`, applied like any other (Part F).
 
 **To (re)generate the corpus from the source database:**
 
-1. Get the source `poems.db` (the SQLite from the standalone `chinese-literature` app) and put it at
-   **`scripts/literature/poems.db`** (this path is **gitignored** — the 19.5 MB DB is never committed;
-   only the generated JSON is).
-2. Install dependencies once (`npm install`) — this pulls in `better-sqlite3`, a build-time-only tool.
-   On Windows it needs the native build chain; if `npm install` fails on it, install the
-   **"Desktop development with C++"** workload (Visual Studio Build Tools,
-   <https://visualstudio.microsoft.com/downloads/> → "Build Tools for Visual Studio") and re-run.
-   > 💡 This step is **optional** — it's only for regenerating the corpus. If the C++ build is more
-   > trouble than it's worth, **skip Part S entirely**: the corpus JSON under `public/literature/**` is
-   > already committed, so the Literature module works in a normal clone/deploy without it.
-3. Run **`npm run build:literature`**. It prints the poem/writer/type counts and writes
-   `public/literature/{meta,index}.json` + `poem/<id>.json` + `writer/<id>.json`.
-4. **Commit** the changed `public/literature/**` (that tree is the deployable source of truth — the
-   deploy/CI build never needs `poems.db` or `better-sqlite3`).
+1. Get the source `poems.db` (the SQLite from the standalone `chinese-literature` app) and put it at **`scripts/literature/poems.db`** (this path is **gitignored** — the 19.5 MB DB is never committed; only the generated JSON is).
+2. Install dependencies once (`npm install`) — this pulls in `better-sqlite3`, a build-time-only tool. On Windows it needs the native build chain; if `npm install` fails on it, install the **"Desktop development with C++"** workload (Visual Studio Build Tools, <https://visualstudio.microsoft.com/downloads/> → "Build Tools for Visual Studio") and re-run.
+   > 💡 This step is **optional** — it's only for regenerating the corpus. If the C++ build is more trouble than it's worth, **skip Part S entirely**: the corpus JSON under `public/literature/**` is already committed, so the Literature module works in a normal clone/deploy without it.
+3. Run **`npm run build:literature`**. It prints the poem/writer/type counts and writes `public/literature/{meta,index}.json` + `poem/<id>.json` + `writer/<id>.json`.
+4. **Commit** the changed `public/literature/**` (that tree is the deployable source of truth — the deploy/CI build never needs `poems.db` or `better-sqlite3`).
 
-The corpus is **not** affected by `supabase db reset` (it isn't in the database). Reading works fully
-offline once the app is installed: browse/search/favourites are precached; a poem you open (or
-favourite) is cached for offline reading.
+The corpus is **not** affected by `supabase db reset` (it isn't in the database). Reading works fully offline once the app is installed: browse/search/favourites are precached; a poem you open (or favourite) is cached for offline reading.
 
-> If you correct an existing poem's text (same id/URL), bump the runtime cache name
-> (`literature-bodies-v1` in `vite.config.ts` **and** `BODY_CACHE` in `src/data/literature.ts`) so
-> installed clients refetch it instead of serving the cached old copy.
+> If you correct an existing poem's text (same id/URL), bump the runtime cache name (`literature-bodies-v1` in `vite.config.ts` **and** `BODY_CACHE` in `src/data/literature.ts`) so installed clients refetch it instead of serving the cached old copy.
 
 ---
 
@@ -1001,35 +716,21 @@ favourite) is cached for offline reading.
 
 The WellWorth logo appears in **two** forms — the same chop-seal "W" mark, rendered two ways:
 
-1. **On-screen logo** (Login + Onboarding headers) — drawn live as an inline SVG tinted with the
-   accent colour. This is what you see _inside_ the running app.
-2. **Installed-app icons** (iPhone/iPad home screen, browser tab, PWA) — five raster files in
-   `public/` (`pwa-192x192.png`, `pwa-512x512.png`, `pwa-maskable-512.png`, `apple-touch-icon.png`,
-   `favicon.ico`). iOS and the browser can't use SVG, so these are **generated** PNGs/ICO.
+1. **On-screen logo** (Login + Onboarding headers) — drawn live as an inline SVG tinted with the accent colour. This is what you see _inside_ the running app.
+2. **Installed-app icons** (iPhone/iPad home screen, browser tab, PWA) — five raster files in `public/` (`pwa-192x192.png`, `pwa-512x512.png`, `pwa-maskable-512.png`, `apple-touch-icon.png`, `favicon.ico`). iOS and the browser can't use SVG, so these are **generated** PNGs/ICO.
 
-Both forms read their shape from **one** file — `src/lib/brand-mark.js` (the seal's coordinates and
-path). So you **edit the geometry in one place**; the on-screen mark updates automatically and the
-icons update when you re-run the generator. They can't drift.
+Both forms read their shape from **one** file — `src/lib/brand-mark.js` (the seal's coordinates and path). So you **edit the geometry in one place**; the on-screen mark updates automatically and the icons update when you re-run the generator. They can't drift.
 
 ### To change the logo
 
-1. **Edit the artwork** in **`src/lib/brand-mark.js`** — the rounded-square border, the `W` path,
-   and the dot. Keep the `0 0 100 100` viewBox so both renderers stay aligned. (Colours aren't here:
-   on screen the mark inherits the accent colour; the icons use the `ACCENT`/`BG` constants at the
-   top of `scripts/gen-icons.mjs`.)
+1. **Edit the artwork** in **`src/lib/brand-mark.js`** — the rounded-square border, the `W` path, and the dot. Keep the `0 0 100 100` viewBox so both renderers stay aligned. (Colours aren't here: on screen the mark inherits the accent colour; the icons use the `ACCENT`/`BG` constants at the top of `scripts/gen-icons.mjs`.)
 2. **Regenerate the icons:** `npm run gen:icons`. This overwrites all five files in `public/`.
-   - You normally don't touch `gen-icons.mjs` itself — it already imports the shared geometry. The
-     one thing it adds is a scaled group that gives the **maskable** icon its padding, so Android can
-     crop it to a circle/squircle without clipping the mark; leave that in place.
-3. **Check the result** — open `public/pwa-512x512.png` and `public/pwa-maskable-512.png` and confirm
-   the mark looks right on the dark background and isn't clipped on the maskable one.
-4. **Commit** the changed `src/lib/brand-mark.js` **and** the regenerated `public/*.png` /
-   `favicon.ico` together, then push (auto-deploys).
-5. **On your phone**, after the deploy, **remove and re-add** the home-screen icon — iOS caches the
-   old icon and won't refresh it on its own.
+   - You normally don't touch `gen-icons.mjs` itself — it already imports the shared geometry. The one thing it adds is a scaled group that gives the **maskable** icon its padding, so Android can crop it to a circle/squircle without clipping the mark; leave that in place.
+3. **Check the result** — open `public/pwa-512x512.png` and `public/pwa-maskable-512.png` and confirm the mark looks right on the dark background and isn't clipped on the maskable one.
+4. **Commit** the changed `src/lib/brand-mark.js` **and** the regenerated `public/*.png` / `favicon.ico` together, then push (auto-deploys).
+5. **On your phone**, after the deploy, **remove and re-add** the home-screen icon — iOS caches the old icon and won't refresh it on its own.
 
-> Don't hand-edit the PNGs in an image editor: the next `npm run gen:icons` would overwrite them.
-> The geometry in `src/lib/brand-mark.js` (rasterized by `gen-icons.mjs`) is the source of truth.
+> Don't hand-edit the PNGs in an image editor: the next `npm run gen:icons` would overwrite them. The geometry in `src/lib/brand-mark.js` (rasterized by `gen-icons.mjs`) is the source of truth.
 
 ---
 
@@ -1067,81 +768,32 @@ icons update when you re-run the generator. They can't drift.
 > git add -A && git commit -m "what changed" && git push   # save + push changes (auto-deploys on Vercel)
 ```
 
-**Chinese search fold-map (rarely needed).** Search matches Traditional and Simplified Chinese
-interchangeably. The local-filter part uses a committed character map
-(`src/constants/zh-fold-map.ts`) generated from the `opencc-js` dictionary. You only regenerate it
-after upgrading `opencc-js`:
+**Chinese search fold-map (rarely needed).** Search matches Traditional and Simplified Chinese interchangeably. The local-filter part uses a committed character map (`src/constants/zh-fold-map.ts`) generated from the `opencc-js` dictionary. You only regenerate it after upgrading `opencc-js`:
 
 ```
 > node scripts/gen-zh-fold-map.mjs   # rewrites src/constants/zh-fold-map.ts, then commit the result
 ```
 
-**Why two different mechanisms (a small map for in-app search, but a ~1MB library for the movie/book/
-city searches).** The real dividing line isn't "local vs remote" — it's **"can we normalize both sides
-of the comparison?"**
+**Why two different mechanisms (a small map for in-app search, but a ~1MB library for the movie/book/ city searches).** The real dividing line isn't "local vs remote" — it's **"can we normalize both sides of the comparison?"**
 
-- **In-app search bars** (Shows/Books/Quotes/Medical/Travel filters, the food/city/test pickers) filter
-  data that's **already loaded in the phone's memory**. So the app controls _both_ sides: it folds the
-  text you typed **and** every stored title/name to one script (Simplified) and compares. Folding only
-  ever goes Traditional→Simplified, which is almost always **many-to-one** (後/后, and HK 裏 / TW 裡 both
-  → 里), so a plain per-character lookup is correct. That map is tiny (~60KB) and runs instantly on every
-  keystroke — no big library needed. (Even if app search were ever changed to ask the database directly,
-  this still wouldn't need `opencc-js`: it's _our_ database, so we'd store a folded column and query it
-  with the folded term.)
-- **The movie/TV (TMDB), book (Google Books), and city (Nominatim) searches** query **someone else's**
-  catalogue over the internet. We can't fold _their_ data — we only control the text we send. So instead
-  of folding both sides, the app sends the query in **both** scripts and merges the results. Generating
-  the opposite script — Simplified→Traditional — is the hard direction: it's **one-to-many** (面 could be
-  面 _or_ 麵; 里 could be 里/裡/裏) and needs phrase/context awareness to pick the right Hong-Kong
-  character. That intelligence is exactly the ~1MB dictionary inside `opencc-js`, which is why it's only
-  loaded — once, on demand — the first time you run one of those searches in Chinese, and never for the
-  in-app filters. (The size gap is real: the Traditional→Simplified data is ~66KB; the
-  Simplified→Traditional data is ~1MB.)
+- **In-app search bars** (Shows/Books/Quotes/Medical/Travel filters, the food/city/test pickers) filter data that's **already loaded in the phone's memory**. So the app controls _both_ sides: it folds the text you typed **and** every stored title/name to one script (Simplified) and compares. Folding only ever goes Traditional→Simplified, which is almost always **many-to-one** (後/后, and HK 裏 / TW 裡 both → 里), so a plain per-character lookup is correct. That map is tiny (~60KB) and runs instantly on every keystroke — no big library needed. (Even if app search were ever changed to ask the database directly, this still wouldn't need `opencc-js`: it's _our_ database, so we'd store a folded column and query it with the folded term.)
+- **The movie/TV (TMDB), book (Google Books), and city (Nominatim) searches** query **someone else's** catalogue over the internet. We can't fold _their_ data — we only control the text we send. So instead of folding both sides, the app sends the query in **both** scripts and merges the results. Generating the opposite script — Simplified→Traditional — is the hard direction: it's **one-to-many** (面 could be面 _or_ 麵; 里 could be 里/裡/裏) and needs phrase/context awareness to pick the right Hong-Kong character. That intelligence is exactly the ~1MB dictionary inside `opencc-js`, which is why it's only loaded — once, on demand — the first time you run one of those searches in Chinese, and never for the in-app filters. (The size gap is real: the Traditional→Simplified data is ~66KB; the Simplified→Traditional data is ~1MB.)
 
-If something breaks, the most common causes: a value mistyped in `.env` or Vercel; the Vercel URL not
-added to Google origins / Supabase redirect URLs (sign-in fails); or `SUPABASE_DB_PASSWORD` not set
-(`db push` prompts/hangs).
+If something breaks, the most common causes: a value mistyped in `.env` or Vercel; the Vercel URL not added to Google origins / Supabase redirect URLs (sign-in fails); or `SUPABASE_DB_PASSWORD` not set (`db push` prompts/hangs).
 
-**"Title search unavailable — is VITE_TMDB_API_KEY set?" (or Books search fails) on the deployed app
-but not locally.** `VITE_` keys are **baked into the bundle at build time**, and Vercel builds with
-**Vercel's** Environment Variables — it never sees your local `.env` (it's gitignored). If sign-in works
-in production, your Supabase vars are set, but `VITE_TMDB_API_KEY` / `VITE_GOOGLE_BOOKS_API_KEY` /
-`VITE_USDA_API_KEY` may be missing. Fix: **Vercel → Project → Settings → Environment Variables**, add
-the missing keys (scope **Production**), then **redeploy** — env-var changes don't affect existing
-builds (Deployments → ⋯ → **Redeploy**, and **uncheck "Use existing Build Cache"** so the bundle is
-rebuilt with the new values). For **Google Books** specifically, also check the key's **Application
-restrictions → Websites** in Google Cloud includes your production origin
-(`https://<your-app>.vercel.app/*`); a key restricted to `localhost` only returns 403 in production.
+**"Title search unavailable — is VITE_TMDB_API_KEY set?" (or Books search fails) on the deployed app but not locally.** `VITE_` keys are **baked into the bundle at build time**, and Vercel builds with **Vercel's** Environment Variables — it never sees your local `.env` (it's gitignored). If sign-in works in production, your Supabase vars are set, but `VITE_TMDB_API_KEY` / `VITE_GOOGLE_BOOKS_API_KEY` / `VITE_USDA_API_KEY` may be missing. Fix: **Vercel → Project → Settings → Environment Variables**, add the missing keys (scope **Production**), then **redeploy** — env-var changes don't affect existing builds (Deployments → ⋯ → **Redeploy**, and **uncheck "Use existing Build Cache"** so the bundle is rebuilt with the new values). For **Google Books** specifically, also check the key's **Application restrictions → Websites** in Google Cloud includes your production origin (`https://<your-app>.vercel.app/*`); a key restricted to `localhost` only returns 403 in production.
 
-**Still "not set" after you redeployed with the keys?** The app is an installable **PWA**, so the
-**service worker serves the previously-cached bundle** (built without the keys) even after a new deploy —
-logging out/in or a hard refresh won't replace it.
+**Still "not set" after you redeployed with the keys?** The app is an installable **PWA**, so the **service worker serves the previously-cached bundle** (built without the keys) even after a new deploy — logging out/in or a hard refresh won't replace it.
 
 **Diagnose:** open the prod URL in an **incognito window** (no service worker / cache).
 
-- **If it _still_ fails in incognito**, the Vercel build genuinely lacks the keys — recheck the exact var
-  names (`VITE_TMDB_API_KEY` / `VITE_GOOGLE_BOOKS_API_KEY`, case-sensitive, **Production** scope) and
-  redeploy without build cache (see the "empty value" note below).
-- **If it works in incognito but not your normal browser**, it's the stale service-worker cache. Clear it
-  (Chrome/Edge on Windows — nearly identical):
-  1. Open the prod URL in the normal browser and press **F12** (or right-click → **Inspect**) to open
-     DevTools.
+- **If it _still_ fails in incognito**, the Vercel build genuinely lacks the keys — recheck the exact var names (`VITE_TMDB_API_KEY` / `VITE_GOOGLE_BOOKS_API_KEY`, case-sensitive, **Production** scope) and redeploy without build cache (see the "empty value" note below).
+- **If it works in incognito but not your normal browser**, it's the stale service-worker cache. Clear it (Chrome/Edge on Windows — nearly identical):
+  1. Open the prod URL in the normal browser and press **F12** (or right-click → **Inspect**) to open DevTools.
   2. Click the **Application** tab (use the **»** overflow chevron if it's hidden).
-  3. Left sidebar → **Storage** → click the **Clear site data** button. (This unregisters the service
-     worker **and** clears all caches/storage in one go — a separate Service Workers → **Unregister** is
-     then unnecessary.)
+  3. Left sidebar → **Storage** → click the **Clear site data** button. (This unregisters the service worker **and** clears all caches/storage in one go — a separate Service Workers → **Unregister** is then unnecessary.)
   4. **Close every tab** of the site, then reopen the URL — the browser now fetches the fresh bundle.
-  - **No-DevTools alternative:** click the **padlock / site-info icon** left of the URL → **Site
-    settings** (Chrome) / **Permissions for this site** (Edge) → **Delete data**, then close all tabs and
-    reopen.
-  - **If you installed the PWA** (desktop/taskbar/home screen): that installed window keeps its **own**
-    service worker — clear site data from inside the installed window's DevTools, or uninstall and
-    reinstall it.
+  - **No-DevTools alternative:** click the **padlock / site-info icon** left of the URL → **Site settings** (Chrome) / **Permissions for this site** (Edge) → **Delete data**, then close all tabs and reopen.
+  - **If you installed the PWA** (desktop/taskbar/home screen): that installed window keeps its **own** service worker — clear site data from inside the installed window's DevTools, or uninstall and reinstall it.
 
-> **Watch out for an _empty value_ hidden by "Sensitive".** A Vercel env var marked **Sensitive**
-> shows its value as **blank in the UI even when set** — you can't read it back to confirm. If the build
-> baked an empty string, you get the same "not set" error. To be sure: **delete and re-add** the var,
-> pasting your **actual API key** as the value (no spaces/quotes/newline) — paste the _key_, not the
-> variable name — then redeploy. **Definitive check:** in an incognito DevTools → **Network** → open the
-> main `index-*.js` → **Response** → search for the first characters of your real key; if it isn't in
-> the bundle, the value never made it into the build.
+> **Watch out for an _empty value_ hidden by "Sensitive".** A Vercel env var marked **Sensitive** shows its value as **blank in the UI even when set** — you can't read it back to confirm. If the build baked an empty string, you get the same "not set" error. To be sure: **delete and re-add** the var, pasting your **actual API key** as the value (no spaces/quotes/newline) — paste the _key_, not the variable name — then redeploy. **Definitive check:** in an incognito DevTools → **Network** → open the main `index-*.js` → **Response** → search for the first characters of your real key; if it isn't in the bundle, the value never made it into the build.

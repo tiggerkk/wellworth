@@ -30,8 +30,8 @@ export async function listJournalEntries(userId: string): Promise<JournalRow[]> 
 /**
  * Per-mood entry counts within a day range — the Journal Dashboard's circumplex chart source
  * (one bubble per mood, sized by count). Only `mood` is selected: the chart doesn't need entry
- * text/tags, so this stays a narrow, index-covered query (`(user_id, mood)` — see
- * `09_quotes_schema.sql`) independent of `listJournalEntries`.
+ * text/tags, so this stays a narrow query. Filtered by `user_id` + day range, covered by the
+ * existing `unique(user_id, day)` index — same index `listJournalDays` uses below.
  */
 export async function listJournalMoodCountsByRange(
   userId: string,

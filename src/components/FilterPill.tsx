@@ -1,3 +1,5 @@
+import { IconCheck } from '@tabler/icons-react'
+
 interface FilterPillProps {
   label: string
   /**
@@ -7,6 +9,15 @@ interface FilterPillProps {
   selected?: boolean
   /** Tap handler. When omitted the pill is a non-interactive `<span>` (display-only tags). */
   onClick?: () => void
+  /**
+   * 'accent' (default) — the app-wide accent fill when selected (Quotes Library tag facet,
+   * Literature filters, Poets list).
+   * 'neutral' — a checkmark + a fill tied to `text-primary` rather than any palette swatch, for
+   * contexts where "selected" must never be confused with a caller-configurable palette color
+   * (e.g. Journal Entry's sub-tag suggestions, which sit right next to mood `LabelChip`s that can
+   * be recolored to any swatch — including the same blue as the default accent).
+   */
+  tone?: 'accent' | 'neutral'
 }
 
 /**
@@ -14,14 +25,27 @@ interface FilterPillProps {
  * larger than the old captions) when inactive, accent-filled when `selected`. Used by the Quotes
  * Library tag facet, the Literature poem filters, the Poets list, and a poem's tag list.
  */
-export function FilterPill({ label, selected, onClick }: FilterPillProps) {
-  const className = `rounded-pill px-3 py-1 text-body ${
-    selected ? 'bg-accent text-bg' : 'bg-input text-text-primary'
+export function FilterPill({
+  label,
+  selected,
+  onClick,
+  tone = 'accent',
+}: FilterPillProps) {
+  const selectedClass =
+    tone === 'neutral' ? 'bg-text-primary text-bg' : 'bg-accent text-bg'
+  const className = `inline-flex items-center gap-1 rounded-pill px-3 py-1 text-body ${
+    selected ? selectedClass : 'bg-input text-text-primary'
   }`
-  if (!onClick) return <span className={className}>{label}</span>
+  const content = (
+    <>
+      {selected && tone === 'neutral' && <IconCheck size={13} />}
+      {label}
+    </>
+  )
+  if (!onClick) return <span className={className}>{content}</span>
   return (
     <button type="button" onClick={onClick} aria-pressed={selected} className={className}>
-      {label}
+      {content}
     </button>
   )
 }

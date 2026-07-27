@@ -84,7 +84,7 @@ Every module's New/Edit/View navigation follows one of these four shapes.
 | Edit Item | View Item            | <             | Go to View Item  | Return to View Item | Yes    |
 | View Item | Listing or Dashboard | <             | N/A (read-only)  | Return to Source    | Yes    |
 
-**Category 2 — no "View Item" page** (Insurance Policies, Quotes — no Dashboard; Shows, Books, Travel — have Dashboard; Journal — special case)
+**Category 2 — no "View Item" page** (Insurance Policies, Quotes — no Dashboard; Shows, Books, Travel, Journal — have Dashboard; Journal — special case otherwise)
 
 | Screen    | Entry                | Top-Left Icon | Post-Save Action | Post-Cancel Action | Routed |
 | --------- | -------------------- | ------------- | ---------------- | ------------------ | ------ |
@@ -112,6 +112,7 @@ Every module's New/Edit/View navigation follows one of these four shapes.
 
 - **Escape-to-dismiss** is centralised in `useEscapeKey`: one document listener over a LIFO handler stack, so the innermost overlay wins. Route `Sheet`s + local search sheets close themselves, the `Calendar` closes, an open `SelectMenu` collapses, and the Add/Edit screens follow the navigation described above.
 - **Entry/Settings shells** — two shared chrome wrappers keep New/Edit and Settings screens uniform: `EntryLoader` (the `useAsync` outer loader → inner form render-prop) and `SettingsLayout` (sticky header + the standard `IconX` dismiss). See `01_design_system.md` for both.
+- **A bottom-nav tab needs `end: true` if a sibling tab's route nests under its path.** `NavLink` without `end` matches any path that _starts with_ its `to` — fine for a tab with no nested sibling routes, but if module tab A's route (e.g. `/quotes/journal`) is a prefix of tab B's (e.g. `/quotes/journal/dashboard`), both tabs light up while on B. Scope A with `end: true` (see the Quotes module's Journal tab in `src/constants/modules.ts`); its own Entry/Edit sub-routes then simply show no tab highlighted, same as Quotes' own `library` tab during Quote Entry.
 
 ## Shared hooks (`src/hooks/`)
 
@@ -164,6 +165,7 @@ UI (`screens` + `components`) → `data/*` repository functions → `supabase-js
 - **F8 + F13 — `useAsync` keeps the previous `data` while refetching.** It flips `loading=true` but retains the old `data`. Therefore:
   - Gate a view on `!loading` ONLY when the loaded subject's IDENTITY changes (and key the component by it) — e.g. Net Worth Monthly Entry switching months (**F8**).
   - NEVER gate on `!loading` when a child holds unsaved LOCAL state across a same-subject refetch — it unmounts the child and discards edits (**F13**, Travel Edit Trip); instead render once `data` exists and show a first-load spinner only when `loading && !data`.
+  - **Same rule, `SheetLoader`/Settings variant.** A Settings sheet built on `useProfileEditor` re-triggers this on every single field save, not just on navigation: `save()` bumps the shared profile version tick, `loading` flips briefly true again, and `SheetLoader`/`EntryLoader` unmount the render-prop's children while it's true — discarding any per-row local UI state (not just unsaved edits), e.g. `Collapsible` expand/collapse. Fix: lift that state above the loader boundary, into the screen component itself (which never unmounts), and pass it back in as a controlled prop — see `JournalMoodsSheet` (`08_quotes.md`).
   - **F15b — this is also the rule for any profile/onboarding gate.** `OnboardingGate` gating on `loading || profile == null` flashes a full-screen splash over the whole app on every background refetch (e.g. a `bumpDiary` bump). Gate on the resolved value only (`profile == null` covers both initial-undefined and the row-being-created window). See `03_global.md` for the onboarding screen spec this protects.
   - **Rule of thumb:** a gate keyed on a fetched value reads `data`, never `loading`.
 - **F21 — `useProfile` seeds from a local cache.** `useProfile` seeds its first render from a **local cache of the last-known profile** (`src/lib/profile-cache.ts`, keyed `wellworth:profile:<userId>`), so screens rendering a per-profile order/visibility (Home hub, Medical/Net Worth ordering) paint the user's choice immediately instead of flashing the canonical default while the fetch is in flight; every fetch refreshes the cache. This is the `last-module` / `networth-liquid-filter` localStorage convention applied to the whole row, plumbed through an optional `initialData` seed on `useAsync` (stale-while-revalidate).
@@ -303,17 +305,20 @@ General React/CSS pitfalls, applicable to any module. (Visual **tokens** — col
 
 **Query layer**
 
-- `listJournalEntries` selects only the columns the listing renders/searches/filters/sorts on (`id, day, journal_entry, tags`) — not `select('*')`; `user_id`/`created_at`/`updated_at` are only needed by `getJournalEntry`/`getJournalEntryByDay` (Entry screen), same convention as `QUOTE_LIST_COLUMNS` above.
-- `journal_entry` has one index: the `UNIQUE(user_id, day)` constraint's own btree, which covers every query pattern (equality lookups, the listing's DESC order via a backward scan, `listJournalDays`' range scan, and the importer's dedup) — a separate explicit `(user_id, day desc)` index was dropped as pure write-overhead with no read benefit.
+- `listJournalEntries` selects only the columns the listing renders/searches/filters/sorts on (`id, day, journal_entry, mood, tags`) — not `select('*')`; `user_id`/`created_at`/`updated_at` are only needed by `getJournalEntry`/`getJournalEntryByDay` (Entry screen), same convention as `QUOTE_LIST_COLUMNS` above.
+- `journal_entry` has one index: the `UNIQUE(user_id, day)` constraint's own btree, which covers every query pattern (equality lookups, the listing's DESC order via a backward scan, `listJournalDays`' range scan, the importer's dedup, and the Dashboard's `listJournalMoodCountsByRange`) — a separate explicit `(user_id, day desc)` index was dropped as pure write-overhead with no read benefit, and no `(user_id, mood)` index was added either: the mood-count query filters by day range and only _selects_ `mood`, so a mood index wouldn't be used by it.
+- `listJournalMoodCountsByRange` selects only `mood` for the Dashboard's Mood Map — the chart doesn't need entry text/tags.
 
 **Rendering**
 
 - `applyJournalView` is memoized behind `useMemo`, keyed on the loaded list plus criteria, instead of recomputing on every render — same convention as Books/Shows/Quotes/Travel above.
+- `effectiveMoods(profile?.journal_moods)` is memoized behind `useMemo` in `JournalEntry`, `JournalLibrary`, and `JournalDashboard` — an F4 instance: it returns a fresh array every call, so leaving it unmemoized would silently defeat any downstream `useMemo` keyed on it (`moodOptions`, the circumplex chart's `points`, `topMood`), and in `JournalEntry` specifically it would otherwise recompute on every keystroke (the screen re-renders per keystroke while typing the entry).
 
 **Data fetching**
 
 - The Edit entry point (tapping a Library row) already fetches the target row once, by `id`, to resolve the screen's starting day. `JournalForm` seeds its initial state from that same row instead of re-fetching it by day on mount, cutting a redundant round-trip on the module's most common action. Every subsequent in-screen day change (chevrons/calendar), and the New entry point's starting day, still fetch normally — skipping those would reintroduce the bug where a day that already has an entry briefly (or persistently) shows a blank draft.
 - Its refresh channel (`bumpJournal`/`useJournalVersion`) is separate from Quotes' (`bumpQuotes`/ `useQuotesVersion`), so a Journal write never forces a Quotes Library refetch, or vice versa.
+- The Dashboard's two queries (`listJournalDays` for the KPIs, `listJournalMoodCountsByRange` for the Mood Map) don't use `useAsync`'s shared cache — unlike Books/Shows/Quotes (Shared performance notes above), Journal's Dashboard doesn't reuse the Library's exact query/shape, so there's nothing to share a cache entry with; same tradeoff as the Travel/Wellness/Net Worth/Medical Dashboards, which fetch dashboard-specific shapes and don't cache either.
 
 ### Net Worth
 

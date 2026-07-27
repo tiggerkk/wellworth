@@ -6,14 +6,24 @@ interface LabelChipProps {
   /** Accent color (CSS value, e.g. a `var(--color-*)` or palette token) for a solid-fill chip.
    *  Takes precedence over any bg/text tone classes in `className` — use for per-entry dynamic colors. */
   color?: string
+  /** 'section' (11px, default) — compact contexts: row badges, category/dynasty chips.
+   *  'body' (15px) — a chip that's a primary, tappable choice rather than a compact label (e.g.
+   *  Journal Entry's mood picker), matching the size of adjacent `FilterPill`s. */
+  size?: 'section' | 'body'
 }
 
 /** A non-status label pill: rounded-md (vs. `StatusChip`'s rounded-pill) so labels read apart from
  * statuses at a glance. Presentational only. */
-export function LabelChip({ label, className = '', color }: LabelChipProps) {
+export function LabelChip({
+  label,
+  className = '',
+  color,
+  size = 'section',
+}: LabelChipProps) {
+  const sizeClass = size === 'body' ? 'text-body' : 'text-section'
   return (
     <span
-      className={`inline-flex items-center rounded-md px-2 py-0.5 text-section font-medium ${className}`}
+      className={`inline-flex items-center rounded-md px-2 py-0.5 font-medium ${sizeClass} ${className}`}
       style={color ? { backgroundColor: color, color: 'var(--color-bg)' } : undefined}
     >
       {label}

@@ -107,7 +107,9 @@ create table public.journal_entry (
                          -- same leading columns would only add write overhead, no read benefit.
 );
 
-create index on public.journal_entry (user_id, mood);  -- Journal Dashboard's per-mood count aggregate
+-- No separate (user_id, mood) index: the Journal Dashboard's per-mood count query filters by
+-- user_id + day range (covered by the unique(user_id, day) index above) and only SELECTs mood —
+-- an index on mood itself wouldn't be used by that query, so it'd be pure write overhead.
 
 alter table public.journal_entry enable row level security;
 

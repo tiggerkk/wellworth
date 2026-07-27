@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { IconChevronLeft, IconChevronRight, IconClipboard } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
@@ -223,8 +223,11 @@ function JournalForm({
   const { data: tagSuggestions } = useAsync(tagsFn)
 
   const { data: profile } = useProfile()
-  const moods = effectiveMoods(profile?.journal_moods)
-  const subTags = moodSubTags(moods, draft.mood)
+  const moods = useMemo(
+    () => effectiveMoods(profile?.journal_moods),
+    [profile?.journal_moods],
+  )
+  const subTags = useMemo(() => moodSubTags(moods, draft.mood), [moods, draft.mood])
 
   function toggleSuggestedTag(tag: string) {
     const exists = draft.tags.some((t) => t.toLowerCase() === tag.toLowerCase())
@@ -400,6 +403,7 @@ function JournalForm({
                     <LabelChip
                       label={m.label}
                       color={m.color}
+                      size="body"
                       className={`w-full justify-center py-1 ${
                         draft.mood === m.key ? 'ring-2 ring-text-primary' : 'opacity-50'
                       }`}
@@ -413,6 +417,7 @@ function JournalForm({
                     <FilterPill
                       key={tag}
                       label={tag}
+                      tone="neutral"
                       selected={draft.tags.some(
                         (t) => t.toLowerCase() === tag.toLowerCase(),
                       )}
