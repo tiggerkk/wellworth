@@ -69,7 +69,7 @@ describe('applyJournalView', () => {
       id: 'c',
       day: '2026-04-06',
       journal_entry: 'Finally decided to learn more about AI!',
-      mood: 'motivated',
+      mood: 'inspired',
       tags: ['ai'],
     }),
   ]

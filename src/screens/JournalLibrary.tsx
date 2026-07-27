@@ -65,6 +65,13 @@ export function JournalLibrary() {
     ],
     [moods],
   )
+  // Sized off the longest current mood label (renamable, so this can't be a fixed constant) so
+  // every row's leading column is the same width and the entry text lines up across rows,
+  // regardless of which mood a given row shows.
+  const leadingWidth = useMemo(
+    () => Math.max(0, ...moods.map((m) => m.label.length)) - 2,
+    [moods],
+  )
 
   const [criteria, setCriteria] = useSessionState<JournalCriteria>(
     'wellworth:journal-library',
@@ -247,12 +254,15 @@ export function JournalLibrary() {
                             onClick={() => navigate(routes.quotes.journalEdit(entry.id))}
                             color={color}
                             leading={
-                              <div className="flex flex-col items-center gap-1">
+                              <div
+                                className="flex flex-col items-center gap-1"
+                                style={{ width: `${leadingWidth}ch` }}
+                              >
                                 <DateBadge day={entry.day} />
                                 <LabelChip
                                   label={moodLabel(moods, entry.mood)}
                                   color={color}
-                                  className="text-[10px] px-1.5 py-0"
+                                  className="w-full justify-center text-[10px] px-1.5 py-0"
                                 />
                               </div>
                             }

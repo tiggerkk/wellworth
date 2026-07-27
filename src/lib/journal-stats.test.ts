@@ -59,7 +59,7 @@ describe('computeJournalStats', () => {
 })
 
 describe('topMood', () => {
-  const order = ['happy', 'motivated', 'calm', 'neutral', 'sad', 'anxious', 'angry']
+  const order = ['happy', 'inspired', 'calm', 'neutral', 'sad', 'anxious', 'angry']
 
   it('picks the highest count', () => {
     expect(topMood({ happy: 2, sad: 5, calm: 1 }, order)).toBe('sad')

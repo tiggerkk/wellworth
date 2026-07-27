@@ -142,7 +142,7 @@ Standard rules: own `user_id` for direct RLS, four owner policies using `(select
 - `id` UUID PK · `user_id` UUID → auth.users (ON DELETE CASCADE)
 - `day` DATE — the calendar day this entry belongs to (required)
 - `journal_entry` TEXT — the entry text (required)
-- `mood` TEXT DEFAULT 'neutral' **CHECK** in the 7 fixed keys (`happy, motivated, calm, neutral, sad, anxious, angry`) — unlike `quote.source_type`/`category`, this **is** CHECK-constrained: the set is structural (the Dashboard's Mood Map is keyed to it), not an owner-extensible list. The owner's rename/recolor/sub-tags for each key live on `profile.journal_moods` (JSONB, added by `10_quotes_profile_settings.sql` alongside `quote_categories` etc.; NULL = canonical defaults) — resolved by `src/lib/journal-moods.ts`.
+- `mood` TEXT DEFAULT 'neutral' **CHECK** in the 7 fixed keys (`happy, inspired, calm, neutral, sad, anxious, angry`) — unlike `quote.source_type`/`category`, this **is** CHECK-constrained: the set is structural (the Dashboard's Mood Map is keyed to it), not an owner-extensible list. The owner's rename/recolor/sub-tags for each key live on `profile.journal_moods` (JSONB, added by `10_quotes_profile_settings.sql` alongside `quote_categories` etc.; NULL = canonical defaults) — resolved by `src/lib/journal-moods.ts`.
 - `tags` TEXT[] DEFAULT '{}' — optional; own vocabulary, independent of `quote.tags`
 - `created_at`, `updated_at`
 - **UNIQUE (`user_id`, `day`)** — one entry per day; drives the Entry screen's day nav (the arrows/calendar resolve to this record or a blank draft) and the importer's dedup. Its own index also covers every Journal query, including the Dashboard's per-mood count-by-range query (filtered by `user_id` + day range, `mood` only selected) — no separate `mood` index is needed; one wouldn't be used by that query and would be pure write overhead.
@@ -187,14 +187,14 @@ These are the canonical defaults resolved when `profile.quote_source_types` / `p
 
 The canonical defaults resolved when `profile.journal_moods` is NULL (rename/recolor/sub-tags only — the 7 keys/order themselves are fixed, see Data model above). Stored in `src/constants/journal.ts`:
 
-| key       | label     | default color | default sub-tags                        |
-| --------- | --------- | ------------- | --------------------------------------- |
-| happy     | Happy     | Gold          | relieved, grateful, excited             |
-| motivated | Motivated | Emerald       | energetic, focused                      |
-| calm      | Calm      | Cyan          | content, relaxed, peaceful, resigned    |
-| neutral   | Neutral   | Grey          | indifferent                             |
-| sad       | Sad       | Blue          | lonely, hurt, disappointed, depressed   |
-| anxious   | Anxious   | Purple        | stressed, worried, restless             |
-| angry     | Angry     | Red           | frustrated, annoyed, resentful, furious |
+| key      | label    | default color | default sub-tags                        |
+| -------- | -------- | ------------- | --------------------------------------- |
+| happy    | Happy    | Gold          | relieved, grateful, excited             |
+| inspired | Inspired | Emerald       | energetic, focused                      |
+| calm     | Calm     | Cyan          | content, relaxed, peaceful, resigned    |
+| neutral  | Neutral  | Grey          | indifferent                             |
+| sad      | Sad      | Blue          | lonely, hurt, disappointed, depressed   |
+| anxious  | Anxious  | Purple        | stressed, worried, restless             |
+| angry    | Angry    | Red           | frustrated, annoyed, resentful, furious |
 
 Each mood also has a fixed valence/arousal position on the Dashboard's Mood Map (`JOURNAL_MOOD_POSITIONS`) — not owner-editable.

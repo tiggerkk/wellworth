@@ -52,30 +52,32 @@ export function JournalMoodsSheet() {
       {(prof) => {
         const list = effectiveMoods(prof.journal_moods)
         return (
-          <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4">
-            <p className="px-1 text-caption text-text-secondary">
-              {saving ? 'Saving…' : 'All changes saved'}
-            </p>
-            {list.map((mood) => (
-              <MoodRow
-                key={mood.key}
-                mood={mood}
-                open={expandedKeys.has(mood.key)}
-                onOpenChange={(open) =>
-                  setExpandedKeys((prev) => {
-                    const next = new Set(prev)
-                    if (open) next.add(mood.key)
-                    else next.delete(mood.key)
-                    return next
-                  })
-                }
-                onRename={(label) => void persist(renameMood(list, mood.key, label))}
-                onRecolor={(color) => void persist(recolorMood(list, mood.key, color))}
-                onSubTagsChange={(subTags) =>
-                  void persist(resubTagMood(list, mood.key, subTags))
-                }
-              />
-            ))}
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <div className="flex flex-col gap-3 p-4">
+              <p className="px-1 text-caption text-text-secondary">
+                {saving ? 'Saving…' : 'All changes saved'}
+              </p>
+              {list.map((mood) => (
+                <MoodRow
+                  key={mood.key}
+                  mood={mood}
+                  open={expandedKeys.has(mood.key)}
+                  onOpenChange={(open) =>
+                    setExpandedKeys((prev) => {
+                      const next = new Set(prev)
+                      if (open) next.add(mood.key)
+                      else next.delete(mood.key)
+                      return next
+                    })
+                  }
+                  onRename={(label) => void persist(renameMood(list, mood.key, label))}
+                  onRecolor={(color) => void persist(recolorMood(list, mood.key, color))}
+                  onSubTagsChange={(subTags) =>
+                    void persist(resubTagMood(list, mood.key, subTags))
+                  }
+                />
+              ))}
+            </div>
           </div>
         )
       }}
@@ -112,6 +114,7 @@ function MoodRow({
       color={mood.color}
       open={open}
       onOpenChange={onOpenChange}
+      className="shrink-0"
       actions={
         <ColorPicker
           value={mood.color}

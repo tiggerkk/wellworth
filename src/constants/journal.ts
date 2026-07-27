@@ -22,7 +22,7 @@ import { lastNDays, monthsAgo, type RangeOption } from '../lib/date-range'
  */
 export const JOURNAL_MOODS = [
   'happy',
-  'motivated',
+  'inspired',
   'calm',
   'neutral',
   'sad',
@@ -37,7 +37,7 @@ export const JOURNAL_MOOD_DEFAULT_KEY: JournalMood = 'neutral'
 
 export const JOURNAL_MOOD_LABELS: Record<JournalMood, string> = {
   happy: 'Happy',
-  motivated: 'Motivated',
+  inspired: 'Inspired',
   calm: 'Calm',
   neutral: 'Neutral',
   sad: 'Sad',
@@ -49,7 +49,7 @@ export const JOURNAL_MOOD_LABELS: Record<JournalMood, string> = {
  *  (the owner can repick from `PALETTE_SWATCHES` in Journal Moods settings). */
 export const JOURNAL_MOOD_DEFAULT_COLORS: Record<JournalMood, string> = {
   happy: PALETTE_GOLD,
-  motivated: PALETTE_EMERALD,
+  inspired: PALETTE_EMERALD,
   calm: PALETTE_CYAN,
   neutral: PALETTE_GREY,
   sad: PALETTE_BLUE,
@@ -70,7 +70,7 @@ export const JOURNAL_MOOD_POSITIONS: Record<
   { valence: number; arousal: number }
 > = {
   happy: { valence: 0.8, arousal: 0.4 },
-  motivated: { valence: 0.6, arousal: 0.8 },
+  inspired: { valence: 0.6, arousal: 0.8 },
   calm: { valence: 0.6, arousal: -0.6 },
   neutral: { valence: 0, arousal: 0 },
   sad: { valence: -0.6, arousal: -0.5 },
@@ -82,7 +82,7 @@ export const JOURNAL_MOOD_POSITIONS: Record<
  *  purely a starting point, editable per-mood in Quotes Settings -> Journal Values -> Moods. */
 export const JOURNAL_MOOD_DEFAULT_SUB_TAGS: Record<JournalMood, string[]> = {
   happy: ['relieved', 'grateful', 'excited'],
-  motivated: ['energetic', 'focused'],
+  inspired: ['energetic', 'focused'],
   calm: ['content', 'relaxed', 'peaceful', 'resigned'],
   neutral: ['indifferent'],
   sad: ['lonely', 'hurt', 'disappointed', 'depressed'],

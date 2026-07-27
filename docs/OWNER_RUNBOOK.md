@@ -476,7 +476,7 @@ update public.profile
   set journal_moods = null;  -- null = the seed mood list (key/color/sub-tags) in src/constants/journal.ts
 ```
 
-> The 7 moods themselves (`happy, motivated, calm, neutral, sad, anxious, angry`) are fixed by a CHECK constraint, not owner-configurable — `journal_moods = null` only resets the **rename/recolor/sub-tag** customization back to the seed defaults, not the mood set itself.
+> The 7 moods themselves (`happy, inspired, calm, neutral, sad, anxious, angry`) are fixed by a CHECK constraint, not owner-configurable — `journal_moods = null` only resets the **rename/recolor/sub-tag** customization back to the seed defaults, not the mood set itself.
 
 **Medical** — wipes every report and its results (the `medical_lab_test` reference is kept):
 

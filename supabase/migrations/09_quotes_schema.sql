@@ -96,7 +96,7 @@ create table public.journal_entry (
   day            date not null,
   journal_entry  text not null,
   mood           text not null default 'neutral'
-                   check (mood in ('happy', 'motivated', 'calm', 'neutral', 'sad', 'anxious', 'angry')),
+                   check (mood in ('happy', 'inspired', 'calm', 'neutral', 'sad', 'anxious', 'angry')),
   tags           text[] not null default '{}',
   created_at     timestamptz not null default now(),
   updated_at     timestamptz not null default now(),
