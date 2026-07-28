@@ -404,7 +404,7 @@ function JournalForm({
                       label={m.label}
                       color={m.color}
                       size="body"
-                      className={`w-full justify-center py-1 ${
+                      className={`w-full justify-center ${
                         draft.mood === m.key ? 'ring-2 ring-text-primary' : 'opacity-50'
                       }`}
                     />

@@ -320,7 +320,7 @@ export function QuotesLibrary() {
                     onDelete={() => void remove(quote.id)}
                     onClick={() => navigate(routes.quotes.edit(quote.id))}
                   >
-                    <span className="line-clamp-2 block text-body text-text-primary">
+                    <span className="line-clamp-2 text-body text-text-primary">
                       {quote.text}
                     </span>
                     <span className="mt-1 flex flex-wrap items-center gap-2 text-caption text-text-secondary">

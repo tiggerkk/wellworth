@@ -72,15 +72,22 @@ export function JournalCircumplexChart({ points }: { points: CircumplexPoint[] }
         <ReferenceLine y={0} stroke={GRID} />
         <Tooltip
           cursor={false}
-          contentStyle={{
-            background: 'var(--color-surface)',
-            border: '1px solid var(--color-border)',
-            borderRadius: 12,
-            color: 'var(--color-text-primary)',
-          }}
-          formatter={(_value, _name, item) => {
-            const p = item.payload as CircumplexPoint
-            return [`${p.count} entr${p.count === 1 ? 'y' : 'ies'}`, p.label]
+          content={({ active, payload }) => {
+            if (!active || !payload?.length) return null
+            const p = payload[0]!.payload as CircumplexPoint
+            return (
+              <div
+                style={{
+                  background: 'var(--color-surface)',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: 12,
+                  color: 'var(--color-text-primary)',
+                  padding: '6px 10px',
+                }}
+              >
+                {p.label}: {p.count} entr{p.count === 1 ? 'y' : 'ies'}
+              </div>
+            )
           }}
         />
         <Scatter data={points} fill="var(--color-accent)">

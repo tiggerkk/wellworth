@@ -1,15 +1,25 @@
 interface LabelChipProps {
   /** The label to show (e.g. a dynasty, category, or provider name). */
   label: string
-  /** Palette classes for this label (colour is caller-supplied — no shared tone set yet). */
+  /** Layout-only classes (width, ring, opacity, shrink, margin). Never use this for padding or
+   *  font-size — those are owned entirely by `size` so a caller's override can't silently lose to
+   *  this component's own classes depending on Tailwind's generated-CSS order. */
   className?: string
   /** Accent color (CSS value, e.g. a `var(--color-*)` or palette token) for a solid-fill chip.
    *  Takes precedence over any bg/text tone classes in `className` — use for per-entry dynamic colors. */
   color?: string
-  /** 'section' (11px, default) — compact contexts: row badges, category/dynasty chips.
-   *  'body' (15px) — a chip that's a primary, tappable choice rather than a compact label (e.g.
-   *  Journal Entry's mood picker), matching the size of adjacent `FilterPill`s. */
-  size?: 'section' | 'body'
+  /** 'section' (11px, default, px-2 py-0.5) — compact contexts: row badges, category/dynasty chips.
+   *  'body' (15px, px-2 py-0.5) — a primary, tappable choice rather than a compact label (e.g.
+   *  Journal Entry's mood picker), matching the size of adjacent `FilterPill`s.
+   *  'compact' (10px, px-1.5 py-0) — the tightest variant, for a leading column badge stacked
+   *  under something else (e.g. Journal Library's row mood chip under the date badge). */
+  size?: 'section' | 'body' | 'compact'
+}
+
+const SIZE_CLASSES: Record<NonNullable<LabelChipProps['size']>, string> = {
+  section: 'text-section px-2 py-0.5',
+  body: 'text-body px-2 py-0.5',
+  compact: 'text-[10px] px-1.5 py-0',
 }
 
 /** A non-status label pill: rounded-md (vs. `StatusChip`'s rounded-pill) so labels read apart from
@@ -20,10 +30,9 @@ export function LabelChip({
   color,
   size = 'section',
 }: LabelChipProps) {
-  const sizeClass = size === 'body' ? 'text-body' : 'text-section'
   return (
     <span
-      className={`inline-flex items-center rounded-md px-2 py-0.5 font-medium ${sizeClass} ${className}`}
+      className={`inline-flex items-center rounded-md font-medium ${SIZE_CLASSES[size]} ${className}`}
       style={color ? { backgroundColor: color, color: 'var(--color-bg)' } : undefined}
     >
       {label}

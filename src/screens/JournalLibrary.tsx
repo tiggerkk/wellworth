@@ -107,6 +107,7 @@ export function JournalLibrary() {
     setOverride((prev) => (prev ?? entries ?? []).filter((e) => e.id !== id))
     try {
       await deleteJournalEntry(id)
+      bumpJournal() // invalidate the cache so a later remount doesn't resurrect the deleted row
     } catch {
       bumpJournal() // resync from server on a failed delete
     }
@@ -262,12 +263,13 @@ export function JournalLibrary() {
                                 <LabelChip
                                   label={moodLabel(moods, entry.mood)}
                                   color={color}
-                                  className="w-full justify-center text-[10px] px-1.5 py-0"
+                                  size="compact"
+                                  className="w-full justify-center"
                                 />
                               </div>
                             }
                           >
-                            <span className="line-clamp-3 block text-body text-text-primary">
+                            <span className="line-clamp-3 text-body text-text-primary">
                               {entry.journal_entry}
                             </span>
                           </ListRow>
