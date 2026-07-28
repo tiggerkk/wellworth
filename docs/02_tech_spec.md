@@ -231,6 +231,14 @@ Supabase is the single source of truth; all devices read/write it. The cloud is 
 - Because every table carries `user_id` and RLS isolates rows by `auth.uid()`, additional family members work with no schema change: they sign in with their own Google account and get their own `profile` and data automatically.
 - A future "shared household custom foods" feature would be an additive change (e.g. a nullable `household_id` + a shared-visibility policy), not a rebuild.
 
+## Shared text cleanup helpers
+
+`src/lib/html-text.ts` — cleans up freeform text that arrives already-formatted from an external source (TMDB, Google Books, the static literature corpus) so it can be dropped straight into a plain-text UI element.
+
+- **`htmlToText(s)`** — strips HTML tags, converts `<br>`/`</p>`/`</div>` into line breaks, normalizes non-breaking spaces, and collapses runs of 3+ blank lines to one. Pure string→string; safe on already-plain text (a no-op) and on undefined/null (`''`). Callers pair it with a `whitespace-pre-line` class so the returned `\n`s render as line breaks. Used for TMDB `overview` (Shows Entry), Google Books `description` (Books Entry), and poem fields + poet bios (Literature).
+- **`parseSectionedIntro(s)`** — some poet `detailIntro` values in the static corpus are themselves a JSON-encoded object of named sections (e.g. `{"軼事典故":"...","洛神悲歌":"..."}`) rather than plain prose. This detects that shape (parses as JSON, requires a non-empty plain object of string values) and returns ordered `{heading, body}[]` with each `body` already run through `htmlToText`. Returns `null` for anything else — plain prose, malformed JSON, arrays, non-string values — so the caller falls back to rendering the raw string via `htmlToText` alone. `LiteraturePoetDetail` is the one caller: sections render as a bold heading + paragraph per entry; the `null` fallback covers `simpleIntro` and any non-sectioned `detailIntro`.
+- Both helpers only ever act on **display** — nothing is rewritten in Supabase or the static JSON corpus, so the raw source value is always still available if the cleanup logic needs to change later.
+
 ## Shared external APIs
 
 Called directly from the browser (no server proxy); CORS-enabled.
