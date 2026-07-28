@@ -4,7 +4,7 @@ import { Link } from 'react-router'
 interface EmptyStateProps {
   /** The "No X yet" line. */
   title: string
-  /** The action pill text, e.g. "+ New Show" (the + glyph is the leading icon). Omit (with `to`) for
+  /** The action chip text, e.g. "+ New Show" (the + glyph is the leading icon). Omit (with `to`) for
    *  a read-only screen that has no create action (e.g. the Literature corpus). */
   actionLabel?: string
   /** Route the action navigates to. Omit together with `actionLabel`. */
@@ -15,7 +15,7 @@ interface EmptyStateProps {
 
 /**
  * Vertically-centered empty state for every module's Dashboards/Libraries: the module icon over a
- * muted "No X yet" line over an optional "+ New X" action pill. The host must give its content region
+ * muted "No X yet" line over an optional "+ New X" action chip. The host must give its content region
  * `flex-1` so this centers between the sticky header and the bottom nav.
  */
 export function EmptyState({ title, actionLabel, to, Icon }: EmptyStateProps) {

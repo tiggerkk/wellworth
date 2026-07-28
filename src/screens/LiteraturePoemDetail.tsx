@@ -13,7 +13,7 @@ import { LITERATURE_SECTION_COLOR } from '../constants/literature'
 import { routes } from '../constants/routes'
 import { ScreenHeaderTitle } from '../components/ScreenHeaderTitle'
 import { PoemReader } from '../components/PoemReader'
-import { FilterPill } from '../components/FilterPill'
+import { SelectableChip } from '../components/SelectableChip'
 import { Collapsible } from '../components/Collapsible'
 
 /** A prose (譯文/註釋/賞析) section body — only rendered when both visible and non-empty. */
@@ -119,7 +119,7 @@ export function LiteraturePoemDetail() {
               {tags.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
                   {tags.map((name) => (
-                    <FilterPill key={name} label={name} />
+                    <SelectableChip key={name} label={name} />
                   ))}
                 </div>
               )}

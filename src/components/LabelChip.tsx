@@ -10,7 +10,7 @@ interface LabelChipProps {
   color?: string
   /** 'section' (11px, default, px-2 py-0.5) — compact contexts: row badges, category/dynasty chips.
    *  'body' (15px, px-2 py-0.5) — a primary, tappable choice rather than a compact label (e.g.
-   *  Journal Entry's mood picker), matching the size of adjacent `FilterPill`s.
+   *  Journal Entry's mood picker), matching the size of adjacent `SelectableChip`s.
    *  'compact' (10px, px-1.5 py-0) — the tightest variant, for a leading column badge stacked
    *  under something else (e.g. Journal Library's row mood chip under the date badge). */
   size?: 'section' | 'body' | 'compact'
@@ -22,7 +22,7 @@ const SIZE_CLASSES: Record<NonNullable<LabelChipProps['size']>, string> = {
   compact: 'text-[10px] px-1.5 py-0',
 }
 
-/** A non-status label pill: rounded-md (vs. `StatusChip`'s rounded-pill) so labels read apart from
+/** A non-status label chip: rounded-md (vs. `StatusChip`'s rounded-pill) so labels read apart from
  * statuses at a glance. Presentational only. */
 export function LabelChip({
   label,

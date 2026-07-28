@@ -20,7 +20,7 @@ import { Toggle } from '../components/Toggle'
 import { EmptyState } from '../components/EmptyState'
 import { ListRow } from '../components/ListRow'
 import { DynastyChip } from '../components/DynastyChip'
-import { FilterPill } from '../components/FilterPill'
+import { SelectableChip } from '../components/SelectableChip'
 
 const KIND_LABEL: Record<Exclude<TypeKind, 'other'>, string> = {
   theme: '主題',
@@ -146,7 +146,7 @@ export function LiteraturePoems() {
                 <span className="text-caption text-text-secondary">朝代</span>
                 <div className="flex flex-wrap gap-1.5">
                   {meta.dynasties.map((d) => (
-                    <FilterPill
+                    <SelectableChip
                       key={d}
                       label={d}
                       selected={criteria.dynasty === d}
@@ -169,7 +169,7 @@ export function LiteraturePoems() {
                   </span>
                   <div className="flex flex-wrap gap-1.5">
                     {list.map((t) => (
-                      <FilterPill
+                      <SelectableChip
                         key={t.id}
                         label={t.name}
                         selected={criteria.typeIds.includes(t.id)}

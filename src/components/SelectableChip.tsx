@@ -1,13 +1,13 @@
 import { IconCheck } from '@tabler/icons-react'
 
-interface FilterPillProps {
+interface SelectableChipProps {
   label: string
   /**
    * Selected/toggle state — accent fill + `aria-pressed`. Omit for a plain navigational or
-   * display-only pill (rendered inactive, no `aria-pressed`).
+   * display-only chip (rendered inactive, no `aria-pressed`).
    */
   selected?: boolean
-  /** Tap handler. When omitted the pill is a non-interactive `<span>` (display-only tags). */
+  /** Tap handler. When omitted the chip is a non-interactive `<span>` (display-only tags). */
   onClick?: () => void
   /**
    * 'accent' (default) — the app-wide accent fill when selected (Quotes Library tag facet,
@@ -21,16 +21,16 @@ interface FilterPillProps {
 }
 
 /**
- * The shared filter/tag pill — a rounded `text-body` chip, `bg-input text-text-primary` (whiter,
- * larger than the old captions) when inactive, accent-filled when `selected`. Used by the Quotes
+ * The shared filter/tag chip — a rounded `text-body` chip, `bg-input text-text-primary` (whiter,
+ * larger than the old captions) when inactive, accent-filled when `selected`. Used by the Journal / Quotes
  * Library tag facet, the Literature poem filters, the Poets list, and a poem's tag list.
  */
-export function FilterPill({
+export function SelectableChip({
   label,
   selected,
   onClick,
   tone = 'accent',
-}: FilterPillProps) {
+}: SelectableChipProps) {
   const selectedClass =
     tone === 'neutral' ? 'bg-text-primary text-bg' : 'bg-accent text-bg'
   const className = `inline-flex items-center gap-1 rounded-pill px-3 py-1 text-body ${

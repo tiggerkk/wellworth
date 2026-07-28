@@ -74,7 +74,7 @@ const TYPE_GROUPS = {
 }
 
 // Alias layer: map the high-frequency fine-grained ("other") tags onto a curated tag, so a poem
-// tagged only e.g. 寫景 / 中秋節 still surfaces under the 景物 / 節日 filter. The 28 pills are unchanged
+// tagged only e.g. 寫景 / 中秋節 still surfaces under the 景物 / 節日 filter. The 28 chips are unchanged
 // — these ~hundred tags just FEED them (a poem keeps its own tags AND gains the curated parent's id).
 // Keyed by curated target → its alias tags. Targets must be one of the TYPE_GROUPS names above.
 // The long tail (styles like 婉約/豪放, forms like 樂府, misc like 女子/生活) is intentionally left
@@ -314,7 +314,7 @@ function main() {
   for (const p of poemRows) {
     const writer = writerName.get(p.writer_id) ?? '佚名'
     // A poem keeps its own tag ids AND gains the curated parent id of any aliased tag it carries,
-    // so the 28 filter pills reach the long tail of granular tags.
+    // so the 28 filter chips reach the long tail of granular tags.
     const linkedIds = typeIdsByPoem.get(p.id) ?? []
     const expanded = new Set(linkedIds)
     for (const tid of linkedIds) {

@@ -37,7 +37,7 @@
   - Terminated (surrendered or matured) policies excluded from their effective month onward.
   - Rows line 1: `Number · Policy Date · Provider`; line 2: `Name (truncated)`; right-side: `Cash Value (native→HKD)` with an "as of yr N" tag when carried.
   - Tap → Policy detail (read-only, resolved at the month's age), with a schedule table (shared `PolicyDetail`, titled **SCHEDULE**).
-- **Liquid Only toggle** (header, beside Import): when ON, non-liquid sections stay visible and editable but are excluded from the header total and marked with an **"Excluded"** pill; saving is unaffected (the toggle only changes the displayed total, never what's persisted). State is shared with the Dashboard (`useLiquidOnly`, `localStorage`).
+- **Liquid Only toggle** (header, beside Import): when ON, non-liquid sections stay visible and editable but are excluded from the header total and marked with an **"Excluded"** chip; saving is unaffected (the toggle only changes the displayed total, never what's persisted). State is shared with the Dashboard (`useLiquidOnly`, `localStorage`).
 - **Each asset-type section has a colored left stripe + tinted header** (4px left stripe + `color-mix … 14%` header tint) keyed to `ASSET_TYPE_COLORS` (the same per-type palette as the Dashboard "By asset type" dots — defined in `src/lib/networth.ts`), and the **Import** action is accent.
 - **Gain/loss percentages read green/red across Net Worth** via `gainLossClass(n)` (`src/lib/networth.ts`): teal positive, red negative, muted zero. Applied to fund Return Rate (Monthly Entry rows, Fund detail, Dashboard Fund performance), fund Profit / Loss (Fund detail), and Surrender Gain %/Yr (Policy detail + both schedule tables). The **By-asset-type share %** stays neutral — it is an allocation, not a gain/loss.
 
@@ -64,10 +64,10 @@
   - Policy Name.
   - Notes (2-row textarea).
 - **TERMINATION** section (surrender or maturity — mutually exclusive; single `termination_kind`)).
-  - When active, two pill buttons: **Mark Surrendered** and **Mark Matured**; choosing one opens its section (titled **Surrender** / **Maturity**).
+  - When active, two chip buttons: **Mark Surrendered** and **Mark Matured**; choosing one opens its section (titled **Surrender** / **Maturity**).
   - {kind} Date + {kind} Effective From on one line (setting/changing the Date auto-syncs Effective From, still overridable) + Actual Proceeds, all mandatory.
   - Helper "Enter the cash received {into|as} Cash in Monthly Entry."
-  - When terminated, the section shows with an **Un-Surrender / Un-Mature** pill (clears all four `termination_*` fields).
+  - When terminated, the section shows with an **Un-Surrender / Un-Mature** chip (clears all four `termination_*` fields).
 - **SCHEDULE** section listing versions:
   - **Schedule** (import) button to the right of the SCHEDULE header.
   - The selected version's editable `effective_date` is the first field, the version dropdown to its right, then a hard-delete that promotes the earliest remaining to Original.

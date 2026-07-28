@@ -30,7 +30,7 @@ import { Toggle } from '../components/Toggle'
 import { LabelChip } from '../components/LabelChip'
 import { ListSearchFilterPanel, ResultCount } from '../components/ListSearchFilterPanel'
 import { ListFab } from '../components/ListFab'
-import { FilterPill } from '../components/FilterPill'
+import { SelectableChip } from '../components/SelectableChip'
 
 const LANGUAGE_OPTIONS: { value: string; label: string }[] = [
   { value: 'all', label: 'Any Language' },
@@ -266,7 +266,7 @@ export function QuotesLibrary() {
             {ranked.length > 0 && (
               <div className="flex max-h-32 flex-wrap items-center gap-1.5 overflow-y-auto">
                 {displayTags.map((tag) => (
-                  <FilterPill
+                  <SelectableChip
                     key={tag}
                     label={tag}
                     selected={criteria.tags.includes(tag)}

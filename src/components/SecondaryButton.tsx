@@ -2,7 +2,7 @@ import type { ButtonHTMLAttributes, ReactNode } from 'react'
 
 interface SecondaryButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode
-  /** 'default' = full pill; 'sm' = compact for header action bars. */
+  /** 'default' = full chip; 'sm' = compact for header action bars. */
   size?: 'default' | 'sm'
   /** 'neutral' (default) = muted text; 'accent' = blue-tinted text (e.g. a "Mark Matured" action). */
   tone?: 'neutral' | 'accent'

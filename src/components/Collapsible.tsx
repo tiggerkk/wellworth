@@ -36,13 +36,13 @@ interface CollapsibleProps {
   /**
    * Trailing controls (badges, subtotals, buttons) rendered OUTSIDE the toggle button, so they
    * never trigger open/close — e.g. Net Worth's Excluded badge / subtotal / Add / Import, or
-   * Travel's date pill / delete / duplicate / expenses / add.
+   * Travel's date chip / delete / duplicate / expenses / add.
    */
   actions?: ReactNode
   /**
    * Whether the toggle button grows to fill the row (default true), pushing `actions` flush to
    * the right edge — right for Net Worth, where actions should hug the far right. Set false when
-   * `actions` needs its own internal spacer instead (Travel: the date pill should stay snug next
+   * `actions` needs its own internal spacer instead (Travel: the date chip should stay snug next
    * to the title, with only the trailing icon cluster pushed right).
    */
   titleGrow?: boolean

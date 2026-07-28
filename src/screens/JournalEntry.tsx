@@ -13,7 +13,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog'
 import { Calendar, type DayCue } from '../components/Calendar'
 import { TagInput } from '../components/TagInput'
 import { LabelChip } from '../components/LabelChip'
-import { FilterPill } from '../components/FilterPill'
+import { SelectableChip } from '../components/SelectableChip'
 import { FIELD_CLASS as inputClass } from '../constants/forms'
 import { routes } from '../constants/routes'
 import { useProfile } from '../hooks/useProfile'
@@ -414,7 +414,7 @@ function JournalForm({
               {subTags.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {subTags.map((tag) => (
-                    <FilterPill
+                    <SelectableChip
                       key={tag}
                       label={tag}
                       tone="neutral"

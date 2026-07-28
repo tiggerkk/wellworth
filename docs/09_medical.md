@@ -33,7 +33,7 @@ Tracked tests are chosen in Medical Settings → Tracked Tests (seeded from `def
   - Line 1: **date · type · body part**.
   - Line 2: **provider**.
   - Tap → Entry/Edit; **swipe-left → Delete** (optimistic). The DB delete runs in the background (no `bumpMedical()` → full-list refetch; bump only on error).
-- A floating **+** (`ListFab`) opens **New Medical Report**, shown only once the filtered list has at least one row (the bottom-nav **New Medical** tab and the empty-state pill remain the other entry points).
+- A floating **+** (`ListFab`) opens **New Medical Report**, shown only once the filtered list has at least one row (the bottom-nav **New Medical** tab and the empty-state chip remain the other entry points).
 
 ### Report detail (`/medical/:id`)
 
@@ -64,7 +64,7 @@ Tracked tests are chosen in Medical Settings → Tracked Tests (seeded from `def
   - The category isn't shown per-card for a matched row (the section header carries it); a **custom** row keeps a category picker.
   - Manual values are stored as-entered (no unit normalization — that's the importer's job).
 - **Review ("uncertain") lifecycle:**
-  - A row is flagged for review when the **importer** raises `uncertain` (see Import); a flagged card is **accent-tinted** and shows **`Review – <reason>`** as its **last row** with a **Mark Reviewed** pill button.
+  - A row is flagged for review when the **importer** raises `uncertain` (see Import); a flagged card is **accent-tinted** and shows **`Review – <reason>`** as its **last row** with a **Mark Reviewed** chip button.
   - The flag clears on **Mark Reviewed** _or_ on **editing any field** of the row (so reviewing it — here or back in Edit Report after an unreviewed import — resolves it).
   - The `<reason>` is derived from row state (`medicalReviewReason`): `no numeric value` (numeric test, no number), `unmatched test` (name matched no reference test), else `check value` (the AI's low-confidence flag). Same editor + flag behaviour on the Import review screen.
 - Deleting a report here returns to the **Reports list** (not the now-deleted read-only detail).

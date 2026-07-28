@@ -7,7 +7,7 @@ interface SegmentedTabsProps<T extends string> {
   size?: 'compact' | 'field'
 }
 
-/** `input`-track segmented control; active segment = light `fill` pill with dark text. */
+/** `input`-track segmented control; active segment = light `fill` chip with dark text. */
 export function SegmentedTabs<T extends string>({
   options,
   value,

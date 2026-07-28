@@ -6,9 +6,9 @@ import { loadMeta } from '../data/literature'
 import { groupWritersByDynasty } from '../lib/literature'
 import { routes } from '../constants/routes'
 import { EmptyState } from '../components/EmptyState'
-import { FilterPill } from '../components/FilterPill'
+import { SelectableChip } from '../components/SelectableChip'
 
-/** Literature — Poets. Writers grouped by dynasty as tappable pills → poet detail. */
+/** Literature — Poets. Writers grouped by dynasty as tappable chips → poet detail. */
 export function LiteraturePoets() {
   const navigate = useNavigate()
   const fn = useCallback(() => loadMeta(), [])
@@ -36,7 +36,7 @@ export function LiteraturePoets() {
               </span>
               <div className="flex flex-1 flex-wrap gap-1.5">
                 {g.writers.map((w) => (
-                  <FilterPill
+                  <SelectableChip
                     key={w.id}
                     label={w.name}
                     onClick={() => navigate(routes.literature.poet(String(w.id)))}

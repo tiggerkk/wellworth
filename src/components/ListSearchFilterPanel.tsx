@@ -37,7 +37,7 @@ interface ListSearchFilterPanelProps<T, F extends string> {
   onToggleFilters: () => void
   /** Rendered after the search/sort chrome, before the filter panel body (e.g. Quotes' constraint banner). */
   afterSearch?: ReactNode
-  /** Filter-panel body (dropdowns/pills/date rows) — rendered while `filtersOpen`. */
+  /** Filter-panel body (dropdowns/chips/date rows) — rendered while `filtersOpen`. */
   filters?: ReactNode
   sortField: F
   sortOptions: { value: F; label: string }[]

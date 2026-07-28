@@ -9,7 +9,7 @@ interface StatusChipProps {
   className?: string
 }
 
-/** A status pill, tinted (15% opacity) rounded-pill by semantic tone. Presentational — Books, Shows,
+/** A status chip, tinted (15% opacity) rounded-pill by semantic tone. Presentational — Books, Shows,
  * Travel, and Insurance each map their own statuses to a shared tone so the chip look stays uniform. */
 export function StatusChip({ label, tone, className = '' }: StatusChipProps) {
   const toneClass = tone ? STATUS_TONE_CLASS[tone] : ''

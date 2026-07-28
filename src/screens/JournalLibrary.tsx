@@ -27,7 +27,7 @@ import { ListRow } from '../components/ListRow'
 import { EmptyState } from '../components/EmptyState'
 import { ListSearchFilterPanel, ResultCount } from '../components/ListSearchFilterPanel'
 import { ListFab } from '../components/ListFab'
-import { FilterPill } from '../components/FilterPill'
+import { SelectableChip } from '../components/SelectableChip'
 import { LabelChip } from '../components/LabelChip'
 import { SelectMenu } from '../components/SelectMenu'
 import { DateRangeRow } from '../components/DateRangeRow'
@@ -197,7 +197,7 @@ export function JournalLibrary() {
             {ranked.length > 0 && (
               <div className="flex max-h-32 flex-wrap items-center gap-1.5 overflow-y-auto">
                 {displayTags.map((tag) => (
-                  <FilterPill
+                  <SelectableChip
                     key={tag}
                     label={tag}
                     selected={criteria.tags.includes(tag)}
