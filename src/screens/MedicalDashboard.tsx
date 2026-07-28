@@ -1,6 +1,6 @@
 import { Suspense, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { IconChevronDown, IconHeartbeat, IconReportMedical } from '@tabler/icons-react'
+import { IconChevronDown, IconHeartbeat } from '@tabler/icons-react'
 import { lazyWithReload } from '../lib/lazy-with-reload'
 import { useMedicalTrends } from '../hooks/useMedicalTrends'
 import { effectiveReportTypes, type MedicalReportTypeConfig } from '../lib/medical-config'
@@ -89,16 +89,6 @@ export function MedicalDashboard() {
                 ))}
               </div>
             </section>
-          )}
-
-          {/* Latest report — jump straight to the newest report (reports are newest-first) */}
-          {recentReports.length > 0 && (
-            <Link
-              to={routes.medical.detail(recentReports[0]!.id)}
-              className="flex items-center justify-center gap-2 rounded-card border border-accent/40 bg-accent/10 px-4 py-2.5 text-body font-medium text-accent active:bg-accent/20"
-            >
-              <IconReportMedical size={18} /> Latest Report
-            </Link>
           )}
 
           {/* Latest values per test, grouped by category */}
