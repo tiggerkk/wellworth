@@ -7,14 +7,11 @@ import type { StatusTone } from './chips'
 import {
   PALETTE_BLUE,
   PALETTE_BROWN,
-  PALETTE_CYAN,
-  PALETTE_EMERALD,
   PALETTE_GOLD,
   PALETTE_GREY,
-  PALETTE_MAGENTA,
   PALETTE_PURPLE,
   PALETTE_RED,
-  PALETTE_OFF_WHITE,
+  reorderSwatches,
 } from './palette'
 
 /** Trip lifecycle status. */
@@ -58,7 +55,7 @@ export const STOP_TYPE_COLORS: Record<StopType, string> = {
   eat: PALETTE_GOLD,
   shop: PALETTE_BROWN,
   stay: PALETTE_RED,
-  other: 'var(--color-text-tertiary)', // grey (darker than text-muted, so it reads apart from the row text)
+  other: PALETTE_GREY,
 }
 
 /** Per-stop completion. Null (unmarked) is the default and isn't represented here. */
@@ -103,21 +100,21 @@ export const TRAVEL_EXPENSE_CATEGORY_LABELS: Record<TravelExpenseCategory, strin
  * entry on `profile.travel_expense_categories` and drives the **stable** per-category slice colour
  * in the Expenses donut.
  */
-export const TRAVEL_CATEGORY_COLORS = [
-  { name: 'Emerald', value: PALETTE_EMERALD },
-  { name: 'Magenta', value: PALETTE_MAGENTA },
-  { name: 'Gold', value: PALETTE_GOLD },
-  { name: 'Brown', value: PALETTE_BROWN },
-  { name: 'Purple', value: PALETTE_PURPLE },
-  { name: 'Grey', value: PALETTE_GREY },
-  { name: 'Blue', value: PALETTE_BLUE },
-  { name: 'Red', value: PALETTE_RED },
-  { name: 'Cyan', value: PALETTE_CYAN },
-  { name: 'Off-White', value: PALETTE_OFF_WHITE },
-] as const
+export const TRAVEL_CATEGORY_COLORS = reorderSwatches([
+  'Emerald',
+  'Magenta',
+  'Gold',
+  'Brown',
+  'Purple',
+  'Grey',
+  'Blue',
+  'Red',
+  'Cyan',
+  'Off-White',
+])
 
 /** Neutral fallback for an orphan/unconfigured category colour (e.g. a deleted category still on a row). */
-export const TRAVEL_CATEGORY_COLOR_FALLBACK = 'var(--color-text-secondary)'
+export const TRAVEL_CATEGORY_COLOR_FALLBACK = PALETTE_GREY
 
 /**
  * Currency codes offered in the trip/stop/expense currency pickers (ISO 4217). The owner can travel

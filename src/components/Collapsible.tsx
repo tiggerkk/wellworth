@@ -1,12 +1,15 @@
-import { useState, type ComponentType, type ReactNode } from 'react'
+import { useState, type ComponentType, type CSSProperties, type ReactNode } from 'react'
 import { IconChevronDown, IconChevronRight } from '@tabler/icons-react'
 
 interface CollapsibleProps {
   title: string
   /** Leading category icon rendered inside the toggle button, before the title (e.g. Wellness
    *  Diary's per-group icon). */
-  icon?: ComponentType<{ size?: number; className?: string }>
+  icon?: ComponentType<{ size?: number; className?: string; style?: CSSProperties }>
   iconClassName?: string
+  /** CSS color value for the icon (e.g. a `PALETTE_*` constant) — for fixed per-category icon
+   *  colors that aren't Tailwind classes. Takes precedence alongside `iconClassName`. */
+  iconColor?: string
   /** Extra content inside the toggle button, after the title — e.g. Wellness Diary's kcal
    *  subtotal, which (unlike Net Worth's subtotal) is part of what gets toggled, not a separate
    *  action. */
@@ -67,6 +70,7 @@ export function Collapsible({
   title,
   icon: Icon,
   iconClassName = '',
+  iconColor,
   titleSuffix,
   children,
   color,
@@ -114,7 +118,13 @@ export function Collapsible({
         ) : (
           <IconChevronRight size={18} className="shrink-0 text-text-secondary" />
         )}
-        {Icon && <Icon size={18} className={`shrink-0 ${iconClassName}`} />}
+        {Icon && (
+          <Icon
+            size={18}
+            className={`shrink-0 ${iconClassName}`}
+            style={iconColor ? { color: iconColor } : undefined}
+          />
+        )}
         <span className={`min-w-0 truncate ${titleGrow ? 'flex-1' : ''} ${titleClass}`}>
           {title}
         </span>

@@ -344,7 +344,7 @@ export function WellnessDiary() {
                   key={group.key}
                   title={group.label}
                   icon={group.Icon}
-                  iconClassName={group.iconClass}
+                  iconColor={group.iconColor}
                   titleSuffix={
                     <span
                       className={`shrink-0 text-label ${negative ? 'text-accent' : 'text-text-secondary'}`}

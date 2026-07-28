@@ -4,6 +4,7 @@
  * shape: the mood set is structural (see `JOURNAL_MOODS`), so only `label`, `color`, and `subTags`
  * are ever owner-editable, and always for exactly the 7 canonical keys, in their fixed order.
  */
+import { PALETTE_GREY } from '../constants/palette'
 import {
   JOURNAL_MOOD_DEFAULT_COLORS,
   JOURNAL_MOOD_DEFAULT_SUB_TAGS,
@@ -81,9 +82,7 @@ export function moodLabel(list: JournalMoodConfig[], key: string): string {
 export function moodColor(list: JournalMoodConfig[], key: string): string {
   const found = list.find((e) => e.key === key)
   if (found) return found.color
-  return isJournalMood(key)
-    ? JOURNAL_MOOD_DEFAULT_COLORS[key]
-    : 'var(--color-text-secondary)'
+  return isJournalMood(key) ? JOURNAL_MOOD_DEFAULT_COLORS[key] : PALETTE_GREY
 }
 
 export function moodSubTags(list: JournalMoodConfig[], key: string): string[] {

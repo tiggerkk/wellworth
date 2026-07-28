@@ -3,7 +3,7 @@
  * generated DB types surface as plain `string`). Pure constants only — runtime helpers
  * live in `src/lib/quotes.ts`.
  */
-import { PALETTE_SWATCHES } from './palette'
+import { PALETTE_GREY, PALETTE_SWATCHES } from './palette'
 
 /**
  * The default categories + their initial display order. Exactly one category is required per quote.
@@ -40,7 +40,7 @@ export const QUOTE_CATEGORY_LABELS: Record<QuoteCategory, string> = {
 export const QUOTE_CATEGORY_COLORS = PALETTE_SWATCHES
 
 /** Neutral fallback for an orphan/unconfigured category colour (e.g. a deleted category still on a row). */
-export const QUOTE_CATEGORY_COLOR_FALLBACK = 'var(--color-text-secondary)'
+export const QUOTE_CATEGORY_COLOR_FALLBACK = PALETTE_GREY
 
 /** The default source types (the medium a quote came from) + their initial display order (seed defaults). */
 export const QUOTE_SOURCE_TYPES = [

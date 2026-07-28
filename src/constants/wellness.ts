@@ -14,6 +14,7 @@ import {
 } from '@tabler/icons-react'
 import type { ComponentType } from 'react'
 import { lastNDays, monthsAgo, type RangeOption } from '../lib/date-range'
+import { PALETTE_BLUE, PALETTE_GOLD, PALETTE_PURPLE, PALETTE_RED } from './palette'
 import type { TablesInsert } from '../types/database'
 
 /**
@@ -54,13 +55,22 @@ export interface DiaryGroup {
   kind: 'food' | 'activity'
   /** Leading category icon shown in the group header. */
   Icon: GroupIcon
-  /** Tailwind text-color for the icon (intentional per-category colors). */
-  iconClass: string
+  /** CSS color value for the icon (intentional per-category colors, see `WELLNESS_CATEGORY_COLOR`). */
+  iconColor: string
 }
 
-// Per-category icon colors live as `cat-*` tokens in index.css (red apple / orange cookie /
-// purple pill / blue runner).
-const MEAL = { Icon: IconApple, iconClass: 'text-cat-meal' }
+/** The 4 fixed diary-group categories (red apple / gold cookie / purple pill / blue runner) — not
+ *  owner-configurable, so this is a plain key→color map rather than a swatch-cycling list. */
+export type WellnessCategory = 'meal' | 'snack' | 'supplement' | 'activity'
+
+export const WELLNESS_CATEGORY_COLOR: Record<WellnessCategory, string> = {
+  meal: PALETTE_RED,
+  snack: PALETTE_GOLD,
+  supplement: PALETTE_PURPLE,
+  activity: PALETTE_BLUE,
+}
+
+const MEAL = { Icon: IconApple, iconColor: WELLNESS_CATEGORY_COLOR.meal }
 
 export const DIARY_GROUPS: DiaryGroup[] = [
   { key: 'breakfast', label: 'Breakfast', kind: 'food', ...MEAL },
@@ -71,21 +81,21 @@ export const DIARY_GROUPS: DiaryGroup[] = [
     label: 'Snacks',
     kind: 'food',
     Icon: IconCookie,
-    iconClass: 'text-cat-snack',
+    iconColor: WELLNESS_CATEGORY_COLOR.snack,
   },
   {
     key: 'supplements',
     label: 'Supplements',
     kind: 'food',
     Icon: IconPill,
-    iconClass: 'text-cat-supplement',
+    iconColor: WELLNESS_CATEGORY_COLOR.supplement,
   },
   {
     key: 'activities',
     label: 'Activities',
     kind: 'activity',
     Icon: IconRun,
-    iconClass: 'text-cat-activity',
+    iconColor: WELLNESS_CATEGORY_COLOR.activity,
   },
 ]
 

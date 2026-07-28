@@ -34,3 +34,24 @@ export const PALETTE_SWATCHES: { name: string; value: string }[] = [
   { name: 'Off-White', value: PALETTE_OFF_WHITE },
   { name: 'Emerald', value: PALETTE_EMERALD },
 ]
+
+/**
+ * Returns `PALETTE_SWATCHES` reordered to a module's own default-assignment cycle (e.g. Travel
+ * starts new categories at Emerald, Medical at Emerald too but a different subsequent order,
+ * Net Worth at Gold). Every module still draws from the same 10 name/value pairs — only the
+ * *order* new items cycle through differs — so the swatches themselves can never drift between
+ * modules even though each keeps its intentional starting sequence. `order` must name every
+ * swatch in `PALETTE_SWATCHES` exactly once (case-insensitive match on `name`).
+ */
+export function reorderSwatches(order: string[]): { name: string; value: string }[] {
+  const byName = new Map(
+    PALETTE_SWATCHES.map((swatch) => [swatch.name.toLowerCase(), swatch]),
+  )
+  return order.map((name) => {
+    const swatch = byName.get(name.toLowerCase())
+    if (!swatch) {
+      throw new Error(`reorderSwatches: unknown swatch name "${name}"`)
+    }
+    return swatch
+  })
+}

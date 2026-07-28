@@ -4,15 +4,13 @@
  */
 import {
   PALETTE_BLUE,
-  PALETTE_BROWN,
   PALETTE_CYAN,
   PALETTE_EMERALD,
   PALETTE_GOLD,
   PALETTE_GREY,
   PALETTE_MAGENTA,
-  PALETTE_PURPLE,
   PALETTE_RED,
-  PALETTE_OFF_WHITE,
+  reorderSwatches,
 } from './palette'
 
 export const ASSET_TYPES = [
@@ -122,21 +120,21 @@ export const PROVIDER_DEFAULT_CURRENCY: Record<InsuranceProvider, NetWorthCurren
  * provider's chosen colour is stored per entry on `profile.insurance_providers` and drives the leading
  * dot on each row in Manage Providers, and the left-strip accent on each row in Insurance Policies.
  */
-export const INSURANCE_PROVIDER_COLORS = [
-  { name: 'Gold', value: PALETTE_GOLD },
-  { name: 'Magenta', value: PALETTE_MAGENTA },
-  { name: 'Purple', value: PALETTE_PURPLE },
-  { name: 'Brown', value: PALETTE_BROWN },
-  { name: 'Cyan', value: PALETTE_CYAN },
-  { name: 'Red', value: PALETTE_RED },
-  { name: 'Grey', value: PALETTE_GREY },
-  { name: 'Blue', value: PALETTE_BLUE },
-  { name: 'Emerald', value: PALETTE_EMERALD },
-  { name: 'Off-White', value: PALETTE_OFF_WHITE },
-] as const
+export const INSURANCE_PROVIDER_COLORS = reorderSwatches([
+  'Gold',
+  'Magenta',
+  'Purple',
+  'Brown',
+  'Cyan',
+  'Red',
+  'Grey',
+  'Blue',
+  'Emerald',
+  'Off-White',
+])
 
 /** Neutral fallback for an orphan/unconfigured provider colour (e.g. a deleted provider still on a policy). */
-export const INSURANCE_PROVIDER_COLOR_FALLBACK = 'var(--color-text-secondary)'
+export const INSURANCE_PROVIDER_COLOR_FALLBACK = PALETTE_GREY
 
 /** The user's birth year — insurance ages are computed as `entry_year − BIRTH_YEAR`. */
 export const DEFAULT_BIRTH_YEAR = 1974

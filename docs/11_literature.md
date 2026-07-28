@@ -41,7 +41,7 @@ Module base `/literature`; tabs (Home auto-prepended by `BottomNav`): **Poems ·
 
 ### Poem detail (`/literature/poem/:id`)
 
-- Header: **X** (close, left) · the **poem title** (`text-title`, **truncates** with `…` when long) · the linked **writer** + gold **dynasty** chip (`text-caption`/`text-section`, `shrink-0` so they survive a long title) · favourite heart (right). Body: **`PoemReader`** (read-aloud), the poem's tags as `FilterPill`s (resolved id→name from `meta.types`), then the collapsible color-accented sections via **`Collapsible`**: **原文** (always) · **譯文** / **註釋** / **賞析** (each only when present **and** visible per the Settings → 顯示 prefs). 原文 opens by default; the prose sections start collapsed. Section accent colours come from `LITERATURE_SECTION_COLOR` (constants → `--color-lit-*`).
+- Header: **X** (close, left) · the **poem title** (`text-title`, **truncates** with `…` when long) · the linked **writer** + gold **dynasty** chip (`text-caption`/`text-section`, `shrink-0` so they survive a long title) · favourite heart (right). Body: **`PoemReader`** (read-aloud), the poem's tags as `FilterPill`s (resolved id→name from `meta.types`), then the collapsible color-accented sections via **`Collapsible`**: **原文** (always) · **譯文** / **註釋** / **賞析** (each only when present **and** visible per the Settings → 顯示 prefs). 原文 opens by default; the prose sections start collapsed. Section accent colours come from `LITERATURE_SECTION_COLOR` (`PALETTE_*` constants, see `docs/01_design_system.md` → Color tokens).
 - Body loaded lazily via `getPoem(id)` (runtime-cached); `meta` (precached) resolves tag names. Keyed by route id, so the reader resets per poem. The writer link opens the poet; **Esc** (or X) closes.
 
 ### Poets (`/literature/poets`) + Poet detail (`/literature/poet/:id`)
@@ -79,7 +79,7 @@ Module base `/literature`; tabs (Home auto-prepended by `BottomNav`): **Poems ·
 
 - Data: `src/data/literature.ts` (static-asset fetch + memoized index/meta + Supabase favourites + `cachePoemOffline`). Logic/types: `src/lib/literature.ts` (+ `.test.ts`), `src/lib/literature-refresh.ts`.
 - Hooks: `src/hooks/useSpeech.ts`, `src/hooks/useLiteratureFavorites.ts`.
-- Components: `src/components/PoemReader.tsx`, `src/components/PoemCard.tsx`. Shared (cross-module): `FilterPill.tsx`, `Collapsible.tsx`, `VisibleFieldsSheet.tsx`. Section colours: `src/constants/literature-sections.ts` (`LITERATURE_SECTION_COLOR`) → `--color-lit-*` (`index.css`).
+- Components: `src/components/PoemReader.tsx`, `src/components/PoemCard.tsx`. Shared (cross-module): `FilterPill.tsx`, `Collapsible.tsx`, `VisibleFieldsSheet.tsx`. Section colours: `src/constants/literature.ts` (`LITERATURE_SECTION_COLOR`, `PALETTE_*` constants).
 - Screens: `src/screens/Literature{Home,PoemDetail,Poets,PoetDetail,Favorites,Settings}.tsx` + `Literature{Poem,Writer}FieldsSheet.tsx`.
 - Build: `scripts/build-literature-data.mjs` (`npm run build:literature`).
 

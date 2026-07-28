@@ -8,7 +8,12 @@
  * Line 2: Source (USDA/OFF/Custom) · Nutrient count · Serving
  */
 import { IconPill } from '@tabler/icons-react'
-import { FOOD_SOURCES, type FoodSource, type FoodType } from '../constants/wellness'
+import {
+  FOOD_SOURCES,
+  WELLNESS_CATEGORY_COLOR,
+  type FoodSource,
+  type FoodType,
+} from '../constants/wellness'
 
 type FoodRowHeaderProps = {
   name: string
@@ -38,7 +43,11 @@ export function FoodRowHeader({
       <span className="flex items-center gap-1.5 text-body text-text-primary">
         <span className="min-w-0 truncate">{name}</span>
         {type === 'supplement' && (
-          <IconPill size={14} className="shrink-0 text-cat-supplement" />
+          <IconPill
+            size={14}
+            className="shrink-0"
+            style={{ color: WELLNESS_CATEGORY_COLOR.supplement }}
+          />
         )}
       </span>
       <span className="block truncate text-caption text-text-secondary">

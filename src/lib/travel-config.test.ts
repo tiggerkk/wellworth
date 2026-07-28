@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { PALETTE_RED, PALETTE_BLUE } from '../constants/palette'
 import {
   addCategory,
   categoryColor,
@@ -69,19 +70,19 @@ describe('category colours', () => {
   })
   it('categoryColor uses the saved colour, then position, then the orphan fallback', () => {
     const list = [
-      { key: 'a', label: 'A', color: 'var(--color-danger)' },
+      { key: 'a', label: 'A', color: PALETTE_RED },
       { key: 'b', label: 'B' }, // legacy entry, no stored colour
     ]
-    expect(categoryColor(list, 'a')).toBe('var(--color-danger)')
+    expect(categoryColor(list, 'a')).toBe(PALETTE_RED)
     expect(categoryColor(list, 'b')).toBe(TRAVEL_CATEGORY_COLORS[1]!.value) // position 1
     expect(categoryColor(list, 'gone')).toBe(TRAVEL_CATEGORY_COLOR_FALLBACK)
   })
   it('readEntry preserves a stored colour and drops a blank one', () => {
     const out = effectiveCategories([
-      { key: 'a', label: 'A', color: 'var(--color-accent)' },
+      { key: 'a', label: 'A', color: PALETTE_BLUE },
       { key: 'b', label: 'B', color: '  ' },
     ])
-    expect(out[0]!.color).toBe('var(--color-accent)')
+    expect(out[0]!.color).toBe(PALETTE_BLUE)
     expect(out[1]!.color).toBeUndefined()
   })
   it('a new category gets a distinct default colour not already in use', () => {

@@ -7,6 +7,7 @@ import { effectiveReportTypes, type MedicalReportTypeConfig } from '../lib/medic
 import { Sparkline } from '../components/Sparkline'
 import { EmptyState } from '../components/EmptyState'
 import { SectionCard } from '../components/SectionCard'
+import { PALETTE_BLUE } from '../constants/palette'
 import {
   MEDICAL_CATEGORY_COLOR,
   MEDICAL_CATEGORY_LABELS,
@@ -135,7 +136,7 @@ export function MedicalDashboard() {
 /** A tracked-test card: name, latest value (flag-coloured), and an inline sparkline. */
 function SparkCard({ trend, onOpen }: { trend: TrackedTrend; onOpen: () => void }) {
   const last = latestPoint(trend.points)! // tracked guarantees ≥1 point
-  const dotColor = last.flag ? MEDICAL_FLAG_COLOR[last.flag] : 'var(--color-accent)'
+  const dotColor = last.flag ? MEDICAL_FLAG_COLOR[last.flag] : PALETTE_BLUE
   return (
     <button
       onClick={onOpen}

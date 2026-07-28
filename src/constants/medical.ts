@@ -7,13 +7,14 @@ import {
   PALETTE_BLUE,
   PALETTE_BROWN,
   PALETTE_CYAN,
+  PALETTE_DARK_GREY,
   PALETTE_EMERALD,
   PALETTE_GOLD,
-  PALETTE_GREY,
   PALETTE_MAGENTA,
-  PALETTE_OFF_WHITE,
   PALETTE_PURPLE,
   PALETTE_RED,
+  PALETTE_GREY,
+  reorderSwatches,
 } from './palette'
 
 /** Result categories in section display order (also the default Dashboard/Report section order). */
@@ -87,21 +88,21 @@ export const REPORT_TYPE_LABELS: Record<ReportType, string> = {
  * `profile.medical_report_types` and drives the **stable** per-type left-strip colour on the Reports
  * list rows.
  */
-export const REPORT_TYPE_COLORS = [
-  { name: 'Emerald', value: PALETTE_EMERALD },
-  { name: 'Blue', value: PALETTE_BLUE },
-  { name: 'Gold', value: PALETTE_GOLD },
-  { name: 'Magenta', value: PALETTE_MAGENTA },
-  { name: 'Purple', value: PALETTE_PURPLE },
-  { name: 'Red', value: PALETTE_RED },
-  { name: 'Cyan', value: PALETTE_CYAN },
-  { name: 'Brown', value: PALETTE_BROWN },
-  { name: 'Grey', value: PALETTE_GREY },
-  { name: 'Off-White', value: PALETTE_OFF_WHITE },
-] as const
+export const REPORT_TYPE_COLORS = reorderSwatches([
+  'Emerald',
+  'Blue',
+  'Gold',
+  'Magenta',
+  'Purple',
+  'Red',
+  'Cyan',
+  'Brown',
+  'Grey',
+  'Off-White',
+])
 
 /** Neutral fallback for an orphan/unconfigured report-type colour (e.g. a deleted type still on a row). */
-export const REPORT_TYPE_COLOR_FALLBACK = 'var(--color-text-secondary)'
+export const REPORT_TYPE_COLOR_FALLBACK = PALETTE_GREY
 
 export const MEDICAL_FLAGS = ['high', 'low', 'abnormal'] as const
 export type MedicalFlag = (typeof MEDICAL_FLAGS)[number]
@@ -140,24 +141,24 @@ export const MEDICAL_FLAG_COLOR: Record<MedicalFlag, string> = {
  * category so adjacent sections read apart.
  */
 export const MEDICAL_CATEGORY_COLOR: Record<MedicalCategory, string> = {
-  general: 'var(--color-med-general)',
-  vitals: 'var(--color-med-vitals)',
-  lipids: 'var(--color-med-lipids)',
-  glucose: 'var(--color-med-glucose)',
-  liver: 'var(--color-med-liver)',
-  renal: 'var(--color-med-renal)',
-  electrolytes: 'var(--color-med-electrolytes)',
-  cbc: 'var(--color-med-cbc)',
-  thyroid: 'var(--color-med-thyroid)',
-  bone: 'var(--color-med-bone)',
-  tumour_markers: 'var(--color-med-tumour_markers)',
-  hepatitis: 'var(--color-med-hepatitis)',
-  inflammation: 'var(--color-med-inflammation)',
-  urine: 'var(--color-med-urine)',
-  stool: 'var(--color-med-stool)',
-  imaging: 'var(--color-med-imaging)',
-  eye: 'var(--color-med-eye)',
-  other: 'var(--color-med-other)',
+  general: PALETTE_EMERALD,
+  vitals: PALETTE_RED,
+  lipids: PALETTE_BLUE,
+  glucose: PALETTE_GOLD,
+  liver: PALETTE_MAGENTA,
+  renal: PALETTE_CYAN,
+  electrolytes: PALETTE_BROWN,
+  cbc: PALETTE_DARK_GREY,
+  thyroid: PALETTE_PURPLE,
+  bone: PALETTE_EMERALD,
+  tumour_markers: PALETTE_RED,
+  hepatitis: PALETTE_BLUE,
+  inflammation: PALETTE_GOLD,
+  urine: PALETTE_MAGENTA,
+  stool: PALETTE_CYAN,
+  imaging: PALETTE_BROWN,
+  eye: PALETTE_PURPLE,
+  other: PALETTE_DARK_GREY,
 }
 
 /** Whether a test records numbers, free text, or either depending on the lab/method. */
