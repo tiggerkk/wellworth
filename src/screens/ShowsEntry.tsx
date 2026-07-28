@@ -19,6 +19,7 @@ import { ScreenHeaderTitle } from '../components/ScreenHeaderTitle'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { createShow, deleteShow, getShow, updateShow } from '../data/show'
 import { numStr } from '../lib/wellness-quantity'
+import { htmlToText } from '../lib/html-text'
 import { FIELD_CLASS as inputClass } from '../constants/forms'
 import {
   SHOW_TYPES,
@@ -612,8 +613,8 @@ function ShowForm({
               </div>
             </div>
             {draft.overview && (
-              <p className="text-caption leading-relaxed text-text-secondary">
-                {draft.overview}
+              <p className="whitespace-pre-line text-caption leading-relaxed text-text-secondary">
+                {htmlToText(draft.overview)}
               </p>
             )}
           </div>

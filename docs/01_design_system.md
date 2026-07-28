@@ -243,5 +243,4 @@ Every other date value reads as `MMM DD, YYYY` (`formatFullDate`), or `MMM DD` (
 
 General React/CSS implementation pitfalls (flex scroll panes, third-party-widget z-index, portaled
 popovers) live in `02_tech_spec.md` → **UI implementation gotchas**, since they're mechanics rather than
-visual tokens. `ImportPreviewList`'s `shrink-0` (above) and `ExpenseRowsEditor`'s field-width fix (Travel,
-below) are both instances of that section's flex-scroll-pane rule.
+visual tokens.

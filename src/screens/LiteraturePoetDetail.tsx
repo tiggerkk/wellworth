@@ -6,6 +6,7 @@ import { useProfile } from '../hooks/useProfile'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 import { getWriter, loadIndex } from '../data/literature'
 import { isFieldVisible } from '../lib/literature'
+import { htmlToText, parseSectionedIntro } from '../lib/html-text'
 import { LITERATURE_SECTION_COLOR } from '../constants/literature'
 import { DynastyChip } from '../components/DynastyChip'
 import { routes } from '../constants/routes'
@@ -55,7 +56,9 @@ export function LiteraturePoetDetail() {
     return writer.poemIds.map((pid) => byId.get(pid)).filter((p) => p !== undefined)
   }, [writer, index])
 
-  const bio = writer?.detailIntro || writer?.simpleIntro || ''
+  const rawBio = writer?.detailIntro || writer?.simpleIntro || ''
+  const bioSections = parseSectionedIntro(rawBio)
+  const bio = htmlToText(rawBio)
   const showBio = isFieldVisible(profile?.literature_writer_visible_fields ?? null, 'bio')
 
   return (
@@ -87,9 +90,24 @@ export function LiteraturePoetDetail() {
                   color={LITERATURE_SECTION_COLOR.bio}
                   defaultOpen={false}
                 >
-                  <p className="whitespace-pre-line px-4 py-3 text-body leading-relaxed text-text-secondary">
-                    {bio}
-                  </p>
+                  {bioSections ? (
+                    <div className="flex flex-col gap-3 px-4 py-3">
+                      {bioSections.map((section) => (
+                        <div key={section.heading}>
+                          <p className="text-body font-medium text-text-primary">
+                            {section.heading}
+                          </p>
+                          <p className="whitespace-pre-line text-body leading-relaxed text-text-secondary">
+                            {section.body}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="whitespace-pre-line px-4 py-3 text-body leading-relaxed text-text-secondary">
+                      {bio}
+                    </p>
+                  )}
                 </Collapsible>
               )}
 

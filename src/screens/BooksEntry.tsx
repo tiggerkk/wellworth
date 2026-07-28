@@ -18,6 +18,7 @@ import { ScreenHeaderTitle } from '../components/ScreenHeaderTitle'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { createBook, deleteBook, getBook, updateBook } from '../data/book'
 import { numStr } from '../lib/wellness-quantity'
+import { htmlToText } from '../lib/html-text'
 import { FIELD_CLASS as inputClass } from '../constants/forms'
 import { BOOK_STATUSES, type BookStatus, BOOK_STATUS_LABELS } from '../constants/books'
 import { LGBTQ_REPS, type LgbtqRep, LGBTQ_REP_LABELS } from '../constants/lgbtq'
@@ -431,8 +432,8 @@ function BookForm({
               </div>
             </div>
             {draft.description && (
-              <p className="line-clamp-6 text-caption leading-relaxed text-text-secondary">
-                {draft.description}
+              <p className="line-clamp-6 whitespace-pre-line text-caption leading-relaxed text-text-secondary">
+                {htmlToText(draft.description)}
               </p>
             )}
           </div>

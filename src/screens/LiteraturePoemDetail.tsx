@@ -7,6 +7,7 @@ import { useEscapeKey } from '../hooks/useEscapeKey'
 import { useLiteratureFavorites } from '../hooks/useLiteratureFavorites'
 import { getPoem, loadMeta } from '../data/literature'
 import { isFieldVisible, type SpeechLang } from '../lib/literature'
+import { htmlToText } from '../lib/html-text'
 import { DynastyChip } from '../components/DynastyChip'
 import { LITERATURE_SECTION_COLOR } from '../constants/literature'
 import { routes } from '../constants/routes'
@@ -14,18 +15,6 @@ import { ScreenHeaderTitle } from '../components/ScreenHeaderTitle'
 import { PoemReader } from '../components/PoemReader'
 import { FilterPill } from '../components/FilterPill'
 import { Collapsible } from '../components/Collapsible'
-
-/** Strip HTML to plain text, turning <br>/block-ends into newlines (poem fields may carry markup). */
-function htmlToText(s: string | null | undefined): string {
-  return (s ?? '')
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/(p|div)>/gi, '\n')
-    .replace(/<[^>]*>/g, '')
-    .replace(/\u00a0/g, ' ')
-    .replace(/[ \t]+\n/g, '\n')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim()
-}
 
 /** A prose (譯文/註釋/賞析) section body — only rendered when both visible and non-empty. */
 function ProseSection({
