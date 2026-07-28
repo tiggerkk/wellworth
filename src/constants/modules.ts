@@ -101,7 +101,12 @@ export const MODULES: ModuleDef[] = [
     description: 'Daily Zen',
     tabs: [
       { to: routes.quotes.zen, label: 'Zen', Icon: IconSparkles, end: true },
-      { to: routes.quotes.journalDashboard, label: 'Dashboard', Icon: IconChartBar },
+      {
+        to: routes.quotes.journalDashboard,
+        label: 'Dashboard',
+        Icon: IconChartBar,
+        end: true,
+      },
       {
         to: routes.quotes.journalLibrary,
         label: 'Journal',
@@ -110,7 +115,8 @@ export const MODULES: ModuleDef[] = [
         isActive: (pathname) =>
           pathname === routes.quotes.journalLibrary ||
           pathname === routes.quotes.journalEntry ||
-          /^\/quotes\/journal\/[^/]+$/.test(pathname),
+          (/^\/quotes\/journal\/[^/]+$/.test(pathname) &&
+            pathname !== routes.quotes.journalDashboard),
       },
       {
         to: routes.quotes.library,
