@@ -27,6 +27,12 @@ export interface NavItem {
   Icon: Icon
   /** Match the path exactly (used for a module's index tab, like react-router's `end`). */
   end?: boolean
+  /**
+   * Override react-router's default prefix match for this tab. Needed when a listing
+   * screen's edit/detail routes live outside the tab's own path prefix (e.g. a poem detail
+   * at `/literature/poem/:id` should still highlight the `/literature` Poems tab).
+   */
+  isActive?: (pathname: string) => boolean
 }
 
 /**
@@ -101,8 +107,23 @@ export const MODULES: ModuleDef[] = [
         label: 'Journal',
         Icon: IconNotebook,
         end: true,
+        isActive: (pathname) =>
+          pathname === routes.quotes.journalLibrary ||
+          pathname === routes.quotes.journalEntry ||
+          /^\/quotes\/journal\/[^/]+$/.test(pathname),
       },
-      { to: routes.quotes.library, label: 'Quotes', Icon: IconQuote },
+      {
+        to: routes.quotes.library,
+        label: 'Quotes',
+        Icon: IconQuote,
+        isActive: (pathname) =>
+          pathname.startsWith(routes.quotes.library) ||
+          pathname === routes.quotes.entry ||
+          (/^\/quotes\/[^/]+$/.test(pathname) &&
+            pathname !== routes.quotes.settings &&
+            pathname !== routes.quotes.import &&
+            pathname !== routes.quotes.journalLibrary),
+      },
       { to: routes.quotes.settings, label: 'Settings', Icon: IconSettings },
     ],
   },
@@ -113,8 +134,22 @@ export const MODULES: ModuleDef[] = [
     base: routes.literature.base,
     description: '萬卷詩書 (粵/國)',
     tabs: [
-      { to: routes.literature.home, label: 'Poems', Icon: IconList, end: true },
-      { to: routes.literature.poets, label: 'Poets', Icon: IconUsers },
+      {
+        to: routes.literature.home,
+        label: 'Poems',
+        Icon: IconList,
+        end: true,
+        isActive: (pathname) =>
+          pathname === routes.literature.home || pathname.startsWith('/literature/poem/'),
+      },
+      {
+        to: routes.literature.poets,
+        label: 'Poets',
+        Icon: IconUsers,
+        isActive: (pathname) =>
+          pathname.startsWith(routes.literature.poets) ||
+          pathname.startsWith('/literature/poet/'),
+      },
       { to: routes.literature.settings, label: 'Settings', Icon: IconSettings },
     ],
   },
@@ -126,8 +161,15 @@ export const MODULES: ModuleDef[] = [
     description: 'TV shows & movies',
     tabs: [
       { to: routes.shows.dashboard, label: 'Dashboard', Icon: IconChartBar, end: true },
-      { to: routes.shows.library, label: 'Library', Icon: IconList },
-      { to: routes.shows.entry, label: 'New Show', Icon: IconDeviceTv },
+      {
+        to: routes.shows.library,
+        label: 'Library',
+        Icon: IconList,
+        isActive: (pathname) =>
+          pathname.startsWith(routes.shows.library) ||
+          (/^\/shows\/[^/]+$/.test(pathname) && pathname !== routes.shows.entry),
+      },
+      { to: routes.shows.entry, label: 'New Show', Icon: IconDeviceTv, end: true },
       { to: routes.shows.settings, label: 'Settings', Icon: IconSettings },
     ],
   },
@@ -139,8 +181,15 @@ export const MODULES: ModuleDef[] = [
     description: 'Books read & to read',
     tabs: [
       { to: routes.books.dashboard, label: 'Dashboard', Icon: IconChartBar, end: true },
-      { to: routes.books.library, label: 'Library', Icon: IconList },
-      { to: routes.books.entry, label: 'New Book', Icon: IconBook },
+      {
+        to: routes.books.library,
+        label: 'Library',
+        Icon: IconList,
+        isActive: (pathname) =>
+          pathname.startsWith(routes.books.library) ||
+          (/^\/books\/[^/]+$/.test(pathname) && pathname !== routes.books.entry),
+      },
+      { to: routes.books.entry, label: 'New Book', Icon: IconBook, end: true },
       { to: routes.books.settings, label: 'Settings', Icon: IconSettings },
     ],
   },
@@ -153,8 +202,15 @@ export const MODULES: ModuleDef[] = [
     tabs: [
       { to: routes.travel.dashboard, label: 'Dashboard', Icon: IconChartBar, end: true },
       { to: routes.travel.map, label: 'Map', Icon: IconMap },
-      { to: routes.travel.trips, label: 'Trips', Icon: IconList },
-      { to: routes.travel.entry, label: 'New Trip', Icon: IconRoute },
+      {
+        to: routes.travel.trips,
+        label: 'Trips',
+        Icon: IconList,
+        isActive: (pathname) =>
+          pathname.startsWith(routes.travel.trips) ||
+          pathname.startsWith('/travel/trip/'),
+      },
+      { to: routes.travel.entry, label: 'New Trip', Icon: IconRoute, end: true },
       { to: routes.travel.settings, label: 'Settings', Icon: IconSettings },
     ],
   },
@@ -166,8 +222,16 @@ export const MODULES: ModuleDef[] = [
     description: 'Lab results & reports',
     tabs: [
       { to: routes.medical.dashboard, label: 'Dashboard', Icon: IconChartBar, end: true },
-      { to: routes.medical.reports, label: 'Reports', Icon: IconReportMedical },
-      { to: routes.medical.entry, label: 'New Medical', Icon: IconHeartbeat },
+      {
+        to: routes.medical.reports,
+        label: 'Reports',
+        Icon: IconReportMedical,
+        isActive: (pathname) =>
+          pathname.startsWith(routes.medical.reports) ||
+          (/^\/medical\/[^/]+(\/edit)?$/.test(pathname) &&
+            pathname !== routes.medical.entry),
+      },
+      { to: routes.medical.entry, label: 'New Medical', Icon: IconHeartbeat, end: true },
       { to: routes.medical.settings, label: 'Settings', Icon: IconSettings },
     ],
   },
