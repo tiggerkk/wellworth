@@ -309,7 +309,7 @@ export function JournalLibrary() {
 function DateBadge({ day }: { day: IsoDate }) {
   return (
     <span className="flex w-9 flex-col items-center justify-center rounded-input bg-input py-1.5 text-text-primary">
-      <span className="text-[10px] leading-tight text-text-secondary">
+      <span className="text-compact leading-tight text-text-secondary">
         {formatWeekdayShort(day)}
       </span>
       <span className="text-body font-bold leading-tight">{formatDayOfMonth(day)}</span>

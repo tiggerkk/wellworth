@@ -80,6 +80,7 @@
   --text-label: 0.8125rem; /* 13px — compact labels, chip body */
   --text-caption: 0.75rem; /* 12px — captions, secondary lines, hints, ResultCount */
   --text-section: 0.6875rem; /* 11px — UPPERCASE section labels, status chips */
+  --text-compact: 0.6275rem; /* 10px — sub-section badges, tightest labels */
 }
 
 html,

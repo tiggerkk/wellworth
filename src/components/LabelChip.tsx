@@ -19,7 +19,7 @@ interface LabelChipProps {
 const SIZE_CLASSES: Record<NonNullable<LabelChipProps['size']>, string> = {
   section: 'text-section px-2 py-0.5',
   body: 'text-body px-2 py-0.5',
-  compact: 'text-[10px] px-1.5 py-0',
+  compact: 'text-compact px-1.5 py-0',
 }
 
 /** A non-status label chip: rounded-md (vs. `StatusChip`'s rounded-pill) so labels read apart from

@@ -77,6 +77,7 @@ _not_ the primary-button color; it's for emphasis, active states, and energy.
   | `text-label`   | 13     | `text-label text-text-primary` / chip body                                        | compact labels, chips                      |
   | `text-caption` | 12     | `text-caption text-text-secondary` (label/caption); `… text-text-tertiary` (hint) | captions, field labels, hints, ResultCount |
   | `text-section` | 11     | `text-section font-medium uppercase tracking-[0.08em] text-text-secondary`        | section labels, status chips               |
+  | `text-compact` | 10     | `text-compact`                                                                    | sub-section chips, tightest labels         |
 
 - Large display numerals (hero stats) may use Tailwind's `text-xl`/`2xl`/`3xl` — these are rem-based and scale with the lever too; they're outside the 7-role chrome scale.
 - Color stays a **separate** `text-text-*` utility (don't fold color into the size token). Text colors: `text-primary` body, `text-secondary` muted/labels, `text-tertiary` hints/disabled (lightened to `#7a8294` for readability), `text-muted` trailing values. **Placeholders** are `text-text-secondary` app-wide (baked into `.field-control`; `SearchBar`/`TagInput`/`PinInput` set it directly) — never `text-tertiary` (too dim).
