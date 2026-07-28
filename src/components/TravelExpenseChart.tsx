@@ -12,6 +12,7 @@ import {
   PALETTE_RED,
   PALETTE_OFF_WHITE,
 } from '../constants/palette'
+import { CHART_TOOLTIP_STYLE } from '../lib/chart-theme'
 
 export interface ExpenseSlice {
   label: string
@@ -64,12 +65,7 @@ export function TravelExpenseChart({ data }: { data: ExpenseSlice[] }) {
           ))}
         </Pie>
         <Tooltip
-          contentStyle={{
-            background: 'var(--color-surface)',
-            border: '1px solid var(--color-border)',
-            borderRadius: 12,
-            color: 'var(--color-text-primary)',
-          }}
+          contentStyle={CHART_TOOLTIP_STYLE}
           formatter={(value, name) => [formatHkd(Number(value)), String(name)]}
         />
       </PieChart>

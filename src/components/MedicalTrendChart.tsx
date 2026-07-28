@@ -10,6 +10,7 @@ import {
 } from 'recharts'
 import { formatFullDate, formatMonthShort } from '../lib/date'
 import { MEDICAL_FLAG_COLOR, type MedicalFlag } from '../constants/medical'
+import { CHART_AXIS, CHART_GRID, CHART_TOOLTIP_STYLE } from '../lib/chart-theme'
 
 /** One charted reading. `flag` colours its dot (the report's own range drives the flag). */
 export interface MedicalChartPoint {
@@ -25,9 +26,6 @@ interface Props {
   refLow: number | null
   refHigh: number | null
 }
-
-const AXIS = 'var(--color-text-secondary)'
-const GRID = 'var(--color-border)'
 
 /** A dot coloured by its reading's flag (in-range = accent). Recharts passes loosely-typed props. */
 function renderDot(props: unknown) {
@@ -51,7 +49,7 @@ export function MedicalTrendChart({ points, unit, refLow, refHigh }: Props) {
   return (
     <ResponsiveContainer width="100%" height={240}>
       <LineChart data={points} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
-        <CartesianGrid stroke={GRID} vertical={false} />
+        <CartesianGrid stroke={CHART_GRID} vertical={false} />
         {hasBand && (
           <ReferenceArea
             y1={refLow}
@@ -64,25 +62,20 @@ export function MedicalTrendChart({ points, unit, refLow, refHigh }: Props) {
         <XAxis
           dataKey="date"
           tickFormatter={(d: string) => formatMonthShort(d)}
-          tick={{ fill: AXIS, fontSize: 11 }}
+          tick={{ fill: CHART_AXIS, fontSize: 11 }}
           tickLine={false}
-          axisLine={{ stroke: GRID }}
+          axisLine={{ stroke: CHART_GRID }}
           minTickGap={24}
         />
         <YAxis
-          tick={{ fill: AXIS, fontSize: 11 }}
+          tick={{ fill: CHART_AXIS, fontSize: 11 }}
           tickLine={false}
           axisLine={false}
           width={44}
           domain={['auto', 'auto']}
         />
         <Tooltip
-          contentStyle={{
-            background: 'var(--color-surface)',
-            border: '1px solid var(--color-border)',
-            borderRadius: 12,
-            color: 'var(--color-text-primary)',
-          }}
+          contentStyle={CHART_TOOLTIP_STYLE}
           labelFormatter={(d) => formatFullDate(String(d))}
           formatter={(value) => [`${value}${unit ? ` ${unit}` : ''}`, 'Value']}
         />

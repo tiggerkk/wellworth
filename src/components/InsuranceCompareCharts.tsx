@@ -16,9 +16,8 @@ import {
   formatNativeCompact,
   type ScheduleComparisonRow,
 } from '../lib/networth'
+import { CHART_AXIS, CHART_GRID, CHART_TOOLTIP_STYLE } from '../lib/chart-theme'
 
-const AXIS = 'var(--color-text-secondary)'
-const GRID = 'var(--color-border)'
 const COLOR_A = 'var(--color-accent)'
 const COLOR_B = 'var(--color-positive)'
 
@@ -64,29 +63,24 @@ export function InsuranceCompareCharts({
             data={cashData}
             margin={{ top: 8, right: 8, bottom: 0, left: 0 }}
           >
-            <CartesianGrid stroke={GRID} vertical={false} />
+            <CartesianGrid stroke={CHART_GRID} vertical={false} />
             <XAxis
               dataKey="age"
-              tick={{ fill: AXIS, fontSize: 11 }}
+              tick={{ fill: CHART_AXIS, fontSize: 11 }}
               tickLine={false}
-              axisLine={{ stroke: GRID }}
+              axisLine={{ stroke: CHART_GRID }}
               minTickGap={20}
             />
             <YAxis
               tickFormatter={(v: number) => formatNativeCompact(v, currency)}
-              tick={{ fill: AXIS, fontSize: 11 }}
+              tick={{ fill: CHART_AXIS, fontSize: 11 }}
               tickLine={false}
               axisLine={false}
               width={64}
               domain={['auto', 'auto']}
             />
             <Tooltip
-              contentStyle={{
-                background: 'var(--color-surface)',
-                border: '1px solid var(--color-border)',
-                borderRadius: 12,
-                color: 'var(--color-text-primary)',
-              }}
+              contentStyle={CHART_TOOLTIP_STYLE}
               labelFormatter={(a) => `Age ${a}`}
               formatter={(value, name) => {
                 if (name === 'band') return [null, null] as unknown as [string, string]
@@ -135,28 +129,23 @@ export function InsuranceCompareCharts({
         </p>
         <ResponsiveContainer width="100%" height={180}>
           <LineChart data={gainData} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
-            <CartesianGrid stroke={GRID} vertical={false} />
+            <CartesianGrid stroke={CHART_GRID} vertical={false} />
             <XAxis
               dataKey="age"
-              tick={{ fill: AXIS, fontSize: 11 }}
+              tick={{ fill: CHART_AXIS, fontSize: 11 }}
               tickLine={false}
-              axisLine={{ stroke: GRID }}
+              axisLine={{ stroke: CHART_GRID }}
               minTickGap={20}
             />
             <YAxis
               tickFormatter={(v: number) => `${v.toFixed(0)}%`}
-              tick={{ fill: AXIS, fontSize: 11 }}
+              tick={{ fill: CHART_AXIS, fontSize: 11 }}
               tickLine={false}
               axisLine={false}
               width={48}
             />
             <Tooltip
-              contentStyle={{
-                background: 'var(--color-surface)',
-                border: '1px solid var(--color-border)',
-                borderRadius: 12,
-                color: 'var(--color-text-primary)',
-              }}
+              contentStyle={CHART_TOOLTIP_STYLE}
               labelFormatter={(a) => `Age ${a}`}
               formatter={(value, name) => [
                 `${Number(value).toFixed(2)}%`,

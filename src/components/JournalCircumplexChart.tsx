@@ -9,6 +9,7 @@ import {
   YAxis,
   ZAxis,
 } from 'recharts'
+import { CHART_AXIS, CHART_GRID, CHART_TOOLTIP_STYLE } from '../lib/chart-theme'
 
 export interface CircumplexPoint {
   key: string
@@ -19,8 +20,6 @@ export interface CircumplexPoint {
   count: number
 }
 
-const AXIS = 'var(--color-text-secondary)'
-const GRID = 'var(--color-border)'
 const MIN_RADIUS = 8
 const MAX_RADIUS = 32
 
@@ -40,11 +39,11 @@ export function JournalCircumplexChart({ points }: { points: CircumplexPoint[] }
           dataKey="valence"
           domain={[-1, 1]}
           tick={false}
-          axisLine={{ stroke: GRID }}
+          axisLine={{ stroke: CHART_GRID }}
           label={{
             value: 'Unpleasant · Pleasant',
             position: 'bottom',
-            fill: AXIS,
+            fill: CHART_AXIS,
             fontSize: 11,
           }}
         />
@@ -53,12 +52,12 @@ export function JournalCircumplexChart({ points }: { points: CircumplexPoint[] }
           dataKey="arousal"
           domain={[-1, 1]}
           tick={false}
-          axisLine={{ stroke: GRID }}
+          axisLine={{ stroke: CHART_GRID }}
           label={{
             value: 'Arousal',
             angle: -90,
             position: 'left',
-            fill: AXIS,
+            fill: CHART_AXIS,
             fontSize: 11,
           }}
         />
@@ -68,23 +67,15 @@ export function JournalCircumplexChart({ points }: { points: CircumplexPoint[] }
           dataKey="count"
           range={[MIN_RADIUS * MIN_RADIUS, MAX_RADIUS * MAX_RADIUS]}
         />
-        <ReferenceLine x={0} stroke={GRID} />
-        <ReferenceLine y={0} stroke={GRID} />
+        <ReferenceLine x={0} stroke={CHART_GRID} />
+        <ReferenceLine y={0} stroke={CHART_GRID} />
         <Tooltip
           cursor={false}
           content={({ active, payload }) => {
             if (!active || !payload?.length) return null
             const p = payload[0]!.payload as CircumplexPoint
             return (
-              <div
-                style={{
-                  background: 'var(--color-surface)',
-                  border: '1px solid var(--color-border)',
-                  borderRadius: 12,
-                  color: 'var(--color-text-primary)',
-                  padding: '6px 10px',
-                }}
-              >
+              <div style={{ ...CHART_TOOLTIP_STYLE, padding: '6px 10px' }}>
                 {p.label}: {p.count} entr{p.count === 1 ? 'y' : 'ies'}
               </div>
             )

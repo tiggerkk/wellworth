@@ -10,15 +10,13 @@ import {
   YAxis,
 } from 'recharts'
 import { formatHkd, formatHkdCompact } from '../lib/networth'
+import { CHART_AXIS, CHART_GRID, CHART_TOOLTIP_STYLE } from '../lib/chart-theme'
 
 export interface InsuranceAggPoint {
   age: number
   cash: number
   premium: number
 }
-
-const AXIS = 'var(--color-text-secondary)'
-const GRID = 'var(--color-border)'
 
 /**
  * Aggregate insurance "Cash Value vs Total Premiums by age" (HKD), with the break-even age marked.
@@ -34,28 +32,23 @@ export function InsuranceTrendChart({
   return (
     <ResponsiveContainer width="100%" height={240}>
       <LineChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
-        <CartesianGrid stroke={GRID} vertical={false} />
+        <CartesianGrid stroke={CHART_GRID} vertical={false} />
         <XAxis
           dataKey="age"
-          tick={{ fill: AXIS, fontSize: 11 }}
+          tick={{ fill: CHART_AXIS, fontSize: 11 }}
           tickLine={false}
-          axisLine={{ stroke: GRID }}
+          axisLine={{ stroke: CHART_GRID }}
           minTickGap={20}
         />
         <YAxis
           tickFormatter={(v: number) => formatHkdCompact(v)}
-          tick={{ fill: AXIS, fontSize: 11 }}
+          tick={{ fill: CHART_AXIS, fontSize: 11 }}
           tickLine={false}
           axisLine={false}
           width={58}
         />
         <Tooltip
-          contentStyle={{
-            background: 'var(--color-surface)',
-            border: '1px solid var(--color-border)',
-            borderRadius: 12,
-            color: 'var(--color-text-primary)',
-          }}
+          contentStyle={CHART_TOOLTIP_STYLE}
           labelFormatter={(a) => `Age ${a}`}
           formatter={(value, name) => [
             formatHkd(Number(value)),
@@ -71,7 +64,12 @@ export function InsuranceTrendChart({
             x={breakEvenAge}
             stroke="var(--color-positive)"
             strokeDasharray="4 3"
-            label={{ value: 'break-even', fill: AXIS, fontSize: 10, position: 'top' }}
+            label={{
+              value: 'break-even',
+              fill: CHART_AXIS,
+              fontSize: 10,
+              position: 'top',
+            }}
           />
         )}
         <Line
