@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { IconWorldSearch } from '@tabler/icons-react'
+import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import { OverlayTop } from './OverlayTop'
 import { ScreenHeaderTitle } from './ScreenHeaderTitle'
 import { SearchBar } from './SearchBar'
@@ -36,15 +37,10 @@ export function TitleSearchOverlay({
   yearHint = null,
 }: TitleSearchOverlayProps) {
   const [query, setQuery] = useState(initialQuery)
-  const [debounced, setDebounced] = useState(initialQuery)
+  const debounced = useDebouncedValue(query, 350)
   const [results, setResults] = useState<TmdbSearchResult[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(false)
-
-  useEffect(() => {
-    const t = setTimeout(() => setDebounced(query), 350)
-    return () => clearTimeout(t)
-  }, [query])
 
   useEffect(() => {
     /* eslint-disable react-hooks/set-state-in-effect */

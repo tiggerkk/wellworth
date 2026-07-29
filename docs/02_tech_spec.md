@@ -129,6 +129,7 @@ Quick-reference index — every hook in the repo, one line each. Full behavior f
 | `useEntryDraft`          | Derives a New/Edit screen's "initial draft" safely from `id`, avoiding an Edit(A)→New(id=undefined) data leak (see below).           |
 | `useEntryClose`          | Centralises an Entry screen's Cancel/Save navigation target across the four screen-flow categories.                                  |
 | `useEntryFavorite`       | Shared optimistic favorite-heart toggle for Entry headers.                                                                           |
+| `useDenouncedValue`      | Used by the search overlays and pickers to avoid firing an API/DB query on every keystroke — only fires once the user pauses typing. |
 | `useDirty`               | `useDirty(current, initial)` — deep-compares a draft to its initial value; drives Reset/Save enablement.                             |
 | `useDiscardConfirm`      | Gates a close action behind a discard-confirm dialog when `useDirty` is true.                                                        |
 | `useScrollRestoration`   | Restores a listing screen's scroll position when returning from an Entry/View screen.                                                |

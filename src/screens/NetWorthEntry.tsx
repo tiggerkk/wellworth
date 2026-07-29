@@ -10,6 +10,7 @@ import {
 import { OverlayTop } from '../components/OverlayTop'
 import { ScreenHeaderTitle } from '../components/ScreenHeaderTitle'
 import { EntryLoader } from '../components/EntryLoader'
+import { ConfirmDialog } from '../components/ConfirmDialog'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useProfile } from '../hooks/useProfile'
@@ -363,6 +364,8 @@ function EntryForm({
   const [fetching, setFetching] = useState<FetchableCurrency | null>(null)
   const [fxError, setFxError] = useState<Partial<Record<FetchableCurrency, boolean>>>({})
   const [pickerOpen, setPickerOpen] = useState(false)
+  // A month-change requested while dirty waits here for ConfirmDialog's Discard/Keep Editing choice.
+  const [pendingMonth, setPendingMonth] = useState<string | null>(null)
   const [expanded, setExpanded] = useSessionState<Record<string, boolean>>(
     'networth-entry-expanded',
     Object.fromEntries(
@@ -414,15 +417,16 @@ function EntryForm({
   }
 
   function changeMonth(delta: number) {
-    if (dirty && !window.confirm('Discard unsaved changes for this month?')) return
-    setMonth(addMonths(month, delta))
+    const m = addMonths(month, delta)
+    if (dirty) setPendingMonth(m)
+    else setMonth(m)
   }
   function goToMonth(target: string) {
     const m = startOfMonth(target)
     setPickerOpen(false)
     if (m === month) return
-    if (dirty && !window.confirm('Discard unsaved changes for this month?')) return
-    setMonth(m)
+    if (dirty) setPendingMonth(m)
+    else setMonth(m)
   }
 
   function addRow(type: AssetType) {
@@ -767,6 +771,17 @@ function EntryForm({
           </div>
         </OverlayTop>
       )}
+
+      <ConfirmDialog
+        open={pendingMonth != null}
+        title="Discard Changes?"
+        message="Discard unsaved changes for this month?"
+        onConfirm={() => {
+          if (pendingMonth) setMonth(pendingMonth)
+          setPendingMonth(null)
+        }}
+        onCancel={() => setPendingMonth(null)}
+      />
     </>
   )
 }

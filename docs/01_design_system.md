@@ -244,3 +244,284 @@ Every other date value reads as `MMM DD, YYYY` (`formatFullDate`), or `MMM DD` (
 General React/CSS implementation pitfalls (flex scroll panes, third-party-widget z-index, portaled
 popovers) live in `02_tech_spec.md` → **UI implementation gotchas**, since they're mechanics rather than
 visual tokens.
+
+## Screen Architecture
+
+WellWorth's screens fall into four families, each with a distinct history/routing model, close behavior, and state-survival contract. Within a family, screens further split into screen types that share a construction pattern (a common shell built from the shared components below). Every family and type below lists its member files, its behavioral characteristics, and the components it's built from — including named exceptions where a member doesn't use a component the rest of its type does.
+
+### A. Routed screens
+
+Screens registered directly as router children under `AppShell` (see `router.tsx`). They render into `<Outlet/>`, have their own URL, survive a reload/deep-link (module data refetches from scratch), and are pushed onto browser history — so the device/browser Back button and in-app Close/Cancel buttons both normally call `navigate(-1)`. None of them reserve the top safe-area inset themselves; `AppShell`'s outer column already applies `pt-[env(safe-area-inset-top)]` once for every routed screen, and `BottomNav` (present for any screen inside a module) reserves its own space at the bottom.
+
+#### A1. Listing screens
+
+Searchable/filterable/sortable lists of a module's records, reached from a bottom-nav tab or a dashboard drill-in.
+
+**Files:** `BooksLibrary.tsx`, `ShowsLibrary.tsx`, `QuotesLibrary.tsx`, `JournalLibrary.tsx`, `WellnessLibrary.tsx`, `InsurancePolicies.tsx`, `MedicalReports.tsx`, `TravelTrips.tsx`, `LiteraturePoems.tsx`
+
+**Characteristics:**
+
+- No stacked header — they live directly under a bottom-nav tab (or, for Insurance/Literature, are reached by drilling in), so none of them use `ScreenHeaderTitle`.
+- Criteria (search text, filters, sort) persist in `sessionStorage` via `useSessionState`, keyed per-listing, so criteria survive a navigate-away-and-back within the same tab session but reset on a hard reload.
+- Data loads through `useAsync`, refetching on a module-specific "version" bump (`useBooksVersion`, `useShowsVersion`, etc.) after any create/edit/delete elsewhere bumps that version.
+- Most apply an optimistic-delete `override` layer (drop the row locally before the server confirms) so a swipe-delete feels instant; `WellnessLibrary`, `TravelTrips`, and `LiteraturePoems` skip this (Wellness/Travel refetch via `bumpDiary`/`bumpTravel` instead; Literature has no delete at all).
+- Tapping a row navigates to that record's Entry screen (`navigate(routes.<module>.edit(id))`) — except `MedicalReports`, whose row tap opens the read-only `MedicalReportDetail` View screen instead, and `WellnessLibrary`, which opens the corresponding Entry as a sheet via `useSheetNavigate`.
+- `WellnessLibrary` is also the only listing screen with an internal tab switch (Foods/Activities), synced to a `?tab=` URL param rather than `sessionStorage` alone, so returning from a sheet restores the correct tab.
+- `QuotesLibrary` additionally reads a `?show=`/`?book=` URL constraint ("Quotes from this title") layered onto the criteria at view time.
+
+**Components used:**
+
+- All use `ListSearchFilterPanel` (search box + collapsible filter drawer + sort control, `sticky`) with its paired `ResultCount`, `ListRow` for each record, `ListFab` for the "+ New" action, and `EmptyState` for the zero-state.
+- Most use `Calendar` for date-range filter pickers (Books, Shows, Journal, Insurance) — Quotes, Medical, Travel, and Literature have no date-range filter and so don't use it.
+- Type-specific leading visuals: `CoverThumb` (Books), `PosterThumb` (Shows), `Thumb` (Travel). Quotes, Journal, Medical, and Insurance render inline color/label chips instead of a thumbnail.
+- Row headers: `BookRowHeader`, `ShowRowHeader`, `FoodRowHeader`/`ActivityRowHeader` (Wellness), `MedicalRowHeader`, `TravelRowHeader`, `InsurancePolicyHeader`. Quotes and Journal render their row content directly rather than through a dedicated `*RowHeader` component (their row content is a quote/entry excerpt, not a titled record).
+- `SegmentedTabs` for an in-panel type/tab switch: Shows (TV/Movie/Doc), Insurance (status), Wellness (Foods/Activities).
+
+**Exceptions:**
+
+- `LiteraturePoems` has no `ListFab` — the poem corpus is a static read-only asset with no "New" action — and paginates with a "load more" button instead of rendering the full result set, since a search can return thousands of poems.
+- `LiteraturePoems` has no delete/optimistic-override handling (nothing to delete); its only per-row mutation is a favorite toggle.
+- `LiteraturePoets` does not fit this type at all despite living at a poets-tab route — see the exception noted under "Other listing-adjacent screens" below.
+
+#### A2. Entry screens (New / Edit / View)
+
+Single-record create/edit forms, reached from a listing row, a dashboard row, or a listing's `+ New` action.
+
+**Files:** `BooksEntry.tsx`, `ShowsEntry.tsx`, `QuotesEntry.tsx`, `JournalEntry.tsx`, `InsuranceEntry.tsx`, `TravelEntry.tsx`, `MedicalEntry.tsx`, `WellnessFoodEntry.tsx`, `WellnessActivityEntry.tsx` (New/Edit); `NetWorthEntry.tsx` (a distinct exception, see below); `MedicalReportDetail.tsx`, `LiteraturePoemDetail.tsx`, `LiteraturePoetDetail.tsx` (View-only sub-type)
+
+**Characteristics — New/Edit sub-type:**
+
+- The route is shared between New and Edit (an optional `:id` param); `useEntryDraft` derives the form's initial state synchronously from `id`, which is what prevents a New-mode render from ever flashing a previous Edit's stale data.
+- Close/Save navigation is a **fixed destination**, not a history pop: `useEntryClose` computes where Cancel/Save should land (the module's Listing, or — for a Dashboard-linked row via the `fromDashboard` nav state — back to the Dashboard) rather than relying on `navigate(-1)`, because a `{ replace: true }` earlier in the flow can otherwise land Cancel on the wrong screen.
+- `dirty` state is tracked locally (`useDirty`) and lifted to the always-mounted header, so the header's Close button can gate on it via `ConfirmDialog` before discarding changes.
+- The caller's dirty in-progress state does **not** survive if the same routed screen is remounted for a different `id` (Edit(A) → Edit(B) both hit this route) — this is exactly the bug `useEntryDraft` exists to prevent.
+
+**Components used (New/Edit):**
+
+- `EntryLoader` (outer loading/error/not-found chrome), `ScreenHeaderTitle` (header + close), `EntryHeaderActions` (Reset/Delete/Save cluster in the header), `ConfirmDialog` (discard/delete confirmation).
+- Local (non-routed) overlays for cross-module or external-API lookups without losing the draft: `BookSearchOverlay`, `TitleSearchOverlay`, `QuoteSourceLinkOverlay`, `NotesEditorOverlay`, `Calendar`.
+
+**Exceptions:**
+
+- `NetWorthEntry` does not fit the New/Edit sub-type at all: it's a **month-snapshot editor** (navigating month-to-month via `useSessionState`-persisted month, freezing a snapshot of every asset type for that month), not a single-record CRUD form. It doesn't use `useEntryDraft`, `useEntryClose`, or `useDirty` — it loads/saves a whole month's `AssetEntryInput[]` at once and deletes via `deleteSnapshot`, not a per-record delete. It does still use `EntryLoader` and `ScreenHeaderTitle` for its shell, and `OverlayTop` for an inline overlay.
+- `WellnessFoodEntry` and `WellnessActivityEntry` are plain top-level routes (not background-location sheet routes — they're absent from `AppShell`'s `TAB_FOR_PATH` map), but each wraps its body in the `Sheet` component (`variant="full"`) purely for the slide-up visual chrome and its `onClose` override wiring into `useEntryClose`'s `requestClose`. They otherwise follow the standard New/Edit construction.
+- `InsuranceEntry` and `TravelEntry` use `ConfirmDeleteAction` in addition to `ConfirmDialog` (a two-step "tap again to confirm" delete affordance) where Books/Shows/Quotes/Journal/Medical/Wellness use a single `ConfirmDialog` prompt instead.
+
+**Characteristics — View sub-type (`MedicalReportDetail`, `LiteraturePoemDetail`, `LiteraturePoetDetail`):**
+
+- Read-only: no draft state, no dirty-tracking, no `ConfirmDialog`. A plain `useAsync` fetch keyed by the route's `id`.
+- Closes via `useEscapeKey(() => navigate(-1))` — a history pop, not a fixed destination, since a read-only drill-in has no unsaved-state risk to protect against.
+- Edit is a separate forward navigation (a pencil-icon button in the header) to the corresponding Entry screen, not inline.
+
+**Components used (View):**
+
+- `MedicalReportDetail` uses `EntryLoader` + `ScreenHeaderTitle`; `LiteraturePoemDetail` and `LiteraturePoetDetail` do not use `EntryLoader` — they render their own inline `Loading…`/error text, since their body only ever needs the single loaded record with no separate "not found" case.
+- `Collapsible` for grouped/sectioned read-only content in all three (result categories in Medical, prose sections in Literature).
+
+#### A3. Dashboards
+
+Module-index screens reached from the module's bottom-nav tab, splitting into constructive sub-patterns.
+
+**Files (shelf dashboards):** `BooksDashboard.tsx`, `ShowsDashboard.tsx`, `TravelDashboard.tsx`
+**Files (analytics dashboards):** `WellnessDashboard.tsx`, `JournalDashboard.tsx`
+**Files (hybrid):** `MedicalDashboard.tsx`, `NetWorthDashboard.tsx`
+**Files (day-log dashboard):** `WellnessDiary.tsx`
+
+**Characteristics — shelf dashboards:**
+
+- Curated shelves ("Favourites", "Currently Reading/Watching", "Recently…", "Want to…") of the same underlying list data used by the module's Listing screen.
+- Tapping a row navigates to that record's Entry screen with `fromDashboard` nav state, so the Entry screen's Cancel/Save return to the Dashboard rather than the Listing.
+
+**Components used (shelf dashboards):** `ListLoader` (outer load/empty chrome), `SectionCard` per shelf, `DashboardRow` per record, and the same `*RowHeader`/thumbnail components as that module's Listing screen. `ShowsDashboard` additionally uses `SegmentedTabs` (TV/Movie/Doc) and `TravelDashboard` uses `KpiTile` for its stat row.
+
+**Characteristics — analytics dashboards:**
+
+- No shelves of individual records — a stat/chart view over a selectable date range, with a custom sticky header (a `<button>` + dropdown menu for the range, not `ScreenHeaderTitle`).
+- Loading/error/empty states are handled inline (or delegated to a child like `NutrientReport`) rather than via `ListLoader`/`EntryLoader`.
+
+**Components used (analytics dashboards):** `KpiTile` for headline numbers, plus a lazy-loaded chart component (`JournalCircumplexChart` for Journal; `NutrientReport` for Wellness, which also owns its own loading/empty rendering).
+
+**Hybrid exceptions:**
+
+- `MedicalDashboard` mixes both: a sparkline trend grid + latest-values list (shelf-like `DashboardRow`/`Collapsible` grouping) with no date-range picker of its own. Its one use of `ScreenHeaderTitle` is not for the dashboard root — it's the header of the expanded-trend-chart `OverlayBottom` that opens when a sparkline is tapped.
+- `NetWorthDashboard` uses `ListLoader` + `SectionCard` (shelf-dashboard shell) but has no `DashboardRow`/`KpiTile` — its body is chart-driven (lazy `NetWorthTrendChart`/`InsuranceTrendChart`) with a range/liquid-only toggle header, closer to the analytics sub-pattern in content even though it borrows the shelf sub-pattern's loader shell.
+
+**Characteristics — day-log dashboard (`WellnessDiary`):**
+
+- Wellness's actual tab-root (`/wellness`) is this day-log, not `WellnessDashboard` — the analytics dashboard is a separate drill-in (`/wellness/dashboard`) reached from here, so within the Wellness module this screen fills the role the shelf/analytics dashboards fill for their own modules.
+- The viewed day lives in the URL (`?day=`), not component state, so it survives unmounting while a picker/detail sheet (family B) is opened over it via `useSheetNavigate` — closing the sheet's `navigate(-1)` returns to the same day.
+- Entries are grouped into fixed sections (Breakfast/Lunch/Dinner/Snacks/Activity, etc.) that the user can collapse/expand, drag-reorder within, and copy/paste as a whole day or a single group via an in-memory (not `sessionStorage`) clipboard.
+- Row taps open the corresponding Detail sheet (B2) rather than navigating to an Entry screen directly.
+
+**Components used (day-log dashboard):** `EntryLoader` for the day's load/error state, `Collapsible` per group (with a per-group action cluster: `ConfirmDeleteAction`, copy/paste `IconAction`s, an add-`IconAction`), `ReorderList` for the entries within an open group, `Calendar` for jumping to an arbitrary day, and `WellnessDailyReportOverlay` for the "view full nutrient report" action — none of the shelf-dashboard (`ListLoader`/`SectionCard`/`DashboardRow`) or analytics-dashboard (`KpiTile`/chart) components apply, since its content is an editable list of the day's log entries, not a curated shelf or a stat view.
+
+#### A4. Home, QuotesZen, and TravelMap
+
+Standalone root screens that don't fit any other type.
+
+**Files:** `Home.tsx` (the app's own root — the index-redirect's usual destination, a launcher of module cards), `QuotesZen.tsx` (the Quotes module's root route, replacing what would otherwise be a dashboard or listing), `TravelMap.tsx` (a canvas map view reached from the Travel bottom-nav)
+
+**Characteristics:** Each is a bespoke, single-purpose full-bleed view (a 2-column grid of module launcher cards for Home; a random/browsable quote card for QuotesZen; an interactive map canvas for TravelMap) rather than a list, form, or stat grid, so none shares meaningful construction with the other screen types. Documented here as their own type rather than force-fit into Listing/Dashboard. `Home` seeds its first render from a locally cached profile (`useProfile`) so the module grid's saved order/visibility paints immediately rather than flashing the canonical order or an empty grid; hiding a module only removes its card, the module's routes stay reachable by direct URL.
+
+**Components used:** `TravelMap` uses `TravelMapCanvas` as its core rendering component; `QuotesZen` composes ordinary card/button primitives with no shared list/entry/dashboard shell; `Home` uses `BrandMark` for its wordmark and otherwise composes plain `Link` cards with no shared list/entry/dashboard shell either.
+
+#### A5. Settings screens
+
+Module and global settings, reached from a module's bottom-nav tab (module settings) or the Home hub (global settings).
+
+**Files:** `Settings.tsx` (global), `WellnessSettings.tsx`, `NetWorthSettings.tsx`, `QuotesSettings.tsx`, `LiteratureSettings.tsx`, `ShowsSettings.tsx`, `BooksSettings.tsx`, `MedicalSettings.tsx`, `TravelSettings.tsx`
+
+**Characteristics:**
+
+- Every module Settings screen loads the profile via `useProfileEditor` and auto-saves each change immediately (no explicit Save button) — there is no dirty-tracking or discard-confirm at this level.
+- Closes via `navigate(-1)` (a history pop), consistent with drilling into Settings from its tab.
+- Sub-items (visible fields, categories, tracked tests, etc.) are reached via `useSheetNavigate`, opening a Settings **sheet** (family B) over the current Settings screen.
+
+**Components used:** Every module Settings screen composes `SettingsLoader` (itself `SettingsLayout` + `EntryLoader`), `SectionCard` per group, and `FieldRow`/`Toggle` for individual settings.
+
+**Exception:** `Settings.tsx` (global) does not use `SettingsLoader` — it composes `SettingsLayout` + `EntryLoader` directly, because its `AccountCard` (session-driven sign-out) must stay usable even when the profile itself fails to load, whereas `SettingsLoader` would block the whole body behind the profile fetch.
+
+---
+
+### B. Routed sheets
+
+Full-screen "sheet" routes, still registered in the router (so they get their own URL, survive reload, and participate in browser history), but visually presented via the `Sheet` component (`variant="full"`, a full-bleed panel with a slide-up entrance animation) rather than a plain page. Reached either as a **background-location sheet** (opened via `useSheetNavigate`, which passes `{ state: { background: location } }` so `AppShell` keeps the calling tab painted behind the sheet and only the sheet unmounts on close) or as a plain nested route for a drill-in that doesn't need a background tab preserved (e.g. `networth/fund/:id`).
+
+Because a background-location sheet remounts on close/reopen, **any in-progress state in the screen underneath is preserved (it never unmounts)**, but a sheet's own in-progress state does not survive being closed and reopened. This is the key distinction from Overlays (family C): anything that must survive across the _caller's_ remount risk (an Entry form's live draft, e.g.) uses an Overlay instead of a routed Sheet.
+
+#### B1. Import\*Sheets
+
+Bulk CSV import flows, reached from a module's Settings screen.
+
+**Files:** `ImportBooksSheet.tsx`, `ImportShowsSheet.tsx`, `ImportFoodsSheet.tsx`, `ImportQuotesSheet.tsx`, `ImportJournalSheet.tsx`, `ImportMedicalSheet.tsx`, `ImportNetWorthSheet.tsx`, `ImportFundSheet.tsx`, `ImportInsuranceBulkSheet.tsx`, `ImportTravelSheet.tsx`, `ImportTravelExpensesSheet.tsx`
+
+**Characteristics:** Parse a CSV, show a preview of what will be created (and what's a duplicate/error), then commit on confirm. Gated behind a per-module "importer enabled" toggle in that module's Settings.
+
+**Components used:** All use `Sheet` (`variant="full"`), `ImportSheetHeader`, and `ImportSheetFooter` (the commit/cancel action row).
+
+**Exception:** Only `ImportBooksSheet`, `ImportShowsSheet`, and `ImportFoodsSheet` use `ImportPreviewList` — these three match imported rows against an external API (Google Books/Open Library, TMDB, USDA/OFF) and need a per-row match-review UI. The rest (Quotes, Journal, Medical, NetWorth, Fund, Insurance, Travel, Travel Expenses) import directly from CSV columns with no external matching step, so they render a simpler custom inline preview list instead of the shared component.
+
+#### B2. Detail sheets
+
+Read-only drill-in sheets for a single record, reached from a dashboard row, a listing row, or (for Fund/Policy) a Net Worth Monthly Entry row.
+
+**Files:** `NetWorthFundDetailSheet.tsx`, `InsurancePolicyDetailSheet.tsx`, `WellnessDiaryFoodDetailSheet.tsx`, `WellnessDiaryActivityDetailSheet.tsx`
+
+**Characteristics:** Load one record by route `id` via `useAsync`; no dirty-tracking, no delete (the Wellness pair are logging forms more than pure "detail" views — see below). `icon="back"` on the header (drilling in), except the two Wellness sheets, which are reached as a picker's forward step and so use `icon="close"`.
+
+**Components used:** `SheetLoader` (the shared `Sheet` + `ScreenHeaderTitle` + `EntryLoader` shell) for `NetWorthFundDetailSheet`. `InsurancePolicyDetailSheet`, `WellnessDiaryFoodDetailSheet`, and `WellnessDiaryActivityDetailSheet` compose `Sheet` + `ScreenHeaderTitle` + `EntryLoader` **directly** instead of `SheetLoader`, because each has a header action that depends on the loaded data (an Edit-policy pencil, a food/activity log-entry Save) and needs the "reserved placeholder + absolutely-floated real action" technique so the header doesn't shift width once data arrives — `SheetLoader`'s `actions` prop is documented as being for actions that do _not_ depend on loaded data.
+
+- `WellnessDiaryFoodDetailSheet`/`WellnessDiaryActivityDetailSheet` additionally use `EntryHeaderActions`, `ConfirmDialog`, and `useDirty`/`useEntryClose` — they're really logging forms (add this food/activity to today's diary) wearing a "detail sheet" route shape, not pure read-only views like the other two.
+
+#### B3. Picker sheets
+
+Search/browse-then-select flows for the Wellness Diary's "add food"/"add activity" actions.
+
+**Files:** `WellnessDiaryFoodPickerSheet.tsx`, `WellnessDiaryActivityPickerSheet.tsx`
+
+**Characteristics:** Both open via `useSheetNavigate`; selecting a row navigates forward to the corresponding Detail sheet (B2) rather than closing immediately.
+
+**Components used:** `WellnessDiaryActivityPickerSheet` is a short, flat list of the user's own activities (few enough to need no search or tabs), so it fits the generic `SheetLoader` shell directly. `WellnessDiaryFoodPickerSheet` is bespoke — it has favorites/custom/all tabs (`SegmentedTabs`), a `SearchBar` querying both local foods and an external food API, and a lazy-loaded `BarcodeScanner` — so it composes `Sheet` + `ScreenHeaderTitle` directly rather than `SheetLoader`, and caches its last search/tab state in a module-level variable (outside React state) so reopening after the sheet unmounts doesn't flash empty results.
+
+#### B4. Settings sheets
+
+Sub-editors opened from a module's Settings screen (or the global Settings/Home hub) via `useSheetNavigate`. This type splits into three constructive sub-patterns.
+
+**B4a. ConfigListEditor-based** — add/rename/delete/reorder a list of owner-defined values.
+
+**Files:** `QuoteCategoriesSheet.tsx`, `QuoteSourceTypesSheet.tsx`, `TravelCategoriesSheet.tsx`, `MedicalReportTypesSheet.tsx`, `InsuranceProvidersSheet.tsx`
+
+**Components used:** `SheetLoader` + `ConfigListEditor` (add/rename/remove/reorder + reassign-on-delete for in-use values). Most also pass a `rowExtra` render prop supplying a `ColorPicker` per row (Travel Categories, Medical Report Types, Insurance Providers) — `QuoteSourceTypesSheet` is the exception, with no color coding, so it has no `rowExtra`/`ColorPicker`.
+
+**Exception:** `JournalMoodsSheet.tsx` conceptually belongs to this group (it's Quotes Settings → Journal Values → Moods) but is **not** built on `ConfigListEditor` — the 7 moods are a fixed, structural set (no add/delete/reorder is possible, only rename/recolor/edit sub-tags), so it's hand-built from `SheetLoader` + `Collapsible` rows + `ColorPicker` + `TagInput` instead.
+
+**B4b. Toggle/visibility sheets** — show/hide a fixed set of fields or values, no reordering.
+
+**Files:** `BooksFieldsSheet.tsx`, `ShowsFieldsSheet.tsx`, `TravelFieldsSheet.tsx`, `MedicalFieldsSheet.tsx`, `QuotesFieldsSheet.tsx`, `LiteraturePoemFieldsSheet.tsx`, `LiteratureWriterFieldsSheet.tsx` (thin wrappers); `WellnessVisibleNutrientsSheet.tsx`, `WellnessHighlightedNutrientsSheet.tsx`, `MedicalTrackedTestsSheet.tsx` (bespoke, grouped); `NetWorthLiquidAssetTypesSheet.tsx` (bespoke, flat)
+
+**Components used:** The seven `*FieldsSheet.tsx` files are thin wrappers passing field lists/column names into the single shared `VisibleFieldsSheet` component (itself `SheetLoader` + a `Toggle` per field). `WellnessVisibleNutrientsSheet`, `WellnessHighlightedNutrientsSheet`, and `MedicalTrackedTestsSheet` don't use `VisibleFieldsSheet` — they group their toggles under category headers (nutrient category, medical test category) rather than a flat field list, so each is hand-built from `SheetLoader` + `Toggle`, with `WellnessVisibleNutrientsSheet` additionally inlining a numeric protein-target input beside one row. `NetWorthLiquidAssetTypesSheet` is also hand-built from `SheetLoader` + `Toggle` rather than `VisibleFieldsSheet` (it's classifying a fixed asset-type list as liquid/non-liquid, not toggling form-field visibility), but its list is flat like the `*FieldsSheet` wrappers rather than grouped like the other three bespoke sheets.
+
+**B4c. Reorder(+toggle) sheets** — drag-to-reorder, sometimes paired with a visibility toggle per row.
+
+**Files:** `NetWorthVisibleAssetTypesSheet.tsx`, `VisibleModulesSheet.tsx` (reorder + toggle); `MedicalOrderSheet.tsx` (reorder only)
+
+**Components used:** `SheetLoader` + `ReorderList` (linear) or `ReorderGrid` (2-up, `VisibleModulesSheet` only, matching the Home hub's 2-column layout) with a `Toggle` in each row's trailing slot. `MedicalOrderSheet` uses two `ReorderList`s (sections, then tests within the selected section) with no toggle at all — display order, not visibility.
+
+**B4d. Other/bespoke:** `MedicalLockSheet.tsx` (PIN setup/change, biometric registration, auto-lock timeout) doesn't fit any of the above — it's built from `SheetLoader` + `SectionCard`/`FieldRow`/`SelectMenu`/`PinInput`/`PrimaryButton`, a form-like body rather than a config-list. It's the settings surface for the security gate that `MedicalLockScreen`/`MedicalLockProvider` (family D) enforce elsewhere.
+
+---
+
+### C. Overlays
+
+Local, non-routed, in-tree overlays — plain React state (`useState`) inside the calling screen, not a route. This is the key distinction from routed Sheets (family B): opening an Overlay never unmounts the caller, so **any in-progress draft in the calling screen (an Entry form mid-edit, a Builder's local state) survives untouched** underneath it — which is exactly why these exist instead of a routed Sheet wherever a caller has unsaved state to protect. An Overlay has no URL, doesn't survive a reload, and isn't on the back-button history stack (Esc/scrim-click/an explicit close button all call a caller-supplied `onClose`, not `navigate(-1)`).
+
+All overlays render via one of two shells: `OverlayTop` (a fixed full-screen panel, reserving the top safe-area inset itself) or `OverlayBottom` (the equivalent bottom-anchored/expanding panel, used for `MedicalDashboard`'s expanded trend chart). Both provide the scrim, dialog semantics, and Esc-to-close; the caller supplies its own header/body.
+
+#### C1. Search/picker overlays
+
+Search-then-select flows opened from a live Entry-form draft.
+
+**Files:** `BookSearchOverlay.tsx`, `FoodSearchOverlay.tsx`, `CitySearchOverlay.tsx`, `TitleSearchOverlay.tsx`, `MedicalTestPickerOverlay.tsx`, `QuoteSourceLinkOverlay.tsx`
+
+**Characteristics:** Each searches either an external API (Google Books/Open Library for `BookSearchOverlay`, USDA/OFF for `FoodSearchOverlay`, a geocoding API for `CitySearchOverlay`) or the user's own existing records (`QuoteSourceLinkOverlay` searches the user's Shows/Books; `TitleSearchOverlay` and `MedicalTestPickerOverlay` search within-app catalogues), debounced, and hand the selected result back to the caller via an `onSelect` callback — the overlay itself never persists anything.
+
+**Components used:** `OverlayTop` + `ScreenHeaderTitle` (with a `SearchBar` passed as `children` in place of a title) + results rendered as plain buttons (`CoverThumb`/`Thumb`/`LabelChip` as appropriate per search domain).
+
+#### C2. Buffered editor overlays
+
+Full-screen editors for one field or sub-record of a live Entry-form draft, with their own dirty-tracking and discard-confirm.
+
+**Files:** `NotesEditorOverlay.tsx`, `StopEditorOverlay.tsx`
+
+**Characteristics:** Edit a **local buffer**, separate from the parent form's field — only `onSave` (from the overlay's own Save action) writes the buffer back into the parent draft; the parent form's own Save is what actually persists to the database. This is why each needs its own dirty/discard handling independent of the parent form's `useDirty`.
+
+**Components used:** `OverlayTop` + `ScreenHeaderTitle` + `EntryHeaderActions` (Delete/Reset/Save cluster, reused from the Entry-screen pattern) + `ConfirmDialog`, driven by `useDiscardConfirm` (the confirm-dialog half of `useEntryClose`, factored out for callers with a `dirty` flag and an `onClose` but no navigation of their own).
+
+#### C3. Immediate-write overlays
+
+Full-screen editors whose changes propagate immediately via callbacks — no local buffer, no discard-confirm.
+
+**Files:** `DayExpensesOverlay.tsx`
+
+**Characteristics:** Each add/update/delete/reorder action calls straight back to the caller (`onAdd`/`onUpdate`/`onDelete`/`onReorder`), which is expected to persist immediately (or hold it in the parent draft, itself covered by the parent's own dirty-tracking) — there's no separate "Save" step at the overlay level, so no `ConfirmDialog`/`EntryHeaderActions` is needed here.
+
+**Components used:** `OverlayTop` + `ScreenHeaderTitle` + a dedicated body editor (`ExpenseRowsEditor`).
+
+#### C4. Read-only viewer overlays
+
+Full-screen, non-editing views opened over the current screen for supplementary detail.
+
+**Files:** `InsuranceCompareOverlay.tsx`, `WellnessDailyReportOverlay.tsx`
+
+**Characteristics:** Pure display — pick/compare UI (`InsuranceCompareOverlay`'s two schedule-version pickers) or a fetch-and-render report (`WellnessDailyReportOverlay`), with no save action of any kind.
+
+**Components used:** `OverlayTop` + `ScreenHeaderTitle` (no `actions`) + a lazy-loaded chart (`InsuranceCompareCharts`) or report component (`NutrientReport`).
+
+**Exception:** Neither uses `EntryLoader` — `InsuranceCompareOverlay` is handed already-loaded `schedules` as a prop (no fetch of its own), and `WellnessDailyReportOverlay` delegates its own loading/error rendering to `NutrientReport`, matching `WellnessDashboard`'s analytics-dashboard pattern of the same delegation.
+
+#### C5. `ImportScheduleOverlay` (hybrid exception)
+
+**Files:** `ImportScheduleOverlay.tsx`
+
+**Characteristics:** A single-policy schedule CSV import opened from `InsuranceEntry`'s local `importOpen` state rather than a route — routing here would remount the Insurance Entry form and lose whatever the owner had already typed (Policy Number, Provider, Start Date) before picking a file, the same reasoning that puts every other Import flow behind a routed Sheet (B1) except this one.
+
+**Components used:** `OverlayTop` + `ScreenHeaderTitle`, but — uniquely among Overlays — reuses `ImportSheetFooter` from the routed Import-sheet family for its commit/cancel action row, since its commit step (parse → preview → apply) is identical in shape to a routed import even though the container is an Overlay.
+
+---
+
+### D. Others
+
+Screens that sit outside the routed-screen/sheet/overlay taxonomy entirely — pre-auth, index-redirect, or app-level gates rendered by `AppShell` above the normal route tree.
+
+**Files:** `Login.tsx`, `RootRedirect.tsx`, `Onboarding.tsx` (component, not a route), `MedicalLockScreen.tsx` + `MedicalLockProvider.tsx` (components, not routes)
+
+**Characteristics:**
+
+- `Login.tsx` is registered at `/login`, entirely outside `RequireAuth`/`AppShell` — no `BottomNav`, no shared header, its own full-page layout (`min-h-svh`) rather than the `AppShell` column's `env(safe-area-inset-top)` padding.
+- `RootRedirect.tsx` is the router's `index: true` route inside `AppShell` — it renders no UI at all, just a `<Navigate>` to the user's last-used module (or the Home hub on first run).
+- `Onboarding` is not a route — it's a forced first-run gate rendered by `AppShell`'s `OnboardingGate` whenever the profile has no `onboarded_at`, covering the shell at `z-20` (below the `z-30` route-sheet layer, so a sheet opened while onboarding — e.g. Visible Modules, or the birthday `Calendar` — still paints above it; above the ordinary `z-10` content/nav). The only way out is completing the form or the global sign-out; it has no nav chrome of its own.
+- `MedicalLockScreen` is likewise not a route — `AppShell`'s `MedicalLockGate` renders it whenever the Medical module is locked (per `MedicalLockProvider`'s `locked`/`inMedical` state), covering the shell at `z-50` (above Onboarding, above sheets — the topmost layer besides the `Toaster`). It auto-attempts a registered platform biometric credential on mount, falling back to a mandatory PIN; "Sign out" is the forgotten-PIN escape hatch.
+
+**Components used:** `Login` uses `PrimaryButton`, `BrandMark`, `Splash`. `Onboarding` uses `BrandMark`, `DisplaySettingsCard`, `ProfileMetricsFields`, `PrimaryButton` — the same profile-metrics fields as the global `Settings` screen's body, since Onboarding is collecting the same data on first run. `MedicalLockScreen` uses `PinInput`, `PrimaryButton`. `RootRedirect` uses no components.
+
+**Note:** `MedicalLockSheet.tsx` (the Settings sheet for _configuring_ the PIN/biometric/timeout, family B4d) is a different screen from `MedicalLockScreen.tsx` (the gate that _enforces_ the lock, family D) — the naming is easy to conflate but the two have no construction in common.

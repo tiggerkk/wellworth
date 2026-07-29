@@ -11,6 +11,7 @@ import { SearchBar } from './SearchBar'
 import { SelectMenu } from './SelectMenu'
 import { PrimaryButton } from './PrimaryButton'
 import { useAsync } from '../hooks/useAsync'
+import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import { listRememberedCities, rememberCity } from '../data/travel'
 import { geocodeCity, snapProvince, type GeocodeSuggestion } from '../lib/travel-places'
 import { CHINA_PROVINCES } from '../constants/travel'
@@ -42,7 +43,7 @@ export function CitySearchOverlay({
   onClose,
 }: CitySearchOverlayProps) {
   const [query, setQuery] = useState(initialQuery)
-  const [debounced, setDebounced] = useState(initialQuery)
+  const debounced = useDebouncedValue(query, 350)
   const [country, setCountry] = useState('中国')
   const [province, setProvince] = useState('')
   const [suggestions, setSuggestions] = useState<GeocodeSuggestion[]>([])
@@ -57,11 +58,6 @@ export function CitySearchOverlay({
     if (!q) return []
     return (cache ?? []).filter((c) => foldZh(c.city).includes(q)).slice(0, 8)
   }, [cache, query])
-
-  useEffect(() => {
-    const t = setTimeout(() => setDebounced(query), 350)
-    return () => clearTimeout(t)
-  }, [query])
 
   // Auto-expand the manual section when search is done and found nothing.
   useEffect(() => {

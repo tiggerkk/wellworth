@@ -1,6 +1,7 @@
 import { Suspense, useEffect, useState } from 'react'
 import { useLocation, useSearchParams, type Location } from 'react-router'
 import { lazyWithReload } from '../lib/lazy-with-reload'
+import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import { ScreenHeaderTitle } from '../components/ScreenHeaderTitle'
 import { Sheet } from '../components/Sheet'
 import { SearchBar } from '../components/SearchBar'
@@ -66,13 +67,8 @@ export function WellnessDiaryFoodPickerSheet() {
   // (no tab/q params) falls back to the Favorites default with an empty search.
   const [tab, setTab] = useState<Tab>(() => parseTab(params.get('tab')))
   const [query, setQuery] = useState(() => params.get('q') ?? '')
-  const [debounced, setDebounced] = useState(query)
+  const debounced = useDebouncedValue(query, 350)
   const [scanning, setScanning] = useState(false)
-
-  useEffect(() => {
-    const t = setTimeout(() => setDebounced(query), 350)
-    return () => clearTimeout(t)
-  }, [query])
 
   // Follow tab + search into the URL (replace, so keystrokes don't pile up history). The
   // entry left behind when opening Food Detail then carries them, so ScreenHeaderTitle's default

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { IconWorldSearch } from '@tabler/icons-react'
+import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import { OverlayTop } from './OverlayTop'
 import { ScreenHeaderTitle } from './ScreenHeaderTitle'
 import { SearchBar } from './SearchBar'
@@ -46,15 +47,10 @@ export function FoodSearchOverlay({
   initialQuery = '',
 }: FoodSearchOverlayProps) {
   const [query, setQuery] = useState(initialQuery)
-  const [debounced, setDebounced] = useState(initialQuery)
+  const debounced = useDebouncedValue(query, 400)
   const [results, setResults] = useState<ExternalFood[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<SearchError>(null)
-
-  useEffect(() => {
-    const t = setTimeout(() => setDebounced(query), 400)
-    return () => clearTimeout(t)
-  }, [query])
 
   useEffect(() => {
     /* eslint-disable react-hooks/set-state-in-effect */

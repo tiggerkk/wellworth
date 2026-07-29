@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { IconWorldSearch } from '@tabler/icons-react'
+import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import { OverlayTop } from './OverlayTop'
 import { ScreenHeaderTitle } from './ScreenHeaderTitle'
 import { SearchBar } from './SearchBar'
@@ -35,16 +36,11 @@ export function BookSearchOverlay({
   authorHint = null,
 }: BookSearchOverlayProps) {
   const [query, setQuery] = useState(initialQuery)
-  const [debounced, setDebounced] = useState(initialQuery)
+  // A longer debounce keeps the keyless Google Books quota from 429-ing on every keystroke pause.
+  const debounced = useDebouncedValue(query, 600)
   const [results, setResults] = useState<BookSearchResult[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<SearchError>(null)
-
-  // A longer debounce keeps the keyless Google Books quota from 429-ing on every keystroke pause.
-  useEffect(() => {
-    const t = setTimeout(() => setDebounced(query), 600)
-    return () => clearTimeout(t)
-  }, [query])
 
   useEffect(() => {
     /* eslint-disable react-hooks/set-state-in-effect */
