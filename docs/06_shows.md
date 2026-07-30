@@ -21,7 +21,7 @@
 - **Type**: segmented control (All / TV / Movies / Docs) sits in the **sticky header above** that is always visible.
 - **Search bar**: matches title, director, and cast; **Filter button** to the right.
 - **SortControl**, **Favorites Only** toggle, **Clear Filters button**: Sort over { Date, Dynasty, Rating, Status, Genre, Title, Year, Type } with an **asc/desc** toggle (nulls sort last; Dynasty: chronologically oldest→newest ascending — 先秦 first … 近代, `全部` last, non-Chinese last; descending flips it); default is **Date** descending.
-- **Filter panel** is label-free: **Any Status**, **Any Genre**, **Any Rating** (minimum: Any / 1★+ … / 5★), **Any LGBT+**, **Any Dynasty**, and single-line **Started** + **Finished** date ranges.
+- **Filter panel** is label-free: **Any Status**, **Any Genre**, **Any Rating** (minimum: Any / 1★+ … / 5★), **Any LGBT+**, **Any Dynasty**, **Notes Only toggle**, and single-line **Started** + **Finished** date ranges.
 - Each row shows the same information as the Dashboard + **heart** (toggle is optimistic); Tap → Entry/Edit; **swipe-left → Delete** (optimistic).
 - A floating **+** (`ListFab`) opens **New Show**, shown only once the filtered list has at least one row (the bottom-nav **New Show** tab and the empty-state chip remain the other entry points).
 

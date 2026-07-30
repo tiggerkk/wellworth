@@ -222,6 +222,14 @@ export function BooksLibrary() {
                 options={DYNASTY_OPTIONS}
                 onChange={(d) => setCrit({ dynasty: d })}
               />
+              <span className="flex items-center gap-1.5">
+                <span className="text-caption text-text-secondary">Notes Only</span>
+                <Toggle
+                  checked={criteria.notesOnly}
+                  onChange={(v) => setCrit({ notesOnly: v })}
+                  label="Notes Only"
+                />
+              </span>
             </div>
             <DateRangeRow
               label="Started"

@@ -230,6 +230,16 @@ describe('applyLibraryView', () => {
     ).toEqual(['Starred'])
   })
 
+  it('filters by notes only', () => {
+    const withNotes = makeBook({ title: 'Has Notes', notes: 'Loved the ending' })
+    const blankNotes = makeBook({ title: 'Blank Notes', notes: '   ' })
+    expect(
+      applyLibraryView([...lib, withNotes, blankNotes], crit({ notesOnly: true })).map(
+        (b) => b.title,
+      ),
+    ).toEqual(['Has Notes'])
+  })
+
   it('filters by a finish-date range', () => {
     expect(
       applyLibraryView(lib, crit({ endFrom: '2026-01-01', endTo: '2026-12-31' })).map(

@@ -443,6 +443,13 @@ describe('applyLibraryView', () => {
     const fav = makeShow({ title: 'Fav', is_favorite: true })
     expect(applyLibraryView([...all, fav], crit({ favoritesOnly: true }))).toEqual([fav])
   })
+  it('filters by notes only', () => {
+    const withNotes = makeShow({ title: 'Has Notes', notes: 'Great finale' })
+    const blankNotes = makeShow({ title: 'Blank Notes', notes: '   ' })
+    expect(
+      applyLibraryView([...all, withNotes, blankNotes], crit({ notesOnly: true })),
+    ).toEqual([withNotes])
+  })
   it('filters by genre and minimum rating', () => {
     expect(applyLibraryView(all, crit({ genre: 'Drama' }))).toEqual([bb])
     expect(applyLibraryView(all, crit({ minRating: 5 }))).toEqual([matrix])

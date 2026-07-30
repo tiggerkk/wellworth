@@ -117,6 +117,7 @@ export interface LibraryCriteria {
   dynasty: 'all' | Dynasty
   status: 'all' | BookStatus
   favoritesOnly: boolean
+  notesOnly: boolean
   startFrom: IsoDate | null
   startTo: IsoDate | null
   endFrom: IsoDate | null
@@ -133,6 +134,7 @@ export const DEFAULT_LIBRARY_CRITERIA: LibraryCriteria = {
   dynasty: 'all',
   status: 'all',
   favoritesOnly: false,
+  notesOnly: false,
   startFrom: null,
   startTo: null,
   endFrom: null,
@@ -149,6 +151,7 @@ function matchesCriteria(book: BookRow, c: LibraryCriteria): boolean {
   if (c.dynasty !== 'all' && book.dynasty !== c.dynasty) return false
   if (c.genre !== 'all' && !(book.genres ?? []).includes(c.genre)) return false
   if (c.favoritesOnly && !book.is_favorite) return false
+  if (c.notesOnly && !book.notes?.trim()) return false
   if (c.minRating > 0 && (book.rating ?? 0) < c.minRating) return false
   if (c.startFrom && (!book.start_date || book.start_date < c.startFrom)) return false
   if (c.startTo && (!book.start_date || book.start_date > c.startTo)) return false

@@ -237,6 +237,7 @@ export interface LibraryCriteria {
   dynasty: 'all' | Dynasty
   status: 'all' | ShowStatus
   favoritesOnly: boolean
+  notesOnly: boolean
   startFrom: IsoDate | null
   startTo: IsoDate | null
   endFrom: IsoDate | null
@@ -254,6 +255,7 @@ export const DEFAULT_LIBRARY_CRITERIA: LibraryCriteria = {
   dynasty: 'all',
   status: 'all',
   favoritesOnly: false,
+  notesOnly: false,
   startFrom: null,
   startTo: null,
   endFrom: null,
@@ -268,6 +270,7 @@ function matchesCriteria(show: ShowRow, c: LibraryCriteria): boolean {
   if (c.type !== 'all' && show.type !== c.type) return false
   if (c.status !== 'all' && show.status !== c.status) return false
   if (c.favoritesOnly && !show.is_favorite) return false
+  if (c.notesOnly && !show.notes?.trim()) return false
   if (c.lgbtq !== 'all' && (show.lgbtq_rep ?? 'none') !== c.lgbtq) return false
   if (c.dynasty !== 'all' && show.dynasty !== c.dynasty) return false
   if (c.genre !== 'all' && !(show.genres ?? []).includes(c.genre)) return false
