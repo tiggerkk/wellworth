@@ -8,6 +8,18 @@ import { startOfMonth, type IsoDate } from './date'
  */
 const FRANKFURTER_BASE = 'https://api.frankfurter.dev/v1'
 const TIMEOUT_MS = 8000
+const RETRY_DELAY_MS = 500
+
+/** Fetch with one retry after a short delay — Frankfurter occasionally times out transiently. */
+async function fetchWithRetry(url: string, signal: AbortSignal): Promise<Response> {
+  try {
+    return await fetch(url, { signal })
+  } catch (err) {
+    if (signal.aborted) throw err
+    await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS))
+    return fetch(url, { signal })
+  }
+}
 
 export type FetchableCurrency = 'CNY' | 'USD'
 
@@ -46,7 +58,7 @@ export async function fetchRateToHkd(
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS)
   try {
-    const res = await fetch(fxUrl(from, month), { signal: controller.signal })
+    const res = await fetchWithRetry(fxUrl(from, month), controller.signal)
     if (!res.ok) throw new Error(`Frankfurter request failed (${res.status})`)
     const rate = parseFrankfurterRate(await res.json())
     cache.set(key, rate)
@@ -77,9 +89,10 @@ export async function fetchRateToHkdOn(
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS)
   try {
-    const res = await fetch(`${FRANKFURTER_BASE}/${date}?from=${currency}&to=HKD`, {
-      signal: controller.signal,
-    })
+    const res = await fetchWithRetry(
+      `${FRANKFURTER_BASE}/${date}?from=${currency}&to=HKD`,
+      controller.signal,
+    )
     if (!res.ok) throw new Error(`Frankfurter request failed (${res.status})`)
     const rate = parseFrankfurterRate(await res.json())
     cache.set(key, rate)
