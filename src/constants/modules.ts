@@ -239,7 +239,8 @@ export const MODULES: ModuleDef[] = [
         isActive: (pathname) =>
           pathname.startsWith(routes.medical.reports) ||
           (/^\/medical\/[^/]+(\/edit)?$/.test(pathname) &&
-            pathname !== routes.medical.entry),
+            pathname !== routes.medical.entry &&
+            pathname !== routes.medical.settings),
       },
       { to: routes.medical.entry, label: 'New Medical', Icon: IconHeartbeat, end: true },
       { to: routes.medical.settings, label: 'Settings', Icon: IconSettings },
