@@ -173,7 +173,9 @@ export const MODULES: ModuleDef[] = [
         Icon: IconList,
         isActive: (pathname) =>
           pathname.startsWith(routes.shows.library) ||
-          (/^\/shows\/[^/]+$/.test(pathname) && pathname !== routes.shows.entry),
+          (/^\/shows\/[^/]+$/.test(pathname) &&
+            pathname !== routes.shows.entry &&
+            pathname !== routes.shows.settings),
       },
       { to: routes.shows.entry, label: 'New Show', Icon: IconDeviceTv, end: true },
       { to: routes.shows.settings, label: 'Settings', Icon: IconSettings },
@@ -193,7 +195,9 @@ export const MODULES: ModuleDef[] = [
         Icon: IconList,
         isActive: (pathname) =>
           pathname.startsWith(routes.books.library) ||
-          (/^\/books\/[^/]+$/.test(pathname) && pathname !== routes.books.entry),
+          (/^\/books\/[^/]+$/.test(pathname) &&
+            pathname !== routes.books.entry &&
+            pathname !== routes.books.settings),
       },
       { to: routes.books.entry, label: 'New Book', Icon: IconBook, end: true },
       { to: routes.books.settings, label: 'Settings', Icon: IconSettings },
