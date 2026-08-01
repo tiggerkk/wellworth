@@ -1,17 +1,4 @@
-import {
-  IconApple,
-  IconCookie,
-  IconPill,
-  IconBarbell,
-  IconKarate,
-  IconRun,
-  IconStretching,
-  IconStretching2,
-  IconSwimming,
-  IconWalk,
-  IconYoga,
-  type Icon,
-} from '@tabler/icons-react'
+import { IconApple, IconCookie, IconPill, IconRun } from '@tabler/icons-react'
 import type { ComponentType } from 'react'
 import { lastNDays, monthsAgo, type RangeOption } from '../lib/date-range'
 import { PALETTE_BLUE, PALETTE_GOLD, PALETTE_PURPLE, PALETTE_RED } from './palette'
@@ -134,27 +121,13 @@ export const NUTRIENT_SECTIONS: NutrientSection[] = [
 
 // --- Activity icons --------------------------------------------------------------------------------
 
-/**
- * Maps the Tabler component-name string stored in `activity.icon` to the imported
- * component. Only the icons the app uses are imported (tree-shaking safe — do NOT use
- * `import * as TablerIcons`). Null/unknown falls back to DEFAULT_ACTIVITY_ICON.
- */
-export const ACTIVITY_ICONS: Record<string, Icon> = {
-  IconKarate,
-  IconStretching,
-  IconStretching2,
-  IconYoga,
-  IconBarbell,
-  IconSwimming,
-  IconWalk,
-  IconRun,
-}
-
-const DEFAULT_ACTIVITY_ICON: Icon = IconRun
-
-export function resolveActivityIcon(name: string | null): Icon {
-  return (name && ACTIVITY_ICONS[name]) || DEFAULT_ACTIVITY_ICON
-}
+/** Activity icons live in `activity-icons.tsx`; re-exported here so screens keep importing
+ *  icon-related helpers from this module alongside the rest of the wellness constants. */
+export {
+  ACTIVITY_ICONS,
+  resolveActivityIcon,
+  type ActivityIconProps,
+} from './activity-icons'
 
 // --- Activity templates --------------------------------------------------------------------------
 
@@ -210,16 +183,25 @@ export const OWNER_SEED_ACTIVITIES: SeedActivity[] = [
     default_effort: 'vigorous',
     default_duration_min: 60,
     met_by_effort: { light: 3.0, moderate: 5.9, vigorous: 7.0 },
-    icon: 'IconKarate',
+    icon: 'bodycombat',
   },
   {
-    name: '八段锦 (Baduanjin)',
+    name: '八段锦',
     description: 'Gentle qigong',
     template: 'duration',
     default_effort: 'light',
     default_duration_min: 10,
     met_by_effort: { light: 3.0 },
-    icon: 'IconStretching',
+    icon: 'baduanjin',
+  },
+  {
+    name: '太极',
+    description: 'Taichi',
+    template: 'duration',
+    default_effort: 'light',
+    default_duration_min: 10,
+    met_by_effort: { light: 2.3 },
+    icon: 'taichi',
   },
   {
     name: 'Stretching',
@@ -228,7 +210,7 @@ export const OWNER_SEED_ACTIVITIES: SeedActivity[] = [
     default_effort: 'light',
     default_duration_min: 10,
     met_by_effort: { light: 2.3 },
-    icon: 'IconStretching2',
+    icon: 'stretching',
   },
   {
     name: 'Yoga',
@@ -237,7 +219,25 @@ export const OWNER_SEED_ACTIVITIES: SeedActivity[] = [
     default_effort: 'light',
     default_duration_min: 15,
     met_by_effort: { light: 2.5, moderate: 3.5 },
-    icon: 'IconYoga',
+    icon: 'yoga',
+  },
+  {
+    name: 'Push-Ups',
+    description: '10-20 reps at steady pace',
+    template: 'duration',
+    default_effort: 'moderate',
+    default_duration_min: 2,
+    met_by_effort: { light: 3.8 },
+    icon: 'pushup',
+  },
+  {
+    name: 'Sit-Ups',
+    description: 'Standard sit-ups at steady pace',
+    template: 'duration',
+    default_effort: 'moderate',
+    default_duration_min: 2,
+    met_by_effort: { light: 3.8 },
+    icon: 'situp',
   },
   {
     name: 'Weights - General',
@@ -246,7 +246,7 @@ export const OWNER_SEED_ACTIVITIES: SeedActivity[] = [
     default_effort: 'moderate',
     default_duration_min: 20,
     met_by_effort: { light: 3.0, moderate: 3.5 },
-    icon: 'IconBarbell',
+    icon: 'weights',
   },
   {
     name: 'Weights - Powerlifting',
@@ -255,7 +255,7 @@ export const OWNER_SEED_ACTIVITIES: SeedActivity[] = [
     default_effort: 'vigorous',
     default_duration_min: 20,
     met_by_effort: { vigorous: 6.0 },
-    icon: 'IconBarbell',
+    icon: 'weights',
   },
   {
     name: 'Weights - Circuit',
@@ -264,7 +264,7 @@ export const OWNER_SEED_ACTIVITIES: SeedActivity[] = [
     default_effort: 'vigorous',
     default_duration_min: 20,
     met_by_effort: { vigorous: 8.0 },
-    icon: 'IconBarbell',
+    icon: 'weights',
   },
   {
     name: 'Swimming',
@@ -273,7 +273,7 @@ export const OWNER_SEED_ACTIVITIES: SeedActivity[] = [
     default_effort: 'moderate',
     default_duration_min: 30,
     met_by_effort: { light: 3.0, moderate: 5.9, vigorous: 6.5 },
-    icon: 'IconSwimming',
+    icon: 'swimming',
   },
   {
     name: 'Walking',
@@ -282,7 +282,7 @@ export const OWNER_SEED_ACTIVITIES: SeedActivity[] = [
     default_effort: 'moderate',
     default_duration_min: 30,
     met_by_effort: { moderate: 3.3 },
-    icon: 'IconWalk',
+    icon: 'walking',
   },
   {
     name: 'Running - Jog',
@@ -291,7 +291,7 @@ export const OWNER_SEED_ACTIVITIES: SeedActivity[] = [
     default_effort: 'moderate',
     default_duration_min: 30,
     met_by_effort: { moderate: 5.9 },
-    icon: 'IconRun',
+    icon: 'running',
   },
   {
     name: 'Running - Fast',
@@ -300,6 +300,6 @@ export const OWNER_SEED_ACTIVITIES: SeedActivity[] = [
     default_effort: 'vigorous',
     default_duration_min: 30,
     met_by_effort: { vigorous: 9.8 },
-    icon: 'IconRun',
+    icon: 'running',
   },
 ]
