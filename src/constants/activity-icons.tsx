@@ -4,7 +4,9 @@
  * ones (e.g. yoga) don't read clearly at small sizes, so this module owns hand-drawn stroke-based
  * SVGs instead. Each icon is `viewBox="0 0 24 24"`, `fill="none"`, `stroke="currentColor"` so it
  * inherits color the same way Tabler icons did, and exposes the same `{ size, className }` props
- * so callers don't need to change how they render the resolved icon component.
+ * so callers don't need to change how they render the resolved icon component. Each rendered
+ * `<svg>` also carries the `tabler-icon` class so it keeps riding the Dynamic Type font-scale
+ * transform in `src/index.css` (`02_tech_spec.md` F23) alongside the app's remaining Tabler icons.
  */
 import type { ComponentType, ReactNode } from 'react'
 
@@ -34,7 +36,7 @@ function makeActivityIcon(
         strokeWidth={stroke}
         strokeLinecap="round"
         strokeLinejoin="round"
-        className={className}
+        className={['tabler-icon', className].filter(Boolean).join(' ')}
       >
         {children(stroke)}
       </svg>

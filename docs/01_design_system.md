@@ -239,6 +239,8 @@ Every other date value reads as `MMM DD, YYYY` (`formatFullDate`), or `MMM DD` (
 
 **Icon sizing & Dynamic Type:** keep passing a px `size={N}` per the wireframe scale (13/16/18/22/40…). Icons **scale with the font-size preset automatically** — a global `.tabler-icon { transform: scale(…) }` keyed off the `<html>` `data-font-scale` attribute (tech-spec F23) enlarges every Tabler glyph at the Large/Larger presets. It's a `transform` (not width/height), so the icon's layout box is unchanged — no extra wrap pressure; you don't need to do anything per-icon.
 
+**Wellness activity icons** are the one exception to "Tabler everywhere": the activity library (`src/constants/activity-icons.tsx`) uses a custom hand-drawn stroke-based SVG set instead, since Tabler doesn't cover every activity and some available Tabler icons don't read clearly at small sizes. Each icon still exposes the same `{ size, className, stroke }` props as a Tabler icon and applies the `tabler-icon` class itself, so it rides the same Dynamic Type transform above with no special handling at the call site.
+
 ## Layout gotchas
 
 General React/CSS implementation pitfalls (flex scroll panes, third-party-widget z-index, portaled

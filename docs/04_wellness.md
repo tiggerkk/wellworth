@@ -101,7 +101,7 @@ Two sub-tabs:
 - **Default Duration** (minutes): prefills the Duration field when logging this activity (default 30).
 - **Default Effort**: Light (≤3 MET) / Moderate (3.1–5.9) / Vigorous (≥6) — applies to both templates; overridable per session when logging.
 - **MET by effort**: for each effort level, an editable MET value; fill **at least one** level (the default effort must have a value; single-intensity activities need only one). Drives the calorie estimate via MET × weight × hours. In the Activity Log, effort levels with no MET are disabled.
-- **Icon**: an icon picker (the keys of `ACTIVITY_ICONS`); optional, defaults to `IconRun`.
+- **Icon**: an icon picker (the keys of `ACTIVITY_ICONS`); optional, defaults to `running`.
 - Top-right: **RESET** + **CREATE** (new) / **SAVE** (editing). Enabled only when something changed; CREATE requires a name and a MET for the default effort.
 
 ### Settings (from the Settings tab in the Wellness bottom nav)
@@ -200,7 +200,7 @@ Shared external APIs).
 - `default_effort` TEXT — 'light' | 'moderate' | 'vigorous'
 - `default_duration_min` NUMERIC NOT NULL DEFAULT 30
 - `met_by_effort` JSONB — `{ "light": n, "moderate": n, "vigorous": n }`; at least one key required. Resolved MET for a session = `met_by_effort[session_effort]`. The default_effort must be a key in this map.
-- `icon` TEXT NULL — Tabler icon component name (e.g. 'IconKarate'). Resolved at render time via `ACTIVITY_ICONS[icon]` in `src/constants/wellness.ts` (named imports only — do NOT use `import * as TablerIcons`). Null/unknown falls back to `IconRun`.
+- `icon` TEXT NULL — activity icon key (e.g. `'karate'`), resolved at render time via `ACTIVITY_ICONS[icon]` in `src/constants/activity-icons.tsx` (re-exported from `src/constants/wellness.ts`). The activity library uses a custom hand-drawn stroke-based SVG icon set rather than Tabler icons, since Tabler doesn't cover activities like Push-Ups, Sit-Ups, or 太极, and some available Tabler icons don't read clearly at small sizes. Null/unknown falls back to `running`.
 - `deleted_at` TIMESTAMPTZ NULL — **soft delete**. Never hard-delete an activity referenced by a diary entry.
 - `created_at`, `updated_at`
 
@@ -246,19 +246,22 @@ Migration: `supabase/migrations/01_wellness_schema.sql`.
 
 ### Activity library (seed at first login alongside the profile)
 
-| Name                   | Template | Default duration | Default effort | MET by effort                               | Description                               | Icon            |
-| ---------------------- | -------- | ---------------- | -------------- | ------------------------------------------- | ----------------------------------------- | --------------- |
-| Body Combat            | duration | 60               | vigorous       | {"light":3.0,"moderate":5.9,"vigorous":7.0} | High-intensity martial-arts cardio        | IconKarate      |
-| 八段锦 (Baduanjin)     | duration | 10               | light          | {"light":3.0}                               | Gentle qigong                             | IconStretching  |
-| Stretching             | duration | 10               | light          | {"light":2.3}                               | Shoulder/Neck stretches                   | IconStretching2 |
-| Yoga                   | duration | 15               | light          | {"light":2.5,"moderate":3.5}                | General                                   | IconYoga        |
-| Weights - General      | strength | 20               | moderate       | {"light":3.0,"moderate":3.5}                | 8–15 reps, standard rest                  | IconBarbell     |
-| Weights - Powerlifting | strength | 20               | vigorous       | {"vigorous":6.0}                            | Heavy sets                                | IconBarbell     |
-| Weights - Circuit      | strength | 20               | vigorous       | {"vigorous":8.0}                            | Fast-paced, minimal rest, high heart rate | IconBarbell     |
-| Swimming               | duration | 30               | moderate       | {"light":3.0,"moderate":5.9,"vigorous":6.5} | Leisurely                                 | IconSwimming    |
-| Walking                | duration | 30               | moderate       | {"moderate":3.3}                            | ~3 mph                                    | IconWalk        |
-| Running - Jog          | duration | 30               | moderate       | {"moderate":5.9}                            | ~4 mph                                    | IconRun         |
-| Running - Fast         | duration | 30               | vigorous       | {"vigorous":9.8}                            | ~6 mph                                    | IconRun         |
+| Name                   | Template | Default duration | Default effort | MET by effort                               | Description                               | Icon       |
+| ---------------------- | -------- | ---------------- | -------------- | ------------------------------------------- | ----------------------------------------- | ---------- |
+| Body Combat            | duration | 60               | vigorous       | {"light":3.0,"moderate":5.9,"vigorous":7.0} | High-intensity martial-arts cardio        | bodycombat |
+| 八段锦 (Baduanjin)     | duration | 10               | light          | {"light":3.0}                               | Gentle qigong                             | baduanjin  |
+| 太极                   | duration | 10               | light          | {"light":2.3}                               | Taichi                                    | taichi     |
+| Stretching             | duration | 10               | light          | {"light":2.3}                               | Shoulder/Neck stretches                   | stretching |
+| Yoga                   | duration | 15               | light          | {"light":2.5,"moderate":3.5}                | General                                   | yoga       |
+| Push-Ups               | duration | 2                | moderate       | {"light":3.8}                               | 10-20 reps at steady pace                 | pushup     |
+| Sit-Ups                | duration | 2                | moderate       | {"light":3.8}                               | Standard sit-ups at steady pace           | situp      |
+| Weights - General      | strength | 20               | moderate       | {"light":3.0,"moderate":3.5}                | 8–15 reps, standard rest                  | weights    |
+| Weights - Powerlifting | strength | 20               | vigorous       | {"vigorous":6.0}                            | Heavy sets                                | weights    |
+| Weights - Circuit      | strength | 20               | vigorous       | {"vigorous":8.0}                            | Fast-paced, minimal rest, high heart rate | weights    |
+| Swimming               | duration | 30               | moderate       | {"light":3.0,"moderate":5.9,"vigorous":6.5} | Leisurely                                 | swimming   |
+| Walking                | duration | 30               | moderate       | {"moderate":3.3}                            | ~3 mph                                    | walking    |
+| Running - Jog          | duration | 30               | moderate       | {"moderate":5.9}                            | ~4 mph                                    | running    |
+| Running - Fast         | duration | 30               | vigorous       | {"vigorous":9.8}                            | ~6 mph                                    | running    |
 
 MET source: Compendium of Physical Activities. Intensity bands: light ≤3.0, moderate 3.1–5.9, vigorous ≥6.0 METs.
 
