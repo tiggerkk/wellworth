@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useState } from 'react'
+import { Suspense, useEffect, useMemo, useState } from 'react'
 import { useLocation, useSearchParams, type Location } from 'react-router'
 import { lazyWithReload } from '../lib/lazy-with-reload'
 import { useDebouncedValue } from '../hooks/useDebouncedValue'
@@ -159,51 +159,63 @@ export function WellnessDiaryFoodPickerSheet() {
 
   // Merge local foods (filtered by tab) and USDA results into one normalized list, then — when
   // there is a query — keep only the matches and order them by how well each name matches, with
-  // same-name (and same-score) entries ordered by nutrient count, descending. With no query we
-  // keep the source order (local foods newest-first; no USDA fetched).
-  const localFoods = (userFoods ?? []).filter((f) => {
-    if (tab === 'favorites') return f.is_favorite
-    if (tab === 'custom') return f.source === 'custom'
-    return true
-  })
-  const localResults: DisplayFood[] = localFoods.map((f) => ({
-    key: `local-${f.id}`,
-    name: f.name,
-    nutrientCount: Object.keys(asNutrientMap(f.nutrients)).length,
-    serving: localFoodServing(f.nutrient_basis),
-    source: f.source as FoodSource,
-    type: f.type as FoodType,
-    onOpen: () => openSheet(`${routes.wellness.food('local', f.id)}${suffix}`),
-    favorite: {
-      isFavorite: f.is_favorite,
-      toggle: () => void toggleFav(f.id, !f.is_favorite),
-    },
-  }))
-  // A USDA/OFF food the user already saved (favorited/logged/customized) shows as a local row;
-  // drop its live USDA twin so it doesn't appear twice (the local row carries the custom servings).
-  const cachedExternal = new Set(
-    (userFoods ?? [])
-      .filter((f) => f.external_id)
-      .map((f) => `${f.source}:${f.external_id}`),
-  )
-  const usdaDisplay: DisplayFood[] =
-    tab === 'all'
-      ? usdaResults
-          .filter((f) => !cachedExternal.has(`${f.source}:${f.externalId}`))
-          .map((f) => ({
-            key: `usda-${f.externalId}`,
-            name: f.name,
-            nutrientCount: Object.keys(f.nutrients).length,
-            serving: externalFoodServing(f),
-            source: f.source,
-            onOpen: () =>
-              openSheet(`${routes.wellness.food(f.source, f.externalId)}${suffix}`),
-          }))
-      : []
+  // same-name (and same-score) entries ordered by nutrient count, descending. With no query, fall
+  // back to a stable alphabetical order. Memoized: this list is recomputed on every keystroke via
+  // `query`/`debounced` state changes, so the filter/map/sort chain shouldn't rerun on unrelated
+  // renders (favoriting a row, scan toggling, etc.) — same convention as apply*View elsewhere.
+  const localResults = useMemo<DisplayFood[]>(() => {
+    const localFoods = (userFoods ?? []).filter((f) => {
+      if (tab === 'favorites') return f.is_favorite
+      if (tab === 'custom') return f.source === 'custom'
+      return true
+    })
+    return localFoods.map((f) => ({
+      key: `local-${f.id}`,
+      name: f.name,
+      nutrientCount: Object.keys(asNutrientMap(f.nutrients)).length,
+      serving: localFoodServing(f.nutrient_basis),
+      source: f.source as FoodSource,
+      type: f.type as FoodType,
+      onOpen: () => openSheet(`${routes.wellness.food('local', f.id)}${suffix}`),
+      favorite: {
+        isFavorite: f.is_favorite,
+        toggle: () => void toggleFav(f.id, !f.is_favorite),
+      },
+    }))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userFoods, tab, suffix])
 
-  let results = [...localResults, ...usdaDisplay]
-  if (q) {
-    results = results
+  const usdaDisplay = useMemo<DisplayFood[]>(() => {
+    // A USDA/OFF food the user already saved (favorited/logged/customized) shows as a local row;
+    // drop its live USDA twin so it doesn't appear twice (the local row carries the custom servings).
+    if (tab !== 'all') return []
+    const cachedExternal = new Set(
+      (userFoods ?? [])
+        .filter((f) => f.external_id)
+        .map((f) => `${f.source}:${f.external_id}`),
+    )
+    return usdaResults
+      .filter((f) => !cachedExternal.has(`${f.source}:${f.externalId}`))
+      .map((f) => ({
+        key: `usda-${f.externalId}`,
+        name: f.name,
+        nutrientCount: Object.keys(f.nutrients).length,
+        serving: externalFoodServing(f),
+        source: f.source,
+        onOpen: () =>
+          openSheet(`${routes.wellness.food(f.source, f.externalId)}${suffix}`),
+      }))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, userFoods, usdaResults, suffix])
+
+  const results = useMemo(() => {
+    const merged = [...localResults, ...usdaDisplay]
+    if (!q) {
+      // No search text: fall back to a stable alphabetical order instead of raw fetch order
+      // (local foods come back newest-first, which looks unsorted to the user).
+      return [...merged].sort((a, b) => a.name.localeCompare(b.name))
+    }
+    return merged
       .map((r) => ({ r, score: foodMatchScore(r.name, q) }))
       .filter((x) => x.score > 0)
       .sort(
@@ -213,7 +225,7 @@ export function WellnessDiaryFoodPickerSheet() {
           a.r.name.localeCompare(b.r.name),
       )
       .map((x) => x.r)
-  }
+  }, [localResults, usdaDisplay, q])
 
   return (
     <Sheet variant="full" label="Add food">

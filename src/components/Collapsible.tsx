@@ -111,7 +111,7 @@ export function Collapsible({
       <button
         onClick={toggle}
         aria-expanded={open}
-        className={`flex items-center gap-2 text-left ${titleGrow ? 'min-w-0 flex-1' : 'shrink-0'}`}
+        className={`flex min-w-0 items-center gap-2 text-left ${titleGrow ? 'flex-1' : 'shrink'}`}
       >
         {open ? (
           <IconChevronDown size={18} className="shrink-0 text-text-secondary" />

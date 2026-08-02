@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import {
   IconChevronLeft,
@@ -10,6 +10,7 @@ import {
 } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
+import { useSessionState } from '../hooks/useSessionState'
 import { useProfile } from '../hooks/useProfile'
 import { useNutrientReference } from '../hooks/useNutrientReference'
 import { useSheetNavigate } from '../hooks/useSheetNavigate'
@@ -89,7 +90,10 @@ export function WellnessDiary() {
     },
     [userId],
   )
-  const [expanded, setExpanded] = useState<Partial<Record<GroupName, boolean>>>({})
+  const [expanded, setExpanded] = useSessionState<Partial<Record<GroupName, boolean>>>(
+    'wellness-diary-expanded',
+    {},
+  )
   // Optimistic per-group order override (drag-to-reorder). Keyed by group; used only while its id
   // set still matches the fetched entries — once an item is added/removed there, it falls back to
   // the fetched (sort_order) order. Survives the reorder's background persist + refetch.
@@ -112,28 +116,6 @@ export function WellnessDiary() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, day, diaryVersion])
   const { data: entries, loading, error } = useAsync(entriesFn)
-
-  // Default-expand on entry / day change: when a day's entries first settle, open every non-empty
-  // group (empty groups stay collapsed). Runs once per day — a `sawLoading` ref ignores the brief
-  // render where `day` already changed but `entries`/`loading` are still the previous day's (stale)
-  // values, and `autoExpandedDay` stops later same-day refetches (add/delete) from clobbering the
-  // user's manual collapses. Paste resets `autoExpandedDay` so its refetch re-expands non-empty groups.
-  const sawLoadingForDay = useRef<IsoDate | null>(null)
-  const autoExpandedDay = useRef<IsoDate | null>(null)
-  useEffect(() => {
-    if (loading) {
-      sawLoadingForDay.current = day
-      return
-    }
-    if (sawLoadingForDay.current !== day) return // stale window: data not yet for this day
-    if (!entries || autoExpandedDay.current === day) return
-    setExpanded(
-      Object.fromEntries(
-        DIARY_GROUPS.map((g) => [g.key, entries.some((e) => e.group_name === g.key)]),
-      ),
-    )
-    autoExpandedDay.current = day
-  }, [day, loading, entries])
 
   const targets = profile ? computeTargets(profile) : null
   const totals = deriveNetCarbs(
@@ -175,7 +157,6 @@ export function WellnessDiary() {
     // Day paste keeps each item's original group (no override).
     await cloneEntriesToDay(userId, day, clipboard.entries, clipboard.setsByEntry)
     setDiaryClipboard(null) // one-shot
-    autoExpandedDay.current = null // re-expand non-empty groups once the paste refetch settles
     bumpDiary()
   }
 
@@ -203,7 +184,7 @@ export function WellnessDiary() {
       groupOverride: group.key,
     })
     setDiaryClipboard(null) // one-shot
-    autoExpandedDay.current = null // re-expand non-empty groups once the paste refetch settles
+    setExpanded((prev) => ({ ...prev, [group.key]: true })) // reveal what was just pasted in
     bumpDiary()
   }
 
@@ -346,11 +327,13 @@ export function WellnessDiary() {
                   icon={group.Icon}
                   iconColor={group.iconColor}
                   titleSuffix={
-                    <span
-                      className={`shrink-0 text-label ${negative ? 'text-accent' : 'text-text-secondary'}`}
-                    >
-                      {Math.round(subtotal)} kcal
-                    </span>
+                    group.key === 'supplements' ? undefined : (
+                      <span
+                        className={`shrink-0 text-label ${negative ? 'text-accent' : 'text-text-secondary'}`}
+                      >
+                        {Math.round(subtotal)} kcal
+                      </span>
+                    )
                   }
                   titleGrow={false}
                   open={isOpen}
