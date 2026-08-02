@@ -465,7 +465,7 @@ export function WellnessDiaryFoodDetailSheet() {
             <div className="flex-1 overflow-y-auto p-4">
               <div className="mb-2 flex gap-3">
                 {!managing && (
-                  <label className="flex-1 text-caption text-text-secondary">
+                  <label className="w-16 shrink-0 text-caption text-text-secondary">
                     Amount
                     <input
                       type="number"
@@ -481,7 +481,7 @@ export function WellnessDiaryFoodDetailSheet() {
                     />
                   </label>
                 )}
-                <label className="flex-1 text-caption text-text-secondary">
+                <label className="min-w-0 flex-1 text-caption text-text-secondary">
                   Serving Size
                   <select
                     value={servingIndex}
