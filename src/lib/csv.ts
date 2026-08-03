@@ -1,7 +1,9 @@
 /**
- * Minimal RFC-4180 CSV parser used by the bulk food import. Handles quoted fields, embedded
- * commas / newlines inside quotes, and `""` escapes. Returns rows of raw string cells; callers
- * trim and interpret. A leading UTF-8 BOM (common from Excel exports) is stripped.
+ * Minimal RFC-4180 CSV parser/serializer shared by every module's bulk importer and exporter.
+ * `parseCsv` handles quoted fields, embedded commas / newlines inside quotes, and `""` escapes,
+ * returning rows of raw string cells (callers trim and interpret); a leading UTF-8 BOM (common
+ * from Excel exports) is stripped. `toCsv` is its inverse, for the Export buttons — quoting a
+ * cell only when it needs it (contains a comma, quote, or newline).
  */
 export function parseCsv(text: string): string[][] {
   const rows: string[][] = []
@@ -53,4 +55,15 @@ export function parseCsv(text: string): string[][] {
     rows.push(row)
   }
   return rows
+}
+
+/** Quote a cell only if it needs it (comma, double-quote, or newline), doubling any `"`. */
+function escapeCsvField(field: string): string {
+  return /[",\r\n]/.test(field) ? `"${field.replace(/"/g, '""')}"` : field
+}
+
+/** Serialize rows of string cells to RFC-4180 CSV text (CRLF line endings, header row included
+ *  by the caller as `rows[0]`). Inverse of `parseCsv`. */
+export function toCsv(rows: string[][]): string {
+  return rows.map((row) => row.map(escapeCsvField).join(',')).join('\r\n')
 }

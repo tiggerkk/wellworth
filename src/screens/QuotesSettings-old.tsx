@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { IconChevronRight } from '@tabler/icons-react'
+import { IconChevronRight, IconUpload } from '@tabler/icons-react'
 import { SettingsLoader } from '../components/SettingsLoader'
 import { useProfileEditor } from '../hooks/useProfileEditor'
 import { useSheetNavigate } from '../hooks/useSheetNavigate'
@@ -9,9 +9,7 @@ import { FieldRow } from '../components/FieldRow'
 import { Toggle } from '../components/Toggle'
 import { ImportExportRow } from '../components/ImportExportRow'
 import { listJournalEntries } from '../data/journal'
-import { listQuotes } from '../data/quote'
 import { buildJournalExportRows } from '../lib/journal-export'
-import { buildQuotesExportRows } from '../lib/quotes-export'
 import { downloadCsv } from '../lib/file-export'
 import { errorMessage } from '../lib/errors'
 import { routes } from '../constants/routes'
@@ -44,7 +42,6 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
   const { session } = useAuth()
   const userId = session?.user.id
   const [exportingJournal, setExportingJournal] = useState(false)
-  const [exportingQuotes, setExportingQuotes] = useState(false)
   const [exportError, setExportError] = useState<string | null>(null)
 
   async function exportJournal() {
@@ -60,22 +57,6 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
       setExportError(errorMessage(e, 'Export failed.'))
     } finally {
       setExportingJournal(false)
-    }
-  }
-
-  async function exportQuotes() {
-    if (!userId) return
-    setExportingQuotes(true)
-    setExportError(null)
-    try {
-      const quotes = await listQuotes(userId)
-      const rows = buildQuotesExportRows(quotes)
-      const today = new Date().toISOString().slice(0, 10)
-      downloadCsv(`quotes-export-${today}.csv`, rows)
-    } catch (e) {
-      setExportError(errorMessage(e, 'Export failed.'))
-    } finally {
-      setExportingQuotes(false)
     }
   }
 
@@ -140,14 +121,12 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
               exporting={exportingJournal}
               exportDisabled={!userId}
             />
-            <ImportExportRow
-              importLabel="Import CSV Quotes"
-              onImport={() => openSheet(routes.quotes.import)}
-              exportLabel="Export CSV Quotes"
-              onExport={() => void exportQuotes()}
-              exporting={exportingQuotes}
-              exportDisabled={!userId}
-            />
+            <button
+              onClick={() => openSheet(routes.quotes.import)}
+              className="flex w-full items-center gap-2 border-b border-border px-4 py-2 text-body text-accent last:border-b-0 active:bg-input/40"
+            >
+              <IconUpload size={18} /> Import CSV Quotes
+            </button>
             {exportError && (
               <p className="px-4 py-2 text-caption text-danger">{exportError}</p>
             )}

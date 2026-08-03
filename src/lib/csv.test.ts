@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parseCsv } from './csv'
+import { parseCsv, toCsv } from './csv'
 
 describe('parseCsv', () => {
   it('parses simple rows', () => {
@@ -44,5 +44,41 @@ describe('parseCsv', () => {
       ['a', 'b', 'c'],
       ['1', '', ''],
     ])
+  })
+})
+
+describe('toCsv', () => {
+  it('serializes simple rows unquoted', () => {
+    expect(
+      toCsv([
+        ['a', 'b', 'c'],
+        ['1', '2', '3'],
+      ]),
+    ).toBe('a,b,c\r\n1,2,3')
+  })
+
+  it('quotes a field containing a comma', () => {
+    expect(toCsv([['Yogurt, Greek']])).toBe('"Yogurt, Greek"')
+  })
+
+  it('quotes a field containing a double-quote, doubling it', () => {
+    expect(toCsv([['2" cup']])).toBe('"2"" cup"')
+  })
+
+  it('quotes a field containing a newline', () => {
+    expect(toCsv([['line1\nline2']])).toBe('"line1\nline2"')
+  })
+
+  it('leaves an empty cell unquoted', () => {
+    expect(toCsv([['a', '', 'c']])).toBe('a,,c')
+  })
+
+  it('round-trips through parseCsv', () => {
+    const rows = [
+      ['name', 'note'],
+      ['Yogurt, Greek', '2" cup'],
+      ['Plain', ''],
+    ]
+    expect(parseCsv(toCsv(rows))).toEqual(rows)
   })
 })
