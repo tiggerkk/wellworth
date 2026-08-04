@@ -1,12 +1,19 @@
 import { useState } from 'react'
-import { IconChevronRight, IconTrash, IconUpload } from '@tabler/icons-react'
+import { IconChevronRight, IconTrash } from '@tabler/icons-react'
 import { SettingsLoader } from '../components/SettingsLoader'
 import { useProfileEditor } from '../hooks/useProfileEditor'
 import { useSheetNavigate } from '../hooks/useSheetNavigate'
 import { SectionCard } from '../components/SectionCard'
 import { FieldRow } from '../components/FieldRow'
 import { Toggle } from '../components/Toggle'
+import { ImportExportRow } from '../components/ImportExportRow'
 import { clearFoodMatchCache, foodMatchCacheSize } from '../lib/wellness-food-match-cache'
+import { listFoods } from '../data/food'
+import { listServingsForFoods } from '../data/serving'
+import { getAllNutrients } from '../data/nutrient'
+import { buildFoodExportRows } from '../lib/wellness-food-export'
+import { downloadCsv } from '../lib/file-export'
+import { errorMessage } from '../lib/errors'
 import { routes } from '../constants/routes'
 import type { Tables, TablesUpdate } from '../types/database'
 
@@ -37,6 +44,28 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
     profile.protein_target_g == null ? '' : String(profile.protein_target_g),
   )
   const [cacheCount, setCacheCount] = useState(() => foodMatchCacheSize())
+  const [exportingFoods, setExportingFoods] = useState(false)
+  const [exportError, setExportError] = useState<string | null>(null)
+
+  async function exportFoods() {
+    setExportingFoods(true)
+    setExportError(null)
+    try {
+      const [foods, nutrients] = await Promise.all([listFoods(), getAllNutrients()])
+      const servingsByFoodId = await listServingsForFoods(foods.map((f) => f.id))
+      const rows = buildFoodExportRows(
+        foods,
+        servingsByFoodId,
+        nutrients.map((n) => n.key),
+      )
+      const today = new Date().toISOString().slice(0, 10)
+      downloadCsv(`wellness-food-export-${today}.csv`, rows)
+    } catch (e) {
+      setExportError(errorMessage(e, 'Export failed.'))
+    } finally {
+      setExportingFoods(false)
+    }
+  }
 
   function commitProtein() {
     const n = Number(proteinDraft)
@@ -86,21 +115,22 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
       </SectionCard>
 
       <SectionCard title="Import">
-        <FieldRow label="Enable Bulk Food Import">
+        <FieldRow label="Enable Bulk Food Import / Export">
           <Toggle
             checked={profile.food_importer_enabled}
             onChange={(on) => void save({ food_importer_enabled: on })}
-            label="Enable Bulk Food Import"
+            label="Enable Bulk Food Import / Export"
           />
         </FieldRow>
         {profile.food_importer_enabled ? (
           <>
-            <button
-              onClick={() => openSheet(routes.wellness.importFoods)}
-              className="flex w-full items-center gap-2 border-b border-border px-4 py-2 text-body text-accent active:bg-input/40"
-            >
-              <IconUpload size={18} /> Import CSV Food
-            </button>
+            <ImportExportRow
+              importLabel="Import CSV Food"
+              onImport={() => openSheet(routes.wellness.importFoods)}
+              exportLabel="Export CSV Food"
+              onExport={() => void exportFoods()}
+              exporting={exportingFoods}
+            />
             <button
               onClick={() => {
                 clearFoodMatchCache()
@@ -112,6 +142,9 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
               <IconTrash size={18} />
               Clear Import Match Cache{cacheCount ? ` (${cacheCount})` : ''}
             </button>
+            {exportError && (
+              <p className="px-4 py-2 text-caption text-danger">{exportError}</p>
+            )}
             <p className="px-4 py-2 text-caption text-text-tertiary">
               Bulk-seed your foods from a CSV — each row is matched against USDA (custom
               foods for the rest), all saved as favorites. The importer remembers each

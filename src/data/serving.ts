@@ -12,6 +12,30 @@ export async function listServings(foodId: string): Promise<Tables<'serving'>[]>
 }
 
 /**
+ * Every serving for a batch of foods, in one query (used by the Food export — avoids an N+1
+ * per-food fetch). Grouped by `food_id`, each group ordered by `grams` ascending (same order as
+ * `listServings`).
+ */
+export async function listServingsForFoods(
+  foodIds: string[],
+): Promise<Map<string, Tables<'serving'>[]>> {
+  const byFood = new Map<string, Tables<'serving'>[]>()
+  if (foodIds.length === 0) return byFood
+  const { data, error } = await supabase
+    .from('serving')
+    .select('*')
+    .in('food_id', foodIds)
+    .order('grams')
+  if (error) throw error
+  for (const s of data) {
+    const group = byFood.get(s.food_id)
+    if (group) group.push(s)
+    else byFood.set(s.food_id, [s])
+  }
+  return byFood
+}
+
+/**
  * Replace a food's serving list (delete all, re-insert) — used when saving a Library edit or the
  * Food Detail Manage-servings editor. Returns the freshly-inserted rows (with their new ids, in
  * input order) so callers can point `food.default_serving_id` at one of them. Note: ids change on

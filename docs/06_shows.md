@@ -53,7 +53,7 @@ A new show can be prefilled from `?title=&poster=&overview=&type=`.
 ### Settings (`/shows/settings`)
 
 - **DISPLAY → Visible Fields**: shared **VisibleFieldsSheet** (see `docs/01_design_system.md`) over the optional Entry/Edit fields in New/Edit form order: Original Title, Year, **TMDB Metadata**, Rating, LGBT+, Dynasty, the two dates, Season & Episode counts, **Poster URL**, Notes. Most stored on `profile.show_visible_fields` (**NULL = all visible**); **Poster URL** is an `extra` backed by `profile.show_poster_url_visible` (**default off**) meaning "force always visible" — stored separately because the visible-fields list is default-on. Type, Title, Status, and the favorite heart are always shown and not listed.
-- **Import → Enable Bulk Shows Import** toggle (`profile.show_importer_enabled`, **on by default**); when on, an **Import CSV Shows** launcher opens the importer sheet, plus a **Clear Import Match Cache (N)** button (`clearShowMatchCache`; `N` = `showMatchCacheSize`) — see Import CSV → match cache, and `OWNER_RUNBOOK.md` Part R.
+- **Import → Enable Bulk Shows Import / Export** toggle (`profile.show_importer_enabled`, **on by default**); when on, an **Import CSV Shows** launcher opens the importer sheet, an **Export CSV Shows** button downloads every tracked title as a CSV, plus a **Clear Import Match Cache (N)** button (`clearShowMatchCache`; `N` = `showMatchCacheSize`) — see Import CSV → match cache, and `OWNER_RUNBOOK.md` Part R.
 
 ### Import CSV (sheet, from Shows Settings)
 
@@ -74,6 +74,12 @@ Steps:
 3. **Import** writes all rows **idempotently** (dedup on lower(title) — re-running the same file updates in place, never duplicates). Dates from the file; `created_at` = `start_date`. `saveImportedShows` **batches** the writes — one bulk `insert` for new titles + one bulk `upsert` (conflict on `id`) for existing ones, chunked at 500 — rather than a per-row round-trip, so a ~440-row import is a couple of calls, not hundreds. (TMDB matching is the separate step 1, before this.)
 
 Full guide: `templates/shows-import-guide.md`.
+
+### Export CSV Shows (button, from Shows Settings)
+
+`shows-export.ts` (pure), reusing `listShows` as-is — its existing column selection is already a superset of the CSV's columns, so no dedicated export query was added. Same column spec as Import: `title,type,status,rating,lgbtq_rep,dynasty,watched_seasons,watched_episodes,is_favorite,start_date,end_date,notes`.
+
+- Sorted by `type`, then `status` — both by their canonical enum order (`SHOW_TYPES`/`SHOW_STATUSES`), not alphabetically — then `start_date` ascending (a `want` row with no `start_date` sorts last within its group).
 
 ---
 

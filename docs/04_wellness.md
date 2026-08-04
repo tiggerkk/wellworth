@@ -112,7 +112,7 @@ Wellness-module sub-settings. Auto-save on change.
 - **DISPLAY**:
   - **Highlighted Nutrients** → choose up to 8 shown on the Diary (the picker caps the selection at 8).
   - **Visible Nutrients** → per-nutrient toggle for what appears on the Dashboard & Daily Report.
-- **IMPORT**: **Enable Bulk Food Import** toggle (`profile.food_importer_enabled`, **on by default**; column added to the `profile` table in `01_wellness_schema.sql`). When on: an **Import CSV Food** launcher opens the importer sheet, plus a **Clear Import Match Cache (N)** button (`clearFoodMatchCache` / `foodMatchCacheSize`)..
+- **IMPORT**: **Enable Bulk Food Import / Export** toggle (`profile.food_importer_enabled`, **on by default**; column added to the `profile` table in `01_wellness_schema.sql`). When on: an **Import CSV Food** launcher opens the importer sheet, an **Export CSV Food** button downloads every active food as a CSV, plus a **Clear Import Match Cache (N)** button (`clearFoodMatchCache` / `foodMatchCacheSize`)..
 
 #### Import CSV (sheet, from Wellness Settings)
 
@@ -125,6 +125,15 @@ Reused CSV format: `templates/wellness-foods-template.csv` (guide: `templates/we
 - **Match cache** (`src/lib/food-match-cache.ts`, a `match-cache.ts` instance; key `normMatch(name)`, value = the resolved `ExternalFood`): re-importing the same file (after `supabase db reset --linked`) skips USDA entirely. **Change** overwrites, **Manual** removes; cleared via Settings → **Clear import match cache** (`OWNER_RUNBOOK.md` Part R).
 - **Import** (`saveImportedFoods`): **every** row saved as a **favorite** (`is_favorite=true`, so USDA foods persist). Matched → `source='usda'` (per-100g, USDA nutrients); unmatched/Manual/`is_custom` → `source='custom'` from the CSV's nutrients/servings. **Idempotent** — USDA dedupe on (source, external_id), custom on `lower(name)`; re-running updates in place.
 - **Servings + default (F22):** each food's `serving` rows = the USDA household serving (for matched rows, from `match.servingText/servingGrams`) **+** the CSV `serving*` measures; `default_serving_id` is set from the CSV `default_serving` (by name) → else the USDA serving → else the first serving. New rows resolve their default by position after the bulk serving insert, then set it in **one** bulk `food` upsert (full rows, so NOT NULL columns hold). **Re-import overwrites** an existing food's servings + default from the CSV (`applyImportServings`) — including USDA rows (previously their servings were untouched) — so in-app serving edits are replaced.
+
+#### Export CSV Food (button, from Wellness Settings)
+
+`wellness-food-export.ts` (pure) + `data/food.listFoods()` / `data/serving.listServingsForFoods` / `data/nutrient.getAllNutrients`. Produces the exact same column set as `templates/wellness-foods-template.csv` — every core column plus **every** nutrient column (not just ones in use), so the downloaded file re-imports unchanged, and can also be hand-edited to add new rows before re-importing without needing to look up the template separately.
+
+- Every active (non-deleted) food is included, matching Library's Food tab exactly — not just favorites or foods with custom servings.
+- **`is_custom`** is `true` only for `source='custom'`; a USDA-matched food is left blank so re-importing lets it re-resolve against USDA — its nutrient cells are exported blank too, since re-import ignores nutrients for a non-custom row regardless of what the CSV holds.
+- A food's servings fill the CSV's 3 fixed `serving*` slots, ordered by `grams` ascending; a food with more than 3 servings only exports its first 3 (the CSV format itself has no room for more) — a known gap for a food edited to have >3 servings in-app. `default_serving` is the _name_ of the food's current default, so it matches back by name on re-import.
+- Sorted by `name` ascending — independent of Library's own sort/filter state.
 
 #### Visible Nutrients sub-screen
 

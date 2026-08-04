@@ -16,6 +16,7 @@ import type {
   TripDayInsert,
   TripDayRow,
   TripDayUpdate,
+  TripExportBundle,
   TripInsert,
   TripRow,
   TripUpdate,
@@ -145,6 +146,59 @@ export async function nextStopSortOrder(dayId: string): Promise<number> {
 }
 
 // --- Bundle + derived ---
+
+/**
+ * Every trip's full itinerary in 3 bulk queries total (all trips, then all their days in one
+ * `.in(trip_id)`, then all those days' stops in one `.in(trip_day_id)`) — used by the Trips JSON
+ * export, so exporting scales with query count, not trip count.
+ */
+export async function listTripsForExport(userId: string): Promise<TripExportBundle[]> {
+  const { data: trips, error: tripErr } = await supabase
+    .from('trip')
+    .select('*')
+    .eq('user_id', userId)
+  if (tripErr) throw tripErr
+  if (!trips || trips.length === 0) return []
+
+  const tripIds = trips.map((t) => t.id)
+  const { data: days, error: daysErr } = await supabase
+    .from('trip_day')
+    .select('*')
+    .in('trip_id', tripIds)
+    .order('trip_id', { ascending: true })
+    .order('sort_order', { ascending: true })
+  if (daysErr) throw daysErr
+
+  const dayIds = (days ?? []).map((d) => d.id)
+  let stops: StopRow[] = []
+  if (dayIds.length > 0) {
+    const { data: stopRows, error: stopsErr } = await supabase
+      .from('stop')
+      .select('*')
+      .in('trip_day_id', dayIds)
+      .order('trip_day_id', { ascending: true })
+      .order('sort_order', { ascending: true })
+    if (stopsErr) throw stopsErr
+    stops = stopRows ?? []
+  }
+
+  const stopsByDay = new Map<string, StopRow[]>()
+  for (const s of stops) {
+    const group = stopsByDay.get(s.trip_day_id)
+    if (group) group.push(s)
+    else stopsByDay.set(s.trip_day_id, [s])
+  }
+
+  const daysByTrip = new Map<string, { day: TripDayRow; stops: StopRow[] }[]>()
+  for (const d of days ?? []) {
+    const entry = { day: d, stops: stopsByDay.get(d.id) ?? [] }
+    const group = daysByTrip.get(d.trip_id)
+    if (group) group.push(entry)
+    else daysByTrip.set(d.trip_id, [entry])
+  }
+
+  return trips.map((trip) => ({ trip, days: daysByTrip.get(trip.id) ?? [] }))
+}
 
 /** Load a trip with its ordered days and all of their stops (Edit Trip's single read). */
 export async function getTripBundle(tripId: string): Promise<TripBundle | null> {

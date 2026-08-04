@@ -29,6 +29,14 @@ export interface TripBundle {
   expenses: ExpenseRow[]
 }
 
+/** Trip + its ordered days, each with its own ordered stops already grouped in — the shape the
+ *  Trips JSON export builds from. Returned by `listTripsForExport` (3 bulk queries total across
+ *  every trip, not one round-trip per trip). */
+export interface TripExportBundle {
+  trip: TripRow
+  days: { day: TripDayRow; stops: StopRow[] }[]
+}
+
 /** A city resolved by the picker (manual, cache, or geocode assist) — handed back to a stop. */
 export interface ResolvedCity {
   city: string

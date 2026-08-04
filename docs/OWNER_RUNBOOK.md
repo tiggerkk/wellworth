@@ -400,6 +400,8 @@ The starter activities live in `src/constants/seed-activities.ts` and are seeded
 
 Use this to start a module clean — test it, wipe just its tables, then enter real production data — without touching the others (e.g. reset Wellness and go live on it while Net Worth, Shows, Books, Quotes, Medical, and Travel stay as they are). Run the SQL in **Supabase → SQL Editor** (Dashboard → **SQL Editor** → **New query** → paste → **Run**). It edits **data only** — never the schema or the migrations.
 
+> 💾 **Export first if you want the data back afterward.** Wellness Food, Journal, Quotes, Shows, Books, and Travel Trips each have an **Export CSV/JSON** button next to their **Import** button in that module's Settings (turn on the module's Import/Export toggle first if it's off) — it downloads a file in the exact shape the matching **Import** button reads back, so export → truncate → re-import round-trips the data. Look for a "💾 Export first" note under each module below for the specific button. **Net Worth, Medical, and Travel Expenses have no Export** — for those, re-run whatever CSV/JSON you originally imported (or re-enter by hand, if there wasn't one). **Wellness Diary entries also have no Export yet** — the Diary/activity log itself isn't covered by any current Export button.
+
 > ⚠️ The SQL Editor runs with full privileges (it bypasses row-level security), so `truncate` wipes **all** rows in those tables — on a solo project that's exactly your data. `cascade` also clears the dependent child rows (strength sets, servings, asset entries, insurance schedule versions + points, medical results, and Travel days/stops/expenses). There is no undo.
 >
 > **Views need nothing.** `networth_monthly_type_total` and `medical_latest_result` are **views** over their base tables, not tables — they refresh automatically once the underlying rows are wiped, so they never appear in a `truncate`.
@@ -412,6 +414,8 @@ Use this to start a module clean — test it, wipe just its tables, then enter r
 truncate public.diary_entry, public.strength_set, public.food, public.serving,
          public.activity cascade;
 ```
+
+> 💾 Export first: **Wellness Settings → Export CSV Food** backs up your custom + USDA-matched foods (servings + defaults included). It does **not** cover diary entries or activities — there's no export for those yet.
 
 This keeps the `nutrient` reference table and your `profile`. After running it, **reload the app**: `ensureOwnerActivities` sees zero activities and re-seeds the starter **activity library** (your production starting point); foods and diary start empty. Your `profile` (identity, units, protein target, nutrient visibility) is the **shared account row** and is left as-is — adjust it in the app's **Settings** if you want, rather than here.
 
@@ -441,6 +445,8 @@ update public.profile
       show_poster_url_visible = false;
 ```
 
+> 💾 Export first: **Shows Settings → Export CSV Shows**.
+
 > **Schema changes are folded into the existing migration files** (the media tables hold no precious data; you refresh with `supabase db reset --linked`). Because `supabase db push` won't re-run an already-applied migration, apply edits with a full reset: **`supabase db reset --linked`** re-runs every migration from scratch (wipes all modules), then run **Part G** (`npm run gen:types`) so `src/types/database.ts` matches.
 >
 > ⚠️ **`supabase db reset --linked` also wipes `auth.users` — it deletes your own account.** If **"Allow new users to sign up" is OFF** (Part H3, the recommended lockdown), your next Google sign-in is treated as a _new signup_ and is **blocked** — the app loops back to "Sign in with Google" (the redirect carries `?error=access_denied&error_code=signup_disabled`). **Fix:** Supabase → **Authentication → Sign In / Providers → enable "Allow new users to sign up"**, sign in once to recreate your account, then turn it **off** again. (The `VITE_ALLOWED_EMAILS` allowlist still gates who's admitted.)
@@ -452,6 +458,8 @@ truncate public.book cascade;
 -- optional: also reset the Books settings on your profile to defaults
 update public.profile set book_visible_fields = null, book_importer_enabled = true;
 ```
+
+> 💾 Export first: **Books Settings → Export CSV Books**.
 
 **Quotes** — wipes every quote:
 
@@ -465,6 +473,8 @@ update public.profile
       quote_categories       = null;  -- null = the seed Category list in src/constants/quotes.ts
 ```
 
+> 💾 Export first: **Quotes Settings → Export CSV Quotes**.
+
 > Quotes' optional `show_id`/`book_id` links are `ON DELETE SET NULL`, so wiping Shows/Books only nulls those columns on surviving quotes (the denormalised author/title/source type stay). Wiping `quote` never touches `show`/`book`.
 
 **Journal** — wipes every journal entry (Journal is folded into the Quotes module, but its data is a separate table — resetting Quotes above does **not** touch this):
@@ -475,6 +485,8 @@ truncate public.journal_entry cascade;
 update public.profile
   set journal_moods = null;  -- null = the seed mood list (key/color/sub-tags) in src/constants/journal.ts
 ```
+
+> 💾 Export first: **Quotes Settings → Export CSV Journal** (Journal's Export lives in the Quotes module's Settings, same as its Import).
 
 > The 7 moods themselves (`happy, inspired, calm, neutral, sad, anxious, angry`) are fixed by a CHECK constraint, not owner-configurable — `journal_moods = null` only resets the **rename/recolor/sub-tag** customization back to the seed defaults, not the mood set itself.
 
@@ -508,6 +520,8 @@ update public.profile
       travel_visible_fields     = null,  -- null = all Trip-form fields visible
       travel_importer_enabled   = true;
 ```
+
+> 💾 Export first: **Travel Settings → Export JSON Trips** backs up every trip's itinerary (days + stops). It does **not** cover Expenses — there's no export for those yet (re-run whatever CSV you originally imported), and it does not cover `remembered_city` (just a geocoding cache — nothing to restore, it rebuilds itself as you use City Picker again).
 
 - ✅ Check: open that module in the app — its lists are empty (Wellness shows the re-seeded starter activities after a reload), and the **other** modules' data is untouched.
 

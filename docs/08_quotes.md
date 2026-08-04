@@ -65,7 +65,7 @@
 - **VALUES** — manage the dropdown lists used on the Add/Edit form (each opens a sheet):
   - **Source Types** and **Categories**: uses **ConfigListEditor** to add / rename / delete / drag-reorder / color-pick the lists. Changes auto-save.
   - **Delete migration**: deleting a value still used by quotes prompts a **reassignment** — pick a replacement and the affected quotes are moved to it before the value is removed. A value can't be deleted if it's the last one in its list. **TV Show / Movie / Book** source types are **protected from deletion** (their `linkKind` drives Show/Book auto-linking) — they can still be renamed/reordered.
-- **Enable Bulk Quotes Import** (`profile.quote_importer_enabled`, **on by default**): surfaces both the **Import CSV Journal** and **Import CSV Quotes** launchers — Journal's importer reuses this same toggle rather than adding a second one.
+- **Enable Bulk Quotes Import / Export** (`profile.quote_importer_enabled`, **on by default**): surfaces both the **Import CSV Journal** / **Export CSV Journal** and **Import CSV Quotes** / **Export CSV Quotes** button pairs — Journal's importer/exporter reuse this same toggle rather than adding a second one.
 
 ### Import CSV Quotes (sheet, from Quotes Settings)
 
@@ -83,6 +83,12 @@ Steps:
 
 Full guide: `templates/quotes-import-guide.md`.
 
+### Export CSV Quotes (button, from Quotes Settings)
+
+`quotes-export.ts` (pure), reusing `listQuotes` as-is — its existing column selection is already every CSV column, so no dedicated export query was added. Same column spec as Import. `Category`/`Source` are exported as their stored **key**, not the display label, so the key stays correct even if that Category/Source Type was later renamed. `Title` is exported verbatim from the quote row — it's stored as plain text, independent of the auto-linked `show_id`/`book_id`.
+
+- Sorted by `created_at`, then `author`, then `title`, all ascending (a null author/title sorts before any non-null value).
+
 ### Import CSV Journal (sheet, from Quotes Settings)
 
 Columns: `day,journal_entry,mood,tags`
@@ -96,6 +102,12 @@ Steps:
 1. **Choose CSV** → rows parsed/validated (day format, non-blank entry text, mood match).
 2. **Preview**: counts of **new / duplicate-skipped / flagged** rows + a sample of new rows (snippet + date + mood chip + tags).
 3. **Import** writes only the new rows in one batched upsert.
+
+### Export CSV Journal (button, from Quotes Settings)
+
+`journal-export.ts` (pure), reusing `listJournalEntries` as-is — its existing column selection (`day, journal_entry, mood, tags`) is already exactly the CSV's column spec, so no dedicated export query was added. `mood` is exported as its stored **key**, not the display label, so it stays correct even if that mood was later renamed in Journal Values.
+
+- Sorted by `day` ascending (oldest first) — independent of the Library's own newest-first order.
 
 ---
 

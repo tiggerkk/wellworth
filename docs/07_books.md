@@ -44,7 +44,7 @@
 ### Settings (`/book/settings`)
 
 - **DISPLAY → Visible Fields**: shared **VisibleFieldsSheet** (see `docs/01_design_system.md`) over the optional Entry/Edit fields in New/Edit form order: Author(s), Year, **Google Books Metadata**, Rating, LGBT+, Dynasty, the two dates, Notes. Stored on `profile.book_visible_fields` (**NULL = all visible**). Title, Status, and the Search button are always shown and not listed.
-- **Import → Enable Bulk Books Import** toggle (`profile.book_importer_enabled`, **on by default**); when on, an **Import CSV Books** launcher opens the importer sheet, plus a **Clear Import Match Cache (N)** button — clears the localStorage match cache (`clearBookMatchCache`; `N` = `bookMatchCacheSize`), so the next import does a fresh lookup. The cache is **not** affected by a DB reset (see Import CSV → match cache, and `OWNER_RUNBOOK.md` Part R).
+- **Import → Enable Bulk Books Import / Export** toggle (`profile.book_importer_enabled`, **on by default**); when on, an **Import CSV Books** launcher opens the importer sheet, an **Export CSV Books** button downloads every tracked book as a CSV, plus a **Clear Import Match Cache (N)** button — clears the localStorage match cache (`clearBookMatchCache`; `N` = `bookMatchCacheSize`), so the next import does a fresh lookup. The cache is **not** affected by a DB reset (see Import CSV → match cache, and `OWNER_RUNBOOK.md` Part R).
 
 ### Import CSV (sheet, from Books Settings)
 
@@ -70,6 +70,12 @@ Steps:
 3. **Import** writes all rows **idempotently** (dedup on lower(title) + lower(author) — re-running the same file updates in place, never duplicates). Dates from the file; `created_at` = `start_date`. `saveImportedBooks` **batches** the writes — one bulk `insert` for new books + one bulk `upsert` (conflict on `id`) for existing ones, chunked at 500, with `{ defaultToNull: false }` (the conditional `created_at` key — see Shows) — rather than a per-row round-trip. See tech-spec F16a.
 
 Full guide: `templates/books-import-guide.md`.
+
+### Export CSV Books (button, from Books Settings)
+
+`books-export.ts` (pure), reusing `listBooks` as-is — its existing column selection is already a superset of the CSV's columns, so no dedicated export query was added. Same column spec as Import: `title,author,status,rating,lgbtq_rep,dynasty,is_favorite,start_date,end_date,notes`; `author` joins the stored `authors` array with `, ` (the importer treats the whole cell as one opaque lookup string, so a multi-author cell round-trips fine).
+
+- Sorted by `status` — by its canonical enum order (`BOOK_STATUSES`), not alphabetically — then `start_date` ascending (a `want` row with no `start_date` sorts last within its group).
 
 ---
 
