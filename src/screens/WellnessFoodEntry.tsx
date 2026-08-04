@@ -12,9 +12,16 @@ import { useAuth } from '../auth/AuthProvider'
 import { useDirty } from '../hooks/useDirty'
 import { useEntryDraft } from '../hooks/useEntryDraft'
 import { useEntryClose } from '../hooks/useEntryClose'
+import { useEntryFavorite } from '../hooks/useEntryFavorite'
 import { useEscapeKey } from '../hooks/useEscapeKey'
 import { useNutrientReference } from '../hooks/useNutrientReference'
-import { createFood, getFood, softDeleteFood, updateFood } from '../data/food'
+import {
+  createFood,
+  getFood,
+  setFavorite,
+  softDeleteFood,
+  updateFood,
+} from '../data/food'
 import { listServings, replaceServings } from '../data/serving'
 import { asNutrientMap, type NutrientMap } from '../lib/wellness-nutrients'
 import { NUTRIENT_SECTIONS } from '../constants/wellness'
@@ -32,6 +39,7 @@ interface FoodInitial {
   basis: string
   servings: ServingDraft[]
   nutrients: Record<string, string>
+  isFavorite: boolean
 }
 
 const BLANK: FoodInitial = {
@@ -40,6 +48,7 @@ const BLANK: FoodInitial = {
   basis: 'per_100g',
   servings: [{ name: '', grams: '' }],
   nutrients: {},
+  isFavorite: false,
 }
 
 function blankDraft(): FoodInitial {
@@ -77,6 +86,7 @@ function toDraft({ food, servings }: FoodRow): FoodInitial {
         ? servings.map((s) => ({ name: s.name, grams: String(s.grams) }))
         : [{ name: '', grams: '' }],
     nutrients,
+    isFavorite: food.is_favorite,
   }
 }
 
@@ -149,7 +159,7 @@ export function WellnessFoodEntry() {
 
 function FoodForm({
   id,
-  initial,
+  initial: initialProp,
   onDirtyChange,
   afterSave,
 }: {
@@ -162,7 +172,10 @@ function FoodForm({
   const userId = session?.user.id
   const { nutrients: refRows } = useNutrientReference()
 
-  const [draft, setDraft] = useState<FoodInitial>(initial)
+  // `initial` is stateful (not just the loader's prop) so an immediate favorite save (see
+  // `useEntryFavorite`) can sync the dirty baseline without affecting any other in-progress edits.
+  const [initial, setInitial] = useState<FoodInitial>(initialProp)
+  const [draft, setDraft] = useState<FoodInitial>(initialProp)
   const [saving, setSaving] = useState(false)
 
   const update = (patch: Partial<FoodInitial>) => setDraft((d) => ({ ...d, ...patch }))
@@ -170,6 +183,15 @@ function FoodForm({
   useEffect(() => {
     onDirtyChange(dirty)
   }, [dirty, onDirtyChange])
+
+  const toggleFavorite = useEntryFavorite({
+    id,
+    favorite: draft.isFavorite,
+    setFavorite: (next) => update({ isFavorite: next }),
+    syncInitialFavorite: (next) => setInitial((i) => ({ ...i, isFavorite: next })),
+    persist: setFavorite,
+    bump: bumpDiary,
+  })
 
   const basisLabel = draft.basis === 'per_serving' ? 'serving' : '100 g'
 
@@ -196,7 +218,7 @@ function FoodForm({
               type: draft.type,
               nutrient_basis: draft.basis,
               nutrients,
-              is_favorite: false,
+              is_favorite: draft.isFavorite,
             })
           ).id
       if (id) {
@@ -238,6 +260,8 @@ function FoodForm({
           onReset={() => setDraft(initial)}
           onSubmit={() => void save()}
           onDelete={id ? () => void remove() : undefined}
+          favorite={draft.isFavorite}
+          onToggleFavorite={toggleFavorite}
         />
       </div>
 
