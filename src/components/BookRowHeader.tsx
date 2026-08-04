@@ -9,7 +9,7 @@
  * Line 3: Author(s) · Genre (first genre only)
  */
 import { BOOK_STATUS_LABELS, BOOK_STATUS_CHIP, type BookStatus } from '../constants/books'
-import { formatMonthDay, type IsoDate } from '../lib/date'
+import { formatFullDate, type IsoDate } from '../lib/date'
 import type { BookRow } from '../lib/books'
 import { DynastyChip } from './DynastyChip'
 import { StatusChip } from './StatusChip'
@@ -81,10 +81,10 @@ function BookDateHint({
   endDate: IsoDate | null
 }) {
   if (status === 'reading' && startDate) {
-    return <span>Started {formatMonthDay(startDate)}</span>
+    return <span>Started {formatFullDate(startDate)}</span>
   }
   if ((status === 'read' || status === 'dropped') && endDate) {
-    return <span>{formatMonthDay(endDate)}</span>
+    return <span>{formatFullDate(endDate)}</span>
   }
   return null
 }

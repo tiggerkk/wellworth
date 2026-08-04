@@ -14,7 +14,7 @@ import {
   type ShowStatus,
   type ShowType,
 } from '../constants/shows'
-import { formatMonthDay, type IsoDate } from '../lib/date'
+import { formatFullDate, type IsoDate } from '../lib/date'
 import { lengthHint, progressLabel, usesEpisodes, type ShowRow } from '../lib/shows'
 import { DynastyChip } from './DynastyChip'
 import { ShowTypeBadge } from './ShowTypeBadge'
@@ -92,10 +92,10 @@ function ShowDateHint({
   endDate: IsoDate | null
 }) {
   if (status === 'watching' && startDate) {
-    return <span>Started {formatMonthDay(startDate)}</span>
+    return <span>Started {formatFullDate(startDate)}</span>
   }
   if ((status === 'watched' || status === 'dropped') && endDate) {
-    return <span>{formatMonthDay(endDate)}</span>
+    return <span>{formatFullDate(endDate)}</span>
   }
   return null
 }
