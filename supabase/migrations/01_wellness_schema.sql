@@ -262,13 +262,14 @@ create trigger handle_updated_at before update on public.diary_entry
 -- strength_set — sets within a strength activity entry. Ownership derives from the parent.
 -- =====================================================================================
 create table public.strength_set (
-  id          uuid primary key default gen_random_uuid(),
-  entry_id    uuid not null references public.diary_entry (id) on delete cascade,
-  exercise    text not null, -- e.g. 'Chest Press'
-  set_number  integer not null,
-  reps        integer,
-  weight      numeric,
-  weight_unit text -- entered unit label; canonical weight derived for any maths
+  id             uuid primary key default gen_random_uuid(),
+  entry_id       uuid not null references public.diary_entry (id) on delete cascade,
+  exercise       text not null, -- e.g. 'Chest Press'
+  exercise_order integer not null default 0, -- owner-chosen exercise order within the entry
+  set_number     integer not null,
+  reps           integer,
+  weight         numeric,
+  weight_unit    text -- entered unit label; canonical weight derived for any maths
 );
 
 create index on public.strength_set (entry_id);

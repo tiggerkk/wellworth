@@ -1,7 +1,8 @@
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { OverlayTop } from './OverlayTop'
 import { ScreenHeaderTitle } from './ScreenHeaderTitle'
 import { NutrientReport } from './NutrientReport'
+import { WellnessNutrientFoodsOverlay } from './WellnessNutrientFoodsOverlay'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { listEntriesByDay } from '../data/diary-entry'
@@ -31,6 +32,15 @@ export function WellnessDailyReportOverlay({
   }, [userId, day])
   const { data: entries, loading, error } = useAsync(fn)
 
+  // Which nutrient's food-sources overlay is open, if any. Built from the full per-entry
+  // `entries` already loaded above — no extra fetch.
+  const [nutrientOverlay, setNutrientOverlay] = useState<{
+    key: string
+    label: string
+    target: number | null
+    unit: string
+  } | null>(null)
+
   return (
     <OverlayTop onClose={onClose} label="Daily report">
       <ScreenHeaderTitle
@@ -38,8 +48,24 @@ export function WellnessDailyReportOverlay({
         onClose={onClose}
       />
       <div className="flex-1 overflow-y-auto py-2">
-        <NutrientReport entries={entries} loading={loading} error={error} />
+        <NutrientReport
+          entries={entries}
+          loading={loading}
+          error={error}
+          onNutrientClick={setNutrientOverlay}
+        />
       </div>
+
+      {nutrientOverlay && (
+        <WellnessNutrientFoodsOverlay
+          entries={entries ?? []}
+          nutrientKey={nutrientOverlay.key}
+          label={nutrientOverlay.label}
+          target={nutrientOverlay.target}
+          unit={nutrientOverlay.unit}
+          onClose={() => setNutrientOverlay(null)}
+        />
+      )}
     </OverlayTop>
   )
 }

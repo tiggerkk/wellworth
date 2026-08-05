@@ -50,8 +50,9 @@ export interface DiaryExportDay {
   entries: DiaryExportEntry[]
 }
 
-/** Group a food entry's `exercise`-named sets (from `strength_set`, already `set_number`
- *  ordered) into one export block per distinct exercise name, in first-seen order. */
+/** Group a food entry's `exercise`-named sets (from `strength_set`, already ordered by
+ *  `exercise_order` then `set_number`) into one export block per distinct exercise name, in
+ *  first-seen order — which is therefore the owner's chosen exercise order. */
 function groupExercises(sets: StrengthSetRow[]): DiaryExportExercise[] {
   const byName = new Map<string, DiaryExportExercise>()
   for (const s of sets) {

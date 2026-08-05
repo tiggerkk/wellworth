@@ -56,6 +56,7 @@ function makeSet(overrides: Partial<StrengthSetRow> = {}): StrengthSetRow {
     id: 's1',
     entry_id: 'e2',
     exercise: 'Bench Press',
+    exercise_order: 0, // add this
     set_number: 1,
     reps: 8,
     weight: 60,

@@ -13,10 +13,23 @@ import { NutrientBar } from './NutrientBar'
 import { EntryLoader } from './EntryLoader'
 import type { DiaryEntrySummary } from '../data/diary-entry'
 
+interface NutrientClick {
+  key: string
+  label: string
+  target: number | null
+  unit: string
+}
+
 interface NutrientReportProps {
   entries: DiaryEntrySummary[] | undefined
   loading: boolean
   error: Error | undefined
+  /**
+   * Only passed by the Daily Report overlay, whose `entries` are the full per-entry rows (not the
+   * Dashboard's column-trimmed `DiaryEntrySummary`, which lacks `label`/`id` and can't drive a
+   * per-food drill-down over a multi-day range anyway). When omitted, bars render inert as before.
+   */
+  onNutrientClick?: (n: NutrientClick) => void
 }
 
 /**
@@ -24,7 +37,12 @@ interface NutrientReportProps {
  * per-logged-day averages, so a single day shows that day's totals. Renders the Energy
  * Balance card and the visible-nutrient sections in the fixed order, red over total-intake ULs.
  */
-export function NutrientReport({ entries, loading, error }: NutrientReportProps) {
+export function NutrientReport({
+  entries,
+  loading,
+  error,
+  onNutrientClick,
+}: NutrientReportProps) {
   const { data: profile } = useProfile()
   const { byKey, nutrients } = useNutrientReference()
 
@@ -73,15 +91,35 @@ export function NutrientReport({ entries, loading, error }: NutrientReportProps)
                       const dri = targets?.dri[n.key]
                       const value = avg[n.key] ?? 0
                       const ref = byKey.get(n.key)
+                      const label = ref?.display_name ?? n.key
+                      const bar = (
+                        <NutrientBar
+                          label={label}
+                          value={value}
+                          target={dri?.target ?? null}
+                          unit={n.unit}
+                          over={dri ? isOverUpperLimit(value, dri) : false}
+                        />
+                      )
                       return (
                         <div key={n.key} className={n.parent_key ? 'pl-3' : ''}>
-                          <NutrientBar
-                            label={ref?.display_name ?? n.key}
-                            value={value}
-                            target={dri?.target ?? null}
-                            unit={n.unit}
-                            over={dri ? isOverUpperLimit(value, dri) : false}
-                          />
+                          {onNutrientClick ? (
+                            <button
+                              onClick={() =>
+                                onNutrientClick({
+                                  key: n.key,
+                                  label,
+                                  target: dri?.target ?? null,
+                                  unit: n.unit,
+                                })
+                              }
+                              className="w-full text-left"
+                            >
+                              {bar}
+                            </button>
+                          ) : (
+                            bar
+                          )}
                         </div>
                       )
                     })}

@@ -286,10 +286,13 @@ export function buildDiaryEntryInsert(
 
 /** The `strength_set` insert rows for one activity entry's exercises, once its parent
  *  `diary_entry` id is known (after the bulk entry insert returns). Flattens
- *  `exercises[].sets[]` into one row per set, numbering `set_number` per exercise from 1. */
+ *  `exercises[].sets[]` into one row per set, numbering `set_number` per exercise from 1 and
+ *  stamping `exercise_order` from the exercise's position in the JSON array, so re-importing
+ *  preserves the order the owner entered exercises in. */
 export interface StrengthSetInsert {
   entry_id: string
   exercise: string
+  exercise_order: number
   set_number: number
   reps: number | null
   weight: number | null
@@ -301,18 +304,19 @@ export function buildStrengthSetInserts(
   exercises: ParsedExercise[],
 ): StrengthSetInsert[] {
   const rows: StrengthSetInsert[] = []
-  for (const ex of exercises) {
+  exercises.forEach((ex, exIdx) => {
     ex.sets.forEach((s, i) => {
       rows.push({
         entry_id: entryId,
         exercise: ex.name,
+        exercise_order: exIdx,
         set_number: i + 1,
         reps: s.reps,
         weight: s.weight,
         weight_unit: s.weight_unit,
       })
     })
-  }
+  })
   return rows
 }
 

@@ -8,6 +8,7 @@ export async function listSetsByEntry(
     .from('strength_set')
     .select('*')
     .eq('entry_id', entryId)
+    .order('exercise_order')
     .order('set_number')
   if (error) throw error
   return data
@@ -22,6 +23,7 @@ export async function listSetsForEntries(
     .from('strength_set')
     .select('*')
     .in('entry_id', entryIds)
+    .order('exercise_order')
     .order('set_number')
   if (error) throw error
   return data

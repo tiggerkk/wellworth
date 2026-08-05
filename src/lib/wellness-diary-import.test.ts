@@ -233,7 +233,7 @@ describe('buildDiaryEntryInsert', () => {
 })
 
 describe('buildStrengthSetInserts', () => {
-  it('flattens exercises into one row per set, numbering set_number from 1 per exercise', () => {
+  it('flattens exercises into one row per set, numbering set_number from 1 per exercise and stamping exercise_order from array position', () => {
     const rows = buildStrengthSetInserts('entry-1', [
       {
         name: 'Bench Press',
@@ -248,6 +248,7 @@ describe('buildStrengthSetInserts', () => {
       {
         entry_id: 'entry-1',
         exercise: 'Bench Press',
+        exercise_order: 0,
         set_number: 1,
         reps: 8,
         weight: 60,
@@ -256,6 +257,7 @@ describe('buildStrengthSetInserts', () => {
       {
         entry_id: 'entry-1',
         exercise: 'Bench Press',
+        exercise_order: 0,
         set_number: 2,
         reps: 6,
         weight: 65,
@@ -264,6 +266,7 @@ describe('buildStrengthSetInserts', () => {
       {
         entry_id: 'entry-1',
         exercise: 'Squat',
+        exercise_order: 1,
         set_number: 1,
         reps: 5,
         weight: 100,

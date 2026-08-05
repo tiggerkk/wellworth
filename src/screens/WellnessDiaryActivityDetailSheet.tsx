@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
-import { IconPlus } from '@tabler/icons-react'
+import { IconChevronDown, IconChevronUp, IconPlus, IconTrash } from '@tabler/icons-react'
 import { Sheet } from '../components/Sheet'
 import { ScreenHeaderTitle } from '../components/ScreenHeaderTitle'
 import { EntryHeaderActions } from '../components/EntryHeaderActions'
@@ -190,6 +190,24 @@ export function WellnessDiaryActivityDetailSheet() {
     )
   }
 
+  // Reorder/delete act on the local draft array only — the whole exercise list is saved
+  // atomically on submit (replaceSets/createSets), so there's nothing to persist per-move.
+  function moveExercise(exIdx: number, dir: -1 | 1) {
+    setExercises((prev) => {
+      const next = [...prev]
+      const j = exIdx + dir
+      if (j < 0 || j >= next.length) return prev
+      ;[next[exIdx], next[j]] = [next[j]!, next[exIdx]!]
+      return next
+    })
+  }
+  function removeExercise(exIdx: number) {
+    setExercises((prev) => {
+      const next = prev.filter((_, i) => i !== exIdx)
+      return next.length > 0 ? next : blankExercises()
+    })
+  }
+
   function reset() {
     if (!initial) return
     setMinutes(initial.minutes)
@@ -242,10 +260,11 @@ export function WellnessDiaryActivityDetailSheet() {
       if (activity.template === 'strength') {
         const rows = exercises
           .filter((ex) => ex.name.trim())
-          .flatMap((ex) =>
+          .flatMap((ex, exIdx) =>
             ex.sets.map((s, i) => ({
               entry_id: targetEntryId,
               exercise: ex.name.trim(),
+              exercise_order: exIdx,
               set_number: i + 1,
               reps: Number(s.reps),
               weight: Number(s.weight),
@@ -355,18 +374,45 @@ export function WellnessDiaryActivityDetailSheet() {
                         key={exIdx}
                         className="rounded-card border border-border bg-surface p-3"
                       >
-                        <input
-                          value={ex.name}
-                          placeholder="Exercise name"
-                          onChange={(e) =>
-                            setExercises((prev) =>
-                              prev.map((x, i) =>
-                                i === exIdx ? { ...x, name: e.target.value } : x,
-                              ),
-                            )
-                          }
-                          className="mb-2 field-control w-full"
-                        />
+                        <div className="mb-2 flex items-center gap-2">
+                          <input
+                            value={ex.name}
+                            placeholder="Exercise name"
+                            onChange={(e) =>
+                              setExercises((prev) =>
+                                prev.map((x, i) =>
+                                  i === exIdx ? { ...x, name: e.target.value } : x,
+                                ),
+                              )
+                            }
+                            className="field-control min-w-0 flex-1"
+                          />
+                          <div className="flex shrink-0 items-center gap-1">
+                            <button
+                              onClick={() => moveExercise(exIdx, -1)}
+                              disabled={exIdx === 0}
+                              aria-label="Move exercise up"
+                              className="p-1 text-text-tertiary disabled:opacity-30"
+                            >
+                              <IconChevronUp size={18} />
+                            </button>
+                            <button
+                              onClick={() => moveExercise(exIdx, 1)}
+                              disabled={exIdx === exercises.length - 1}
+                              aria-label="Move exercise down"
+                              className="p-1 text-text-tertiary disabled:opacity-30"
+                            >
+                              <IconChevronDown size={18} />
+                            </button>
+                            <button
+                              onClick={() => removeExercise(exIdx)}
+                              aria-label="Delete exercise"
+                              className="p-1 text-danger"
+                            >
+                              <IconTrash size={18} />
+                            </button>
+                          </div>
+                        </div>
                         {ex.sets.map((s, setIdx) => (
                           <div key={setIdx} className="mb-2 flex items-center gap-2">
                             <span className="w-10 text-caption text-text-secondary">

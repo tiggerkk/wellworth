@@ -1173,6 +1173,7 @@ export type Database = {
         Row: {
           entry_id: string
           exercise: string
+          exercise_order: number
           id: string
           reps: number | null
           set_number: number
@@ -1182,6 +1183,7 @@ export type Database = {
         Insert: {
           entry_id: string
           exercise: string
+          exercise_order?: number
           id?: string
           reps?: number | null
           set_number: number
@@ -1191,6 +1193,7 @@ export type Database = {
         Update: {
           entry_id?: string
           exercise?: string
+          exercise_order?: number
           id?: string
           reps?: number | null
           set_number?: number
