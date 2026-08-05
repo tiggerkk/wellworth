@@ -46,6 +46,7 @@ import { ConfirmDeleteAction } from '../components/ConfirmDeleteAction'
 import { NutrientBar } from '../components/NutrientBar'
 import { ReorderList } from '../components/ReorderList'
 import { WellnessDailyReportOverlay } from '../components/WellnessDailyReportOverlay'
+import { WellnessNutrientFoodsOverlay } from '../components/WellnessNutrientFoodsOverlay'
 
 export function WellnessDiary() {
   const { session } = useAuth()
@@ -75,6 +76,13 @@ export function WellnessDiary() {
 
   const [calendarOpen, setCalendarOpen] = useState(false)
   const [reportOpen, setReportOpen] = useState(false)
+  // Which highlighted nutrient's food-sources overlay is open, if any.
+  const [nutrientOverlay, setNutrientOverlay] = useState<{
+    key: string
+    label: string
+    target: number | null
+    unit: string
+  } | null>(null)
   // Diary supplies the calendar's food/activity cue dots for the visible month.
   const loadCalendarCues = useCallback(
     async (monthStart: IsoDate, monthEnd: IsoDate): Promise<Map<IsoDate, DayCue>> => {
@@ -284,16 +292,29 @@ export function WellnessDiary() {
                 const ref = byKey.get(key)
                 const dri = targets?.dri[key]
                 const value = totals[key] ?? 0
+                const label = ref?.display_name ?? key
                 return (
-                  <NutrientBar
+                  <button
                     key={key}
-                    label={ref?.display_name ?? key}
-                    value={value}
-                    target={dri?.target ?? null}
-                    unit={ref?.unit ?? ''}
-                    over={dri ? isOverUpperLimit(value, dri) : false}
-                    compact
-                  />
+                    onClick={() =>
+                      setNutrientOverlay({
+                        key,
+                        label,
+                        target: dri?.target ?? null,
+                        unit: ref?.unit ?? '',
+                      })
+                    }
+                    className="text-left"
+                  >
+                    <NutrientBar
+                      label={label}
+                      value={value}
+                      target={dri?.target ?? null}
+                      unit={ref?.unit ?? ''}
+                      over={dri ? isOverUpperLimit(value, dri) : false}
+                      compact
+                    />
+                  </button>
                 )
               })}
             </div>
@@ -435,6 +456,17 @@ export function WellnessDiary() {
 
       {reportOpen && (
         <WellnessDailyReportOverlay day={day} onClose={() => setReportOpen(false)} />
+      )}
+
+      {nutrientOverlay && (
+        <WellnessNutrientFoodsOverlay
+          entries={entries ?? []}
+          nutrientKey={nutrientOverlay.key}
+          label={nutrientOverlay.label}
+          target={nutrientOverlay.target}
+          unit={nutrientOverlay.unit}
+          onClose={() => setNutrientOverlay(null)}
+        />
       )}
     </div>
   )
