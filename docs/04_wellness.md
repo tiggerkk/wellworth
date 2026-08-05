@@ -112,7 +112,7 @@ Wellness-module sub-settings. Auto-save on change.
 - **DISPLAY**:
   - **Highlighted Nutrients** → choose up to 8 shown on the Diary (the picker caps the selection at 8).
   - **Visible Nutrients** → per-nutrient toggle for what appears on the Dashboard & Daily Report.
-- **IMPORT**: **Enable Bulk Food Import / Export** toggle (`profile.food_importer_enabled`, **on by default**; column added to the `profile` table in `01_wellness_schema.sql`). When on: an **Import CSV Food** launcher opens the importer sheet, an **Export CSV Food** button downloads every active food as a CSV, plus a **Clear Import Match Cache (N)** button (`clearFoodMatchCache` / `foodMatchCacheSize`)..
+- **IMPORT**: **Enable Bulk Import / Export** toggle (`profile.food_importer_enabled`, **on by default**; column added to the `profile` table in `01_wellness_schema.sql`) — gates Food's Import/Export **and** Diary's Import/Export (no separate toggle for Diary). When on: an **Import CSV Food** launcher opens the importer sheet, an **Export CSV Food** button downloads every active food as a CSV, an **Import JSON Diary** / **Export JSON Diary** pair does the same for the Diary log, plus a **Clear Import Match Cache (N)** button (`clearFoodMatchCache` / `foodMatchCacheSize`)..
 
 #### Import CSV (sheet, from Wellness Settings)
 
@@ -134,6 +134,26 @@ Reused CSV format: `templates/wellness-foods-template.csv` (guide: `templates/we
 - **`is_custom`** is `true` only for `source='custom'`; a USDA-matched food is left blank so re-importing lets it re-resolve against USDA — its nutrient cells are exported blank too, since re-import ignores nutrients for a non-custom row regardless of what the CSV holds.
 - A food's servings fill the CSV's 3 fixed `serving*` slots, ordered by `grams` ascending; a food with more than 3 servings only exports its first 3 (the CSV format itself has no room for more) — a known gap for a food edited to have >3 servings in-app. `default_serving` is the _name_ of the food's current default, so it matches back by name on re-import.
 - Sorted by `name` ascending — independent of Library's own sort/filter state.
+
+#### Import JSON Diary (sheet, from Wellness Settings)
+
+`wellness-diary-import.ts` (pure parse/validate) + `ImportDiarySheet`. Shape: a JSON array of `{ day, entries }`; `entries[].group` (one of `DIARY_GROUPS`'s 6 keys) determines `kind` — a food group accepts `amount`/`nutrients`, `activities` accepts `duration_min`/`effort`/`exercises`. Unlike Travel's JSON importer, there's no tolerant-repair pass for malformed JSON — the file is expected well-formed (produced by Export JSON Diary, or a hand-edit of one).
+
+- **A day is the unit of replacement, not a dedup key**: every day present in the file has its existing entries deleted and replaced with the file's entries for that day (`data/diary-entry.ts`'s `replaceDiaryDays` — one bulk `.in('day', days)` delete + one bulk insert, 2 round trips regardless of file size). There's no per-entry dedup logic, unlike every other importer — Diary entries have no natural unique key (the same food can legitimately be logged twice in a day), so re-running the same file is idempotent by construction instead. A day repeated at the top level of the file is invalid — only its first occurrence is kept (mirrors Journal's file-level "first occurrence wins").
+- **Food/activity linking is best-effort, by name** (`matchByName`, using the shared `normMatch` primitive from `title-match.ts` — same CJK-aware exact-match normalization Shows/Books use, just against the user's own Library instead of an external API): an entry's `label` is matched case-insensitively against the user's existing Food/Activity names. No match → the row still imports, just unlinked (`food_id`/`activity_id` null) — already a fully valid, supported state (`diary_entry`'s FKs are `ON DELETE SET NULL` specifically so history survives a deleted source). A tied name resolves to whichever the library map last held for that key.
+- **`sort_order` is optional per entry** — defaults to its position in the `entries` array when omitted, so a hand-edited file that adds/removes a row without renumbering the rest still imports sensibly.
+- **Strength sets**: an activity entry's `exercises[].sets[]` become `strength_set` rows after the parent `diary_entry` insert returns its generated id (`buildStrengthSetInserts`, one bulk `createSets` call for every entry's sets across the whole import, not one insert per entry).
+- Preview shows day-level counts (how many of the file's days already have entries and will be **replaced** vs. are **new**) plus a per-day entry sample — the Diary is a high-volume day-keyed log like Journal, so it gets the same preview shape rather than Shows/Books' per-row match-review list.
+
+#### Export JSON Diary (button, from Wellness Settings)
+
+`wellness-diary-export.ts` (pure) + `data/diary-entry.listAllEntriesForExport` / `data/strength-set.listSetsForEntries`. Produces the same `{ day, entries }` shape Import JSON Diary reads, one object per day (not one row per entry) — the file's own shape matches the unit Import replaces by.
+
+- **Full history always** — no date-range option; every entry the user has ever logged.
+- `group` alone determines `kind` in the file (no separate field) — matches `DIARY_GROUPS`. Food-only fields (`amount`, `nutrients`) are omitted from an activity entry and vice versa (`duration_min`/`effort`/`exercises`); `exercises` itself is omitted entirely (not `[]`) when the entry has no strength sets.
+- **`sort_order` is re-numbered** to each entry's 0-based position within its day, not the raw DB value — which for an entry logged into a group the user has never drag-reordered is a large `Date.now()`-scale number (`createEntry`'s default; see `data/diary-entry.ts`) — so the file stays small and hand-editable.
+- **Which serving a food entry used is not exported** — it was never persisted in the first place: `diary_entry.serving_id` is a schema column the live Diary Food entry screen never actually writes to (confirmed by reading `WellnessDiaryFoodDetailSheet.tsx` — on edit, it _reverse-guesses_ the likely serving by matching against the food's current servings, since the original selection isn't stored). Not a regression from exporting; the app doesn't have this information to export.
+- A strength activity entry's `strength_set` rows (already `set_number` ordered, from `listSetsForEntries`) are grouped into one `exercises` block per distinct exercise name, in first-seen order.
 
 #### Visible Nutrients sub-screen
 

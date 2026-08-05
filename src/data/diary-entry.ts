@@ -22,6 +22,23 @@ export async function listEntriesByDay(
   return data
 }
 
+/** Every entry the user has ever logged, across every day — used by the Diary JSON export. Same
+ *  order as `listEntriesByDay` (day, then sort_order, then created_at), so the exported file's
+ *  entries come out in day order without the pure builder needing its own DB round trip. */
+export async function listAllEntriesForExport(
+  userId: string,
+): Promise<Tables<'diary_entry'>[]> {
+  const { data, error } = await supabase
+    .from('diary_entry')
+    .select('*')
+    .eq('user_id', userId)
+    .order('day')
+    .order('sort_order')
+    .order('created_at')
+  if (error) throw error
+  return data
+}
+
 /**
  * The columns `NutrientReport`'s aggregation actually reads (see `aggregateEntries` in
  * `lib/wellness-nutrient-report.ts`). A range can span up to a year of logging, so
@@ -154,6 +171,51 @@ export async function deleteEntriesByDay(userId: string, day: string): Promise<v
     .eq('user_id', userId)
     .eq('day', day)
   if (error) throw error
+}
+
+/** Which of the given days already have at least one entry — one query for the whole set, used
+ *  by the Diary JSON import's preview ("N days already have entries and will be replaced"). */
+export async function listDaysWithEntries(
+  userId: string,
+  days: string[],
+): Promise<Set<string>> {
+  if (days.length === 0) return new Set()
+  const { data, error } = await supabase
+    .from('diary_entry')
+    .select('day')
+    .eq('user_id', userId)
+    .in('day', days)
+  if (error) throw error
+  return new Set(data.map((r) => r.day))
+}
+
+/**
+ * The Diary JSON import's writer: for every day present in the file, delete that day's existing
+ * entries wholesale, then insert the file's entries for those days — 2 bulk round trips total
+ * (one `.in('day', days)` delete, one multi-row insert), regardless of how many days or entries
+ * the file holds, rather than one delete + insert per day. A day is the unit of replacement, so
+ * re-importing the same file is naturally idempotent without any per-entry dedup logic.
+ *
+ * Returns the inserted rows (with generated ids, in the same order as `entries`) so the caller
+ * can attach `strength_set` rows to the right activity entries by position.
+ */
+export async function replaceDiaryDays(
+  userId: string,
+  days: string[],
+  entries: TablesInsert<'diary_entry'>[],
+): Promise<Tables<'diary_entry'>[]> {
+  if (days.length > 0) {
+    const { error: delError } = await supabase
+      .from('diary_entry')
+      .delete()
+      .eq('user_id', userId)
+      .in('day', days)
+    if (delError) throw delError
+  }
+  if (entries.length === 0) return []
+  const { data, error } = await supabase.from('diary_entry').insert(entries).select()
+  if (error) throw error
+  return data
 }
 
 /** Hard-delete every entry in one group on a day (a group header's Delete). strength_set rows cascade. */

@@ -26,6 +26,7 @@ export const routes = {
     activity: (id: string) => `/wellness/activity/${id}`,
     report: (day: string) => `/wellness/report/${day}`,
     importFoods: '/wellness/import-foods',
+    importDiary: '/wellness/import-diary',
     newFood: '/wellness/new-food',
     editFood: (id: string) => `/wellness/edit-food/${id}`,
     newActivity: '/wellness/new-activity',

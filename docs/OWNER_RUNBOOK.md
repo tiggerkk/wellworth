@@ -400,7 +400,7 @@ The starter activities live in `src/constants/seed-activities.ts` and are seeded
 
 Use this to start a module clean — test it, wipe just its tables, then enter real production data — without touching the others (e.g. reset Wellness and go live on it while Net Worth, Shows, Books, Quotes, Medical, and Travel stay as they are). Run the SQL in **Supabase → SQL Editor** (Dashboard → **SQL Editor** → **New query** → paste → **Run**). It edits **data only** — never the schema or the migrations.
 
-> 💾 **Export first if you want the data back afterward.** Wellness Food, Journal, Quotes, Shows, Books, and Travel Trips each have an **Export CSV/JSON** button next to their **Import** button in that module's Settings (turn on the module's Import/Export toggle first if it's off) — it downloads a file in the exact shape the matching **Import** button reads back, so export → truncate → re-import round-trips the data. Look for a "💾 Export first" note under each module below for the specific button. **Net Worth, Medical, and Travel Expenses have no Export** — for those, re-run whatever CSV/JSON you originally imported (or re-enter by hand, if there wasn't one). **Wellness Diary entries also have no Export yet** — the Diary/activity log itself isn't covered by any current Export button.
+> 💾 **Export first if you want the data back afterward.** Wellness Food, Wellness Diary, Journal, Quotes, Shows, Books, and Travel Trips each have an **Export CSV/JSON** button next to their **Import** button in that module's Settings (turn on the module's Import/Export toggle first if it's off) — it downloads a file in the exact shape the matching **Import** button reads back, so export → truncate → re-import round-trips the data. Look for a "💾 Export first" note under each module below for the specific button. **Net Worth, Medical, and Travel Expenses have no Export** — for those, re-run whatever CSV/JSON you originally imported (or re-enter by hand, if there wasn't one).
 
 > ⚠️ The SQL Editor runs with full privileges (it bypasses row-level security), so `truncate` wipes **all** rows in those tables — on a solo project that's exactly your data. `cascade` also clears the dependent child rows (strength sets, servings, asset entries, insurance schedule versions + points, medical results, and Travel days/stops/expenses). There is no undo.
 >
@@ -415,7 +415,7 @@ truncate public.diary_entry, public.strength_set, public.food, public.serving,
          public.activity cascade;
 ```
 
-> 💾 Export first: **Wellness Settings → Export CSV Food** backs up your custom + USDA-matched foods (servings + defaults included). It does **not** cover diary entries or activities — there's no export for those yet.
+> 💾 Export first: **Wellness Settings → Export CSV Food** backs up your custom + USDA-matched foods (servings + defaults included), and **Export JSON Diary** backs up every logged entry (day-grouped; strength sets included). Neither covers the Activity **library** itself (only what you've logged) — there's no export for that yet.
 
 This keeps the `nutrient` reference table and your `profile`. After running it, **reload the app**: `ensureOwnerActivities` sees zero activities and re-seeds the starter **activity library** (your production starting point); foods and diary start empty. Your `profile` (identity, units, protein target, nutrient visibility) is the **shared account row** and is left as-is — adjust it in the app's **Settings** if you want, rather than here.
 

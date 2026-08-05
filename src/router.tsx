@@ -20,6 +20,7 @@ import {
   WellnessHighlightedNutrientsSheet,
   WellnessVisibleNutrientsSheet,
   ImportFoodsSheet,
+  ImportDiarySheet,
   BooksDashboard,
   BooksLibrary,
   BooksEntry,
@@ -135,6 +136,7 @@ export const router = createBrowserRouter([
             element: <WellnessHighlightedNutrientsSheet />,
           },
           { path: 'wellness/import-foods', element: <ImportFoodsSheet /> },
+          { path: 'wellness/import-diary', element: <ImportDiarySheet /> },
 
           // Net Worth module
           { path: 'networth', element: <NetWorthDashboard /> },
