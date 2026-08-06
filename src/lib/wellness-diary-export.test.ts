@@ -56,7 +56,7 @@ function makeSet(overrides: Partial<StrengthSetRow> = {}): StrengthSetRow {
     id: 's1',
     entry_id: 'e2',
     exercise: 'Bench Press',
-    exercise_order: 0, // add this
+    exercise_order: 0,
     set_number: 1,
     reps: 8,
     weight: 60,
@@ -146,6 +146,37 @@ describe('buildDiaryExportData', () => {
   it('omits exercises entirely for an activity entry with no strength sets', () => {
     const days = buildDiaryExportData([makeActivityEntry()], [])
     expect(days[0]?.entries[0]).not.toHaveProperty('exercises')
+  })
+
+  it('preserves the owner’s chosen exercise order (exercise_order), not alphabetical or insertion order', () => {
+    // listSetsForEntries always returns sets pre-sorted by exercise_order then set_number, so
+    // groupExercises only needs to preserve first-seen order of its input array — this fixture
+    // mimics that pre-sorted order with a Squat (exercise_order 0) placed before a
+    // alphabetically-earlier Bench Press (exercise_order 1), which a name- or id-based sort would
+    // get wrong.
+    const sets = [
+      makeSet({
+        id: 's1',
+        exercise: 'Squat',
+        exercise_order: 0,
+        set_number: 1,
+        reps: 5,
+        weight: 100,
+      }),
+      makeSet({
+        id: 's2',
+        exercise: 'Bench Press',
+        exercise_order: 1,
+        set_number: 1,
+        reps: 8,
+        weight: 60,
+      }),
+    ]
+    const days = buildDiaryExportData([makeActivityEntry({ id: 'e2' })], sets)
+    expect(days[0]?.entries[0]?.exercises?.map((ex) => ex.name)).toEqual([
+      'Squat',
+      'Bench Press',
+    ])
   })
 
   it('groups an activity entry’s strength sets into one exercises block per exercise name', () => {
