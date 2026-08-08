@@ -86,6 +86,8 @@ import {
   TravelCategoriesSheet,
   ImportTravelSheet,
   ImportTravelExpensesSheet,
+  TravelStatsProvincesSheet,
+  TravelStatsCitiesSheet,
 } from './screens'
 
 // Routes are flat children of the single <AppShell/> layout (full path strings, no
@@ -236,6 +238,8 @@ export const router = createBrowserRouter([
           { path: 'travel/settings/categories', element: <TravelCategoriesSheet /> },
           { path: 'travel/import-travel', element: <ImportTravelSheet /> },
           { path: 'travel/import-expenses', element: <ImportTravelExpensesSheet /> },
+          { path: 'travel/stats/provinces', element: <TravelStatsProvincesSheet /> },
+          { path: 'travel/stats/cities', element: <TravelStatsCitiesSheet /> },
         ],
       },
     ],

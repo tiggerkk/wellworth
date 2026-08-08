@@ -10,6 +10,7 @@ import { EmptyState } from '../components/EmptyState'
 import { ListLoader } from '../components/ListLoader'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
+import { useSheetNavigate } from '../hooks/useSheetNavigate'
 import { fromDashboard } from '../hooks/useEntryClose'
 import { listTripFacetRows, listTrips } from '../data/travel'
 import { useTravelVersion } from '../lib/travel-refresh'
@@ -33,6 +34,7 @@ const SHELF_LIMIT = 4
 
 export function TravelDashboard() {
   const navigate = useNavigate()
+  const openSheet = useSheetNavigate()
   const { session } = useAuth()
   const userId = session?.user.id
   const version = useTravelVersion()
@@ -109,8 +111,17 @@ export function TravelDashboard() {
               value={stats.chinaProvinces}
               suffix={`/ ${CHINA_PROVINCE_TOTAL}`}
               label="中国省份"
+              onClick={() =>
+                openSheet(routes.travel.statsProvinces, { state: { trips, facetRows } })
+              }
             />
-            <KpiTile value={stats.chinaCities} label="中国城市" />
+            <KpiTile
+              value={stats.chinaCities}
+              label="中国城市"
+              onClick={() =>
+                openSheet(routes.travel.statsCities, { state: { trips, facetRows } })
+              }
+            />
             <KpiTile value={stats.countries} label="Countries" />
             <KpiTile value={stats.cities} label="Cities" />
             <KpiTile value={stats.tripsThisYear} label="Trips This Year" />

@@ -124,5 +124,7 @@ export const routes = {
     settingsCategories: '/travel/settings/categories', // manage expense-category list (sheet)
     importExpenses: '/travel/import-expenses', // wide CSV expenses importer (sheet)
     importTravel: '/travel/import-travel', // travel JSON-array importer (sheet)
+    statsProvinces: '/travel/stats/provinces', // 中国省份 KPI drill-in (sheet)
+    statsCities: '/travel/stats/cities', // 中国城市 KPI drill-in (sheet)
   },
 } as const

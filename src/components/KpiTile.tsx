@@ -5,6 +5,8 @@ interface KpiTileProps {
   value: ReactNode
   suffix?: string
   label: string
+  /** When present, renders the tile as a button (e.g. Travel's China province/city drill-ins). */
+  onClick?: () => void
 }
 
 /**
@@ -12,14 +14,31 @@ interface KpiTileProps {
  * dashboard KPI grids across modules (Travel's count tiles, Journal's streak/total stats) —
  * pulled out once a second module needed the same shape, so the two can't drift apart.
  */
-export function KpiTile({ value, suffix, label }: KpiTileProps) {
-  return (
-    <div className="rounded-card border border-border bg-surface px-3 py-3">
+export function KpiTile({ value, suffix, label, onClick }: KpiTileProps) {
+  const content = (
+    <>
       <div className="flex items-baseline gap-1">
         <span className="text-xl font-semibold text-text-primary">{value}</span>
         {suffix && <span className="text-caption text-text-secondary">{suffix}</span>}
       </div>
       <p className="mt-0.5 text-caption leading-tight text-text-secondary">{label}</p>
+    </>
+  )
+
+  if (onClick) {
+    return (
+      <button
+        onClick={onClick}
+        className="rounded-card border border-border bg-surface px-3 py-3 text-left active:bg-input/40"
+      >
+        {content}
+      </button>
+    )
+  }
+
+  return (
+    <div className="rounded-card border border-border bg-surface px-3 py-3">
+      {content}
     </div>
   )
 }

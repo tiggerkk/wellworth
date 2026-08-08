@@ -34,6 +34,7 @@ import {
   BooksLibrary,
   BooksEntry,
   BooksSettings,
+  TravelDashboard,
   TravelSettings,
 } from '../screens'
 
@@ -60,6 +61,7 @@ const TAB_FOR_PATH: Record<string, React.ReactNode> = {
   '/quotes/library': <QuotesLibrary />,
   '/quotes/entry': <QuotesEntry />,
   '/quotes/settings': <QuotesSettings />,
+  '/travel': <TravelDashboard />,
   '/travel/settings': <TravelSettings />,
 }
 

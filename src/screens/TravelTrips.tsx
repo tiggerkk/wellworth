@@ -13,6 +13,7 @@ import { useAsync } from '../hooks/useAsync'
 import { useSessionState } from '../hooks/useSessionState'
 import { deleteTrip, listTripFacetRows, listTrips } from '../data/travel'
 import { bumpTravel, useTravelVersion } from '../lib/travel-refresh'
+import { compareProvinces } from '../lib/travel-stats'
 import {
   DEFAULT_TRIP_CRITERIA,
   applyTripList,
@@ -98,7 +99,7 @@ export function TravelTrips() {
   const provinces = useMemo(() => {
     const s = new Set<string>()
     for (const f of facetsByTrip.values()) for (const p of f.provinces) s.add(p)
-    return [...s].sort()
+    return [...s].sort(compareProvinces)
   }, [facetsByTrip])
 
   const years = useMemo(() => {
