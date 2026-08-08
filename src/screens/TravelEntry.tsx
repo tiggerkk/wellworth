@@ -393,8 +393,12 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
   }
 
   // All itinerary handlers below follow one shape: mutate local state for instant feedback, persist in
-  // the background, and `bumpTravel()` ONLY on a write error (forces a refetch → the sync effect
-  // re-seeds from server truth). No bump on success, so they never pay the full-bundle refetch.
+  // the background, and `bumpTravel()` on a write error (forces a refetch → the sync effect re-seeds
+  // from server truth). Handlers whose fields feed Dashboard/Trips-filter facets (stop city/country/
+  // province, day dates) ALSO bump on success, since those screens read from a separate cached fetch
+  // that this screen's local state doesn't invalidate on its own. Handlers with no cross-screen stat
+  // impact (completion, day creation before stops exist, expenses) skip the success-path bump to avoid
+  // paying the full-bundle refetch for changes nothing else needs to see.
 
   async function addDay() {
     // Default the new day to the day after the previous (dated) day.
@@ -455,6 +459,8 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
     try {
       await deleteDay(dayId)
       void recomputeTripDates(trip.id)
+      // Deletes that day's stops (city/province facets) and possibly shifts trip dates.
+      bumpTravel()
     } catch {
       bumpTravel()
     }
@@ -490,6 +496,8 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
         setStops((st) => [...st, ...created])
       }
       if (day.day_date) void recomputeTripDates(trip.id)
+      // New stops carry city/country/province facets that Dashboard/Trips-filter need to see.
+      bumpTravel()
     } catch {
       bumpTravel()
     }
@@ -503,6 +511,8 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
     try {
       await updateDay(dayId, { day_date: iso })
       void recomputeTripDates(trip.id)
+      // Day dates feed Dashboard's tripsThisYear/daysTravelled — invalidate that cache too.
+      bumpTravel()
     } catch {
       bumpTravel()
     }
@@ -512,6 +522,8 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
     setStops((st) => st.filter((x) => x.id !== stopId))
     try {
       await deleteStop(stopId)
+      // A removed stop's city/country/province facet must drop from Dashboard/Trips-filter caches.
+      bumpTravel()
     } catch {
       bumpTravel()
     }
@@ -959,12 +971,15 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
           onClose={() => setStopEditor(null)}
           onSaved={(saved) => {
             setStopEditor(null)
-            // Merge the saved stop optimistically: replace on edit, append on add (no refetch).
+            // Merge the saved stop optimistically: replace on edit, append on add (no refetch here).
             setStops((st) =>
               st.some((x) => x.id === saved.id)
                 ? st.map((x) => (x.id === saved.id ? saved : x))
                 : [...st, saved],
             )
+            // Stop city/country/province feed Dashboard's province/city counts and the Trips-list
+            // filter dropdowns — invalidate that separate cache so they pick up the change.
+            bumpTravel()
           }}
           onDelete={
             stopEditor.stop

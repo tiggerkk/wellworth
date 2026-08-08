@@ -15,6 +15,51 @@ import { searchZhVariants } from './zh-query'
 const CANONICAL = new Set<string>(CHINA_PROVINCES)
 
 /**
+ * Cities whose province can't be inferred from `snapProvince` (no admin-1 string resolves, and the
+ * city name itself isn't a `CHINA_PROVINCES` entry) but should still count toward the province map —
+ * currently Taiwanese cities, which Nominatim/geocode assist may tag with a country only.
+ */
+const CITY_PROVINCE_OVERRIDES: Record<string, ChinaProvince> = {
+  台北: '台湾',
+  新北: '台湾',
+  桃园: '台湾',
+  台中: '台湾',
+  台南: '台湾',
+  高雄: '台湾',
+  基隆: '台湾',
+  新竹: '台湾',
+  嘉义: '台湾',
+  花莲: '台湾',
+  宜兰: '台湾',
+  南投: '台湾',
+  屏东: '台湾',
+  台东: '台湾',
+  云林: '台湾',
+  彰化: '台湾',
+  苗栗: '台湾',
+  澎湖: '台湾',
+  金门: '台湾',
+  连江: '台湾',
+}
+
+/**
+ * Fallback for when normal province resolution (`snapProvince` on a geocoded/typed admin-1 string)
+ * comes back null. Order: (1) `CITY_PROVINCE_OVERRIDES` for cities that don't share their province's
+ * name (台北 → 台湾); (2) the city name itself if it IS a `CHINA_PROVINCES` entry (北京, 澳门, 台湾—
+ * municipalities/SARs/regions that are their own "province"); (3) null, stored as-is for non-China
+ * cities or unrecognized places.
+ */
+export function resolveProvinceFallback(
+  city: string,
+  province: ChinaProvince | string | null,
+): ChinaProvince | string | null {
+  if (province) return province
+  if (CITY_PROVINCE_OVERRIDES[city]) return CITY_PROVINCE_OVERRIDES[city]
+  if (CANONICAL.has(city)) return city as ChinaProvince
+  return null
+}
+
+/**
  * Aliases → canonical `CHINA_PROVINCES` name. Covers DataV/printed Chinese forms (suffixed names and
  * the ethnic-qualified autonomous regions, which a naive suffix-strip would miss) and the English
  * admin-1 names Nominatim returns. Lower-cased English is matched separately (see `snapProvince`).

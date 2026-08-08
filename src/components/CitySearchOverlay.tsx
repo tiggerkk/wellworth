@@ -13,7 +13,12 @@ import { PrimaryButton } from './PrimaryButton'
 import { useAsync } from '../hooks/useAsync'
 import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import { listRememberedCities, rememberCity } from '../data/travel'
-import { geocodeCity, snapProvince, type GeocodeSuggestion } from '../lib/travel-places'
+import {
+  geocodeCity,
+  snapProvince,
+  resolveProvinceFallback,
+  type GeocodeSuggestion,
+} from '../lib/travel-places'
 import { CHINA_PROVINCES } from '../constants/travel'
 import type { ResolvedCity } from '../lib/travel'
 import { foldZh } from '../lib/zh-fold'
@@ -101,10 +106,13 @@ export function CitySearchOverlay({
   }
 
   function selectSuggestion(s: GeocodeSuggestion) {
+    const city = s.city || query.trim()
+    const country = s.country || 'China'
+    const snapped = isChina(country) ? snapProvince(s.province) : (s.province ?? null)
     void confirm({
-      city: s.city || query.trim(),
-      country: s.country || 'China',
-      province: isChina(s.country) ? snapProvince(s.province) : (s.province ?? null),
+      city,
+      country,
+      province: isChina(country) ? resolveProvinceFallback(city, snapped) : snapped,
       lat: s.lat,
       lng: s.lng,
     })
@@ -113,10 +121,16 @@ export function CitySearchOverlay({
   function useManual() {
     const city = query.trim()
     if (!city || !country.trim()) return
+    const trimmedCountry = country.trim()
+    const snapped = isChina(trimmedCountry)
+      ? snapProvince(province)
+      : province.trim() || null
     void confirm({
       city,
-      country: country.trim(),
-      province: isChina(country) ? snapProvince(province) : province.trim() || null,
+      country: trimmedCountry,
+      province: isChina(trimmedCountry)
+        ? resolveProvinceFallback(city, snapped)
+        : snapped,
       lat: null,
       lng: null,
     })

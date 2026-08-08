@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { cityFromAddress, snapProvince, toSuggestion } from './travel-places'
+import {
+  cityFromAddress,
+  resolveProvinceFallback,
+  snapProvince,
+  toSuggestion,
+} from './travel-places'
 
 describe('snapProvince', () => {
   it('passes through canonical names', () => {
@@ -44,6 +49,27 @@ describe('cityFromAddress', () => {
     expect(cityFromAddress({ city: 'Wuhan', county: 'X' }, 'fb')).toBe('Wuhan')
     expect(cityFromAddress({ town: 'Jingzhou' }, 'fb')).toBe('Jingzhou')
     expect(cityFromAddress({}, 'fallback')).toBe('fallback')
+  })
+})
+
+describe('resolveProvinceFallback', () => {
+  it('passes through an already-resolved province untouched', () => {
+    expect(resolveProvinceFallback('荆州', '湖北')).toBe('湖北')
+  })
+  it('maps Taiwanese cities to 台湾 via the override table', () => {
+    expect(resolveProvinceFallback('台北', null)).toBe('台湾')
+    expect(resolveProvinceFallback('高雄', null)).toBe('台湾')
+    expect(resolveProvinceFallback('台中', null)).toBe('台湾')
+  })
+  it('falls back to the city name when it is itself a China province-level division', () => {
+    expect(resolveProvinceFallback('北京', null)).toBe('北京')
+    expect(resolveProvinceFallback('澳门', null)).toBe('澳门')
+    expect(resolveProvinceFallback('台湾', null)).toBe('台湾')
+    expect(resolveProvinceFallback('上海', null)).toBe('上海')
+  })
+  it('returns null for a city with no known province', () => {
+    expect(resolveProvinceFallback('Paris', null)).toBeNull()
+    expect(resolveProvinceFallback('荆州', null)).toBeNull()
   })
 })
 

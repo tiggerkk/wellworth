@@ -8,7 +8,7 @@
  * (`ImportTravelTripsSheet`) confirms trip/day/stop counts + pooled new cities before writing drafts the
  * owner finishes in Edit Trip.
  */
-import { snapProvince } from './travel-places'
+import { snapProvince, resolveProvinceFallback } from './travel-places'
 import { isChinaCountry } from './travel-stats'
 import {
   STOP_TYPES,
@@ -117,12 +117,17 @@ function toStop(raw: unknown): StopDraft {
   const type = (typeStr && STOP_TYPE_SET.has(typeStr) ? typeStr : 'other') as StopType
   const country = strOrNull(o.country)
   const rawProvince = strOrNull(o.province)
-  // Chinese stops snap to a canonical CHINA_PROVINCES name; foreign provinces are kept verbatim.
-  const province = isChinaCountry(country) ? snapProvince(rawProvince) : rawProvince
+  const city = strOrNull(o.city)
+  // Chinese stops snap to a canonical CHINA_PROVINCES name (falling back to a manual city→province
+  // override or the city's own name when it IS a province-level division); foreign provinces are
+  // kept verbatim.
+  const snapped = isChinaCountry(country) ? snapProvince(rawProvince) : rawProvince
+  const province =
+    isChinaCountry(country) && city ? resolveProvinceFallback(city, snapped) : snapped
   return {
     type,
     description: strOrNull(o.description),
-    city: strOrNull(o.city),
+    city,
     country,
     province,
     details: strOrNull(o.details),

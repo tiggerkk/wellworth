@@ -59,7 +59,7 @@ Header top-left: **✕ Close** (returns to origin, Escape does the same). Edit h
 ### City Picker (modal, from a Stop's City Lookup)
 
 - Seeded with the stop's current City; searches as you type: **remembered cities** match instantly, and a **Nominatim** lookup runs automatically (debounced) and lists **Search results**.
-- Selecting any result resolves City / Province / Country (province snapped to **CHINA_PROVINCES** for China), caches it in `remembered_city`, and returns it to the stop.
+- Selecting any result resolves City / Province / Country (province snapped to **CHINA_PROVINCES** for China, then `resolveProvinceFallback` applies if snapping came back empty: a `CITY_PROVINCE_OVERRIDES` lookup for cities that don't share their province's name — e.g. Taiwanese cities like 台北/高雄/台中 → 台湾 — else the city's own name when it IS a `CHINA_PROVINCES` entry, e.g. 北京/澳门/台湾), caches it in `remembered_city`, and returns it to the stop.
 - Manual entry is the fallback: the **Enter manually…** disclosure toggle at the bottom is **collapsed by default** (preventing accidental use when search results are present); it **auto-expands when search finds nothing**.
 - When expanded: Country (defaults to `中国`, recognised by `isChina()`), Province (a CHINA_PROVINCES select for China, else free text), and a **Use "city"** PrimaryButton.
 
