@@ -72,9 +72,28 @@ docs/                # documentation
 - `AppShell` renders the per-module `BottomNav` (a leading **Home** item + the module's tabs) only when in a module; the hub and global Settings have none.
 - Modal **sheets** use React Router's **background-location** pattern — opening a sheet stashes the current location as `state.background`, and `AppShell` paints that tab (via `TAB_FOR_PATH`) behind the sheet. New sheets live under their module's prefix and are opened with `useSheetNavigate`.
 
+### Sheet mechanics: `useSheetNavigate`, `TAB_FOR_PATH`, `variant="full"`
+
+- **`useSheetNavigate()`** returns an `openSheet(to, options?)` function. It reads the _current_ location's `state.background` and, if present, carries it forward instead of overwriting it with the current location — this is what lets a chain of stacked sheets (e.g. Diary → Food Picker → Food Detail) all remember the _original_ screen, not just their immediate predecessor, so closing the innermost sheet doesn't strand the user on a sheet with no real content behind it. Call it instead of the bare `navigate()` for every routed sheet open; using `navigate()` directly skips this and leaves `state.background` unset. An optional second argument, `{ state }`, merges extra caller data (e.g. a Dashboard's already-fetched rows) into the sheet's `location.state` alongside `background` — see "Sheet data: fetch vs. route `state`" below.
+- **`TAB_FOR_PATH`** (in `AppShell.tsx`) is a `Record<string, ReactNode>` mapping a background location's `pathname` to the component that should render behind an open sheet — e.g. `'/travel': <TravelDashboard />`. `AppShell` looks up `background.pathname` in this map and renders the result inside `<main>`, underneath the sheet's own `outlet`. Every top-level module Dashboard/Listing/Settings screen that can have a sheet opened on top of it needs an entry here, or the sheet will render over a blank `<main>` — a route added to `router.tsx` doesn't automatically get one; it's a second, separate registration. Only _static_ paths can be keys (no `:id` params), which is why dynamic routes like `/networth/fund/:id` can never appear as a background themselves — they're always the sheet, never the tab painted behind one.
+- **`variant="full"`** on `Sheet` means the sheet is a fixed, opaque, `inset-0`, `z-30` overlay — it fully occludes whatever `TAB_FOR_PATH` painted behind it. Every `Sheet` in the codebase currently uses this variant (there is no `variant="bottom"` sheet in use), which means `background`/`TAB_FOR_PATH` has no _visible_ effect today — the sheet always fully covers it. It still matters for a chain of stacked sheets sharing one common background (see `useSheetNavigate` above) and for making the background tab available already-mounted (via `useAsync`'s stale-while-revalidate) if a future sheet is ever built as `variant="bottom"`, where the tab would show around the sheet's edges. Bear this in mind if a screen ever seems to work fine after skipping `useSheetNavigate()` or a `TAB_FOR_PATH` entry — it will look correct for a full-screen sheet but silently break the moment that sheet (or the pattern it's copied from) becomes `variant="bottom"`.
+
+### Routed sheet vs. local overlay
+
+Two different mechanisms both present a screen "on top of" another, and picking the wrong one either loses draft data or adds an unnecessary route:
+
+- **Routed sheet** (`Sheet`/`SheetLoader`, a real route under the module's prefix, opened with `useSheetNavigate`) — use when there's no unsaved draft state on the calling screen that a remount would destroy. Dashboards, Listings, and Settings screens all qualify: they hold no in-progress edits, so painting them as the `TAB_FOR_PATH` background and mounting the sheet as a sibling route is safe. Categories 1, 2, 4's picker row, 5, and 6 above are all routed sheets.
+- **Local overlay** (`OverlayTop`/`OverlayBottom`, rendered directly in the calling component's own tree, no route) — use when the calling screen is an unsaved Entry/Diary form. A routed sheet would stash the Entry screen as a background location; if the person then reopens or refreshes anything that remounts it (or the sheet closes via `navigate(-1)` popping past it), the in-progress draft in that form's local `useState` is gone, because a fresh mount starts from the saved record again, not the edited-but-unsaved one. Keeping the overlay inside the same component tree means the draft state it reads from and writes back to never unmounts. See "Local overlays" above for the full list and how they group by purpose.
+
+The dividing line is **"does the caller hold unsaved draft state a remount would lose,"** not visual complexity or whether the content is a table vs. a form — a Dashboard's read-only drill-in (Category 6) and an Entry form's read-only drill-in (a local overlay) can look nearly identical on screen and still belong in different buckets for this reason.
+
+### Sheet data: fetch vs. route `state`
+
+Most routed sheets fetch their own data via `useAsync` inside `SheetLoader`/`EntryLoader`, keyed off a route param (e.g. `NetWorthFundDetailSheet` fetches by `:id`). Where the opening screen already holds the exact data the sheet needs — same shape, already loaded, no id-based refetch required — `useSheetNavigate`'s `{ state }` option can pass it directly instead, avoiding a redundant round trip. `TravelStatsProvincesSheet`/`TravelStatsCitiesSheet` are the current example: `TravelDashboard` passes its already-loaded `trips`/`facetRows` through route `state`, and the sheets read `location.state` directly rather than calling `useAsync`. This only works one hop deep (the data doesn't survive a page refresh or a direct URL visit, since `location.state` is gone in both cases) — sheets built this way should render a graceful empty/error state if `location.state` is missing, not assume it's always present.
+
 ### Screen-flow categories
 
-Every module's New/Edit/View navigation follows one of these four shapes.
+Every module's New/Edit/View navigation follows one of these six shapes.
 
 **Category 1 — has a "View Item" page** (Medical Report, with Dashboard)
 
@@ -107,6 +126,32 @@ Every module's New/Edit/View navigation follows one of these four shapes.
 | Diary Food/Activity Detail | Diary Food/Activity Picker or Diary | <             | Go to Diary              | Return to Source   | Yes    |
 | New Food/Activity          | Library (+ FAB)                     | X             | Go to Edit Food/Activity | Return to Library  | Yes    |
 | Edit Food/Activity         | Library                             | <             | Go to Library            | Return to Library  | Yes    |
+
+**Category 5 — Settings sub-sheet** (every module's Settings screen: field visibility, category/type lists, CSV/JSON import, and other config)
+
+| Screen             | Entry    | Top-Left Icon | Post-Save Action                | Post-Cancel Action | Routed |
+| ------------------ | -------- | ------------- | ------------------------------- | ------------------ | ------ |
+| Settings sub-sheet | Settings | <             | Stay or Go to Settings (varies) | Return to Settings | Yes    |
+
+The largest bucket in the codebase by file count — every `*FieldsSheet`, `*CategoriesSheet`/`*TypesSheet`, `Import*Sheet`, `NetWorthLiquidAssetTypesSheet`/`NetWorthVisibleAssetTypesSheet`, `Wellness*NutrientsSheet`, `VisibleModulesSheet`, `MedicalLockSheet`, `MedicalOrderSheet`, `MedicalTrackedTestsSheet`, `MedicalReportTypesSheet`, `InsuranceProvidersSheet`, `JournalMoodsSheet`, `LiteraturePoemFieldsSheet`/`LiteratureWriterFieldsSheet` falls here. All are opened from their module's Settings screen via `useSheetNavigate`, all use `SheetLoader`'s default `icon="back"` (none override it to `"close"`), and all return to Settings on both Save and Cancel — there's no separate post-save destination to distinguish, unlike Categories 1/2/4's New/Edit split. Import sheets follow the same shape one level deeper (Settings → Import list → an individual `Import*Sheet`) but the entry/icon/return rules are identical.
+
+**Category 6 — View-only drill-in, no Edit page** (opened from a Dashboard or Listing, not Settings; distinct from Category 1 because there is no corresponding Edit screen, and from Category 3 because it's a routed sheet layered over a Dashboard rather than the Listing-to-View flow itself)
+
+| Screen        | Entry     | Top-Left Icon | Post-Save Action | Post-Cancel Action | Routed |
+| ------------- | --------- | ------------- | ---------------- | ------------------ | ------ |
+| Drill-in view | Dashboard | <             | N/A (read-only)  | Return to Source   | Yes    |
+
+`NetWorthFundDetailSheet` (fund performance detail), `InsurancePolicyDetailSheet` (policy detail), and `TravelStatsProvincesSheet`/`TravelStatsCitiesSheet` (KPI-tile drill-ins) are the current members. All are opened via `useSheetNavigate` from their Dashboard, all `variant="full"`. The Travel stats pair additionally passes its data through route `state` (see "Sheet data: fetch vs. route state" below) rather than re-fetching.
+
+### Local overlays
+
+Distinct from routed sheets: a local overlay (`OverlayTop`/`OverlayBottom`) stays inside the calling screen's own React tree instead of becoming a new route, so it never remounts — and never risks dropping — the caller's in-progress draft. Every local overlay in the codebase is opened from an unsaved Entry/Diary form (or nested inside another local overlay); this is the deciding factor over a routed sheet, not screen complexity or table-vs-form content. See "Routed sheet vs. local overlay" below for the full rule.
+
+- **Search pickers** — select a value and hand it back to the caller's draft: `BookSearchOverlay`, `CitySearchOverlay`, `FoodSearchOverlay`, `TitleSearchOverlay`, `MedicalTestPickerOverlay`.
+- **Draft-scoped editors** — edit a nested piece of the current draft in place: `NotesEditorOverlay`, `StopEditorOverlay`, `ImportScheduleOverlay`, `QuoteSourceLinkOverlay`.
+- **Draft-scoped drill-in views** — read-only detail computed from the draft or from data the caller already holds: `DayExpensesOverlay`, `InsuranceCompareOverlay`, `WellnessNutrientFoodsOverlay`, `WellnessDailyReportOverlay` (`WellnessNutrientFoodsOverlay` nests inside this one).
+
+`Calendar`, `MonthPicker`, and `ConfirmDialog` are smaller reusable popovers rather than full local-overlay screens (no `OverlayTop`/`OverlayBottom`), so they aren't screen-flow entries in the sense above, but they follow the same "stay in the caller's tree" principle for the same reason.
 
 ### Other navigation rules
 

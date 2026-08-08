@@ -1,5 +1,4 @@
 import { Suspense, useCallback, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router'
 import { IconCalendarPlus, IconChevronDown } from '@tabler/icons-react'
 import { lazyWithReload } from '../lib/lazy-with-reload'
 import { EmptyState } from '../components/EmptyState'
@@ -8,6 +7,7 @@ import { routes } from '../constants/routes'
 import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useProfile } from '../hooks/useProfile'
+import { useSheetNavigate } from '../hooks/useSheetNavigate'
 import { useNetWorthVersion } from '../lib/networth-refresh'
 import { listMonthlyTypeTotals, listEntriesBySnapshot } from '../data/asset-entry'
 import { getLatestSnapshot } from '../data/networth-snapshot'
@@ -125,7 +125,7 @@ function buildInsuranceAgg(
 export function NetWorthDashboard() {
   const { session } = useAuth()
   const userId = session?.user.id
-  const navigate = useNavigate()
+  const openSheet = useSheetNavigate()
   const { data: profile } = useProfile()
   const version = useNetWorthVersion()
   const [mode, setMode] = useState<'total' | 'type'>('total')
@@ -372,7 +372,7 @@ export function NetWorthDashboard() {
                 {funds.map((f) => (
                   <button
                     key={f.id}
-                    onClick={() => navigate(routes.networth.fund(f.id))}
+                    onClick={() => openSheet(routes.networth.fund(f.id))}
                     className="flex w-full items-center gap-3 border-b border-border px-4 py-2.5 text-left last:border-b-0 active:bg-input/40"
                   >
                     <span className="min-w-0 flex-1 truncate text-body text-text-primary">

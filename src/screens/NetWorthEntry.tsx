@@ -1,5 +1,4 @@
 import { useCallback, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router'
 import {
   IconChevronLeft,
   IconChevronRight,
@@ -351,7 +350,6 @@ function EntryForm({
   liquidTypes: AssetType[]
   providers: InsuranceProviderConfig[]
 }) {
-  const navigate = useNavigate()
   const openSheet = useSheetNavigate()
   const [liquidOnly, setLiquidOnly] = useLiquidOnly()
   const [rows, setRows] = useState<EntryDraft[]>(() => cloneRows(initial.rows))
@@ -735,7 +733,7 @@ function EntryForm({
                       month={month}
                       providers={providers}
                       rowBase={rowBase}
-                      navigate={navigate}
+                      openSheet={openSheet}
                     />
                   )}
                 </>
@@ -878,13 +876,13 @@ function InsuranceRows({
   month,
   providers,
   rowBase,
-  navigate,
+  openSheet,
 }: {
   rows: EntryDraft[]
   month: string
   providers: InsuranceProviderConfig[]
   rowBase: (r: EntryDraft) => number
-  navigate: ReturnType<typeof useNavigate>
+  openSheet: ReturnType<typeof useSheetNavigate>
 }) {
   // Group by the configured providers in order, then any orphan-keyed rows (deleted providers) last.
   const orphanKeys = [
@@ -909,7 +907,7 @@ function InsuranceRows({
               <button
                 key={r.clientId}
                 onClick={() =>
-                  navigate(
+                  openSheet(
                     `${routes.networth.policy(r.details.policy_id ?? '')}?month=${month}`,
                   )
                 }

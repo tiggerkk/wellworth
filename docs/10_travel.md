@@ -5,6 +5,11 @@
 ### Dashboard (`/travel`)
 
 - **Six count tiles** over `status = visited` trips, **3 columns × 2 rows, filled column-first**: **中国省份** (China provinces, `N / 34` suffix) · **中国城市** (China cities) | **Countries** · **Cities** | **Trips This Year** · **Days Travelled** — distinct counts. The province count is intersected with `CHINA_PROVINCES`, so it never exceeds 34; Days Travelled is the inclusive span of dated visited trips. No standalone province-progress bar (removed — duplicated the 中国省份 tile).
+- **中国省份 / 中国城市 KPI drill-ins**: tapping either tile opens a routed sheet (Category 6, `<` back — see `02_tech_spec.md` → Screen-flow categories) with the per-province or per-city trip breakdown behind that count. Both sheets read the Dashboard's already-loaded `trips`/`facetRows` via route `state` (no fetch of their own — see `02_tech_spec.md` → "Sheet data: fetch vs. route `state`").
+  - **`TravelStatsProvincesSheet`** (`/travel/stats/provinces`): a table of visited provinces (**中国省份** · **# of Trips**), sorted by trip count descending, then province **group order** ascending as the tie-break (see `compareProvinces` below) — plus a **Not Yet Visited** list of the remaining provinces, in the same group order.
+  - **`TravelStatsCitiesSheet`** (`/travel/stats/cities`): a table of visited cities (**中国省份** · **中国城市** · **# of Trips**), grouped by province in the same fixed group order, then city ascending within each province — independent of trip counts, so the layout doesn't reshuffle between opens.
+  - A province or city visited more than once **within the same trip** (e.g. two stops in different cities of the same province, or two stops in the same city) still counts as **1 trip** — both tables dedupe per trip before counting. Computed by `computeProvinceVisitStats`/`computeCityVisitStats` in `src/lib/travel-stats.ts`.
+  - **`compareProvinces`** (`src/lib/travel-stats.ts`) orders province names **municipalities → provinces → autonomous regions → SARs** (the same grouping `CHINA_PROVINCES` is declared in), rather than alphabetically; used by both drill-in sheets and by the Trips list's province filter dropdown (see Trips section below). A non-canonical name sorts after all canonical provinces.
 - **Shelves**: **Recently Visited** (reverse-chron, with a "See all trips" link), **Planning**, **Want to Visit** — each a card row (cover thumbnail · name · date range · primary region · status chip), tapping goes to Edit Trip. Empty overall → **New Trip** CTA (shared EmptyState).
 - **Status chip palette** (`TRIP_STATUS_CHIP`): Want = purple (`plan`), Planning = orange (`warning`), Visited = teal (`positive`) — via the shared `StatusChip`.
 
@@ -19,7 +24,7 @@
 
 - **Search bar**: matches trip name, city, companion; **Filter button** to the right.
 - **SortControl**, **Clear Filters button**: Sort over { Date, Country, Province, City, Status, Trip Name } with an **asc/desc** toggle (country/province/city use the trip's alphabetically-first value; undated trips last); default is **Date** descending.
-- **Filter panel** is label-free: **Any Country**, **Any Status**, **Any Rating** (minimum: Any / 1★+ … / 5★), **Any Year**.
+- **Filter panel** is label-free: **Any Country**, **Any Province** (options in `compareProvinces` group order — municipalities → provinces → autonomous regions → SARs — not alphabetical), **Any Status**, **Any Rating** (minimum: Any / 1★+ … / 5★), **Any Year**.
 - Each row carries:
   - Line 1: **cover thumbnail · trip name**.
   - Line 2: **status chip · date range · primary region**.
