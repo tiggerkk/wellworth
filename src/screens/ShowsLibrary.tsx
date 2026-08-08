@@ -121,6 +121,7 @@ export function ShowsLibrary() {
     setOverride((prev) => (prev ?? shows ?? []).filter((s) => s.id !== id))
     try {
       await deleteShow(id)
+      bumpShows() // invalidate the shared cache (ShowsDashboard reads the same list) on success too
     } catch {
       bumpShows() // resync from server on a failed delete
     }
@@ -132,6 +133,7 @@ export function ShowsLibrary() {
     )
     try {
       await updateShow(id, { is_favorite: next })
+      bumpShows() // invalidate the shared cache (ShowsDashboard reads the same list) on success too
     } catch {
       bumpShows() // resync from server on a failed write
     }

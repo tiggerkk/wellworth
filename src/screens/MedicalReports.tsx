@@ -90,6 +90,7 @@ export function MedicalReports() {
     setOverride((prev) => (prev ?? data ?? []).filter((r) => r.id !== id))
     try {
       await deleteReport(id)
+      bumpMedical() // invalidate the Dashboard's independent subscription on success too
     } catch {
       bumpMedical() // resync from server on a failed delete
     }

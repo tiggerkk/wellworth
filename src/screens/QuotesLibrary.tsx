@@ -118,6 +118,7 @@ export function QuotesLibrary() {
     setOverride((prev) => (prev ?? quotes ?? []).filter((q) => q.id !== id))
     try {
       await deleteQuote(id)
+      bumpQuotes() // invalidate the shared cache (QuotesZen reads the same list) on success too
     } catch {
       bumpQuotes() // resync from server on a failed delete
     }
@@ -129,6 +130,7 @@ export function QuotesLibrary() {
     )
     try {
       await updateQuote(id, { is_favorite: next })
+      bumpQuotes() // invalidate the shared cache (QuotesZen reads the same list) on success too
     } catch {
       bumpQuotes() // resync from server on a failed write
     }

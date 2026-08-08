@@ -722,10 +722,16 @@ function PolicyForm({
                   <ConfirmDeleteAction
                     label="Delete schedule version"
                     onDelete={() =>
-                      void deleteSchedule(id, selected.id).then(() => {
-                        bumpNetWorth()
-                        void reload()
-                      })
+                      void deleteSchedule(id, selected.id)
+                        .then(() => {
+                          bumpNetWorth()
+                          void reload()
+                        })
+                        .catch((e: unknown) => {
+                          showToast(
+                            errorMessage(e, 'Could not delete the schedule version.'),
+                          )
+                        })
                     }
                   />
                 )}

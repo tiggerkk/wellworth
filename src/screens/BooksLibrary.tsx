@@ -108,6 +108,7 @@ export function BooksLibrary() {
     setOverride((prev) => (prev ?? books ?? []).filter((b) => b.id !== id))
     try {
       await deleteBook(id)
+      bumpBooks() // invalidate the shared cache (BooksDashboard reads the same list) on success too
     } catch {
       bumpBooks() // resync from server on a failed delete
     }
@@ -119,6 +120,7 @@ export function BooksLibrary() {
     )
     try {
       await updateBook(id, { is_favorite: next })
+      bumpBooks() // invalidate the shared cache (BooksDashboard reads the same list) on success too
     } catch {
       bumpBooks() // resync from server on a failed write
     }

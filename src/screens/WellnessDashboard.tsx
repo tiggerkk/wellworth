@@ -8,10 +8,12 @@ import { EmptyState } from '../components/EmptyState'
 import { WELLNESS_RANGES, WELLNESS_RANGE_DEFAULT } from '../constants/wellness'
 import { routes } from '../constants/routes'
 import { todayLocal } from '../lib/date'
+import { useDiaryVersion } from '../lib/wellness-diary-refresh'
 
 export function WellnessDashboard() {
   const { session } = useAuth()
   const userId = session?.user.id
+  const version = useDiaryVersion()
   const [rangeKey, setRangeKey] = useState(WELLNESS_RANGE_DEFAULT)
   const [menuOpen, setMenuOpen] = useState(false)
 
@@ -19,9 +21,10 @@ export function WellnessDashboard() {
   const { from, to } = option.toRange(todayLocal())
 
   const fn = useCallback(() => {
+    void version // refetch after a Diary food/activity log, edit, or delete (bumpDiary)
     if (!userId) return Promise.resolve([])
     return listEntrySummariesByRange(userId, from, to)
-  }, [userId, from, to])
+  }, [userId, from, to, version])
   const { data: entries, loading, error } = useAsync(fn)
 
   return (
