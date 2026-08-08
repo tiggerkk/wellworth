@@ -280,6 +280,7 @@ export async function cloneEntriesToDay(
     return sets.map((s) => ({
       entry_id: row.id,
       exercise: s.exercise,
+      exercise_order: s.exercise_order,
       set_number: s.set_number,
       reps: s.reps,
       weight: s.weight,
