@@ -36,9 +36,9 @@ export function TravelStatsCitiesSheet() {
       {(d) => (
         <div className="flex-1 overflow-y-auto px-4 py-4">
           <div className="overflow-hidden rounded-card border border-border bg-surface">
-            <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_5rem] gap-2 border-b border-border px-3 py-2 text-caption uppercase tracking-[0.06em] text-text-tertiary">
-              <span>中国省份</span>
-              <span>中国城市</span>
+            <div className="grid grid-cols-[5.5rem_1fr_5rem] gap-2 border-b border-border px-3 py-2 text-caption uppercase tracking-[0.06em] text-text-tertiary">
+              <span className="text-center">中国省份</span>
+              <span className="text-center">中国城市</span>
               <span className="text-center"># of Trips</span>
             </div>
             <div className="divide-y divide-border">
@@ -50,12 +50,12 @@ export function TravelStatsCitiesSheet() {
                 d.map((row) => (
                   <div
                     key={`${row.province}\u0000${row.city}`}
-                    className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_5rem] gap-2 px-3 py-2.5"
+                    className="grid grid-cols-[5.5rem_1fr_5rem] gap-2 px-3 py-2.5"
                   >
-                    <span className="min-w-0 truncate text-body text-text-secondary">
+                    <span className="min-w-0 truncate text-center text-body text-text-secondary">
                       {row.province}
                     </span>
-                    <span className="min-w-0 truncate text-body text-text-primary">
+                    <span className="min-w-0 truncate text-center text-body text-text-primary">
                       {row.city}
                     </span>
                     <span className="text-center text-body text-text-secondary">
