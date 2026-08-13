@@ -106,17 +106,24 @@ export async function createEntry(
 }
 
 /**
- * Persist a new order for a group's entries (sort_order = array index) in ONE round trip. Callers
- * pass the already-fetched rows in their new order (the Diary already holds them for rendering) —
- * `upsert` resends each full row so its NOT NULL columns stay satisfied; only `sort_order` actually
- * changes. Previously this issued one `update` per row via `Promise.all`, an N-request fan-out for
- * what a drag-to-reorder is really just one statement.
+ * Persist a new order for a group's entries in ONE round trip. Callers pass the already-fetched
+ * rows in their new order (the Diary already holds them for rendering) — `upsert` resends each
+ * full row so its NOT NULL columns stay satisfied; only `sort_order` actually changes. Previously
+ * this issued one `update` per row via `Promise.all`, an N-request fan-out for what a
+ * drag-to-reorder is really just one statement.
+ *
+ * `sort_order` is a day-wide column, not per-group, so stamping raw `0..n` here would collide with
+ * every other group's own `0..n` range (harmless for filtering, since a stable sort still keeps
+ * each group internally consistent, but fragile — any future day-wide consumer that doesn't also
+ * tie-break on `created_at` would misorder groups). `Date.now()`-based stamping keeps every row's
+ * `sort_order` unique day-wide while still being monotonically increasing in the new order.
  */
 export async function reorderEntries(entries: Tables<'diary_entry'>[]): Promise<void> {
   if (entries.length === 0) return
+  const base = Date.now()
   const rows: TablesInsert<'diary_entry'>[] = entries.map((e, i) => ({
     ...e,
-    sort_order: i,
+    sort_order: base + i,
   }))
   const { error } = await supabase.from('diary_entry').upsert(rows, { onConflict: 'id' })
   if (error) throw error

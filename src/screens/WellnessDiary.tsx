@@ -152,7 +152,11 @@ export function WellnessDiary() {
   // --- Day-level actions (header, top-right) ---
 
   async function copyDay() {
-    const chosen = entries ?? []
+    // Use each group's effective (post-drag) order, not the raw fetched list, so a Copy that
+    // follows a reorder reflects what's on screen even if the background persist hasn't landed yet.
+    const chosen = DIARY_GROUPS.flatMap((group) =>
+      orderedEntries(group.key, entriesFor(group.key)),
+    )
     if (chosen.length === 0) return
     setDiaryClipboard(await buildClipboard(chosen))
     showToast(
@@ -177,7 +181,8 @@ export function WellnessDiary() {
   // --- Group-level actions (group header) ---
 
   async function copyGroup(group: DiaryGroup) {
-    const chosen = entriesFor(group.key)
+    // Use the effective (post-drag) order — see copyDay.
+    const chosen = orderedEntries(group.key, entriesFor(group.key))
     if (chosen.length === 0) return
     setDiaryClipboard(await buildClipboard(chosen))
     showToast(

@@ -22,7 +22,7 @@
 Copy granularity is a whole group or a whole day, via the header icons. The clipboard is an in-app, in-memory store (`src/lib/diary-clipboard.ts`) that survives sheets but not reloads; strength activities carry their `strength_set` rows.
 
 - **Delete** (group or day) — clears that group's / the day's entries after a confirm. Disabled when there's nothing to delete.
-- **Copy** (group or day) — replaces the clipboard with those entries (each remembers its **own** group). Fires a toast (e.g. "Copied Breakfast · 3 items"). Disabled when the source is empty.
+- **Copy** (group or day) — replaces the clipboard with those entries in their current on-screen order (each remembers its **own** group), including any drag-reorder not yet reflected in the fetched `sort_order` (the copy reads the same effective per-group order the screen renders, not the raw fetched list). Fires a toast (e.g. "Copied Breakfast · 3 items"). Disabled when the source is empty.
 - **Paste** — enabled whenever the clipboard holds any item (across a different group **and/or** day). A **group Paste** drops every clipboard item into the clicked group; a **day Paste** keeps each item's original group. Both are **additive** (never overwrite existing rows) and **one-shot** — the clipboard is cleared after a paste, so every Paste icon disables until the next Copy. Enabled Paste icons take an active tint (`text-positive`) while the clipboard holds items.
 
 ### Diary Food Picker (modal, from the Diary group's `+`)
@@ -246,7 +246,7 @@ Shared external APIs).
 - `energy_kcal` NUMERIC — negative for activities
 - `label` TEXT — denormalized display name (snapshot; stable even after soft-delete of source)
 - `nutrients` JSONB — snapshot of this entry's nutrient contribution (stable after soft-delete)
-- `sort_order` NUMERIC NOT NULL DEFAULT 0 — manual order within a (`day`, `group_name`). Queries order by (`sort_order`, `created_at`). New rows get `Date.now()` (a large epoch value) so they append after any reordered rows; a drag (`reorderEntries`) renumbers a group's rows to small `0..n` indices, and `cloneEntriesToDay` stamps ascending values on pasted clones so they append in order.
+- `sort_order` NUMERIC NOT NULL DEFAULT 0 — manual order within a (`day`, `group_name`), though the column itself is day-wide, not group-scoped. Queries order by (`sort_order`, `created_at`). New rows get `Date.now()` (a large epoch value) so they append after any reordered rows; a drag (`reorderEntries`) renumbers a group's rows to `Date.now()`-based values (kept unique day-wide, not raw `0..n`, so groups can't collide into the same range), and `cloneEntriesToDay` stamps ascending values on pasted clones so they append in order.
 - `created_at`, `updated_at`
 - Index on (`user_id`, `day`).
 
