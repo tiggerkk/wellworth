@@ -15,7 +15,7 @@ asset_type,name,currency,value_native,detail1_key,detail1_value,detail2_key,deta
   Fund section), and insurance is generated from the policy catalogue (see
   `templates/fund-import-guide.md` / `templates/insurance-import-guide.md`).
 - **name** — your label (institution, ticker/company, address…).
-- **currency** — `HKD`, `CNY`, or `USD`.
+- **currency** — `HKD`, `CNY`, `USD`, `AUD`, `CAD`, `JPY`, `KRW`, `SGD`, or `THB`.
 - **value_native** — the value in that currency. Quoted thousands separators are fine
   (`"8,466,568.80"`); the importer strips commas/quotes before parsing.
 - **detailN_key / detailN_value** — optional, type-specific, stored as-is (informational). Any number

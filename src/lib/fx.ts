@@ -1,4 +1,5 @@
 import { startOfMonth, type IsoDate } from './date'
+import { NETWORTH_ENTRY_CURRENCIES } from '../constants/networth'
 
 /**
  * FX rates via Frankfurter (https://frankfurter.dev) — keyless, ECB-sourced, CORS-enabled
@@ -21,7 +22,13 @@ async function fetchWithRetry(url: string, signal: AbortSignal): Promise<Respons
   }
 }
 
-export type FetchableCurrency = 'CNY' | 'USD'
+export type FetchableCurrency = Exclude<(typeof NETWORTH_ENTRY_CURRENCIES)[number], 'HKD'>
+
+/** All fetchable (non-HKD) Monthly Entry currencies, in the Exchange Rates panel's display order —
+ *  derived from `NETWORTH_ENTRY_CURRENCIES` (single source of truth) so the two never drift apart. */
+export const FETCHABLE_CURRENCIES: FetchableCurrency[] = NETWORTH_ENTRY_CURRENCIES.filter(
+  (c): c is FetchableCurrency => c !== 'HKD',
+)
 
 /** Frankfurter URL for `from`→HKD on the 1st of `month`'s month. Pure (exported for tests). */
 export function fxUrl(from: FetchableCurrency, month: IsoDate): string {
@@ -102,16 +109,17 @@ export async function fetchRateToHkdOn(
   }
 }
 
-/** Fetch CNY+USD native→HKD for a month; a failed leg resolves to null (non-fatal). */
+/** Fetch all fetchable currencies' native→HKD for a month; a failed leg resolves to null (non-fatal). */
 export async function fetchRatesToHkd(
   month: IsoDate,
-): Promise<{ CNY: number | null; USD: number | null }> {
-  const [cny, usd] = await Promise.allSettled([
-    fetchRateToHkd('CNY', month),
-    fetchRateToHkd('USD', month),
-  ])
-  return {
-    CNY: cny.status === 'fulfilled' ? cny.value : null,
-    USD: usd.status === 'fulfilled' ? usd.value : null,
-  }
+): Promise<Record<FetchableCurrency, number | null>> {
+  const results = await Promise.allSettled(
+    FETCHABLE_CURRENCIES.map((c) => fetchRateToHkd(c, month)),
+  )
+  return Object.fromEntries(
+    FETCHABLE_CURRENCIES.map((c, i) => {
+      const r = results[i]!
+      return [c, r.status === 'fulfilled' ? r.value : null]
+    }),
+  ) as Record<FetchableCurrency, number | null>
 }

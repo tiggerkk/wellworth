@@ -57,7 +57,9 @@ create table public.asset_entry (
                     )
                   ),
   name            text not null,
-  currency        text not null check (currency in ('HKD', 'CNY', 'USD')),
+  currency        text not null check (
+                    currency in ('HKD', 'CNY', 'USD', 'AUD', 'CAD', 'JPY', 'KRW', 'SGD', 'THB')
+                  ),
   details         jsonb not null default '{}'::jsonb, -- type-specific fields (maturity_date, ticker, shares, units, cost, premium, policy_year, …)
   value_native    numeric not null default 0, -- value in the entry's own currency
   fx_rate_to_base numeric not null default 1, -- native -> HKD rate used (1 for HKD)

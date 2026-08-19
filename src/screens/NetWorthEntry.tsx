@@ -26,8 +26,8 @@ import {
   ASSET_TYPE_COLORS,
   type AssetType,
   ASSET_TYPE_LABELS,
-  NETWORTH_CURRENCIES,
-  type NetWorthCurrency,
+  NETWORTH_ENTRY_CURRENCIES,
+  type NetWorthEntryCurrency,
   DEFAULT_BIRTH_YEAR,
   ASSET_DETAIL_FIELDS,
 } from '../constants/networth'
@@ -50,7 +50,12 @@ import {
   type InsuranceProviderConfig,
 } from '../lib/insurance-config'
 import { bumpNetWorth, useNetWorthVersion } from '../lib/networth-refresh'
-import { fetchRateToHkd, fetchRatesToHkd, type FetchableCurrency } from '../lib/fx'
+import {
+  fetchRateToHkd,
+  fetchRatesToHkd,
+  FETCHABLE_CURRENCIES,
+  type FetchableCurrency,
+} from '../lib/fx'
 import { addMonths, formatMonthLabel, startOfMonth, todayLocal } from '../lib/date'
 import { draftAmount } from '../lib/wellness-quantity'
 import { routes } from '../constants/routes'
@@ -72,11 +77,11 @@ interface EntryDraft {
   clientId: string
   asset_type: AssetType
   name: string
-  currency: NetWorthCurrency
+  currency: NetWorthEntryCurrency
   valueNative: string
   details: Record<string, string>
 }
-type RateDraft = Record<NetWorthCurrency, string>
+type RateDraft = Record<NetWorthEntryCurrency, string>
 interface MonthDraft {
   rows: EntryDraft[]
   fxRates: RateDraft
@@ -87,8 +92,18 @@ const nextId = () => `e${++uid}`
 
 const READONLY_TYPES = new Set<AssetType>(['fund', 'insurance'])
 
+/** Exchange Rates panel row pairing (2 currencies per row). */
+const FX_ROW_PAIRS: [FetchableCurrency, FetchableCurrency][] = [
+  ['CNY', 'USD'],
+  ['AUD', 'CAD'],
+  ['JPY', 'KRW'],
+  ['SGD', 'THB'],
+]
+
 function blankRates(): RateDraft {
-  return { HKD: '1', CNY: '', USD: '' }
+  return Object.fromEntries(
+    NETWORTH_ENTRY_CURRENCIES.map((c) => [c, c === 'HKD' ? '1' : '']),
+  ) as RateDraft
 }
 
 function detailsToStrings(details: Json): Record<string, string> {
@@ -102,15 +117,17 @@ function detailsToStrings(details: Json): Record<string, string> {
 function draftFromEntries(entries: Tables<'asset_entry'>[]): MonthDraft {
   const fxRates = blankRates()
   for (const e of entries) {
-    if (e.currency === 'CNY' && e.fx_rate_to_base) fxRates.CNY = String(e.fx_rate_to_base)
-    if (e.currency === 'USD' && e.fx_rate_to_base) fxRates.USD = String(e.fx_rate_to_base)
+    const ccy = e.currency as NetWorthEntryCurrency
+    if (ccy !== 'HKD' && e.fx_rate_to_base && ccy in fxRates) {
+      fxRates[ccy] = String(e.fx_rate_to_base)
+    }
   }
   return {
     rows: entries.map((e) => ({
       clientId: nextId(),
       asset_type: e.asset_type as AssetType,
       name: e.name,
-      currency: e.currency as NetWorthCurrency,
+      currency: e.currency as NetWorthEntryCurrency,
       valueNative: e.value_native == null ? '' : String(e.value_native),
       details: detailsToStrings(e.details),
     })),
@@ -142,7 +159,7 @@ function resolveInsuranceRows(
       clientId: nextId(),
       asset_type: 'insurance',
       name: policy.policy_name || policy.policy_number,
-      currency: (policy.currency as NetWorthCurrency) ?? 'HKD',
+      currency: (policy.currency as NetWorthEntryCurrency) ?? 'HKD',
       valueNative: String(r.cashValue),
       details: insuranceRowDetails(policy, r, original, variance),
     })
@@ -224,6 +241,16 @@ export function NetWorthEntry() {
     // live-resolve insurance from the catalogue so it still appears — a Monthly Entry SAVE freezes it.
     if (existing) {
       const base = draftFromEntries(existing.entries)
+      // Rates for currencies with no frozen entry this month (e.g. a saved month from before a
+      // currency was added, or one that simply never held that currency) have nothing to hydrate
+      // from — fetch those live so the panel isn't left with unexplained blanks.
+      const missing = FETCHABLE_CURRENCIES.filter((c) => base.fxRates[c] === '')
+      if (missing.length > 0) {
+        const fetched = await fetchRatesToHkd(month)
+        for (const c of missing) {
+          if (fetched[c] != null) base.fxRates[c] = String(fetched[c])
+        }
+      }
       // When live insurance is injected into a snapshot that has none persisted, the displayed total
       // is higher than what's saved (and the Dashboard, which reads the saved snapshot, won't match).
       // Flag `needsFreeze` so SAVE is enabled even without a manual edit — pressing it freezes the
@@ -251,13 +278,14 @@ export function NetWorthEntry() {
     const carried = (priorRows?.rows ?? []).filter((r) => r.asset_type !== 'insurance')
     const insurance = resolveInsuranceRows(catalogue, month, birthYear, providers)
     const newRows = [...carried, ...insurance]
+    const fxRates = blankRates()
+    for (const ccy of FETCHABLE_CURRENCIES) {
+      fxRates[ccy] =
+        fetched[ccy] != null ? String(fetched[ccy]) : (priorRows?.fxRates[ccy] ?? '')
+    }
     return {
       rows: newRows,
-      fxRates: {
-        HKD: '1',
-        CNY: fetched.CNY != null ? String(fetched.CNY) : (priorRows?.fxRates.CNY ?? ''),
-        USD: fetched.USD != null ? String(fetched.USD) : (priorRows?.fxRates.USD ?? ''),
-      },
+      fxRates,
       snapshotId: null,
       // A brand-new month is entirely unpersisted — enable SAVE so the copied-forward snapshot can be
       // created without first editing a value.
@@ -396,7 +424,7 @@ function EntryForm({
     }
   }
 
-  const rateOf = (currency: NetWorthCurrency) =>
+  const rateOf = (currency: NetWorthEntryCurrency) =>
     currency === 'HKD' ? 1 : draftAmount(fxRates[currency], 0)
   const rowBase = (r: EntryDraft) =>
     valueBase(draftAmount(r.valueNative, 0), rateOf(r.currency))
@@ -571,59 +599,65 @@ function EntryForm({
       {/* Scrolling body */}
       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4">
         {/* Exchange rates */}
-        <section className="shrink-0">
-          <h2 className="mb-2 px-1 text-section font-medium uppercase tracking-[0.08em] text-text-secondary">
-            Exchange rates{' '}
-            <span className="font-normal normal-case tracking-normal text-text-tertiary">
+        <Collapsible
+          className="shrink-0"
+          title="Exchange rates"
+          titleSuffix={
+            <span className="text-compact font-normal normal-case tracking-normal text-text-tertiary">
               (as of 1st of the month from Frankfurter)
             </span>
-          </h2>
-          <div className="overflow-hidden rounded-card border border-border bg-surface">
-            <div className="flex items-stretch gap-2 px-4 py-2.5">
-              {(['CNY', 'USD'] as const).map((ccy) => (
-                <div key={ccy} className="flex flex-1 items-center gap-1.5">
-                  <span className="text-body text-text-primary">{ccy}</span>
-                  <input
-                    type="number"
-                    inputMode="decimal"
-                    step="any"
-                    min={0}
-                    placeholder="rate"
-                    value={fxRates[ccy]}
-                    onChange={(e) => {
-                      const v = e.target.value
-                      setFxRates((prev) => ({ ...prev, [ccy]: v }))
-                      setFxError((er) => ({ ...er, [ccy]: false }))
-                    }}
-                    className={`w-0 min-w-0 flex-1 text-right ${inputCls}`}
-                  />
-                  <button
-                    onClick={() => void refreshRate(ccy)}
-                    disabled={fetching === ccy}
-                    aria-label={`Refresh ${ccy} rate`}
-                    className="shrink-0 text-text-secondary disabled:opacity-50"
-                  >
-                    <IconRefresh size={16} />
-                  </button>
-                </div>
-              ))}
-            </div>
-            {(['CNY', 'USD'] as const).some((c) => fetching === c || fxError[c]) && (
-              <p className="px-4 pb-2 text-caption text-text-tertiary">
-                {(['CNY', 'USD'] as const)
-                  .map((c) =>
-                    fetching === c
-                      ? `${c}: fetching…`
-                      : fxError[c]
-                        ? `${c}: couldn’t fetch — enter manually.`
-                        : null,
-                  )
+          }
+          titleCase="caption"
+          open={expanded.fx ?? false}
+          onOpenChange={(next) => setExpanded((e) => ({ ...e, fx: next }))}
+        >
+          <div className="flex flex-col gap-2 px-4 py-2.5">
+            {FX_ROW_PAIRS.map((pair) => (
+              <div key={pair.join('-')} className="flex items-stretch gap-2">
+                {pair.map((ccy) => (
+                  <div key={ccy} className="flex flex-1 items-center gap-1.5">
+                    <span className="text-body text-text-primary">{ccy}</span>
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      step="any"
+                      min={0}
+                      placeholder="rate"
+                      value={fxRates[ccy]}
+                      onChange={(e) => {
+                        const v = e.target.value
+                        setFxRates((prev) => ({ ...prev, [ccy]: v }))
+                        setFxError((er) => ({ ...er, [ccy]: false }))
+                      }}
+                      className={`w-0 min-w-0 flex-1 text-right ${inputCls}`}
+                    />
+                    <button
+                      onClick={() => void refreshRate(ccy)}
+                      disabled={fetching === ccy}
+                      aria-label={`Refresh ${ccy} rate`}
+                      className="shrink-0 text-text-secondary disabled:opacity-50"
+                    >
+                      <IconRefresh size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ))}
+            {FETCHABLE_CURRENCIES.some((c) => fetching === c || fxError[c]) && (
+              <p className="text-caption text-text-tertiary">
+                {FETCHABLE_CURRENCIES.map((c) =>
+                  fetching === c
+                    ? `${c}: fetching…`
+                    : fxError[c]
+                      ? `${c}: couldn’t fetch — enter manually.`
+                      : null,
+                )
                   .filter(Boolean)
                   .join('  ')}
               </p>
             )}
           </div>
-        </section>
+        </Collapsible>
 
         {/* Asset-type sections (visible, ordered, collapsible) */}
         {visibleTypes.map((type) => {
@@ -815,10 +849,12 @@ function ManualRow({
         />
         <select
           value={row.currency}
-          onChange={(e) => onChange({ currency: e.target.value as NetWorthCurrency })}
+          onChange={(e) =>
+            onChange({ currency: e.target.value as NetWorthEntryCurrency })
+          }
           className={`shrink-0 ${inputCls}`}
         >
-          {NETWORTH_CURRENCIES.map((c) => (
+          {NETWORTH_ENTRY_CURRENCIES.map((c) => (
             <option key={c} value={c}>
               {c}
             </option>

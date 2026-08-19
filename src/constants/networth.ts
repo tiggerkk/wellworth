@@ -55,6 +55,25 @@ export const NETWORTH_CURRENCIES = ['HKD', 'CNY', 'USD'] as const
 export type NetWorthCurrency = (typeof NETWORTH_CURRENCIES)[number]
 export const BASE_CURRENCY: NetWorthCurrency = 'HKD'
 
+/**
+ * Currencies offered on Monthly Entry rows + the manual Net Worth CSV importer — a superset of
+ * `NETWORTH_CURRENCIES` (which stays HKD/CNY/USD-only for Insurance Policies / Providers / bulk
+ * import, so a policy's currency options don't silently widen along with this list). HKD, CNY, USD
+ * lead (existing order); the rest are grouped for the Exchange Rates panel's row pairing.
+ */
+export const NETWORTH_ENTRY_CURRENCIES = [
+  'HKD',
+  'CNY',
+  'USD',
+  'AUD',
+  'CAD',
+  'JPY',
+  'KRW',
+  'SGD',
+  'THB',
+] as const
+export type NetWorthEntryCurrency = (typeof NETWORTH_ENTRY_CURRENCIES)[number]
+
 /** Type-specific, informational detail fields (stored as-is in `details` JSONB). */
 export interface DetailField {
   key: string

@@ -8,9 +8,9 @@
  * `detailN_key`/`detailN_value` pairs are accepted and stored as-is in `details`.
  */
 import {
-  NETWORTH_CURRENCIES,
+  NETWORTH_ENTRY_CURRENCIES,
   type AssetType,
-  type NetWorthCurrency,
+  type NetWorthEntryCurrency,
 } from '../constants/networth'
 
 const REQUIRED_COLUMNS = ['asset_type', 'name', 'currency', 'value_native']
@@ -31,7 +31,7 @@ const MANUAL_ASSET_TYPES = [
 export interface ParsedAssetRow {
   asset_type: AssetType
   name: string
-  currency: NetWorthCurrency
+  currency: NetWorthEntryCurrency
   value_native: number
   details: Record<string, string>
 }
@@ -82,7 +82,7 @@ export function parseNetWorthCsv(rows: string[][]): NetWorthImportResult {
   }
 
   const assetSet = new Set<string>(MANUAL_ASSET_TYPES)
-  const currencySet = new Set<string>(NETWORTH_CURRENCIES)
+  const currencySet = new Set<string>(NETWORTH_ENTRY_CURRENCIES)
 
   for (let r = 1; r < rows.length; r++) {
     const cells = rows[r]!
@@ -112,7 +112,7 @@ export function parseNetWorthCsv(rows: string[][]): NetWorthImportResult {
     const currency = currencyRaw.toUpperCase()
     if (!currencySet.has(currency)) {
       errors.push(
-        `Row ${line} ("${name}"): currency "${currencyRaw}" must be HKD, CNY, or USD — skipped.`,
+        `Row ${line} ("${name}"): currency "${currencyRaw}" must be one of ${NETWORTH_ENTRY_CURRENCIES.join(', ')} — skipped.`,
       )
       continue
     }
@@ -136,7 +136,7 @@ export function parseNetWorthCsv(rows: string[][]): NetWorthImportResult {
     out.push({
       asset_type: assetType as AssetType,
       name,
-      currency: currency as NetWorthCurrency,
+      currency: currency as NetWorthEntryCurrency,
       value_native: value,
       details,
     })

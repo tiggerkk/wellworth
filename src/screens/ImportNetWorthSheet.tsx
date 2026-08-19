@@ -10,10 +10,10 @@ import { parseCsv } from '../lib/csv'
 import { parseNetWorthCsv, type NetWorthImportResult } from '../lib/networth-import'
 import { getSnapshotWithEntries, saveManualImportComplete } from '../data/asset-entry'
 import type { AssetEntryInput } from '../data/asset-entry'
-import { fetchRatesToHkd } from '../lib/fx'
+import { fetchRatesToHkd, type FetchableCurrency } from '../lib/fx'
 import { bumpNetWorth } from '../lib/networth-refresh'
 import { errorMessage } from '../lib/errors'
-import { DEFAULT_BIRTH_YEAR, type NetWorthCurrency } from '../constants/networth'
+import { DEFAULT_BIRTH_YEAR, type NetWorthEntryCurrency } from '../constants/networth'
 import { formatHkd, valueBase } from '../lib/networth'
 import { formatMonthLabel, startOfMonth, todayLocal } from '../lib/date'
 
@@ -33,7 +33,7 @@ export function ImportNetWorthSheet() {
   const inputRef = useRef<HTMLInputElement>(null)
   const [fileName, setFileName] = useState<string | null>(null)
   const [result, setResult] = useState<NetWorthImportResult | null>(null)
-  const [rates, setRates] = useState<{ CNY: number | null; USD: number | null } | null>(
+  const [rates, setRates] = useState<Record<FetchableCurrency, number | null> | null>(
     null,
   )
   const [existingCount, setExistingCount] = useState<number | null>(null)
@@ -72,7 +72,7 @@ export function ImportNetWorthSheet() {
     }
   }
 
-  const rateOf = (c: NetWorthCurrency): number | null =>
+  const rateOf = (c: NetWorthEntryCurrency): number | null =>
     c === 'HKD' ? 1 : (rates?.[c] ?? null)
   const usedCurrencies = [...new Set((result?.rows ?? []).map((r) => r.currency))]
   const missingRate = usedCurrencies.some((c) => rateOf(c) == null)
