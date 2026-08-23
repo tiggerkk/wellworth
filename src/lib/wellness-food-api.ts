@@ -183,6 +183,30 @@ function apiKey(): string {
   return key
 }
 
+/** Status codes worth a single retry — USDA's gateway occasionally 404s or 5xxs a well-formed
+ * request, and 429 can clear quickly. 400/401/403 are retried too since a repeat costs little
+ * and gains resilience if the gateway misfires them transiently; a persistent failure still
+ * surfaces after the retry. */
+function isRetryableStatus(status: number): boolean {
+  return status === 404 || status === 429 || status >= 500
+}
+
+/** Fetch with one retry after a short delay on a transient-looking failure (network error or a
+ * retryable HTTP status). USDA's API gateway is intermittently flaky — the same request can 404
+ * one moment and succeed the next — so a single retry meaningfully reduces user-visible errors
+ * without masking a genuinely broken request (which will fail the same way twice). */
+async function fetchWithRetry(url: string, init?: RequestInit): Promise<Response> {
+  try {
+    const res = await fetch(url, init)
+    if (res.ok || !isRetryableStatus(res.status)) return res
+    await new Promise((resolve) => setTimeout(resolve, 500))
+    return await fetch(url, init)
+  } catch {
+    await new Promise((resolve) => setTimeout(resolve, 500))
+    return await fetch(url, init)
+  }
+}
+
 /**
  * One USDA search call. Uses POST with a JSON body — the GET endpoint rejects a `dataType`
  * containing "Survey (FNDDS)" (the space/parens 400s), whereas POST accepts the array.
@@ -192,7 +216,7 @@ async function usdaSearch(
   dataType: string[],
   pageSize: number,
 ): Promise<ExternalFood[]> {
-  const res = await fetch(
+  const res = await fetchWithRetry(
     `${USDA_BASE}/foods/search?api_key=${encodeURIComponent(apiKey())}`,
     {
       method: 'POST',
@@ -251,7 +275,7 @@ async function searchFoodsOne(trimmed: string): Promise<ExternalFood[]> {
 /** Fetch one USDA food's full nutrient profile. */
 export async function getUsdaFood(fdcId: string): Promise<ExternalFood> {
   const params = new URLSearchParams({ api_key: apiKey() })
-  const res = await fetch(`${USDA_BASE}/food/${fdcId}?${params.toString()}`)
+  const res = await fetchWithRetry(`${USDA_BASE}/food/${fdcId}?${params.toString()}`)
   if (!res.ok) throw new Error(`USDA lookup failed (${res.status})`)
   const json = (await res.json()) as UsdaFood
   return toExternalFood(json)
