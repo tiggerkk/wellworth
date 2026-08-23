@@ -11,7 +11,7 @@ import {
 } from '../lib/wellness-food-api'
 import { foodMatchScore } from '../lib/wellness-food-search'
 
-type SearchError = 'failed' | null
+type SearchError = string | null
 
 interface FoodSearchOverlayProps {
   onSelect: (result: ExternalFood) => void
@@ -69,8 +69,8 @@ export function FoodSearchOverlay({
       .then((r) => {
         if (!cancelled) setResults(rankFoods(r, term))
       })
-      .catch(() => {
-        if (!cancelled) setError('failed')
+      .catch((e: unknown) => {
+        if (!cancelled) setError(e instanceof Error ? e.message : 'Search failed.')
       })
       .finally(() => {
         if (!cancelled) setLoading(false)
@@ -115,18 +115,14 @@ export function FoodSearchOverlay({
                 ? 'Search USDA by name.'
                 : loading
                   ? 'Searching…'
-                  : error === 'failed'
+                  : error
                     ? 'Search failed.'
                     : 'No matches.'}
             </p>
           )}
         </div>
 
-        {error === 'failed' && (
-          <p className="mt-3 text-caption text-danger">
-            Food search unavailable — is <code>VITE_USDA_API_KEY</code> set?
-          </p>
-        )}
+        {error && <p className="mt-3 text-caption text-danger">{error}</p>}
       </div>
     </OverlayTop>
   )

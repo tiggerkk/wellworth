@@ -110,7 +110,7 @@ export function WellnessDiaryFoodPickerSheet() {
     usdaCache && usdaCache.query === query.trim() ? usdaCache.results : [],
   )
   const [usdaLoading, setUsdaLoading] = useState(false)
-  const [usdaError, setUsdaError] = useState(false)
+  const [usdaError, setUsdaError] = useState<string | null>(null)
   useEffect(() => {
     // Intentional synchronous resets: a tab/query change starts (or clears) a fetch, and we
     // seed cached results so they show before the network round-trip — same trade-off useAsync
@@ -120,11 +120,11 @@ export function WellnessDiaryFoodPickerSheet() {
     if (tab !== 'all' || !term) {
       setUsdaResults([])
       setUsdaLoading(false)
-      setUsdaError(false)
+      setUsdaError(null)
       return
     }
     let cancelled = false
-    setUsdaError(false)
+    setUsdaError(null)
     // Show cached results immediately while revalidating; otherwise show the spinner.
     if (usdaCache && usdaCache.query === term) {
       setUsdaResults(usdaCache.results)
@@ -139,8 +139,8 @@ export function WellnessDiaryFoodPickerSheet() {
         usdaCache = { query: term, results }
         setUsdaResults(results)
       })
-      .catch(() => {
-        if (!cancelled) setUsdaError(true)
+      .catch((e: unknown) => {
+        if (!cancelled) setUsdaError(e instanceof Error ? e.message : 'Search failed.')
       })
       .finally(() => {
         if (!cancelled) setUsdaLoading(false)
@@ -304,11 +304,7 @@ export function WellnessDiaryFoodPickerSheet() {
               )}
             </div>
 
-            {usdaError && (
-              <p className="mt-3 text-caption text-danger">
-                Food search unavailable — is VITE_USDA_API_KEY set?
-              </p>
-            )}
+            {usdaError && <p className="mt-3 text-caption text-danger">{usdaError}</p>}
           </>
         )}
       </div>
