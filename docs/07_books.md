@@ -9,7 +9,6 @@
   - Line 1: **cover thumbnail** (2:3, neutral placeholder when there's no cover), **title (+ year)** and a **gold Dynasty badge** for Chinese titles.
   - Line 2: **status chip · star rating** (when set) **· date**.
   - Line 3: **author · first genre**.
-- **Favorites** — every `is_favorite` book (any status); a favorite also still appears in its status shelf below.
 - **Currently Reading** — all `status=reading`.
 - **Recently Read** — last 5 by finish date; shows **finish date**. Imported rows with no `end_date` don't appear here.
 - **Want to Read** — `status=want` titles.
@@ -118,7 +117,7 @@ Full guide: `templates/books-import-guide.md`.
 - `rating` NUMERIC NULL — user stars, 0–5 in 0.5 steps (CHECK)
 - `lgbtq_rep` TEXT DEFAULT 'none' — `'none' | 'some' | 'significant'` (CHECK)
 - `dynasty` TEXT NULL — Chinese dynasty (CHECK against the 13 `DYNASTIES` values in `src/constants/dynasty.ts`); set only for Chinese titles, NULL otherwise; editable only when the Title contains CJK
-- `is_favorite` BOOLEAN NOT NULL DEFAULT false — ♥; favorites filter + Dashboard shelf
+- `is_favorite` BOOLEAN NOT NULL DEFAULT false — ♥; used by the favorites filter
 - `start_date` DATE NULL · `end_date` DATE NULL
 - `notes` TEXT NULL — free-text user notes (effectively unbounded; edited inline or via `NotesEditorOverlay`)
 - `created_at`, `updated_at`

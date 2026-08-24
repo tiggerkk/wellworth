@@ -9,7 +9,6 @@ import { listBooks } from '../data/book'
 import {
   countReadThisYear,
   currentlyReading,
-  favoriteBooks,
   recentlyRead,
   wantToRead,
 } from '../lib/books'
@@ -64,7 +63,6 @@ export function BooksDashboard() {
         }
       >
         {(all) => {
-          const favorites = favoriteBooks(all)
           const reading = currentlyReading(all)
           const recent = recentlyRead(all, 5)
           const want = wantToRead(all, WANT_SHELF_LIMIT)
@@ -76,20 +74,6 @@ export function BooksDashboard() {
                 <p className="px-1 text-caption text-text-secondary">
                   {readYear} read this year
                 </p>
-              )}
-
-              {favorites.length > 0 && (
-                <SectionCard title="Favourites">
-                  {favorites.map((b) => (
-                    <DashboardRow
-                      key={b.id}
-                      leading={<CoverThumb url={b.cover_url} className="h-14 w-10" />}
-                      onClick={() => editBook(b.id)}
-                    >
-                      <BookRowHeader book={b} />
-                    </DashboardRow>
-                  ))}
-                </SectionCard>
               )}
 
               {reading.length > 0 && (

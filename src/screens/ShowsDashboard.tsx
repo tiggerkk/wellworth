@@ -7,12 +7,7 @@ import { fromDashboard } from '../hooks/useEntryClose'
 import { useShowsVersion } from '../lib/shows-refresh'
 import { listShows } from '../data/show'
 import { type ShowType } from '../constants/shows'
-import {
-  countWatchedThisYear,
-  favoriteShows,
-  isUpNext,
-  recentlyWatched,
-} from '../lib/shows'
+import { countWatchedThisYear, isUpNext, recentlyWatched } from '../lib/shows'
 import { todayLocal } from '../lib/date'
 import { routes } from '../constants/routes'
 import { SectionCard } from '../components/SectionCard'
@@ -83,7 +78,6 @@ export function ShowsDashboard() {
       >
         {(all) => {
           const filtered = filter === 'all' ? all : all.filter((s) => s.type === filter)
-          const favorites = favoriteShows(filtered)
           const upNext = filtered.filter(isUpNext)
           const upNextIds = new Set(upNext.map((s) => s.id))
           const watching = filtered.filter(
@@ -104,26 +98,6 @@ export function ShowsDashboard() {
                 <p className="px-1 text-caption text-text-secondary">
                   {watchedYear} watched this year
                 </p>
-              )}
-
-              {favorites.length > 0 && (
-                <SectionCard title="Favourites">
-                  {favorites.map((s) => (
-                    <DashboardRow
-                      key={s.id}
-                      leading={
-                        <PosterThumb
-                          path={s.poster_path}
-                          size="w92"
-                          className="h-14 w-10"
-                        />
-                      }
-                      onClick={() => editShow(s.id)}
-                    >
-                      <ShowRowHeader show={s} />
-                    </DashboardRow>
-                  ))}
-                </SectionCard>
               )}
 
               {upNext.length > 0 && (

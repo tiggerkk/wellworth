@@ -10,7 +10,6 @@
   - Line 1: **poster thumbnail**, **title (+ year)** and a **gold Dynasty badge** for Chinese titles.
   - Line 2: **status chip · star rating** (when set) **· date**.
   - Line 3: **type badge · seasons/episodes or length hint· first genre**.
-- **Favorites** — every `is_favorite` title (any status); a favorite also still appears in its status shelf below.
 - **Up Next** — in-progress episodic title (TV or documentary); seasons/episodes shows **"S{watched_seasons} · {watched_episodes}/{total_episodes}"** progress.
 - **Watching** — remaining `status=watching` titles (movies + TV without episode totals); season/episode progress for an episodic title with a known total, otherwise **"Started {start date}"**. Up Next is de-duplicated out so a show isn't listed twice.
 - **Want to Watch** — `status=want` titles; **length hint** is compact (`~2h 10m` for movies, `3 seasons`/`12 eps` for episodic).
@@ -119,7 +118,7 @@ Full guide: `templates/shows-import-guide.md`.
 - `rating` NUMERIC NULL — user stars, 0–5 in 0.5 steps (CHECK)
 - `lgbtq_rep` TEXT DEFAULT 'none' — `'none' | 'some' | 'significant'` (CHECK)
 - `dynasty` TEXT NULL — Chinese dynasty (CHECK against the 13 `DYNASTIES` values — `全部` + 12 dynasties in `src/constants/dynasty.ts`); set only for Chinese titles, NULL otherwise; editable in the Entry form only when the title contains CJK
-- `is_favorite` BOOLEAN NOT NULL DEFAULT false — ♥; favorites filter + Dashboard shelf
+- `is_favorite` BOOLEAN NOT NULL DEFAULT false — ♥; used by the favorites filter
 - `start_date` DATE NULL · `end_date` DATE NULL — start and finish/drop date
 - `notes` TEXT NULL — free-text user notes (effectively unbounded; edited inline or via `NotesEditorOverlay`)
 - `created_at`, `updated_at`
