@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router'
 import {
   IconArrowsDiagonal,
@@ -33,6 +33,7 @@ import {
   isAbsoluteUrl,
   isFieldVisible,
   posterUrl,
+  totalWatchedEpisodes,
   usesEpisodes,
   type ShowRow,
 } from '../lib/shows'
@@ -55,6 +56,13 @@ import { SelectMenu } from '../components/SelectMenu'
 import { StarRating } from '../components/StarRating'
 import { TitleSearchOverlay } from '../components/TitleSearchOverlay'
 
+/** Parse a numeric text input to an integer, or null when blank/invalid. Shared by Save (all
+ * numeric fields) and Refresh (re-parsing the draft's season/episode counts to diff against TMDB). */
+function intOrNull(s: string): number | null {
+  const n = Number(s)
+  return s.trim() !== '' && Number.isFinite(n) ? Math.trunc(n) : null
+}
+
 interface ShowDraft {
   type: ShowType
   title: string
@@ -71,6 +79,10 @@ interface ShowDraft {
   total_episodes: string
   watched_seasons: string
   watched_episodes: string
+  /** Per-season episode counts from TMDB ({@link ShowRow.season_episode_counts}); drives the
+   * "X of Y episodes watched overall" hint and cumulative dashboard/library math. Read-only —
+   * populated by TMDB select/refresh, never hand-edited. */
+  season_episode_counts: Record<number, number> | null
   notes: string
   // TMDB-sourced metadata (read-only display; populated on select, persisted on save).
   poster_path: string | null
@@ -111,6 +123,7 @@ function blankDraft(prefill?: ShowPrefill): ShowDraft {
     total_episodes: '',
     watched_seasons: '',
     watched_episodes: '',
+    season_episode_counts: null,
     notes: '',
     poster_path: prefill?.poster || null,
     overview: prefill?.overview || null,
@@ -141,6 +154,7 @@ function draftFromRow(row: ShowRow): ShowDraft {
     total_episodes: numStr(row.total_episodes),
     watched_seasons: numStr(row.watched_seasons),
     watched_episodes: numStr(row.watched_episodes),
+    season_episode_counts: row.season_episode_counts as Record<number, number> | null,
     notes: row.notes ?? '',
     poster_path: row.poster_path,
     overview: row.overview,
@@ -275,6 +289,31 @@ function ShowForm({
     onDirtyChange(dirty)
   }, [dirty, onDirtyChange])
   const episodic = usesEpisodes(draft.type)
+  // Cumulative "X of Y episodes watched overall" hint shown under the Watched Seasons/Episodes
+  // inputs — computed live as the owner types, using their per-season entry convention (season +
+  // in-season count) plus the stored TMDB season breakdown. Only shown once there's a real total
+  // to compare against and the owner has entered something. Memoized since the form re-renders on
+  // every keystroke across unrelated fields (title, notes, etc.), not just these three.
+  const watchedOverallHint = useMemo(() => {
+    if (!episodic) return null
+    const totalEpisodes = Number.parseInt(draft.total_episodes, 10)
+    const watchedSeasons = Number.parseInt(draft.watched_seasons, 10)
+    if (!Number.isFinite(totalEpisodes) || totalEpisodes <= 0) return null
+    if (!Number.isFinite(watchedSeasons) || watchedSeasons <= 0) return null
+    const watchedEpisodes = Number.parseInt(draft.watched_episodes, 10)
+    const total = totalWatchedEpisodes({
+      watched_seasons: watchedSeasons,
+      watched_episodes: Number.isFinite(watchedEpisodes) ? watchedEpisodes : 0,
+      season_episode_counts: draft.season_episode_counts,
+    })
+    return `${total} of ${totalEpisodes} episodes watched overall`
+  }, [
+    episodic,
+    draft.total_episodes,
+    draft.watched_seasons,
+    draft.watched_episodes,
+    draft.season_episode_counts,
+  ])
   // Dynasty is editable only for a Chinese title; the dropdown shows the default until chosen.
   const isChinese = containsCjk(draft.title)
   const hasMeta =
@@ -319,6 +358,7 @@ function ShowForm({
           m.total_seasons != null ? String(m.total_seasons) : d.total_seasons,
         total_episodes:
           m.total_episodes != null ? String(m.total_episodes) : d.total_episodes,
+        season_episode_counts: m.season_episode_counts,
         tmdb_id: m.tmdb_id,
         imdb_id: m.imdb_id,
       }))
@@ -336,10 +376,6 @@ function ShowForm({
     if (draft.tmdb_id == null) return
     setRefreshing(true)
     setRefreshResult(null)
-    const toNum = (s: string): number | null => {
-      const n = Number(s)
-      return s.trim() !== '' && Number.isFinite(n) ? Math.trunc(n) : null
-    }
     try {
       const meta = await refreshFromTmdb({
         type: draft.type,
@@ -355,11 +391,12 @@ function ShowForm({
           genres: draft.genres,
           director: draft.director,
           cast: draft.cast,
-          total_seasons: toNum(draft.total_seasons),
-          total_episodes: toNum(draft.total_episodes),
+          total_seasons: intOrNull(draft.total_seasons),
+          total_episodes: intOrNull(draft.total_episodes),
           runtime_min: draft.runtime_min,
           original_language: draft.original_language,
           poster_path: draft.poster_path,
+          season_episode_counts: draft.season_episode_counts,
         },
         meta,
       )
@@ -378,6 +415,9 @@ function ShowForm({
             patch.total_episodes != null
               ? String(patch.total_episodes)
               : d.total_episodes,
+          season_episode_counts:
+            (patch.season_episode_counts as Record<number, number> | null) ??
+            d.season_episode_counts,
           runtime_min: patch.runtime_min ?? null,
           original_language: patch.original_language ?? null,
           poster_path:
@@ -417,10 +457,6 @@ function ShowForm({
     if (!userId || !draft.title.trim()) return
     setSaving(true)
     try {
-      const intOrNull = (s: string): number | null => {
-        const n = Number(s)
-        return s.trim() !== '' && Number.isFinite(n) ? Math.trunc(n) : null
-      }
       const row = {
         type: draft.type,
         title: draft.title.trim(),
@@ -438,6 +474,7 @@ function ShowForm({
         total_episodes: episodic ? intOrNull(draft.total_episodes) : null,
         watched_seasons: episodic ? intOrNull(draft.watched_seasons) : null,
         watched_episodes: episodic ? intOrNull(draft.watched_episodes) : null,
+        season_episode_counts: episodic ? draft.season_episode_counts : null,
         notes: draft.notes.trim() || null,
         poster_path: draft.poster_path,
         overview: draft.overview,
@@ -754,6 +791,9 @@ function ShowForm({
                 />
               </div>
             </div>
+            {watchedOverallHint && (
+              <p className="mt-1 text-caption text-text-tertiary">{watchedOverallHint}</p>
+            )}
           </div>
         )}
 

@@ -18,6 +18,7 @@ function makeShow(overrides: Partial<ShowRow> = {}): ShowRow {
     runtime_min: null,
     total_seasons: null,
     total_episodes: null,
+    season_episode_counts: null,
     watched_seasons: null,
     watched_episodes: null,
     rating: null,

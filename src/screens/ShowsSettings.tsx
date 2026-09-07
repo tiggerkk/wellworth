@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { IconChevronRight, IconTrash } from '@tabler/icons-react'
+import { IconChevronRight, IconRefresh, IconTrash } from '@tabler/icons-react'
 import { SettingsLoader } from '../components/SettingsLoader'
 import { useProfileEditor } from '../hooks/useProfileEditor'
 import { useSheetNavigate } from '../hooks/useSheetNavigate'
@@ -9,17 +9,23 @@ import { FieldRow } from '../components/FieldRow'
 import { Toggle } from '../components/Toggle'
 import { ImportExportRow } from '../components/ImportExportRow'
 import { clearShowMatchCache, showMatchCacheSize } from '../lib/shows-match-cache'
-import { listShows } from '../data/show'
+import { listShows, updateShow } from '../data/show'
 import { buildShowsExportRows } from '../lib/shows-export'
 import { downloadCsv } from '../lib/file-export'
 import { errorMessage } from '../lib/errors'
 import { routes } from '../constants/routes'
+import {
+  bulkRefreshCandidates,
+  refreshAllFromTmdb,
+  type BulkRefreshOutcome,
+} from '../lib/shows-bulk-refresh'
+import { bumpShows } from '../lib/shows-refresh'
 import type { Tables, TablesUpdate } from '../types/database'
 
 type SaveFn = (patch: TablesUpdate<'profile'>) => Promise<void>
 
 /**
- * Shows-specific settings.
+ * Shows-specific settings: field visibility, CSV import/export, and bulk TMDB maintenance.
  */
 export function ShowsSettings() {
   const { profile, loading, error, save } = useProfileEditor()
@@ -44,6 +50,12 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
   const [cacheCount, setCacheCount] = useState(() => showMatchCacheSize())
   const [exportingShows, setExportingShows] = useState(false)
   const [exportError, setExportError] = useState<string | null>(null)
+  const [refreshing, setRefreshing] = useState(false)
+  const [refreshProgress, setRefreshProgress] = useState<{
+    done: number
+    total: number
+  } | null>(null)
+  const [refreshResults, setRefreshResults] = useState<BulkRefreshOutcome[] | null>(null)
 
   async function exportShows() {
     if (!userId) return
@@ -58,6 +70,25 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
       setExportError(errorMessage(e, 'Export failed.'))
     } finally {
       setExportingShows(false)
+    }
+  }
+
+  async function refreshAll() {
+    if (!userId) return
+    setRefreshing(true)
+    setRefreshResults(null)
+    try {
+      const shows = await listShows(userId)
+      const candidates = bulkRefreshCandidates(shows)
+      setRefreshProgress({ done: 0, total: candidates.length })
+      const results = await refreshAllFromTmdb(candidates, updateShow, (done, total) =>
+        setRefreshProgress({ done, total }),
+      )
+      if (results.some((r) => r.changed)) bumpShows()
+      setRefreshResults(results)
+    } finally {
+      setRefreshing(false)
+      setRefreshProgress(null)
     }
   }
 
@@ -118,6 +149,57 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
           </div>
         )}
       </SectionCard>
+
+      <SectionCard title="Maintenance">
+        <button
+          onClick={() => void refreshAll()}
+          disabled={refreshing || !userId}
+          className="flex w-full items-center gap-2 border-b border-border px-4 py-2 text-body text-accent last:border-b-0 active:bg-input/40 disabled:opacity-40"
+        >
+          <IconRefresh size={18} className={refreshing ? 'animate-spin' : ''} />
+          {refreshing
+            ? refreshProgress
+              ? `Refreshing… (${refreshProgress.done}/${refreshProgress.total})`
+              : 'Refreshing…'
+            : 'Refresh All from TMDB'}
+        </button>
+        <p className="px-4 py-2 text-caption text-text-tertiary">
+          Re-checks every Want / Watching TV show and Documentary against TMDB for new
+          seasons or episodes. Movies aren’t included — they have no seasons/episodes to
+          check for.
+        </p>
+        {refreshResults && <BulkRefreshResults results={refreshResults} />}
+      </SectionCard>
     </>
+  )
+}
+
+/** Result list for "Refresh All from TMDB": only shows titles that actually changed or gained
+ * new episodes/seasons, plus any that errored — a large "nothing to report" library stays quiet. */
+function BulkRefreshResults({ results }: { results: BulkRefreshOutcome[] }) {
+  const withNews = results.filter((r) => r.newEpisodesAvailable || r.error)
+  const changedCount = results.filter((r) => r.changed).length
+
+  return (
+    <div className="border-t border-border px-4 py-2">
+      <p className="text-caption text-text-secondary">
+        {results.length} checked · {changedCount} updated
+        {withNews.length > 0 ? ` · ${withNews.length} to review` : ''}
+      </p>
+      {withNews.length > 0 && (
+        <ul className="mt-2 flex flex-col gap-1.5">
+          {withNews.map((r) => (
+            <li key={r.show.id} className="text-caption text-text-secondary">
+              <span className="text-text-primary">{r.show.title}</span>
+              {r.error ? (
+                <span className="text-danger"> — {r.error}</span>
+              ) : (
+                <span className="text-positive"> — new episodes available</span>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   )
 }

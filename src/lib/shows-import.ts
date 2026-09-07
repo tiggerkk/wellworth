@@ -296,6 +296,7 @@ export function buildImportRow(
     original_language: match?.original_language ?? null,
     total_seasons: episodic ? (match?.total_seasons ?? null) : null,
     total_episodes: episodic ? (match?.total_episodes ?? null) : null,
+    season_episode_counts: episodic ? (match?.season_episode_counts ?? null) : null,
     watched_seasons,
     watched_episodes,
     tmdb_id: match?.tmdb_id ?? null,

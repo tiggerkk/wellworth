@@ -1036,6 +1036,7 @@ export type Database = {
           poster_path: string | null
           rating: number | null
           runtime_min: number | null
+          season_episode_counts: Json | null
           start_date: string | null
           status: string
           title: string
@@ -1067,6 +1068,7 @@ export type Database = {
           poster_path?: string | null
           rating?: number | null
           runtime_min?: number | null
+          season_episode_counts?: Json | null
           start_date?: string | null
           status: string
           title: string
@@ -1098,6 +1100,7 @@ export type Database = {
           poster_path?: string | null
           rating?: number | null
           runtime_min?: number | null
+          season_episode_counts?: Json | null
           start_date?: string | null
           status?: string
           title?: string

@@ -7,7 +7,7 @@ import { fromDashboard } from '../hooks/useEntryClose'
 import { useShowsVersion } from '../lib/shows-refresh'
 import { listShows } from '../data/show'
 import { type ShowType } from '../constants/shows'
-import { countWatchedThisYear, isUpNext, recentlyWatched } from '../lib/shows'
+import { countWatchedThisYear, isCaughtUp, recentlyWatched } from '../lib/shows'
 import { todayLocal } from '../lib/date'
 import { routes } from '../constants/routes'
 import { SectionCard } from '../components/SectionCard'
@@ -17,6 +17,7 @@ import { ShowRowHeader } from '../components/ShowRowHeader'
 import { PosterThumb } from '../components/PosterThumb'
 import { EmptyState } from '../components/EmptyState'
 import { ListLoader } from '../components/ListLoader'
+import type { ShowRow } from '../lib/shows'
 
 type TypeFilter = 'all' | ShowType
 
@@ -24,8 +25,8 @@ const WANT_SHELF_LIMIT = 6
 
 /**
  * Shows — Dashboard. Shelves of what's in progress / to watch / recently finished, scoped by a
- * type filter. "Watching" de-duplicates "Up Next" (an episode-tracked TV show shows under Up Next,
- * not both).
+ * type filter. "Currently Watching" excludes titles that are fully caught up on known episodes —
+ * those move to the "Caught Up" shelf instead (still status "Watching", just waiting on more).
  */
 export function ShowsDashboard() {
   const navigate = useNavigate()
@@ -78,10 +79,10 @@ export function ShowsDashboard() {
       >
         {(all) => {
           const filtered = filter === 'all' ? all : all.filter((s) => s.type === filter)
-          const upNext = filtered.filter(isUpNext)
-          const upNextIds = new Set(upNext.map((s) => s.id))
+          const caughtUp = filtered.filter(isCaughtUp)
+          const caughtUpIds = new Set(caughtUp.map((s) => s.id))
           const watching = filtered.filter(
-            (s) => s.status === 'watching' && !upNextIds.has(s.id),
+            (s) => s.status === 'watching' && !caughtUpIds.has(s.id),
           )
           const want = filtered
             .filter((s) => s.status === 'want')
@@ -100,89 +101,56 @@ export function ShowsDashboard() {
                 </p>
               )}
 
-              {upNext.length > 0 && (
-                <SectionCard title="Up Next">
-                  {upNext.map((s) => (
-                    <DashboardRow
-                      key={s.id}
-                      leading={
-                        <PosterThumb
-                          path={s.poster_path}
-                          size="w92"
-                          className="h-14 w-10"
-                        />
-                      }
-                      onClick={() => editShow(s.id)}
-                    >
-                      <ShowRowHeader show={s} />
-                    </DashboardRow>
-                  ))}
-                </SectionCard>
+              {watching.length > 0 && (
+                <ShowShelf
+                  title="Currently Watching"
+                  shows={watching}
+                  onSelect={editShow}
+                />
               )}
 
-              {watching.length > 0 && (
-                <SectionCard title="Currently Watching">
-                  {watching.map((s) => (
-                    <DashboardRow
-                      key={s.id}
-                      leading={
-                        <PosterThumb
-                          path={s.poster_path}
-                          size="w92"
-                          className="h-14 w-10"
-                        />
-                      }
-                      onClick={() => editShow(s.id)}
-                    >
-                      <ShowRowHeader show={s} />
-                    </DashboardRow>
-                  ))}
-                </SectionCard>
+              {caughtUp.length > 0 && (
+                <ShowShelf title="Caught Up" shows={caughtUp} onSelect={editShow} />
               )}
 
               {want.length > 0 && (
-                <SectionCard title="Want to Watch">
-                  {want.map((s) => (
-                    <DashboardRow
-                      key={s.id}
-                      leading={
-                        <PosterThumb
-                          path={s.poster_path}
-                          size="w92"
-                          className="h-14 w-10"
-                        />
-                      }
-                      onClick={() => editShow(s.id)}
-                    >
-                      <ShowRowHeader show={s} />
-                    </DashboardRow>
-                  ))}
-                </SectionCard>
+                <ShowShelf title="Want to Watch" shows={want} onSelect={editShow} />
               )}
 
               {recent.length > 0 && (
-                <SectionCard title="Recently Watched">
-                  {recent.map((s) => (
-                    <DashboardRow
-                      key={s.id}
-                      leading={
-                        <PosterThumb
-                          path={s.poster_path}
-                          size="w92"
-                          className="h-14 w-10"
-                        />
-                      }
-                      onClick={() => editShow(s.id)}
-                    >
-                      <ShowRowHeader show={s} />
-                    </DashboardRow>
-                  ))}
-                </SectionCard>
+                <ShowShelf title="Recently Watched" shows={recent} onSelect={editShow} />
               )}
             </div>
           )
         }}
       </ListLoader>
     </div>
+  )
+}
+
+/** One dashboard shelf: a `SectionCard` of `DashboardRow`s sharing the same poster-thumb + row
+ * layout — every shelf (Currently Watching, Caught Up, Want to Watch, Recently Watched) renders
+ * identically, so this is the single place that layout is defined. */
+function ShowShelf({
+  title,
+  shows,
+  onSelect,
+}: {
+  title: string
+  shows: ShowRow[]
+  onSelect: (id: string) => void
+}) {
+  return (
+    <SectionCard title={title}>
+      {shows.map((s) => (
+        <DashboardRow
+          key={s.id}
+          leading={<PosterThumb path={s.poster_path} size="w92" className="h-14 w-10" />}
+          onClick={() => onSelect(s.id)}
+        >
+          <ShowRowHeader show={s} />
+        </DashboardRow>
+      ))}
+    </SectionCard>
   )
 }

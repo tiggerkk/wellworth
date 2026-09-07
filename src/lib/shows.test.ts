@@ -7,8 +7,8 @@ import {
   favoriteShows,
   formatRuntime,
   isAbsoluteUrl,
+  isCaughtUp,
   isFieldVisible,
-  isUpNext,
   lengthHint,
   markWatched,
   posterUrl,
@@ -17,6 +17,7 @@ import {
   SHOW_VISIBLE_FIELDS,
   showGenres,
   startWatching,
+  totalWatchedEpisodes,
   usesEpisodes,
   type LibraryCriteria,
   type ShowRow,
@@ -43,6 +44,7 @@ function makeShow(p: Partial<ShowRow>): ShowRow {
     original_language: null,
     total_seasons: null,
     total_episodes: null,
+    season_episode_counts: null,
     watched_seasons: null,
     watched_episodes: null,
     rating: null,
@@ -147,8 +149,23 @@ describe('markWatched', () => {
 describe('progressLabel', () => {
   it('formats season + episode progress', () => {
     expect(
-      progressLabel({ watched_seasons: 2, watched_episodes: 18, total_episodes: 30 }),
+      progressLabel({
+        watched_seasons: 2,
+        watched_episodes: 18,
+        total_episodes: 30,
+        season_episode_counts: null,
+      }),
     ).toBe('S2 · 18/30')
+  })
+  it('shows the cumulative total across seasons when season counts are known', () => {
+    expect(
+      progressLabel({
+        watched_seasons: 2,
+        watched_episodes: 7,
+        total_episodes: 18,
+        season_episode_counts: { 1: 10, 2: 8 },
+      }),
+    ).toBe('S2 · 17/18')
   })
   it('treats nulls as zero', () => {
     expect(
@@ -156,6 +173,7 @@ describe('progressLabel', () => {
         watched_seasons: null,
         watched_episodes: null,
         total_episodes: null,
+        season_episode_counts: null,
       }),
     ).toBe('S0 · 0/0')
   })
@@ -228,38 +246,85 @@ describe('lengthHint', () => {
   })
 })
 
-describe('isUpNext', () => {
-  it('is true for an in-progress TV show with episodes remaining', () => {
+describe('totalWatchedEpisodes', () => {
+  const counts = { 1: 10, 2: 8 }
+  it('sums full prior seasons plus the in-season count', () => {
     expect(
-      isUpNext({
+      totalWatchedEpisodes({
+        watched_seasons: 2,
+        watched_episodes: 7,
+        season_episode_counts: counts,
+      }),
+    ).toBe(17)
+  })
+  it('is just the in-season count for season 1', () => {
+    expect(
+      totalWatchedEpisodes({
+        watched_seasons: 1,
+        watched_episodes: 4,
+        season_episode_counts: counts,
+      }),
+    ).toBe(4)
+  })
+  it('falls back to the raw watched_episodes when there are no season counts', () => {
+    expect(
+      totalWatchedEpisodes({
+        watched_seasons: 2,
+        watched_episodes: 7,
+        season_episode_counts: null,
+      }),
+    ).toBe(7)
+  })
+})
+
+describe('isCaughtUp', () => {
+  const counts = { 1: 10, 2: 8 }
+  it('is true once all known episodes are watched and still Watching', () => {
+    expect(
+      isCaughtUp({
         status: 'watching',
         type: 'tv',
-        watched_episodes: 5,
-        total_episodes: 10,
+        watched_seasons: 2,
+        watched_episodes: 8,
+        total_episodes: 18,
+        season_episode_counts: counts,
       }),
     ).toBe(true)
   })
-  it('is false once all episodes are watched', () => {
+  it('is false with episodes remaining', () => {
     expect(
-      isUpNext({
+      isCaughtUp({
         status: 'watching',
         type: 'tv',
-        watched_episodes: 10,
-        total_episodes: 10,
+        watched_seasons: 2,
+        watched_episodes: 7,
+        total_episodes: 18,
+        season_episode_counts: counts,
       }),
     ).toBe(false)
   })
-  it('is false for movies and non-watching statuses', () => {
+  it('is false once marked Watched (not "waiting for more")', () => {
     expect(
-      isUpNext({
-        status: 'watching',
-        type: 'movie',
-        watched_episodes: 0,
-        total_episodes: 0,
+      isCaughtUp({
+        status: 'watched',
+        type: 'tv',
+        watched_seasons: 2,
+        watched_episodes: 8,
+        total_episodes: 18,
+        season_episode_counts: counts,
       }),
     ).toBe(false)
+  })
+  it('is false for movies and when total is unknown', () => {
     expect(
-      isUpNext({ status: 'want', type: 'tv', watched_episodes: 0, total_episodes: 10 }),
+      isCaughtUp({
+        status: 'watching',
+        type: 'movie',
+        watched_seasons: null,
+        watched_episodes: null,
+        total_episodes: null,
+        season_episode_counts: null,
+      }),
     ).toBe(false)
   })
 })
@@ -348,6 +413,7 @@ describe('buildRefreshPatch', () => {
     runtime_min: 30,
     original_language: 'en',
     poster_path: '/old.jpg',
+    season_episode_counts: { '1': 10 } as unknown as ShowRow['season_episode_counts'],
   }
 
   it('patches only TMDB fields — never year or imdb_id', () => {
@@ -382,6 +448,10 @@ describe('buildRefreshPatch', () => {
       runtime_min: meta.runtime_min,
       original_language: meta.original_language,
       poster_path: meta.poster_path,
+      season_episode_counts: {
+        '1': 10,
+        '2': 10,
+      } as unknown as ShowRow['season_episode_counts'],
     }
     expect(buildRefreshPatch(same, meta).changed).toBe(false)
   })

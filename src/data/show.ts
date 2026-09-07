@@ -19,8 +19,8 @@ import { dedupKey, type ImportShowRow } from '../lib/shows-import'
  */
 const SHOW_LIST_COLUMNS =
   'id, user_id, type, status, title, original_title, year, poster_path, genres, director, ' +
-  '"cast", runtime_min, total_seasons, total_episodes, watched_seasons, watched_episodes, ' +
-  'rating, lgbtq_rep, dynasty, is_favorite, start_date, end_date, notes, updated_at'
+  '"cast", runtime_min, total_seasons, total_episodes, season_episode_counts, watched_seasons, ' +
+  'watched_episodes, rating, lgbtq_rep, dynasty, is_favorite, start_date, end_date, notes, updated_at'
 
 /** All of a user's shows, newest-touched first (Library default order; full sort is M5). */
 export async function listShows(userId: string): Promise<ShowRow[]> {

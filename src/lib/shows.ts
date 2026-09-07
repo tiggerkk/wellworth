@@ -74,9 +74,30 @@ const REFRESH_FIELDS = [
   'original_language',
 ] as const
 
+/** `season_episode_counts` round-trips through `jsonb` (typed as `Json`) but is always written as
+ * `{ [seasonNumber]: episodeCount }`; this normalizes it to a plain lookup keyed by season number,
+ * used by both the diffing in `buildRefreshPatch` and the summing in `totalWatchedEpisodes`. */
+function seasonCounts(
+  value: ShowRow['season_episode_counts'] | Record<number, number> | null,
+): Record<number, number> {
+  return (value as Record<number, number> | null) ?? {}
+}
+
 const sameArray = (a: string[] | null, b: string[] | null): boolean =>
   (a ?? null) === (b ?? null) ||
   (!!a && !!b && a.length === b.length && a.every((v, i) => v === b[i]))
+
+const sameSeasonCounts = (
+  a: ShowRow['season_episode_counts'],
+  b: Record<number, number> | null,
+): boolean => {
+  const av = seasonCounts(a)
+  const bv = seasonCounts(b)
+  const aKeys = Object.keys(av)
+  const bKeys = Object.keys(bv)
+  if (aKeys.length !== bKeys.length) return false
+  return aKeys.every((k) => av[Number(k)] === bv[Number(k)])
+}
 
 /**
  * Build the patch for a per-show Refresh: only the TMDB-sourced fields above, plus the poster.
@@ -86,7 +107,10 @@ const sameArray = (a: string[] | null, b: string[] | null): boolean =>
  * the caller can skip the write and report "no changes" (idempotent + non-destructive).
  */
 export function buildRefreshPatch(
-  show: Pick<ShowRow, (typeof REFRESH_FIELDS)[number] | 'poster_path'>,
+  show: Pick<
+    ShowRow,
+    (typeof REFRESH_FIELDS)[number] | 'poster_path' | 'season_episode_counts'
+  >,
   meta: ShowMetadata,
 ): { patch: ShowUpdate; changed: boolean } {
   const patch: ShowUpdate = {
@@ -100,6 +124,7 @@ export function buildRefreshPatch(
     total_episodes: meta.total_episodes,
     runtime_min: meta.runtime_min,
     original_language: meta.original_language,
+    season_episode_counts: meta.season_episode_counts,
   }
   // Preserve a manually pasted poster; otherwise adopt the TMDB poster.
   if (!isAbsoluteUrl(show.poster_path)) patch.poster_path = meta.poster_path
@@ -110,15 +135,66 @@ export function buildRefreshPatch(
         ? !sameArray(show[k], patch[k] as string[] | null)
         : show[k] !== patch[k],
     ) ||
+    !sameSeasonCounts(
+      show.season_episode_counts,
+      patch.season_episode_counts as Record<number, number> | null,
+    ) ||
     (patch.poster_path !== undefined && patch.poster_path !== show.poster_path)
   return { patch, changed }
 }
 
-/** "S{watched_seasons} · {watched_episodes}/{total_episodes}" — the TV progress label. */
+/** "S{watched_seasons} · {cumulative watched}/{total_episodes}" — the TV progress label. The
+ * numerator is the true series-wide total watched (see `totalWatchedEpisodes`), not just the
+ * in-season count, so a show mid-way through season 2 reads e.g. "S2 · 17/18" rather than "S2 · 7/18". */
 export function progressLabel(
-  show: Pick<ShowRow, 'watched_seasons' | 'watched_episodes' | 'total_episodes'>,
+  show: Pick<
+    ShowRow,
+    'watched_seasons' | 'watched_episodes' | 'total_episodes' | 'season_episode_counts'
+  >,
 ): string {
-  return `S${show.watched_seasons ?? 0} · ${show.watched_episodes ?? 0}/${show.total_episodes ?? 0}`
+  return `S${show.watched_seasons ?? 0} · ${totalWatchedEpisodes(show)}/${show.total_episodes ?? 0}`
+}
+
+/**
+ * Cumulative episodes watched across the whole series. `watched_episodes` is entered as the count
+ * WITHIN `watched_seasons` (the owner's convention — e.g. season 2, 7 eps means "all of season 1
+ * plus 7 of season 2"), so this sums the full episode counts of every prior season from
+ * `season_episode_counts` and adds the in-season count. Falls back to the raw `watched_episodes`
+ * value (old per-season-only behaviour) when `season_episode_counts` isn't available — e.g. a
+ * manually-entered title with no TMDB match, or a row saved before this field existed.
+ */
+export function totalWatchedEpisodes(
+  show: Pick<ShowRow, 'watched_seasons' | 'watched_episodes' | 'season_episode_counts'>,
+): number {
+  const inSeason = show.watched_episodes ?? 0
+  const watchedSeason = show.watched_seasons ?? 0
+  if (!show.season_episode_counts || watchedSeason <= 0) return inSeason
+  const counts = seasonCounts(show.season_episode_counts)
+  let priorSeasons = 0
+  for (let s = 1; s < watchedSeason; s++) priorSeasons += counts[s] ?? 0
+  return priorSeasons + inSeason
+}
+
+/**
+ * True when the owner has watched everything TMDB currently lists as available for an episodic
+ * title that's still marked "Watching" (as opposed to "Watched" — the owner is deliberately
+ * waiting on a next season/episode, not done with the show). Used to surface the dashboard's
+ * "Caught Up" shelf/chip. Always false when there's no known total (can't tell).
+ */
+export function isCaughtUp(
+  show: Pick<
+    ShowRow,
+    | 'status'
+    | 'type'
+    | 'watched_seasons'
+    | 'watched_episodes'
+    | 'total_episodes'
+    | 'season_episode_counts'
+  >,
+): boolean {
+  if (show.status !== 'watching' || !usesEpisodes(show.type)) return false
+  if (!show.total_episodes) return false
+  return totalWatchedEpisodes(show) >= show.total_episodes
 }
 
 /** A runtime in minutes as "2h 10m" / "1h" / "45m" (no leading zero hour). */
@@ -144,17 +220,6 @@ export function lengthHint(
   }
   if (show.total_episodes) return `${show.total_episodes} eps`
   return null
-}
-
-/** Dashboard "Up Next": an in-progress TV show with episodes still to watch. */
-export function isUpNext(
-  show: Pick<ShowRow, 'status' | 'type' | 'watched_episodes' | 'total_episodes'>,
-): boolean {
-  return (
-    show.status === 'watching' &&
-    show.type === 'tv' &&
-    (show.watched_episodes ?? 0) < (show.total_episodes ?? 0)
-  )
 }
 
 /** Dashboard "Favourites": starred titles (incoming order preserved). */

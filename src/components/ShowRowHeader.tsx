@@ -5,7 +5,8 @@
  * The favourite indicator itself lives on the caller's `ListRow`/`DashboardRow`, not here.
  *
  * Line 1: Title (+ year) · Dynasty chip (if not null)
- * Line 2: Status chip · Rating (if not null) · Start/Finish date (per status)
+ * Line 2: Status chip (or "Caught Up" in place of "Watching" once all known episodes are watched) ·
+ *   Rating (if not null) · Start/Finish date (per status)
  * Line 3: TV/Movie/Doc icon · Progress info (see showProgressInfo) · Genre (first genre only)
  */
 import {
@@ -15,7 +16,13 @@ import {
   type ShowType,
 } from '../constants/shows'
 import { formatFullDate, type IsoDate } from '../lib/date'
-import { lengthHint, progressLabel, usesEpisodes, type ShowRow } from '../lib/shows'
+import {
+  isCaughtUp,
+  lengthHint,
+  progressLabel,
+  usesEpisodes,
+  type ShowRow,
+} from '../lib/shows'
 import { DynastyChip } from './DynastyChip'
 import { ShowTypeBadge } from './ShowTypeBadge'
 import { StatusChip } from './StatusChip'
@@ -38,6 +45,7 @@ type ShowRowHeaderProps = {
     | 'total_episodes'
     | 'watched_seasons'
     | 'watched_episodes'
+    | 'season_episode_counts'
   >
 }
 
@@ -47,6 +55,7 @@ export function ShowRowHeader({ show }: ShowRowHeaderProps) {
   const status = show.status as ShowStatus
   const progress = showProgressInfo(show, status)
   const hasByline = !!progress || !!show.genres?.[0]
+  const caughtUp = isCaughtUp(show)
 
   return (
     <>
@@ -59,7 +68,14 @@ export function ShowRowHeader({ show }: ShowRowHeaderProps) {
       </span>
 
       <span className="mt-0.5 flex items-center gap-2 text-caption text-text-secondary">
-        <StatusChip label={SHOW_STATUS_LABELS[status]} tone={SHOW_STATUS_CHIP[status]} />
+        {caughtUp ? (
+          <StatusChip label="Caught Up" tone="caught-up" />
+        ) : (
+          <StatusChip
+            label={SHOW_STATUS_LABELS[status]}
+            tone={SHOW_STATUS_CHIP[status]}
+          />
+        )}
         {show.rating ? <StarRating value={show.rating} size={12} /> : null}
         <ShowDateHint
           status={status}

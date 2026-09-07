@@ -3,7 +3,14 @@
  * `*_STATUS_CHIP` map picks a tone per status; `STATUS_TONE_CLASS` is the single place that maps a
  * tone to its actual colour so the whole app's status palette can be tweaked in one spot.
  */
-export const STATUS_TONES = ['want', 'ongoing', 'done', 'dropped', 'break-even'] as const
+export const STATUS_TONES = [
+  'want',
+  'ongoing',
+  'done',
+  'dropped',
+  'break-even',
+  'caught-up',
+] as const
 export type StatusTone = (typeof STATUS_TONES)[number]
 
 export const STATUS_TONE_CLASS: Record<StatusTone, string> = {
@@ -12,4 +19,5 @@ export const STATUS_TONE_CLASS: Record<StatusTone, string> = {
   done: 'bg-positive/15 text-positive',
   dropped: 'bg-track/15 text-text-secondary',
   'break-even': 'bg-accent/15 text-accent',
+  'caught-up': 'bg-accent/15 text-accent',
 }

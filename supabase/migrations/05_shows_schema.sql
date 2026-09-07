@@ -40,8 +40,12 @@ create table public.show (
   original_language text,
   total_seasons    integer,                  -- episodic types only (TV + documentary)
   total_episodes   integer,                  -- episodic types only
+  season_episode_counts jsonb,               -- episodic types only; { [season_number]: episode_count } from TMDB,
+                                              -- used to compute cumulative watched-episode totals and to detect
+                                              -- newly-released seasons/episodes on refresh
   watched_seasons  integer,                  -- episodic types only; set to totals on Watched
-  watched_episodes integer,                  -- episodic types only; set to totals on Watched
+  watched_episodes integer,                  -- episodic types only; watched count WITHIN watched_seasons
+                                              -- (not a series-wide total); set to totals on Watched
   rating           numeric check (
                      rating >= 0 and rating <= 5 and (rating * 2) = floor(rating * 2)
                    ),                         -- user stars, 0–5 in 0.5 steps
