@@ -9,7 +9,7 @@ import { FieldRow } from '../components/FieldRow'
 import { Toggle } from '../components/Toggle'
 import { ImportExportRow } from '../components/ImportExportRow'
 import { clearShowMatchCache, showMatchCacheSize } from '../lib/shows-match-cache'
-import { listShows, updateShow } from '../data/show'
+import { listShows, listShowsForRefresh, updateShow } from '../data/show'
 import { buildShowsExportRows } from '../lib/shows-export'
 import { downloadCsv } from '../lib/file-export'
 import { errorMessage } from '../lib/errors'
@@ -78,7 +78,7 @@ function Body({ profile, save }: { profile: Tables<'profile'>; save: SaveFn }) {
     setRefreshing(true)
     setRefreshResults(null)
     try {
-      const shows = await listShows(userId)
+      const shows = await listShowsForRefresh(userId)
       const candidates = bulkRefreshCandidates(shows)
       setRefreshProgress({ done: 0, total: candidates.length })
       const results = await refreshAllFromTmdb(candidates, updateShow, (done, total) =>

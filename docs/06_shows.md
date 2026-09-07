@@ -8,10 +8,10 @@
 - A small stat line: **"N watched this year"**.
 - **Shelves**: a card shown only when it has items. Each row carries the following (with some card-specific items):
   - Line 1: **poster thumbnail**, **title (+ year)** and a **gold Dynasty badge** for Chinese titles.
-  - Line 2: **status chip · star rating** (when set) **· date**.
-  - Line 3: **type badge · seasons/episodes or length hint· first genre**.
-- **Up Next** — in-progress episodic title (TV or documentary); seasons/episodes shows **"S{watched_seasons} · {watched_episodes}/{total_episodes}"** progress.
-- **Watching** — remaining `status=watching` titles (movies + TV without episode totals); season/episode progress for an episodic title with a known total, otherwise **"Started {start date}"**. Up Next is de-duplicated out so a show isn't listed twice.
+  - Line 2: **status chip** (reads **"Caught Up"** in place of "Watching" once every known episode is watched — see below) **· star rating** (when set) **· date**.
+  - Line 3: **type badge · seasons/episodes or length hint · first genre**.
+- **Currently Watching** — `status=watching` titles that still have unwatched episodes (or, for movies, no episode concept at all); season/episode progress for an episodic title with a known total, otherwise **"Started {start date}"**. Progress is shown as **"S{watched_seasons} · {cumulative watched}/{total_episodes}"** — the numerator is the **true series-wide total watched**, not just the count within the current season (see `totalWatchedEpisodes` below), so a show mid-way through season 2 correctly reads e.g. `S2 · 17/18` rather than `S2 · 7/18`.
+- **Caught Up** — episodic `status=watching` titles where cumulative watched episodes have reached the known total (`isCaughtUp`): the owner has watched everything TMDB currently lists but hasn't marked it Watched, i.e. deliberately waiting on more. Sits directly below Currently Watching, above Want to Watch. A title moves back to Currently Watching automatically once a refresh (per-show or bulk) reveals new episodes/seasons.
 - **Want to Watch** — `status=want` titles; **length hint** is compact (`~2h 10m` for movies, `3 seasons`/`12 eps` for episodic).
 - **Recently Watched** — last 5 by finish date; shows **finish date**. Imported rows with no `end_date` don't appear here.
 
@@ -35,10 +35,10 @@ A new show can be prefilled from `?title=&poster=&overview=&type=`.
 - **Status** (Want / Watching / Watched / Dropped) is a **dropdown** sharing a line with **Rating** (0–5 half-star): Watching/Watched/Dropped defaults **Start date** to today; Watched/Dropped also defaults **Finish/Drop date** to today; Watched on an episodic title snaps watched counts to totals. **Want leaves Start Date blank.**
 - **LGBT+ representation**: None / Some / Significant dropdown.
 - **Start Date** and **Finish / Drop Date** share a line; each opens the Calendar modal and is clearable.
-- **Total Seasons / Episodes** and **Watched Seasons / Episodes** (episodic types — TV + documentary): two labels over four side-by-side number inputs.
+- **Total Seasons / Episodes** and **Watched Seasons / Episodes** (episodic types — TV + documentary): two labels over four side-by-side number inputs. The **Watched** convention stays entry-only: the owner enters the season they're on plus the episode count **within that season** (e.g. season 2, 7 eps = all of season 1 finished plus 7 of season 2) rather than a series-wide total. A computed caption below the inputs — **"{X} of {Y} episodes watched overall"** — shows the true cumulative total live as the owner types, so the per-season convention doesn't require mentally tallying prior seasons. The caption (and the Dashboard/Library progress line) needs `season_episode_counts` populated (see Data model); it falls back silently to the raw in-season count for a title with no TMDB match or one saved before this field existed.
 - **Notes** (free text): a **4-row** textarea. An **expand icon** beside the label opens the shared full-screen **`NotesEditorOverlay`** for long notes — header `Title (Year)` (title only when Year is unknown), a **buffered** editor (only Save writes back to the form) using the shared **EntryHeaderActions** (Delete clears the text · Reset reverts to the value at open · Save applies + closes), a top-left ✕ to cancel/discard, and a **paste** icon that inserts clipboard text **at the cursor**. Stored as `notes` (TEXT, effectively unbounded).
 - **Search TMDB** opens the Title Search modal (CJK-aware; documentary uses the /tv endpoint). Selecting a result fetches details and populates metadata — poster thumbnail + Genres, Director/Creator, top Cast, Overview, Runtime (read-only display) — plus Title/Original Title/Year (editable) and season/episode totals for episodic types. Nothing saved until CREATE/SAVE.
-- **⟳ Refresh from TMDB** (beside Search; enabled only when `tmdb_id` exists): re-fetches TMDB metadata and updates **only TMDB-sourced fields** (title, original_title, overview, genres, director, cast, season/episode totals, runtime, original_language, TMDB poster). Never touches owner fields (status, rating, lgbtq_rep, dates, notes, watched counts, is_favorite) or a **manually pasted** poster. Reports "Updated" / "Already up to date".
+- **⟳ Refresh from TMDB** (beside Search; enabled only when `tmdb_id` exists): re-fetches TMDB metadata and updates **only TMDB-sourced fields** (title, original_title, overview, genres, director, cast, season/episode totals, `season_episode_counts` per-season breakdown, runtime, original_language, TMDB poster). Never touches owner fields (status, rating, lgbtq_rep, dates, notes, watched counts, is_favorite) or a **manually pasted** poster. Reports "Updated" / "Already up to date". A title saved before `season_episode_counts` existed picks it up on the next Refresh (or re-selecting from Search), which also corrects its Dashboard/Library progress display.
 - Top-right icon actions (Delete when editing · Reset · Create/Save) via shared **EntryHeaderActions**. Create requires a Title.
 - Field visibility controlled by **Shows Settings → Visible Fields** (Type, Title, Status, the favorite heart, and the Refresh action are always shown).
 
@@ -53,6 +53,7 @@ A new show can be prefilled from `?title=&poster=&overview=&type=`.
 
 - **DISPLAY → Visible Fields**: shared **VisibleFieldsSheet** (see `docs/01_design_system.md`) over the optional Entry/Edit fields in New/Edit form order: Original Title, Year, **TMDB Metadata**, Rating, LGBT+, Dynasty, the two dates, Season & Episode counts, **Poster URL**, Notes. Most stored on `profile.show_visible_fields` (**NULL = all visible**); **Poster URL** is an `extra` backed by `profile.show_poster_url_visible` (**default off**) meaning "force always visible" — stored separately because the visible-fields list is default-on. Type, Title, Status, and the favorite heart are always shown and not listed.
 - **Import → Enable Bulk Shows Import / Export** toggle (`profile.show_importer_enabled`, **on by default**); when on, an **Import CSV Shows** launcher opens the importer sheet, an **Export CSV Shows** button downloads every tracked title as a CSV, plus a **Clear Import Match Cache (N)** button (`clearShowMatchCache`; `N` = `showMatchCacheSize`) — see Import CSV → match cache, and `OWNER_RUNBOOK.md` Part R.
+- **Maintenance → Refresh All from TMDB**: re-checks every **Want/Watching** episodic (TV or documentary) title with a known `tmdb_id` against TMDB in one pass — movies are skipped (no seasons/episodes to check for). Reuses the same `buildRefreshPatch` diff the per-show Refresh button uses, so the two can't drift; runs with **bounded concurrency** (`REFRESH_CONCURRENCY = 4` requests in flight, not fully sequential) since TMDB comfortably tolerates it — a live "Refreshing… (done/total)" counter tracks progress. Afterward shows a summary — **"{checked} checked · {updated} updated · {N} to review"** — plus a details list naming only the titles that need a look: ones that **gained new episodes/seasons while already caught up** (`hasNewEpisodesAvailable`) or that **errored**. A large "nothing to report" refresh (most titles just get quiet metadata touch-ups) stays uncluttered — the "to review" list is deliberately much shorter than "updated". This is also the fastest way to backfill `season_episode_counts` across an existing library (see Data model) so Dashboard/Library progress math is correct everywhere.
 
 ### Import CSV (sheet, from Shows Settings)
 
@@ -80,6 +81,8 @@ Full guide: `templates/shows-import-guide.md`.
 
 - Sorted by `type`, then `status` — both by their canonical enum order (`SHOW_TYPES`/`SHOW_STATUSES`), not alphabetically — then `start_date` ascending (a `want` row with no `start_date` sorts last within its group).
 
+Note: the bulk "Refresh All from TMDB" maintenance action (above) uses a separate `listShowsForRefresh` query, not `listShows` — it needs `tmdb_id`/`overview`/`original_language`, which `listShows`' column-trimmed select deliberately omits (list/Dashboard screens never read them), and filters server-side to Want/Watching + episodic + has-a-match so unrelated rows never leave the database.
+
 ---
 
 ## External APIs (Shows-only)
@@ -91,7 +94,7 @@ Full guide: `templates/shows-import-guide.md`.
 - **Search**: `GET /search/tv` or `/search/movie` by title; returns poster_path, title, year, id.
 - **Details**: `GET /tv/{id}` or `/movie/{id}` for genres, cast, director/creator, runtime, original_language, season/episode totals.
 - **Persist only on CREATE/SAVE** — no TMDB data is stored until the user explicitly saves.
-- **`buildRefreshPatch`**: assembles the TMDB-sourced field delta for the Refresh action; never overwrites owner fields or a manually pasted poster.
+- **`buildRefreshPatch`**: assembles the TMDB-sourced field delta for the Refresh action, including the `season_episode_counts` per-season breakdown; never overwrites owner fields or a manually pasted poster. Shared unchanged by the bulk "Refresh All from TMDB" action (Settings), which runs it across many titles with bounded concurrency (`REFRESH_CONCURRENCY = 4`) rather than one-at-a-time.
 - Poster CDN base is `https://image.tmdb.org/t/p/w92` (list) / `w185` (detail). A manually pasted URL passes through as-is (detected by `isAbsoluteUrl`). All `<img>` tags use `referrerpolicy="no-referrer"`.
 
 ---
@@ -114,7 +117,8 @@ Full guide: `templates/shows-import-guide.md`.
 - `runtime_min` INT NULL
 - `original_language` TEXT NULL
 - `total_seasons` INT NULL · `total_episodes` INT NULL — episodic types (TV + documentary)
-- `watched_seasons` INT NULL · `watched_episodes` INT NULL — episodic types; set to totals on Watched
+- `season_episode_counts` JSONB NULL — episodic types; `{ [season_number]: episode_count }` from TMDB. Powers **`totalWatchedEpisodes`** (cumulative watched-episode total across all seasons, used by the Dashboard/Library progress line and by `isCaughtUp`) and **`hasNewEpisodesAvailable`** (bulk-refresh "new episodes" detection). Populated on TMDB select/refresh (Entry) and by the bulk "Refresh All from TMDB" action; `NULL` on a title with no TMDB match or one saved before this column existed — `totalWatchedEpisodes` falls back to the raw in-season `watched_episodes` count in that case (the old, less accurate behaviour), never errors.
+- `watched_seasons` INT NULL · `watched_episodes` INT NULL — episodic types; set to totals on Watched. **`watched_episodes` is the count WITHIN `watched_seasons`, not a series-wide total** — e.g. season 2, 7 eps means "all of season 1 finished, plus 7 of season 2". This is the entry convention the owner types (no need to mentally tally prior seasons); `totalWatchedEpisodes` derives the true cumulative total from it plus `season_episode_counts`.
 - `rating` NUMERIC NULL — user stars, 0–5 in 0.5 steps (CHECK)
 - `lgbtq_rep` TEXT DEFAULT 'none' — `'none' | 'some' | 'significant'` (CHECK)
 - `dynasty` TEXT NULL — Chinese dynasty (CHECK against the 13 `DYNASTIES` values — `全部` + 12 dynasties in `src/constants/dynasty.ts`); set only for Chinese titles, NULL otherwise; editable in the Entry form only when the title contains CJK
@@ -122,7 +126,7 @@ Full guide: `templates/shows-import-guide.md`.
 - `start_date` DATE NULL · `end_date` DATE NULL — start and finish/drop date
 - `notes` TEXT NULL — free-text user notes (effectively unbounded; edited inline or via `NotesEditorOverlay`)
 - `created_at`, `updated_at`
-- Index on (`user_id`, `status`) and (`user_id`, `is_favorite`)
+- Index on (`user_id`, `status`) and (`user_id`, `is_favorite`) — the former also serves `listShowsForRefresh`'s Want/Watching filter for the bulk TMDB refresh (type and `tmdb_id` are filtered from the matched rows; no dedicated index needed at personal-library scale)
 
 Standard rules: own `user_id` for direct RLS, four owner policies using `(select auth.uid()) = user_id`, CHECK on enum columns, `moddatetime` trigger on `updated_at`, explicit GRANT to `anon`/`authenticated`. **Hard delete** (nothing references `show` except `quote.show_id` ON DELETE SET NULL on `quote` — so deleting a show nullifies the link on any quoting it, but the quote survives). Migration:
 `supabase/migrations/05_shows_schema.sql`. Profile columns added by `supabase/migrations/06_shows_profile_settings.sql`.

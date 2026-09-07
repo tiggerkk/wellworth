@@ -113,4 +113,23 @@ describe('refreshAllFromTmdb', () => {
     expect(results[0]!.error).toBeTruthy()
     expect(results[0]!.changed).toBe(false)
   })
+
+  it('preserves input order and reports full progress under concurrency, regardless of list size', async () => {
+    // All throw immediately (no tmdb_id), so this stays deterministic and offline while still
+    // exercising the worker-pool path across more candidates than REFRESH_CONCURRENCY.
+    const shows = Array.from({ length: 10 }, (_, i) =>
+      makeShow({ id: `s${i}`, tmdb_id: null }),
+    )
+    const updateShow = async () => {}
+    let lastDone = 0
+    let lastTotal = 0
+    const results = await refreshAllFromTmdb(shows, updateShow, (done, total) => {
+      lastDone = done
+      lastTotal = total
+    })
+    expect(results.map((r) => r.show.id)).toEqual(shows.map((s) => s.id))
+    expect(results.every((r) => r.error)).toBe(true)
+    expect(lastDone).toBe(10)
+    expect(lastTotal).toBe(10)
+  })
 })

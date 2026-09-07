@@ -55,34 +55,53 @@ export function bulkRefreshCandidates<T extends RefreshableShow>(shows: T[]): T[
 }
 
 /**
- * Bulk "Refresh all from TMDB": re-pulls each candidate sequentially (polite to the TMDB API) via
- * the same `buildRefreshPatch` the per-show Refresh button uses, so the two never drift. A show
- * that errors is reported with `error` set and does not stop the batch. `onProgress` reports
- * 1-based (`done`, `total`) so the caller can show a live counter.
+ * Bulk "Refresh all from TMDB": re-pulls candidates with bounded concurrency (a handful of
+ * requests in flight at once, not one-at-a-time) via the same `buildRefreshPatch` the per-show
+ * Refresh button uses, so the two never drift. TMDB's public API comfortably tolerates this
+ * (~50 req/s), so a small worker pool cuts wall-clock time substantially for a library-wide
+ * refresh without needing the sliding-window limiter Books uses for Google's stricter quota. A
+ * show that errors is reported with `error` set and does not stop the batch. `onProgress` reports
+ * how many of `candidates` have completed so far (not in list order, since workers finish out of
+ * order) so the caller can show a live counter.
  */
+const REFRESH_CONCURRENCY = 4
+
 export async function refreshAllFromTmdb(
   candidates: RefreshableShow[],
   updateShow: (id: string, patch: ShowUpdate) => Promise<void>,
   onProgress?: (done: number, total: number) => void,
 ): Promise<BulkRefreshOutcome[]> {
-  const results: BulkRefreshOutcome[] = []
-  for (let i = 0; i < candidates.length; i++) {
-    const show = candidates[i]!
-    try {
-      const meta = await refreshFromTmdb(show)
-      const { patch, changed } = buildRefreshPatch(show, meta)
-      const newEpisodesAvailable = hasNewEpisodesAvailable(show, meta.total_episodes)
-      if (changed) await updateShow(show.id, patch)
-      results.push({ show, changed, newEpisodesAvailable })
-    } catch (e) {
-      results.push({
-        show,
-        changed: false,
-        newEpisodesAvailable: false,
-        error: e instanceof Error ? e.message : 'Refresh failed.',
-      })
+  const results: BulkRefreshOutcome[] = new Array(candidates.length)
+  let nextIndex = 0
+  let doneCount = 0
+
+  async function worker(): Promise<void> {
+    for (;;) {
+      const i = nextIndex++
+      if (i >= candidates.length) return
+      const show = candidates[i]!
+      try {
+        const meta = await refreshFromTmdb(show)
+        const { patch, changed } = buildRefreshPatch(show, meta)
+        const newEpisodesAvailable = hasNewEpisodesAvailable(show, meta.total_episodes)
+        if (changed) await updateShow(show.id, patch)
+        results[i] = { show, changed, newEpisodesAvailable }
+      } catch (e) {
+        results[i] = {
+          show,
+          changed: false,
+          newEpisodesAvailable: false,
+          error: e instanceof Error ? e.message : 'Refresh failed.',
+        }
+      }
+      onProgress?.(++doneCount, candidates.length)
     }
-    onProgress?.(i + 1, candidates.length)
   }
+
+  const workers = Array.from(
+    { length: Math.min(REFRESH_CONCURRENCY, candidates.length) },
+    worker,
+  )
+  await Promise.all(workers)
   return results
 }

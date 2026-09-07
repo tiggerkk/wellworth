@@ -22,6 +22,13 @@ const SHOW_LIST_COLUMNS =
   '"cast", runtime_min, total_seasons, total_episodes, season_episode_counts, watched_seasons, ' +
   'watched_episodes, rating, lgbtq_rep, dynasty, is_favorite, start_date, end_date, notes, updated_at'
 
+/** Columns needed by the bulk "Refresh All from TMDB" maintenance action: everything
+ * `SHOW_LIST_COLUMNS` has, plus the TMDB-refresh-only fields it deliberately omits (`tmdb_id`,
+ * `overview`, `original_language`) since list screens never read those. Kept separate from
+ * `SHOW_LIST_COLUMNS` rather than widening it, per the column-trimmed list query rule — Dashboard
+ * and Library shouldn't pay for columns they don't render. */
+const SHOW_REFRESH_COLUMNS = SHOW_LIST_COLUMNS + ', tmdb_id, overview, original_language'
+
 /** All of a user's shows, newest-touched first (Library default order; full sort is M5). */
 export async function listShows(userId: string): Promise<ShowRow[]> {
   const { data, error } = await supabase
@@ -33,6 +40,23 @@ export async function listShows(userId: string): Promise<ShowRow[]> {
   // Cast: the narrowed select is a subset of `show`'s columns, and every list-screen consumer
   // only reads fields within SHOW_LIST_COLUMNS (see comment above) — so ShowRow is safe here even
   // though overview/imdb_id/tmdb_id/original_language/created_at are `undefined` at runtime.
+  return data as unknown as ShowRow[]
+}
+
+/** Shows for the bulk TMDB refresh maintenance action — see `SHOW_REFRESH_COLUMNS`. Filters
+ * server-side to the same scope `bulkRefreshCandidates` checks — Want/Watching, episodic, and a
+ * known TMDB match — so Watched, Dropped, movie, and unmatched rows never leave the database
+ * rather than being fetched and discarded client-side. `bulkRefreshCandidates` is still applied by
+ * the caller as the single source of truth for that scope; this query just mirrors it in SQL. */
+export async function listShowsForRefresh(userId: string): Promise<ShowRow[]> {
+  const { data, error } = await supabase
+    .from('show')
+    .select(SHOW_REFRESH_COLUMNS)
+    .eq('user_id', userId)
+    .in('status', ['want', 'watching'])
+    .in('type', ['tv', 'documentary'])
+    .not('tmdb_id', 'is', null)
+  if (error) throw error
   return data as unknown as ShowRow[]
 }
 
