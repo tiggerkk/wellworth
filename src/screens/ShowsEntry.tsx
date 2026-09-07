@@ -760,6 +760,7 @@ function ShowForm({
                   min={0}
                   value={draft.total_seasons}
                   onChange={(e) => update({ total_seasons: e.target.value })}
+                  onFocus={(e) => e.target.select()}
                   placeholder="Seasons"
                   className={`${inputClass} min-w-0 flex-1`}
                 />
@@ -768,6 +769,7 @@ function ShowForm({
                   min={0}
                   value={draft.total_episodes}
                   onChange={(e) => update({ total_episodes: e.target.value })}
+                  onFocus={(e) => e.target.select()}
                   placeholder="Episodes"
                   className={`${inputClass} min-w-0 flex-1`}
                 />
@@ -778,6 +780,7 @@ function ShowForm({
                   min={0}
                   value={draft.watched_seasons}
                   onChange={(e) => update({ watched_seasons: e.target.value })}
+                  onFocus={(e) => e.target.select()}
                   placeholder="Seasons"
                   className={`${inputClass} min-w-0 flex-1`}
                 />
@@ -786,6 +789,7 @@ function ShowForm({
                   min={0}
                   value={draft.watched_episodes}
                   onChange={(e) => update({ watched_episodes: e.target.value })}
+                  onFocus={(e) => e.target.select()}
                   placeholder="Episodes"
                   className={`${inputClass} min-w-0 flex-1`}
                 />
