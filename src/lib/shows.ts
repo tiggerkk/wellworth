@@ -222,23 +222,40 @@ export function lengthHint(
   return null
 }
 
-/** Dashboard "Favourites": starred titles (incoming order preserved). */
-export function favoriteShows<T extends Pick<ShowRow, 'is_favorite'>>(shows: T[]): T[] {
-  return shows.filter((s) => s.is_favorite)
+/**
+ * Shared "date" ordering key: finish date if known, else last-updated timestamp.
+ * Used by both the Library's `date` sort and the Dashboard shelves below.
+ */
+function dashboardDateKey(show: Pick<ShowRow, 'end_date' | 'updated_at'>): string {
+  return show.end_date ?? show.updated_at
+}
+
+/** Sorts most-recent-first by `dashboardDateKey`, breaking ties by `start_date` then title. */
+export function sortByRecency<
+  T extends Pick<ShowRow, 'title' | 'start_date' | 'end_date' | 'updated_at'>,
+>(shows: T[]): T[] {
+  return [...shows].sort((a, b) => {
+    const primary = dashboardDateKey(b).localeCompare(dashboardDateKey(a))
+    if (primary !== 0) return primary
+    if (a.start_date !== b.start_date) {
+      if (a.start_date == null) return 1
+      if (b.start_date == null) return -1
+      return b.start_date.localeCompare(a.start_date)
+    }
+    return a.title.localeCompare(b.title)
+  })
 }
 
 /**
  * Dashboard "Recently Watched": the most-recently-finished titles. Imported rows with no
  * `end_date` are excluded by design — they live in the Library, not the recent shelf.
  */
-export function recentlyWatched<T extends Pick<ShowRow, 'status' | 'end_date'>>(
-  shows: T[],
-  limit: number,
-): T[] {
-  return shows
-    .filter((s) => s.status === 'watched' && s.end_date != null)
-    .sort((a, b) => (b.end_date ?? '').localeCompare(a.end_date ?? ''))
-    .slice(0, limit)
+export function recentlyWatched<
+  T extends Pick<ShowRow, 'title' | 'status' | 'start_date' | 'end_date' | 'updated_at'>,
+>(shows: T[], limit: number): T[] {
+  return sortByRecency(
+    shows.filter((s) => s.status === 'watched' && s.end_date != null),
+  ).slice(0, limit)
 }
 
 /** Count titles finished in a given calendar year (by `end_date`). */
@@ -365,8 +382,8 @@ function sortKey(show: ShowRow, field: SortField): string | number | null {
       // Chronological oldest→newest ascending (先秦 first … 近代 … 全部 last); non-Chinese sorts last.
       return dynastySortRank(show.dynasty)
     case 'date':
-      // Finish date if any, else the start/added date. (`updated_at` is import-time noise here.)
-      return show.end_date ?? show.start_date
+      // Finish date if any, else last-updated timestamp; start_date only breaks ties (see compareShows).
+      return show.end_date ?? show.updated_at
   }
 }
 
@@ -382,6 +399,13 @@ function compareShows(a: ShowRow, b: ShowRow, field: SortField, dir: SortDir): n
       ? ka - kb
       : String(ka).localeCompare(String(kb))
   if (primary !== 0) return dir === 'asc' ? primary : -primary
+  // On a `date` tie, break by start_date before falling back to title.
+  if (field === 'date' && a.start_date !== b.start_date) {
+    if (a.start_date == null) return 1
+    if (b.start_date == null) return -1
+    const startCmp = a.start_date.localeCompare(b.start_date)
+    return dir === 'asc' ? startCmp : -startCmp
+  }
   return a.title.localeCompare(b.title) // stable tiebreak
 }
 

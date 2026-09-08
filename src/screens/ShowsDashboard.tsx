@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { IconDeviceTv } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthProvider'
@@ -7,7 +7,12 @@ import { fromDashboard } from '../hooks/useEntryClose'
 import { useShowsVersion } from '../lib/shows-refresh'
 import { listShows } from '../data/show'
 import { type ShowType } from '../constants/shows'
-import { countWatchedThisYear, isCaughtUp, recentlyWatched } from '../lib/shows'
+import {
+  countWatchedThisYear,
+  isCaughtUp,
+  recentlyWatched,
+  sortByRecency,
+} from '../lib/shows'
 import { todayLocal } from '../lib/date'
 import { routes } from '../constants/routes'
 import { SectionCard } from '../components/SectionCard'
@@ -48,6 +53,23 @@ export function ShowsDashboard() {
 
   const editShow = (id: string) => navigate(routes.shows.edit(id), fromDashboard)
 
+  const shelves = useMemo(() => {
+    const all = shows ?? []
+    const filtered = filter === 'all' ? all : all.filter((s) => s.type === filter)
+    const caughtUp = sortByRecency(filtered.filter(isCaughtUp))
+    const caughtUpIds = new Set(caughtUp.map((s) => s.id))
+    const watching = sortByRecency(
+      filtered.filter((s) => s.status === 'watching' && !caughtUpIds.has(s.id)),
+    )
+    const want = sortByRecency(filtered.filter((s) => s.status === 'want')).slice(
+      0,
+      WANT_SHELF_LIMIT,
+    )
+    const recent = recentlyWatched(filtered, 5)
+    const watchedYear = countWatchedThisYear(filtered, Number(todayLocal().slice(0, 4)))
+    return { watching, caughtUp, want, recent, watchedYear }
+  }, [shows, filter])
+
   return (
     <div className="flex min-h-full flex-col pb-4">
       <header className="sticky top-0 z-10 flex flex-col gap-3 bg-bg/90 px-4 py-3 backdrop-blur">
@@ -77,21 +99,8 @@ export function ShowsDashboard() {
           />
         }
       >
-        {(all) => {
-          const filtered = filter === 'all' ? all : all.filter((s) => s.type === filter)
-          const caughtUp = filtered.filter(isCaughtUp)
-          const caughtUpIds = new Set(caughtUp.map((s) => s.id))
-          const watching = filtered.filter(
-            (s) => s.status === 'watching' && !caughtUpIds.has(s.id),
-          )
-          const want = filtered
-            .filter((s) => s.status === 'want')
-            .slice(0, WANT_SHELF_LIMIT)
-          const recent = recentlyWatched(filtered, 5)
-          const watchedYear = countWatchedThisYear(
-            filtered,
-            Number(todayLocal().slice(0, 4)),
-          )
+        {() => {
+          const { watching, caughtUp, want, recent, watchedYear } = shelves
 
           return (
             <div className="flex flex-col gap-4 px-4">

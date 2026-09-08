@@ -4,7 +4,6 @@ import {
   buildRefreshPatch,
   countWatchedThisYear,
   DEFAULT_LIBRARY_CRITERIA,
-  favoriteShows,
   formatRuntime,
   isAbsoluteUrl,
   isCaughtUp,
@@ -331,11 +330,41 @@ describe('isCaughtUp', () => {
 
 describe('recentlyWatched', () => {
   const shows = [
-    { status: 'watched', end_date: '2026-06-01' },
-    { status: 'watched', end_date: '2026-06-10' },
-    { status: 'watched', end_date: null }, // imported, unknown date → excluded
-    { status: 'watching', end_date: '2026-06-15' }, // not watched → excluded
-    { status: 'watched', end_date: '2026-05-20' },
+    {
+      title: 'A',
+      status: 'watched',
+      start_date: null,
+      end_date: '2026-06-01',
+      updated_at: '2026-06-01T00:00:00Z',
+    },
+    {
+      title: 'B',
+      status: 'watched',
+      start_date: null,
+      end_date: '2026-06-10',
+      updated_at: '2026-06-10T00:00:00Z',
+    },
+    {
+      title: 'C',
+      status: 'watched',
+      start_date: null,
+      end_date: null,
+      updated_at: '2026-06-11T00:00:00Z',
+    }, // imported, unknown date → excluded
+    {
+      title: 'D',
+      status: 'watching',
+      start_date: null,
+      end_date: '2026-06-15',
+      updated_at: '2026-06-15T00:00:00Z',
+    }, // not watched → excluded
+    {
+      title: 'E',
+      status: 'watched',
+      start_date: null,
+      end_date: '2026-05-20',
+      updated_at: '2026-05-20T00:00:00Z',
+    },
   ]
   it('returns watched titles with a date, newest first, capped to the limit', () => {
     expect(recentlyWatched(shows, 2).map((s) => s.end_date)).toEqual([
@@ -371,15 +400,6 @@ describe('showGenres', () => {
         makeShow({ genres: null }),
       ]),
     ).toEqual(['Action', 'Comedy', 'Drama'])
-  })
-})
-
-describe('favoriteShows', () => {
-  it('returns only starred titles, preserving order', () => {
-    const a = makeShow({ title: 'A', is_favorite: true })
-    const b = makeShow({ title: 'B', is_favorite: false })
-    const c = makeShow({ title: 'C', is_favorite: true })
-    expect(favoriteShows([a, b, c]).map((s) => s.title)).toEqual(['A', 'C'])
   })
 })
 
