@@ -362,6 +362,8 @@ General React/CSS pitfalls, applicable to any module. (Visual **tokens** — col
 - `TravelEntry`'s itinerary groups a trip's stops by day once per `stops` change (memoized `Map`), instead of re-filtering the whole trip's stops for every day on every render.
 - Library filter facets — Shows'/Books' genre list, Quotes' tag ranking + tag search — are memoized against the underlying list, so they recompute only when the list actually changes, not on every render (previously reran on every keystroke in Search/tag-filter).
 - Each of Books/Shows/Quotes/Travel's `apply*View`/`applyTripList` call — the filter/sort/search pass over the whole list — is memoized behind `useMemo`, keyed on the list plus its criteria (Quotes also keys on the URL show/book constraint; Travel also keys on its facets map), instead of recomputing on every render (favorite toggles, sheet opens, unrelated state changes).
+- **Books' and Shows' `applyLibraryView` fold the search query once, not per row**: `matchesCriteria` takes the already-`foldZh`'d query as a parameter instead of recomputing `foldZh(c.query.trim())` inside the per-row predicate, so filtering no longer re-normalizes the same query string on every row of the list.
+- **Books/Shows Dashboard shelves are memoized behind `useMemo`**, keyed on the loaded list (and, for Shows, the type filter), instead of recomputing every shelf's filter/sort/slice pass inline in the list-loader's render — previously reran on every render of the Dashboard screen, not just when the underlying list or filter changed. `BooksDashboard` also extracted its three near-identical shelf blocks into one `BookShelf` component (`ShowsDashboard` already had the equivalent `ShowShelf`).
 
 **Data fetching**
 

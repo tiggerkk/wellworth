@@ -346,9 +346,12 @@ export const DEFAULT_LIBRARY_CRITERIA: LibraryCriteria = {
   sortDir: 'desc',
 }
 
-function matchesCriteria(show: ShowRow, c: LibraryCriteria): boolean {
-  const q = foldZh(c.query.trim())
-  if (q && !searchableText(show).includes(q)) return false
+function matchesCriteria(
+  show: ShowRow,
+  c: LibraryCriteria,
+  foldedQuery: string,
+): boolean {
+  if (foldedQuery && !searchableText(show).includes(foldedQuery)) return false
   if (c.type !== 'all' && show.type !== c.type) return false
   if (c.status !== 'all' && show.status !== c.status) return false
   if (c.favoritesOnly && !show.is_favorite) return false
@@ -411,8 +414,9 @@ function compareShows(a: ShowRow, b: ShowRow, field: SortField, dir: SortDir): n
 
 /** Filter then sort a Library list. Pure — does not mutate `shows`. */
 export function applyLibraryView(shows: ShowRow[], c: LibraryCriteria): ShowRow[] {
+  const foldedQuery = foldZh(c.query.trim())
   return shows
-    .filter((s) => matchesCriteria(s, c))
+    .filter((s) => matchesCriteria(s, c, foldedQuery))
     .sort((a, b) => compareShows(a, b, c.sortField, c.sortDir))
 }
 

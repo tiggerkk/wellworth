@@ -38,11 +38,6 @@ export function currentlyReading<T extends Pick<BookRow, 'status'>>(books: T[]):
   return books.filter((b) => b.status === 'reading')
 }
 
-/** Dashboard "Favourites": starred books (incoming order preserved). */
-export function favoriteBooks<T extends Pick<BookRow, 'is_favorite'>>(books: T[]): T[] {
-  return books.filter((b) => b.is_favorite)
-}
-
 /** Dashboard "Want to Read": the to-read shelf, capped to `limit`. */
 export function wantToRead<T extends Pick<BookRow, 'status'>>(
   books: T[],
@@ -91,13 +86,6 @@ export function bookGenres(books: Pick<BookRow, 'genres'>[]): string[] {
   return [...set].sort((a, b) => a.localeCompare(b))
 }
 
-/** Sorted unique authors present across the given books (drives the Library Author filter). */
-export function bookAuthors(books: Pick<BookRow, 'authors'>[]): string[] {
-  const set = new Set<string>()
-  for (const b of books) for (const a of b.authors ?? []) set.add(a)
-  return [...set].sort((a, b) => a.localeCompare(b))
-}
-
 export type SortField =
   | 'title'
   | 'author'
@@ -143,9 +131,12 @@ export const DEFAULT_LIBRARY_CRITERIA: LibraryCriteria = {
   sortDir: 'desc',
 }
 
-function matchesCriteria(book: BookRow, c: LibraryCriteria): boolean {
-  const q = foldZh(c.query.trim())
-  if (q && !bookSearchText(book).includes(q)) return false
+function matchesCriteria(
+  book: BookRow,
+  c: LibraryCriteria,
+  foldedQuery: string,
+): boolean {
+  if (foldedQuery && !bookSearchText(book).includes(foldedQuery)) return false
   if (c.status !== 'all' && book.status !== c.status) return false
   if (c.lgbtq !== 'all' && (book.lgbtq_rep ?? 'none') !== c.lgbtq) return false
   if (c.dynasty !== 'all' && book.dynasty !== c.dynasty) return false
@@ -200,8 +191,9 @@ function compareBooks(a: BookRow, b: BookRow, field: SortField, dir: SortDir): n
 
 /** Filter then sort a Library list. Pure — does not mutate `books`. */
 export function applyLibraryView(books: BookRow[], c: LibraryCriteria): BookRow[] {
+  const foldedQuery = foldZh(c.query.trim())
   return books
-    .filter((b) => matchesCriteria(b, c))
+    .filter((b) => matchesCriteria(b, c, foldedQuery))
     .sort((a, b) => compareBooks(a, b, c.sortField, c.sortDir))
 }
 

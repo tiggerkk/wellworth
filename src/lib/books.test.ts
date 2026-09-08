@@ -1,13 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import {
   applyLibraryView,
-  bookAuthors,
   bookGenres,
   bookSearchText,
   countReadThisYear,
   currentlyReading,
   DEFAULT_LIBRARY_CRITERIA,
-  favoriteBooks,
   isFieldVisible,
   markRead,
   recentlyRead,
@@ -137,26 +135,16 @@ describe('dashboard selectors', () => {
     expect(countReadThisYear(books, 2025)).toBe(1)
     expect(countReadThisYear(books, 2024)).toBe(0)
   })
-
-  it('favoriteBooks keeps only starred books, preserving order', () => {
-    const list = [
-      makeBook({ title: 'a', is_favorite: true }),
-      makeBook({ title: 'b', is_favorite: false }),
-      makeBook({ title: 'c', is_favorite: true }),
-    ]
-    expect(favoriteBooks(list).map((b) => b.title)).toEqual(['a', 'c'])
-  })
 })
 
-describe('bookGenres / bookAuthors', () => {
-  it('collects sorted unique genres and authors', () => {
+describe('bookGenres', () => {
+  it('collects sorted unique genres', () => {
     const books = [
-      makeBook({ genres: ['Fantasy', 'Adventure'], authors: ['Tolkien'] }),
-      makeBook({ genres: ['Fantasy'], authors: ['Le Guin'] }),
-      makeBook({ genres: null, authors: null }),
+      makeBook({ genres: ['Fantasy', 'Adventure'] }),
+      makeBook({ genres: ['Fantasy'] }),
+      makeBook({ genres: null }),
     ]
     expect(bookGenres(books)).toEqual(['Adventure', 'Fantasy'])
-    expect(bookAuthors(books)).toEqual(['Le Guin', 'Tolkien'])
   })
 })
 
