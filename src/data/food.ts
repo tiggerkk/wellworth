@@ -1,7 +1,7 @@
 import { supabase } from '../lib/supabase'
 import type { ImportFoodRecord } from '../lib/wellness-food-import'
 import type { ExternalFood } from '../lib/wellness-food-api'
-import { replaceServings } from './serving'
+import { replaceServings, resolveDefaultServingId } from './serving'
 import { foodHasEntries } from './diary-entry'
 import type { Tables, TablesInsert, TablesUpdate } from '../types/database'
 
@@ -69,8 +69,7 @@ async function applyImportServings(
 ): Promise<void> {
   const saved = await replaceServings(foodId, plan.rows)
   await updateFood(foodId, {
-    default_serving_id:
-      plan.defaultIndex >= 0 ? (saved[plan.defaultIndex]?.id ?? null) : null,
+    default_serving_id: resolveDefaultServingId(saved, { index: plan.defaultIndex }),
   })
 }
 

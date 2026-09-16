@@ -29,22 +29,25 @@ import {
   setFavorite,
   updateFood,
 } from '../data/food'
-import { listServings, replaceServings } from '../data/serving'
+import {
+  listServings,
+  recomputeEntriesForServing,
+  replaceServings,
+  resolveDefaultServingId,
+} from '../data/serving'
+import type { Tables } from '../types/database'
 import { getUsdaFood } from '../lib/wellness-food-api'
 import { lookupBarcode } from '../lib/wellness-off-api'
-import {
-  asNutrientMap,
-  basisGrams,
-  deriveNetCarbs,
-  isOverUpperLimit,
-  scaleNutrients,
-} from '../lib/wellness-nutrients'
+import { asNutrientMap, isOverUpperLimit, scaledEntry } from '../lib/wellness-nutrients'
 import { computeTargets } from '../lib/wellness-targets'
 import { draftAmount } from '../lib/wellness-quantity'
 import { bumpDiary } from '../lib/wellness-diary-refresh'
 import { todayLocal } from '../lib/date'
 
 interface Serving {
+  /** Stored serving id, when this row came from the DB. Undefined for a not-yet-saved row (a
+   *  freshly added serving, or the synthetic "100 g" fallback from `withDefaultServing`). */
+  id?: string
   name: string
   grams: number
 }
@@ -76,31 +79,49 @@ function buildServings(
   defaultServingId: string | null,
 ): { servings: Serving[]; defaultIndex: number } {
   // withDefaultServing only appends, so the stored rows keep their indices.
-  const servings = withDefaultServing(rows.map((r) => ({ name: r.name, grams: r.grams })))
+  const servings = withDefaultServing(
+    rows.map((r) => ({ id: r.id, name: r.name, grams: r.grams })),
+  )
   const found = rows.findIndex((r) => r.id === defaultServingId)
   return { servings, defaultIndex: found >= 0 ? found : 0 }
 }
 
 /**
- * Persist a food's servings + default. Replacing mints new serving ids, so the default is re-pointed
- * at the saved row by position. Shared by the Manage-servings save and the seed-on-first-cache path
- * (so a freshly favorited/logged USDA food keeps its household serving, not just "100 g").
+ * Persist a food's servings + default, then bring any already-logged diary entries for a
+ * gram-size change back in sync. `replaceServings` now updates existing rows in place (preserving
+ * their id) rather than delete-and-reinsert, so `diary_entry.serving_id` stays valid across an
+ * edit — that's what lets us recompute past entries instead of only affecting future ones.
+ * Shared by the Manage-servings save and the seed-on-first-cache path (so a freshly
+ * favorited/logged USDA food keeps its household serving, not just "100 g").
+ * Returns the saved rows (with real ids) so a caller logging an entry in the same submit — e.g. a
+ * brand-new serving added via "+ Add Serving" and logged against immediately — can resolve the
+ * real `serving_id` instead of the pre-save `undefined`.
  */
 async function writeServings(
   foodId: string,
+  food: { nutrient_basis: string; nutrients: unknown },
   list: Serving[],
   defIndex: number,
-): Promise<void> {
+): Promise<Tables<'serving'>[]> {
   const valid = list.filter((s) => s.name.trim() && s.grams > 0)
+  const before = new Map(valid.filter((s) => s.id).map((s) => [s.id!, s.grams]))
   const saved = await replaceServings(
     foodId,
-    valid.map((s) => ({ name: s.name.trim(), grams: s.grams })),
+    valid.map((s) => ({ id: s.id, name: s.name.trim(), grams: s.grams })),
   )
   const def = list[defIndex]
   const pos = def ? valid.indexOf(def) : -1
   await updateFood(foodId, {
-    default_serving_id: pos >= 0 ? (saved[pos]?.id ?? null) : null,
+    default_serving_id: pos >= 0 ? resolveDefaultServingId(saved, { index: pos }) : null,
   })
+  // Only servings that existed before AND changed grams need past entries recomputed — a brand
+  // new serving or an unchanged one has nothing logged against it yet (or nothing to update).
+  const changed = saved.filter((s) => {
+    const prevGrams = before.get(s.id)
+    return prevGrams != null && prevGrams !== s.grams
+  })
+  await Promise.all(changed.map((s) => recomputeEntriesForServing(s.id, food, s.grams)))
+  return saved
 }
 
 export function WellnessDiaryFoodDetailSheet() {
@@ -231,35 +252,38 @@ export function WellnessDiaryFoodDetailSheet() {
   const serving = effectiveServings[servingIndex] ?? effectiveServings[0]
   const scaled = useMemo(() => {
     if (!food || !serving) return {}
-    const basis = food.nutrientBasis === 'per_serving' ? serving.grams : 100
-    return deriveNetCarbs(
-      scaleNutrients(food.nutrients, {
-        amount: draftAmount(amount, 1),
-        servingGrams: serving.grams,
-        basisGrams: basis,
-      }),
+    return scaledEntry(
+      food.nutrients,
+      food.nutrientBasis,
+      draftAmount(amount, 1),
+      serving.grams,
     )
   }, [food, serving, amount])
 
-  // On edit, prefill from the entry once food + entry load. Entries don't persist which serving
-  // was used, so pick the serving whose scaled energy best matches the logged energy.
+  // On edit, prefill from the entry once food + entry load. `entry.serving_id` is now recorded at
+  // log time (see writeServings/submit), so prefer an exact id match; the energy-match heuristic
+  // remains only as a fallback for entries logged before this was tracked, or whose serving was
+  // since deleted (serving_id NULL via ON DELETE SET NULL).
   useEffect(() => {
     if (!editing || !food || !entry || initial) return
-    let bestIndex = 0
-    let bestDiff = Infinity
-    food.servings.forEach((s, i) => {
-      const e =
-        scaleNutrients(food.nutrients, {
-          amount: entry.amount ?? 1,
-          servingGrams: s.grams,
-          basisGrams: basisGrams(food.nutrientBasis, s.grams),
-        }).energy ?? 0
-      const diff = Math.abs(e - (entry.energy_kcal ?? 0))
-      if (diff < bestDiff) {
-        bestDiff = diff
-        bestIndex = i
-      }
-    })
+    const byId = entry.serving_id
+      ? food.servings.findIndex((s) => s.id === entry.serving_id)
+      : -1
+    let bestIndex = byId
+    if (bestIndex < 0) {
+      bestIndex = 0
+      let bestDiff = Infinity
+      food.servings.forEach((s, i) => {
+        const e =
+          scaledEntry(food.nutrients, food.nutrientBasis, entry.amount ?? 1, s.grams)
+            .energy ?? 0
+        const diff = Math.abs(e - (entry.energy_kcal ?? 0))
+        if (diff < bestDiff) {
+          bestDiff = diff
+          bestIndex = i
+        }
+      })
+    }
     const amt = String(entry.amount ?? 1)
     /* eslint-disable react-hooks/set-state-in-effect */
     setAmount(amt)
@@ -324,11 +348,13 @@ export function WellnessDiaryFoodDetailSheet() {
   const targets = profile ? computeTargets(profile) : null
   const favShown = favOverride ?? food?.isFavorite ?? false
 
-  async function ensureCachedId(f: DetailFood): Promise<string> {
-    if (f.localId) return f.localId
+  async function ensureCachedId(
+    f: DetailFood,
+  ): Promise<{ foodId: string; seeded: Tables<'serving'>[] | null }> {
+    if (f.localId) return { foodId: f.localId, seeded: null }
     if (f.externalId) {
       const existing = await getFoodByExternal(f.source, f.externalId)
-      if (existing) return existing.id
+      if (existing) return { foodId: existing.id, seeded: null }
     }
     const created = await createFood({
       user_id: userId!,
@@ -343,31 +369,56 @@ export function WellnessDiaryFoodDetailSheet() {
     // Seed the food's servings (incl. its USDA/OFF household serving) on first cache, so reopening it
     // shows more than "100 g". Skip when the Manage list is dirty — persistServings writes the edited
     // list right after, which would otherwise double-write.
-    if (!servingsDirty) await writeServings(created.id, f.servings, f.defaultIndex)
-    return created.id
+    let seeded: Tables<'serving'>[] | null = null
+    if (!servingsDirty) {
+      seeded = await writeServings(
+        created.id,
+        { nutrient_basis: 'per_100g', nutrients: f.nutrients },
+        f.servings,
+        f.defaultIndex,
+      )
+    }
+    return { foodId: created.id, seeded }
   }
 
-  // Persist the managed servings + default — only when the user actually changed them.
-  async function persistServings(foodId: string) {
-    if (!servingsDirty) return
-    await writeServings(foodId, servings, defaultIndex)
+  // Persist the managed servings + default — only when the user actually changed them. Returns
+  // the saved rows so a caller logging an entry in this same submit can resolve a just-added
+  // serving's real id (it has none yet in local state).
+  async function persistServings(foodId: string): Promise<Tables<'serving'>[] | null> {
+    if (!servingsDirty || !food) return null
+    const saved = await writeServings(
+      foodId,
+      { nutrient_basis: food.nutrientBasis, nutrients: food.nutrients },
+      servings,
+      defaultIndex,
+    )
     setServingsInitial({ servings, defaultIndex })
+    return saved
   }
 
   async function submit() {
     if (!food || !userId || !serving) return
     setSaving(true)
     try {
-      const foodId = await ensureCachedId(food)
-      await persistServings(foodId)
+      const { foodId, seeded } = await ensureCachedId(food)
+      const saved = await persistServings(foodId)
       if (managing) {
         bumpDiary()
         navigate(-1)
         return
       }
+      // `serving.id` is undefined for a serving that only just got its real id this submit — a
+      // brand-new USDA/OFF food's seeded household serving (`seeded`, from `ensureCachedId`), or a
+      // serving added via "+ Add Serving" in Manage Servings (`saved`, from `persistServings`).
+      // Resolve it by matching what was actually saved, since local state never got the new id.
+      const resolved = (seeded ?? saved)?.find(
+        (s) => s.name === serving.name.trim() && s.grams === serving.grams,
+      )
+      const servingId = serving.id ?? resolved?.id ?? null
       if (editing && entryId) {
         await updateEntry(entryId, {
           amount: draftAmount(amount, 1),
+          serving_id: servingId,
           energy_kcal: scaled.energy ?? 0,
           nutrients: scaled,
         })
@@ -379,6 +430,7 @@ export function WellnessDiaryFoodDetailSheet() {
           kind: 'food',
           food_id: foodId,
           amount: draftAmount(amount, 1),
+          serving_id: servingId,
           energy_kcal: scaled.energy ?? 0,
           label: food.name,
           nutrients: scaled,
@@ -395,7 +447,7 @@ export function WellnessDiaryFoodDetailSheet() {
     if (!food) return
     const next = !favShown
     setFavOverride(next)
-    const foodId = await ensureCachedId(food)
+    const { foodId } = await ensureCachedId(food)
     await persistServings(foodId)
     await setFavorite(foodId, next)
   }
@@ -542,6 +594,7 @@ export function WellnessDiaryFoodDetailSheet() {
                         onChange={(e) =>
                           updateServing(i, { grams: Number(e.target.value) })
                         }
+                        onFocus={(e) => e.target.select()}
                         className="field-control w-20"
                       />
                       <RemoveRowButton

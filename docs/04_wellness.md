@@ -46,10 +46,11 @@ Copy granularity is a whole group or a whole day, via the header icons. The clip
 
 A food's **servings** (reusable measures = name + grams) are distinct from **Amount** (the per-log quantity). The **Serving Size** dropdown picks which measure this log uses; **Manage Servings** (an accent-coloured toggle under the dropdown; reads **Hide Servings** when open) is where they're created/edited:
 
-- Each row: a **default star** (`IconStarFilled` = the food's default measure), a name input, a grams input, and a delete (`IconTrash`); **+ Add Serving** appends a blank row. The default is marked `· default` in the dropdown and is preselected next time the food is opened
+- Each row: a **default star** (`IconStarFilled` = the food's default measure), a name input, a grams input (select-on-focus, so retyping a size doesn't require manually clearing the old value first), and a delete (`IconTrash`); **+ Add Serving** appends a blank row. The default is marked `· default` in the dropdown and is preselected next time the food is opened
   (`food.default_serving_id`).
 - **Persistence is deliberate, not incidental (F22):** the managed list is written to the DB **only when it's dirty** (a serving's name/grams or the default changed) — on **ADD**, the **heart**, or **SAVE**. Changing **Amount**, or just picking a different serving in the dropdown for one log, **never** writes back, so a one-off "ate more/less today" doesn't drift the stored default.
-- Persisting replaces the food's `serving` rows (new ids each time) and re-points `default_serving_id` at the chosen row by position. Adding a custom serving to a never-saved USDA food creates its `food` row (the heart/ADD path), so the serving has somewhere to live.
+- **Persisting preserves each row's `serving.id`** (`replaceServings` upserts: matched ids update in place, new rows insert, removed rows delete) rather than replacing the whole set with fresh ids — this is what keeps `diary_entry.serving_id` valid across an edit. `default_serving_id` is re-pointed at the chosen row by its (now-stable) id. Adding a custom serving to a never-saved USDA food creates its `food` row (the heart/ADD path), so the serving has somewhere to live.
+- **Gram-size edits retroactively update past entries:** when a serving's `grams` changes, every already-logged `diary_entry` row whose `serving_id` points at it has its stored `nutrients`/`energy_kcal` snapshot recomputed to match (`recomputeEntriesForServing`) — so the Daily Report picks up the correction immediately, without re-entering old log entries. The lookup is scoped by the indexed `serving_id` column (not a table scan), so this stays cheap regardless of how much history exists. Entries with no `serving_id` — logged before this fix, or whose serving was later deleted — keep their frozen snapshot, same as the existing behavior for a deleted food/serving.
 
 ### Diary Activity Picker (modal, from the Diary Activities `+`)
 
@@ -152,7 +153,7 @@ Reused CSV format: `templates/wellness-foods-template.csv` (guide: `templates/we
 - **Full history always** — no date-range option; every entry the user has ever logged.
 - `group` alone determines `kind` in the file (no separate field) — matches `DIARY_GROUPS`. Food-only fields (`amount`, `nutrients`) are omitted from an activity entry and vice versa (`duration_min`/`effort`/`exercises`); `exercises` itself is omitted entirely (not `[]`) when the entry has no strength sets.
 - **`sort_order` is re-numbered** to each entry's 0-based position within its day, not the raw DB value — which for an entry logged into a group the user has never drag-reordered is a large `Date.now()`-scale number (`createEntry`'s default; see `data/diary-entry.ts`) — so the file stays small and hand-editable.
-- **Which serving a food entry used is not exported** — it was never persisted in the first place: `diary_entry.serving_id` is a schema column the live Diary Food entry screen never actually writes to (confirmed by reading `WellnessDiaryFoodDetailSheet.tsx` — on edit, it _reverse-guesses_ the likely serving by matching against the food's current servings, since the original selection isn't stored). Not a regression from exporting; the app doesn't have this information to export.
+- **Which serving a food entry used is not exported** — `diary_entry.serving_id` is now written when logging/editing a food entry (see Manage Servings above), but the CSV format has no column for it; export still derives the displayed serving from amount/nutrient math, not from `serving_id`. Not a regression from exporting; the CSV format doesn't have a slot for it.
 - A strength activity entry's `strength_set` rows (already ordered by `exercise_order` then `set_number`, from `listSetsForEntries`) are grouped into one `exercises` block per distinct exercise name, in first-seen order — which is therefore the owner's chosen exercise order (see Diary Activity Detail — strength type above).
 
 #### Visible Nutrients sub-screen
@@ -242,7 +243,7 @@ Shared external APIs).
 - `kind` TEXT — 'food' | 'activity'
 - `food_id` UUID NULL → food (ON DELETE SET NULL)
 - `activity_id` UUID NULL → activity (ON DELETE SET NULL)
-- `serving_id` UUID NULL → serving (ON DELETE SET NULL)
+- `serving_id` UUID NULL → serving (ON DELETE SET NULL) — which serving this food entry was logged/edited against; written on create/edit (Diary Food Detail) so a later serving-grams correction can find and recompute this entry (see Manage Servings above). NULL for activity entries, and for a food entry logged before this was tracked.
 - `amount` NUMERIC NULL · `duration_min` NUMERIC NULL · `effort` TEXT NULL — per-session override
 - `energy_kcal` NUMERIC — negative for activities
 - `label` TEXT — denormalized display name (snapshot; stable even after soft-delete of source)

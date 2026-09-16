@@ -37,6 +37,27 @@ export function scaleNutrients(perBasis: NutrientMap, input: ScaleInput): Nutrie
   return out
 }
 
+/**
+ * The full "how many nutrients does logging this amount of this serving contribute" calc:
+ * resolve the storage basis, scale, then derive net carbs. Single source of truth for this
+ * pipeline — used for the live entry preview, the edit-prefill energy match, and recomputing a
+ * past entry after a serving's grams changes, so those three call sites can't drift apart.
+ */
+export function scaledEntry(
+  perBasis: NutrientMap,
+  nutrientBasis: string,
+  amount: number,
+  servingGrams: number,
+): NutrientMap {
+  return deriveNetCarbs(
+    scaleNutrients(perBasis, {
+      amount,
+      servingGrams,
+      basisGrams: basisGrams(nutrientBasis, servingGrams),
+    }),
+  )
+}
+
 /** Element-wise sum of several nutrient maps (e.g. a day's diary entries). */
 export function sumNutrients(maps: NutrientMap[]): NutrientMap {
   const out: NutrientMap = {}
