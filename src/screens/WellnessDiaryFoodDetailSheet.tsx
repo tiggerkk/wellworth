@@ -179,7 +179,7 @@ export function WellnessDiaryFoodDetailSheet() {
         localId: null,
         name: f.name,
         type: 'food',
-        nutrientBasis: 'per_100g',
+        nutrientBasis: f.nutrientBasis,
         nutrients: f.nutrients,
         servings: withDefaultServing(seeded),
         defaultIndex: 0,
@@ -362,7 +362,7 @@ export function WellnessDiaryFoodDetailSheet() {
       external_id: f.externalId,
       name: f.name,
       type: f.type,
-      nutrient_basis: 'per_100g',
+      nutrient_basis: f.nutrientBasis,
       nutrients: f.nutrients,
       is_favorite: favShown,
     })
@@ -373,7 +373,7 @@ export function WellnessDiaryFoodDetailSheet() {
     if (!servingsDirty) {
       seeded = await writeServings(
         created.id,
-        { nutrient_basis: 'per_100g', nutrients: f.nutrients },
+        { nutrient_basis: f.nutrientBasis, nutrients: f.nutrients },
         f.servings,
         f.defaultIndex,
       )

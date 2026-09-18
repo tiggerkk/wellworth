@@ -1,14 +1,16 @@
 import type { NutrientMap } from './wellness-nutrients'
 import { toUsdaWildcardQuery } from './wellness-food-search'
 import { searchZhVariants } from './zh-query'
-import { GRAMS_PER_OZ, GRAMS_PER_LB } from './wellness-units'
+import { ouncesToGrams, poundsToGrams } from './wellness-units'
 
 /**
  * USDA FoodData Central client + nutrient mapping. Called directly from the browser with
- * VITE_USDA_API_KEY (the tech spec designates it a browser var). Amounts are normalized to
- * per 100 g — Foundation/SR Legacy/Survey already report per 100 g, and Branded foods in
- * FDC store per-100g values in foodNutrients too. We map on the stable INFOODS
- * `nutrient.number` (string), never the free-text name. Units already match ours.
+ * VITE_USDA_API_KEY (the tech spec designates it a browser var). Amounts are normally per 100 g —
+ * Foundation/SR Legacy/Survey already report per 100 g, and Branded foods in FDC store per-100g
+ * values in foodNutrients too. We map on the stable INFOODS `nutrient.number` (string), never the
+ * free-text name. Units already match ours. Some Branded records carry no usable foodNutrients at
+ * all (label-only submissions); for those we fall back to the label panel and switch to a
+ * per_serving basis instead — see mapUsdaLabelNutrients/toExternalFood below.
  */
 
 const USDA_BASE = 'https://api.nal.usda.gov/fdc/v1'
@@ -19,7 +21,7 @@ export interface ExternalFood {
   externalId: string
   name: string
   brand: string | null
-  nutrientBasis: 'per_100g'
+  nutrientBasis: 'per_100g' | 'per_serving'
   nutrients: NutrientMap
   servingText: string | null
   servingGrams: number | null
@@ -94,12 +96,25 @@ const USDA_NUTRIENT_MAP: Record<string, string> = {
   '510': 'valine',
 }
 
-// Loose shapes for the USDA JSON (search uses nutrientNumber/value; detail uses nutrient.number/amount).
+// Loose shapes for the USDA JSON. Three shapes have been observed in the wild for a single
+// nutrient row, depending on endpoint/format: search's own shape (`nutrientNumber`/`value`), the
+// nested "full" detail shape (`nutrient.number`/`amount`), and the POST /foods batch endpoint's
+// flat shape (`number`/`amount`). The single-item GET /food/{fdcId} endpoint has been observed
+// returning a fourth, unusable shape — bare `{ id, amount }` with no nutrient number at all, even
+// with format=full — which is why getUsdaFood below uses the batch endpoint instead.
 interface UsdaFoodNutrient {
   nutrient?: { number?: string }
   amount?: number
   nutrientNumber?: string
+  number?: number
   value?: number
+}
+// labelNutrients keys → our key. Present on many Branded records (often the *only* nutrient
+// source FDC has for label-only submissions — e.g. restaurant/menu-style items, drinks). Values
+// are per the record's label serving, not per 100 g (see USDA_LABEL_NUTRIENT_MAP usage in
+// toExternalFood).
+interface UsdaLabelNutrients {
+  [key: string]: { value?: number } | undefined
 }
 interface UsdaFood {
   fdcId: number
@@ -111,16 +126,50 @@ interface UsdaFood {
   servingSizeUnit?: string
   householdServingFullText?: string
   foodNutrients?: UsdaFoodNutrient[]
+  labelNutrients?: UsdaLabelNutrients
 }
 
 /** Map a USDA food's nutrients (per 100 g) to our NutrientMap. Exported for testing. */
 export function mapUsdaNutrients(food: UsdaFood): NutrientMap {
   const out: NutrientMap = {}
   for (const fn of food.foodNutrients ?? []) {
-    const number = fn.nutrient?.number ?? fn.nutrientNumber
+    const number = fn.nutrient?.number ?? fn.nutrientNumber ?? fn.number?.toString()
     const amount = fn.amount ?? fn.value
     const key = number ? USDA_NUTRIENT_MAP[number] : undefined
     if (key && typeof amount === 'number' && Number.isFinite(amount)) {
+      out[key] = amount
+    }
+  }
+  return out
+}
+
+// labelNutrients field name → our key. Only the fields FDC actually populates on the label object;
+// units already match ours (g for macros, mg/µg per our USDA_NUTRIENT_MAP conventions).
+const USDA_LABEL_NUTRIENT_MAP: Record<string, string> = {
+  calories: 'energy',
+  protein: 'protein',
+  fat: 'fat',
+  saturatedFat: 'saturated',
+  transFat: 'trans',
+  carbohydrates: 'carbs',
+  fiber: 'fiber',
+  sugars: 'sugars',
+  addedSugars: 'added_sugars',
+  cholesterol: 'cholesterol',
+  sodium: 'sodium',
+  calcium: 'calcium',
+  iron: 'iron',
+  potassium: 'potassium',
+  vitaminD: 'vitamin_d',
+}
+
+/** Map a Branded food's label-panel nutrients (per the label's serving, not per 100 g) to our
+ * NutrientMap. Exported for testing. */
+export function mapUsdaLabelNutrients(labelNutrients: UsdaLabelNutrients): NutrientMap {
+  const out: NutrientMap = {}
+  for (const [field, key] of Object.entries(USDA_LABEL_NUTRIENT_MAP)) {
+    const amount = labelNutrients[field]?.value
+    if (typeof amount === 'number' && Number.isFinite(amount)) {
       out[key] = amount
     }
   }
@@ -151,10 +200,10 @@ function usdaServingGrams(food: UsdaFood): number | null {
       grams = n
       break
     case 'oz':
-      grams = n * GRAMS_PER_OZ
+      grams = ouncesToGrams(n)
       break
     case 'lb':
-      grams = n * GRAMS_PER_LB
+      grams = poundsToGrams(n)
       break
     default:
       return null
@@ -162,15 +211,42 @@ function usdaServingGrams(food: UsdaFood): number | null {
   return Math.round(grams * 10) / 10
 }
 
-function toExternalFood(food: UsdaFood): ExternalFood {
-  return {
-    source: 'usda',
+// Nominal "servingGrams" for the labelNutrients fallback. per_serving foods always scale as
+// (amount × servingGrams) / basisGrams, and basisGrams === servingGrams for per_serving — so the
+// two cancel out and the actual number is arbitrary as long as it's the same value used as this
+// food's seeded serving size below. We don't have (and don't need) the label serving in real
+// grams to make this correct.
+const LABEL_BASIS_UNITS = 100
+
+/** Normalize a raw USDA food record. Exported for testing the labelNutrients fallback. */
+export function toExternalFood(food: UsdaFood): ExternalFood {
+  const base = {
+    source: 'usda' as const,
     externalId: String(food.fdcId),
     name: food.description ?? 'Unknown food',
     brand: food.brandName ?? food.brandOwner ?? null,
-    nutrientBasis: 'per_100g',
-    nutrients: mapUsdaNutrients(food),
     servingText: food.householdServingFullText ?? null,
+  }
+  const perGram = mapUsdaNutrients(food)
+  // Some Branded records (often label-only submissions — drinks, restaurant/menu-style items)
+  // carry no usable foodNutrients at all; fall back to the label panel, which most Branded foods
+  // do have. Label values are per the record's own serving, so the basis switches to per_serving —
+  // see LABEL_BASIS_UNITS for why the serving size we report here doesn't need to be true grams.
+  if (Object.keys(perGram).length === 0 && food.labelNutrients) {
+    const labelNutrients = mapUsdaLabelNutrients(food.labelNutrients)
+    if (Object.keys(labelNutrients).length > 0) {
+      return {
+        ...base,
+        nutrientBasis: 'per_serving',
+        nutrients: labelNutrients,
+        servingGrams: LABEL_BASIS_UNITS,
+      }
+    }
+  }
+  return {
+    ...base,
+    nutrientBasis: 'per_100g',
+    nutrients: perGram,
     servingGrams: usdaServingGrams(food),
   }
 }
@@ -272,11 +348,27 @@ async function searchFoodsOne(trimmed: string): Promise<ExternalFood[]> {
   return out
 }
 
-/** Fetch one USDA food's full nutrient profile. */
+/**
+ * Fetch one USDA food's full nutrient profile via the batch `POST /foods` endpoint (one id).
+ * The single-item `GET /food/{fdcId}` endpoint has been observed returning a bare
+ * `{ id, amount }` foodNutrients shape with no nutrient number at all for some Branded records
+ * (confirmed via a live fdcId — 15 nutrient rows, none mappable, `format=full` made no
+ * difference) — those foods silently mapped to zero nutrients even though real values were
+ * sitting right there. The batch endpoint returns a flat `{ number, amount, name }` per row for
+ * the same records, which mapUsdaNutrients also understands.
+ */
 export async function getUsdaFood(fdcId: string): Promise<ExternalFood> {
-  const params = new URLSearchParams({ api_key: apiKey() })
-  const res = await fetchWithRetry(`${USDA_BASE}/food/${fdcId}?${params.toString()}`)
+  const res = await fetchWithRetry(
+    `${USDA_BASE}/foods?api_key=${encodeURIComponent(apiKey())}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fdcIds: [Number(fdcId)], format: 'full' }),
+    },
+  )
   if (!res.ok) throw new Error(`USDA lookup failed (${res.status})`)
-  const json = (await res.json()) as UsdaFood
-  return toExternalFood(json)
+  const json = (await res.json()) as UsdaFood[]
+  const food = json[0]
+  if (!food) throw new Error('USDA lookup failed (not found)')
+  return toExternalFood(food)
 }

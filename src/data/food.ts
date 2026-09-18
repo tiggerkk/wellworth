@@ -30,15 +30,17 @@ export async function listFoods(
 
 /**
  * A resolved food-import row: the parsed CSV record plus its USDA match (or null = save as custom).
- * `match` present → cache a USDA-backed favorite (per-100g, USDA nutrients); `match` null → a custom
- * food from the CSV's own nutrients/servings. We carry the match's `servingText`/`servingGrams` so an
- * imported USDA food keeps its household serving (Food Detail reads the cached row, not the API).
+ * `match` present → cache a USDA-backed favorite (nutrients + basis as returned by USDA — normally
+ * per-100g, but per-serving for the labelNutrients fallback, see wellness-food-api.ts); `match` null
+ * → a custom food from the CSV's own nutrients/servings. We carry the match's `servingText`/
+ * `servingGrams` so an imported USDA food keeps its household serving (Food Detail reads the cached
+ * row, not the API).
  */
 export interface ImportFoodResolved {
   input: ImportFoodRecord
   match: Pick<
     ExternalFood,
-    'externalId' | 'name' | 'nutrients' | 'servingText' | 'servingGrams'
+    'externalId' | 'name' | 'nutrients' | 'nutrientBasis' | 'servingText' | 'servingGrams'
   > | null
 }
 
@@ -106,7 +108,7 @@ export async function saveImportedFoods(
       const fields = {
         name: it.match.name,
         type: it.input.type,
-        nutrient_basis: 'per_100g' as const,
+        nutrient_basis: it.match.nutrientBasis,
         nutrients: it.match.nutrients,
         is_favorite: true,
         deleted_at: null,
