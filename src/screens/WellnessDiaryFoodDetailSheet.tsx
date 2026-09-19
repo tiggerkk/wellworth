@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams, useSearchParams } from 'react-router'
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router'
 import {
   IconHeart,
   IconHeartFilled,
@@ -36,7 +36,7 @@ import {
   resolveDefaultServingId,
 } from '../data/serving'
 import type { Tables } from '../types/database'
-import { getUsdaFood } from '../lib/wellness-food-api'
+import { getUsdaFood, type ExternalFood } from '../lib/wellness-food-api'
 import { lookupBarcode } from '../lib/wellness-off-api'
 import { asNutrientMap, isOverUpperLimit, scaledEntry } from '../lib/wellness-nutrients'
 import { computeTargets } from '../lib/wellness-targets'
@@ -126,10 +126,19 @@ async function writeServings(
 
 export function WellnessDiaryFoodDetailSheet() {
   const navigate = useNavigate()
+  const location = useLocation()
   const returnAfterLog = useReturnAfterLog()
   const { session } = useAuth()
   const userId = session?.user.id
   const { source = 'usda', id = '' } = useParams()
+  // The Food Picker/search overlay already fetched and correctly parsed this exact food (see
+  // FoodSearchOverlay/WellnessDiaryFoodPickerSheet's onOpen) — some USDA Branded records return
+  // foodNutrients with no nutrient number on every detail endpoint (GET /food/{id}, GET .../{id}
+  // with format=full, and the batch POST /foods all confirmed broken for the same record), even
+  // though the search response for that food is fine. Reusing it here avoids repeating the
+  // now-known-unreliable detail call. Route state, so a direct link/refresh still falls back to it.
+  const routedExternalFood = (location.state as { externalFood?: ExternalFood } | null)
+    ?.externalFood
   const [params] = useSearchParams()
   const group = params.get('group') ?? 'snacks'
   const day = params.get('day') ?? todayLocal()
@@ -168,7 +177,14 @@ export function WellnessDiaryFoodDetailSheet() {
           isFavorite: cached.is_favorite,
         }
       }
-      const f = source === 'usda' ? await getUsdaFood(id) : await lookupBarcode(id)
+      const f =
+        routedExternalFood &&
+        routedExternalFood.source === source &&
+        routedExternalFood.externalId === id
+          ? routedExternalFood
+          : source === 'usda'
+            ? await getUsdaFood(id)
+            : await lookupBarcode(id)
       if (!f) return null
       const seeded = f.servingGrams
         ? [{ name: f.servingText ?? '1 serving', grams: f.servingGrams }]
@@ -204,7 +220,7 @@ export function WellnessDiaryFoodDetailSheet() {
       defaultIndex,
       isFavorite: row.is_favorite,
     }
-  }, [source, id])
+  }, [source, id, routedExternalFood])
 
   const { data: food, loading, error } = useAsync(loadFn)
 

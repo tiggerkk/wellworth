@@ -203,7 +203,14 @@ export function WellnessDiaryFoodPickerSheet() {
         serving: externalFoodServing(f),
         source: f.source,
         onOpen: () =>
-          openSheet(`${routes.wellness.food(f.source, f.externalId)}${suffix}`),
+          openSheet(`${routes.wellness.food(f.source, f.externalId)}${suffix}`, {
+            // Carry the already-fetched, correctly-parsed search result forward so Food Detail
+            // doesn't need a separate USDA detail lookup — some Branded records return foodNutrients
+            // as bare {id, amount} with no nutrient number on every detail endpoint we've tried
+            // (confirmed against USDA directly), even though the search response for the same food
+            // is fine. See WellnessDiaryFoodDetailSheet's use of location.state.externalFood.
+            state: { externalFood: f },
+          }),
       }))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, userFoods, usdaResults, suffix])

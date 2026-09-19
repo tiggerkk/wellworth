@@ -85,8 +85,15 @@ async function resolveRow(input: ImportFoodRecord): Promise<ResolvedRow> {
   try {
     const top = bestHit(await searchFoods(input.name), input.name)
     if (!top) return { input, match: null, status: 'nomatch' }
-    // Fetch the full nutrient profile (search results are abbreviated) and cache it.
-    const detail = await getUsdaFood(top.food.externalId)
+    // Prefer the search hit's own nutrients — some USDA Branded records return foodNutrients with
+    // no nutrient number on every detail endpoint (confirmed against USDA directly: GET /food/{id},
+    // format=full, and the batch POST /foods all return the same broken shape for the same record),
+    // even though the search response for that food is fine. Only fall back to the detail call when
+    // the search hit itself came back with no nutrients (e.g. a genuinely sparse record).
+    const detail =
+      Object.keys(top.food.nutrients).length > 0
+        ? top.food
+        : await getUsdaFood(top.food.externalId)
     setCachedFoodMatch(input.name, detail)
     return { input, match: detail, status: foodMatchStatus(top.score) }
   } catch {
@@ -183,7 +190,11 @@ export function ImportFoodsSheet() {
     setImportError(null)
     const input = resolved?.[i]?.input
     try {
-      const detail = await getUsdaFood(food.externalId)
+      // Same fallback as resolveRow: prefer the search result's own nutrients, since some Branded
+      // records' detail endpoints are unreliable (see resolveRow's comment) even though the search
+      // response for the same food is fine.
+      const detail =
+        Object.keys(food.nutrients).length > 0 ? food : await getUsdaFood(food.externalId)
       if (input) setCachedFoodMatch(input.name, detail) // persist the correction across re-imports
       setResolved(
         (prev) =>
