@@ -44,19 +44,25 @@ export async function listServingsForFoods(
  * `diary_entry.serving_id` valid, which is what lets a gram-size correction be recomputed onto
  * past entries (see `recomputeEntriesForServing`) instead of silently orphaning them.
  * Returns the resulting rows in input order (with ids) so callers can point
- * `food.default_serving_id` at one of them.
+ * `food.default_serving_id` at one of them. Pass `{ isNew: true }` only when `foodId` was created
+ * moments ago and cannot have stored servings yet — it skips the delete round trip that would
+ * otherwise remove nothing. It is a hint, not a guard: passing it for a food that does have
+ * servings leaves the old ones in place.
  */
 export async function replaceServings(
   foodId: string,
   rows: { id?: string; name: string; grams: number }[],
+  options: { isNew?: boolean } = {},
 ): Promise<Tables<'serving'>[]> {
   const keepIds = rows.filter((r) => r.id).map((r) => r.id!)
   // Delete servings that were removed from the list entirely.
-  let delQuery = supabase.from('serving').delete().eq('food_id', foodId)
-  delQuery =
-    keepIds.length > 0 ? delQuery.not('id', 'in', `(${keepIds.join(',')})`) : delQuery
-  const { error: delError } = await delQuery
-  if (delError) throw delError
+  if (!options.isNew) {
+    let delQuery = supabase.from('serving').delete().eq('food_id', foodId)
+    delQuery =
+      keepIds.length > 0 ? delQuery.not('id', 'in', `(${keepIds.join(',')})`) : delQuery
+    const { error: delError } = await delQuery
+    if (delError) throw delError
+  }
 
   const toUpdate = rows.filter((r) => r.id)
   const toInsert = rows.filter((r) => !r.id)

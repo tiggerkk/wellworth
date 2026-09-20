@@ -46,8 +46,24 @@ interface DisplayFood {
 // sheet; clicking X / ADD navigates back and remounts it. Serving the last results
 // from the cache lets the previous tab, search, and results reappear instantly instead of
 // flashing empty while refetching. (Tab + search text are restored from the URL; see below.)
-let localFoodsCache: Awaited<ReturnType<typeof listFoods>> | null = null
+type LocalFoodRows = Awaited<ReturnType<typeof listFoods>>
+
+let localFoodsCache: LocalFoodRows | null = null
 let usdaCache: { query: string; results: ExternalFood[] } | null = null
+
+/** The rows with one food's favorite flag set (null stays null while nothing has loaded yet). */
+function withFavorite(
+  rows: LocalFoodRows | null,
+  id: string,
+  isFavorite: boolean,
+): LocalFoodRows | null {
+  return rows?.map((f) => (f.id === id ? { ...f, is_favorite: isFavorite } : f)) ?? null
+}
+
+/** Set one food's favorite flag in the module cache, so the next mount seeds the right heart. */
+function setCachedFavorite(id: string, isFavorite: boolean) {
+  localFoodsCache = withFavorite(localFoodsCache, id, isFavorite)
+}
 
 function parseTab(value: string | null): Tab {
   return value === 'all' || value === 'custom' || value === 'favorites'
@@ -88,7 +104,6 @@ export function WellnessDiaryFoodPickerSheet() {
 
   // --- Local (Favorites / Custom / your foods) ---
   const [userFoods, setUserFoods] = useState(localFoodsCache)
-  const [reloadNonce, setReloadNonce] = useState(0)
   useEffect(() => {
     let cancelled = false
     listFoods()
@@ -103,7 +118,7 @@ export function WellnessDiaryFoodPickerSheet() {
     return () => {
       cancelled = true
     }
-  }, [reloadNonce])
+  }, [])
 
   // --- USDA search (All tab only) ---
   const [usdaResults, setUsdaResults] = useState<ExternalFood[]>(() =>
@@ -152,9 +167,21 @@ export function WellnessDiaryFoodPickerSheet() {
 
   const q = query.trim()
 
+  // Flip one row's heart in place (state + the module cache that seeds the next mount) rather than
+  // refetching the whole `select *` food library for a single boolean. Optimistic, so the heart
+  // responds at once; a failed write puts the previous value back.
+  function applyFavorite(id: string, isFavorite: boolean) {
+    setCachedFavorite(id, isFavorite)
+    setUserFoods((rows) => withFavorite(rows, id, isFavorite))
+  }
+
   async function toggleFav(id: string, next: boolean) {
-    await setFavorite(id, next)
-    setReloadNonce((n) => n + 1)
+    applyFavorite(id, next)
+    try {
+      await setFavorite(id, next)
+    } catch {
+      applyFavorite(id, !next)
+    }
   }
 
   // Merge local foods (filtered by tab) and USDA results into one normalized list, then — when

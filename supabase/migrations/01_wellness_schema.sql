@@ -104,9 +104,14 @@ create table public.food (
 create index on public.food (user_id);
 create index on public.food (user_id, created_at desc);  -- covers listFoods' default sort order
 -- getFoodByExternal(source, external_id) — hit on every USDA/Open Food Facts food view and
--- during import dedup checks; previously only the bare user_id index applied.
-create index on public.food (user_id, source, external_id)
-  where external_id is not null;
+-- during import dedup checks. UNIQUE so at most one ACTIVE cached row exists per external food per
+-- user: caching is check-then-insert in the client, so without this two tabs/devices (or a
+-- double-fired heart + ADD) could each insert one. Partial on active rows so a soft-deleted food
+-- (kept as a tombstone for the diary entries that reference it) never blocks re-adding it, and
+-- custom foods (external_id null) are unconstrained. The losing insert fails with 23505.
+create unique index food_active_external_uniq
+  on public.food (user_id, source, external_id)
+  where external_id is not null and deleted_at is null;
 
 alter table public.food enable row level security;
 

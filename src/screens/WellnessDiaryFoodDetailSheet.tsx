@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router'
 import {
   IconHeart,
@@ -43,14 +43,10 @@ import { computeTargets } from '../lib/wellness-targets'
 import { draftAmount } from '../lib/wellness-quantity'
 import { bumpDiary } from '../lib/wellness-diary-refresh'
 import { todayLocal } from '../lib/date'
+import { isStorable, withSavedIds, type ServingDraft } from '../lib/wellness-servings'
+import { isUniqueViolation } from '../lib/errors'
 
-interface Serving {
-  /** Stored serving id, when this row came from the DB. Undefined for a not-yet-saved row (a
-   *  freshly added serving, or the synthetic "100 g" fallback from `withDefaultServing`). */
-  id?: string
-  name: string
-  grams: number
-}
+type Serving = ServingDraft
 
 interface DetailFood {
   source: 'usda' | 'off' | 'custom'
@@ -95,25 +91,29 @@ function buildServings(
  * favorited/logged USDA food keeps its household serving, not just "100 g").
  * Returns the saved rows (with real ids) so a caller logging an entry in the same submit — e.g. a
  * brand-new serving added via "+ Add Serving" and logged against immediately — can resolve the
- * real `serving_id` instead of the pre-save `undefined`.
+ * real `serving_id` instead of the pre-save `undefined`. `isNew` marks a food created moments ago
+ * (no stored servings, no logged entries), which skips the delete and recompute round trips.
  */
 async function writeServings(
   foodId: string,
   food: { nutrient_basis: string; nutrients: unknown },
   list: Serving[],
   defIndex: number,
+  isNew = false,
 ): Promise<Tables<'serving'>[]> {
-  const valid = list.filter((s) => s.name.trim() && s.grams > 0)
+  const valid = list.filter(isStorable)
   const before = new Map(valid.filter((s) => s.id).map((s) => [s.id!, s.grams]))
   const saved = await replaceServings(
     foodId,
     valid.map((s) => ({ id: s.id, name: s.name.trim(), grams: s.grams })),
+    { isNew },
   )
   const def = list[defIndex]
   const pos = def ? valid.indexOf(def) : -1
   await updateFood(foodId, {
     default_serving_id: pos >= 0 ? resolveDefaultServingId(saved, { index: pos }) : null,
   })
+  if (isNew) return saved
   // Only servings that existed before AND changed grams need past entries recomputed — a brand
   // new serving or an unchanged one has nothing logged against it yet (or nothing to update).
   const changed = saved.filter((s) => {
@@ -131,8 +131,8 @@ export function WellnessDiaryFoodDetailSheet() {
   const { session } = useAuth()
   const userId = session?.user.id
   const { source = 'usda', id = '' } = useParams()
-  // The Food Picker/search overlay already fetched and correctly parsed this exact food (see
-  // FoodSearchOverlay/WellnessDiaryFoodPickerSheet's onOpen) — some USDA Branded records return
+  // The Food Picker already fetched and correctly parsed this exact food (see
+  // WellnessDiaryFoodPickerSheet's onOpen) — some USDA Branded records return
   // foodNutrients with no nutrient number on every detail endpoint (GET /food/{id}, GET .../{id}
   // with format=full, and the batch POST /foods all confirmed broken for the same record), even
   // though the search response for that food is fine. Reusing it here avoids repeating the
@@ -364,37 +364,100 @@ export function WellnessDiaryFoodDetailSheet() {
   const targets = profile ? computeTargets(profile) : null
   const favShown = favOverride ?? food?.isFavorite ?? false
 
-  async function ensureCachedId(
+  // After a write, gives the local serving list the ids its rows now have in the DB. `written` is
+  // the exact list that was saved: `saved` lines up with its storable rows, not with whatever the
+  // user has typed since, so ids are stamped onto the live list only if its rows are still the same
+  // ones, and otherwise left for the next save rather than landing on the wrong row. The
+  // dirty-tracking snapshot always takes the ids, so it stays equal to what was stored and the sheet
+  // does not read as dirty and re-save. With `rebaseline` the snapshot also takes `written`'s edits
+  // and default — for a write of the user's own changes, so those changes read as saved.
+  function adoptSavedIds(
+    saved: Tables<'serving'>[],
+    written: { servings: Serving[]; defaultIndex: number },
+    rebaseline?: boolean,
+  ) {
+    const stamped = withSavedIds(written.servings, saved)
+    setServings((prev) =>
+      prev.length === written.servings.length &&
+      prev.every(
+        (p, i) =>
+          p.name === written.servings[i]?.name && p.grams === written.servings[i]?.grams,
+      )
+        ? stamped
+        : prev,
+    )
+    setServingsInitial((prev) =>
+      rebaseline
+        ? { servings: stamped, defaultIndex: written.defaultIndex }
+        : prev && { ...prev, servings: withSavedIds(prev.servings, saved) },
+    )
+  }
+
+  // Resolves this sheet's food to a cached `food` row id, creating it on first need. The promise
+  // is held in a ref so a second heart tap or an ADD that lands before the first create has
+  // resolved awaits the same create instead of starting another — `food` has no unique index on
+  // (user_id, source, external_id), so two overlapping creates would leave duplicate rows. It also
+  // means the lookup + create run once per sheet visit rather than once per action. A failed
+  // attempt is cleared so the next tap can retry.
+  const cachedIdRef = useRef<Promise<{
+    foodId: string
+    seeded: Tables<'serving'>[] | null
+  }> | null>(null)
+
+  function ensureCachedId(
     f: DetailFood,
   ): Promise<{ foodId: string; seeded: Tables<'serving'>[] | null }> {
-    if (f.localId) return { foodId: f.localId, seeded: null }
-    if (f.externalId) {
-      const existing = await getFoodByExternal(f.source, f.externalId)
-      if (existing) return { foodId: existing.id, seeded: null }
-    }
-    const created = await createFood({
-      user_id: userId!,
-      source: f.source,
-      external_id: f.externalId,
-      name: f.name,
-      type: f.type,
-      nutrient_basis: f.nutrientBasis,
-      nutrients: f.nutrients,
-      is_favorite: favShown,
+    if (f.localId) return Promise.resolve({ foodId: f.localId, seeded: null })
+    if (cachedIdRef.current) return cachedIdRef.current
+    const pending = (async () => {
+      if (f.externalId) {
+        const existing = await getFoodByExternal(f.source, f.externalId)
+        if (existing) return { foodId: existing.id, seeded: null }
+      }
+      let created: Tables<'food'>
+      try {
+        created = await createFood({
+          user_id: userId!,
+          source: f.source,
+          external_id: f.externalId,
+          name: f.name,
+          type: f.type,
+          nutrient_basis: f.nutrientBasis,
+          nutrients: f.nutrients,
+          is_favorite: favShown,
+        })
+      } catch (e) {
+        // A partial unique index allows one active row per (user, source, external_id). Losing that
+        // race (another tab or device cached the same food first) is not a failure — adopt the row
+        // that won. It seeded its own servings, so there is nothing to seed here.
+        const winner =
+          isUniqueViolation(e) && f.externalId
+            ? await getFoodByExternal(f.source, f.externalId)
+            : null
+        if (!winner) throw e
+        return { foodId: winner.id, seeded: null }
+      }
+      // Seed the food's servings (incl. its USDA/OFF household serving) on first cache, so
+      // reopening it shows more than "100 g". Skip when the Manage list is dirty — persistServings
+      // writes the edited list right after, which would otherwise double-write.
+      let seeded: Tables<'serving'>[] | null = null
+      if (!servingsDirty) {
+        seeded = await writeServings(
+          created.id,
+          { nutrient_basis: f.nutrientBasis, nutrients: f.nutrients },
+          f.servings,
+          f.defaultIndex,
+          true,
+        )
+        adoptSavedIds(seeded, { servings: f.servings, defaultIndex: f.defaultIndex })
+      }
+      return { foodId: created.id, seeded }
+    })()
+    cachedIdRef.current = pending
+    pending.catch(() => {
+      if (cachedIdRef.current === pending) cachedIdRef.current = null
     })
-    // Seed the food's servings (incl. its USDA/OFF household serving) on first cache, so reopening it
-    // shows more than "100 g". Skip when the Manage list is dirty — persistServings writes the edited
-    // list right after, which would otherwise double-write.
-    let seeded: Tables<'serving'>[] | null = null
-    if (!servingsDirty) {
-      seeded = await writeServings(
-        created.id,
-        { nutrient_basis: f.nutrientBasis, nutrients: f.nutrients },
-        f.servings,
-        f.defaultIndex,
-      )
-    }
-    return { foodId: created.id, seeded }
+    return pending
   }
 
   // Persist the managed servings + default — only when the user actually changed them. Returns
@@ -408,7 +471,7 @@ export function WellnessDiaryFoodDetailSheet() {
       servings,
       defaultIndex,
     )
-    setServingsInitial({ servings, defaultIndex })
+    adoptSavedIds(saved, { servings, defaultIndex }, true)
     return saved
   }
 
@@ -427,9 +490,11 @@ export function WellnessDiaryFoodDetailSheet() {
       // brand-new USDA/OFF food's seeded household serving (`seeded`, from `ensureCachedId`), or a
       // serving added via "+ Add Serving" in Manage Servings (`saved`, from `persistServings`).
       // Resolve it by matching what was actually saved, since local state never got the new id.
-      const resolved = (seeded ?? saved)?.find(
-        (s) => s.name === serving.name.trim() && s.grams === serving.grams,
-      )
+      // `saved` (this submit's Manage-servings write) is checked first: `seeded` is memoized from
+      // the food's first cache and can predate a serving the user has since added.
+      const matches = (s: Tables<'serving'>) =>
+        s.name === serving.name.trim() && s.grams === serving.grams
+      const resolved = saved?.find(matches) ?? seeded?.find(matches)
       const servingId = serving.id ?? resolved?.id ?? null
       if (editing && entryId) {
         await updateEntry(entryId, {

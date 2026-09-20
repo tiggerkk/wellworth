@@ -32,3 +32,8 @@ export function errorMessage(e: unknown, fallback: string): string {
   const tail = [code, hint || details].filter(Boolean).join(' ')
   return tail ? `${message} ${tail}` : message
 }
+
+/** Postgres `unique_violation`. Supabase surfaces it as a thrown `PostgrestError` with this `code`. */
+export function isUniqueViolation(e: unknown): boolean {
+  return typeof e === 'object' && e !== null && (e as PostgrestLike).code === '23505'
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { errorMessage } from './errors'
+import { errorMessage, isUniqueViolation } from './errors'
 
 describe('errorMessage', () => {
   it('returns a genuine Error message', () => {
@@ -39,5 +39,20 @@ describe('errorMessage', () => {
     expect(errorMessage(undefined, 'fallback')).toBe('fallback')
     expect(errorMessage({}, 'fallback')).toBe('fallback')
     expect(errorMessage('   ', 'fallback')).toBe('fallback')
+  })
+})
+
+describe('isUniqueViolation', () => {
+  it('is true only for a Postgres 23505 error object', () => {
+    expect(isUniqueViolation({ code: '23505', message: 'duplicate key' })).toBe(true)
+    expect(isUniqueViolation({ code: '23503' })).toBe(false)
+    expect(isUniqueViolation({ message: 'no code' })).toBe(false)
+  })
+
+  it('is false for non-objects and nullish values', () => {
+    expect(isUniqueViolation(null)).toBe(false)
+    expect(isUniqueViolation(undefined)).toBe(false)
+    expect(isUniqueViolation('23505')).toBe(false)
+    expect(isUniqueViolation(new Error('x'))).toBe(false)
   })
 })

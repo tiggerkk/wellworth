@@ -98,6 +98,11 @@ export async function saveImportedFoods(
 
   const newRows: TablesInsert<'food'>[] = []
   const newPlans: ReturnType<typeof importServings>[] = [] // parallel to newRows
+  // Slot in `newRows` of each queued USDA food, by external id. Two CSV rows can resolve to the same
+  // USDA food; the unique index allows one active row per (user, source, external_id), so the later
+  // row takes over the earlier one's slot instead of queuing a second insert that would fail the
+  // whole batch.
+  const queuedUsda = new Map<string, number>()
   let created = 0
   let updated = 0
 
@@ -118,14 +123,23 @@ export async function saveImportedFoods(
         await applyImportServings(found.id, plan) // re-import overwrites servings + default
         updated++
       } else {
-        newRows.push({
+        const row = {
           user_id: userId,
           source: 'usda',
           external_id: it.match.externalId,
           ...fields,
-        })
-        newPlans.push(plan)
-        created++
+        }
+        const slot = queuedUsda.get(it.match.externalId)
+        if (slot !== undefined) {
+          newRows[slot] = row
+          newPlans[slot] = plan
+          updated++
+        } else {
+          queuedUsda.set(it.match.externalId, newRows.length)
+          newRows.push(row)
+          newPlans.push(plan)
+          created++
+        }
       }
     } else {
       const found = customByName.get(it.input.name.trim().toLowerCase())
