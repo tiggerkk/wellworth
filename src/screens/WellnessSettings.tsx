@@ -88,7 +88,9 @@ function Body({
     setExportError(null)
     try {
       const entries = await listAllEntriesForExport(userId)
-      const strengthSets = await listSetsForEntries(entries.map((e) => e.id))
+      const strengthSets = await listSetsForEntries(
+        entries.filter((e) => e.kind === 'activity').map((e) => e.id),
+      )
       const data = buildDiaryExportData(entries, strengthSets)
       const today = new Date().toISOString().slice(0, 10)
       downloadJson(`wellness-diary-export-${today}.json`, data)
