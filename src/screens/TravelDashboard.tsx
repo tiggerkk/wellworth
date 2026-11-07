@@ -129,17 +129,17 @@ export function TravelDashboard() {
           </div>
 
           <Shelf
+            title="Planning"
+            trips={planning}
+            facetsByTrip={facetsByTrip}
+            onOpen={(id) => navigate(routes.travel.edit(id), fromDashboard)}
+          />
+          <Shelf
             title="Recently Visited"
             trips={recentlyVisited}
             facetsByTrip={facetsByTrip}
             onOpen={(id) => navigate(routes.travel.edit(id), fromDashboard)}
             onSeeAll={() => navigate(routes.travel.trips)}
-          />
-          <Shelf
-            title="Planning"
-            trips={planning}
-            facetsByTrip={facetsByTrip}
-            onOpen={(id) => navigate(routes.travel.edit(id), fromDashboard)}
           />
           <Shelf
             title="Want to Visit"

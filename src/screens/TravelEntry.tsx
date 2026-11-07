@@ -34,6 +34,7 @@ import { useAuth } from '../auth/AuthProvider'
 import { useAsync } from '../hooks/useAsync'
 import { useEntryClose } from '../hooks/useEntryClose'
 import { useEscapeKey } from '../hooks/useEscapeKey'
+import { useSessionState } from '../hooks/useSessionState'
 import {
   createDay,
   createExpense,
@@ -71,7 +72,7 @@ import type { ExpenseRow, ExpenseUpdate } from '../lib/travel-expenses'
 import { effectiveCategories } from '../lib/travel-config'
 import { useProfile } from '../hooks/useProfile'
 import { routes } from '../constants/routes'
-import { addDays, formatFullDate, todayLocal } from '../lib/date'
+import { addDays, formatFullDate, formatMonthDay, todayLocal } from '../lib/date'
 
 export function TravelEntry() {
   const { id } = useParams()
@@ -276,6 +277,9 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
     setExpenses(bundle.expenses)
   }
   const [tab, setTab] = useState<'itinerary' | 'expenses'>('itinerary')
+  // One shared open/closed flag for the trip-details header across all trips; session-scoped, so it
+  // survives navigating into a sheet and back and resets to collapsed when the app is closed.
+  const [headerOpen, setHeaderOpen] = useSessionState('travel-entry-header-open', false)
   const [dayExpensesFor, setDayExpensesFor] = useState<TripDayRow | null>(null)
 
   const categories = useMemo(
@@ -325,6 +329,15 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
     return map
   }, [stops])
   const stopsByDay = (dayId: string) => stopsByDayId.get(dayId) ?? []
+
+  // "Trip Details - <start year>", with " - <name>" appended while collapsed (year omitted when undated).
+  const headerTitle = [
+    'Trip Details',
+    trip.start_date ? trip.start_date.slice(0, 4) : null,
+    headerOpen ? null : name.trim() || trip.name,
+  ]
+    .filter(Boolean)
+    .join(' - ')
 
   const dayLabel = (day: TripDayRow, index: number) =>
     `Day ${index + 1}${day.day_date ? ` · ${formatFullDate(day.day_date)}` : ''}`
@@ -617,8 +630,14 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
         }
       />
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
-        {/* Trip header fields */}
-        <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
+        {/* Trip header fields — collapsed by default; the trip name stands in while collapsed. */}
+        <Collapsible
+          title={headerTitle}
+          className="shrink-0"
+          bodyClassName="flex flex-col gap-3 p-4"
+          open={headerOpen}
+          onOpenChange={setHeaderOpen}
+        >
           {/* Row 1: Trip Name + Status */}
           <div className="flex gap-3">
             <label className="flex-1 text-caption text-text-secondary">
@@ -696,16 +715,29 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
               )}
             </>
           )}
-        </section>
+        </Collapsible>
 
-        <SegmentedTabs<'itinerary' | 'expenses'>
-          value={tab}
-          onChange={setTab}
-          options={[
-            { value: 'itinerary', label: 'Itinerary' },
-            { value: 'expenses', label: 'Expenses' },
-          ]}
-        />
+        <div className="flex items-stretch gap-2">
+          <div className="min-w-0 flex-1">
+            <SegmentedTabs<'itinerary' | 'expenses'>
+              value={tab}
+              onChange={setTab}
+              options={[
+                { value: 'itinerary', label: 'Itinerary' },
+                { value: 'expenses', label: 'Expenses' },
+              ]}
+            />
+          </div>
+          {tab === 'itinerary' && days.length > 1 && (
+            <SecondaryButton
+              size="sm"
+              className="shrink-0 whitespace-nowrap"
+              onClick={() => setReorderDaysOpen(true)}
+            >
+              Reorder Days
+            </SecondaryButton>
+          )}
+        </div>
 
         {tab === 'expenses' && (
           <section className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-card border border-border bg-surface px-3 py-2">
@@ -732,14 +764,6 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
 
         {tab === 'itinerary' ? (
           <section className="flex flex-col gap-4">
-            {days.length > 1 && (
-              <div className="flex gap-2">
-                <SecondaryButton size="sm" onClick={() => setReorderDaysOpen(true)}>
-                  Reorder Days
-                </SecondaryButton>
-              </div>
-            )}
-
             {days.length === 0 && (
               <p className="px-1 text-body text-text-secondary">
                 No days yet — add your first day.
@@ -766,7 +790,7 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
                             ? `Change date for Day ${i + 1}`
                             : `Add a date for Day ${i + 1}`
                         }
-                        className="flex items-center gap-1 rounded-pill bg-input px-2.5 py-1 text-left text-body"
+                        className="flex shrink-0 items-center gap-1 whitespace-nowrap rounded-pill bg-input px-2.5 py-1 text-left text-body"
                       >
                         <IconCalendar
                           size={16}
@@ -774,7 +798,7 @@ function EditTripBody({ bundle }: { bundle: TripBundle }) {
                         />
                         {day.day_date ? (
                           <span className="text-text-primary">
-                            {formatFullDate(day.day_date)}
+                            {formatMonthDay(day.day_date)}
                           </span>
                         ) : (
                           <span className="text-text-tertiary">Add date</span>
